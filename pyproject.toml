@@ -1,0 +1,126 @@
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project]
+name = "PySchemaForms"
+version = "2025.4.18.1.beta"
+requires-python = ">=3.9"
+description = ""
+keywords = []
+readme = "README.md"
+classifiers = [ "License :: OSI Approved :: MIT License", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
+dependencies = []
+[[project.authors]]
+name = "Mike Ryan"
+email = "mikeryan56@gmail.com"
+
+[[project.maintainers]]
+name = "Mike Ryan"
+email = "mikeryan56@gmail.com"
+
+[project.license]
+file = "LICENSE"
+
+[project.urls]
+Homepage = "https://github.com/devsetgo/PySchemaForms"
+Documentation = "https://devsetgo.github.io/PySchemaForms/"
+Repository = "https://github.com/devsetgo/PySchemaForms"
+
+[project.optional-dependencies]
+
+[project.scripts]
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+unsafe-fixes = true
+target-version = "py312"
+src = [ "PySchemaForms", "test",]
+exclude = [ "unreleased/*", "scripts/*", "coverage.xml", "coverage-badge.svg", "PySchemaForms/static/node_modules",]
+
+[tool.flake8]
+max-line-length = 100
+max-doc-length = 100
+ignore = [ "E302", "E501", "E303",]
+exclude = [ ".git", "__pycache__", "docs", "build", "tests", "_venv", "htmlcov", "scripts", ".pytest_cache", ".vscode", "dist", "*.egg-info",]
+
+[tool.isort]
+src_paths = [ "PySchemaForms", "test",]
+force_single_line = false
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 100
+
+[tool.bumpcalver]
+version_format = "{current_date}-{build_count:03}"
+date_format = "%y.Q%q"
+timezone = "America/New_York"
+git_tag = true
+auto_commit = false
+[[tool.bumpcalver.file]]
+path = "makefile"
+file_type = "makefile"
+variable = "APP_VERSION"
+version_standard = "standard"
+
+[[tool.bumpcalver.file]]
+path = "pyproject.toml"
+file_type = "toml"
+variable = "project.version"
+version_standard = "python"
+
+[[tool.bumpcalver.file]]
+path = "PySchemaForms/__init__.py"
+file_type = "python"
+variable = "__version__"
+version_standard = "python"
+
+[tool.ruff.lint]
+select = [ "C", "F", "E", "W", "B",]
+ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "single"
+
+[tool.coverage.run]
+source = [ "PySchemaForms",]
+omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
+
+[tool.coverage.report]
+exclude_lines = [ "pragma: no cover", "if __name__", "def main", "import_sqlalchemy",]
+
+[tool.pytest.ini_options]
+norecursedirs = [ "/tests",]
+testpaths = [ "tests",]
+python_files = [ "test_*.py", "*_test.py",]
+addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
+
+[tool.hatch.build.targets.sdist]
+include = [ "/PySchemaForms",]
+exclude = [ "*.json", "pkg/_compat.py",]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "PySchemaForms",]
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+exclude = '''
+(
+    /(
+        \.git
+      | \.hg
+      | \.mypy_cache
+      | \.tox
+      | \.venv
+      | _venv
+      | build
+      | dist
+      | PySchemaForms/static/node_modules
+    )/
+)
+'''

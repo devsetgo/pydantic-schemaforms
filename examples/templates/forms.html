@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Forms - PyJSONSchema Example{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Available Forms</h1>
+    <form method="get" action="/" class="mb-3">
+        <label>
+            <input type="checkbox" name="liveValidate" value="true" {% if liveValidate %}checked{% endif %}>
+            Live Validate
+        </label>
+        <label class="ms-4">
+            Show Error List:
+            <select name="showErrorList" class="ms-2">
+                <option value="false" {% if showErrorList=="false" %}selected{% endif %}>None</option>
+                <option value="top" {% if showErrorList=="top" %}selected{% endif %}>Top</option>
+                <option value="bottom" {% if showErrorList=="bottom" %}selected{% endif %}>Bottom</option>
+            </select>
+        </label>
+        <button type="submit" class="ms-4 btn btn-primary">Apply</button>
+    </form>
+    <ul>
+        {% for endpoint, label in form_endpoints %}
+        <li>
+            <a href="/{{ endpoint }}?liveValidate={{ 'true' if liveValidate else 'false' }}&showErrorList={{ showErrorList }}"
+                hx-get="/{{ endpoint }}?liveValidate={{ 'true' if liveValidate else 'false' }}&showErrorList={{ showErrorList }}"
+                hx-target="#form-container" hx-swap="innerHTML"
+                onclick="this.setAttribute('hx-get', this.getAttribute('href') + '&_ts=' + Date.now())"
+            >{{ label }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="row mt-4">
+        <div class="col-12 col-md-6 col-lg-6 mx-auto" id="form-container"></div>
+    </div>
+</div>
+{% endblock %}

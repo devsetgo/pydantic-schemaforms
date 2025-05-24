@@ -1,0 +1,49 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/postgres
+{
+	"name": "Pydantic Forms - aka FormGuru",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// This can be used to network with other containers or the host.
+	// "forwardPorts": [5000, 5432, 32080],
+
+	// Install Python and JS dependencies, then build JS bundle after container creation
+	// "postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt && cd PySchemaForms && npm install && npx vite build",
+	"postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt",
+
+	// "postStartCommand": "pip install -r requirements.txt", // Add this line to install requirements.txt after container start
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Set *default* container specific settings.json values on container create.
+			"settings": {
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
+				"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+				"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+				"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+				"python.testing.pytestPath": "/usr/local/py-utils/bin/pytest"
+			},
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				// "usernamehw.errorlens",
+				"streetsidesoftware.code-spell-checker",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"donjayamanne.githistory",
+				"ecmel.vscode-html-css",
+				"hnw.vscode-auto-open-markdown-preview",
+				"kamikillerto.vscode-colorize",
+				"mikestead.dotenv",
+				"oderwat.indent-rainbow",
+				"wayou.vscode-todo-highlight",
+			]
+		}
+	},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "mike"
+}
