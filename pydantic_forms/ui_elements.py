@@ -229,9 +229,10 @@ class RadioInput:
     """
     Represents a radio input element.
     Required: group_name, value, id_
-    Optional: required, checked, disabled, readonly, autocomplete, class_, style
+    Optional: required, checked, disabled, readonly, autocomplete, class_, style, label
     """
-    template = t("""<input type="radio" name="{group_name}" value="{value}" id="{id_}" class="{class_}" style="{style}"{required}{checked}{disabled}{readonly}{autocomplete} />""")
+    template = t("""<input type="radio" name="{group_name}" value="{value}" id="{id_}" class="{class_}" style="{style}"{required}{checked}{disabled}{readonly}{autocomplete} />
+<label for="{id_}">{label}</label>""")
     def render(self, **kwargs):
         attrs = {
             "checked": " checked" if kwargs.get("checked") else "",
@@ -244,23 +245,27 @@ class RadioInput:
             "group_name": kwargs.get("group_name", ""),
             "value": kwargs.get("value", ""),
             "id_": kwargs.get("id_", ""),
+            "label": kwargs.get("label", kwargs.get("value", "").capitalize() if kwargs.get("value") else ""),
         }
-        label = kwargs.get("label", None)
-        html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["value"].capitalize() if attrs["value"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
-        return html
+        return self.template.format(**attrs)
 
 class SelectInput:
     """
     Represents a select input element.
     Required: name, id_, options
-    Optional: required, disabled, multiple, size, autocomplete, class_, style
+    Optional: required, disabled, multiple, size, autocomplete, class_, style, option_list
     """
     template = t("""<select name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{disabled}{multiple}{size}{autocomplete}>{options}</select>""")
     def render(self, **kwargs):
+        # Support both 'options' (raw HTML) and 'option_list' (list of (value, label, selected))
+        options_html = kwargs.get("options", "")
+        option_list = kwargs.get("option_list")
+        if option_list:
+            options_html = ""
+            for opt in option_list:
+                value, label = opt[0], opt[1]
+                selected = ' selected' if len(opt) > 2 and opt[2] else ''
+                options_html += f'<option value="{value}"{selected}>{label}</option>'
         attrs = {
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "multiple": " multiple" if kwargs.get("multiple") else "",
@@ -271,12 +276,10 @@ class SelectInput:
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
-            "options": kwargs.get("options", ""),
+            "options": options_html,
         }
         label = kwargs.get("label", None)
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
         if label:
             html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
@@ -653,55 +656,55 @@ class CreditCardInput:
         return html
 
 if __name__ == "__main__":
-    # text_input = TextInput()
-    # print(text_input.render(name="username", id_="username", class_="form-control", style="width: 100%;", required="required", placeholder="Enter your username"))
+    text_input = TextInput()
+    print(text_input.render(name="username", id_="username", class_="form-control", style="width: 100%;", required="required", placeholder="Enter your username"))
 
-    # password_input = PasswordInput()
-    # print(password_input.render(name="password", id_="password", class_="form-control", style="width: 100%;", required="required", maxlength=32, autocomplete="off"))
+    password_input = PasswordInput()
+    print(password_input.render(name="password", id_="password", class_="form-control", style="width: 100%;", required="required", maxlength=32, autocomplete="off"))
 
-    # email_input = EmailInput()
-    # print(email_input.render(
-    #     name="email",
-    #     id_="email",
-    #     class_="form-control",
-    #     style="width: 100%;",
-    #     required="required",
-    #     placeholder="Enter your email",
-    #     pattern=r"[^@]+@[^@]+\.[^@]+"
-    # ))
+    email_input = EmailInput()
+    print(email_input.render(
+        name="email",
+        id_="email",
+        class_="form-control",
+        style="width: 100%;",
+        required="required",
+        placeholder="Enter your email",
+        pattern=r"[^@]+@[^@]+\.[^@]+"
+    ))
 
-    # number_input = NumberInput()
-    # print(number_input.render(name="age", id_="age", class_="form-control", style="width: 100%;", required="required", min=0, max=120, step=1, value=30))
+    number_input = NumberInput()
+    print(number_input.render(name="age", id_="age", class_="form-control", style="width: 100%;", required="required", min=0, max=120, step=1, value=30))
 
-    # checkbox_input = CheckboxInput()
-    # print(checkbox_input.render(name="subscribe", id_="subscribe", class_="form-check-input", style="", checked=True, value="yes"))
+    checkbox_input = CheckboxInput()
+    print(checkbox_input.render(name="subscribe", id_="subscribe", class_="form-check-input", style="", checked=True, value="yes"))
 
-    # radio_input = RadioInput()
-    # print(radio_input.render(group_name="gender", value="male", id_="gender_male", class_="form-check-input", checked=True))
+    radio_input = RadioInput()
+    print(radio_input.render(group_name="gender", value="male", id_="gender_male", class_="form-check-input", checked=True))
 
-    # select_input = SelectInput()
-    # print(select_input.render(name="country", id_="country", class_="form-select", style="width: 100%;", options='<option value="us">United States</option><option value="ca">Canada</option>', required="required"))
+    select_input = SelectInput()
+    print(select_input.render(name="country", id_="country", class_="form-select", style="width: 100%;", options='<option value="us">United States</option><option value="ca">Canada</option>', required="required"))
 
-    # date_input = DateInput()
-    # print(date_input.render(name="birthday", id_="birthday", class_="form-control", style="width: 100%;", min="1900-01-01", max="2100-12-31", value="2000-01-01"))
+    date_input = DateInput()
+    print(date_input.render(name="birthday", id_="birthday", class_="form-control", style="width: 100%;", min="1900-01-01", max="2100-12-31", value="2000-01-01"))
 
-    # datetime_input = DatetimeInput()
-    # print(datetime_input.render(name="event_time", id_="event_time", class_="form-control", style="width: 100%;", required="", min="2023-01-01T00:00", max="2023-12-31T23:59", value="2023-06-15T14:30"))
+    datetime_input = DatetimeInput()
+    print(datetime_input.render(name="event_time", id_="event_time", class_="form-control", style="width: 100%;", required="", min="2023-01-01T00:00", max="2023-12-31T23:59", value="2023-06-15T14:30"))
 
-    # file_input = FileInput()
-    # print(file_input.render(name="resume", id_="resume", class_="form-control", style="", required="", accept=".pdf,.docx", multiple="multiple"))
+    file_input = FileInput()
+    print(file_input.render(name="resume", id_="resume", class_="form-control", style="", required="", accept=".pdf,.docx", multiple="multiple"))
 
-    # color_input = ColorInput()
-    # print(color_input.render(name="favorite_color", id_="favorite_color", class_="form-control", style="", required="", value="#ff0000"))
+    color_input = ColorInput()
+    print(color_input.render(name="favorite_color", id_="favorite_color", class_="form-control", style="", required="", value="#ff0000"))
 
-    # range_input = RangeInput()
-    # print(range_input.render(name="volume", id_="volume", class_="form-range", style="", required="", min=0, max=100, step=1, value=50))
+    range_input = RangeInput()
+    print(range_input.render(name="volume", id_="volume", class_="form-range", style="", required="", min=0, max=100, step=1, value=50))
 
-    # hidden_input = HiddenInput()
-    # print(hidden_input.render(name="secret", id_="secret", class_="form-control", style="", value="hidden_value"))
+    hidden_input = HiddenInput()
+    print(hidden_input.render(name="secret", id_="secret", class_="form-control", style="", value="hidden_value"))
 
-    # ssn_input = SSNInput()
-    # print(ssn_input.render(name="ssn", id_="ssn", class_="form-control", style="", required="", value="987-65-4321",label="Social Security Number"))
+    ssn_input = SSNInput()
+    print(ssn_input.render(name="ssn", id_="ssn", class_="form-control", style="", required="", value="987-65-4321",label="Social Security Number"))
 
     phone_input = PhoneInput()
     print(phone_input.render(
@@ -714,11 +717,11 @@ if __name__ == "__main__":
         country_code="+353"
     ))
 
-    # url_input = URLInput()
-    # print(url_input.render(name="website", id_="website", class_="form-control", style="", required="", pattern="https?://.+", value="https://example.com"))
+    url_input = URLInput()
+    print(url_input.render(name="website", id_="website", class_="form-control", style="", required="", pattern="https?://.+", value="https://example.com"))
 
-    # currency_input = CurrencyInput()
-    # print(currency_input.render(name="amount", id_="amount", class_="form-control", style="", required="", pattern="^\\$?\\d+(\\.(\\d{2}))?$", value="$100.00"))
+    currency_input = CurrencyInput()
+    print(currency_input.render(name="amount", id_="amount", class_="form-control", style="", required="", pattern="^\\$?\\d+(\\.(\\d{2}))?$", value="$100.00"))
 
-    # credit_card_input = CreditCardInput()
-    # print(credit_card_input.render(name="ccn", id_="ccn", class_="form-control", style="", required="", pattern="\\d{16}", value="1234567812345678"))
+    credit_card_input = CreditCardInput()
+    print(credit_card_input.render(name="ccn", id_="ccn", class_="form-control", style="", required="", pattern="\\d{16}", value="1234567812345678"))

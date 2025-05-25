@@ -62,4 +62,5 @@ def render_form_html(
     html.append("</form>")
     html.append('<div id="form-response"></div>')
     html.append('<script src="https://unpkg.com/htmx.org@2.0.4"></script>')
+    html.append('<script src="https://unpkg.com/imask"></script>')
     return "\n".join(html)

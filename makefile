@@ -109,8 +109,8 @@ ex-run: ## Run the example fast application
 	uvicorn examples.main:app --port ${PORT} --reload  --log-level $(LOG_LEVEL)
 # rm /workspaces/$(REPONAME)/ex.py
 
-ex-f: ## Run the example fast application
-	uvicorn fastapi_example:app --port ${PORT} --reload  --log-level $(LOG_LEVEL)
+ex-f: ## Run the example flask application
+	FLASK_APP=example.py flask run --host 0.0.0.0 --port ${PORT} --reload
 
 js-build: ## Install JS dependencies and build form-bundle.js with Vite
 	cd PySchemaForms/static && \
