@@ -59,7 +59,6 @@ from pydantic import (
     constr,
     model_validator,
 )
-
 from PySchemaForms import STATIC_DIR
 from PySchemaForms.render_form import pydantic_errors_to_rjsf, render_form_page
 from PySchemaForms.schema_form import FormModel

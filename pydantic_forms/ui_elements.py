@@ -33,25 +33,48 @@ HTML Input Attribute Reference
 | id           | Specifies a unique id for an element                                        |
 | name         | Specifies the name of an input element                                      |
 
-"""
-from string.templatelib import Template, Interpolation
-import uuid
 
+Design Pattern to Follow for All UI Elements
+1. Define a class for each UI element (e.g., TextInput, PasswordInput, etc.).
+2. Each class should have a `template` attribute that contains the HTML structure of the element.
+3. The `render` method should accept keyword arguments for all the attributes that can be set on the element.
+4. The `render` method should format the template with the provided attributes, ensuring that only valid attributes are included.
+5. The `render` method should return the final HTML string.
+
+
+"""
+
+import uuid
+from collections import namedtuple
+from string.templatelib import Interpolation, Template
+
+
+# Add this at the top of the file, before any class definitions, to ensure t() is always available.
 def t(template: str) -> str:
+    # This is a no-op fallback for Python <3.14, but in 3.14+ the t-string syntax will be native.
     return template
 
-# --- FIX: Use t(...) not t... ---
+
+Option = namedtuple("Option", ["value", "label", "selected"])
+
+
 class TextInput:
     """
     Represents a text input element.
     Required: name, id_
     Optional: required, placeholder, pattern, maxlength, minlength, readonly, disabled, size, value, autocomplete, class_, style
     """
-    template = t("""<input type="text" name="{name}" id="{id_}" class="{class_}" style="{style}" {required}{placeholder}{pattern}{maxlength}{minlength}{readonly}{disabled}{size}{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="text" name="{name}" id="{id_}" class="{class_}" style="{style}" {required}{placeholder}{pattern}{maxlength}{minlength}{readonly}{disabled}{size}{value}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         # Only include attributes if present and not None/empty
         attrs = {
-            "placeholder": f' placeholder="{kwargs["placeholder"]}"' if kwargs.get("placeholder") else "",
+            "placeholder": (
+                f' placeholder="{kwargs["placeholder"]}"' if kwargs.get("placeholder") else ""
+            ),
             "pattern": f' pattern="{kwargs["pattern"]}"' if kwargs.get("pattern") else "",
             "maxlength": f' maxlength="{kwargs["maxlength"]}"' if kwargs.get("maxlength") else "",
             "minlength": f' minlength="{kwargs["minlength"]}"' if kwargs.get("minlength") else "",
@@ -59,20 +82,22 @@ class TextInput:
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "size": f' size="{kwargs["size"]}"' if kwargs.get("size") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class TextArea:
     """
@@ -80,17 +105,25 @@ class TextArea:
     Required: name, id_
     Optional: required, placeholder, maxlength, minlength, readonly, disabled, rows, cols, autocomplete, value, class_, style
     """
-    template = t("""<textarea name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{placeholder}{maxlength}{minlength}{readonly}{disabled}{rows}{cols}{autocomplete}>{value}</textarea>""")
+
+    template = t(
+        """<textarea name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{placeholder}{maxlength}{minlength}{readonly}{disabled}{rows}{cols}{autocomplete}>{value}</textarea>"""
+    )
+
     def render(self, **kwargs):
         attrs = {
-            "placeholder": f' placeholder="{kwargs["placeholder"]}"' if kwargs.get("placeholder") else "",
+            "placeholder": (
+                f' placeholder="{kwargs["placeholder"]}"' if kwargs.get("placeholder") else ""
+            ),
             "maxlength": f' maxlength="{kwargs["maxlength"]}"' if kwargs.get("maxlength") else "",
             "minlength": f' minlength="{kwargs["minlength"]}"' if kwargs.get("minlength") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "rows": f' rows="{kwargs["rows"]}"' if kwargs.get("rows") else "",
             "cols": f' cols="{kwargs["cols"]}"' if kwargs.get("cols") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
@@ -98,13 +131,13 @@ class TextArea:
             "id_": kwargs.get("id_", ""),
             "value": kwargs.get("value", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class PasswordInput:
     """
@@ -112,7 +145,11 @@ class PasswordInput:
     Required: name, id_
     Optional: required, maxlength, minlength, readonly, disabled, size, value, autocomplete, class_, style
     """
-    template = t("""<input type="password" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{maxlength}{minlength}{readonly}{disabled}{size}{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="password" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{maxlength}{minlength}{readonly}{disabled}{size}{value}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "maxlength": f' maxlength="{kwargs["maxlength"]}"' if kwargs.get("maxlength") else "",
@@ -121,20 +158,22 @@ class PasswordInput:
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "size": f' size="{kwargs["size"]}"' if kwargs.get("size") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class EmailInput:
     """
@@ -142,7 +181,11 @@ class EmailInput:
     Required: name, id_
     Optional: required, pattern, maxlength, minlength, readonly, disabled, size, value, autocomplete, class_, style
     """
-    template = t("""<input type="email" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{readonly}{disabled}{size}{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="email" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{readonly}{disabled}{size}{value}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "pattern": f' pattern="{kwargs["pattern"]}"' if kwargs.get("pattern") else "",
@@ -152,20 +195,22 @@ class EmailInput:
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "size": f' size="{kwargs["size"]}"' if kwargs.get("size") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class NumberInput:
     """
@@ -173,7 +218,11 @@ class NumberInput:
     Required: name, id_
     Optional: required, min, max, step, readonly, disabled, value, autocomplete, class_, style
     """
-    template = t("""<input type="number" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{step}{readonly}{disabled}{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="number" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{step}{readonly}{disabled}{value}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "min": f' min="{kwargs["min"]}"' if kwargs.get("min") is not None else "",
@@ -182,20 +231,22 @@ class NumberInput:
             "readonly": " readonly" if kwargs.get("readonly") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") is not None else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class CheckboxInput:
     """
@@ -203,74 +254,161 @@ class CheckboxInput:
     Required: name, id_
     Optional: required, checked, disabled, value, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="checkbox" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{checked}{disabled}{value}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="checkbox" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{checked}{disabled}{value}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "checked": " checked" if kwargs.get("checked") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class RadioInput:
     """
-    Represents a radio input element.
+    Represents a single radio input element.
+    NOTE: For most UI use cases, use RadioGroup instead of RadioInput directly.
+    RadioInput is intended for internal use by RadioGroup.
     Required: group_name, value, id_
     Optional: required, checked, disabled, readonly, autocomplete, class_, style, label
     """
-    template = t("""<input type="radio" name="{group_name}" value="{value}" id="{id_}" class="{class_}" style="{style}"{required}{checked}{disabled}{readonly}{autocomplete} />
-<label for="{id_}">{label}</label>""")
+
+    template = t(
+        """<input type="radio" name="{group_name}" value="{value}" id="{id_}" class="{class_}" style="{style}"{required}{checked}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "checked": " checked" if kwargs.get("checked") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "group_name": kwargs.get("group_name", ""),
             "value": kwargs.get("value", ""),
             "id_": kwargs.get("id_", ""),
-            "label": kwargs.get("label", kwargs.get("value", "").capitalize() if kwargs.get("value") else ""),
         }
-        return self.template.format(**attrs)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["value"].replace("_", " ").capitalize() if attrs["value"] else ""
+        html = self.template.format(**attrs)
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        return html
+
+
+class RadioGroup:
+    """
+    Represents a group of radio input elements with a group label.
+    Required: group_name, options (list of dicts with value, label, checked)
+    Optional: id_prefix, class_, style, group_label, direction ('horizontal' or 'vertical')
+    """
+
+    def render(self, **kwargs):
+        group_name = kwargs.get("group_name", "")
+        options = kwargs.get("options", [])
+        id_prefix = kwargs.get("id_prefix", group_name)
+        # Remove 'form-check' from the outer container for consistency with other inputs
+        style = kwargs.get("style", "")
+        group_label = kwargs.get("group_label")
+        direction = kwargs.get("direction", "horizontal")  # default to horizontal
+
+        if not group_label:
+            group_label = group_name.replace("_", " ").capitalize() if group_name else ""
+
+        # Set flex direction for alignment
+        flex_direction = "row" if direction == "horizontal" else "column"
+        radios = []
+        for idx, opt in enumerate(options):
+            value = opt.get("value", "")
+            label = opt.get("label", value.capitalize())
+            checked = opt.get("checked", False)
+            id_ = f"{id_prefix}_{value or idx}"
+            radios.append(
+                f'<div class="form-check" style="margin-right: 1em;">'
+                f'{RadioInput().render(group_name=group_name, value=value, id_=id_, class_="", style="", checked=checked, label=label)}'
+                f"</div>"
+            )
+        radios_html = "\n".join(radios)
+        # Wrap everything in a container that uses Bootstrap spacing classes for proper alignment.
+        return (
+            f'<div class="mb-3" style="{style}">'
+            f'<label class="form-label" style="display:block; text-align:left; margin-bottom:0.5em;">{group_label}</label>'
+            f'<div style="display: flex; flex-direction: {flex_direction}; justify-content: flex-start;">{radios_html}</div>'
+            f"</div>"
+        )
+
 
 class SelectInput:
     """
     Represents a select input element.
     Required: name, id_, options
-    Optional: required, disabled, multiple, size, autocomplete, class_, style, option_list
+    Optional: required, disabled, multiple, size, autocomplete, class_, style, option_list, option_dict
     """
-    template = t("""<select name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{disabled}{multiple}{size}{autocomplete}>{options}</select>""")
+
+    template = t(
+        """<select name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{disabled}{multiple}{size}{autocomplete}>{options}</select>"""
+    )
+
     def render(self, **kwargs):
-        # Support both 'options' (raw HTML) and 'option_list' (list of (value, label, selected))
+        # Support: 'options' (raw HTML), 'option_list' (list of (value, label, selected?)),
+        # 'option_dict' (dict of value: label), or 'option_named' (list of Option namedtuples or dicts)
         options_html = kwargs.get("options", "")
         option_list = kwargs.get("option_list")
-        if option_list:
+        option_dict = kwargs.get("option_dict")
+        option_named = kwargs.get("option_named")
+        if option_dict:
+            options_html = ""
+            for value, label in option_dict.items():
+                options_html += f'<option value="{value}">{label}</option>'
+        elif option_named:
+            options_html = ""
+            for opt in option_named:
+                # Accept either namedtuple or dict
+                if isinstance(opt, dict):
+                    value = opt.get("value")
+                    label = opt.get("label")
+                    selected = opt.get("selected", False)
+                else:
+                    value = getattr(opt, "value", None)
+                    label = getattr(opt, "label", None)
+                    selected = getattr(opt, "selected", False)
+                sel = " selected" if selected else ""
+                options_html += f'<option value="{value}"{sel}>{label}</option>'
+        elif option_list:
             options_html = ""
             for opt in option_list:
                 value, label = opt[0], opt[1]
-                selected = ' selected' if len(opt) > 2 and opt[2] else ''
+                selected = " selected" if len(opt) > 2 and opt[2] else ""
                 options_html += f'<option value="{value}"{selected}>{label}</option>'
         attrs = {
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "multiple": " multiple" if kwargs.get("multiple") else "",
             "size": f' size="{kwargs["size"]}"' if kwargs.get("size") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
@@ -278,11 +416,19 @@ class SelectInput:
             "id_": kwargs.get("id_", ""),
             "options": options_html,
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            # Always create a label if not provided
+            label = kwargs.get("name", "")
+            label = label.replace("_", " ").capitalize() if label else ""
         html = self.template.format(**attrs)
-        if label:
+        # --- FIX: Only add label if attrs["id_"] is not empty ---
+        if attrs["id_"]:
             html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        else:
+            html = f"<label>{label}</label> {html}"
         return html
+
 
 class DateInput:
     """
@@ -290,7 +436,11 @@ class DateInput:
     Required: name, id_
     Optional: required, min, max, readonly, disabled, value, autocomplete, class_, style
     """
-    template = t("""<input type="date" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{readonly}{disabled}{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="date" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{readonly}{disabled}{value}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "min": f' min="{kwargs["min"]}"' if kwargs.get("min") else "",
@@ -298,49 +448,108 @@ class DateInput:
             "readonly": " readonly" if kwargs.get("readonly") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class DatetimeInput:
     """
     Represents a datetime input element.
     Required: name, id_
-    Optional: required, min, max, readonly, disabled, value, autocomplete, class_, style
+    Optional: required, min, max, readonly, disabled, value, autocomplete, class_, style, use_current (set to True to default to current datetime), with_set_now_button (adds a button to set to current datetime)
     """
-    template = t("""<input type="datetime-local" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{readonly}{disabled}{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="datetime-local" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{readonly}{disabled}{value}{autocomplete} />"""
+    )
+
+    template_with_button = t(
+        """<div style="display: flex; align-items: center; gap: 10px;">
+    <input type="datetime-local" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{readonly}{disabled}{value}{autocomplete} />
+    <button type="button" onclick="setDatetimeToNow('{id_}')" class="btn btn-sm btn-secondary">Now</button>
+    <script>
+    function setDatetimeToNow(inputId) {{
+        const input = document.getElementById(inputId);
+        if (input) {{
+            const now = new Date();
+            // Format: YYYY-MM-DDThh:mm
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            input.value = `${{year}}-${{month}}-${{day}}T${{hours}}:${{minutes}}`;
+        }}
+    }}
+    {auto_set}
+    </script>
+    </div>"""
+    )
+
     def render(self, **kwargs):
+        # Check if we should use current datetime as default value
+        use_current = kwargs.get("use_current", False)
+        if use_current and not kwargs.get("value"):
+            from datetime import datetime
+
+            # Format datetime as expected by datetime-local input: YYYY-MM-DDThh:mm
+            current_datetime = datetime.now().strftime("%Y-%m-%dT%H:%M")
+            kwargs["value"] = current_datetime
+
+        # Prepare attributes for the input
         attrs = {
             "min": f' min="{kwargs["min"]}"' if kwargs.get("min") else "",
             "max": f' max="{kwargs["max"]}"' if kwargs.get("max") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
-        html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+
+        # Get label
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
+
+        # Check if we should add a "Set to Now" button
+        with_set_now_button = kwargs.get("with_set_now_button", False)
+
+        # Auto-set script for initial value
+        auto_set = ""
+        if kwargs.get("auto_set_on_load", False):
+            auto_set = f"document.addEventListener('DOMContentLoaded', function() {{ setDatetimeToNow('{attrs['id_']}'); }});"
+
+        # Render the HTML
+        if with_set_now_button:
+            attrs["auto_set"] = auto_set
+            html = self.template_with_button.format(**attrs)
+        else:
+            html = self.template.format(**attrs)
+
+        # Add label
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class FileInput:
     """
@@ -348,27 +557,33 @@ class FileInput:
     Required: name, id_
     Optional: required, accept, multiple, disabled, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="file" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{accept}{multiple}{disabled}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="file" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{accept}{multiple}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "accept": f' accept="{kwargs["accept"]}"' if kwargs.get("accept") else "",
             "multiple": " multiple" if kwargs.get("multiple") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "required": " required" if kwargs.get("required") else "",
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class ColorInput:
     """
@@ -376,26 +591,32 @@ class ColorInput:
     Required: name, id_
     Optional: required, value, disabled, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="color" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{value}{disabled}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="color" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{value}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "required": " required" if kwargs.get("required") else "",
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class RangeInput:
     """
@@ -403,7 +624,11 @@ class RangeInput:
     Required: name, id_
     Optional: required, min, max, step, value, disabled, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="range" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{step}{value}{disabled}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="range" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{min}{max}{step}{value}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "required": " required" if kwargs.get("required") else "",
@@ -413,19 +638,21 @@ class RangeInput:
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") is not None else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class HiddenInput:
     """
@@ -433,11 +660,17 @@ class HiddenInput:
     Required: name, id_
     Optional: value, autocomplete, class_, style
     """
-    template = t("""<input type="hidden" name="{name}" id="{id_}" class="{class_}" style="{style}"{value}{autocomplete} />""")
+
+    template = t(
+        """<input type="hidden" name="{name}" id="{id_}" class="{class_}" style="{style}"{value}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
@@ -455,7 +688,9 @@ class SSNInput:
 
     Shows a masked SSN in the UI, but submits the masked value with dashes via a hidden input.
     """
-    template = t("""<div class="{class_}" style="{style}">
+
+    template = t(
+        """<div class="{class_}" style="{style}">
     <label for="{id_}_masked">{label}</label>
     <div class="input-group">
         <input type="text" id="{id_}_masked" class="form-control" inputmode="numeric" value="{initial_value}" />
@@ -488,7 +723,8 @@ class SSNInput:
         }}
     }});
     </script>
-    </div>""")
+    </div>"""
+    )
 
     def render(self, **kwargs):
         id_ = kwargs.get("id_", "")
@@ -500,7 +736,9 @@ class SSNInput:
         attrs = {
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
-            "label": kwargs.get("label", kwargs.get("name", "").capitalize() if kwargs.get("name") else ""),
+            "label": kwargs.get(
+                "label", kwargs.get("name", "").capitalize() if kwargs.get("name") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "initial_value": initial_value,
@@ -516,7 +754,9 @@ class PhoneInput:
 
     Uses imask.js for phone number masking. Supports custom mask for different countries.
     """
-    template = t("""<div class="{class_}" style="{style}">
+
+    template = t(
+        """<div class="{class_}" style="{style}">
     <label for="{id_}">{label}</label>
     <div class="input-group">
         <input type="text" name="{name}" id="{id_}" class="form-control" inputmode="tel" value="{value}" autocomplete="{autocomplete}" />
@@ -535,7 +775,8 @@ class PhoneInput:
         }}
     }});
     </script>
-    </div>""")
+    </div>"""
+    )
 
     def render(self, **kwargs):
         id_ = kwargs.get("id_", "")
@@ -565,13 +806,18 @@ class PhoneInput:
         }
         return self.template.format(**attrs)
 
+
 class URLInput:
     """
     Represents a URL input element.
     Required: name, id_
     Optional: required, pattern, maxlength, minlength, value, disabled, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="url" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{value}{disabled}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="url" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{value}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "required": " required" if kwargs.get("required") else "",
@@ -581,19 +827,21 @@ class URLInput:
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class CurrencyInput:
     """
@@ -601,7 +849,11 @@ class CurrencyInput:
     Required: name, id_
     Optional: required, pattern, maxlength, minlength, value, disabled, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="text" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{value}{disabled}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="text" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{value}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "required": " required" if kwargs.get("required") else "",
@@ -611,19 +863,21 @@ class CurrencyInput:
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 class CreditCardInput:
     """
@@ -631,7 +885,11 @@ class CreditCardInput:
     Required: name, id_
     Optional: required, pattern, maxlength, minlength, value, disabled, readonly, autocomplete, class_, style
     """
-    template = t("""<input type="text" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{value}{disabled}{readonly}{autocomplete} />""")
+
+    template = t(
+        """<input type="text" name="{name}" id="{id_}" class="{class_}" style="{style}"{required}{pattern}{maxlength}{minlength}{value}{disabled}{readonly}{autocomplete} />"""
+    )
+
     def render(self, **kwargs):
         attrs = {
             "required": " required" if kwargs.get("required") else "",
@@ -641,87 +899,261 @@ class CreditCardInput:
             "value": f' value="{kwargs["value"]}"' if kwargs.get("value") else "",
             "disabled": " disabled" if kwargs.get("disabled") else "",
             "readonly": " readonly" if kwargs.get("readonly") else "",
-            "autocomplete": f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else "",
+            "autocomplete": (
+                f' autocomplete="{kwargs["autocomplete"]}"' if kwargs.get("autocomplete") else ""
+            ),
             "class_": kwargs.get("class_", ""),
             "style": kwargs.get("style", ""),
             "name": kwargs.get("name", ""),
             "id_": kwargs.get("id_", ""),
         }
-        label = kwargs.get("label", None)
+        label = kwargs.get("label")
+        if not label:
+            label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
-        if label is None:
-            label = attrs["name"].capitalize() if attrs["name"] else ""
-        if label:
-            html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
+        html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
         return html
+
 
 if __name__ == "__main__":
     text_input = TextInput()
-    print(text_input.render(name="username", id_="username", class_="form-control", style="width: 100%;", required="required", placeholder="Enter your username"))
+    print(
+        text_input.render(
+            name="username",
+            id_="username",
+            class_="form-control",
+            style="width: 100%;",
+            required="required",
+            placeholder="Enter your username",
+        )
+    )
 
     password_input = PasswordInput()
-    print(password_input.render(name="password", id_="password", class_="form-control", style="width: 100%;", required="required", maxlength=32, autocomplete="off"))
+    print(
+        password_input.render(
+            name="password",
+            id_="password",
+            class_="form-control",
+            style="width: 100%;",
+            required="required",
+            maxlength=32,
+            autocomplete="off",
+        )
+    )
 
     email_input = EmailInput()
-    print(email_input.render(
-        name="email",
-        id_="email",
-        class_="form-control",
-        style="width: 100%;",
-        required="required",
-        placeholder="Enter your email",
-        pattern=r"[^@]+@[^@]+\.[^@]+"
-    ))
+    print(
+        email_input.render(
+            name="email",
+            id_="email",
+            class_="form-control",
+            style="width: 100%;",
+            required="required",
+            placeholder="Enter your email",
+            pattern=r"[^@]+@[^@]+\.[^@]+",
+        )
+    )
 
     number_input = NumberInput()
-    print(number_input.render(name="age", id_="age", class_="form-control", style="width: 100%;", required="required", min=0, max=120, step=1, value=30))
+    print(
+        number_input.render(
+            name="age",
+            id_="age",
+            class_="form-control",
+            style="width: 100%;",
+            required="required",
+            min=0,
+            max=120,
+            step=1,
+            value=30,
+        )
+    )
 
     checkbox_input = CheckboxInput()
-    print(checkbox_input.render(name="subscribe", id_="subscribe", class_="form-check-input", style="", checked=True, value="yes"))
+    print(
+        checkbox_input.render(
+            name="subscribe",
+            id_="subscribe",
+            class_="form-check-input",
+            style="",
+            checked=True,
+            value="yes",
+        )
+    )
 
     radio_input = RadioInput()
-    print(radio_input.render(group_name="gender", value="male", id_="gender_male", class_="form-check-input", checked=True))
+    print(
+        radio_input.render(
+            group_name="gender",
+            value="male",
+            id_="gender_male",
+            class_="form-check-input",
+            checked=True,
+        )
+    )
 
     select_input = SelectInput()
-    print(select_input.render(name="country", id_="country", class_="form-select", style="width: 100%;", options='<option value="us">United States</option><option value="ca">Canada</option>', required="required"))
+    print(
+        select_input.render(
+            name="country",
+            id_="country",
+            class_="form-select",
+            style="width: 100%;",
+            options='<option value="us">United States</option><option value="ca">Canada</option>',
+            required="required",
+        )
+    )
 
     date_input = DateInput()
-    print(date_input.render(name="birthday", id_="birthday", class_="form-control", style="width: 100%;", min="1900-01-01", max="2100-12-31", value="2000-01-01"))
+    print(
+        date_input.render(
+            name="birthday",
+            id_="birthday",
+            class_="form-control",
+            style="width: 100%;",
+            min="1900-01-01",
+            max="2100-12-31",
+            value="2000-01-01",
+        )
+    )
 
     datetime_input = DatetimeInput()
-    print(datetime_input.render(name="event_time", id_="event_time", class_="form-control", style="width: 100%;", required="", min="2023-01-01T00:00", max="2023-12-31T23:59", value="2023-06-15T14:30"))
+    print(
+        datetime_input.render(
+            name="event_time",
+            id_="event_time",
+            class_="form-control",
+            style="width: 100%;",
+            required="",
+            min="2023-01-01T00:00",
+            max="2023-12-31T23:59",
+            value="2023-06-15T14:30",
+        )
+    )
 
     file_input = FileInput()
-    print(file_input.render(name="resume", id_="resume", class_="form-control", style="", required="", accept=".pdf,.docx", multiple="multiple"))
+    print(
+        file_input.render(
+            name="resume",
+            id_="resume",
+            class_="form-control",
+            style="",
+            required="",
+            accept=".pdf,.docx",
+            multiple="multiple",
+        )
+    )
 
     color_input = ColorInput()
-    print(color_input.render(name="favorite_color", id_="favorite_color", class_="form-control", style="", required="", value="#ff0000"))
+    print(
+        color_input.render(
+            name="favorite_color",
+            id_="favorite_color",
+            class_="form-control",
+            style="",
+            required="",
+            value="#ff0000",
+        )
+    )
 
     range_input = RangeInput()
-    print(range_input.render(name="volume", id_="volume", class_="form-range", style="", required="", min=0, max=100, step=1, value=50))
+    print(
+        range_input.render(
+            name="volume",
+            id_="volume",
+            class_="form-range",
+            style="",
+            required="",
+            min=0,
+            max=100,
+            step=1,
+            value=50,
+        )
+    )
 
     hidden_input = HiddenInput()
-    print(hidden_input.render(name="secret", id_="secret", class_="form-control", style="", value="hidden_value"))
+    print(
+        hidden_input.render(
+            name="secret", id_="secret", class_="form-control", style="", value="hidden_value"
+        )
+    )
 
     ssn_input = SSNInput()
-    print(ssn_input.render(name="ssn", id_="ssn", class_="form-control", style="", required="", value="987-65-4321",label="Social Security Number"))
+    print(
+        ssn_input.render(
+            name="ssn",
+            id_="ssn",
+            class_="form-control",
+            style="",
+            required="",
+            value="987-65-4321",
+            label="Social Security Number",
+        )
+    )
 
     phone_input = PhoneInput()
-    print(phone_input.render(
-        name="phone",
-        id_="phone",
-        class_="form-control",
-        style="",
-        required="",
-        value="838341551",
-        country_code="+353"
-    ))
+    print(
+        phone_input.render(
+            name="phone",
+            id_="phone",
+            class_="form-control",
+            style="",
+            required="",
+            value="838341551",
+            country_code="+353",
+        )
+    )
 
     url_input = URLInput()
-    print(url_input.render(name="website", id_="website", class_="form-control", style="", required="", pattern="https?://.+", value="https://example.com"))
+    print(
+        url_input.render(
+            name="website",
+            id_="website",
+            class_="form-control",
+            style="",
+            required="",
+            pattern="https?://.+",
+            value="https://example.com",
+        )
+    )
 
     currency_input = CurrencyInput()
-    print(currency_input.render(name="amount", id_="amount", class_="form-control", style="", required="", pattern="^\\$?\\d+(\\.(\\d{2}))?$", value="$100.00"))
+    print(
+        currency_input.render(
+            name="amount",
+            id_="amount",
+            class_="form-control",
+            style="",
+            required="",
+            pattern="^\\$?\\d+(\\.(\\d{2}))?$",
+            value="$100.00",
+        )
+    )
 
     credit_card_input = CreditCardInput()
-    print(credit_card_input.render(name="ccn", id_="ccn", class_="form-control", style="", required="", pattern="\\d{16}", value="1234567812345678"))
+    print(
+        credit_card_input.render(
+            name="ccn",
+            id_="ccn",
+            class_="form-control",
+            style="",
+            required="",
+            pattern="\\d{16}",
+            value="1234567812345678",
+        )
+    )
+
+    radio_group = RadioGroup()
+    print(
+        radio_group.render(
+            group_name="newsletter",
+            options=[
+                {"value": "daily", "label": "Daily"},
+                {"value": "weekly", "label": "Weekly", "checked": True},
+                {"value": "monthly", "label": "Monthly"},
+            ],
+            class_="form-check",
+            style="",
+            group_label="Newsletter Frequency",
+        )
+    )

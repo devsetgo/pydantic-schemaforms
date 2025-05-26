@@ -1,5 +1,4 @@
 from pydantic import Field, model_validator
-
 from PySchemaForms.render_form import SchemaFormValidationError
 from PySchemaForms.schema_form import FormModel
 
@@ -50,14 +49,14 @@ class MinimalSchemaModel(FormModel):
                 }
             )
         # Biography must not contain any bad words (case-insensitive)
-        bad_words = ["buy", "sock", "chump","ministry", "company"]
+        bad_words = ["buy", "sock", "chump", "ministry", "company"]
         found = [w for w in bad_words if w in self.biography.lower()]
         if found:
             errors.append(
                 {
                     "name": "biography",
                     "property": ".biography",
-                    "message": f'The following word(s) are not allowed in the biography: {", ".join(found)}.'
+                    "message": f'The following word(s) are not allowed in the biography: {", ".join(found)}.',
                 }
             )
 

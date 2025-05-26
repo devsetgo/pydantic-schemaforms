@@ -13,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 from pydantic import ValidationError
-
 from PySchemaForms import STATIC_DIR
 from PySchemaForms.render_form import (
     SchemaFormValidationError,
@@ -21,7 +20,6 @@ from PySchemaForms.render_form import (
     render_form_page,
 )
 from PySchemaForms.schema_form import FormModel
-
 
 # Configure logging as before
 logging_config.config_log(
@@ -114,7 +112,9 @@ async def material_design_example(
     request: Request,
     liveValidate: bool = Query(False, description="Enable live validation"),
     showErrorList: str = Query("top", description="Show error list (false, top, bottom)"),
-    debug: bool = Query(True, description="Show schema/data/errors debug info"),  # <-- Make sure this is bool
+    debug: bool = Query(
+        True, description="Show schema/data/errors debug info"
+    ),  # <-- Make sure this is bool
 ):
     """
     Render or process a Material UI themed form using render_form_page.
@@ -287,7 +287,9 @@ async def material_design_basic(
     request: Request,
     liveValidate: bool = Query(False, description="Enable live validation"),
     showErrorList: str = Query("top", description="Show error list (false, top, bottom)"),
-    debug: bool = Query(True, description="Show schema/data/errors debug info"),  # <-- Make sure this is bool and True
+    debug: bool = Query(
+        True, description="Show schema/data/errors debug info"
+    ),  # <-- Make sure this is bool and True
 ):
     """
     Render or process a minimal Material UI form for testing.
@@ -321,7 +323,11 @@ async def material_design_basic(
             errors = e.errors
             # print(f"SchemaFormValidationError: {errors}")
             errors.append(
-                {"name": "userName", "property": ".userName", "message": "I can extend the toast error messages"}
+                {
+                    "name": "userName",
+                    "property": ".userName",
+                    "message": "I can extend the toast error messages",
+                }
             )
         # except ValidationError as e:
         #     errors = e.errors()

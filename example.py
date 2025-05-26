@@ -1,9 +1,10 @@
 from flask import Flask, make_response
 from pydantic_forms.ui_elements import (
-    TextInput, PasswordInput, EmailInput, NumberInput, CheckboxInput, RadioInput,
+    TextInput, PasswordInput, EmailInput, NumberInput, CheckboxInput,
     SelectInput, DateInput, DatetimeInput, FileInput, ColorInput, RangeInput,
     HiddenInput, SSNInput, PhoneInput, URLInput, CurrencyInput, CreditCardInput
 )
+from pydantic_forms.ui_elements import RadioGroup
 
 app = Flask(__name__)
 
@@ -24,33 +25,39 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
     checkbox_input = CheckboxInput().render(
         name="subscribe", id_="subscribe", class_="form-check-input", style="", checked=True, value="yes"
     )
-    radio_input = (
-        RadioInput().render(
-            group_name="gender", value="male", id_="gender_male", class_="form-check-input", checked=True, label="Male"
-        ) + "<br/>" +
-        RadioInput().render(
-            group_name="gender", value="female", id_="gender_female", class_="form-check-input", label="Female"
-        ) + "<br/>" +
-        RadioInput().render(
-            group_name="gender", value="other", id_="gender_other", class_="form-check-input", label="Other"
-        )
+    radio_input = RadioGroup().render(
+        group_name="gender",
+        options=[
+            {"value": "male", "label": "Male", "checked": True},
+            {"value": "female", "label": "Female"},
+            {"value": "other", "label": "Other"},
+        ],
+        class_="form-check",
+        group_label="Gender"
     )
     select_input = SelectInput().render(
         name="country", id_="country", class_="form-select", style="width: 100%;",
-        option_list=[
-            ("us", "United States", True),
-            ("ca", "Canada", False),
-            ("ie", "Ireland", False),
+        option_named=[
+            {"value": "us", "label": "United States", "selected": True},
+            {"value": "ca", "label": "Canada", "selected": False},
+            {"value": "ie", "label": "Ireland", "selected": False},
         ],
-        required="required"
+        required="required",
+        label="Country of Residence"  # <-- Set the label here
     )
     date_input = DateInput().render(
         name="birthday", id_="birthday", class_="form-control", style="width: 100%;",
         min="1900-01-01", max="2100-12-31", value="2000-01-01"
     )
     datetime_input = DatetimeInput().render(
-        name="event_time", id_="event_time", class_="form-control", style="width: 100%;",
-        required="", min="2023-01-01T00:00", max="2023-12-31T23:59", value="2023-06-15T14:30"
+        name="event_time",
+        id_="event_time",
+        class_="form-control",
+        value="2023-10-01T12:00",
+        required="",
+        style="width: 100%;",
+        with_set_now_button=False,
+        auto_set_on_load=True
     )
     file_input = FileInput().render(
         name="resume", id_="resume", class_="form-control", style="",  accept=".pdf,.docx", multiple="multiple"
