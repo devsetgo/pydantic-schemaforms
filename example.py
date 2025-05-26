@@ -26,9 +26,9 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
         name="subscribe", id_="subscribe", class_="form-check-input", style="", checked=True, value="yes"
     )
     radio_input = RadioGroup().render(
-        group_name="gender",
+        group_name="gender", required="required",
         options=[
-            {"value": "male", "label": "Male", "checked": True},
+            {"value": "male", "label": "Male"},#, "checked": True},
             {"value": "female", "label": "Female"},
             {"value": "other", "label": "Other"},
         ],
@@ -60,7 +60,7 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
         auto_set_on_load=True
     )
     file_input = FileInput().render(
-        name="resume", id_="resume", class_="form-control", style="",  accept=".pdf,.docx", multiple="multiple"
+        name="resume", id_="resume", class_="form-control", style="",  accept=".pdf,.docx", multiple="multiple", required="required"
     )
     color_input = ColorInput().render(
         name="favorite_color", id_="favorite_color", class_="form-control", style="", required="", value="#ff0000"
@@ -129,17 +129,51 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
             const form = e.target;
             const data = {{}};
             const fd = new FormData(form);
+            
+            // Process all form data including files
             for (const [key, value] of fd.entries()) {{
-                if (data[key]) {{
-                    if (Array.isArray(data[key])) {{
-                        data[key].push(value);
+                // Special handling for File objects
+                if (value instanceof File) {{
+                    // If we already have a file array for this key
+                    if (data[key] && Array.isArray(data[key])) {{
+                        data[key].push({{
+                            name: value.name,
+                            type: value.type,
+                            size: value.size + " bytes",
+                            lastModified: new Date(value.lastModified).toLocaleString()
+                        }});
+                    }} else if (data[key]) {{
+                        // Convert existing file to array
+                        const existingFile = data[key];
+                        data[key] = [existingFile, {{
+                            name: value.name,
+                            type: value.type,
+                            size: value.size + " bytes",
+                            lastModified: new Date(value.lastModified).toLocaleString()
+                        }}];
                     }} else {{
-                        data[key] = [data[key], value];
+                        // First file for this key
+                        data[key] = {{
+                            name: value.name,
+                            type: value.type,
+                            size: value.size + " bytes",
+                            lastModified: new Date(value.lastModified).toLocaleString()
+                        }};
                     }}
                 }} else {{
-                    data[key] = value;
+                    // Handle non-file inputs as before
+                    if (data[key]) {{
+                        if (Array.isArray(data[key])) {{
+                            data[key].push(value);
+                        }} else {{
+                            data[key] = [data[key], value];
+                        }}
+                    }} else {{
+                        data[key] = value;
+                    }}
                 }}
             }}
+            
             document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
         }});
       </script>
@@ -174,6 +208,7 @@ def form_shadcn():
     js_links = """
         <script src="https://unpkg.com/htmx.org@2.0.4"></script>
         <script src="https://unpkg.com/imask"></script>
+        <script src="https://cdn.jsdelivr.net/npm/shadcn@2.5.0/dist/index.min.js"></script>
     """
     return render_form_page(css_links, js_links, form_class="shadcn-form")
 
@@ -199,3 +234,4 @@ def index():
     </html>
     """
     return make_response(html)
+
