@@ -28,8 +28,8 @@ autoflake: ## Remove unused imports and unused variables from Python code
 
 black: ## Reformat Python code to follow the Black code style
 	black $(SERVICE_PATH)
-	black $(TESTS_PATH)
-	black $(EXAMPLE_PATH)
+	# black $(TESTS_PATH)
+	# black $(EXAMPLE_PATH)
 
 bump: ## Bump the version of the project
 	bumpcalver --build
@@ -110,7 +110,7 @@ ex-run: ## Run the example fast application
 # rm /workspaces/$(REPONAME)/ex.py
 
 ex-f: ## Run the example flask application
-	FLASK_APP=example.py flask run --host 0.0.0.0 --port ${PORT} --reload
+	FLASK_APP=example.py python -m flask run --host 0.0.0.0 --port ${PORT} --reload
 
 js-build: ## Install JS dependencies and build form-bundle.js with Vite
 	cd PySchemaForms/static && \

@@ -2,25 +2,62 @@ from flask import Flask, make_response
 from pydantic_forms.ui_elements import (
     TextInput, PasswordInput, EmailInput, NumberInput, CheckboxInput,
     SelectInput, DateInput, DatetimeInput, FileInput, ColorInput, RangeInput,
-    HiddenInput, SSNInput, PhoneInput, URLInput, CurrencyInput, CreditCardInput
+    HiddenInput, SSNInput, PhoneInput, URLInput, CurrencyInput, CreditCardInput,
+    TextArea
 )
 from pydantic_forms.ui_elements import RadioGroup
 
 app = Flask(__name__)
 
 def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-light"):
+    # Common CSS for required fields - fix the double asterisk issue
+    required_css = """
+    <style>
+        /* Only show one asterisk for required fields */
+        label[data-required="true"]::after {
+            content: "*";
+            color: red;
+            margin-left: 3px;
+        }
+        
+        /* Remove any existing asterisks that might be in the label text */
+        label[data-required="true"] .required-indicator {
+            display: none;
+        }
+        
+        /* Simple override for invalid inputs */
+        input:invalid, select:invalid, textarea:invalid {
+            border-color: red;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+        }
+        
+        /* Style for Bootstrap's was-validated mode */
+        .was-validated .form-control:invalid {
+            border-color: red;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+    </style>
+    """
+    css_links += required_css
+
     text_input = TextInput().render(
         name="username", id_="username", class_="form-control", style="width: 100%;", required="required", placeholder="Enter your username"
     )
     password_input = PasswordInput().render(
         name="password", id_="password", class_="form-control", style="width: 100%;", required="required", maxlength=32, autocomplete="off"
     )
+    biography_input = TextArea().render(name="biography", id_="biography", class_="form-control", style="width: 100%;", required="required",
+        placeholder="Tell us about yourself", rows=4, maxlength=500, value="This is a sample biography."
+    )     
     email_input = EmailInput().render(
         name="email", id_="email", class_="form-control", style="width: 100%;", required="required",
         placeholder="Enter your email", pattern=r"[^@]+@[^@]+\.[^@]+",value="me@something.com"
     )
     number_input = NumberInput().render(
-        name="age", id_="age", class_="form-control", style="width: 100%;", required="required", min=0, max=120, step=1, value=30
+        name="age", id_="age", class_="form-control", style="width: 100%;", required="required", min=0, max=120, step=1, value=30, placeholder="Enter your age"
     )
     checkbox_input = CheckboxInput().render(
         name="subscribe", id_="subscribe", class_="form-check-input", style="", checked=True, value="yes"
@@ -98,9 +135,11 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
       <div class="row justify-content-center"><a href="/">Back to Index</a></div>
         <div class="row justify-content-center">
           <div class="col-md-8 col-lg-6 col-xl-4">
-            <form id="mainForm" hx-post="/submit" hx-target="#result" hx-swap="innerHTML" class="{form_class}">
+            <form id="mainForm" novalidate hx-post="/submit" hx-target="#result" hx-swap="innerHTML" class="{form_class}">
+              <!-- Form elements -->
               {text_input}<br/>
               {password_input}<br/>
+              {biography_input}<br/>
               {email_input}<br/>
               {number_input}<br/>
               {checkbox_input}<br/>
@@ -124,7 +163,47 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
         </div>
       </div>
       <script>
+        // Enhanced form validation that prevents submission if invalid
         document.getElementById('mainForm').addEventListener('submit', function (e) {{
+            // First check if the form is valid
+            if (!this.checkValidity()) {{
+                e.preventDefault();
+                
+                // Mark the form as validated to show error styles
+                this.classList.add('was-validated');
+                
+                // Find all invalid fields and highlight them
+                const invalidFields = this.querySelectorAll(':invalid');
+                invalidFields.forEach(field => {{
+                    field.setAttribute('aria-invalid', 'true');
+                    
+                    // Add scrollIntoView for the first invalid field
+                    if (field === invalidFields[0]) {{
+                        setTimeout(() => field.scrollIntoView({{ behavior: 'smooth', block: 'center' }}), 100);
+                        field.focus();
+                    }}
+                }});
+                
+                // Display an alert at the top of the form
+                const errorMsgDiv = document.createElement('div');
+                errorMsgDiv.className = 'alert alert-danger';
+                errorMsgDiv.textContent = 'Please fill in all required fields marked with *';
+                errorMsgDiv.style.marginBottom = '20px';
+                
+                // Remove any existing error message
+                const existingError = this.querySelector('.alert.alert-danger');
+                if (existingError) {{
+                    existingError.remove();
+                }}
+                
+                // Insert at the top of the form
+                this.insertBefore(errorMsgDiv, this.firstChild);
+                
+                // Return - don't process further
+                return;
+            }}
+            
+            // If form is valid, continue with form data processing
             e.preventDefault();
             const form = e.target;
             const data = {{}};

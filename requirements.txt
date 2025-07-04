@@ -29,3 +29,4 @@ silly==1.1.0 # Vulnerabilities: None
 tox==4.26.0 # From 4.25.0 | Vulnerabilities: None
 tqdm==4.67.1 # Vulnerabilities: None
 twine==6.1.0 # Vulnerabilities: None
+flask
