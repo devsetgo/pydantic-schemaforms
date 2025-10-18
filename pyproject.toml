@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "PySchemaForms"
-version = "2025.4.18.1.beta"
+version = "25.Q4.1.beta"
 requires-python = ">=3.9"
 description = ""
 keywords = []
@@ -78,6 +78,11 @@ file_type = "python"
 variable = "__version__"
 version_standard = "python"
 
+[tool.black]
+line-length = 100
+target-version = [ "py314",]
+exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n      | \\.tox\n      | \\.venv\n      | _venv\n      | build\n      | dist\n      | PySchemaForms/static/node_modules\n    )/\n)\n"
+
 [tool.ruff.lint]
 select = [ "C", "F", "E", "W", "B",]
 ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
@@ -105,22 +110,3 @@ exclude = [ "*.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "PySchemaForms",]
-
-[tool.black]
-line-length = 100
-target-version = ['py314']
-exclude = '''
-(
-    /(
-        \.git
-      | \.hg
-      | \.mypy_cache
-      | \.tox
-      | \.venv
-      | _venv
-      | build
-      | dist
-      | PySchemaForms/static/node_modules
-    )/
-)
-'''
