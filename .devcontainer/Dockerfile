@@ -1,4 +1,4 @@
-FROM python:3.14.0b3
+FROM python:3.14
 
 # Create user 'mike' with home directory and add to sudoers
 RUN useradd -ms /bin/bash mike \
