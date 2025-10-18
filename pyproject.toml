@@ -78,6 +78,11 @@ file_type = "python"
 variable = "__version__"
 version_standard = "python"
 
+[[tool.bumpcalver.file]]
+path = "sonar-project.properties"
+file_type = "properties"
+variable = "sonar.projectVersion"
+
 [tool.black]
 line-length = 100
 target-version = [ "py314",]
