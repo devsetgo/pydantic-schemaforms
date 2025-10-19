@@ -3,64 +3,60 @@ Specialized input components using Python 3.14 template strings.
 Includes FileInput, ColorInput, HiddenInput, ImageInput, ButtonInput, etc.
 """
 
-from typing import List, Optional, Union, Dict, Any
-from string.templatelib import Interpolation, Template
-from .base import FileInputBase, FormInput, build_label, build_error_message, build_help_text
-from html import escape
+from typing import Optional
+from .base import FileInputBase, FormInput
 
 
 class FileInput(FileInputBase):
     """File upload input with drag-and-drop support."""
-    
+
     def get_input_type(self) -> str:
         return "file"
-    
-    def render(self, accept: Optional[str] = None, multiple: bool = False, 
+
+    def render(self, accept: Optional[str] = None, multiple: bool = False,
                capture: Optional[str] = None, show_preview: bool = True, **kwargs) -> str:
         """Render file input with optional preview functionality."""
-        
+
         if accept:
             kwargs["accept"] = accept
         if multiple:
             kwargs["multiple"] = True
         if capture:
             kwargs["capture"] = capture
-        
+
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-        template = t'<input {attributes_str} />'
-        file_html = render_template(template)
-        
+
+        # Render the input
+        file_html = f'<input {attributes_str} />'
+
         if show_preview:
             field_name = kwargs.get("name", "")
             field_id = kwargs.get("id", field_name)
-            
+
             preview_html = f'''
             <div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 const fileInput = document.getElementById('{field_id}');
                 const preview = document.getElementById('{field_name}_preview');
-                
+
                 if (fileInput && preview) {{
                     fileInput.addEventListener('change', function() {{
                         preview.innerHTML = '';
-                        
+
                         if (this.files) {{
                             Array.from(this.files).forEach(function(file) {{
                                 const fileItem = document.createElement('div');
                                 fileItem.className = 'file-item';
                                 fileItem.style.cssText = 'margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 3px;';
-                                
+
                                 let content = `<strong>${{file.name}}</strong> (${{{(file.size / 1024).toFixed(1)}}} KB)`;
-                                
+
                                 // Show image preview for image files
                                 if (file.type.startsWith('image/')) {{
                                     const reader = new FileReader();
@@ -72,7 +68,7 @@ class FileInput(FileInputBase):
                                     }};
                                     reader.readAsDataURL(file);
                                 }}
-                                
+
                                 fileItem.innerHTML = content;
                                 preview.appendChild(fileItem);
                             }});
@@ -83,64 +79,62 @@ class FileInput(FileInputBase):
             </script>
             '''
             return f'<div class="file-input-group">{file_html}{preview_html}</div>'
-        
+
         return file_html
 
 
 class ImageInput(FormInput):
     """Image input that acts as a submit button."""
-    
+
     valid_attributes = FormInput.valid_attributes + [
-        "src", "alt", "width", "height", "formaction", "formenctype", 
+        "src", "alt", "width", "height", "formaction", "formenctype",
         "formmethod", "formnovalidate", "formtarget"
     ]
-    
+
     def get_input_type(self) -> str:
         return "image"
-    
+
     def render(self, src: str, alt: str, **kwargs) -> str:
         """Render image input with required src and alt attributes."""
         kwargs["src"] = src
         kwargs["alt"] = alt
-        
+
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+
+        # Render the input
+        return f'<input {attributes_str} />'
 
 
 class ColorInput(FormInput):
     """Color picker input."""
-    
+
     def get_input_type(self) -> str:
         return "color"
-    
+
     def render(self, show_value: bool = True, **kwargs) -> str:
         """Render color input with optional color value display."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
+
         # Use Python 3.14 template string literal and render it
         from .base import render_template
         template = t'<input {attributes_str} />'
         color_html = render_template(template)
-        
+
         if show_value:
             field_name = kwargs.get("name", "")
             field_id = kwargs.get("id", field_name)
             current_value = kwargs.get("value", "#000000")
-            
+
             value_display = f'''
             <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
                 <span id="{field_name}_value" style="font-family: monospace;">{current_value}</span>
@@ -151,7 +145,7 @@ class ColorInput(FormInput):
                 const colorInput = document.getElementById('{field_id}');
                 const valueSpan = document.getElementById('{field_name}_value');
                 const swatch = document.getElementById('{field_name}_swatch');
-                
+
                 if (colorInput && valueSpan && swatch) {{
                     colorInput.addEventListener('input', function() {{
                         valueSpan.textContent = this.value;
@@ -162,25 +156,25 @@ class ColorInput(FormInput):
             </script>
             '''
             return f'<div class="color-input-group">{color_html}{value_display}</div>'
-        
+
         return color_html
 
 
 class HiddenInput(FormInput):
     """Hidden input field."""
-    
+
     def get_input_type(self) -> str:
         return "hidden"
-    
+
     def render(self, **kwargs) -> str:
         """Render hidden input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
+
         # Use Python 3.14 template string literal and render it
         from .base import render_template
         template = t'<input {attributes_str} />'
@@ -189,23 +183,23 @@ class HiddenInput(FormInput):
 
 class ButtonInput(FormInput):
     """Button input field."""
-    
+
     valid_attributes = FormInput.valid_attributes + [
         "popovertarget", "popovertargetaction"
     ]
-    
+
     def get_input_type(self) -> str:
         return "button"
-    
+
     def render(self, **kwargs) -> str:
         """Render button input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
+
         # Use Python 3.14 template string literal and render it
         from .base import render_template
         template = t'<input {attributes_str} />'
@@ -214,23 +208,23 @@ class ButtonInput(FormInput):
 
 class SubmitInput(FormInput):
     """Submit button input."""
-    
+
     valid_attributes = FormInput.valid_attributes + [
         "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget"
     ]
-    
+
     def get_input_type(self) -> str:
         return "submit"
-    
+
     def render(self, **kwargs) -> str:
         """Render submit input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
+
         # Use Python 3.14 template string literal and render it
         from .base import render_template
         template = t'<input {attributes_str} />'
@@ -239,19 +233,19 @@ class SubmitInput(FormInput):
 
 class ResetInput(FormInput):
     """Reset button input."""
-    
+
     def get_input_type(self) -> str:
         return "reset"
-    
+
     def render(self, **kwargs) -> str:
         """Render reset input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs["type"] = self.get_input_type()
-        
+
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
+
         # Use Python 3.14 template string literal and render it
         from .base import render_template
         template = t'<input {attributes_str} />'
@@ -260,7 +254,7 @@ class ResetInput(FormInput):
 
 class CSRFInput(HiddenInput):
     """CSRF token hidden input for security."""
-    
+
     def render(self, token: str, **kwargs) -> str:
         """Render CSRF input with token value."""
         kwargs["name"] = kwargs.get("name", "csrf_token")
@@ -270,7 +264,7 @@ class CSRFInput(HiddenInput):
 
 class HoneypotInput(HiddenInput):
     """Honeypot input for spam protection."""
-    
+
     def render(self, **kwargs) -> str:
         """Render honeypot input that should remain empty."""
         # Use a name that looks like a real field but is actually a trap
@@ -284,21 +278,21 @@ class HoneypotInput(HiddenInput):
 
 class CaptchaInput:
     """Simple math captcha input for spam protection."""
-    
+
     def __init__(self):
         import random
         self.num1 = random.randint(1, 10)
         self.num2 = random.randint(1, 10)
         self.answer = self.num1 + self.num2
-    
+
     def render(self, name: str = "captcha", **kwargs) -> str:
         """Render math captcha with validation."""
         field_id = kwargs.get("id", name)
-        
+
         # Create hidden input with the answer
         hidden_input = HiddenInput()
         hidden_html = hidden_input.render(name=f"{name}_answer", value=str(self.answer))
-        
+
         # Create text input for user answer
         text_input = FormInput()
         text_attrs = {
@@ -311,7 +305,7 @@ class CaptchaInput:
             **kwargs
         }
         text_html = text_input.render(**text_attrs)
-        
+
         # Create the complete captcha
         captcha_html = f'''
         <div class="captcha-input">
@@ -325,7 +319,7 @@ class CaptchaInput:
                     form.addEventListener('submit', function(e) {{
                         const captchaInput = document.getElementById('{field_id}');
                         const answerInput = document.querySelector('input[name="{name}_answer"]');
-                        
+
                         if (captchaInput && answerInput) {{
                             if (parseInt(captchaInput.value) !== parseInt(answerInput.value)) {{
                                 e.preventDefault();
@@ -340,21 +334,21 @@ class CaptchaInput:
             </script>
         </div>
         '''
-        
+
         return captcha_html
 
 
 class RatingStarsInput:
     """Star rating input widget."""
-    
+
     def render(self, name: str, max_stars: int = 5, current_rating: int = 0, **kwargs) -> str:
         """Render star rating input."""
         field_id = kwargs.get("id", name)
-        
+
         # Create hidden input to store the rating value
         hidden_input = HiddenInput()
         hidden_html = hidden_input.render(name=name, id=f"{field_id}_value", value=str(current_rating))
-        
+
         # Create star display
         stars_html = []
         for i in range(1, max_stars + 1):
@@ -362,7 +356,7 @@ class RatingStarsInput:
             stars_html.append(
                 f'<span class="rating-star {star_class}" data-rating="{i}">★</span>'
             )
-        
+
         rating_html = f'''
         <div class="star-rating-input" data-name="{name}">
             <div class="stars" id="{field_id}_stars">
@@ -389,24 +383,24 @@ class RatingStarsInput:
                 const starsContainer = document.getElementById('{field_id}_stars');
                 const hiddenInput = document.getElementById('{field_id}_value');
                 const stars = starsContainer.querySelectorAll('.rating-star');
-                
+
                 stars.forEach(function(star, index) {{
                     star.addEventListener('mouseenter', function() {{
                         stars.forEach(function(s, i) {{
                             s.classList.toggle('hover', i <= index);
                         }});
                     }});
-                    
+
                     star.addEventListener('mouseleave', function() {{
                         stars.forEach(function(s) {{
                             s.classList.remove('hover');
                         }});
                     }});
-                    
+
                     star.addEventListener('click', function() {{
                         const rating = parseInt(this.dataset.rating);
                         hiddenInput.value = rating;
-                        
+
                         stars.forEach(function(s, i) {{
                             s.classList.toggle('star-filled', i < rating);
                         }});
@@ -416,23 +410,23 @@ class RatingStarsInput:
             </script>
         </div>
         '''
-        
+
         return rating_html
 
 
 class TagsInput:
     """Tags input widget for entering multiple tags."""
-    
-    def render(self, name: str, placeholder: str = "Enter tags...", 
+
+    def render(self, name: str, placeholder: str = "Enter tags...",
                separator: str = ",", **kwargs) -> str:
         """Render tags input widget."""
         field_id = kwargs.get("id", name)
         initial_tags = kwargs.get("value", "")
-        
+
         # Create hidden input to store tag values
         hidden_input = HiddenInput()
         hidden_html = hidden_input.render(name=name, id=f"{field_id}_value", value=initial_tags)
-        
+
         # Create visible input for typing
         text_attrs = {
             "type": "text",
@@ -440,10 +434,10 @@ class TagsInput:
             "placeholder": placeholder,
             "autocomplete": "off"
         }
-        
+
         text_input = FormInput()
         text_html = text_input.render(**text_attrs)
-        
+
         tags_html = f'''
         <div class="tags-input" data-name="{name}">
             <div class="tags-container" id="{field_id}_container"></div>
@@ -487,13 +481,13 @@ class TagsInput:
                 const input = document.getElementById('{field_id}_input');
                 const hiddenInput = document.getElementById('{field_id}_value');
                 let tags = [];
-                
+
                 // Initialize with existing tags
                 if (hiddenInput.value) {{
                     tags = hiddenInput.value.split('{separator}').filter(Boolean);
                     renderTags();
                 }}
-                
+
                 function renderTags() {{
                     container.innerHTML = '';
                     tags.forEach(function(tag, index) {{
@@ -504,12 +498,12 @@ class TagsInput:
                     }});
                     hiddenInput.value = tags.join('{separator}');
                 }}
-                
+
                 window.removeTag = function(index) {{
                     tags.splice(index, 1);
                     renderTags();
                 }};
-                
+
                 input.addEventListener('keydown', function(e) {{
                     if (e.key === 'Enter' || e.key === '{separator}') {{
                         e.preventDefault();
@@ -528,5 +522,5 @@ class TagsInput:
             </script>
         </div>
         '''
-        
+
         return tags_html

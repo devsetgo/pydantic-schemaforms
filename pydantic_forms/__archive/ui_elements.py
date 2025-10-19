@@ -44,9 +44,7 @@ Design Pattern to Follow for All UI Elements
 
 """
 
-import uuid
 from collections import namedtuple
-from string.templatelib import Interpolation, Template
 
 
 # Add this at the top of the file, before any class definitions, to ensure t() is always available.
@@ -96,7 +94,7 @@ class TextInput:
             label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
         html = self.template.format(**attrs)
         html = f'<label for="{attrs["id_"]}">{label}</label> {html}'
-        
+
         # Add required indicator if needed
         return add_required_indicator(html, kwargs.get("required"))
 
@@ -345,7 +343,7 @@ class RadioGroup:
         # Set flex direction for alignment
         flex_direction = "row" if direction == "horizontal" else "column"
         radios = []
-        
+
         # Apply 'required' only to the first radio button in the group
         # This is how HTML validation works for radio groups - only one needs the attribute
         for idx, opt in enumerate(options):
@@ -353,32 +351,32 @@ class RadioGroup:
             label = opt.get("label", value.capitalize())
             checked = opt.get("checked", False)
             id_ = f"{id_prefix}_{value or idx}"
-            
+
             # Only apply required to first button in the group
             is_required = required and idx == 0
-            
+
             radios.append(
                 f'<div class="form-check" style="margin-right: 1em;">'
                 f'{RadioInput().render(group_name=group_name, value=value, id_=id_, class_="", style="", checked=checked, label=label, required=is_required)}'
                 f"</div>"
             )
         radios_html = "\n".join(radios)
-        
+
         # Add a hidden field to show validation message for the group
         validation_html = ""
         if required:
             validation_html = (
                 f'<span class="invalid-feedback" style="display: none;">'
-                f'Please select one of the options for {group_label}.'
-                f'</span>'
+                f"Please select one of the options for {group_label}."
+                f"</span>"
             )
-        
+
         # Wrap everything in a container that uses Bootstrap spacing classes for proper alignment.
         return (
             f'<div class="mb-3" style="{style}">'
             f'<label class="form-label" style="display:block; text-align:left; margin-bottom:0.5em;">{group_label}</label>'
             f'<div style="display: flex; flex-direction: {flex_direction}; justify-content: flex-start;">{radios_html}</div>'
-            f'{validation_html}'
+            f"{validation_html}"
             f"</div>"
         )
 
@@ -651,7 +649,7 @@ class RangeInput:
 
     template = t(
         """<div class="range-input-container" style="margin-bottom: 10px;">
-    <input type="range" name="{name}" id="{id_}" class="{class_}" style="width: 100%; height: {track_height}px; {style}" 
+    <input type="range" name="{name}" id="{id_}" class="{class_}" style="width: 100%; height: {track_height}px; {style}"
      {required}{min}{max}{step}{value}{disabled}{readonly}{autocomplete} />
     <div class="range-value-display" style="text-align: center; margin-top: 5px;">
         <output for="{id_}" id="{id_}_value">{display_value}</output>
@@ -663,7 +661,7 @@ class RangeInput:
             background: transparent; /* Make background transparent to show our custom track */
             cursor: pointer;
         }
-        
+
         /* Track styles - the line the thumb slides on */
         #{id_}::-webkit-slider-runnable-track {
             height: {track_height}px;
@@ -675,7 +673,7 @@ class RangeInput:
             background: {track_color};
             border-radius: 4px;
         }
-        
+
         /* Thumb styles - the draggable handle */
         #{id_}::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -694,7 +692,7 @@ class RangeInput:
             border-radius: 50%;
             border: 2px solid white;
         }
-        
+
         /* Focus styles */
         #{id_}:focus {
             outline: none;
@@ -710,11 +708,11 @@ class RangeInput:
         document.addEventListener('DOMContentLoaded', function() {{
             const slider = document.getElementById('{id_}');
             const output = document.getElementById('{id_}_value');
-            
+
             // Update the output value when the page loads
             if (slider && output) {{
                 output.textContent = slider.value;
-                
+
                 // Update the output value when the slider is moved
                 slider.oninput = function() {{
                     output.textContent = this.value;
@@ -729,7 +727,9 @@ class RangeInput:
         # Add new color customization parameters with defaults
         track_color = kwargs.get("track_color", "#d3d3d3")  # Default light gray track
         thumb_color = kwargs.get("thumb_color", "#0d6efd")  # Default Bootstrap primary blue thumb
-        track_focus_color = kwargs.get("track_focus_color", "#c0c0c0")  # Slightly darker when focused
+        track_focus_color = kwargs.get(
+            "track_focus_color", "#c0c0c0"
+        )  # Slightly darker when focused
         track_height = kwargs.get("track_height", 6)  # Default track height in pixels
         thumb_size = kwargs.get("thumb_size", 18)  # Default thumb size in pixels
         thumb_offset = (thumb_size - track_height) / 2  # Calculate offset to center thumb
@@ -760,13 +760,13 @@ class RangeInput:
         label = kwargs.get("label")
         if not label:
             label = attrs["name"].replace("_", " ").capitalize() if attrs["name"] else ""
-            
+
         # Double all curly braces in the template for proper escaping
         escaped_template = self.template.replace("{", "{{").replace("}", "}}")
         # Restore named placeholders
         for key in attrs:
             escaped_template = escaped_template.replace(f"{{{{{key}}}}}", f"{{{key}}}")
-        
+
         html = escaped_template.format(**attrs)
         return f'<label for="{attrs["id_"]}" style="display: block; margin-bottom: 5px;">{label}</label>{html}'
 
@@ -844,7 +844,7 @@ class SSNInput:
     )
 
     def render(self, **kwargs):
-        id_ = kwargs.get("id_", "")
+        kwargs.get("id_", "")
         label = kwargs.get("label", None)
         if label is None:
             label = kwargs.get("name", "").capitalize() if kwargs.get("name") else ""
@@ -1036,23 +1036,23 @@ def add_required_indicator(input_html, is_required=False):
     """
     Helper function to add a visual required indicator to any form input.
     Adds a red asterisk and ensures validation works consistently.
-    
+
     Args:
         input_html: The HTML string of the input element
         is_required: Boolean indicating if the input is required
-        
+
     Returns:
         Updated HTML with required indicator if needed
     """
     if not is_required:
         return input_html
-        
+
     # Add required indicator (red asterisk) to the label
     # Handle different label positioning scenarios
     if "<label" in input_html and "data-required" not in input_html:
         # Insert required indicator after the label opening tag but before any content
         # Don't modify the label text directly, add an asterisk via CSS with data-required attribute
-        html = input_html.replace("<label", "<label data-required=\"true\"", 1)
+        html = input_html.replace("<label", '<label data-required="true"', 1)
         return html
     else:
         # For inputs without labels, wrap them
@@ -1062,6 +1062,7 @@ def add_required_indicator(input_html, is_required=False):
             <span class="required-indicator" style="color: red; margin-left: 3px;">*</span>
         </div>
         """
+
 
 # ...existing code...
 

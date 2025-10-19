@@ -1,1073 +1,478 @@
-<https://github.com/python/cpython/blob/3.14/Lib/string/templatelib.py>
+# Pydantic Forms
 
-<https://docs.python.org/id/3.14/library/string.templatelib.html>
+[![PyPI version](https://badge.fury.io/py/pydantic-forms.svg)](https://pypi.python.org/pypi/pydantic-forms/)
+[![Downloads](https://static.pepy.tech/badge/pydantic-forms)](https://pepy.tech/project/pydantic-forms)
+[![Downloads](https://static.pepy.tech/badge/pydantic-forms/month)](https://pepy.tech/project/pydantic-forms)
+[![Downloads](https://static.pepy.tech/badge/pydantic-forms/week)](https://pepy.tech/project/pydantic-forms)
 
-Now that Python 3.14 has been released with Template Strings, I want to get back to working on this library. The purpose of the library is to generate HTML forms using template strings.
+**Support Python Versions**
 
-JSON Schema should configure the form to allow validation on the HTML page. When submitting, the validation should also happen server-side via Pydantic. Live server side validation would be good to have so complex validation would happen before submission of the form.
+![Static Badge](https://img.shields.io/badge/Python-3.14-blue)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-forms/refs/heads/main/coverage-badge.svg)](./reports/coverage/index.html)
+[![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-forms/refs/heads/main/tests-badge.svg)](./reports/coverage/index.html)
 
-The general idea is a competitor to WTForms and a python version of the key abilities of React JSON Schema Forms (JSON Schema the driver of creating the form, ability to configure validation, theme -material, bootstrap, shadcn - and layout.  
-[Introduction | react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/docs/)
+**CI/CD Pipeline:**
 
-The form sections should be configurable (default vertical) as sections for horizontal and vertical layouts. Future should allow tab forms (each tab has a section of the form).
+[![Testing - Main](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml/badge.svg?branch=main)](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml)
+[![Testing - Dev](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml/badge.svg?branch=dev)](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml)
 
-The whole form should be delivered from the library (HTML Form, inputs, layouts, css, javascript) should be delivered with the idea that it will be embedded in an existing page/template (jinja, mako, html, etc.).
+**SonarCloud:**
 
-The library should be useable in any python app (Flask, FastAPI, Robyn) and support async and sync use.
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=coverage)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=alert_status)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
 
-Performance matters. It should be fast to render and validate. It should be easy to configure and development with.  
-<br/>Code coverage should target 100% for unit, integration, and UI.
+> **Note**: This project should be considered in beta as it is actively under development and may have breaking changes.
 
-The Input Types should be separated into separate modules: Text Inputs, Numeric Inputs, Selection Inputs, Date Time Inputs, and Specialized Inputs.
+## Overview
 
-**Text Inputs**
+**pydantic-forms** is a modern Python library that generates dynamic HTML forms using Pydantic 2.x+ models with React JSON Schema Forms compatibility. Create beautiful, validated forms with minimal code - just define your Pydantic model and get a complete HTML form with CSS framework integration.
 
-\- \`TextInput\`: Standard text input
+**Key Features:**
+- 🚀 **Zero-Configuration Forms**: Generate complete HTML forms directly from Pydantic models
+- 🎨 **Multi-Framework Support**: Bootstrap, Material Design, Tailwind CSS, and custom frameworks
+- ✅ **Built-in Validation**: Client-side HTML5 + server-side Pydantic validation
+- 🔧 **React JSON Schema Forms Compatible**: Uses familiar `ui_element`, `ui_autofocus`, `ui_options` syntax
+- 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
+- 🌐 **Framework Agnostic**: Works with Flask, FastAPI, Django, or any Python web framework
 
-\- \`PasswordInput\`: Password input with masking
+---
 
-\- \`EmailInput\`: Email validation input
+## Quick Start
 
-\- \`TextArea\`: Multi-line text input
+### Installation
 
-**Numeric Inputs**
-
-\- \`NumberInput\`: Numeric input with step controls
-
-\- \`RangeInput\`: Range slider
-
-\- \`CurrencyInput\`: Currency formatted input
-
-**Selection Inputs**
-
-\- \`SelectInput\`: Dropdown selection
-
-\- \`RadioGroup\`: Radio button group
-
-\- \`CheckboxInput\`: Single checkbox
-
-**Date/Time Inputs**
-
-\- \`DateInput\`: Date picker
-
-\- \`DatetimeInput\`: Date and time picker
-
-**Specialized Inputs**
-
-\- \`FileInput\`: File upload
-
-\- \`ColorInput\`: Color picker
-
-\- \`URLInput\`: URL validation input
-
-\- \`PhoneInput\`: Phone number input
-
-\- \`HiddenInput\`: Hidden field
-
-**Custom Inputs**
-
-\- 'CSRFInput': Cross-Site Request Forgery
-
-\- \`SSNInput\`: Social Security Number input
-
-\- \`CreditCardInput\`: Credit card input
-
-The rules for all standard HTML input types should be in the library, with all attributes available for each input type.
-
-- &lt;input type="button"&gt;
-- &lt;input type="checkbox"&gt;
-- &lt;input type="color"&gt;
-- &lt;input type="date"&gt;
-- &lt;input type="datetime-local"&gt;
-- &lt;input type="email"&gt;
-- &lt;input type="file"&gt;
-- &lt;input type="hidden"&gt;
-- &lt;input type="image"&gt;
-- &lt;input type="month"&gt;
-- &lt;input type="number"&gt;
-- &lt;input type="password"&gt;
-- &lt;input type="radio"&gt;
-- &lt;input type="range"&gt;
-- &lt;input type="reset"&gt;
-- &lt;input type="search"&gt;
-- &lt;input type="submit"&gt;
-- &lt;input type="tel"&gt;
-- &lt;input type="text"&gt; (default value)
-- &lt;input type="time"&gt;
-- &lt;input type="url"&gt;
-- &lt;input type="week"&gt;
-
-Attributes
-
-| **Attribute** | **Value** | **Description** |
-| --- | --- | --- |
-| [accept](https://www.w3schools.com/tags/att_input_accept.asp) | _file_extension_  <br>audio/\*  <br>video/\*  <br>image/\*  <br>_media_type_ | Specifies a filter for what file types the user can pick from the file input dialog box (only for type="file") |
-| [alt](https://www.w3schools.com/tags/att_input_alt.asp) | _text_ | Specifies an alternate text for images (only for type="image") |
-| [autocomplete](https://www.w3schools.com/tags/att_input_autocomplete.asp) | on  <br>off | Specifies whether an &lt;input&gt; element should have autocomplete enabled |
-| [autofocus](https://www.w3schools.com/tags/att_input_autofocus.asp) | autofocus | Specifies that an &lt;input&gt; element should automatically get focus when the page loads |
-| [checked](https://www.w3schools.com/tags/att_input_checked.asp) | checked | Specifies that an &lt;input&gt; element should be pre-selected when the page loads (for type="checkbox" or type="radio") |
-| [dirname](https://www.w3schools.com/tags/att_input_dirname.asp) | _inputname_.dir | Specifies that the text direction will be submitted |
-| [disabled](https://www.w3schools.com/tags/att_input_disabled.asp) | disabled | Specifies that an &lt;input&gt; element should be disabled |
-| [form](https://www.w3schools.com/tags/att_input_form.asp) | _form_id_ | Specifies the form the &lt;input&gt; element belongs to |
-| [formaction](https://www.w3schools.com/tags/att_input_formaction.asp) | _URL_ | Specifies the URL of the file that will process the input control when the form is submitted (for type="submit" and type="image") |
-| [formenctype](https://www.w3schools.com/tags/att_input_formenctype.asp) | application/x-www-form-urlencoded  <br>multipart/form-data  <br>text/plain | Specifies how the form-data should be encoded when submitting it to the server (for type="submit" and type="image") |
-| [formmethod](https://www.w3schools.com/tags/att_input_formmethod.asp) | get  <br>post | Defines the HTTP method for sending data to the action URL (for type="submit" and type="image") |
-| [formnovalidate](https://www.w3schools.com/tags/att_input_formnovalidate.asp) | formnovalidate | Defines that form elements should not be validated when submitted |
-| [formtarget](https://www.w3schools.com/tags/att_input_formtarget.asp) | \_blank  <br>\_self  <br>\_parent  <br>\_top  <br>_framename_ | Specifies where to display the response that is received after submitting the form (for type="submit" and type="image") |
-| [height](https://www.w3schools.com/tags/att_input_height.asp) | _pixels_ | Specifies the height of an &lt;input&gt; element (only for type="image") |
-| [list](https://www.w3schools.com/tags/att_input_list.asp) | _datalist_id_ | Refers to a &lt;datalist&gt; element that contains pre-defined options for an &lt;input&gt; element |
-| [max](https://www.w3schools.com/tags/att_input_max.asp) | _number  <br>date_ | Specifies the maximum value for an &lt;input&gt; element |
-| [maxlength](https://www.w3schools.com/tags/att_input_maxlength.asp) | _number_ | Specifies the maximum number of characters allowed in an &lt;input&gt; element |
-| [min](https://www.w3schools.com/tags/att_input_min.asp) | _number  <br>date_ | Specifies a minimum value for an &lt;input&gt; element |
-| [minlength](https://www.w3schools.com/tags/att_input_minlength.asp) | _number_ | Specifies the minimum number of characters required in an &lt;input&gt; element |
-| [multiple](https://www.w3schools.com/tags/att_input_multiple.asp) | multiple | Specifies that a user can enter more than one value in an &lt;input&gt; element |
-| [name](https://www.w3schools.com/tags/att_input_name.asp) | _text_ | Specifies the name of an &lt;input&gt; element |
-| [pattern](https://www.w3schools.com/tags/att_input_pattern.asp) | _regexp_ | Specifies a regular expression that an &lt;input&gt; element's value is checked against |
-| [placeholder](https://www.w3schools.com/tags/att_input_placeholder.asp) | _text_ | Specifies a short hint that describes the expected value of an &lt;input&gt; element |
-| [popovertarget](https://www.w3schools.com/tags/att_input_popovertarget.asp) | _element_id_ | Specifies which popover element to invoke (only for type="button") |
-| [popovertargetaction](https://www.w3schools.com/tags/att_input_popovertargetaction.asp) | hide  <br>show  <br>toggle | Specifies what happens to the popover element when you click the button (only for type="button") |
-| [readonly](https://www.w3schools.com/tags/att_input_readonly.asp) | readonly | Specifies that an input field is read-only |
-| [required](https://www.w3schools.com/tags/att_input_required.asp) | required | Specifies that an input field must be filled out before submitting the form |
-| [size](https://www.w3schools.com/tags/att_input_size.asp) | _number_ | Specifies the width, in characters, of an &lt;input&gt; element |
-| [src](https://www.w3schools.com/tags/att_input_src.asp) | _URL_ | Specifies the URL of the image to use as a submit button (only for type="image") |
-| [step](https://www.w3schools.com/tags/att_input_step.asp) | _number  <br>_any | Specifies the interval between legal numbers in an input field |
-| [type](https://www.w3schools.com/tags/att_input_type.asp) | button  <br>checkbox  <br>color  <br>date  <br>datetime-local  <br>email  <br>file  <br>hidden  <br>image  <br>month  <br>number  <br>password  <br>radio  <br>range  <br>reset  <br>search  <br>submit  <br>tel  <br>text  <br>time  <br>url  <br>week | Specifies the type &lt;input&gt; element to display |
-| [value](https://www.w3schools.com/tags/att_input_value.asp) | _text_ | Specifies the value of an &lt;input&gt; element |
-| [width](https://www.w3schools.com/tags/att_input_width.asp) | _pixels_ | Specifies the width of an &lt;input&gt; element (only for type="image") |
-
-AI Generated README.md.  
-<br/>**\# Pydantic Forms**
-
-A powerful, flexible Python library for automatically generating beautiful HTML forms from Pydantic models and manual form definitions. Supports multiple UI frameworks including Bootstrap, Material Design, and shadcn/ui with built-in validation, accessibility features, and HTMX integration.
-
-**\## Overview**
-
-Pydantic Forms bridges the gap between your data models and user interfaces by automatically generating forms with minimal code. Whether you're building a simple contact form or a complex multi-step wizard, this library handles the heavy lifting while giving you complete control over styling and behavior.
-
-**\### Key Features**
-
-\- **\*\*🚀 Zero-Configuration Forms\*\***: Generate complete HTML forms directly from Pydantic models
-
-\- **\*\*🎨 Multi-Framework Support\*\***: Bootstrap 5, Material Design, shadcn/ui, and extensible for custom frameworks
-
-\- **\*\*✅ Built-in Validation\*\***: Client and server-side validation with real-time feedback
-
-\- **\*\*♿ Accessibility First\*\***: ARIA labels, keyboard navigation, and screen reader support
-
-\- **\*\*🔧 Highly Customizable\*\***: Override any aspect of form generation and styling
-
-\- **\*\*📱 Responsive Design\*\***: Mobile-friendly forms that work across all devices
-
-\- **\*\*⚡ HTMX Integration\*\***: Modern, dynamic form interactions without JavaScript frameworks
-
-\- **\*\*🎯 Type Safety\*\***: Full type hints and IDE support throughout
-
-**\### Use Cases**
-
-\- **\*\*Web Applications\*\***: Rapid form development for Flask, FastAPI, Django applications
-
-\- **\*\*Admin Interfaces\*\***: Auto-generated CRUD forms from your data models
-
-\- **\*\*API Documentation\*\***: Interactive forms for testing API endpoints
-
-\- **\*\*Prototyping\*\***: Quick form mockups and demos
-
-\- **\*\*Data Collection\*\***: Surveys, feedback forms, registration pages
-
-**\### Quick Start Example**
-
-\`\`\`python
-
-from flask import Flask, make_response
-
-from pydantic import BaseModel, Field
-
-from pydantic_forms import FormRenderer
-
-app = Flask(\__name_\_)
-
-\# Define your data model
-
-class UserForm(BaseModel):
-
-&nbsp;   username: str = Field(..., min_length=3, description="Choose a username")
-
-&nbsp;   email: str = Field(..., description="Your email address")
-
-&nbsp;   age: int = Field(..., ge=13, le=120, description="Your age")
-
-\# Generate the form with one line
-
-renderer = FormRenderer()
-
-@app.route("/form")
-
-def show_form():
-
-&nbsp;   return renderer.render_form_from_pydantic(UserForm, framework="bootstrap")
-
-\`\`\`
-
-That's it! You now have a fully functional, validated, accessible form.
-
-\---
-
-**\## Installation**
-
-\`\`\`bash
-
+```bash
 pip install pydantic-forms
+```
 
-\`\`\`
+### Basic Example
 
-**\### Development Installation**
+```python
+from pydantic_forms.schema_form import FormModel, Field
+from flask import Flask
 
-\`\`\`bash
+app = Flask(__name__)
 
-git clone <https://github.com/devsetgo/pydantic-forms.git>
-
-cd pydantic-forms
-
-pip install -e .
-
-\`\`\`
-
-**\### Requirements**
-
-\- Python 3.8+
-
-\- Pydantic 2.0+
-
-\- Flask (for web framework integration)
-
-\---
-
-**\## Core Components**
-
-**\### FormRenderer**
-
-The main class responsible for rendering forms from Pydantic models or manual definitions.
-
-**\#### Constructor**
-
-\`\`\`python
-
-FormRenderer(framework: str = "bootstrap")
-
-\`\`\`
-
-**\*\*Parameters:\*\***
-
-\- \`framework\` (str): UI framework to use ("bootstrap", "material", "shadcn")
-
-**\#### Methods**
-
-**\##### \`render_form_from_pydantic()\`**
-
-Automatically generates a complete HTML form from a Pydantic model.
-
-\`\`\`python
-
-def render_form_from_pydantic(
-
-&nbsp;   model_cls: Type\[BaseModel\],
-
-&nbsp;   framework: str = "bootstrap",
-
-&nbsp;   title: Optional\[str\] = None,
-
-&nbsp;   submit_url: str = "/submit",
-
-&nbsp;   form_data: Optional\[Dict\[str, Any\]\] = None
-
-) -> str:
-
-\`\`\`
-
-**\*\*Parameters:\*\***
-
-\- \`model_cls\`: The Pydantic model class to generate the form from
-
-\- \`framework\`: UI framework ("bootstrap", "material", "shadcn")
-
-\- \`title\`: Form title (defaults to model class name)
-
-\- \`submit_url\`: URL to submit form data to
-
-\- \`form_data\`: Pre-populate form with this data
-
-**\*\*Returns:\*\*** Complete HTML page with the form
-
-**\*\*Example:\*\***
-
-\`\`\`python
-
-class ContactForm(BaseModel):
-
-&nbsp;   name: str = Field(..., min_length=2)
-
-&nbsp;   email: str = Field(...)
-
-&nbsp;   message: str = Field(..., min_length=10)
-
-renderer = FormRenderer("bootstrap")
-
-html = renderer.render_form_from_pydantic(
-
-&nbsp;   ContactForm,
-
-&nbsp;   title="Contact Us",
-
-&nbsp;   submit_url="/contact"
-
-)
-
-\`\`\`
-
-**\##### \`render_complete_form()\`**
-
-Renders a form from a manual FormDefinition object.
-
-\`\`\`python
-
-def render_complete_form(form_def: FormDefinition) -> str:
-
-\`\`\`
-
-**\*\*Parameters:\*\***
-
-\- \`form_def\`: FormDefinition object containing fields and configuration
-
-**\*\*Returns:\*\*** Complete HTML page with the form
-
-\---
-
-**\### FormDefinition**
-
-Represents a complete form configuration for manual form building.
-
-**\#### Constructor**
-
-\`\`\`python
-
-FormDefinition(
-
-&nbsp;   title: str = "Form",
-
-&nbsp;   fields: Optional\[List\[FormField\]\] = None,
-
-&nbsp;   submit_url: str = "/submit",
-
-&nbsp;   method: str = "POST",
-
-&nbsp;   css_framework: str = "bootstrap"
-
-)
-
-\`\`\`
-
-**\*\*Parameters:\*\***
-
-\- \`title\`: Form title displayed to users
-
-\- \`fields\`: List of FormField objects
-
-\- \`submit_url\`: URL to submit form data to
-
-\- \`method\`: HTTP method ("POST", "GET")
-
-\- \`css_framework\`: UI framework to use
-
-**\*\*Example:\*\***
-
-\`\`\`python
-
-form_def = FormDefinition(
-
-&nbsp;   title="User Registration",
-
-&nbsp;   fields=\[
-
-&nbsp;       FormField("username", "text", required=True),
-
-&nbsp;       FormField("email", "email", required=True),
-
-&nbsp;       FormField("age", "number", min=13, max=120)
-
-&nbsp;   \],
-
-&nbsp;   submit_url="/register"
-
-)
-
-\`\`\`
-
-\---
-
-**\### FormField**
-
-Represents a single form field with all its configuration options.
-
-**\#### Constructor**
-
-\`\`\`python
-
-FormField(
-
-&nbsp;   name: str,
-
-&nbsp;   field_type: str = "text",
-
-&nbsp;   label: Optional\[str\] = None,
-
-&nbsp;   required: bool = False,
-
-&nbsp;   placeholder: Optional\[str\] = None,
-
-&nbsp;   value: Any = None,
-
-&nbsp;   options: Optional\[List\[Dict\[str, Any\]\]\] = None,
-
-&nbsp;   \*\*kwargs
-
-)
-
-\`\`\`
-
-**\*\*Parameters:\*\***
-
-\- \`name\`: Field name (used in form submission)
-
-\- \`field_type\`: Type of input field (see Field Types section)
-
-\- \`label\`: Display label (auto-generated from name if not provided)
-
-\- \`required\`: Whether field is required
-
-\- \`placeholder\`: Placeholder text
-
-\- \`value\`: Default/pre-filled value
-
-\- \`options\`: For select/radio fields, list of options
-
-\- \`\*\*kwargs\`: Additional HTML attributes
-
-**\*\*Field Types:\*\***
-
-\- \`text\`: Standard text input
-
-\- \`password\`: Password input (masked)
-
-\- \`email\`: Email input with validation
-
-\- \`number\`: Numeric input with min/max
-
-\- \`checkbox\`: Checkbox input
-
-\- \`radio\`: Radio button group
-
-\- \`select\`: Dropdown select
-
-\- \`textarea\`: Multi-line text area
-
-\- \`date\`: Date picker
-
-\- \`datetime\`: Date and time picker
-
-\- \`file\`: File upload
-
-\- \`color\`: Color picker
-
-\- \`range\`: Range slider
-
-\- \`url\`: URL input with validation
-
-\- \`phone\`: Phone number input
-
-\- \`ssn\`: Social Security Number input
-
-\- \`currency\`: Currency input
-
-\- \`credit_card\`: Credit card number input
-
-\- \`hidden\`: Hidden field
-
-**\*\*Example:\*\***
-
-\`\`\`python
-
-\# Text field with validation
-
-username_field = FormField(
-
-&nbsp;   name="username",
-
-&nbsp;   field_type="text",
-
-&nbsp;   label="Username",
-
-&nbsp;   required=True,
-
-&nbsp;   placeholder="Enter your username",
-
-&nbsp;   minlength=3,
-
-&nbsp;   maxlength=20
-
-)
-
-\# Select field with options
-
-country_field = FormField(
-
-&nbsp;   name="country",
-
-&nbsp;   field_type="select",
-
-&nbsp;   label="Country",
-
-&nbsp;   required=True,
-
-&nbsp;   options=\[
-
-&nbsp;       {"value": "us", "label": "United States", "selected": True},
-
-&nbsp;       {"value": "ca", "label": "Canada"},
-
-&nbsp;       {"value": "uk", "label": "United Kingdom"}
-
-&nbsp;   \]
-
-)
-
-\# Radio button group
-
-gender_field = FormField(
-
-&nbsp;   name="gender",
-
-&nbsp;   field_type="radio",
-
-&nbsp;   label="Gender",
-
-&nbsp;   options=\[
-
-&nbsp;       {"value": "male", "label": "Male"},
-
-&nbsp;       {"value": "female", "label": "Female"},
-
-&nbsp;       {"value": "other", "label": "Other"}
-
-&nbsp;   \]
-
-)
-
-\`\`\`
-
-\---
-
-**\## UI Elements**
-
-Low-level form input components that can be used directly for maximum customization.
-
-**\### Available Components**
-
-All UI elements inherit from a common base and provide a \`render(\*\*kwargs)\` method:
-
-**\#### Text Inputs**
-
-\- \`TextInput\`: Standard text input
-
-\- \`PasswordInput\`: Password input with masking
-
-\- \`EmailInput\`: Email validation input
-
-\- \`TextArea\`: Multi-line text input
-
-**\#### Numeric Inputs**
-
-\- \`NumberInput\`: Numeric input with step controls
-
-\- \`RangeInput\`: Range slider
-
-\- \`CurrencyInput\`: Currency formatted input
-
-**\#### Selection Inputs**
-
-\- \`SelectInput\`: Dropdown selection
-
-\- \`RadioGroup\`: Radio button group
-
-\- \`CheckboxInput\`: Single checkbox
-
-**\#### Date/Time Inputs**
-
-\- \`DateInput\`: Date picker
-
-\- \`DatetimeInput\`: Date and time picker
-
-**\#### Specialized Inputs**
-
-\- \`FileInput\`: File upload
-
-\- \`ColorInput\`: Color picker
-
-\- \`URLInput\`: URL validation input
-
-\- \`PhoneInput\`: Phone number input
-
-\- \`SSNInput\`: Social Security Number input
-
-\- \`CreditCardInput\`: Credit card input
-
-\- \`HiddenInput\`: Hidden field
-
-**\#### Usage Example**
-
-\`\`\`python
-
-from pydantic_forms.ui_elements import TextInput, EmailInput, SelectInput
-
-\# Manual field rendering
-
-text_field = TextInput().render(
-
-&nbsp;   name="username",
-
-&nbsp;   id_="username",
-
-&nbsp;   class_="form-control",
-
-&nbsp;   required="required",
-
-&nbsp;   placeholder="Enter username"
-
-)
-
-email_field = EmailInput().render(
-
-&nbsp;   name="email",
-
-&nbsp;   id_="email",
-
-&nbsp;   class_="form-control",
-
-&nbsp;   required="required",
-
-&nbsp;   value="<user@example.com>"
-
-)
-
-select_field = SelectInput().render(
-
-&nbsp;   name="country",
-
-&nbsp;   id_="country",
-
-&nbsp;   class_="form-select",
-
-&nbsp;   option_named=\[
-
-&nbsp;       {"value": "us", "label": "United States", "selected": True},
-
-&nbsp;       {"value": "ca", "label": "Canada"}
-
-&nbsp;   \]
-
-)
-
-\`\`\`
-
-\---
-
-**\## Framework Support**
-
-**\### Bootstrap 5**
-
-Full support for Bootstrap 5 components and styling.
-
-**\*\*Features:\*\***
-
-\- Form validation states
-
-\- Input groups and sizing
-
-\- Custom form controls
-
-\- Grid system integration
-
-**\*\*CSS Classes Used:\*\***
-
-\- \`form-control\`: Text inputs, selects, textareas
-
-\- \`form-select\`: Select dropdowns
-
-\- \`form-check-input\`: Checkboxes and radios
-
-\- \`btn btn-primary\`: Submit buttons
-
-**\### Material Design**
-
-Integration with Materialize CSS framework.
-
-**\*\*Features:\*\***
-
-\- Material Design form styling
-
-\- Floating labels
-
-\- Material icons support
-
-\- Ripple effects
-
-**\*\*CSS Classes Used:\*\***
-
-\- \`validate\`: Input validation
-
-\- \`browser-default\`: Select styling
-
-\- \`btn waves-effect\`: Buttons with ripple
-
-**\### shadcn/ui**
-
-Modern design system built on Tailwind CSS.
-
-**\## Advanced Features**
-
-**\### Form Validation**
-
-**\#### Client-Side Validation**
-
-All forms include built-in HTML5 validation with enhanced JavaScript:
-
-\- Real-time validation feedback
-
-\- Custom error messages
-
-\- Accessibility-compliant error handling
-
-\- Prevent submission of invalid forms
-
-**\#### Server-Side Integration**
-
-\`\`\`python
-
-from pydantic_forms.schema_form import FormModel
-
-from pydantic_forms.render_form import SchemaFormValidationError
-
+# Define your form using Pydantic model + UI elements
 class UserForm(FormModel):
+    username: str = Field(
+        ...,
+        min_length=3,
+        description="Choose a username",
+        ui_autofocus=True
+    )
+    email: str = Field(
+        ...,
+        description="Your email address",
+        ui_element="email"
+    )
+    age: int = Field(
+        ...,
+        ge=18,
+        le=120,
+        description="Your age",
+        ui_element="number"
+    )
+    newsletter: bool = Field(
+        False,
+        description="Subscribe to newsletter",
+        ui_element="checkbox"
+    )
 
-&nbsp;   username: str = Field(..., min_length=3)
+@app.route("/")
+def user_form():
+    # Generate complete HTML form with Bootstrap styling
+    form_html = UserForm.render_form(framework="bootstrap", submit_url="/submit")
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>User Form</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container my-5">
+            {form_html}
+        </div>
+    </body>
+    </html>
+    """
 
-&nbsp;   email: str = Field(...)
+if __name__ == "__main__":
+    app.run(debug=True)
+```
 
-\# In your route handler
+That's it! You now have a fully functional, validated, accessible form with Bootstrap styling.
 
-@app.route("/submit", methods=\["POST"\])
+---
 
+## React JSON Schema Forms Compatibility
+
+Pydantic Forms uses the same UI element specifications as React JSON Schema Forms for familiarity:
+
+```python
+from pydantic_forms.schema_form import FormModel, Field
+
+class ContactForm(FormModel):
+    name: str = Field(
+        ...,
+        description="Your name",
+        ui_autofocus=True  # Auto-focus this field
+    )
+
+    email: str = Field(
+        ...,
+        description="Email address",
+        ui_element="email"  # Use email input type
+    )
+
+    phone: str = Field(
+        None,
+        description="Phone number",
+        ui_element="tel"  # Use tel input type
+    )
+
+    website: str = Field(
+        None,
+        description="Your website",
+        ui_element="url"  # Use URL input type
+    )
+
+    birth_date: str = Field(
+        None,
+        description="Birth date",
+        ui_element="date"  # Use date picker
+    )
+
+    message: str = Field(
+        ...,
+        min_length=10,
+        description="Your message",
+        ui_element="textarea",
+        ui_options={"rows": 4}  # Textarea with 4 rows
+    )
+
+    color_preference: str = Field(
+        "#3498db",
+        description="Preferred color",
+        ui_element="color"  # Color picker
+    )
+
+# Generate form with Material Design
+form_html = ContactForm.render_form(framework="material", submit_url="/contact")
+```
+
+**Supported UI Elements:**
+- `text` (default), `email`, `password`, `tel`, `url`
+- `number`, `date`, `time`, `datetime-local`, `color`
+- `textarea`, `checkbox`, `radio`, `select`
+- `file`, `hidden`, `range`
+
+**UI Options:**
+- `ui_autofocus`: Auto-focus the field
+- `ui_options`: Additional options (e.g., `{"rows": 4}` for textarea)
+- Standard Pydantic Field options: `description`, `min_length`, `max_length`, `ge`, `le`, etc.
+
+---
+
+## Framework Support
+
+### Bootstrap 5 (Recommended)
+```python
+UserForm.render_form(framework="bootstrap", submit_url="/submit")
+```
+- Complete Bootstrap integration
+- Form validation states and styling
+- Responsive grid system
+- Custom form controls
+
+### Material Design
+```python
+UserForm.render_form(framework="material", submit_url="/submit")
+```
+- Materialize CSS framework
+- Floating labels and animations
+- Material icons integration
+
+### Plain HTML
+```python
+UserForm.render_form(framework="none", submit_url="/submit")
+```
+- Clean HTML5 forms
+- No framework dependencies
+- Easy to style with custom CSS
+
+---
+
+## Advanced Examples
+
+### File Upload Form
+```python
+class FileUploadForm(FormModel):
+    title: str = Field(..., description="Upload title")
+    files: str = Field(
+        ...,
+        description="Select files",
+        ui_element="file",
+        ui_options={"accept": ".pdf,.docx", "multiple": True}
+    )
+    description: str = Field(
+        ...,
+        description="File description",
+        ui_element="textarea",
+        ui_options={"rows": 3}
+    )
+```
+
+### Event Creation Form
+```python
+class EventForm(FormModel):
+    event_name: str = Field(..., description="Event name", ui_autofocus=True)
+    event_datetime: str = Field(
+        ...,
+        description="Event date and time",
+        ui_element="datetime-local"
+    )
+    max_attendees: int = Field(
+        ...,
+        ge=1,
+        le=1000,
+        description="Maximum attendees",
+        ui_element="number"
+    )
+    is_public: bool = Field(
+        True,
+        description="Make event public",
+        ui_element="checkbox"
+    )
+    theme_color: str = Field(
+        "#3498db",
+        description="Event color",
+        ui_element="color"
+    )
+```
+
+### Form Validation
+```python
+from pydantic import ValidationError
+
+@app.route("/submit", methods=["POST"])
 def handle_submit():
+    try:
+        # Validate form data using your Pydantic model
+        user_data = UserForm(**request.form)
 
-&nbsp;   try:
+        # Process valid data
+        return f"Welcome {user_data.username}!"
 
-&nbsp;       form_data = UserForm(\*\*request.form)
+    except ValidationError as e:
+        # Handle validation errors
+        errors = e.errors()
+        return f"Validation failed: {errors}", 400
+```
 
-&nbsp;       # Process valid data
+---
 
-&nbsp;       return "Success!"
+## Flask Integration
 
-&nbsp;   except ValidationError as e:
+Complete Flask application example:
 
-&nbsp;       # Handle validation errors
+```python
+from flask import Flask, request, render_template_string
+from pydantic import ValidationError
+from pydantic_forms.schema_form import FormModel, Field
 
-&nbsp;       errors = {error\['loc'\]\[0\]: error\['msg'\] for error in e.errors()}
+app = Flask(__name__)
 
-&nbsp;       return render_form_with_errors(errors)
+class UserRegistrationForm(FormModel):
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=20,
+        description="Choose a unique username",
+        ui_autofocus=True
+    )
+    email: str = Field(
+        ...,
+        description="Your email address",
+        ui_element="email"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        description="Choose a secure password",
+        ui_element="password"
+    )
+    age: int = Field(
+        ...,
+        ge=13,
+        le=120,
+        description="Your age",
+        ui_element="number"
+    )
+    newsletter: bool = Field(
+        False,
+        description="Subscribe to our newsletter",
+        ui_element="checkbox"
+    )
 
-\`\`\`
+@app.route("/", methods=["GET", "POST"])
+def registration():
+    if request.method == "POST":
+        try:
+            # Validate form data
+            user = UserRegistrationForm(**request.form)
+            return f"Registration successful for {user.username}!"
+        except ValidationError as e:
+            errors = e.errors()
+            # Re-render form with errors
+            form_html = UserRegistrationForm.render_form(
+                framework="bootstrap",
+                submit_url="/",
+                errors=errors
+            )
+            return render_template_string(BASE_TEMPLATE, form_html=form_html)
 
-**\### HTMX Integration**
+    # Render empty form
+    form_html = UserRegistrationForm.render_form(framework="bootstrap", submit_url="/")
+    return render_template_string(BASE_TEMPLATE, form_html=form_html)
 
-All forms include HTMX for modern, dynamic interactions:
+BASE_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h1>User Registration</h1>
+        {{ form_html | safe }}
+    </div>
+</body>
+</html>
+"""
 
-\`\`\`html
+if __name__ == "__main__":
+    app.run(debug=True)
+```
 
-&lt;form hx-post="/submit" hx-target="#result" hx-swap="innerHTML"&gt;
+---
 
-&nbsp;   &lt;!-- Form fields --&gt;
+## Examples in This Repository
 
-&lt;/form&gt;
+The repository includes several complete examples:
 
-&lt;div id="result"&gt;&lt;/div&gt;
+1. **`example_usage.py`** - React JSON Schema Forms compatible examples
+2. **`pydantic_example.py`** - Flask integration with multiple form types
+3. **`simple_example.py`** - Basic usage without frameworks
+4. **`example.py`** - Low-level UI components demonstration
 
-\`\`\`
+Run any example:
+```bash
+python example_usage.py     # http://localhost:5000
+python pydantic_example.py  # http://localhost:5001
+python example.py           # http://localhost:5002
+```
 
-**\### Accessibility Features**
+---
 
-\- **\*\*ARIA Labels\*\***: Automatic aria-label and aria-describedby attributes
+## Supported Input Types
 
-\- **\*\*Keyboard Navigation\*\***: Full keyboard accessibility
+**Text Inputs:**
+- `text` (default), `email`, `password`, `search`
+- `tel`, `url`
+- `textarea`
 
-\- **\*\*Screen Reader Support\*\***: Semantic HTML and proper labeling
+**Numeric Inputs:**
+- `number`, `range`
 
-\- **\*\*Focus Management\*\***: Logical tab order and focus indicators
+**Date/Time Inputs:**
+- `date`, `time`, `datetime-local`
+- `week`, `month`
 
-\- **\*\*Error Announcements\*\***: Screen reader compatible error messages
+**Selection Inputs:**
+- `checkbox`, `radio`, `select`
 
-**\### File Upload Handling**
+**Specialized Inputs:**
+- `file`, `color`, `hidden`
 
-\`\`\`python
+**Input Options:**
+All HTML5 input attributes are supported through `ui_options` or Field parameters.
 
-file_field = FormField(
+---
 
-&nbsp;   name="resume",
+## API Reference
 
-&nbsp;   field_type="file",
+### FormModel
 
-&nbsp;   label="Resume",
+Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
-&nbsp;   accept=".pdf,.docx",
+```python
+from pydantic_forms.schema_form import FormModel, Field
 
-&nbsp;   multiple=True,
+class MyForm(FormModel):
+    field_name: str = Field(..., ui_element="email")
 
-&nbsp;   required=True
+    @classmethod
+    def render_form(cls, framework="bootstrap", submit_url="/submit", **kwargs):
+        """Render complete HTML form"""
+```
 
+### Field Function
+
+Enhanced Field function with UI element support:
+
+```python
+Field(
+    default=...,           # Pydantic default value
+    description="Label",   # Field label
+    ui_element="email",    # Input type
+    ui_autofocus=True,     # Auto-focus field
+    ui_options={...},      # Additional options
+    # All standard Pydantic Field options...
 )
+```
 
-\`\`\`
+### Framework Options
 
-The library handles file metadata display and validation automatically.
+- `"bootstrap"` - Bootstrap 5 styling (recommended)
+- `"material"` - Material Design (Materialize CSS)
+- `"none"` - Plain HTML5 forms
 
-\---
+---
 
-**\## Examples**
+## Contributing
 
-**\### Complete Flask Application**
+Contributions are welcome! Please check out the [Contributing Guide](contribute.md) for details.
 
-\`\`\`python
+**Development Setup:**
+```bash
+git clone https://github.com/devsetgo/pydantic-forms.git
+cd pydantic-forms
+pip install -e .
+```
 
-from flask import Flask, make_response, request
+**Run Tests:**
+```bash
+python -m pytest tests/
+```
 
-from pydantic import BaseModel, Field, ValidationError
+---
 
-from pydantic_forms import FormRenderer
+## Links
 
-app = Flask(\__name_\_)
+- **Documentation**: [pydantic-forms Docs](https://devsetgo.github.io/pydantic-forms/)
+- **Repository**: [GitHub](https://github.com/devsetgo/pydantic-forms)
+- **PyPI**: [pydantic-forms](https://pypi.org/project/pydantic-forms/)
+- **Issues**: [Bug Reports & Feature Requests](https://github.com/devsetgo/pydantic-forms/issues)
 
-renderer = FormRenderer()
+---
 
-class ContactForm(BaseModel):
+## License
 
-&nbsp;   name: str = Field(..., min_length=2, description="Your full name")
-
-&nbsp;   email: str = Field(..., description="Your email address")
-
-&nbsp;   subject: str = Field(..., min_length=5, description="Message subject")
-
-&nbsp;   message: str = Field(..., min_length=10, description="Your message")
-
-&nbsp;   urgent: bool = Field(False, description="Mark as urgent")
-
-@app.route("/contact", methods=\["GET"\])
-
-def contact_form():
-
-&nbsp;   return renderer.render_form_from_pydantic(
-
-&nbsp;       ContactForm,
-
-&nbsp;       framework="bootstrap",
-
-&nbsp;       title="Contact Us",
-
-&nbsp;       submit_url="/contact"
-
-&nbsp;   )
-
-@app.route("/contact", methods=\["POST"\])
-
-def handle_contact():
-
-&nbsp;   try:
-
-&nbsp;       form_data = ContactForm(\*\*request.form)
-
-&nbsp;       # Process the valid form data
-
-&nbsp;       # send_email(form_data)
-
-&nbsp;       return "Thank you for your message!"
-
-&nbsp;   except ValidationError as e:
-
-&nbsp;       # Re-render form with errors
-
-&nbsp;       errors = {error\['loc'\]\[0\]: error\['msg'\] for error in e.errors()}
-
-&nbsp;       return renderer.render_form_from_pydantic(
-
-&nbsp;           ContactForm,
-
-&nbsp;           framework="bootstrap",
-
-&nbsp;           title="Contact Us",
-
-&nbsp;           form_data=request.form,
-
-&nbsp;           errors=errors
-
-&nbsp;       )
-
-if \__name__ == "\__main_\_":
-
-&nbsp;   app.run(debug=True)
-
-\`\`\`
-
-**\### Manual Form Definition**
-
-\`\`\`python
-
-from pydantic_forms import FormDefinition, FormField, FormRenderer
-
-\# Create form manually
-
-registration_form = FormDefinition(
-
-&nbsp;   title="User Registration",
-
-&nbsp;   fields=\[
-
-&nbsp;       FormField("username", "text", "Username", required=True,
-
-&nbsp;                placeholder="Choose a username", minlength=3),
-
-&nbsp;       FormField("email", "email", "Email Address", required=True,
-
-&nbsp;                placeholder="<your@email.com>"),
-
-&nbsp;       FormField("password", "password", "Password", required=True,
-
-&nbsp;                minlength=8),
-
-&nbsp;       FormField("age", "number", "Age", required=True,
-
-&nbsp;                min=13, max=120, step=1),
-
-&nbsp;       FormField("country", "select", "Country", required=True,
-
-&nbsp;                options=\[
-
-&nbsp;                    {"value": "us", "label": "United States"},
-
-&nbsp;                    {"value": "ca", "label": "Canada"},
-
-&nbsp;                    {"value": "uk", "label": "United Kingdom"}
-
-&nbsp;                \]),
-
-&nbsp;       FormField("newsletter", "checkbox", "Subscribe to Newsletter",
-
-&nbsp;                value=True),
-
-&nbsp;       FormField("gender", "radio", "Gender", options=\[
-
-&nbsp;           {"value": "male", "label": "Male"},
-
-&nbsp;           {"value": "female", "label": "Female"},
-
-&nbsp;           {"value": "other", "label": "Prefer not to say"}
-
-&nbsp;       \])
-
-&nbsp;   \],
-
-&nbsp;   submit_url="/register",
-
-&nbsp;   css_framework="bootstrap"
-
-)
-
-renderer = FormRenderer("bootstrap")
-
-html = renderer.render_complete_form(registration_form)
-
-\`\`\`
-
-\---
-
-**\## API Reference**
-
-**\### Utility Functions**
-
-**\#### \`create_demo_form()\`**
-
-Creates a demonstration form with various field types for testing and examples.
-
-\`\`\`python
-
-def create_demo_form() -> FormDefinition:
-
-\`\`\`
-
-**\*\*Returns:\*\*** FormDefinition with sample fields
-
-**\*\*Usage:\*\***
-
-\`\`\`python
-
-from pydantic_forms import create_demo_form, FormRenderer
-
-demo_form = create_demo_form()
-
-renderer = FormRenderer("material")
-
-html = renderer.render_complete_form(demo_form)
-
-\`\`\`
-
-**\### Schema Integration**
-
-**\#### \`FormModel\`**
-
-Base class for Pydantic models with form-specific enhancements.
-
-\`\`\`python
-
-class FormModel(BaseModel):
-
-&nbsp;   @classmethod
-
-&nbsp;   def get_json_schema(cls) -> Dict\[str, Any\]:
-
-&nbsp;       """Get simplified JSON schema for form rendering."""
-
-&nbsp;
-
-&nbsp;   @classmethod  
-
-&nbsp;   def get_example_form_data(cls) -> dict:
-
-&nbsp;       """Generate example form data for testing."""
-
-\`\`\`
-
-**\#### \`render_form_html()\`**
-
-Low-level function for rendering forms from FormModel classes.
-
-\`\`\`python
-
-def render_form_html(
-
-&nbsp;   form_model_cls: Type\[FormModel\],
-
-&nbsp;   form_data: Optional\[Dict\[str, Any\]\] = None,
-
-&nbsp;   errors: Optional\[Dict\[str, str\]\] = None,
-
-&nbsp;   htmx_post_url: str = "/submit",
-
-) -> str:
-
-\`\`\`
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

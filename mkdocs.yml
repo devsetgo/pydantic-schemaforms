@@ -1,0 +1,113 @@
+site_name: 'BumpCalver Library'
+# Project information
+site_description: 'Simple Calendar Versioning Library'
+site_author: 'Mike Ryan'
+repo_name: 'devsetgo/bumpcalver'
+repo_url: 'https://github.com/devsetgo/bumpcalver'
+
+# Copyright
+copyright: 'Copyright &copy; 2024 - 2025 Mike Ryan'
+
+nav:
+    - Introduction: 'index.md'
+    - Tutorial: 'tutorial.md'
+    # - QuickStart: 'quickstart.md'
+    # - Modules: 'models.md'
+    # - Examples:
+    #   - Configuration: 'examples/configuration.md'
+    #   - Filelayout: 'examples/filelayout.md'
+    # - Documentation:
+    #   - Versioning: 'versioning.md'
+    #   - Quick Reference: 'mike-quickref.md'
+    # - About:
+    #   - About: 'about.md'
+    #   - Contributing: 'contribute.md'
+    # - Release Notes: release-notes.md
+# Theme
+theme:
+  features:
+    - navigation.tabs
+    - navigation.instant
+    - navigation.tabs.sticky
+    - toc.integrate
+    - toc.follow
+    - navigation.top
+  name: 'material'
+  palette:
+    # Toggle dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    # Toggle light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  language: en
+plugins:
+  - search:
+      separator: '[\s\-\.]+'
+      lang:
+        - en
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            heading_level: 2
+            docstring_style: google
+            show_source: true
+            show_root_heading: True
+            show_symbol_type_heading: True
+            show_docstring_examples: True
+            show_submodules: True
+  - mike:
+      # Version management configuration
+      alias_type: symlink
+      redirect_template: null
+      deploy_prefix: ''
+      canonical_version: null
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+  # this has to be last
+  - print-site:
+      add_to_navigation: true
+      print_page_title: 'Print Site'
+      add_print_site_banner: false
+      # Table of contents
+      add_table_of_contents: true
+      toc_title: 'Table of Contents'
+      toc_depth: 6
+      # Content-related
+      add_full_urls: false
+      enumerate_headings: true
+      enumerate_figures: true
+      add_cover_page: true
+      # cover_page_template: ""
+      # path_to_pdf: ""
+      include_css: true
+      enabled: true
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - footnotes
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/devsetgo
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/_devsetgo

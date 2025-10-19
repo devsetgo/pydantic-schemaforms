@@ -17,41 +17,66 @@ import os
 
 # Core form building and rendering
 from .integration import (
-    FormBuilder, AutoFormBuilder, FormIntegration,
-    create_login_form, create_registration_form, create_contact_form,
-    create_form_from_model, render_form_page
+    FormBuilder,
+    AutoFormBuilder,
+    FormIntegration,
+    create_login_form,
+    create_registration_form,
+    create_contact_form,
+    create_form_from_model,
+    render_form_page,
 )
 
+# FormModel abstraction for Pydantic models with UI hints
+from .schema_form import FormModel, Field
+from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError
+from .render_form import render_form_html
+
 # Modern renderer with Python 3.14 template strings
-from .modern_renderer import (
-    ModernFormRenderer, FormDefinition, FormField, FormSection
-)
+from .modern_renderer import ModernFormRenderer, FormDefinition, FormSection
 
 # Comprehensive input types
 from .inputs import *
 
 # Layout system
 from .layouts import (
-    Layout, LayoutFactory, HorizontalLayout, VerticalLayout, GridLayout,
-    ResponsiveGridLayout, TabLayout, AccordionLayout, ModalLayout, CardLayout
+    Layout,
+    LayoutFactory,
+    HorizontalLayout,
+    VerticalLayout,
+    GridLayout,
+    ResponsiveGridLayout,
+    TabLayout,
+    AccordionLayout,
+    ModalLayout,
+    CardLayout,
 )
 
 # Validation system
 from .validation import (
-    ValidationRule, RequiredRule, MinLengthRule, MaxLengthRule,
-    RegexRule, EmailRule, PhoneRule, NumericRangeRule, DateRangeRule,
-    CustomRule, FieldValidator, FormValidator, CrossFieldRules,
-    create_validator
+    ValidationRule,
+    RequiredRule,
+    MinLengthRule,
+    MaxLengthRule,
+    RegexRule,
+    EmailRule,
+    PhoneRule,
+    NumericRangeRule,
+    DateRangeRule,
+    CustomRule,
+    FieldValidator,
+    FormValidator,
+    CrossFieldRules,
+    create_validator,
 )
 
-# Legacy compatibility (deprecated)
-try:
-    from .form_layout import FormLayout
-    from .render_form import FormRenderer
-    from .schema_form import SchemaForm
-except ImportError:
-    # Legacy modules may not exist in new structure
-    pass
+# Legacy compatibility (deprecated) - archived modules
+# The following modules have been archived:
+# - form_layout.py -> use layouts.py instead
+# - form_model.py -> use schema_form.py instead
+# - form_renderer.py -> use enhanced_renderer.py or modern_renderer.py instead
+# - ui_elements.py -> use inputs/ directory structure instead
+# - template_compat.py -> empty/unused
 
 __version__ = "2.0.0"
 __author__ = "Pydantic Forms Team"
@@ -72,27 +97,43 @@ logger.propagate = False
 # Main exports for common usage
 __all__ = [
     # Primary form building interface
-    "FormBuilder", "AutoFormBuilder", "create_form_from_model",
-    
+    "FormBuilder",
+    "AutoFormBuilder",
+    "create_form_from_model",
+    # FormModel abstraction
+    "FormModel",
+    "Field",
+    "EnhancedFormRenderer",
+    "SchemaFormValidationError",
+    "render_form_html",
     # Pre-built form templates
-    "create_login_form", "create_registration_form", "create_contact_form",
-    
+    "create_login_form",
+    "create_registration_form",
+    "create_contact_form",
     # Rendering utilities
-    "render_form_page", "ModernFormRenderer",
-    
+    "render_form_page",
+    "ModernFormRenderer",
     # Layout components
-    "Layout", "HorizontalLayout", "VerticalLayout", "GridLayout",
-    "TabLayout", "AccordionLayout", "ModalLayout",
-    
+    "Layout",
+    "HorizontalLayout",
+    "VerticalLayout",
+    "GridLayout",
+    "TabLayout",
+    "AccordionLayout",
+    "ModalLayout",
     # Validation system
-    "create_validator", "FormValidator", "RequiredRule", "EmailRule",
-    
+    "create_validator",
+    "FormValidator",
+    "RequiredRule",
+    "EmailRule",
     # Input types (comprehensive list)
-    "TEXT_INPUTS", "NUMERIC_INPUTS", "SELECTION_INPUTS", 
-    "DATETIME_INPUTS", "SPECIALIZED_INPUTS",
-    
+    "TEXT_INPUTS",
+    "NUMERIC_INPUTS",
+    "SELECTION_INPUTS",
+    "DATETIME_INPUTS",
+    "SPECIALIZED_INPUTS",
     # Framework integration
-    "FormIntegration"
+    "FormIntegration",
 ]
 
 # Quick start documentation
@@ -158,7 +199,7 @@ tabs_html = Layout.tabs([
 from pydantic_forms import FormIntegration
 result = FormIntegration.flask_integration(form)
 
-# FastAPI  
+# FastAPI
 result = await FormIntegration.fastapi_integration(form, data)
 ```
 """

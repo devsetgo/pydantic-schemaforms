@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "PySchemaForms"
 version = "25.Q4.1.beta"
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 description = ""
 keywords = []
 readme = "README.md"
@@ -35,7 +35,7 @@ Repository = "https://github.com/devsetgo/PySchemaForms"
 line-length = 100
 indent-width = 4
 unsafe-fixes = true
-target-version = "py312"
+target-version = "py314"
 src = [ "PySchemaForms", "test",]
 exclude = [ "unreleased/*", "scripts/*", "coverage.xml", "coverage-badge.svg", "PySchemaForms/static/node_modules",]
 

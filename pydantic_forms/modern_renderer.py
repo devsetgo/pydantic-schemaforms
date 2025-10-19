@@ -3,8 +3,7 @@ Modern Form Renderer using Python 3.14 template strings and modular input system
 Provides high-performance form generation with multiple framework support.
 """
 
-from typing import Any, Dict, List, Optional, Type, Union, Callable
-from pydantic import BaseModel, ValidationError
+from typing import Any, Dict, List, Optional, Callable
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
@@ -14,14 +13,14 @@ from .inputs import (
     HiddenInput, RadioGroup, TextArea, SearchInput, TelInput, URLInput,
     MonthInput, WeekInput, TimeInput, SubmitInput, ResetInput, ButtonInput,
     CSRFInput, HoneypotInput, ToggleSwitch, MultiSelectInput,
-    build_label, build_error_message, build_help_text
+    build_label
 )
 from html import escape
 
 
 class FormField:
     """Enhanced form field configuration with validation support."""
-    
+
     def __init__(
         self,
         name: str,
@@ -46,29 +45,29 @@ class FormField:
         self.validators = validators or []
         self.extra_attrs = kwargs
         self.errors: List[str] = []
-    
+
     def validate(self, value: Any) -> bool:
         """Run field-level validation."""
         self.errors = []
-        
+
         # Required field validation
         if self.required and (value is None or value == ""):
             self.errors.append(f"{self.label} is required")
             return False
-        
+
         # Run custom validators
         for validator in self.validators:
             try:
                 validator(value)
             except ValueError as e:
                 self.errors.append(str(e))
-        
+
         return len(self.errors) == 0
 
 
 class FormSection:
     """Form section for organizing fields into logical groups."""
-    
+
     def __init__(
         self,
         title: str,
@@ -88,7 +87,7 @@ class FormSection:
 
 class FormDefinition:
     """Enhanced form definition with sections and advanced configuration."""
-    
+
     def __init__(
         self,
         title: str = "Form",
@@ -112,7 +111,7 @@ class FormDefinition:
         self.csrf_protection = csrf_protection
         self.honeypot_protection = honeypot_protection
         self.extra_attrs = kwargs
-        
+
         # If fields are provided without sections, create a default section
         if self.fields and not self.sections:
             self.sections = [FormSection("Main", self.fields)]
@@ -122,7 +121,7 @@ class ModernFormRenderer:
     """
     Modern form renderer with Python 3.14 template strings and async support.
     """
-    
+
     # Framework configurations with enhanced theming
     FRAMEWORKS = {
         "bootstrap": {
@@ -174,7 +173,7 @@ class ModernFormRenderer:
             "help_class": "text-gray-500 text-sm mt-1"
         }
     }
-    
+
     # Input type mapping to renderer classes
     INPUT_RENDERERS = {
         "text": TextInput,
@@ -205,68 +204,68 @@ class ModernFormRenderer:
         "csrf": CSRFInput,
         "honeypot": HoneypotInput
     }
-    
+
     def __init__(self, framework: str = "bootstrap", enable_async: bool = False):
         self.framework = framework
         self.config = self.FRAMEWORKS.get(framework, self.FRAMEWORKS["bootstrap"])
         self.enable_async = enable_async
         self.executor = ThreadPoolExecutor(max_workers=4) if enable_async else None
-    
+
     async def render_form_async(self, form_def: FormDefinition, **kwargs) -> str:
         """Async form rendering for high-performance applications."""
         if not self.enable_async:
             return self.render_form(form_def, **kwargs)
-        
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
-            self.executor, 
-            self.render_form, 
-            form_def, 
+            self.executor,
+            self.render_form,
+            form_def,
             **kwargs
         )
-    
+
     def render_form(self, form_def: FormDefinition, **kwargs) -> str:
         """Render complete HTML form from FormDefinition."""
-        
+
         # Update framework config if different from instance
         if form_def.css_framework != self.framework:
             config = self.FRAMEWORKS.get(form_def.css_framework, self.config)
         else:
             config = self.config
-        
+
         # Render form sections
         sections_html = self._render_sections(form_def.sections, config)
-        
+
         # Generate CSRF field if enabled
         csrf_field = ""
         if form_def.csrf_protection:
             csrf_token = kwargs.get("csrf_token", "dummy_token")
             csrf_input = CSRFInput()
             csrf_field = csrf_input.render(token=csrf_token)
-        
+
         # Generate honeypot field if enabled
         honeypot_field = ""
         if form_def.honeypot_protection:
             honeypot_input = HoneypotInput()
             honeypot_field = honeypot_input.render()
-        
+
         # Generate action buttons
         submit_button = self._render_submit_button(config, kwargs.get("submit_text", "Submit"))
         reset_button = self._render_reset_button(config, kwargs.get("reset_text", "Reset"))
-        
+
         # Build CSS and JS links
         css_links = self._build_css_links(config)
         js_links = self._build_js_links(config)
-        
+
         # Generate validation script
         validation_script = self._generate_validation_script(form_def, config)
-        
+
         # Build form attributes
         form_attributes = self._build_form_attributes(form_def, **kwargs)
-        
+
         # Custom CSS for framework-specific styling
         custom_css = self._generate_custom_css(config)
-        
+
         # Create the complete HTML using Python 3.14 template strings
         title = escape(form_def.title)
         container_class = config["container_class"]
@@ -275,7 +274,7 @@ class ModernFormRenderer:
         form_class = config["form_class"]
         method = form_def.method
         submit_url = form_def.submit_url
-        
+
         # Build the complete form template
         template = t'''<!DOCTYPE html>
 <html lang="en">
@@ -291,7 +290,7 @@ class ModernFormRenderer:
         <div class="{row_class}">
             <div class="{col_class}">
                 <h1 class="form-title">{title}</h1>
-                <form id="main-form" method="{method}" action="{submit_url}" 
+                <form id="main-form" method="{method}" action="{submit_url}"
                       class="{form_class}" {form_attributes}>
                     {csrf_field}
                     {honeypot_field}
@@ -309,29 +308,29 @@ class ModernFormRenderer:
     {validation_script}
 </body>
 </html>'''
-        
+
         # Import render_template function
         from .inputs.base import render_template
         return render_template(template)
-    
+
     def _render_sections(self, sections: List[FormSection], config: Dict[str, str]) -> str:
         """Render form sections with different layouts."""
         sections_html = []
-        
+
         for section in sections:
             section_html = self._render_section(section, config)
             sections_html.append(section_html)
-        
+
         return "\n".join(sections_html)
-    
+
     def _render_section(self, section: FormSection, config: Dict[str, str]) -> str:
         """Render a single form section."""
         fields_html = []
-        
+
         for field in section.fields:
             field_html = self._render_field(field, config)
             fields_html.append(field_html)
-        
+
         # Apply layout
         if section.layout == "horizontal":
             field_divs = [f'<div class="col">{field}</div>' for field in fields_html]
@@ -342,14 +341,14 @@ class ModernFormRenderer:
             fields_container = f'<div class="row row-cols-{grid_cols}">{" ".join(field_divs)}</div>'
         else:  # vertical (default)
             fields_container = "\n".join(fields_html)
-        
+
         # Wrap in section container
         section_class = "form-section"
         if section.collapsible:
             section_class += " collapsible"
             if section.collapsed:
                 section_class += " collapsed"
-        
+
         section_html = f'''
         <fieldset class="{section_class}">
             <legend class="section-title">{escape(section.title)}</legend>
@@ -358,16 +357,16 @@ class ModernFormRenderer:
             </div>
         </fieldset>
         '''
-        
+
         return section_html
-    
+
     def _render_field(self, field: FormField, config: Dict[str, str]) -> str:
         """Render a single form field with proper wrapper and styling."""
-        
+
         # Get the appropriate input renderer
         renderer_class = self.INPUT_RENDERERS.get(field.field_type, TextInput)
         renderer = renderer_class()
-        
+
         # Build field attributes
         field_attrs = {
             "name": field.name,
@@ -375,7 +374,7 @@ class ModernFormRenderer:
             "class": self._get_field_class(field.field_type, config),
             **field.extra_attrs
         }
-        
+
         # Add common attributes
         if field.required:
             field_attrs["required"] = True
@@ -383,7 +382,7 @@ class ModernFormRenderer:
             field_attrs["placeholder"] = field.placeholder
         if field.value is not None:
             field_attrs["value"] = field.value
-        
+
         # Handle special field types
         if field.field_type in ["select", "multiselect"] and field.options:
             field_attrs["options"] = field.options
@@ -391,7 +390,7 @@ class ModernFormRenderer:
             field_attrs["options"] = field.options
             field_attrs["group_name"] = field.name
             field_attrs["legend"] = field.label
-        
+
         # Render the input
         if hasattr(renderer, 'render_with_label'):
             # Use enhanced rendering with label, help text, and errors
@@ -404,7 +403,7 @@ class ModernFormRenderer:
         else:
             # Basic rendering
             input_html = renderer.render(**field_attrs)
-            
+
             # Add label, help text, and errors manually
             parts = []
             if field.field_type not in ["hidden", "csrf", "honeypot"]:
@@ -414,16 +413,16 @@ class ModernFormRenderer:
                 parts.append(f'<div class="{config["help_class"]}">{escape(field.help_text)}</div>')
             if field.errors:
                 parts.append(f'<div class="{config["error_class"]}">{escape(field.errors[0])}</div>')
-            
+
             input_html = "\n".join(parts)
-        
+
         # Wrap in field container
         wrapper_class = config.get("field_wrapper", "mb-3")
         if field.errors:
             wrapper_class += " has-error"
-        
+
         return f'<div class="{wrapper_class}">{input_html}</div>'
-    
+
     def _get_field_class(self, field_type: str, config: Dict[str, str]) -> str:
         """Get CSS class for field type based on framework."""
         if field_type in ["select", "multiselect"]:
@@ -434,7 +433,7 @@ class ModernFormRenderer:
             return config["radio_class"]
         else:
             return config["input_class"]
-    
+
     def _render_submit_button(self, config: Dict[str, str], text: str) -> str:
         """Render submit button."""
         submit_input = SubmitInput()
@@ -442,7 +441,7 @@ class ModernFormRenderer:
             value=text,
             class_=config["button_class"]
         )
-    
+
     def _render_reset_button(self, config: Dict[str, str], text: str) -> str:
         """Render reset button."""
         reset_input = ResetInput()
@@ -450,7 +449,7 @@ class ModernFormRenderer:
             value=text,
             class_=f"{config['button_class']} btn-secondary"
         )
-    
+
     def _build_css_links(self, config: Dict[str, str]) -> str:
         """Build CSS links for the framework."""
         links = []
@@ -458,30 +457,30 @@ class ModernFormRenderer:
             links.append(f'<link href="{config["css_url"]}" rel="stylesheet">')
         if "css_url2" in config:
             links.append(f'<link href="{config["css_url2"]}" rel="stylesheet">')
-        
+
         # Add HTMX for dynamic interactions
         links.append('<script src="https://unpkg.com/htmx.org@1.9.6"></script>')
-        
+
         return "\n".join(links)
-    
+
     def _build_js_links(self, config: Dict[str, str]) -> str:
         """Build JavaScript links for the framework."""
         links = []
         if "js_url" in config:
             links.append(f'<script src="{config["js_url"]}"></script>')
-        
+
         return "\n".join(links)
-    
+
     def _generate_validation_script(self, form_def: FormDefinition, config: Dict[str, str]) -> str:
         """Generate client-side validation JavaScript."""
         if not form_def.live_validation:
             return ""
-        
+
         return '''
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('main-form');
-            
+
             // Enable Bootstrap validation styling
             form.addEventListener('submit', function(event) {
                 if (!form.checkValidity()) {
@@ -490,7 +489,7 @@ class ModernFormRenderer:
                 }
                 form.classList.add('was-validated');
             });
-            
+
             // Live validation
             const inputs = form.querySelectorAll('input, select, textarea');
             inputs.forEach(function(input) {
@@ -501,14 +500,14 @@ class ModernFormRenderer:
         });
         </script>
         '''
-    
+
     def _build_form_attributes(self, form_def: FormDefinition, **kwargs) -> str:
         """Build additional form attributes."""
         attrs = []
-        
+
         if form_def.live_validation:
             attrs.append('novalidate')
-        
+
         # Add HTMX attributes if specified
         if "hx_post" in kwargs:
             attrs.append(f'hx-post="{kwargs["hx_post"]}"')
@@ -516,9 +515,9 @@ class ModernFormRenderer:
             attrs.append(f'hx-target="{kwargs["hx_target"]}"')
         if "hx_swap" in kwargs:
             attrs.append(f'hx-swap="{kwargs["hx_swap"]}"')
-        
+
         return " ".join(attrs)
-    
+
     def _generate_custom_css(self, config: Dict[str, str]) -> str:
         """Generate framework-specific custom CSS."""
         return '''

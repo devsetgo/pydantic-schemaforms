@@ -15,8 +15,6 @@ HTML Input Attribute Reference
 
 """
 
-from string.templatelib import Interpolation, Template
-
 
 # Add the t() fallback if not already present
 def t(template: str) -> str:

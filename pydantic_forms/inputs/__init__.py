@@ -20,7 +20,7 @@ from .base import (
     SelectInputBase,
     build_label,
     build_error_message,
-    build_help_text
+    build_help_text,
 )
 
 # Text inputs
@@ -35,7 +35,7 @@ from .text_inputs import (
     SSNInput,
     PhoneInput,
     CreditCardInput,
-    CurrencyInput
+    CurrencyInput,
 )
 
 # Numeric inputs
@@ -50,7 +50,7 @@ from .numeric_inputs import (
     ScoreInput,
     RatingInput,
     SliderInput,
-    TemperatureInput
+    TemperatureInput,
 )
 
 # Selection inputs
@@ -62,7 +62,7 @@ from .selection_inputs import (
     RadioInput,
     RadioGroup,
     ToggleSwitch,
-    ComboBoxInput
+    ComboBoxInput,
 )
 
 # DateTime inputs
@@ -74,7 +74,7 @@ from .datetime_inputs import (
     WeekInput,
     DateRangeInput,
     TimeRangeInput,
-    BirthdateInput
+    BirthdateInput,
 )
 
 # Specialized inputs
@@ -90,48 +90,80 @@ from .specialized_inputs import (
     HoneypotInput,
     CaptchaInput,
     RatingStarsInput,
-    TagsInput
+    TagsInput,
 )
 
 # Organized exports by category
 TEXT_INPUTS = [
-    'TextInput', 'PasswordInput', 'EmailInput', 'SearchInput', 'TextArea', 
-    'URLInput', 'TelInput', 'SSNInput', 'PhoneInput', 'CreditCardInput', 'CurrencyInput'
+    "TextInput",
+    "PasswordInput",
+    "EmailInput",
+    "SearchInput",
+    "TextArea",
+    "URLInput",
+    "TelInput",
+    "SSNInput",
+    "PhoneInput",
+    "CreditCardInput",
+    "CurrencyInput",
 ]
 
 NUMERIC_INPUTS = [
-    'NumberInput', 'RangeInput', 'PercentageInput', 'DecimalInput', 'IntegerInput',
-    'AgeInput', 'QuantityInput', 'ScoreInput', 'RatingInput', 'SliderInput', 'TemperatureInput'
+    "NumberInput",
+    "RangeInput",
+    "PercentageInput",
+    "DecimalInput",
+    "IntegerInput",
+    "AgeInput",
+    "QuantityInput",
+    "ScoreInput",
+    "RatingInput",
+    "SliderInput",
+    "TemperatureInput",
 ]
 
 SELECTION_INPUTS = [
-    'SelectInput', 'MultiSelectInput', 'CheckboxInput', 'CheckboxGroup', 
-    'RadioInput', 'RadioGroup', 'ToggleSwitch', 'ComboBoxInput'
+    "SelectInput",
+    "MultiSelectInput",
+    "CheckboxInput",
+    "CheckboxGroup",
+    "RadioInput",
+    "RadioGroup",
+    "ToggleSwitch",
+    "ComboBoxInput",
 ]
 
 DATETIME_INPUTS = [
-    'DateInput', 'TimeInput', 'DatetimeInput', 'MonthInput', 'WeekInput',
-    'DateRangeInput', 'TimeRangeInput', 'BirthdateInput'
+    "DateInput",
+    "TimeInput",
+    "DatetimeInput",
+    "MonthInput",
+    "WeekInput",
+    "DateRangeInput",
+    "TimeRangeInput",
+    "BirthdateInput",
 ]
 
 SPECIALIZED_INPUTS = [
-    'FileInput', 'ImageInput', 'ColorInput', 'HiddenInput', 'ButtonInput',
-    'SubmitInput', 'ResetInput', 'CSRFInput', 'HoneypotInput', 'CaptchaInput',
-    'RatingStarsInput', 'TagsInput'
+    "FileInput",
+    "ImageInput",
+    "ColorInput",
+    "HiddenInput",
+    "ButtonInput",
+    "SubmitInput",
+    "ResetInput",
+    "CSRFInput",
+    "HoneypotInput",
+    "CaptchaInput",
+    "RatingStarsInput",
+    "TagsInput",
 ]
 
-BASE_CLASSES = [
-    'BaseInput', 'FormInput', 'NumericInput', 'FileInputBase', 'SelectInputBase'
-]
+BASE_CLASSES = ["BaseInput", "FormInput", "NumericInput", "FileInputBase", "SelectInputBase"]
 
-UTILITIES = [
-    'build_label', 'build_error_message', 'build_help_text'
-]
+UTILITIES = ["build_label", "build_error_message", "build_help_text"]
 
 # All available inputs
-ALL_INPUTS = (
-    TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + 
-    DATETIME_INPUTS + SPECIALIZED_INPUTS
-)
+ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS + SPECIALIZED_INPUTS
 
 __all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES
