@@ -14,14 +14,14 @@ from pydantic_forms.schema_form import FormModel, Field
 class MinimalSchemaModel(FormModel):
     """
     Example form model matching React JSON Schema Forms patterns.
-    
+
     This demonstrates:
     - UI element specifications (ui_element, ui_autofocus, ui_options)
     - Field validation (min_length, max_length)
     - Cross-field validation with custom error messages
     - Automatic form rendering with Bootstrap styling
     """
-    
+
     userName: str = Field(
         ...,
         alias="userName",
@@ -67,14 +67,14 @@ class MinimalSchemaModel(FormModel):
                 }
             )
         # Biography must not contain any bad words (case-insensitive)
-        bad_words = ["buy", "sock", "chump","ministry", "company"]
+        bad_words = ["buy", "sock", "chump", "ministry", "company"]
         found = [w for w in bad_words if w in self.biography.lower()]
         if found:
             errors.append(
                 {
                     "name": "biography",
                     "property": ".biography",
-                    "message": f'The following word(s) are not allowed in the biography: {", ".join(found)}.'
+                    "message": f'The following word(s) are not allowed in the biography: {", ".join(found)}.',
                 }
             )
 
@@ -97,43 +97,41 @@ class MinimalSchemaModel(FormModel):
 def demo_basic_usage():
     """Demonstrate basic form rendering."""
     print("=== Basic Form Rendering ===")
-    
+
     # Generate empty form
     form_html = MinimalSchemaModel.render_form()
     print("✓ Empty form generated successfully")
     print(f"Form HTML length: {len(form_html)} characters")
-    
+
     # Generate form with data
     sample_data = {
-        "userName": "john_doe", 
+        "userName": "john_doe",
         "password": "MySecurePassword123!",
         "passwordRepeat": "MySecurePassword123!",
-        "biography": "I am a software developer who loves Python."
+        "biography": "I am a software developer who loves Python.",
     }
-    
+
     form_with_data = MinimalSchemaModel.render_form(data=sample_data)
     print("✓ Form with data generated successfully")
-    
+
     # Generate form with validation errors
     sample_errors = {
         "password_repeat": "Passwords do not match",
-        "biography": "Biography contains forbidden words"
+        "biography": "Biography contains forbidden words",
     }
-    
+
     form_with_errors = MinimalSchemaModel.render_form(
-        data=sample_data,
-        errors=sample_errors,
-        framework="bootstrap"
+        data=sample_data, errors=sample_errors, framework="bootstrap"
     )
     print("✓ Form with errors generated successfully")
-    
+
     return form_html
 
 
 def demo_frameworks():
     """Demonstrate different CSS frameworks."""
     print("\n=== Framework Support ===")
-    
+
     frameworks = ["bootstrap", "material", "none"]
     for framework in frameworks:
         form_html = MinimalSchemaModel.render_form(framework=framework)
@@ -143,26 +141,26 @@ def demo_frameworks():
 def demo_validation():
     """Demonstrate Pydantic validation integration."""
     print("\n=== Validation Demo ===")
-    
+
     # Test valid data
     try:
         valid_form = MinimalSchemaModel(
             userName="validuser",
             password="ValidPassword123!",
             passwordRepeat="ValidPassword123!",
-            biography="I love programming in Python and building web applications."
+            biography="I love programming in Python and building web applications.",
         )
         print("✓ Valid data passed validation")
     except Exception as e:
         print(f"✗ Valid data failed: {e}")
-    
+
     # Test validation errors
     try:
         invalid_form = MinimalSchemaModel(
             userName="bob",  # Triggers "I don't like Bob"
             password="ValidPassword123!",
             passwordRepeat="DifferentPassword",  # Password mismatch
-            biography="I want to buy socks"  # Contains forbidden words
+            biography="I want to buy socks",  # Contains forbidden words
         )
         print("✗ Invalid data should have failed validation")
     except SchemaFormValidationError as e:
@@ -178,19 +176,19 @@ if __name__ == "__main__":
     demo_basic_usage()
     demo_frameworks()
     demo_validation()
-    
-    print("\n" + "="*60)
+
+    print("\n" + "=" * 60)
     print("EXAMPLE FORM OUTPUT")
-    print("="*60)
-    
+    print("=" * 60)
+
     # Show a complete example
     example_form = MinimalSchemaModel.render_form(
         data={
             "userName": "developer123",
             "password": "MySecurePassword123!",
             "passwordRepeat": "MySecurePassword123!",
-            "biography": "I am a passionate Python developer who enjoys building modern web applications with frameworks like FastAPI and Flask."
+            "biography": "I am a passionate Python developer who enjoys building modern web applications with frameworks like FastAPI and Flask.",
         },
-        framework="bootstrap"
+        framework="bootstrap",
     )
     print(example_form)

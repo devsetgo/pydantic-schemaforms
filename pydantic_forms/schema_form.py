@@ -1,6 +1,46 @@
-from typing import Any, Dict, Type, Optional, List
+from typing import Any, Dict, Type, Optional, List, Callable
 from pydantic import BaseModel, Field as PydanticField
 from pydantic.fields import FieldInfo
+from functools import wraps
+
+# Import the new FormField
+
+
+def form_validator(func: Callable) -> Callable:
+    """
+    Decorator for form validation methods that matches the design_idea.py vision.
+
+    This decorator provides a clean way to define cross-field validation on FormModel classes.
+    It wraps the function to provide better error handling and integration with the form system.
+
+    Usage:
+        class MyForm(FormModel):
+            age: int = FormField(..., input_type="number")
+            parental_consent: bool = FormField(False, input_type="checkbox")
+
+            @form_validator
+            def check_age_and_consent(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+                age = values.get('age')
+                consent = values.get('parental_consent')
+                if age is not None and age < 18 and not consent:
+                    raise ValueError("Parental consent is required for users under 18.")
+                return values
+    """
+
+    @wraps(func)
+    def wrapper(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            return func(cls, values)
+        except ValueError as e:
+            # Convert to a more detailed validation error
+            raise ValueError(f"Form validation failed: {str(e)}")
+        except Exception as e:
+            # Handle unexpected errors
+            raise ValueError(f"Validation error: {str(e)}")
+
+    # Mark the function as a form validator
+    wrapper._is_form_validator = True
+    return classmethod(wrapper)
 
 
 def Field(
@@ -223,3 +263,50 @@ class FormModel(BaseModel):
             else:
                 example[field_name] = ""
         return example
+
+
+class ValidationResult:
+    """
+    Validation result object that provides clean error handling for forms.
+
+    This matches the design_idea.py vision where validation returns an object
+    with .is_valid, .data, and .render_with_errors() methods.
+    """
+
+    def __init__(
+        self,
+        is_valid: bool,
+        data: Optional[Dict[str, Any]] = None,
+        errors: Optional[Dict[str, Any]] = None,
+        form_model_cls: Optional[Type[FormModel]] = None,
+        original_data: Optional[Dict[str, Any]] = None,
+    ):
+        self.is_valid = is_valid
+        self.data = data or {}
+        self.errors = errors or {}
+        self.form_model_cls = form_model_cls
+        self.original_data = original_data or {}
+
+    def render_with_errors(self, framework: str = "bootstrap", **kwargs) -> str:
+        """
+        Render the form with validation errors displayed.
+
+        Args:
+            framework: CSS framework to use
+            **kwargs: Additional rendering options
+
+        Returns:
+            HTML form with errors displayed
+        """
+        if not self.form_model_cls:
+            raise ValueError("Cannot render form: form_model_cls not provided")
+
+        return self.form_model_cls.render_form(
+            data=self.original_data, errors=self.errors, framework=framework, **kwargs
+        )
+
+    def __str__(self) -> str:
+        if self.is_valid:
+            return f"ValidationResult(valid=True, data={self.data})"
+        else:
+            return f"ValidationResult(valid=False, errors={self.errors})"

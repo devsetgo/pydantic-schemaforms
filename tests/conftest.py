@@ -11,14 +11,28 @@ from pydantic import ValidationError, EmailStr
 from pydantic_forms.schema_form import FormModel, Field
 from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
 from pydantic_forms.inputs import (
-    TextInput, PasswordInput, EmailInput, NumberInput, CheckboxInput,
-    SelectInput, DateInput, DatetimeInput, FileInput, ColorInput, RangeInput,
-    HiddenInput, TextArea, SearchInput, TelInput, URLInput
+    TextInput,
+    PasswordInput,
+    EmailInput,
+    NumberInput,
+    CheckboxInput,
+    SelectInput,
+    DateInput,
+    DatetimeInput,
+    FileInput,
+    ColorInput,
+    RangeInput,
+    HiddenInput,
+    TextArea,
+    SearchInput,
+    TelInput,
+    URLInput,
 )
 from pydantic_forms.layouts import HorizontalLayout, VerticalLayout, GridLayout
 
 
 # ==================== TEST FIXTURES ====================
+
 
 @pytest.fixture
 def sample_form_data():
@@ -33,7 +47,7 @@ def sample_form_data():
         "newsletter": True,
         "birth_date": "1998-01-15",
         "favorite_color": "#3498db",
-        "rating": 4
+        "rating": 4,
     }
 
 
@@ -53,29 +67,13 @@ def invalid_form_data():
 @pytest.fixture
 def simple_form_model():
     """Simple form model for basic testing."""
+
     class SimpleForm(FormModel):
-        name: str = Field(
-            ...,
-            min_length=2,
-            description="Your name",
-            ui_autofocus=True
-        )
-        email: EmailStr = Field(
-            ...,
-            description="Email address",
-            ui_element="email"
-        )
-        age: int = Field(
-            ...,
-            ge=18,
-            le=120,
-            description="Your age",
-            ui_element="number"
-        )
+        name: str = Field(..., min_length=2, description="Your name", ui_autofocus=True)
+        email: EmailStr = Field(..., description="Email address", ui_element="email")
+        age: int = Field(..., ge=18, le=120, description="Your age", ui_element="number")
         newsletter: bool = Field(
-            False,
-            description="Subscribe to newsletter",
-            ui_element="checkbox"
+            False, description="Subscribe to newsletter", ui_element="checkbox"
         )
 
     return SimpleForm
@@ -84,6 +82,7 @@ def simple_form_model():
 @pytest.fixture
 def complex_form_model():
     """Complex form model with various field types."""
+
     class ComplexForm(FormModel):
         # Text fields
         first_name: str = Field(..., min_length=2, description="First name", ui_autofocus=True)
@@ -99,7 +98,9 @@ def complex_form_model():
 
         # Date/time fields
         birth_date: Optional[date] = Field(None, description="Birth date", ui_element="date")
-        appointment_time: Optional[str] = Field(None, description="Appointment", ui_element="datetime-local")
+        appointment_time: Optional[str] = Field(
+            None, description="Appointment", ui_element="datetime-local"
+        )
 
         # Text areas
         bio: Optional[str] = Field(
@@ -107,13 +108,10 @@ def complex_form_model():
             max_length=500,
             description="Biography",
             ui_element="textarea",
-            ui_options={"rows": 4}
+            ui_options={"rows": 4},
         )
         comments: Optional[str] = Field(
-            None,
-            max_length=200,
-            description="Comments",
-            ui_element="textarea"
+            None, max_length=200, description="Comments", ui_element="textarea"
         )
 
         # Selection fields
@@ -126,7 +124,9 @@ def complex_form_model():
 
         # Special fields
         favorite_color: str = Field("#3498db", description="Favorite color", ui_element="color")
-        profile_picture: Optional[str] = Field(None, description="Profile picture", ui_element="file")
+        profile_picture: Optional[str] = Field(
+            None, description="Profile picture", ui_element="file"
+        )
 
     return ComplexForm
 
@@ -167,7 +167,7 @@ def sample_validation_errors():
     return [
         {"name": "name", "message": "This field is required"},
         {"name": "email", "message": "Invalid email format"},
-        {"name": "age", "message": "Must be at least 18"}
+        {"name": "age", "message": "Must be at least 18"},
     ]
 
 
@@ -227,23 +227,17 @@ def layout_components():
 
 # ==================== PYTEST CONFIGURATION ====================
 
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "framework: mark test as framework-specific"
-    )
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "framework: mark test as framework-specific")
 
 
 # ==================== HELPER FUNCTIONS ====================
+
 
 def assert_html_contains(html: str, expected: str, msg: str = ""):
     """Assert that HTML contains expected content."""
@@ -255,10 +249,13 @@ def assert_html_has_attribute(html: str, tag: str, attribute: str, value: str = 
     if value:
         expected = f'{tag}.*{attribute}="{value}"'
     else:
-        expected = f'{tag}.*{attribute}'
+        expected = f"{tag}.*{attribute}"
 
     import re
-    assert re.search(expected, html, re.IGNORECASE), f"Expected {tag} with {attribute}={value} in HTML"
+
+    assert re.search(
+        expected, html, re.IGNORECASE
+    ), f"Expected {tag} with {attribute}={value} in HTML"
 
 
 def assert_form_validates(form_model, data: Dict[str, Any]):
@@ -270,7 +267,9 @@ def assert_form_validates(form_model, data: Dict[str, Any]):
         pytest.fail(f"Form validation failed: {e.errors()}")
 
 
-def assert_form_validation_fails(form_model, data: Dict[str, Any], expected_fields: List[str] = None):
+def assert_form_validation_fails(
+    form_model, data: Dict[str, Any], expected_fields: List[str] = None
+):
     """Assert that form data validation fails."""
     with pytest.raises(ValidationError) as exc_info:
         form_model(**data)
@@ -284,21 +283,24 @@ def assert_form_validation_fails(form_model, data: Dict[str, Any], expected_fiel
 def normalize_html(html: str) -> str:
     """Normalize HTML for comparison by removing extra whitespace."""
     import re
+
     # Remove extra whitespace and normalize
-    html = re.sub(r'\s+', ' ', html.strip())
-    html = re.sub(r'>\s+<', '><', html)
+    html = re.sub(r"\s+", " ", html.strip())
+    html = re.sub(r">\s+<", "><", html)
     return html
 
 
 def extract_form_fields(html: str) -> List[str]:
     """Extract form field names from HTML."""
     import re
+
     # Find all name attributes in form inputs
     matches = re.findall(r'name=["\']([^"\']+)["\']', html)
     return matches
 
 
 # ==================== CUSTOM ASSERTIONS ====================
+
 
 class FormHTMLAssertion:
     """Custom assertion helper for form HTML testing."""
@@ -307,7 +309,7 @@ class FormHTMLAssertion:
         self.html = html
         self.normalized = normalize_html(html)
 
-    def has_input(self, name: str, input_type: str = None) -> 'FormHTMLAssertion':
+    def has_input(self, name: str, input_type: str = None) -> "FormHTMLAssertion":
         """Assert form has an input with given name and type."""
         if input_type:
             pattern = f'<input[^>]*name="{name}"[^>]*type="{input_type}"'
@@ -315,34 +317,38 @@ class FormHTMLAssertion:
             pattern = f'<input[^>]*name="{name}"'
 
         import re
-        assert re.search(pattern, self.html, re.IGNORECASE), \
-            f"Expected input with name='{name}' and type='{input_type}'"
+
+        assert re.search(
+            pattern, self.html, re.IGNORECASE
+        ), f"Expected input with name='{name}' and type='{input_type}'"
         return self
 
-    def has_label(self, text: str) -> 'FormHTMLAssertion':
+    def has_label(self, text: str) -> "FormHTMLAssertion":
         """Assert form has a label with given text."""
-        assert "<label" in self.html and text in self.html, \
-            f"Expected label with text '{text}'"
+        assert "<label" in self.html and text in self.html, f"Expected label with text '{text}'"
         return self
 
-    def has_required_field(self, name: str) -> 'FormHTMLAssertion':
+    def has_required_field(self, name: str) -> "FormHTMLAssertion":
         """Assert form has a required field."""
         pattern = f'name="{name}"[^>]*required'
         import re
-        assert re.search(pattern, self.html, re.IGNORECASE), \
-            f"Expected required field '{name}'"
+
+        assert re.search(pattern, self.html, re.IGNORECASE), f"Expected required field '{name}'"
         return self
 
-    def has_css_class(self, css_class: str) -> 'FormHTMLAssertion':
+    def has_css_class(self, css_class: str) -> "FormHTMLAssertion":
         """Assert form has elements with specific CSS class."""
-        assert f'class="{css_class}"' in self.html or f"class='{css_class}'" in self.html, \
-            f"Expected CSS class '{css_class}'"
+        assert (
+            f'class="{css_class}"' in self.html or f"class='{css_class}'" in self.html
+        ), f"Expected CSS class '{css_class}'"
         return self
 
 
 @pytest.fixture
 def assert_form_html():
     """Factory for FormHTMLAssertion."""
+
     def _assert_form_html(html: str):
         return FormHTMLAssertion(html)
+
     return _assert_form_html

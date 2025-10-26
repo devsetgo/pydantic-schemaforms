@@ -25,16 +25,16 @@ class TextInput(FormInput):
         return f'<input {attributes_str} />'
 
     def render_with_label(self, label: Optional[str] = None, help_text: Optional[str] = None,
-                         error: Optional[str] = None, **kwargs) -> str:
-        """Render input with label, help text, and error message."""
+                         error: Optional[str] = None, icon: Optional[str] = None, framework: str = "bootstrap", **kwargs) -> str:
+        """Render input with label, help text, error message, and icon support."""
         field_name = kwargs.get("name", "")
         required = kwargs.get("required", False)
 
         parts = []
 
-        # Add label
+        # Add label with icon support
         if label is not False:  # Allow explicit False to skip label
-            label_html = build_label(field_name, label, required)
+            label_html = build_label(field_name, label, required, icon, framework)
             parts.append(render_template(label_html))
 
         # Add input

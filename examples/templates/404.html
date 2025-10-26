@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="demo-card">
+    <div class="demo-card-header">
+        <h1><i class="bi bi-exclamation-triangle"></i> Page Not Found</h1>
+    </div>
+    <div class="demo-card-body text-center">
+        <p>The page you're looking for doesn't exist.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Return Home</a>
+    </div>
+</div>
+{% endblock %}

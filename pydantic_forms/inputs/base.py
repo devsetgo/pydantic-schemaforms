@@ -138,12 +138,31 @@ class FormInput(BaseInput):
     ]
 
 
-def build_label(field_name: str, label: Optional[str] = None, required: bool = False) -> str:
-    """Build label element."""
+def build_label(
+    field_name: str,
+    label: Optional[str] = None,
+    required: bool = False,
+    icon: Optional[str] = None,
+    framework: str = "bootstrap",
+) -> str:
+    """Build label element with optional icon support."""
     display_label = label or field_name.replace("_", " ").title()
     required_indicator = " *" if required else ""
 
-    return f'<label for="{escape(field_name)}">{escape(display_label)}{required_indicator}</label>'
+    # Add icon if provided
+    icon_html = ""
+    if icon:
+        if framework == "bootstrap":
+            # Handle both with and without bi bi- prefix
+            icon_class = icon if icon.startswith("bi bi-") else f"bi bi-{icon}"
+            icon_html = f'<i class="{icon_class}"></i> '
+        elif framework == "material":
+            icon_html = f'<i class="material-icons">{icon}</i> '
+        elif framework == "fontawesome":
+            icon_class = icon if icon.startswith("fas fa-") else f"fas fa-{icon}"
+            icon_html = f'<i class="{icon_class}"></i> '
+
+    return f'<label for="{escape(field_name)}">{icon_html}{escape(display_label)}{required_indicator}</label>'
 
 
 def build_error_message(field_name: str, error: str) -> str:

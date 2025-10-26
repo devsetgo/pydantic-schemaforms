@@ -3,14 +3,19 @@ Pydantic Forms - Modern form generation library using Python 3.14 template strin
 
 A production-ready competitor to WTForms with React JSON Schema Forms capabilities.
 Features:
-- Python 3.14 native template strings
+- Python 3.14 native template strings (REQUIRED)
 - Comprehensive HTML5 input types
 - Multi-framework theming (Bootstrap, Material, Tailwind)
 - Advanced validation system
 - Async/sync rendering
 - Layout system with responsive grids
 - CSRF protection and security features
+
+IMPORTANT: This library requires Python 3.14+ and provides NO backward compatibility.
 """
+
+# Check Python version before any other imports
+from .version_check import check_python_version, verify_template_strings
 
 import logging
 import os
@@ -28,12 +33,51 @@ from .integration import (
 )
 
 # FormModel abstraction for Pydantic models with UI hints
-from .schema_form import FormModel, Field
+from .schema_form import FormModel, Field, form_validator, ValidationResult
 from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError
 from .render_form import render_form_html
 
+# Enhanced FormField matching design_idea.py vision
+from .form_field import (
+    FormField,
+    TextField,
+    EmailField,
+    NumberField,
+    SelectField,
+    CheckboxField,
+    DateField,
+    TextAreaField,
+)
+
+# Input type constants and validation
+from .input_types import (
+    TEXT_INPUTS,
+    NUMERIC_INPUTS,
+    SELECTION_INPUTS,
+    DATETIME_INPUTS,
+    SPECIALIZED_INPUTS,
+    ALL_INPUT_TYPES,
+)
+
+# Layout composition system matching design_idea.py vision
+from .form_layouts import (
+    VerticalLayout,
+    HorizontalLayout,
+    TabbedLayout,
+    SectionDesign,
+    FormDesign,
+)
+
 # Modern renderer with Python 3.14 template strings
 from .modern_renderer import ModernFormRenderer, FormDefinition, FormSection
+from .py314_renderer import ModernFormRenderer as Py314Renderer, RenderContext
+from .templates import TemplateString, FormTemplates
+
+# Live validation system
+from .live_validation import (
+    LiveValidator, HTMXValidationConfig, ValidationResponse,
+    create_email_validator, create_password_strength_validator
+)
 
 # Comprehensive input types
 from .inputs import *
@@ -100,9 +144,21 @@ __all__ = [
     "FormBuilder",
     "AutoFormBuilder",
     "create_form_from_model",
-    # FormModel abstraction
+    # FormModel abstraction and new components
     "FormModel",
     "Field",
+    "form_validator",
+    "ValidationResult",
+    # Enhanced FormField system
+    "FormField",
+    "TextField",
+    "EmailField",
+    "NumberField",
+    "SelectField",
+    "CheckboxField",
+    "DateField",
+    "TextAreaField",
+    # Renderers
     "EnhancedFormRenderer",
     "SchemaFormValidationError",
     "render_form_html",
@@ -113,10 +169,14 @@ __all__ = [
     # Rendering utilities
     "render_form_page",
     "ModernFormRenderer",
-    # Layout components
-    "Layout",
-    "HorizontalLayout",
+    # Enhanced layout composition system
     "VerticalLayout",
+    "HorizontalLayout",
+    "TabbedLayout",
+    "SectionDesign",
+    "FormDesign",
+    # Original layout components
+    "Layout",
     "GridLayout",
     "TabLayout",
     "AccordionLayout",

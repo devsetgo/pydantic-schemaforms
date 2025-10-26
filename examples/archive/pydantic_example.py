@@ -14,169 +14,117 @@ from pydantic_forms.schema_form import FormModel
 
 app = Flask(__name__)
 
+
 # Define your Pydantic models with UI hints
 class UserRegistrationForm(FormModel):
     username: str = Field(
-        ..., 
-        min_length=3, 
-        max_length=20, 
-        description="Choose a unique username",
-        ui_autofocus=True
+        ..., min_length=3, max_length=20, description="Choose a unique username", ui_autofocus=True
     )
-    email: str = Field(
-        ..., 
-        description="Your email address",
-        ui_element="email"
-    )
+    email: str = Field(..., description="Your email address", ui_element="email")
     password: str = Field(
-        ..., 
-        min_length=8, 
-        description="Choose a secure password",
-        ui_element="password"
+        ..., min_length=8, description="Choose a secure password", ui_element="password"
     )
-    age: int = Field(
-        ..., 
-        ge=13, 
-        le=120, 
-        description="Your age",
-        ui_element="number"
-    )
+    age: int = Field(..., ge=13, le=120, description="Your age", ui_element="number")
     newsletter: bool = Field(
-        False, 
-        description="Subscribe to our newsletter",
-        ui_element="checkbox"
+        False, description="Subscribe to our newsletter", ui_element="checkbox"
     )
-    birthday: Optional[date] = Field(
-        None, 
-        description="Your birth date",
-        ui_element="date"
-    )
+    birthday: Optional[date] = Field(None, description="Your birth date", ui_element="date")
+
 
 class ContactForm(FormModel):
-    name: str = Field(
-        ..., 
-        min_length=2, 
-        description="Your full name",
-        ui_autofocus=True
-    )
-    email: str = Field(
-        ..., 
-        description="Your email address",
-        ui_element="email"
-    )
-    phone: Optional[str] = Field(
-        None, 
-        description="Your phone number",
-        ui_element="tel"
-    )
-    website: Optional[str] = Field(
-        None, 
-        description="Your website URL",
-        ui_element="url"
-    )
+    name: str = Field(..., min_length=2, description="Your full name", ui_autofocus=True)
+    email: str = Field(..., description="Your email address", ui_element="email")
+    phone: Optional[str] = Field(None, description="Your phone number", ui_element="tel")
+    website: Optional[str] = Field(None, description="Your website URL", ui_element="url")
     message: str = Field(
-        ..., 
-        min_length=10, 
-        max_length=1000, 
+        ...,
+        min_length=10,
+        max_length=1000,
         description="Your message",
         ui_element="textarea",
-        ui_options={"rows": 5}
+        ui_options={"rows": 5},
     )
 
+
 class EventForm(FormModel):
-    event_name: str = Field(
-        ..., 
-        description="Name of the event",
-        ui_autofocus=True
-    )
+    event_name: str = Field(..., description="Name of the event", ui_autofocus=True)
     event_datetime: str = Field(
-        ..., 
-        description="When the event starts",
-        ui_element="datetime-local"
+        ..., description="When the event starts", ui_element="datetime-local"
     )
     max_attendees: int = Field(
-        ..., 
-        ge=1, 
-        le=1000, 
-        description="Maximum number of attendees",
-        ui_element="number"
+        ..., ge=1, le=1000, description="Maximum number of attendees", ui_element="number"
     )
     is_public: bool = Field(
-        True, 
-        description="Make this event publicly visible",
-        ui_element="checkbox"
+        True, description="Make this event publicly visible", ui_element="checkbox"
     )
-    event_color: str = Field(
-        "#3498db", 
-        description="Theme color for the event",
-        ui_element="color"
-    )
+    event_color: str = Field("#3498db", description="Theme color for the event", ui_element="color")
+
 
 # Initialize the form renderer
 renderer = EnhancedFormRenderer()
+
 
 @app.route("/user-registration", methods=["GET"])
 def user_registration():
     """User registration form using Bootstrap framework."""
     html = _render_form_page(
-        UserRegistrationForm, 
+        UserRegistrationForm,
         framework="bootstrap",
         title="User Registration",
-        submit_url="/register"
+        submit_url="/register",
     )
     return make_response(html)
+
 
 @app.route("/contact", methods=["GET"])
 def contact():
     """Contact form using Material Design framework."""
     html = _render_form_page(
-        ContactForm, 
-        framework="material",
-        title="Contact Us",
-        submit_url="/contact"
+        ContactForm, framework="material", title="Contact Us", submit_url="/contact"
     )
     return make_response(html)
+
 
 @app.route("/event", methods=["GET"])
 def event():
     """Event form using no framework (plain HTML)."""
     html = _render_form_page(
-        EventForm, 
-        framework="none",
-        title="Create Event",
-        submit_url="/create-event"
+        EventForm, framework="none", title="Create Event", submit_url="/create-event"
     )
     return make_response(html)
 
+
 def _render_form_page(form_model, framework="bootstrap", title="Form", submit_url="/submit"):
     """Helper function to render a complete HTML page with form."""
-    
+
     # Get framework-specific CSS
     css_links = {
         "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
         "material": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/css/materialize.min.css",
-        "none": ""
+        "none": "",
     }
-    
+
     js_links = {
         "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
         "material": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/js/materialize.min.js",
-        "none": ""
+        "none": "",
     }
-    
+
     # Render the form
     form_html = form_model.render_form(framework=framework, submit_url=submit_url)
-    
+
     # Create complete HTML page
-    css_link = f'<link href="{css_links[framework]}" rel="stylesheet">' if css_links[framework] else ""
+    css_link = (
+        f'<link href="{css_links[framework]}" rel="stylesheet">' if css_links[framework] else ""
+    )
     js_link = f'<script src="{js_links[framework]}"></script>' if js_links[framework] else ""
-    
+
     container_class = {
         "bootstrap": "container my-5",
         "material": "container",
-        "none": "form-container"
+        "none": "form-container",
     }[framework]
-    
+
     html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -207,6 +155,7 @@ def _render_form_page(form_model, framework="bootstrap", title="Form", submit_ur
     </html>
     """
     return html
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -266,6 +215,7 @@ def index():
     </html>
     """
     return make_response(html)
+
 
 if __name__ == "__main__":
     print("Starting Flask app with Pydantic Forms integration...")

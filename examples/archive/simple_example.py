@@ -11,135 +11,79 @@ from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
 from typing import Optional
 from datetime import date
 
+
 # Example 1: Basic User Form
 class UserForm(FormModel):
     """Simple user registration form."""
-    name: str = Field(
-        ..., 
-        min_length=2, 
-        description="Your full name",
-        ui_autofocus=True
-    )
-    email: str = Field(
-        ..., 
-        description="Your email address",
-        ui_element="email"
-    )
-    age: int = Field(
-        ..., 
-        ge=18, 
-        le=120, 
-        description="Your age",
-        ui_element="number"
-    )
-    newsletter: bool = Field(
-        False, 
-        description="Subscribe to newsletter",
-        ui_element="checkbox"
-    )
+
+    name: str = Field(..., min_length=2, description="Your full name", ui_autofocus=True)
+    email: str = Field(..., description="Your email address", ui_element="email")
+    age: int = Field(..., ge=18, le=120, description="Your age", ui_element="number")
+    newsletter: bool = Field(False, description="Subscribe to newsletter", ui_element="checkbox")
+
 
 # Example 2: Contact Form with More Field Types
 class ContactForm(FormModel):
     """Contact form with various input types."""
-    name: str = Field(
-        ..., 
-        description="Your name",
-        ui_autofocus=True
-    )
-    email: str = Field(
-        ..., 
-        description="Email address",
-        ui_element="email"
-    )
-    phone: Optional[str] = Field(
-        None, 
-        description="Phone number",
-        ui_element="tel"
-    )
-    website: Optional[str] = Field(
-        None, 
-        description="Your website",
-        ui_element="url"
-    )
-    birth_date: Optional[date] = Field(
-        None, 
-        description="Birth date",
-        ui_element="date"
-    )
+
+    name: str = Field(..., description="Your name", ui_autofocus=True)
+    email: str = Field(..., description="Email address", ui_element="email")
+    phone: Optional[str] = Field(None, description="Phone number", ui_element="tel")
+    website: Optional[str] = Field(None, description="Your website", ui_element="url")
+    birth_date: Optional[date] = Field(None, description="Birth date", ui_element="date")
     message: str = Field(
-        ..., 
-        min_length=10, 
-        max_length=500, 
+        ...,
+        min_length=10,
+        max_length=500,
         description="Your message",
         ui_element="textarea",
-        ui_options={"rows": 4}
+        ui_options={"rows": 4},
     )
+
 
 # Example 3: Event Form with Advanced Fields
 class EventForm(FormModel):
     """Event creation form with advanced input types."""
-    event_name: str = Field(
-        ..., 
-        description="Event name",
-        ui_autofocus=True
-    )
-    event_datetime: str = Field(
-        ..., 
-        description="Event date and time",
-        ui_element="datetime-local"
-    )
+
+    event_name: str = Field(..., description="Event name", ui_autofocus=True)
+    event_datetime: str = Field(..., description="Event date and time", ui_element="datetime-local")
     duration: int = Field(
-        ..., 
-        ge=30, 
-        le=480, 
-        description="Duration in minutes",
-        ui_element="number"
+        ..., ge=30, le=480, description="Duration in minutes", ui_element="number"
     )
     max_attendees: int = Field(
-        ..., 
-        ge=1, 
-        le=1000, 
-        description="Maximum attendees",
-        ui_element="number"
+        ..., ge=1, le=1000, description="Maximum attendees", ui_element="number"
     )
-    event_color: str = Field(
-        "#3498db", 
-        description="Event color",
-        ui_element="color"
-    )
+    event_color: str = Field("#3498db", description="Event color", ui_element="color")
     description: str = Field(
-        ..., 
-        min_length=20, 
-        max_length=1000, 
+        ...,
+        min_length=20,
+        max_length=1000,
         description="Event description",
         ui_element="textarea",
-        ui_options={"rows": 5}
+        ui_options={"rows": 5},
     )
-    is_public: bool = Field(
-        True, 
-        description="Make event public",
-        ui_element="checkbox"
-    )
+    is_public: bool = Field(True, description="Make event public", ui_element="checkbox")
+
 
 def demo_forms():
     """Demonstrate different forms with various frameworks."""
-    
+
     print("=== Pydantic Forms - Simple Examples ===\n")
-    
+
     # Demo 1: Bootstrap User Form
     print("1. Bootstrap User Form:")
     print("-" * 40)
     user_form_html = UserForm.render_form(framework="bootstrap", submit_url="/submit-user")
     print(user_form_html[:200] + "..." if len(user_form_html) > 200 else user_form_html)
     print()
-    
+
     # Demo 2: Material Design Contact Form
     print("2. Material Design Contact Form:")
     print("-" * 40)
     contact_form_html = ContactForm.render_form(framework="material", submit_url="/submit-contact")
     print(contact_form_html[:200] + "..." if len(contact_form_html) > 200 else contact_form_html)
     print()
-    
+
     # Demo 3: Plain HTML Event Form
     print("3. Plain HTML Event Form:")
     print("-" * 40)
@@ -147,26 +91,22 @@ def demo_forms():
     print(event_form_html[:200] + "..." if len(event_form_html) > 200 else event_form_html)
     print()
 
+
 def demo_validation():
     """Demonstrate form validation."""
-    
+
     print("=== Form Validation Demo ===\n")
-    
+
     # Test valid data
     print("Testing valid user data:")
     try:
-        user = UserForm(
-            name="John Doe",
-            email="john@example.com", 
-            age=25,
-            newsletter=True
-        )
+        user = UserForm(name="John Doe", email="john@example.com", age=25, newsletter=True)
         print(f"✓ Valid user created: {user.name}, {user.email}")
     except Exception as e:
         print(f"✗ Validation failed: {e}")
-    
+
     print()
-    
+
     # Test invalid data
     print("Testing invalid user data:")
     try:
@@ -174,19 +114,20 @@ def demo_validation():
             name="J",  # Too short
             email="invalid-email",  # Invalid format
             age=15,  # Too young
-            newsletter=True
+            newsletter=True,
         )
         print(f"✓ User created: {user.name}")
     except Exception as e:
         print(f"✗ Validation failed (expected): {e}")
-    
+
     print()
+
 
 def write_example_html():
     """Write complete HTML examples to files."""
-    
+
     print("=== Writing HTML Examples ===\n")
-    
+
     # Bootstrap example
     bootstrap_html = f"""
     <!DOCTYPE html>
@@ -203,11 +144,11 @@ def write_example_html():
     </body>
     </html>
     """
-    
+
     with open("/workspaces/pydantic-forms/example_bootstrap.html", "w") as f:
         f.write(bootstrap_html)
     print("✓ Created example_bootstrap.html")
-    
+
     # Material Design example
     material_html = f"""
     <!DOCTYPE html>
@@ -225,11 +166,11 @@ def write_example_html():
     </body>
     </html>
     """
-    
+
     with open("/workspaces/pydantic-forms/example_material.html", "w") as f:
         f.write(material_html)
     print("✓ Created example_material.html")
-    
+
     # Plain HTML example
     plain_html = f"""
     <!DOCTYPE html>
@@ -251,18 +192,19 @@ def write_example_html():
     </body>
     </html>
     """
-    
+
     with open("/workspaces/pydantic-forms/example_plain.html", "w") as f:
         f.write(plain_html)
     print("✓ Created example_plain.html")
-    
+
     print("\nHTML examples written! You can open these files in a browser to see the forms.")
+
 
 if __name__ == "__main__":
     demo_forms()
     demo_validation()
     write_example_html()
-    
+
     print("\n=== Summary ===")
     print("This demonstrates the pydantic-forms library with:")
     print("• Pydantic 2.x+ models with UI element specifications")

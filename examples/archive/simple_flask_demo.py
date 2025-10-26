@@ -32,20 +32,22 @@ app = Flask(__name__)
 # Pydantic Models for form validation
 class LoginModel(BaseModel):
     """Simple login form model."""
+
     username: str = Field(..., min_length=3, max_length=50, description="Username or email")
     password: str = Field(..., min_length=6, description="Password")
     remember_me: bool = Field(default=False, description="Remember me")
 
-    @field_validator('username')
+    @field_validator("username")
     @classmethod
     def validate_username(cls, v):
         if len(v) < 3:
-            raise ValueError('Username must be at least 3 characters long')
+            raise ValueError("Username must be at least 3 characters long")
         return v
 
 
 class ContactModel(BaseModel):
     """Contact form model with more fields."""
+
     name: str = Field(..., min_length=2, max_length=100, description="Full name")
     email: EmailStr = Field(..., description="Email address")
     phone: Optional[str] = Field(None, description="Phone number")
@@ -53,16 +55,17 @@ class ContactModel(BaseModel):
     message: str = Field(..., min_length=10, max_length=2000, description="Message")
     priority: str = Field(default="medium", description="Priority level")
 
-    @field_validator('phone')
+    @field_validator("phone")
     @classmethod
     def validate_phone(cls, v):
-        if v and len(v.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')) < 10:
-            raise ValueError('Phone number must be at least 10 digits')
+        if v and len(v.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")) < 10:
+            raise ValueError("Phone number must be at least 10 digits")
         return v
 
 
 class KitchenSinkModel(BaseModel):
     """Kitchen sink model with all field types."""
+
     text_field: str = Field(..., min_length=1, description="Text input")
     email_field: EmailStr = Field(..., description="Email input")
     password_field: str = Field(..., min_length=6, description="Password")
@@ -75,11 +78,11 @@ class KitchenSinkModel(BaseModel):
     checkbox_field: bool = Field(default=False, description="Checkbox option")
     terms_accepted: bool = Field(default=False, description="Terms acceptance")
 
-    @field_validator('terms_accepted')
+    @field_validator("terms_accepted")
     @classmethod
     def validate_terms(cls, v):
         if not v:
-            raise ValueError('You must accept the terms and conditions')
+            raise ValueError("You must accept the terms and conditions")
         return v
 
 
@@ -141,36 +144,29 @@ def handle_form_submission(model_class, success_message):
     try:
         # Convert form data to dict (handle checkboxes properly)
         form_data = request.form.to_dict()
-        
+
         # Handle checkboxes (they're not submitted if unchecked)
-        for field_name in ['remember_me', 'checkbox_field', 'terms_accepted']:
+        for field_name in ["remember_me", "checkbox_field", "terms_accepted"]:
             if field_name not in form_data:
                 form_data[field_name] = False
             else:
                 form_data[field_name] = True
-        
+
         # Handle date fields
-        if 'date_field' in form_data and form_data['date_field']:
+        if "date_field" in form_data and form_data["date_field"]:
             from datetime import datetime
-            form_data['date_field'] = datetime.strptime(form_data['date_field'], '%Y-%m-%d').date()
-        
+
+            form_data["date_field"] = datetime.strptime(form_data["date_field"], "%Y-%m-%d").date()
+
         # Validate with Pydantic
         validated_data = model_class(**form_data)
-        
-        return {
-            'success': True,
-            'message': success_message,
-            'data': validated_data.model_dump()
-        }
+
+        return {"success": True, "message": success_message, "data": validated_data.model_dump()}
     except Exception as e:
-        return {
-            'success': False,
-            'message': str(e),
-            'data': form_data
-        }
+        return {"success": False, "message": str(e), "data": form_data}
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """Main demo page."""
     content = """
@@ -274,20 +270,20 @@ def index():
         </div>
     </div>
     """
-    
+
     return render_page("Home", content)
 
 
-@app.route('/minimal', methods=['GET', 'POST'])
+@app.route("/minimal", methods=["GET", "POST"])
 def minimal():
     """Minimal form example."""
-    
+
     # Handle form submission
     login_result = None
-    
-    if request.method == 'POST':
+
+    if request.method == "POST":
         login_result = handle_form_submission(LoginModel, "Login successful!")
-    
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-person"></i> Minimal Form Example</h1>
@@ -339,20 +335,22 @@ def minimal():
         </ul>
     </div>
     """
-    
+
     return render_page("Login", content)
 
 
-@app.route('/medium', methods=['GET', 'POST'])
+@app.route("/medium", methods=["GET", "POST"])
 def medium():
     """Medium complexity form example."""
-    
+
     # Handle form submission
     contact_result = None
-    
-    if request.method == 'POST':
-        contact_result = handle_form_submission(ContactModel, "Contact form submitted successfully!")
-    
+
+    if request.method == "POST":
+        contact_result = handle_form_submission(
+            ContactModel, "Contact form submitted successfully!"
+        )
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-envelope"></i> Medium Complexity Form</h1>
@@ -444,20 +442,22 @@ def medium():
         </div>
     </div>
     """
-    
+
     return render_page("Contact", content)
 
 
-@app.route('/kitchen', methods=['GET', 'POST'])
+@app.route("/kitchen", methods=["GET", "POST"])
 def kitchen_sink():
     """Kitchen sink form - showcasing all features."""
-    
+
     # Handle form submission
     kitchen_result = None
-    
-    if request.method == 'POST':
-        kitchen_result = handle_form_submission(KitchenSinkModel, "Kitchen sink form submitted successfully!")
-    
+
+    if request.method == "POST":
+        kitchen_result = handle_form_submission(
+            KitchenSinkModel, "Kitchen sink form submitted successfully!"
+        )
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-stars"></i> Kitchen Sink Form</h1>
@@ -679,15 +679,15 @@ def kitchen_sink():
         </div>
     </div>
     """
-    
+
     return render_page("Kitchen Sink", content)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("🚀 Starting Pydantic Forms Demo...")
     print("📄 Visit: http://localhost:5000/")
     print("🔐 Login form: http://localhost:5000/minimal")
     print("📧 Contact form: http://localhost:5000/medium")
     print("🏪 Kitchen sink: http://localhost:5000/kitchen")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    app.run(debug=True, host="0.0.0.0", port=5000)

@@ -13,17 +13,33 @@ For higher-level Pydantic model integration, see:
 
 from flask import Flask, make_response
 from pydantic_forms.inputs import (
-    TextInput, PasswordInput, EmailInput, NumberInput, CheckboxInput,
-    SelectInput, DateInput, DatetimeInput, FileInput, ColorInput, RangeInput,
-    HiddenInput, SSNInput, PhoneInput, URLInput, CurrencyInput, CreditCardInput,
-    TextArea, RadioGroup
+    TextInput,
+    PasswordInput,
+    EmailInput,
+    NumberInput,
+    CheckboxInput,
+    SelectInput,
+    DateInput,
+    DatetimeInput,
+    FileInput,
+    ColorInput,
+    RangeInput,
+    HiddenInput,
+    SSNInput,
+    PhoneInput,
+    URLInput,
+    CurrencyInput,
+    CreditCardInput,
+    TextArea,
+    RadioGroup,
 )
 
 app = Flask(__name__)
 
+
 def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-light"):
     """Render a comprehensive form using low-level UI elements."""
-    
+
     # Common CSS for required fields
     required_css = """
     <style>
@@ -54,113 +70,176 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
 
     # Create all the form inputs using low-level components
     text_input = TextInput().render(
-        name="username", id_="username", class_="form-control", 
-        required="required", placeholder="Enter your username"
+        name="username",
+        id_="username",
+        class_="form-control",
+        required="required",
+        placeholder="Enter your username",
     )
-    
+
     password_input = PasswordInput().render(
-        name="password", id_="password", class_="form-control", 
-        required="required", maxlength=32, autocomplete="off"
+        name="password",
+        id_="password",
+        class_="form-control",
+        required="required",
+        maxlength=32,
+        autocomplete="off",
     )
-    
+
     biography_input = TextArea().render(
-        name="biography", id_="biography", class_="form-control", 
-        required="required", placeholder="Tell us about yourself", 
-        rows=4, maxlength=500, value="This is a sample biography."
+        name="biography",
+        id_="biography",
+        class_="form-control",
+        required="required",
+        placeholder="Tell us about yourself",
+        rows=4,
+        maxlength=500,
+        value="This is a sample biography.",
     )
-    
+
     email_input = EmailInput().render(
-        name="email", id_="email", class_="form-control", 
-        required="required", placeholder="Enter your email", 
-        pattern=r"[^@]+@[^@]+\.[^@]+", value="me@something.com"
+        name="email",
+        id_="email",
+        class_="form-control",
+        required="required",
+        placeholder="Enter your email",
+        pattern=r"[^@]+@[^@]+\.[^@]+",
+        value="me@something.com",
     )
-    
+
     number_input = NumberInput().render(
-        name="age", id_="age", class_="form-control", 
-        required="required", min=0, max=120, step=1, 
-        value=30, placeholder="Enter your age"
+        name="age",
+        id_="age",
+        class_="form-control",
+        required="required",
+        min=0,
+        max=120,
+        step=1,
+        value=30,
+        placeholder="Enter your age",
     )
-    
+
     checkbox_input = CheckboxInput().render(
-        name="subscribe", id_="subscribe", class_="form-check-input", 
-        checked=True, value="yes"
+        name="subscribe", id_="subscribe", class_="form-check-input", checked=True, value="yes"
     )
-    
+
     radio_input = RadioGroup().render(
-        group_name="gender", required="required",
+        group_name="gender",
+        required="required",
         options=[
             {"value": "male", "label": "Male"},
             {"value": "female", "label": "Female"},
             {"value": "other", "label": "Other"},
         ],
         class_="form-check",
-        group_label="Gender"
+        group_label="Gender",
     )
-    
+
     select_input = SelectInput().render(
-        name="country", id_="country", class_="form-select",
+        name="country",
+        id_="country",
+        class_="form-select",
         option_named=[
             {"value": "us", "label": "United States", "selected": True},
             {"value": "ca", "label": "Canada", "selected": False},
             {"value": "ie", "label": "Ireland", "selected": False},
         ],
         required="required",
-        label="Country of Residence"
+        label="Country of Residence",
     )
-    
+
     date_input = DateInput().render(
-        name="birthday", id_="birthday", class_="form-control",
-        min="1900-01-01", max="2100-12-31", value="2000-01-01"
+        name="birthday",
+        id_="birthday",
+        class_="form-control",
+        min="1900-01-01",
+        max="2100-12-31",
+        value="2000-01-01",
     )
-    
+
     datetime_input = DatetimeInput().render(
-        name="event_time", id_="event_time", class_="form-control",
-        value="2023-10-01T12:00", required="",
-        with_set_now_button=False, auto_set_on_load=True
+        name="event_time",
+        id_="event_time",
+        class_="form-control",
+        value="2023-10-01T12:00",
+        required="",
+        with_set_now_button=False,
+        auto_set_on_load=True,
     )
-    
+
     file_input = FileInput().render(
-        name="resume", id_="resume", class_="form-control", 
-        accept=".pdf,.docx", multiple="multiple", required="required"
+        name="resume",
+        id_="resume",
+        class_="form-control",
+        accept=".pdf,.docx",
+        multiple="multiple",
+        required="required",
     )
-    
+
     color_input = ColorInput().render(
-        name="favorite_color", id_="favorite_color", class_="form-control", 
-        required="", value="#ff0000"
+        name="favorite_color",
+        id_="favorite_color",
+        class_="form-control",
+        required="",
+        value="#ff0000",
     )
-    
+
     range_input = RangeInput().render(
-        name="volume", id_="volume", class_="form-range", 
-        required="", min=0, max=100, step=1, value=50
+        name="volume",
+        id_="volume",
+        class_="form-range",
+        required="",
+        min=0,
+        max=100,
+        step=1,
+        value=50,
     )
-    
-    hidden_input = HiddenInput().render(
-        name="secret", id_="secret", value="hidden_value"
-    )
-    
+
+    hidden_input = HiddenInput().render(name="secret", id_="secret", value="hidden_value")
+
     ssn_input = SSNInput().render(
-        name="ssn", id_="ssn", class_="form-control", 
-        required="", value="987-65-4321", label="Social Security Number"
+        name="ssn",
+        id_="ssn",
+        class_="form-control",
+        required="",
+        value="987-65-4321",
+        label="Social Security Number",
     )
-    
+
     phone_input = PhoneInput().render(
-        name="phone", id_="phone", class_="form-control", 
-        required="", value="838341551", country_code="+353"
+        name="phone",
+        id_="phone",
+        class_="form-control",
+        required="",
+        value="838341551",
+        country_code="+353",
     )
-    
+
     url_input = URLInput().render(
-        name="website", id_="website", class_="form-control", 
-        required="", pattern="https?://.+", value="https://example.com"
+        name="website",
+        id_="website",
+        class_="form-control",
+        required="",
+        pattern="https?://.+",
+        value="https://example.com",
     )
-    
+
     currency_input = CurrencyInput().render(
-        name="amount", id_="amount", class_="form-control", 
-        required="", pattern="^\\$?\\d+(\\.(\\d{2}))?$", value="$100.00"
+        name="amount",
+        id_="amount",
+        class_="form-control",
+        required="",
+        pattern="^\\$?\\d+(\\.(\\d{2}))?$",
+        value="$100.00",
     )
-    
+
     credit_card_input = CreditCardInput().render(
-        name="ccn", id_="ccn", class_="form-control", 
-        required="", pattern="\\d{16}", value="1234567812345678"
+        name="ccn",
+        id_="ccn",
+        class_="form-control",
+        required="",
+        pattern="\\d{16}",
+        value="1234567812345678",
     )
 
     html = f"""
@@ -346,6 +425,7 @@ def render_form_page(css_links, js_links, form_class="p-4 border rounded bg-ligh
     """
     return make_response(html)
 
+
 @app.route("/bootstrap", methods=["GET"])
 def form_bootstrap():
     """Bootstrap 5 styled form example."""
@@ -356,6 +436,7 @@ def form_bootstrap():
         <script src="https://unpkg.com/imask"></script>
     """
     return render_form_page(css_links, js_links, form_class="p-4 border rounded bg-light")
+
 
 @app.route("/material", methods=["GET"])
 def form_material():
@@ -368,6 +449,7 @@ def form_material():
     """
     return render_form_page(css_links, js_links, form_class="card-panel")
 
+
 @app.route("/shadcn", methods=["GET"])
 def form_shadcn():
     """shadcn/ui styled form example."""
@@ -378,6 +460,7 @@ def form_shadcn():
         <script src="https://cdn.jsdelivr.net/npm/shadcn@2.5.0/dist/index.min.js"></script>
     """
     return render_form_page(css_links, js_links, form_class="shadcn-form")
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -445,9 +528,9 @@ def index():
     """
     return make_response(html)
 
+
 if __name__ == "__main__":
     print("🎨 Starting UI Elements Demo")
     print("📱 Visit http://localhost:5002 to see the low-level components")
     print("🔧 This demonstrates the building blocks of pydantic-forms")
-    app.run(debug=True, host='0.0.0.0', port=5002)
-
+    app.run(debug=True, host="0.0.0.0", port=5002)

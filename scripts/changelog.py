@@ -5,6 +5,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import asyncio
 
+
 async def get_github_releases():
     url = f"https://api.github.com/repos/devsetgo/bumpcalver/releases?per_page=1000"
     async with httpx.AsyncClient() as client:
@@ -12,11 +13,15 @@ async def get_github_releases():
         response.raise_for_status()  # Raise an exception if the request was unsuccessful
     return response.json()
 
+
 def set_date_time(published_at):
     published_at = datetime.strptime(published_at, "%Y-%m-%dT%H:%M:%SZ")
     published_at = published_at.replace(tzinfo=ZoneInfo("UTC"))  # Make it aware in UTC
-    published_at = published_at.astimezone(ZoneInfo("America/New_York"))  # Convert to US Eastern Time
+    published_at = published_at.astimezone(
+        ZoneInfo("America/New_York")
+    )  # Convert to US Eastern Time
     return published_at.strftime("%Y %B %d, %H:%M")  # Format it to a more human-readable format
+
 
 async def main():
     try:
@@ -62,6 +67,7 @@ async def main():
             f.writelines(lines)
     except Exception as e:
         print(f"An error occurred while writing to CHANGELOG.md: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="demo-card">
+    <div class="demo-card-header">
+        <h1><i class="bi bi-exclamation-circle"></i> Server Error</h1>
+    </div>
+    <div class="demo-card-body text-center">
+        <p>An internal server error occurred. Please try again later.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Return Home</a>
+    </div>
+</div>
+{% endblock %}

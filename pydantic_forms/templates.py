@@ -1,0 +1,412 @@
+"""
+Native Python 3.14 template string system for pydantic-forms.
+
+This module provides a high-performance template engine using Python 3.14's
+native string.templatelib. No backward compatibility is provided.
+
+Requires: Python 3.14+
+"""
+
+import string.templatelib
+from typing import Any, Dict, Optional
+from functools import lru_cache
+
+# Import version check to ensure compatibility
+
+
+class TemplateString:
+    """
+    Native Python 3.14 template string wrapper.
+
+    Provides a clean API for template rendering with automatic caching and
+    type-safe variable substitution using string.templatelib.
+
+    No legacy template support - Python 3.14+ only.
+    """
+
+    def __init__(self, template_str: str):
+        """
+        Initialize template string.
+
+        Args:
+            template_str: Template string with ${variable} placeholders
+        """
+        self.template_str = template_str
+        self._compiled: Optional[string.templatelib.Template] = None
+
+    @lru_cache(maxsize=128)
+    def _compile_template(self, template_str: str) -> string.templatelib.Template:
+        """Compile and cache template for performance."""
+        return string.templatelib.Template(template_str)
+
+    def render(self, **kwargs: Any) -> str:
+        """
+        Render template with provided variables.
+
+        Args:
+            **kwargs: Variables to substitute in template
+
+        Returns:
+            Rendered template string
+
+        Raises:
+            KeyError: If required template variables are missing
+        """
+        if self._compiled is None:
+            self._compiled = self._compile_template(self.template_str)
+
+        # Convert all values to strings, handling None gracefully
+        safe_kwargs = {}
+        for key, value in kwargs.items():
+            if value is None:
+                safe_kwargs[key] = ""
+            elif isinstance(value, bool):
+                safe_kwargs[key] = "true" if value else "false"
+            else:
+                safe_kwargs[key] = str(value)
+
+        return self._compiled.substitute(**safe_kwargs)
+
+    def safe_render(self, **kwargs: Any) -> str:
+        """
+        Safely render template, leaving unfilled variables as placeholders.
+
+        Args:
+            **kwargs: Variables to substitute in template
+
+        Returns:
+            Rendered template string with unfilled variables preserved
+        """
+        if self._compiled is None:
+            self._compiled = self._compile_template(self.template_str)
+
+        # Convert all values to strings
+        safe_kwargs = {}
+        for key, value in kwargs.items():
+            if value is None:
+                safe_kwargs[key] = ""
+            elif isinstance(value, bool):
+                safe_kwargs[key] = "true" if value else "false"
+            else:
+                safe_kwargs[key] = str(value)
+
+        return self._compiled.safe_substitute(**safe_kwargs)
+
+
+class FormTemplates:
+    """
+    Collection of modern form templates using Python 3.14 template strings.
+
+    Provides pre-built templates for common form elements and layouts with
+    optimized rendering performance.
+    """
+
+    # Input Templates
+    TEXT_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <input type="text"
+           id="${id}"
+           name="${name}"
+           class="form-control ${input_class}"
+           style="${input_style}"
+           value="${value}"
+           placeholder="${placeholder}"
+           ${required}
+           ${disabled}
+           ${readonly}
+           ${attributes} />
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    EMAIL_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <input type="email"
+           id="${id}"
+           name="${name}"
+           class="form-control ${input_class}"
+           style="${input_style}"
+           value="${value}"
+           placeholder="${placeholder}"
+           ${required}
+           ${disabled}
+           ${readonly}
+           ${attributes} />
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    PASSWORD_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <div class="input-group">
+        <input type="password"
+               id="${id}"
+               name="${name}"
+               class="form-control ${input_class}"
+               style="${input_style}"
+               value="${value}"
+               placeholder="${placeholder}"
+               ${required}
+               ${disabled}
+               ${readonly}
+               ${attributes} />
+        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('${id}')">
+            <i class="bi bi-eye" id="${id}_toggle_icon"></i>
+        </button>
+    </div>
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    NUMBER_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <input type="number"
+           id="${id}"
+           name="${name}"
+           class="form-control ${input_class}"
+           style="${input_style}"
+           value="${value}"
+           placeholder="${placeholder}"
+           min="${min_value}"
+           max="${max_value}"
+           step="${step}"
+           ${required}
+           ${disabled}
+           ${readonly}
+           ${attributes} />
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    SELECT_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <select id="${id}"
+            name="${name}"
+            class="form-select ${input_class}"
+            style="${input_style}"
+            ${required}
+            ${disabled}
+            ${multiple}
+            ${attributes}>
+        ${options}
+    </select>
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    TEXTAREA_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <textarea id="${id}"
+              name="${name}"
+              class="form-control ${input_class}"
+              style="${input_style}"
+              rows="${rows}"
+              cols="${cols}"
+              placeholder="${placeholder}"
+              ${required}
+              ${disabled}
+              ${readonly}
+              ${attributes}>${value}</textarea>
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    CHECKBOX_INPUT = TemplateString("""
+<div class="form-check ${wrapper_class}" style="${wrapper_style}">
+    <input type="checkbox"
+           id="${id}"
+           name="${name}"
+           class="form-check-input ${input_class}"
+           style="${input_style}"
+           value="${checkbox_value}"
+           ${checked}
+           ${required}
+           ${disabled}
+           ${attributes} />
+    <label class="form-check-label" for="${id}">
+        ${label_text}
+    </label>
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    RADIO_INPUT = TemplateString("""
+<div class="form-group ${wrapper_class}" style="${wrapper_style}">
+    ${label}
+    <div class="radio-group">
+        ${radio_options}
+    </div>
+    ${help_text}
+    ${error_message}
+</div>
+""")
+
+    # Layout Templates
+    FORM_WRAPPER = TemplateString("""
+<form id="${form_id}"
+      class="pydantic-form ${form_class}"
+      style="${form_style}"
+      method="${method}"
+      action="${action}"
+      ${form_attributes}>
+    ${csrf_token}
+    ${form_content}
+    ${submit_buttons}
+</form>
+""")
+
+    VERTICAL_LAYOUT = TemplateString("""
+<div class="vertical-layout ${layout_class}" style="${layout_style}">
+    ${sections}
+</div>
+""")
+
+    HORIZONTAL_LAYOUT = TemplateString("""
+<div class="horizontal-layout row ${layout_class}" style="${layout_style}">
+    ${sections}
+</div>
+""")
+
+    SECTION = TemplateString("""
+<div class="form-section ${section_class}" style="${section_style}">
+    ${section_title}
+    ${section_content}
+</div>
+""")
+
+    # Helper Templates
+    LABEL = TemplateString("""
+<label for="${for_id}" class="form-label ${label_class}" style="${label_style}">
+    ${icon}${label_text}${required_indicator}
+</label>
+""")
+
+    HELP_TEXT = TemplateString("""
+<div class="form-text ${help_class}" style="${help_style}">
+    ${help_content}
+</div>
+""")
+
+    ERROR_MESSAGE = TemplateString("""
+<div class="invalid-feedback ${error_class}" style="${error_style}">
+    ${error_content}
+</div>
+""")
+
+    ICON = TemplateString("""
+<i class="bi bi-${icon_name} ${icon_class}" style="${icon_style}"></i>
+""")
+
+    # Form Control Groups
+    INPUT_GROUP = TemplateString("""
+<div class="input-group ${group_class}" style="${group_style}">
+    ${prepend}
+    ${input_element}
+    ${append}
+</div>
+""")
+
+    # Complete Page Templates
+    FORM_PAGE = TemplateString("""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${page_title}</title>
+    ${css_links}
+    ${custom_styles}
+</head>
+<body>
+    <div class="container">
+        ${page_header}
+        ${form_content}
+        ${page_footer}
+    </div>
+    ${js_links}
+    ${custom_scripts}
+</body>
+</html>
+""")
+
+
+def render_template(template: TemplateString, **kwargs: Any) -> str:
+    """
+    Convenience function to render a template with variables.
+
+    Args:
+        template: TemplateString instance to render
+        **kwargs: Variables for template substitution
+
+    Returns:
+        Rendered template string
+    """
+    return template.render(**kwargs)
+
+
+def create_custom_template(template_str: str) -> TemplateString:
+    """
+    Create a custom template from a string.
+
+    Args:
+        template_str: Template string with ${variable} placeholders
+
+    Returns:
+        TemplateString instance
+    """
+    return TemplateString(template_str)
+
+
+# Template validation and utilities
+def validate_template_variables(template: TemplateString, **kwargs: Any) -> Dict[str, bool]:
+    """
+    Validate that all required template variables are provided.
+
+    Args:
+        template: TemplateString to validate
+        **kwargs: Variables to check
+
+    Returns:
+        Dictionary mapping variable names to whether they are satisfied
+    """
+    import re
+
+    # Extract variable names from template
+    template_vars = set()
+    for match in re.finditer(r'\$\{(\w+)\}', template.template_str):
+        template_vars.add(match.group(1))
+
+    # Check which variables are satisfied
+    provided_vars = set(kwargs.keys())
+    return {
+        var: var in provided_vars
+        for var in template_vars
+    }
+
+
+# Performance utilities
+def precompile_templates():
+    """Precompile all form templates for optimal performance."""
+    for attr_name in dir(FormTemplates):
+        if not attr_name.startswith('_'):
+            template = getattr(FormTemplates, attr_name)
+            if isinstance(template, TemplateString):
+                # Trigger compilation by accessing _compile_template
+                template._compile_template(template.template_str)
+
+
+# Initialize template compilation on import for better performance
+precompile_templates()

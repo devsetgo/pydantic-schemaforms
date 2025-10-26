@@ -1,40 +1,15 @@
 """
 Complete form integration system for pydantic-forms using Python 3.14 template strings.
 Integrates inputs, layouts, validation, and framework support into a unified system.
+
+Requires: Python 3.14+ (no backward compatibility)
 """
 
 from typing import Dict, Any, List, Optional, Union, Type
 from datetime import date, datetime
+import string.templatelib
 
-# Python 3.14 template string support with fallback
-try:
-    from string.templatelib import Template, Interpolation
-except ImportError:
-    # Fallback for earlier Python versions
-    from string import Template
-
-    class Interpolation:
-        def __init__(self, **kwargs):
-            self.data = kwargs
-
-        def __getattr__(self, name):
-            return self.data.get(name, "")
-
-        def __getitem__(self, key):
-            return self.data.get(key, "")
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def keys(self):
-            return self.data.keys()
-
-        def values(self):
-            return self.data.values()
-
-        def items(self):
-            return self.data.items()
-
+# Import version check to ensure compatibility
 
 from pydantic import BaseModel
 
@@ -52,20 +27,23 @@ class FlaskIntegration:
 
     def create_route(self, app, path: str, form_model, methods=None):
         """Create a Flask route for the form."""
+
         def route_handler():
             return f"Flask route for {form_model.__name__}"
+
         return route_handler
 
     def handle_form_submission(self, form_model, request):
         """Handle Flask form submission."""
         from .validation import validate_form_data
-        if hasattr(request, 'form'):
+
+        if hasattr(request, "form"):
             data = dict(request.form)
             # Convert checkbox values
             for key, value in data.items():
-                if value == 'on':
+                if value == "on":
                     data[key] = True
-        elif hasattr(request, 'method') and request.method == 'POST':
+        elif hasattr(request, "method") and request.method == "POST":
             data = {}
         else:
             data = {}
@@ -84,14 +62,18 @@ class FastAPIIntegration:
 
     def create_endpoint(self, app, path: str, form_model):
         """Create FastAPI endpoint."""
+
         def endpoint():
             return {"message": f"FastAPI endpoint for {form_model.__name__}"}
+
         return endpoint
 
     def create_form_dependency(self, form_model):
         """Create FastAPI form dependency."""
+
         def form_dependency(data: dict):
             return form_model(**data)
+
         return form_dependency
 
     def generate_openapi_schema(self, form_model):
@@ -99,13 +81,13 @@ class FastAPIIntegration:
         return {
             "type": "object",
             "properties": {
-                field_name: {"type": "string"}
-                for field_name in form_model.model_fields.keys()
+                field_name: {"type": "string"} for field_name in form_model.model_fields.keys()
             },
             "required": [
-                field_name for field_name, field_info in form_model.model_fields.items()
+                field_name
+                for field_name, field_info in form_model.model_fields.items()
                 if field_info.is_required()
-            ]
+            ],
         }
 
 
@@ -117,17 +99,21 @@ class DjangoIntegration:
 
     def create_django_form(self, form_model):
         """Create Django form from Pydantic model."""
+
         class DynamicDjangoForm:
             def __init__(self):
                 self.fields = list(form_model.model_fields.keys())
+
         return DynamicDjangoForm
 
     def create_model_form(self, form_model, django_model):
         """Create Django ModelForm."""
+
         class DynamicModelForm:
             def __init__(self):
                 self.model = django_model
                 self.fields = list(form_model.model_fields.keys())
+
         return DynamicModelForm
 
     def handle_view(self, request, form_model, template_name=None):
@@ -177,11 +163,7 @@ class ReactJSONSchemaIntegration:
             if field_info.is_required():
                 required.append(field_name)
 
-        return {
-            "type": "object",
-            "properties": properties,
-            "required": required
-        }
+        return {"type": "object", "properties": properties, "required": required}
 
     def generate_ui_schema(self, form_model):
         """Generate UI Schema for React JSON Schema Forms."""
@@ -217,7 +199,7 @@ class ReactJSONSchemaIntegration:
         return {
             "schema": self.generate_schema(form_model),
             "uiSchema": self.generate_ui_schema(form_model),
-            "formData": initial_data or {}
+            "formData": initial_data or {},
         }
 
 
@@ -240,10 +222,7 @@ class VueFormulateIntegration:
                 if non_none_types:
                     field_type = non_none_types[0]
 
-            field_config = {
-                "name": field_name,
-                "label": field_name.replace("_", " ").title()
-            }
+            field_config = {"name": field_name, "label": field_name.replace("_", " ").title()}
 
             # Map field types
             if "email" in field_name.lower():
@@ -294,13 +273,13 @@ class JSONSchemaGenerator:
         """Generate schema for individual field."""
         if field_type == str:
             schema = {"type": "string"}
-            if hasattr(field_info, 'description'):
+            if hasattr(field_info, "description"):
                 schema["description"] = field_info.description
         elif field_type == int:
             schema = {"type": "integer"}
-            if hasattr(field_info, 'ge'):
+            if hasattr(field_info, "ge"):
                 schema["minimum"] = field_info.ge
-            if hasattr(field_info, 'le'):
+            if hasattr(field_info, "le"):
                 schema["maximum"] = field_info.le
         elif field_type == float:
             schema = {"type": "number"}
@@ -321,13 +300,7 @@ class OpenAPISchemaGenerator:
     def generate_request_schema(self, form_model):
         """Generate OpenAPI request schema."""
         schema = JSONSchemaGenerator().generate_schema(form_model)
-        return {
-            "content": {
-                "application/json": {
-                    "schema": schema
-                }
-            }
-        }
+        return {"content": {"application/json": {"schema": schema}}}
 
     def generate_response_schema(self, form_model):
         """Generate OpenAPI response schema."""
@@ -340,11 +313,11 @@ class OpenAPISchemaGenerator:
                             "type": "object",
                             "properties": {
                                 "success": {"type": "boolean"},
-                                "data": JSONSchemaGenerator().generate_schema(form_model)
-                            }
+                                "data": JSONSchemaGenerator().generate_schema(form_model),
+                            },
                         }
                     }
-                }
+                },
             },
             "422": {
                 "description": "Validation Error",
@@ -355,13 +328,13 @@ class OpenAPISchemaGenerator:
                             "properties": {
                                 "errors": {
                                     "type": "object",
-                                    "additionalProperties": {"type": "string"}
+                                    "additionalProperties": {"type": "string"},
                                 }
-                            }
+                            },
                         }
                     }
-                }
-            }
+                },
+            },
         }
 
     def generate_complete_spec(self, form_model, endpoint_path, method="POST"):
@@ -371,7 +344,7 @@ class OpenAPISchemaGenerator:
                 endpoint_path: {
                     method.lower(): {
                         "requestBody": self.generate_request_schema(form_model),
-                        "responses": self.generate_response_schema(form_model)
+                        "responses": self.generate_response_schema(form_model),
                     }
                 }
             }
@@ -404,14 +377,14 @@ def map_ui_element_to_framework(ui_element, framework):
             "email": "email",
             "password": "password",
             "textarea": "textarea",
-            "select": "select"
+            "select": "select",
         },
         "vue": {
             "email": "email",
             "password": "password",
             "textarea": "textarea",
-            "select": "select"
-        }
+            "select": "select",
+        },
     }
 
     return mapping.get(framework, {}).get(ui_element, ui_element)
@@ -432,12 +405,15 @@ def check_framework_availability(framework_name):
     try:
         if framework_name == "flask":
             import flask
+
             return True
         elif framework_name == "fastapi":
             import fastapi
+
             return True
         elif framework_name == "django":
             import django
+
             return True
         return False
     except ImportError:
@@ -830,7 +806,7 @@ def create_form_from_model(model: Type[BaseModel], **kwargs) -> AutoFormBuilder:
 
 
 # Template for complete form page
-FORM_PAGE_TEMPLATE = Template(
+FORM_PAGE_TEMPLATE = string.templatelib.Template(
     """
 <!DOCTYPE html>
 <html lang="en">

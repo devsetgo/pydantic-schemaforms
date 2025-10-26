@@ -136,6 +136,7 @@ class EnhancedFormRenderer:
         method: str = "POST",
         include_csrf: bool = False,
         include_submit_button: bool = True,
+        layout: str = "vertical",
         **kwargs,
     ) -> str:
         """
@@ -149,12 +150,13 @@ class EnhancedFormRenderer:
             method: HTTP method (POST, GET)
             include_csrf: Whether to include CSRF protection
             include_submit_button: Whether to include submit button
+            layout: Layout type - "vertical", "horizontal", "side-by-side", or "tabbed"
             **kwargs: Additional form attributes
 
         Returns:
             Complete HTML form as string
         """
-        schema = model_cls.get_json_schema()
+        schema = model_cls.model_json_schema()
         data = data or {}
         errors = errors or {}
 
@@ -180,18 +182,25 @@ class EnhancedFormRenderer:
         # Get fields and sort by UI order if specified
         fields = list(schema["properties"].items())
         fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
-
-        # Render each field
         required_fields = schema.get("required", [])
-        for field_name, field_schema in fields:
-            field_html = self._render_field(
-                field_name,
-                field_schema,
-                data.get(field_name),
-                errors.get(field_name),
-                required_fields,
-            )
-            form_parts.append(field_html)
+
+        # Render fields based on layout
+        if layout == "tabbed":
+            form_parts.extend(self._render_tabbed_layout(fields, data, errors, required_fields))
+        elif layout == "side-by-side":
+            form_parts.extend(self._render_side_by_side_layout(fields, data, errors, required_fields))
+        else:
+            # Render each field with appropriate layout
+            for field_name, field_schema in fields:
+                field_html = self._render_field(
+                    field_name,
+                    field_schema,
+                    data.get(field_name),
+                    errors.get(field_name),
+                    required_fields,
+                    layout,
+                )
+                form_parts.append(field_html)
 
         # Add submit button if requested
         if include_submit_button:
@@ -216,16 +225,21 @@ class EnhancedFormRenderer:
         value: Any = None,
         error: Optional[str] = None,
         required_fields: List[str] = None,
+        layout: str = "vertical",
     ) -> str:
         """Render a single form field with its UI element."""
+        # Check for UI info in nested 'ui' key or directly in field schema
         ui_info = field_schema.get("ui", {})
+        if not ui_info:
+            # UI info might be directly in the field schema (from FormField)
+            ui_info = field_schema
 
         # Skip hidden fields in layout but still render them
         if ui_info.get("hidden"):
             return self._render_hidden_field(field_name, field_schema, value)
 
-        # Determine UI element type
-        ui_element = ui_info.get("element") or ui_info.get("widget")
+        # Determine UI element type - check multiple possible keys
+        ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
         if not ui_element:
             ui_element = self._infer_ui_element(field_schema)
 
@@ -276,13 +290,32 @@ class EnhancedFormRenderer:
         if ui_info.get("style"):
             field_attrs["style"] = ui_info["style"]
 
-        # Add UI options
-        ui_options = ui_info.get("options", {})
-        field_attrs.update(ui_options)
+        # Handle select/radio options separately
+        ui_options_list = ui_info.get("options", [])
 
         # Render the input
         try:
-            input_html = input_component.render(**field_attrs)
+            if ui_element in ("select", "radio"):
+                # Convert options to proper format for SelectInput/RadioGroup
+                if ui_options_list:
+                    formatted_options = []
+                    for option in ui_options_list:
+                        if isinstance(option, dict):
+                            formatted_options.append(option)
+                        else:
+                            # Convert string options to dict format
+                            formatted_options.append({
+                                "value": str(option),
+                                "label": str(option),
+                                "selected": str(option) == str(value) if value is not None else False
+                            })
+                    input_html = input_component.render(options=formatted_options, **field_attrs)
+                else:
+                    input_html = f"<!-- Warning: No options provided for {ui_element} field '{field_name}' -->"
+            else:
+                # Regular input rendering
+                input_html = input_component.render(**field_attrs)
+
             if input_html is None:
                 input_html = f"<!-- Error: {ui_element} input returned None -->"
         except Exception as e:
@@ -296,6 +329,7 @@ class EnhancedFormRenderer:
             help_text=ui_info.get("help_text") or field_schema.get("description"),
             error=error,
             required=field_name in (required_fields or []),
+            layout=layout,
         )
 
     def _render_hidden_field(
@@ -343,8 +377,24 @@ class EnhancedFormRenderer:
         help_text: Optional[str] = None,
         error: Optional[str] = None,
         required: bool = False,
+        layout: str = "vertical",
     ) -> str:
         """Wrap field with label, help text, and error message."""
+        if layout == "horizontal":
+            return self._wrap_field_horizontal(field_name, label, input_html, help_text, error, required)
+        else:
+            return self._wrap_field_vertical(field_name, label, input_html, help_text, error, required)
+    
+    def _wrap_field_vertical(
+        self,
+        field_name: str,
+        label: str,
+        input_html: str,
+        help_text: Optional[str] = None,
+        error: Optional[str] = None,
+        required: bool = False,
+    ) -> str:
+        """Wrap field with vertical layout (default)."""
         parts = [f'<div class="{self.config["field_wrapper_class"]}">']
 
         # Add label
@@ -381,6 +431,192 @@ class EnhancedFormRenderer:
         # Filter out None values to prevent join errors
         filtered_parts = [part for part in parts if part is not None]
         return "\n".join(filtered_parts)
+    
+    def _wrap_field_horizontal(
+        self,
+        field_name: str,
+        label: str,
+        input_html: str,
+        help_text: Optional[str] = None,
+        error: Optional[str] = None,
+        required: bool = False,
+    ) -> str:
+        """Wrap field with horizontal layout (Bootstrap row/col format)."""
+        parts = ['<div class="row mb-3">']
+        
+        # Add label in left column
+        label_html = build_label(field_name, label, required)
+        label_html = label_html.replace('<label', '<label class="col-sm-3 col-form-label"')
+        parts.append(label_html)
+        
+        # Add input in right column
+        parts.append('<div class="col-sm-9">')
+        parts.append(input_html)
+        
+        # Add help text
+        if help_text:
+            help_html = build_help_text(field_name, help_text)
+            if self.config["help_class"]:
+                help_html = help_html.replace(
+                    'class="help-text"', f'class="{self.config["help_class"]}"'
+                )
+            parts.append(help_html)
+        
+        # Add error message
+        if error:
+            error_html = build_error_message(field_name, error)
+            if self.config["error_class"]:
+                error_html = error_html.replace(
+                    'class="error-message"', f'class="{self.config["error_class"]}"'
+                )
+            parts.append(error_html)
+        
+        parts.append('</div>')  # Close col-sm-9
+        parts.append('</div>')  # Close row
+        
+        # Filter out None values to prevent join errors
+        filtered_parts = [part for part in parts if part is not None]
+        return "\n".join(filtered_parts)
+    
+    def _render_tabbed_layout(
+        self,
+        fields: List[tuple],
+        data: Dict[str, Any],
+        errors: Dict[str, Any],
+        required_fields: List[str],
+    ) -> List[str]:
+        """Render fields in a tabbed layout."""
+        # Group fields into logical tabs
+        tabs = self._group_fields_into_tabs(fields)
+        
+        parts = []
+        
+        # Create tab navigation
+        parts.append('<ul class="nav nav-tabs" id="formTabs" role="tablist">')
+        for i, (tab_name, _) in enumerate(tabs):
+            active_class = " active" if i == 0 else ""
+            tab_id = f"tab-{tab_name.lower().replace(' ', '-')}"
+            parts.append(f'''
+            <li class="nav-item" role="presentation">
+                <button class="nav-link{active_class}" id="{tab_id}-tab" data-bs-toggle="tab" 
+                        data-bs-target="#{tab_id}" type="button" role="tab" 
+                        aria-controls="{tab_id}" aria-selected="{"true" if i == 0 else "false"}">
+                    {tab_name}
+                </button>
+            </li>
+            ''')
+        parts.append('</ul>')
+        
+        # Create tab content
+        parts.append('<div class="tab-content" id="formTabContent">')
+        for i, (tab_name, tab_fields) in enumerate(tabs):
+            active_class = " show active" if i == 0 else ""
+            tab_id = f"tab-{tab_name.lower().replace(' ', '-')}"
+            parts.append(f'<div class="tab-pane fade{active_class}" id="{tab_id}" role="tabpanel" aria-labelledby="{tab_id}-tab">')
+            
+            # Render fields in this tab
+            for field_name, field_schema in tab_fields:
+                field_html = self._render_field(
+                    field_name,
+                    field_schema,
+                    data.get(field_name),
+                    errors.get(field_name),
+                    required_fields,
+                    "vertical",  # Use vertical layout within tabs
+                )
+                parts.append(field_html)
+            
+            parts.append('</div>')
+        
+        parts.append('</div>')
+        return parts
+    
+    def _group_fields_into_tabs(self, fields: List[tuple]) -> List[tuple]:
+        """Group fields into logical tabs based on field names."""
+        # Simple grouping logic - can be enhanced based on field metadata
+        personal_fields = []
+        contact_fields = []
+        other_fields = []
+        
+        for field_name, field_schema in fields:
+            field_lower = field_name.lower()
+            if any(keyword in field_lower for keyword in ['name', 'username', 'password', 'bio', 'role']):
+                personal_fields.append((field_name, field_schema))
+            elif any(keyword in field_lower for keyword in ['email', 'phone', 'address', 'subject', 'message']):
+                contact_fields.append((field_name, field_schema))
+            else:
+                other_fields.append((field_name, field_schema))
+        
+        tabs = []
+        if personal_fields:
+            tabs.append(("Personal Info", personal_fields))
+        if contact_fields:
+            tabs.append(("Contact Details", contact_fields))
+        if other_fields:
+            tabs.append(("Additional", other_fields))
+            
+        # If no logical grouping, put all in one tab
+        if not tabs:
+            tabs.append(("Form Fields", fields))
+            
+        return tabs
+    
+    def _render_side_by_side_layout(
+        self,
+        fields: List[tuple],
+        data: Dict[str, Any],
+        errors: Dict[str, Any],
+        required_fields: List[str],
+    ) -> List[str]:
+        """Render fields in a side-by-side layout using Bootstrap grid."""
+        parts = []
+        
+        # Group fields into pairs for side-by-side arrangement
+        field_pairs = []
+        for i in range(0, len(fields), 2):
+            if i + 1 < len(fields):
+                field_pairs.append((fields[i], fields[i + 1]))
+            else:
+                # Odd number of fields - last field goes alone
+                field_pairs.append((fields[i], None))
+        
+        # Render each pair in a row
+        for left_field, right_field in field_pairs:
+            parts.append('<div class="row">')
+            
+            # Left column
+            parts.append('<div class="col-md-6">')
+            if left_field:
+                field_name, field_schema = left_field
+                field_html = self._render_field(
+                    field_name,
+                    field_schema,
+                    data.get(field_name),
+                    errors.get(field_name),
+                    required_fields,
+                    "vertical",  # Use vertical layout within each column
+                )
+                parts.append(field_html)
+            parts.append('</div>')
+            
+            # Right column
+            parts.append('<div class="col-md-6">')
+            if right_field:
+                field_name, field_schema = right_field
+                field_html = self._render_field(
+                    field_name,
+                    field_schema,
+                    data.get(field_name),
+                    errors.get(field_name),
+                    required_fields,
+                    "vertical",  # Use vertical layout within each column
+                )
+                parts.append(field_html)
+            parts.append('</div>')
+            
+            parts.append('</div>')  # Close row
+        
+        return parts
 
     def _render_csrf_field(self) -> str:
         """Render CSRF token field."""
@@ -398,6 +634,7 @@ def render_form_html(
     form_data: Optional[Dict[str, Any]] = None,
     errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
     framework: str = "bootstrap",
+    layout: str = "vertical",
     **kwargs,
 ) -> str:
     """
@@ -408,6 +645,7 @@ def render_form_html(
         form_data: Form data to populate fields with
         errors: Validation errors (dict or SchemaFormValidationError)
         framework: CSS framework to use
+        layout: Layout type - "vertical", "horizontal", "side-by-side", or "tabbed"
         **kwargs: Additional rendering options
 
     Returns:
@@ -419,4 +657,4 @@ def render_form_html(
         errors = error_dict
 
     renderer = EnhancedFormRenderer(framework=framework)
-    return renderer.render_form_from_model(form_model_cls, data=form_data, errors=errors, **kwargs)
+    return renderer.render_form_from_model(form_model_cls, data=form_data, errors=errors, layout=layout, **kwargs)

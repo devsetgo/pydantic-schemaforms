@@ -29,37 +29,53 @@ from enum import Enum
 
 # Import pydantic-forms components
 from pydantic_forms.integration import (
-    FormBuilder, AutoFormBuilder, create_login_form, create_contact_form,
-    create_registration_form, render_form_page, FormIntegration
+    FormBuilder,
+    AutoFormBuilder,
+    create_login_form,
+    create_contact_form,
+    create_registration_form,
+    render_form_page,
+    FormIntegration,
 )
 from pydantic_forms.modern_renderer import FormField, FormSection, FormDefinition
 from pydantic_forms.layouts import (
-    Layout, HorizontalLayout, VerticalLayout, GridLayout, 
-    TabLayout, CardLayout, ResponsiveGridLayout
+    Layout,
+    HorizontalLayout,
+    VerticalLayout,
+    GridLayout,
+    TabLayout,
+    CardLayout,
+    ResponsiveGridLayout,
 )
 
 app = Flask(__name__)
-app.secret_key = 'demo-secret-key-change-in-production'
+app.secret_key = "demo-secret-key-change-in-production"
 
 # ============================================================================
 # PYDANTIC MODELS FOR FORMS
 # ============================================================================
 
+
 class UserRole(str, Enum):
     """User role enumeration."""
+
     ADMIN = "admin"
     USER = "user"
     MODERATOR = "moderator"
     GUEST = "guest"
 
+
 class LoginModel(BaseModel):
     """Simple login model."""
+
     email: EmailStr = Field(..., description="Your email address")
     password: str = Field(..., min_length=6, description="Your password")
     remember_me: bool = Field(False, description="Keep me logged in")
 
+
 class ContactModel(BaseModel):
     """Contact form model."""
+
     name: str = Field(..., min_length=2, max_length=100, description="Your full name")
     email: EmailStr = Field(..., description="Your email address")
     subject: str = Field(..., min_length=5, max_length=200, description="Subject of your message")
@@ -67,88 +83,93 @@ class ContactModel(BaseModel):
     urgency: str = Field("medium", description="How urgent is this?")
     subscribe: bool = Field(False, description="Subscribe to newsletter")
 
+
 class UserProfileModel(BaseModel):
     """Medium complexity user profile model."""
+
     # Personal Information
     first_name: str = Field(..., min_length=1, max_length=50)
     last_name: str = Field(..., min_length=1, max_length=50)
     email: EmailStr = Field(...)
-    phone: Optional[str] = Field(None, pattern=r'^\+?[\d\s\-\(\)]+$')
-    
+    phone: Optional[str] = Field(None, pattern=r"^\+?[\d\s\-\(\)]+$")
+
     # Account Settings
-    username: str = Field(..., min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_]+$')
+    username: str = Field(..., min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_]+$")
     role: UserRole = Field(UserRole.USER)
     bio: Optional[str] = Field(None, max_length=500)
-    
+
     # Preferences
     birth_date: Optional[date] = Field(None)
     newsletter: bool = Field(False)
     notifications: bool = Field(True)
-    
+
     # Location
     country: str = Field(..., description="Your country")
     timezone: str = Field("UTC", description="Your timezone")
 
+
 class KitchenSinkModel(BaseModel):
     """Comprehensive model showcasing all input types and features."""
-    
+
     # === TEXT INPUTS ===
     text_field: str = Field(..., min_length=2, max_length=100, description="Basic text input")
     email_field: EmailStr = Field(..., description="Email with validation")
     password_field: str = Field(..., min_length=8, description="Password field")
-    url_field: Optional[str] = Field(None, pattern=r'^https?://.+', description="Website URL")
+    url_field: Optional[str] = Field(None, pattern=r"^https?://.+", description="Website URL")
     search_field: Optional[str] = Field(None, description="Search input")
     tel_field: Optional[str] = Field(None, description="Phone number")
-    
+
     # === NUMERIC INPUTS ===
     integer_field: int = Field(..., ge=1, le=100, description="Integer between 1-100")
     float_field: float = Field(..., ge=0.0, le=1000.0, description="Decimal number")
     range_field: int = Field(50, ge=0, le=100, description="Range slider")
-    
+
     # === SELECTION INPUTS ===
     select_field: str = Field(..., description="Dropdown selection")
     radio_field: str = Field(..., description="Radio button group")
     checkbox_field: bool = Field(False, description="Single checkbox")
     multiselect_field: List[str] = Field(default_factory=list, description="Multiple selection")
-    
+
     # === DATE/TIME INPUTS ===
     date_field: date = Field(..., description="Date picker")
     datetime_field: datetime = Field(..., description="Date and time picker")
     time_field: Optional[str] = Field(None, description="Time picker")
     month_field: Optional[str] = Field(None, description="Month picker")
     week_field: Optional[str] = Field(None, description="Week picker")
-    
+
     # === TEXT AREAS ===
     textarea_field: str = Field(..., min_length=10, max_length=1000, description="Large text area")
     code_field: Optional[str] = Field(None, description="Code input area")
-    
+
     # === SPECIALIZED INPUTS ===
     color_field: str = Field("#ff0000", description="Color picker")
     file_field: Optional[str] = Field(None, description="File upload")
     image_field: Optional[str] = Field(None, description="Image upload")
     hidden_field: str = Field("hidden_value", description="Hidden field")
-    
+
     # === ADVANCED VALIDATIONS ===
     confirm_password: str = Field(..., description="Confirm password")
     terms_accepted: bool = Field(..., description="Accept terms and conditions")
-    
-    @field_validator('confirm_password')
+
+    @field_validator("confirm_password")
     @classmethod
     def passwords_match(cls, v, info):
-        if 'password_field' in info.data and v != info.data['password_field']:
-            raise ValueError('Passwords do not match')
+        if "password_field" in info.data and v != info.data["password_field"]:
+            raise ValueError("Passwords do not match")
         return v
-    
-    @field_validator('terms_accepted')
+
+    @field_validator("terms_accepted")
     @classmethod
     def terms_must_be_accepted(cls, v):
         if not v:
-            raise ValueError('You must accept the terms and conditions')
+            raise ValueError("You must accept the terms and conditions")
         return v
+
 
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
+
 
 def get_base_template():
     """Get the base HTML template with Bootstrap and navigation."""
@@ -288,57 +309,57 @@ def get_base_template():
 </html>
     """
 
+
 def render_page(title, content):
     """Render a page with the base template."""
     template = get_base_template()
     from markupsafe import Markup
+
     return render_template_string(template, title=title, content=Markup(content))
+
 
 def handle_form_submission(form_model, success_message="Form submitted successfully!"):
     """Handle form submission with validation and feedback."""
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             # Get form data
             form_data = request.form.to_dict()
-            
+
             # Handle checkboxes (they don't appear in form data if unchecked)
             for field_name, field_info in form_model.model_fields.items():
                 if field_info.annotation == bool and field_name not in form_data:
                     form_data[field_name] = False
-                elif field_info.annotation == bool and form_data.get(field_name) == 'on':
+                elif field_info.annotation == bool and form_data.get(field_name) == "on":
                     form_data[field_name] = True
-            
+
             # Handle multiselect fields
             for key in request.form.keys():
                 if len(request.form.getlist(key)) > 1:
                     form_data[key] = request.form.getlist(key)
-            
+
             # Validate with Pydantic model
             validated_data = form_model(**form_data)
-            
-            flash(success_message, 'success')
-            return {
-                'success': True,
-                'data': validated_data.dict(),
-                'message': success_message
-            }
-            
+
+            flash(success_message, "success")
+            return {"success": True, "data": validated_data.dict(), "message": success_message}
+
         except Exception as e:
             error_msg = str(e)
-            flash(f'Form validation failed: {error_msg}', 'error')
+            flash(f"Form validation failed: {error_msg}", "error")
             return {
-                'success': False,
-                'data': form_data,
-                'errors': {'general': [error_msg]},
-                'message': error_msg
+                "success": False,
+                "data": form_data,
+                "errors": {"general": [error_msg]},
+                "message": error_msg,
             }
-    
+
     return None
+
 
 def create_simple_form_html(fields_data):
     """Create simple HTML form from field data."""
     html_parts = []
-    
+
     for field in fields_data:
         field_html = f"""
         <div class="mb-3">
@@ -347,23 +368,25 @@ def create_simple_form_html(fields_data):
                 {'<span class="text-danger">*</span>' if field.get('required') else ''}
             </label>
         """
-        
-        if field['type'] == 'text':
+
+        if field["type"] == "text":
             field_html += f'<input type="text" class="form-control" id="{field["name"]}" name="{field["name"]}" placeholder="{field.get("placeholder", "")}" {"required" if field.get("required") else ""}>'
-        elif field['type'] == 'email':
+        elif field["type"] == "email":
             field_html += f'<input type="email" class="form-control" id="{field["name"]}" name="{field["name"]}" placeholder="{field.get("placeholder", "")}" {"required" if field.get("required") else ""}>'
-        elif field['type'] == 'password':
+        elif field["type"] == "password":
             field_html += f'<input type="password" class="form-control" id="{field["name"]}" name="{field["name"]}" placeholder="{field.get("placeholder", "")}" {"required" if field.get("required") else ""}>'
-        elif field['type'] == 'textarea':
-            rows = field.get('rows', 3)
+        elif field["type"] == "textarea":
+            rows = field.get("rows", 3)
             field_html += f'<textarea class="form-control" id="{field["name"]}" name="{field["name"]}" rows="{rows}" placeholder="{field.get("placeholder", "")}" {"required" if field.get("required") else ""}></textarea>'
-        elif field['type'] == 'select':
+        elif field["type"] == "select":
             field_html += f'<select class="form-select" id="{field["name"]}" name="{field["name"]}" {"required" if field.get("required") else ""}>'
-            for option in field.get('options', []):
-                selected = 'selected' if option.get('selected') else ''
-                field_html += f'<option value="{option["value"]}" {selected}>{option["label"]}</option>'
-            field_html += '</select>'
-        elif field['type'] == 'checkbox':
+            for option in field.get("options", []):
+                selected = "selected" if option.get("selected") else ""
+                field_html += (
+                    f'<option value="{option["value"]}" {selected}>{option["label"]}</option>'
+                )
+            field_html += "</select>"
+        elif field["type"] == "checkbox":
             field_html += f"""
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="{field["name"]}" name="{field["name"]}" value="true">
@@ -372,69 +395,67 @@ def create_simple_form_html(fields_data):
                 </label>
             </div>"""
             continue  # Skip the closing div since checkbox has its own structure
-        elif field['type'] == 'file':
-            accept = f'accept="{field["accept"]}"' if field.get('accept') else ''
+        elif field["type"] == "file":
+            accept = f'accept="{field["accept"]}"' if field.get("accept") else ""
             field_html += f'<input type="file" class="form-control" id="{field["name"]}" name="{field["name"]}" {accept} {"required" if field.get("required") else ""}>'
-        elif field['type'] == 'number':
-            min_attr = f'min="{field["min"]}"' if field.get('min') is not None else ''
-            max_attr = f'max="{field["max"]}"' if field.get('max') is not None else ''
+        elif field["type"] == "number":
+            min_attr = f'min="{field["min"]}"' if field.get("min") is not None else ""
+            max_attr = f'max="{field["max"]}"' if field.get("max") is not None else ""
             field_html += f'<input type="number" class="form-control" id="{field["name"]}" name="{field["name"]}" {min_attr} {max_attr} placeholder="{field.get("placeholder", "")}" {"required" if field.get("required") else ""}>'
-        elif field['type'] == 'date':
+        elif field["type"] == "date":
             field_html += f'<input type="date" class="form-control" id="{field["name"]}" name="{field["name"]}" {"required" if field.get("required") else ""}>'
         else:
             field_html += f'<input type="text" class="form-control" id="{field["name"]}" name="{field["name"]}" placeholder="{field.get("placeholder", "")}" {"required" if field.get("required") else ""}>'
-        
-        if field['type'] != 'checkbox':
-            field_html += '</div>'
-        
+
+        if field["type"] != "checkbox":
+            field_html += "</div>"
+
         html_parts.append(field_html)
-    
-    return '\n'.join(html_parts)
+
+    return "\n".join(html_parts)
     """Handle form submission with validation and feedback."""
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             # Get form data
             form_data = request.form.to_dict()
-            
+
             # Handle checkboxes (they don't appear in form data if unchecked)
             for field_name, field_info in form_model.model_fields.items():
                 if field_info.annotation == bool and field_name not in form_data:
                     form_data[field_name] = False
-                elif field_info.annotation == bool and form_data.get(field_name) == 'on':
+                elif field_info.annotation == bool and form_data.get(field_name) == "on":
                     form_data[field_name] = True
-            
+
             # Handle multiselect fields
             for key in request.form.keys():
                 if len(request.form.getlist(key)) > 1:
                     form_data[key] = request.form.getlist(key)
-            
+
             # Validate with Pydantic model
             validated_data = form_model(**form_data)
-            
-            flash(success_message, 'success')
-            return {
-                'success': True,
-                'data': validated_data.dict(),
-                'message': success_message
-            }
-            
+
+            flash(success_message, "success")
+            return {"success": True, "data": validated_data.dict(), "message": success_message}
+
         except Exception as e:
             error_msg = str(e)
-            flash(f'Form validation failed: {error_msg}', 'error')
+            flash(f"Form validation failed: {error_msg}", "error")
             return {
-                'success': False,
-                'data': form_data,
-                'errors': {'general': [error_msg]},
-                'message': error_msg
+                "success": False,
+                "data": form_data,
+                "errors": {"general": [error_msg]},
+                "message": error_msg,
             }
-    
+
     return None
+
 
 # ============================================================================
 # ROUTE HANDLERS
 # ============================================================================
 
-@app.route('/')
+
+@app.route("/")
 def index():
     """Main overview page showcasing all examples."""
     content = """
@@ -615,48 +636,92 @@ def index():
         </div>
     </div>
     """
-    
+
     return render_page("Home", content)
 
-@app.route('/minimal', methods=['GET', 'POST'])
+
+@app.route("/minimal", methods=["GET", "POST"])
 def minimal_forms():
     """Minimal forms examples - login and contact."""
-    
+
     # Handle form submissions
     login_result = None
     contact_result = None
-    
-    if request.method == 'POST':
-        if 'login_submit' in request.form:
+
+    if request.method == "POST":
+        if "login_submit" in request.form:
             login_result = handle_form_submission(LoginModel, "Login successful!")
-        elif 'contact_submit' in request.form:
+        elif "contact_submit" in request.form:
             contact_result = handle_form_submission(ContactModel, "Message sent successfully!")
-    
+
     # Define login form fields
     login_fields = [
-        {'name': 'email', 'label': 'Email Address', 'type': 'email', 'required': True, 'placeholder': 'Enter your email'},
-        {'name': 'password', 'label': 'Password', 'type': 'password', 'required': True, 'placeholder': 'Enter your password'},
-        {'name': 'remember_me', 'label': 'Remember Me', 'type': 'checkbox'}
+        {
+            "name": "email",
+            "label": "Email Address",
+            "type": "email",
+            "required": True,
+            "placeholder": "Enter your email",
+        },
+        {
+            "name": "password",
+            "label": "Password",
+            "type": "password",
+            "required": True,
+            "placeholder": "Enter your password",
+        },
+        {"name": "remember_me", "label": "Remember Me", "type": "checkbox"},
     ]
-    
+
     # Define contact form fields
     contact_fields = [
-        {'name': 'name', 'label': 'Full Name', 'type': 'text', 'required': True, 'placeholder': 'Enter your full name'},
-        {'name': 'email', 'label': 'Email Address', 'type': 'email', 'required': True, 'placeholder': 'Enter your email'},
-        {'name': 'subject', 'label': 'Subject', 'type': 'text', 'required': True, 'placeholder': 'Subject of your message'},
-        {'name': 'urgency', 'label': 'Urgency Level', 'type': 'select', 'required': True, 'options': [
-            {'value': 'low', 'label': 'Low'},
-            {'value': 'medium', 'label': 'Medium', 'selected': True},
-            {'value': 'high', 'label': 'High'},
-            {'value': 'urgent', 'label': 'Urgent'}
-        ]},
-        {'name': 'message', 'label': 'Message', 'type': 'textarea', 'required': True, 'rows': 4, 'placeholder': 'Your message'},
-        {'name': 'subscribe', 'label': 'Subscribe to newsletter', 'type': 'checkbox'}
+        {
+            "name": "name",
+            "label": "Full Name",
+            "type": "text",
+            "required": True,
+            "placeholder": "Enter your full name",
+        },
+        {
+            "name": "email",
+            "label": "Email Address",
+            "type": "email",
+            "required": True,
+            "placeholder": "Enter your email",
+        },
+        {
+            "name": "subject",
+            "label": "Subject",
+            "type": "text",
+            "required": True,
+            "placeholder": "Subject of your message",
+        },
+        {
+            "name": "urgency",
+            "label": "Urgency Level",
+            "type": "select",
+            "required": True,
+            "options": [
+                {"value": "low", "label": "Low"},
+                {"value": "medium", "label": "Medium", "selected": True},
+                {"value": "high", "label": "High"},
+                {"value": "urgent", "label": "Urgent"},
+            ],
+        },
+        {
+            "name": "message",
+            "label": "Message",
+            "type": "textarea",
+            "required": True,
+            "rows": 4,
+            "placeholder": "Your message",
+        },
+        {"name": "subscribe", "label": "Subscribe to newsletter", "type": "checkbox"},
     ]
-    
+
     login_form_html = create_simple_form_html(login_fields)
     contact_form_html = create_simple_form_html(contact_fields)
-    
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-lightning-charge"></i> Minimal Forms</h1>
@@ -762,47 +827,97 @@ html = create_simple_form_html(contact_fields)</code></pre>
         </div>
     </div>
     """
-    
+
     return render_page("Minimal Forms", content)
 
-@app.route('/medium', methods=['GET', 'POST'])
+
+@app.route("/medium", methods=["GET", "POST"])
 def medium_forms():
     """Medium complexity forms - user registration and profiles."""
-    
+
     # Handle form submissions
     profile_result = None
-    
-    if request.method == 'POST':
-        if 'profile_submit' in request.form:
-            profile_result = handle_form_submission(UserProfileModel, "Profile updated successfully!")
-    
+
+    if request.method == "POST":
+        if "profile_submit" in request.form:
+            profile_result = handle_form_submission(
+                UserProfileModel, "Profile updated successfully!"
+            )
+
     # Define profile form fields
     profile_fields = [
-        {'name': 'first_name', 'label': 'First Name', 'type': 'text', 'required': True, 'placeholder': 'Enter your first name'},
-        {'name': 'last_name', 'label': 'Last Name', 'type': 'text', 'required': True, 'placeholder': 'Enter your last name'},
-        {'name': 'email', 'label': 'Email Address', 'type': 'email', 'required': True, 'placeholder': 'Enter your email'},
-        {'name': 'phone', 'label': 'Phone Number', 'type': 'text', 'placeholder': 'Enter your phone number'},
-        {'name': 'username', 'label': 'Username', 'type': 'text', 'required': True, 'placeholder': 'Choose a username'},
-        {'name': 'role', 'label': 'Role', 'type': 'select', 'required': True, 'options': [
-            {'value': 'user', 'label': 'User', 'selected': True},
-            {'value': 'admin', 'label': 'Administrator'},
-            {'value': 'moderator', 'label': 'Moderator'},
-            {'value': 'guest', 'label': 'Guest'}
-        ]},
-        {'name': 'bio', 'label': 'Biography', 'type': 'textarea', 'rows': 4, 'placeholder': 'Tell us about yourself'},
-        {'name': 'birth_date', 'label': 'Birth Date', 'type': 'date'},
-        {'name': 'country', 'label': 'Country', 'type': 'select', 'required': True, 'options': [
-            {'value': 'us', 'label': 'United States'},
-            {'value': 'ca', 'label': 'Canada'},
-            {'value': 'uk', 'label': 'United Kingdom'},
-            {'value': 'au', 'label': 'Australia'}
-        ]},
-        {'name': 'newsletter', 'label': 'Subscribe to Newsletter', 'type': 'checkbox'},
-        {'name': 'notifications', 'label': 'Enable Notifications', 'type': 'checkbox'}
+        {
+            "name": "first_name",
+            "label": "First Name",
+            "type": "text",
+            "required": True,
+            "placeholder": "Enter your first name",
+        },
+        {
+            "name": "last_name",
+            "label": "Last Name",
+            "type": "text",
+            "required": True,
+            "placeholder": "Enter your last name",
+        },
+        {
+            "name": "email",
+            "label": "Email Address",
+            "type": "email",
+            "required": True,
+            "placeholder": "Enter your email",
+        },
+        {
+            "name": "phone",
+            "label": "Phone Number",
+            "type": "text",
+            "placeholder": "Enter your phone number",
+        },
+        {
+            "name": "username",
+            "label": "Username",
+            "type": "text",
+            "required": True,
+            "placeholder": "Choose a username",
+        },
+        {
+            "name": "role",
+            "label": "Role",
+            "type": "select",
+            "required": True,
+            "options": [
+                {"value": "user", "label": "User", "selected": True},
+                {"value": "admin", "label": "Administrator"},
+                {"value": "moderator", "label": "Moderator"},
+                {"value": "guest", "label": "Guest"},
+            ],
+        },
+        {
+            "name": "bio",
+            "label": "Biography",
+            "type": "textarea",
+            "rows": 4,
+            "placeholder": "Tell us about yourself",
+        },
+        {"name": "birth_date", "label": "Birth Date", "type": "date"},
+        {
+            "name": "country",
+            "label": "Country",
+            "type": "select",
+            "required": True,
+            "options": [
+                {"value": "us", "label": "United States"},
+                {"value": "ca", "label": "Canada"},
+                {"value": "uk", "label": "United Kingdom"},
+                {"value": "au", "label": "Australia"},
+            ],
+        },
+        {"name": "newsletter", "label": "Subscribe to Newsletter", "type": "checkbox"},
+        {"name": "notifications", "label": "Enable Notifications", "type": "checkbox"},
     ]
-    
+
     profile_form_html = create_simple_form_html(profile_fields)
-    
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-gear"></i> Medium Complexity Forms</h1>
@@ -955,45 +1070,105 @@ def medium_forms():
         </div>
     </div>
     """
-    
+
     return render_page("Medium Complexity", content)
 
-@app.route('/kitchen', methods=['GET', 'POST'])
+
+@app.route("/kitchen", methods=["GET", "POST"])
 def kitchen_sink():
     """Kitchen sink form - showcasing all features."""
-    
+
     # Handle form submission
     kitchen_result = None
-    
-    if request.method == 'POST':
-        kitchen_result = handle_form_submission(KitchenSinkModel, "Kitchen sink form submitted successfully!")
-    
+
+    if request.method == "POST":
+        kitchen_result = handle_form_submission(
+            KitchenSinkModel, "Kitchen sink form submitted successfully!"
+        )
+
     # Define comprehensive form fields
     kitchen_fields = [
-        {'name': 'text_field', 'label': 'Text Input', 'type': 'text', 'required': True, 'placeholder': 'Enter some text'},
-        {'name': 'email_field', 'label': 'Email Input', 'type': 'email', 'required': True, 'placeholder': 'Enter your email'},
-        {'name': 'password_field', 'label': 'Password', 'type': 'password', 'required': True, 'placeholder': 'Enter password'},
-        {'name': 'integer_field', 'label': 'Integer (1-100)', 'type': 'number', 'required': True, 'min': 1, 'max': 100, 'placeholder': 'Enter a number'},
-        {'name': 'float_field', 'label': 'Decimal Number', 'type': 'number', 'required': True, 'min': 0, 'max': 1000, 'placeholder': 'Enter decimal'},
-        {'name': 'textarea_field', 'label': 'Text Area', 'type': 'textarea', 'required': True, 'rows': 4, 'placeholder': 'Enter your message'},
-        {'name': 'select_field', 'label': 'Select Dropdown', 'type': 'select', 'required': True, 'options': [
-            {'value': 'option1', 'label': 'Option 1'},
-            {'value': 'option2', 'label': 'Option 2'},
-            {'value': 'option3', 'label': 'Option 3'}
-        ]},
-        {'name': 'radio_field', 'label': 'Radio Group', 'type': 'select', 'required': True, 'options': [
-            {'value': 'red', 'label': 'Red'},
-            {'value': 'green', 'label': 'Green'},
-            {'value': 'blue', 'label': 'Blue'}
-        ]},
-        {'name': 'date_field', 'label': 'Date Picker', 'type': 'date', 'required': True},
-        {'name': 'file_field', 'label': 'File Upload', 'type': 'file', 'accept': '.pdf,.jpg,.png'},
-        {'name': 'checkbox_field', 'label': 'Checkbox Option', 'type': 'checkbox'},
-        {'name': 'terms_accepted', 'label': 'I accept the terms and conditions', 'type': 'checkbox'}
+        {
+            "name": "text_field",
+            "label": "Text Input",
+            "type": "text",
+            "required": True,
+            "placeholder": "Enter some text",
+        },
+        {
+            "name": "email_field",
+            "label": "Email Input",
+            "type": "email",
+            "required": True,
+            "placeholder": "Enter your email",
+        },
+        {
+            "name": "password_field",
+            "label": "Password",
+            "type": "password",
+            "required": True,
+            "placeholder": "Enter password",
+        },
+        {
+            "name": "integer_field",
+            "label": "Integer (1-100)",
+            "type": "number",
+            "required": True,
+            "min": 1,
+            "max": 100,
+            "placeholder": "Enter a number",
+        },
+        {
+            "name": "float_field",
+            "label": "Decimal Number",
+            "type": "number",
+            "required": True,
+            "min": 0,
+            "max": 1000,
+            "placeholder": "Enter decimal",
+        },
+        {
+            "name": "textarea_field",
+            "label": "Text Area",
+            "type": "textarea",
+            "required": True,
+            "rows": 4,
+            "placeholder": "Enter your message",
+        },
+        {
+            "name": "select_field",
+            "label": "Select Dropdown",
+            "type": "select",
+            "required": True,
+            "options": [
+                {"value": "option1", "label": "Option 1"},
+                {"value": "option2", "label": "Option 2"},
+                {"value": "option3", "label": "Option 3"},
+            ],
+        },
+        {
+            "name": "radio_field",
+            "label": "Radio Group",
+            "type": "select",
+            "required": True,
+            "options": [
+                {"value": "red", "label": "Red"},
+                {"value": "green", "label": "Green"},
+                {"value": "blue", "label": "Blue"},
+            ],
+        },
+        {"name": "date_field", "label": "Date Picker", "type": "date", "required": True},
+        {"name": "file_field", "label": "File Upload", "type": "file", "accept": ".pdf,.jpg,.png"},
+        {"name": "checkbox_field", "label": "Checkbox Option", "type": "checkbox"},
+        {
+            "name": "terms_accepted",
+            "label": "I accept the terms and conditions",
+            "type": "checkbox",
+        },
     ]
-    
+
     kitchen_form_html = create_simple_form_html(kitchen_fields)
-    
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-stars"></i> Kitchen Sink Form</h1>
@@ -1215,28 +1390,29 @@ def kitchen_sink():
         </div>
     </div>
     """
-    
+
     return render_page("Kitchen Sink", content)
 
-@app.route('/layouts')
+
+@app.route("/layouts")
 def layout_examples():
     """Showcase different layout systems."""
-    
+
     # Create sample form for layout demonstrations
     sample_form = FormBuilder(framework="bootstrap")
     sample_form.text_input("name", "Full Name")
     sample_form.email_input("email", "Email")
     sample_form.textarea_input("message", "Message", rows=3)
-    
+
     # Render form with different layouts
     vertical_layout = sample_form.render()
-    
+
     # Simple horizontal layout using CSS classes
     horizontal_layout_form = FormBuilder(framework="bootstrap")
     horizontal_layout_form.text_input("name", "Full Name")
     horizontal_layout_form.email_input("email", "Email")
     horizontal_layout_form.textarea_input("message", "Message", rows=3)
-    
+
     horizontal_layout = f"""
     <div class="row">
         <div class="col-md-4">
@@ -1259,7 +1435,7 @@ def layout_examples():
         </div>
     </div>
     """
-    
+
     # Grid layout using Bootstrap grid
     grid_layout = f"""
     <div class="row g-3">
@@ -1283,7 +1459,7 @@ def layout_examples():
         </div>
     </div>
     """
-    
+
     # Tab layout using Bootstrap tabs
     tab_layout = f"""
     <ul class="nav nav-tabs" id="formTabs" role="tablist">
@@ -1330,7 +1506,7 @@ def layout_examples():
         </div>
     </div>
     """
-    
+
     # Card layout
     card_layout = f"""
     <div class="card">
@@ -1343,7 +1519,7 @@ def layout_examples():
         </div>
     </div>
     """
-    
+
     content = f"""
     <div class="demo-section">
         <h1><i class="bi bi-grid-3x3"></i> Layout Systems</h1>
@@ -1508,10 +1684,11 @@ html = form.render()  # Default vertical layout</code></pre>
         </div>
     </div>
     """
-    
+
     return render_page("Layout Examples", content)
 
-@app.route('/docs')
+
+@app.route("/docs")
 def documentation():
     """Documentation and API reference."""
     content = """
@@ -1534,8 +1711,9 @@ def documentation():
     """
     return render_page("Documentation", content)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print("🚀 Starting Pydantic Forms Flask Demo")
     print("📱 Visit http://localhost:5001 to see the examples")
     print("🔧 This demonstrates comprehensive Flask integration")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host="0.0.0.0", port=5001)

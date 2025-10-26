@@ -1,0 +1,88 @@
+
+            
+            <div class="tabbed-layout">
+                <ul class="nav nav-tabs" id="form-tabs" role="tablist">
+                    
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-tab_one-tab" 
+                            data-bs-toggle="tab" data-bs-target="#tab-tab_one" 
+                            type="button" role="tab" aria-controls="tab-tab_one" 
+                            aria-selected="true">
+                        Tab One
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-tab_two-tab" 
+                            data-bs-toggle="tab" data-bs-target="#tab-tab_two" 
+                            type="button" role="tab" aria-controls="tab-tab_two" 
+                            aria-selected="false">
+                        Tab Two
+                    </button>
+                </li>
+                </ul>
+                <div class="tab-content" id="form-tab-content">
+                    
+                <div class="tab-pane fade show active" id="tab-tab_one" 
+                     role="tabpanel" aria-labelledby="tab-tab_one-tab">
+                    <div class="vertical-layout"><form method="POST" action="/submit" class="needs-validation" novalidate="True">
+<div class="mb-3">
+<label class="form-label" for="title">Title *</label>
+<input name="title" id="title" class="form-control" required="required" type="text" />
+<div id="title-help" class="form-text text-muted">The title of the item.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="age">Age *</label>
+<input name="age" id="age" class="form-control" required="required" min="0" max="120" step="1" type="number" />
+<div id="age-help" class="form-text text-muted">Your age in years.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="email">Email *</label>
+<input name="email" id="email" class="form-control" required="required" type="email" />
+<div id="email-help" class="form-text text-muted">Your email address.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="subscribe">Subscribe to newsletter</label>
+<input name="subscribe" id="subscribe" class="form-check-input" value="1" type="checkbox" />
+<div id="subscribe-help" class="form-text text-muted">Check to receive our newsletter.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="country">Country *</label>
+<input name="country" id="country" class="form-control" required="required" type="text" />
+<div id="country-help" class="form-text text-muted">Select your country of residence.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="birth_date">Birth Date *</label>
+<input name="birth_date" id="birth_date" class="form-control" required="required" type="text" />
+<div id="birth_date-help" class="form-text text-muted">Your date of birth.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="appointment_time">Appointment Time</label>
+<input name="appointment_time" id="appointment_time" class="form-control" type="text" />
+<div id="appointment_time-help" class="form-text text-muted">Preferred time for appointment.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="credit_card_number">Credit Card Number *</label>
+<input name="credit_card_number" id="credit_card_number" class="form-control" required="required" type="text" />
+<div id="credit_card_number-help" class="form-text text-muted">Enter your credit card number.</div>
+</div>
+<button type="submit" class="btn btn-primary">Submit</button>
+</form></div>
+                </div>
+                <div class="tab-pane fade" id="tab-tab_two" 
+                     role="tabpanel" aria-labelledby="tab-tab_two-tab">
+                    <div class="horizontal-layout"><div class="row"><div class="col"><form method="POST" action="/submit" class="needs-validation" novalidate="True">
+<div class="mb-3">
+<label class="form-label" for="bio">Biography</label>
+<input name="bio" id="bio" class="form-control" type="text" />
+<div id="bio-help" class="form-text text-muted">A brief biography.</div>
+</div>
+<div class="mb-3">
+<label class="form-label" for="profile_picture">Profile Picture</label>
+<input name="profile_picture" id="profile_picture" class="form-control" type="text" />
+<div id="profile_picture-help" class="form-text text-muted">Upload your profile picture.</div>
+</div>
+<button type="submit" class="btn btn-primary">Submit</button>
+</form></div></div></div>
+                </div>
+                </div>
+            </div>

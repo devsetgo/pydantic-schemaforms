@@ -1,38 +1,19 @@
 """
 Advanced layout system for pydantic-forms using Python 3.14 template strings.
 Provides horizontal, vertical, grid, tab, and accordion layouts.
+
+Requires: Python 3.14+ (no backward compatibility)
 """
 
 from typing import List, Dict, Any, Optional, Union
+import string.templatelib
 
-# Python 3.14 template string support with fallback
-try:
-    from string.templatelib import Template, Interpolation
-except ImportError:
-    # Fallback for earlier Python versions
-    from string import Template
+# Import version check to ensure compatibility
 
-    class Interpolation:
-        def __init__(self, **kwargs):
-            self.data = kwargs
 
-        def __getattr__(self, name):
-            return self.data.get(name, "")
-
-        def __getitem__(self, key):
-            return self.data.get(key, "")
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def keys(self):
-            return self.data.keys()
-
-        def values(self):
-            return self.data.values()
-
-        def items(self):
-            return self.data.items()
+class Layout:
+    """Layout base class placeholder."""
+    pass
 
 
 from html import escape
@@ -46,7 +27,7 @@ class BaseLayout:
     def __init__(self, content: Union[str, List[str]] = "", **kwargs):
         self.content = content if isinstance(content, str) else "\n".join(content)
         self.attributes = kwargs
-        self.template_renderer = Template(self.template)
+        self.template_renderer = string.templatelib.Template(self.template)
 
     def render(self, **kwargs) -> str:
         """Render the layout component."""
@@ -185,7 +166,7 @@ class ResponsiveGridLayout(GridLayout):
 class TabLayout:
     """Tab layout with JavaScript interactivity."""
 
-    template = Template(
+    template = string.templatelib.Template(
         """
 <div class="tab-layout ${class_}" style="${style}">
     <div class="tab-navigation" role="tablist">
@@ -324,7 +305,7 @@ function switchTab(tabId, buttonElement) {
 class AccordionLayout:
     """Accordion layout with collapsible sections."""
 
-    template = Template(
+    template = string.templatelib.Template(
         """
 <div class="accordion-layout ${class_}" style="${style}">
     ${accordion_sections}
@@ -431,7 +412,7 @@ function toggleAccordion(sectionId, buttonElement) {
 class ModalLayout:
     """Modal dialog layout."""
 
-    template = Template(
+    template = string.templatelib.Template(
         """
 <div class="modal-overlay ${class_}" id="${modal_id}" style="display: none; ${style}">
     <div class="modal-dialog" role="dialog" aria-labelledby="${modal_id}-title">

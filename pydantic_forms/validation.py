@@ -1,44 +1,18 @@
 """
 Advanced validation system for pydantic-forms using Python 3.14 template strings.
 Provides both client-side JavaScript validation and server-side Python validation.
+
+Requires: Python 3.14+ (no backward compatibility)
 """
 
 import re
 from typing import Any, Dict, List, Optional, Callable, Union, Tuple
 from datetime import datetime, date
-
-# Python 3.14 template string support with fallback
-try:
-    from string.templatelib import Template, Interpolation
-except ImportError:
-    # Fallback for earlier Python versions
-    from string import Template
-
-    class Interpolation:
-        def __init__(self, **kwargs):
-            self.data = kwargs
-
-        def __getattr__(self, name):
-            return self.data.get(name, "")
-
-        def __getitem__(self, key):
-            return self.data.get(key, "")
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def keys(self):
-            return self.data.keys()
-
-        def values(self):
-            return self.data.values()
-
-        def items(self):
-            return self.data.items()
-
-
+import string.templatelib
 from pydantic import ValidationError
 from html import escape
+
+# Import version check to ensure compatibility
 
 
 class ValidationRule:
@@ -429,7 +403,7 @@ class FieldValidator:
         if not js_validations:
             return ""
 
-        template = Template(
+        template = string.templatelib.Template(
             """
 function validate${field_name_camel}(value) {
     ${validations}
@@ -441,11 +415,10 @@ function validate${field_name_camel}(value) {
         # Convert field name to camelCase for JavaScript function
         field_name_camel = "".join(word.capitalize() for word in self.field_name.split("_"))
 
-        interpolation = Interpolation(
-            field_name_camel=field_name_camel, validations="\n    ".join(js_validations)
+        return template.substitute(
+            field_name_camel=field_name_camel,
+            validations="\n    ".join(js_validations)
         )
-
-        return template.substitute(interpolation.data)
 
 
 class FormValidator:
@@ -534,7 +507,7 @@ class FormValidator:
                 field_name_camel = "".join(word.capitalize() for word in field_name.split("_"))
                 field_validations.append(f"    '{field_name}': validate{field_name_camel}")
 
-        template = Template(
+        template = string.templatelib.Template(
             """
 <script>
 ${field_functions}
@@ -630,12 +603,10 @@ document.addEventListener('DOMContentLoaded', function() {
         """
         )
 
-        interpolation = Interpolation(
+        return template.substitute(
             field_functions="\n\n".join(field_functions),
             field_validations=",\n".join(field_validations),
         )
-
-        return template.substitute(interpolation.data)
 
 
 # Common cross-field validation rules

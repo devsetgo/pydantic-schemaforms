@@ -4,7 +4,7 @@ Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
 from typing import List, Dict, Any, Optional
-from string.templatelib import Interpolation, Template
+import string.templatelib
 from .base import SelectInputBase, FormInput
 from html import escape
 
@@ -34,10 +34,12 @@ class SelectInput(SelectInputBase):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        # Use template interpolation
+        # Use template substitution
         try:
-            interpolation = Interpolation(attributes=attributes_str, options=options_html)
-            return Template(self.template).substitute(interpolation)
+            return string.templatelib.Template(self.template).substitute(
+                attributes=attributes_str,
+                options=options_html
+            )
         except Exception:
             # Fallback rendering
             return f"<select {attributes_str}>{options_html}</select>"
@@ -172,12 +174,11 @@ class CheckboxGroup(SelectInputBase):
         legend_text = legend or group_name.replace("_", " ").title()
 
         try:
-            interpolation = Interpolation(
+            return string.templatelib.Template(self.template).substitute(
                 fieldset_attributes=fieldset_attributes_str,
                 legend=escape(legend_text),
                 checkboxes=checkboxes_html,
             )
-            return Template(self.template).substitute(interpolation)
         except Exception:
             # Fallback rendering
             return f"""
@@ -260,12 +261,11 @@ class RadioGroup(SelectInputBase):
         legend_text = legend or group_name.replace("_", " ").title()
 
         try:
-            interpolation = Interpolation(
+            return string.templatelib.Template(self.template).substitute(
                 fieldset_attributes=fieldset_attributes_str,
                 legend=escape(legend_text),
                 radio_buttons=radio_buttons_html,
             )
-            return Template(self.template).substitute(interpolation)
         except Exception:
             # Fallback rendering
             return f"""
@@ -337,10 +337,11 @@ class ComboBoxInput(SelectInput):
         input_attributes_str = self._build_attributes_string(input_attrs)
 
         try:
-            interpolation = Interpolation(
-                input_attributes=input_attributes_str, datalist_id=datalist_id, options=options_html
+            return string.templatelib.Template(self.template).substitute(
+                input_attributes=input_attributes_str,
+                datalist_id=datalist_id,
+                options=options_html
             )
-            return Template(self.template).substitute(interpolation)
         except Exception:
             # Fallback rendering
             return f"""
