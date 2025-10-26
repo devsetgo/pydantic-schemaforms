@@ -1,6 +1,6 @@
 # Variables
 REPONAME = pydantic-forms
-APP_VERSION = 25.Q4-001.beta
+APP_VERSION = 25.Q4.1.beta
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
@@ -109,6 +109,18 @@ ex-run: ## Run the example fast application
 # cp /workspaces/$(REPONAME)/examples/main.py /workspaces/$(REPONAME)/ex.py
 	uvicorn examples.main:app --port ${PORT} --reload  --log-level $(LOG_LEVEL)
 # rm /workspaces/$(REPONAME)/ex.py
+
+ex-flask: ## Run the Flask unified demo (development with reload on port ${PORT})
+	cd examples && FLASK_PORT=${PORT} $(PYTHON) unified_demo.py
+
+ex-flask-prod: ## Run the Flask unified demo (production with ${WORKER} workers on port ${PORT})
+	cd examples && gunicorn -w ${WORKER} -b 0.0.0.0:${PORT} --log-level $(LOG_LEVEL) unified_demo:app
+
+ex-fastapi: ## Run the FastAPI demo (development with reload on port ${PORT})
+	cd examples && uvicorn fastapi_demo:app --host 0.0.0.0 --port ${PORT} --reload --log-level $(LOG_LEVEL)
+
+ex-fastapi-prod: ## Run the FastAPI demo (production with ${WORKER} workers on port ${PORT})
+	cd examples && uvicorn fastapi_demo:app --host 0.0.0.0 --port ${PORT} --workers ${WORKER} --log-level $(LOG_LEVEL)
 
 ex-f: ## Run the example flask application
 	FLASK_APP=example.py python -m flask run --host 0.0.0.0 --port ${PORT} --reload

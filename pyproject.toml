@@ -55,7 +55,7 @@ use_parentheses = true
 line_length = 100
 
 [tool.bumpcalver]
-version_format = "{current_date}-{build_count:03}"
+version_format = "{current_date}.{build_count:03}"
 date_format = "%y.Q%q"
 timezone = "America/New_York"
 git_tag = true
@@ -64,7 +64,7 @@ auto_commit = false
 path = "makefile"
 file_type = "makefile"
 variable = "APP_VERSION"
-version_standard = "standard"
+version_standard = "python"
 
 [[tool.bumpcalver.file]]
 path = "pyproject.toml"

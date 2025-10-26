@@ -34,8 +34,9 @@ from .integration import (
 
 # FormModel abstraction for Pydantic models with UI hints
 from .schema_form import FormModel, Field, form_validator, ValidationResult
-from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError
+from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError, render_form_html_async
 from .render_form import render_form_html
+from .material_renderer import render_material_form_html_async
 
 # Enhanced FormField matching design_idea.py vision
 from .form_field import (
@@ -162,6 +163,8 @@ __all__ = [
     "EnhancedFormRenderer",
     "SchemaFormValidationError",
     "render_form_html",
+    "render_form_html_async",
+    "render_material_form_html_async",
     # Pre-built form templates
     "create_login_form",
     "create_registration_form",
