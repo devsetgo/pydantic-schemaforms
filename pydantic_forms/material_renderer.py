@@ -343,7 +343,8 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
 
         # Build options HTML
         options_html = ""
-        if not is_required:
+        # Only add placeholder option if no default value and not required
+        if not is_required and (value is None or str(value) == ""):
             options_html += '<option value="">-- Select an option --</option>'
 
         for option in options:
@@ -358,6 +359,10 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
 
         # Error state
         error_class = " mdc-select--invalid" if error else ""
+        
+        # Check if select has a value to set initial floating label state
+        has_value = value is not None and str(value) != "" and str(value) != "None"
+        floating_class = " mdc-floating-label--float-above" if has_value else ""
 
         html = f'''
         <div class="mdc-form-field-container">
@@ -367,13 +372,15 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
                     <select id="{field_name}"
                            name="{field_name}"
                            class="mdc-select__native-control"
+                           aria-labelledby="{field_name}-label"
                            {'required' if is_required else ''}>
                         {options_html}
                     </select>
-                    <span class="mdc-floating-label">{escape(label)}{' *' if is_required else ''}</span>
+                    <span class="mdc-floating-label{floating_class}" id="{field_name}-label">{escape(label)}{' *' if is_required else ''}</span>
                     <span class="mdc-line-ripple"></span>
                 </div>
-            </div>'''
+            </div>
+        </div>'''
 
         if help_text:
             html += f'''
@@ -1495,13 +1502,46 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
             const selects = document.querySelectorAll('.mdc-select');
             selects.forEach(select => {
                 const selectInput = select.querySelector('.mdc-select__native-control');
+                const floatingLabel = select.querySelector('.mdc-floating-label');
+
+                // Force check initial state on page load
+                setTimeout(() => {
+                    if (selectInput.value && selectInput.value !== '') {
+                        select.classList.add('mdc-select--activated');
+                        if (floatingLabel) {
+                            floatingLabel.classList.add('mdc-floating-label--float-above');
+                        }
+                    }
+                }, 0);
 
                 selectInput.addEventListener('focus', () => {
                     select.classList.add('mdc-select--focused');
+                    if (floatingLabel) {
+                        floatingLabel.classList.add('mdc-floating-label--float-above');
+                    }
                 });
 
                 selectInput.addEventListener('blur', () => {
                     select.classList.remove('mdc-select--focused');
+                    if (!selectInput.value || selectInput.value === '') {
+                        if (floatingLabel) {
+                            floatingLabel.classList.remove('mdc-floating-label--float-above');
+                        }
+                    }
+                });
+
+                selectInput.addEventListener('change', () => {
+                    if (selectInput.value && selectInput.value !== '') {
+                        select.classList.add('mdc-select--activated');
+                        if (floatingLabel) {
+                            floatingLabel.classList.add('mdc-floating-label--float-above');
+                        }
+                    } else {
+                        select.classList.remove('mdc-select--activated');
+                        if (floatingLabel) {
+                            floatingLabel.classList.remove('mdc-floating-label--float-above');
+                        }
+                    }
                 });
             });
         }
@@ -1519,6 +1559,26 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
                         input.classList.add('mdc-text-field--label-floating');
                     } else {
                         input.classList.remove('mdc-text-field--label-floating');
+                    }
+                });
+            });
+
+            // Handle select floating labels
+            const selects = document.querySelectorAll('.mdc-select__native-control');
+            selects.forEach(select => {
+                const selectContainer = select.closest('.mdc-select');
+                const floatingLabel = selectContainer?.querySelector('.mdc-floating-label');
+                
+                // Check if select has value on load
+                if (select.value && select.value !== '' && floatingLabel) {
+                    floatingLabel.classList.add('mdc-floating-label--float-above');
+                }
+
+                select.addEventListener('change', () => {
+                    if (select.value && select.value !== '' && floatingLabel) {
+                        floatingLabel.classList.add('mdc-floating-label--float-above');
+                    } else if (floatingLabel) {
+                        floatingLabel.classList.remove('mdc-floating-label--float-above');
                     }
                 });
             });

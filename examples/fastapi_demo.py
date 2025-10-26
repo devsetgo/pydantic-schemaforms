@@ -194,7 +194,9 @@ class MediumContactForm(FormModel):
         Priority.MEDIUM,
         title="Priority Level",
         input_type="select",
-        options=[p.value for p in Priority],
+        options=[
+            {"value": p.value, "label": p.value.title()} for p in Priority
+        ],
         help_text="How urgent is your request?",
         icon="bi bi-exclamation-triangle"
     )
@@ -641,8 +643,8 @@ async def internal_server_error(request: Request, exc):
 if __name__ == "__main__":
     import uvicorn
     
-    # Get port from environment variable or default to 8000
-    port = int(os.environ.get('FASTAPI_PORT', 8000))
+    # Get port from environment variable or default to 5000
+    port = int(os.environ.get('FASTAPI_PORT', 5000))
     
     print("🚀 Starting FastAPI Pydantic Forms Demo...")
     print(f"📄 Home page: http://localhost:{port}/")
