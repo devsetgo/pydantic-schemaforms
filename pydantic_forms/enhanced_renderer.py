@@ -209,6 +209,40 @@ class EnhancedFormRenderer:
         form_parts.append("</form>")
 
         return "\n".join(form_parts)
+    
+    async def render_form_from_model_async(
+        self,
+        model_cls: Type[FormModel],
+        data: Optional[Dict[str, Any]] = None,
+        errors: Optional[Dict[str, Any]] = None,
+        submit_url: str = "/submit",
+        method: str = "POST",
+        include_csrf: bool = False,
+        include_submit_button: bool = True,
+        layout: str = "vertical",
+        **kwargs,
+    ) -> str:
+        """
+        Async version of render_form_from_model for high-performance applications.
+        
+        This method is useful when rendering multiple forms concurrently or when
+        integrating with async validation services.
+        """
+        # For CPU-bound form rendering, we run in a thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,  # Use default thread pool
+            self.render_form_from_model,
+            model_cls,
+            data,
+            errors,
+            submit_url,
+            method,
+            include_csrf,
+            include_submit_button,
+            layout,
+            **kwargs
+        )
 
     def _build_form_tag(self, attrs: Dict[str, Any]) -> str:
         """Build opening form tag with attributes."""
@@ -658,3 +692,38 @@ def render_form_html(
 
     renderer = EnhancedFormRenderer(framework=framework)
     return renderer.render_form_from_model(form_model_cls, data=form_data, errors=errors, layout=layout, **kwargs)
+
+
+import asyncio
+from typing import Awaitable
+
+
+async def render_form_html_async(
+    form_model_cls: Type[FormModel],
+    form_data: Optional[Dict[str, Any]] = None,
+    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    framework: str = "bootstrap",
+    layout: str = "vertical",
+    **kwargs,
+) -> str:
+    """
+    Async convenience function to render an HTML form for the given FormModel class.
+
+    Args:
+        form_model_cls: Pydantic FormModel class with UI elements
+        form_data: Form data to populate fields with
+        errors: Validation errors (dict or SchemaFormValidationError)
+        framework: CSS framework to use
+        layout: Layout type - "vertical", "horizontal", "side-by-side", or "tabbed"
+        **kwargs: Additional rendering options
+
+    Returns:
+        Complete HTML form as string
+    """
+    # Handle SchemaFormValidationError
+    if isinstance(errors, SchemaFormValidationError):
+        error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
+        errors = error_dict
+
+    renderer = EnhancedFormRenderer(framework=framework)
+    return await renderer.render_form_from_model_async(form_model_cls, data=form_data, errors=errors, layout=layout, **kwargs)

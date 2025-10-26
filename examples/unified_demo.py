@@ -738,11 +738,14 @@ def internal_server_error(e):
 # ============================================================================
 
 if __name__ == "__main__":
+    # Get port from environment variable or default to 5000
+    port = int(os.environ.get('FLASK_PORT', 5000))
+    
     print("🚀 Starting Unified Pydantic Forms Demo...")
-    print("📄 Home page: http://localhost:5000/")
-    print("🎨 Bootstrap examples: http://localhost:5000/bootstrap/")
-    print("🎨 Material examples: http://localhost:5000/material/")
-    print("📐 Layout examples: http://localhost:5000/layouts")
+    print(f"📄 Home page: http://localhost:{port}/")
+    print(f"🎨 Bootstrap examples: http://localhost:{port}/bootstrap/")
+    print(f"🎨 Material examples: http://localhost:{port}/material/")
+    print(f"📐 Layout examples: http://localhost:{port}/layouts")
     print("⚡ Features: Python 3.14+ templates, multiple themes, all layouts")
     
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=True, port=port, host='0.0.0.0')

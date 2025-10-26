@@ -1630,3 +1630,45 @@ def render_material_form_html(
         html_parts.append(renderer.get_material_javascript())
 
     return '\n'.join(html_parts)
+
+
+import asyncio
+
+
+async def render_material_form_html_async(
+    form_model_cls: Type[FormModel],
+    form_data: Optional[Dict[str, Any]] = None,
+    errors: Optional[Dict[str, str]] = None,
+    layout: str = "vertical",
+    include_css: bool = True,
+    include_js: bool = True,
+    **kwargs,
+) -> str:
+    """
+    Async version of render_material_form_html for high-performance applications.
+
+    Args:
+        form_model_cls: Pydantic FormModel class
+        form_data: Form data to populate fields
+        errors: Validation errors
+        layout: Layout type - "vertical", "horizontal", "side-by-side", or "tabbed"
+        include_css: Whether to include Material CSS
+        include_js: Whether to include Material JavaScript
+        **kwargs: Additional rendering options
+
+    Returns:
+        Complete HTML with Material Design 3 form
+    """
+    # For CPU-bound rendering, run in thread pool
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None,
+        render_material_form_html,
+        form_model_cls,
+        form_data,
+        errors,
+        layout,
+        include_css,
+        include_js,
+        **kwargs
+    )
