@@ -68,7 +68,8 @@ help:  ## Display this help message
 
 install: ## Install the project's dependencie
 	$(PIP) install -r $(REQUIREMENTS_PATH)
-
+	pip install -e .
+	
 local-install: ## Install the project
 	 pip install -e .
 

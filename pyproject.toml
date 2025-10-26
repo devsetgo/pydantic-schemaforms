@@ -3,8 +3,8 @@ requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
 [project]
-name = "PySchemaForms"
-version = "25.Q4.1.beta"
+name = "pydantic-forms"
+version = "25.4.1b1"
 requires-python = ">=3.14"
 description = ""
 keywords = []
@@ -23,9 +23,9 @@ email = "mikeryan56@gmail.com"
 file = "LICENSE"
 
 [project.urls]
-Homepage = "https://github.com/devsetgo/PySchemaForms"
-Documentation = "https://devsetgo.github.io/PySchemaForms/"
-Repository = "https://github.com/devsetgo/PySchemaForms"
+Homepage = "https://github.com/devsetgo/pydantic-forms"
+Documentation = "https://devsetgo.github.io/pydantic-forms/"
+Repository = "https://github.com/devsetgo/pydantic-forms"
 
 [project.optional-dependencies]
 
@@ -36,8 +36,8 @@ line-length = 100
 indent-width = 4
 unsafe-fixes = true
 target-version = "py314"
-src = [ "PySchemaForms", "test",]
-exclude = [ "unreleased/*", "scripts/*", "coverage.xml", "coverage-badge.svg", "PySchemaForms/static/node_modules",]
+src = [ "pydantic_forms", "tests",]
+exclude = [ "unreleased/*", "scripts/*", "coverage.xml", "coverage-badge.svg", "pydantic_forms/static/node_modules",]
 
 [tool.flake8]
 max-line-length = 100
@@ -46,7 +46,7 @@ ignore = [ "E302", "E501", "E303",]
 exclude = [ ".git", "__pycache__", "docs", "build", "tests", "_venv", "htmlcov", "scripts", ".pytest_cache", ".vscode", "dist", "*.egg-info",]
 
 [tool.isort]
-src_paths = [ "PySchemaForms", "test",]
+src_paths = [ "pydantic_forms", "tests",]
 force_single_line = false
 multi_line_output = 3
 include_trailing_comma = true
@@ -73,7 +73,7 @@ variable = "project.version"
 version_standard = "python"
 
 [[tool.bumpcalver.file]]
-path = "PySchemaForms/__init__.py"
+path = "pydantic_forms/__init__.py"
 file_type = "python"
 variable = "__version__"
 version_standard = "python"
@@ -86,7 +86,7 @@ variable = "sonar.projectVersion"
 [tool.black]
 line-length = 100
 target-version = [ "py314",]
-exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n      | \\.tox\n      | \\.venv\n      | _venv\n      | build\n      | dist\n      | PySchemaForms/static/node_modules\n    )/\n)\n"
+exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n      | \\.tox\n      | \\.venv\n      | _venv\n      | build\n      | dist\n      | pydantic_forms/static/node_modules\n    )/\n)\n"
 
 [tool.ruff.lint]
 select = [ "C", "F", "E", "W", "B",]
@@ -97,7 +97,7 @@ indent-style = "space"
 quote-style = "single"
 
 [tool.coverage.run]
-source = [ "PySchemaForms",]
+source = [ "pydantic_forms",]
 omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
 
 [tool.coverage.report]
@@ -110,7 +110,7 @@ python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
 
 [tool.hatch.build.targets.sdist]
-include = [ "/PySchemaForms",]
+include = [ "/pydantic_forms",]
 exclude = [ "*.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]

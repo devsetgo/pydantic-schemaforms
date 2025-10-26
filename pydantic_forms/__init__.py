@@ -78,7 +78,7 @@ from .validation import (
 # - ui_elements.py -> use inputs/ directory structure instead
 # - template_compat.py -> empty/unused
 
-__version__ = "2.0.0"
+__version__ = "25.4.1b1"
 __author__ = "Pydantic Forms Team"
 __description__ = "Modern form generation library for Python 3.14+"
 
