@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-forms"
-version = "25.4.1b1"
+version = "25.Q4.1.beta"
 requires-python = ">=3.14"
 description = ""
 keywords = []
