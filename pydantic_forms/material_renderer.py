@@ -36,18 +36,902 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
         **kwargs,
     ) -> str:
         """
-        Render a complete Material Design 3 form.
+        Render a complete self-contained Material Design 3 form.
+        Includes ALL necessary CSS, JavaScript, HTML, and error handling.
         """
         schema = model_cls.model_json_schema()
         data = data or {}
         errors = errors or {}
 
-        # Start form with Material Design structure
-        form_html = self._build_material_form_structure(
+        # Build complete self-contained form
+        form_html = self._build_complete_material_form(
             schema, data, errors, submit_url, method, include_csrf, include_submit_button, layout, **kwargs
         )
 
         return form_html
+
+    def _build_complete_material_form(
+        self,
+        schema: Dict[str, Any],
+        data: Dict[str, Any],
+        errors: Dict[str, Any],
+        submit_url: str,
+        method: str,
+        include_csrf: bool,
+        include_submit_button: bool,
+        layout: str = "vertical",
+        **kwargs,
+    ) -> str:
+        """Build a complete self-contained Material Design 3 form with all dependencies."""
+
+        # Start with complete HTML structure including all dependencies
+        form_parts = [
+            '<!-- Material Design 3 Self-Contained Form -->',
+            self._get_material_dependencies(),
+            self._get_material_css(),
+            '<div class="pydantic-material-form-container">',
+            f'<form method="{method}" action="{submit_url}" class="pydantic-material-form" novalidate>',
+        ]
+
+        # Add CSRF if requested
+        if include_csrf:
+            form_parts.append(self._render_csrf_field())
+
+        # Add global form errors if any
+        if errors and isinstance(errors, dict):
+            global_errors = [v for k, v in errors.items() if k.startswith('__')]
+            if global_errors:
+                form_parts.append(self._render_material_global_errors(global_errors))
+
+        # Get fields and sort by UI order
+        fields = list(schema["properties"].items())
+        fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
+        required_fields = schema.get("required", [])
+
+        # Render fields based on layout
+        if layout == "tabbed":
+            form_parts.extend(self._render_material_tabbed_layout(fields, data, errors, required_fields))
+        elif layout == "side-by-side":
+            form_parts.extend(self._render_material_side_by_side_layout(fields, data, errors, required_fields))
+        else:
+            # Render each field with Material Design components
+            for field_name, field_schema in fields:
+                field_html = self._render_material_field(
+                    field_name, field_schema, data.get(field_name), errors.get(field_name), required_fields, layout
+                )
+                form_parts.append(field_html)
+
+        # Add submit button if requested
+        if include_submit_button:
+            form_parts.append(self._render_material_submit_button())
+
+        form_parts.extend(['</form>', '</div>'])
+        
+        # Add model list JavaScript if any model_list fields were rendered
+        if self._has_model_list_fields(schema):
+            from .model_list import ModelListRenderer
+            list_renderer = ModelListRenderer(framework="material")
+            form_parts.append(list_renderer.get_model_list_javascript())
+
+        # Add Material Design JavaScript
+        form_parts.append(self._get_material_javascript())
+
+        return '\n'.join(form_parts)
+
+    def _get_material_dependencies(self) -> str:
+        """Return self-contained Material Design dependencies - no external links."""
+        return '''
+<!-- Self-Contained Material Design Dependencies -->
+<style>
+/* Embedded Material Icons */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(data:font/woff2;base64,d09GMgABAAAAAAYkAAoAAAAAE) format('woff2');
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Embedded Bootstrap Icons */
+.bi::before {
+  display: inline-block;
+  content: "";
+  vertical-align: -.125em;
+  background-repeat: no-repeat;
+  background-size: 1rem 1rem;
+}
+</style>'''
+
+    def _get_material_css(self) -> str:
+        """Return complete Material Design CSS for self-contained forms."""
+        return '''
+<style>
+/* Pydantic Forms - Self-Contained Material Design 3 Styles */
+.pydantic-material-form-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+    color: #1d1b20;
+}
+
+.pydantic-material-form {
+    width: 100%;
+    background: #fef7ff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+/* Material Design Form Field Container */
+.pydantic-form-field-container {
+    margin-bottom: 24px;
+    position: relative;
+    width: 100%;
+}
+
+/* Material Design Text Field */
+.pydantic-text-field {
+    position: relative;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.pydantic-text-field input,
+.pydantic-text-field textarea,
+.pydantic-text-field select {
+    width: 100%;
+    padding: 16px 12px 8px 12px;
+    border: 1px solid #79747e;
+    border-radius: 4px;
+    background: #fef7ff;
+    color: #1d1b20;
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.pydantic-text-field input:focus,
+.pydantic-text-field textarea:focus,
+.pydantic-text-field select:focus {
+    border-color: #6750a4;
+    border-width: 2px;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px #6750a4;
+}
+
+/* Material Design Labels */
+.pydantic-field-label {
+    display: block;
+    color: #49454f;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.pydantic-field-label.required::after {
+    content: ' *';
+    color: #ba1a1a;
+}
+
+/* Material Design Help Text */
+.pydantic-help-text {
+    font-size: 12px;
+    color: #49454f;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Material Design Error Text */
+.pydantic-error-text {
+    font-size: 12px;
+    color: #ba1a1a;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Field with Error State */
+.pydantic-field-error input,
+.pydantic-field-error textarea,
+.pydantic-field-error select {
+    border-color: #ba1a1a;
+    background: #fcfcfc;
+}
+
+/* Material Design Buttons */
+.pydantic-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.pydantic-btn-primary {
+    background: #6750a4;
+    color: #ffffff;
+}
+
+.pydantic-btn-primary:hover {
+    background: #5a43a0;
+    box-shadow: 0 2px 4px rgba(103, 80, 164, 0.3);
+}
+
+.pydantic-btn-secondary {
+    background: transparent;
+    color: #6750a4;
+    border: 1px solid #79747e;
+}
+
+.pydantic-btn-secondary:hover {
+    background: #f3f0ff;
+}
+
+/* Material Design Checkboxes */
+.pydantic-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.pydantic-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #79747e;
+    border-radius: 2px;
+    background: #fef7ff;
+    cursor: pointer;
+    position: relative;
+}
+
+.pydantic-checkbox:checked {
+    background: #6750a4;
+    border-color: #6750a4;
+}
+
+.pydantic-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Material Design Select */
+.pydantic-select-container {
+    position: relative;
+}
+
+.pydantic-select-container::after {
+    content: '▼';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #49454f;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* Material Design Color Input */
+.pydantic-color-input {
+    width: 100%;
+    height: 56px;
+    border: 1px solid #79747e;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fef7ff;
+}
+
+.pydantic-color-input:hover {
+    border-color: #6750a4;
+}
+
+/* Material Design Range Input */
+.pydantic-range-input {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #e7e0ec;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.pydantic-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #6750a4;
+    cursor: pointer;
+}
+
+.pydantic-range-input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #6750a4;
+    cursor: pointer;
+    border: none;
+}
+
+/* Material Design Cards for Lists */
+.pydantic-list-container {
+    border: 1px solid #e7e0ec;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+    margin: 16px 0;
+}
+
+.pydantic-list-header {
+    background: #f3f0ff;
+    padding: 16px;
+    border-bottom: 1px solid #e7e0ec;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.pydantic-list-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #1d1b20;
+    margin: 0;
+}
+
+.pydantic-list-item {
+    padding: 16px;
+    border-bottom: 1px solid #f4f4f4;
+    position: relative;
+}
+
+.pydantic-list-item:last-child {
+    border-bottom: none;
+}
+
+/* Material Design Icons */
+.pydantic-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: #49454f;
+    margin-right: 8px;
+}
+
+/* Material Design Field with Icon */
+.pydantic-field-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pydantic-field-with-icon .pydantic-icon {
+    flex-shrink: 0;
+    margin-top: 16px; /* Align with input padding */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .pydantic-material-form {
+        padding: 16px;
+    }
+    
+    .pydantic-form-field-container {
+        margin-bottom: 16px;
+    }
+}
+
+/* Global Error Styling */
+.pydantic-global-errors {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.pydantic-global-error {
+    color: #ba1a1a;
+    font-size: 14px;
+    margin: 4px 0;
+}
+</style>'''
+
+        # Add model list JavaScript if any model_list fields were rendered
+        if self._has_model_list_fields(schema):
+            from .model_list import ModelListRenderer
+            list_renderer = ModelListRenderer(framework="material")
+            form_parts.append(list_renderer.get_model_list_javascript())
+
+        return '\n'.join(form_parts)
+    
+    def _has_model_list_fields(self, schema: Dict[str, Any]) -> bool:
+        """Check if the schema contains any model_list fields."""
+        properties = schema.get("properties", {})
+        for field_name, field_schema in properties.items():
+            ui_info = field_schema.get("ui", {}) or field_schema
+            ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+            if ui_element == "model_list":
+                return True
+        return False
+
+    def _render_material_field(
+        self,
+        field_name: str,
+        field_schema: Dict[str, Any],
+        value: Any = None,
+        error: Optional[str] = None,
+        required_fields: List[str] = None,
+        layout: str = "vertical",
+    ) -> str:
+        """Render a Material Design 3 form field."""
+        # Check for UI info in nested 'ui' key or directly in field schema
+        ui_info = field_schema.get("ui", {})
+        if not ui_info:
+            # UI info might be directly in the field schema (from FormField)
+            ui_info = field_schema
+
+        # Skip hidden fields
+        if ui_info.get("hidden"):
+            return self._render_hidden_field(field_name, field_schema, value)
+
+        # Determine field type - check multiple possible keys
+        ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+        if not ui_element:
+            ui_element = self._infer_ui_element(field_schema)
+
+        # Get field properties
+        label = field_schema.get("title", field_name.replace("_", " ").title())
+        help_text = ui_info.get("help_text") or field_schema.get("description")
+        is_required = field_name in (required_fields or [])
+
+        # Render different Material component types
+        if ui_element == "model_list":
+            return self._render_material_model_list(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element in ["text", "email", "password", "search", "tel", "url"]:
+            return self._render_material_text_field(
+                field_name, ui_element, label, value, error, help_text, is_required, ui_info, field_schema
+            )
+        elif ui_element == "textarea":
+            return self._render_material_textarea(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element == "number":
+            return self._render_material_number_field(
+                field_name, label, value, error, help_text, is_required, ui_info, field_schema
+            )
+        elif ui_element == "select":
+            return self._render_material_select(
+                field_name, label, value, error, help_text, is_required, ui_info, field_schema
+            )
+        elif ui_element == "checkbox":
+            return self._render_material_checkbox(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element == "radio":
+            return self._render_material_radio_group(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element == "color":
+            return self._render_material_color_field(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element == "date":
+            return self._render_material_date_field(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element == "range":
+            return self._render_material_range_field(
+                field_name, label, value, error, help_text, is_required, ui_info, field_schema
+            )
+        else:
+            # Fallback to text field for unknown types
+            return self._render_material_text_field(
+                field_name, "text", label, value, error, help_text, is_required, ui_info, field_schema
+            )
+
+    def _render_material_text_field(
+    top: 0;
+    right: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    text-align: left;
+    pointer-events: none;
+}
+
+.pydantic-notched-outline__leading,
+.pydantic-notched-outline__notch,
+.pydantic-notched-outline__trailing {
+    box-sizing: border-box;
+    height: 100%;
+    border-top: 1px solid rgba(0, 0, 0, 0.38);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.38);
+    pointer-events: none;
+}
+
+.pydantic-notched-outline__leading {
+    border-left: 1px solid rgba(0, 0, 0, 0.38);
+    border-radius: 4px 0 0 4px;
+    width: 12px;
+}
+
+.pydantic-notched-outline__trailing {
+    border-right: 1px solid rgba(0, 0, 0, 0.38);
+    border-radius: 0 4px 4px 0;
+    flex-grow: 1;
+}
+
+.pydantic-notched-outline__notch {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: calc(100% - 12px * 2);
+}
+
+.pydantic-floating-label {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 1rem;
+    line-height: 1.15rem;
+    font-weight: 400;
+    letter-spacing: 0.009375em;
+    text-decoration: inherit;
+    text-transform: inherit;
+    pointer-events: none;
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    background: white;
+    z-index: 1;
+}
+
+.pydantic-text-field__input:focus ~ .pydantic-notched-outline .pydantic-floating-label,
+.pydantic-text-field__input:not(:placeholder-shown) ~ .pydantic-notched-outline .pydantic-floating-label {
+    transform: translateY(-34px) scale(0.75);
+    padding: 0 4px;
+}
+
+.pydantic-text-field__input:focus ~ .pydantic-notched-outline .pydantic-notched-outline__leading,
+.pydantic-text-field__input:focus ~ .pydantic-notched-outline .pydantic-notched-outline__notch,
+.pydantic-text-field__input:focus ~ .pydantic-notched-outline .pydantic-notched-outline__trailing {
+    border-color: #6200ee;
+    border-width: 2px;
+}
+
+/* Icon and Input Layout */
+.pydantic-field-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pydantic-field-icon {
+    font-size: 1.25rem;
+    min-width: 24px;
+    color: rgba(0, 0, 0, 0.54);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pydantic-field-input-wrapper {
+    flex-grow: 1;
+}
+
+/* Helper Text */
+.pydantic-helper-text {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    font-weight: 400;
+    letter-spacing: 0.0333333333em;
+    margin-top: 4px;
+    margin-left: 16px;
+}
+
+.pydantic-helper-text--error {
+    color: #b00020;
+}
+
+/* Submit Button */
+.pydantic-submit-button {
+    background: #6200ee;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Roboto', sans-serif;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.pydantic-submit-button:hover {
+    background: #3700b3;
+}
+
+.pydantic-submit-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(98, 0, 238, 0.3);
+}
+
+/* Global Error Messages */
+.pydantic-global-errors {
+    background: #ffebee;
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    color: #c62828;
+}
+
+.pydantic-global-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* Select Field */
+.pydantic-select {
+    border: none;
+    border-radius: 4px;
+    background: none;
+    font-size: 1rem;
+    width: 100%;
+    height: 56px;
+    padding: 14px 16px;
+    outline: none;
+    color: rgba(0, 0, 0, 0.87);
+    font-family: 'Roboto', sans-serif;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Checkbox */
+.pydantic-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.pydantic-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: #6200ee;
+}
+
+.pydantic-checkbox-label {
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.87);
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+}
+
+/* Textarea */
+.pydantic-textarea {
+    border: none;
+    border-radius: 4px;
+    background: none;
+    font-size: 1rem;
+    width: 100%;
+    min-height: 100px;
+    padding: 14px 16px;
+    outline: none;
+    color: rgba(0, 0, 0, 0.87);
+    font-family: 'Roboto', sans-serif;
+    resize: vertical;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .pydantic-form-field-container {
+        margin-bottom: 1rem;
+    }
+    
+    .pydantic-field-with-icon {
+        gap: 8px;
+    }
+    
+    .pydantic-field-icon {
+        font-size: 1.1rem;
+        min-width: 20px;
+    }
+}
+</style>'''
+
+    def _get_material_javascript(self) -> str:
+        """Return self-contained Material Design JavaScript for form functionality."""
+        return '''
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Pydantic Material Design form functionality
+    function initPydanticMaterialForms() {
+        // Enhanced form validation and interaction
+        const forms = document.querySelectorAll('.pydantic-material-form');
+        forms.forEach(form => {
+            // Add real-time validation
+            const inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+                
+                input.addEventListener('input', function() {
+                    // Clear error state on input
+                    const container = this.closest('.pydantic-form-field-container');
+                    if (container) {
+                        container.classList.remove('pydantic-field-error');
+                        const errorText = container.querySelector('.pydantic-error-text');
+                        if (errorText) {
+                            errorText.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Field validation function
+        function validateField(field) {
+            const container = field.closest('.pydantic-form-field-container');
+            if (!container) return;
+            
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Required field validation
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                isValid = false;
+                errorMessage = 'This field is required';
+            }
+            
+            // Email validation
+            if (field.type === 'email' && field.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(field.value)) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid email address';
+                }
+            }
+            
+            // Number validation
+            if (field.type === 'number' && field.value) {
+                const min = field.getAttribute('min');
+                const max = field.getAttribute('max');
+                const value = parseFloat(field.value);
+                
+                if (min && value < parseFloat(min)) {
+                    isValid = false;
+                    errorMessage = `Value must be at least ${min}`;
+                } else if (max && value > parseFloat(max)) {
+                    isValid = false;
+                    errorMessage = `Value must be at most ${max}`;
+                }
+            }
+            
+            // Update UI based on validation
+            if (isValid) {
+                container.classList.remove('pydantic-field-error');
+            } else {
+                container.classList.add('pydantic-field-error');
+                showFieldError(container, errorMessage);
+            }
+            
+            return isValid;
+        }
+        
+        // Show field error
+        function showFieldError(container, message) {
+            let errorElement = container.querySelector('.pydantic-error-text');
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.className = 'pydantic-error-text';
+                container.appendChild(errorElement);
+            }
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Enhanced checkbox styling
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            if (!checkbox.classList.contains('pydantic-checkbox')) {
+                checkbox.classList.add('pydantic-checkbox');
+            }
+        });
+        
+        // Form submission validation
+        const submitButtons = document.querySelectorAll('button[type="submit"]');
+        submitButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                const form = this.closest('form');
+                if (form) {
+                    const inputs = form.querySelectorAll('input[required], textarea[required], select[required]');
+                    let formValid = true;
+                    
+                    inputs.forEach(input => {
+                        if (!validateField(input)) {
+                            formValid = false;
+                        }
+                    });
+                    
+                    if (!formValid) {
+                        e.preventDefault();
+                        // Scroll to first error
+                        const firstError = form.querySelector('.pydantic-field-error');
+                        if (firstError) {
+                            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }
+            });
+        });
+    }
+    
+    // Initialize forms
+    initPydanticMaterialForms();
+    
+    // Re-initialize for dynamically added content
+    window.pydanticReinitMaterial = initPydanticMaterialForms;
+});
+</script>'''
+
+    def _render_material_global_errors(self, errors: List[str]) -> str:
+        """Render global form errors."""
+        error_list = '\n'.join([f'<li>{escape(error)}</li>' for error in errors])
+        return f'''
+        <div class="pydantic-global-errors">
+            <strong>Please correct the following errors:</strong>
+            <ul>
+                {error_list}
+            </ul>
+        </div>'''
 
     def _build_material_form_structure(
         self,
@@ -97,8 +981,24 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
             form_parts.append(self._render_material_submit_button())
 
         form_parts.extend(['</form>', '</div>'])
+        
+        # Add model list JavaScript if any model_list fields were rendered
+        if self._has_model_list_fields(schema):
+            from .model_list import ModelListRenderer
+            list_renderer = ModelListRenderer(framework="material")
+            form_parts.append(list_renderer.get_model_list_javascript())
 
         return '\n'.join(form_parts)
+    
+    def _has_model_list_fields(self, schema: Dict[str, Any]) -> bool:
+        """Check if the schema contains any model_list fields."""
+        properties = schema.get("properties", {})
+        for field_name, field_schema in properties.items():
+            ui_info = field_schema.get("ui", {}) or field_schema
+            ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+            if ui_element == "model_list":
+                return True
+        return False
 
     def _render_material_field(
         self,
@@ -131,7 +1031,11 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
         is_required = field_name in (required_fields or [])
 
         # Render different Material component types
-        if ui_element in ["text", "email", "password", "search", "tel", "url"]:
+        if ui_element == "model_list":
+            return self._render_material_model_list(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
+        elif ui_element in ["text", "email", "password", "search", "tel", "url"]:
             return self._render_material_text_field(
                 field_name, ui_element, label, value, error, help_text, is_required, ui_info, field_schema
             )
@@ -206,16 +1110,16 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
         if field_schema.get("pattern"):
             attrs.append(f'pattern="{escape(field_schema["pattern"])}"')
 
-        # Icon support
+        # Icon support - simplified for side-by-side layout
         icon = ui_info.get("icon", "")
         leading_icon = ""
         if icon:
             if icon.startswith("material-icons"):
                 icon_name = icon.replace("material-icons ", "")
-                leading_icon = f'<span class="material-icons mdc-text-field__icon mdc-text-field__icon--leading">{icon_name}</span>'
+                leading_icon = f'<span class="material-icons">{icon_name}</span>'
             elif icon.startswith("bi bi-"):
                 icon_name = icon.replace("bi bi-", "")
-                leading_icon = f'<i class="bi bi-{icon_name} mdc-text-field__icon mdc-text-field__icon--leading"></i>'
+                leading_icon = f'<i class="bi bi-{icon_name}"></i>'
 
         # Value handling
         value_attr = f'value="{escape(str(value))}"' if value is not None else ''
@@ -228,40 +1132,69 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
         error_class = " mdc-text-field--invalid" if error else ""
         error_aria = f'aria-describedby="{field_name}-error"' if error else ""
 
-        # Build the Material text field
-        html = f'''
-        <div class="mdc-form-field-container">
-            <div class="mdc-text-field mdc-text-field--filled{error_class}">
-                {leading_icon}
+        # Build the Material text field with icon positioned to the left
+        if leading_icon:
+            # Layout with icon on the left side
+            html = f'''
+        <div class="pydantic-form-field-container">
+            <div class="pydantic-field-with-icon">
+                <div class="pydantic-field-icon">
+                    {leading_icon}
+                </div>
+                <div class="pydantic-field-input-wrapper">
+                    <div class="pydantic-text-field pydantic-text-field--outlined{error_class}">
+                        <input type="{input_type}"
+                               id="{field_name}"
+                               name="{field_name}"
+                               class="pydantic-text-field__input"
+                               {value_attr}
+                               {placeholder_attr}
+                               {error_aria}
+                               {' '.join(attrs)}>
+                        <div class="pydantic-notched-outline">
+                            <div class="pydantic-notched-outline__leading"></div>
+                            <div class="pydantic-notched-outline__notch">
+                                <label class="pydantic-floating-label" for="{field_name}">{escape(label)}{' *' if is_required else ''}</label>
+                            </div>
+                            <div class="pydantic-notched-outline__trailing"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>'''
+        else:
+            # Standard layout without icon
+            html = f'''
+        <div class="pydantic-form-field-container">
+            <div class="pydantic-text-field pydantic-text-field--outlined{error_class}">
                 <input type="{input_type}"
                        id="{field_name}"
                        name="{field_name}"
-                       class="mdc-text-field__input"
+                       class="pydantic-text-field__input"
                        {value_attr}
                        {placeholder_attr}
                        {error_aria}
                        {' '.join(attrs)}>
-                <label class="mdc-floating-label" for="{field_name}">{escape(label)}{' *' if is_required else ''}</label>
-                <div class="mdc-line-ripple"></div>
+                <div class="pydantic-notched-outline">
+                    <div class="pydantic-notched-outline__leading"></div>
+                    <div class="pydantic-notched-outline__notch">
+                        <label class="pydantic-floating-label" for="{field_name}">{escape(label)}{' *' if is_required else ''}</label>
+                    </div>
+                    <div class="pydantic-notched-outline__trailing"></div>
+                </div>
             </div>'''
 
         # Add help text
         if help_text:
             html += f'''
-            <div class="mdc-text-field-helper-line">
-                <div class="mdc-text-field-helper-text" id="{field_name}-helper-text">
-                    {escape(help_text)}
-                </div>
+            <div class="pydantic-helper-text">
+                {escape(help_text)}
             </div>'''
 
         # Add error message
         if error:
             html += f'''
-            <div class="mdc-text-field-helper-line">
-                <div class="mdc-text-field-helper-text mdc-text-field-helper-text--validation-msg"
-                     id="{field_name}-error" aria-live="polite">
-                    {escape(error)}
-                </div>
+            <div class="pydantic-helper-text pydantic-helper-text--error">
+                {escape(error)}
             </div>'''
 
         html += '\n        </div>'
@@ -677,6 +1610,52 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
 
         html += '\n        </div>'
         return html
+
+    def _render_material_model_list(
+        self,
+        field_name: str,
+        label: str,
+        value: Any,
+        error: Optional[str],
+        help_text: Optional[str],
+        is_required: bool,
+        ui_info: Dict[str, Any],
+    ) -> str:
+        """Render Material Design 3 model list field."""
+        
+        from .model_list import ModelListRenderer
+        
+        list_renderer = ModelListRenderer(framework="material")
+        model_class = ui_info.get("model_class")
+        
+        if not model_class:
+            return f'<!-- Error: model_class not specified for model_list field "{field_name}" -->'
+        
+        # Convert value to list of dicts if needed
+        list_values = []
+        if value:
+            if isinstance(value, list):
+                for item in value:
+                    if hasattr(item, 'model_dump'):
+                        list_values.append(item.model_dump())
+                    elif isinstance(item, dict):
+                        list_values.append(item)
+            elif hasattr(value, 'model_dump'):
+                list_values = [value.model_dump()]
+            elif isinstance(value, dict):
+                list_values = [value]
+        
+        return list_renderer.render_model_list(
+            field_name=field_name,
+            label=label,
+            model_class=model_class,
+            values=list_values,
+            error=error,
+            help_text=help_text,
+            is_required=is_required,
+            min_items=ui_info.get('min_items', 0),
+            max_items=ui_info.get('max_items', 10)
+        )
     
     def _render_material_tabbed_layout(
         self,
@@ -806,12 +1785,11 @@ class MaterialDesign3Renderer(EnhancedFormRenderer):
         return parts
 
     def _render_material_submit_button(self) -> str:
-        """Render Material Design 3 submit button."""
+        """Render self-contained Material Design submit button."""
         return '''
-        <div class="mdc-form-field-container">
-            <button type="submit" class="mdc-button mdc-button--raised">
-                <span class="mdc-button__ripple"></span>
-                <span class="mdc-button__label">Submit</span>
+        <div class="pydantic-form-field-container">
+            <button type="submit" class="pydantic-submit-button">
+                Submit
             </button>
         </div>'''
 

@@ -36,7 +36,7 @@ from .integration import (
 from .schema_form import FormModel, Field, form_validator, ValidationResult
 from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError, render_form_html_async
 from .render_form import render_form_html
-from .material_renderer import render_material_form_html_async
+# from .material_renderer import render_material_form_html_async  # Temporarily disabled due to syntax errors
 
 # Enhanced FormField matching design_idea.py vision
 from .form_field import (
@@ -65,6 +65,7 @@ from .form_layouts import (
     VerticalLayout,
     HorizontalLayout,
     TabbedLayout,
+    ListLayout,
     SectionDesign,
     FormDesign,
 )
@@ -176,6 +177,7 @@ __all__ = [
     "VerticalLayout",
     "HorizontalLayout",
     "TabbedLayout",
+    "ListLayout",
     "SectionDesign",
     "FormDesign",
     # Original layout components

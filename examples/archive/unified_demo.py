@@ -37,7 +37,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from pydantic_forms.schema_form import FormModel
 from pydantic_forms.form_field import FormField
-from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout
+from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout, ListLayout, SectionDesign
 from pydantic_forms.enhanced_renderer import render_form_html
 from pydantic_forms.material_renderer import render_material_form_html
 from pydantic_forms.validation import validate_form_data
@@ -76,6 +76,48 @@ class Country(str, Enum):
 # PYDANTIC FORM MODELS
 # ============================================================================
 
+class PetModel(FormModel):
+    """Individual pet model for use in ListLayout."""
+    
+    name: str = FormField(
+        title="Pet's Name",
+        input_type="text",
+        placeholder="Enter your pet's name",
+        help_text="The name of your pet",
+        icon="bi bi-card-text",
+        min_length=1,
+        max_length=50
+    )
+    
+    species: str = FormField(
+        title="Species",
+        input_type="select",
+        options=["Dog", "Cat", "Bird", "Fish", "Rabbit", "Hamster", "Reptile", "Other"],
+        help_text="Select the type of animal",
+        icon="bi bi-paw"
+    )
+    
+    age: Optional[int] = FormField(
+        None,
+        title="Age (years)",
+        input_type="number",
+        placeholder="Pet's age",
+        help_text="Age of your pet in years",
+        icon="bi bi-calendar",
+        min_value=0,
+        max_value=50
+    )
+    
+    is_vaccinated: bool = FormField(
+        True,
+        title="Vaccinated",
+        input_type="checkbox",
+        help_text="Has this pet been vaccinated?",
+        icon="bi bi-shield-check"
+    )
+
+
+
 class MinimalLoginForm(FormModel):
     """Minimal form example - Simple login form."""
     
@@ -112,6 +154,47 @@ class MinimalLoginForm(FormModel):
         if not v.strip():
             raise ValueError("Username cannot be empty")
         return v.strip()
+
+class PetOwnerForm(FormModel):
+    """Form that demonstrates ListLayout for pet management."""
+    
+    owner_name: str = FormField(
+        title="Owner Name",
+        input_type="text",
+        placeholder="Enter your full name",
+        help_text="Your full name as the pet owner",
+        icon="bi bi-person",
+        min_length=2,
+        max_length=100
+    )
+    
+    email: EmailStr = FormField(
+        title="Email Address",
+        input_type="email",
+        placeholder="your.email@example.com",
+        help_text="Your contact email address",
+        icon="bi bi-envelope"
+    )
+    
+    address: Optional[str] = FormField(
+        None,
+        title="Address",
+        input_type="textarea",
+        placeholder="Enter your full address...",
+        help_text="Your home address (optional)",
+        icon="bi bi-house",
+        max_length=500
+    )
+    
+    emergency_contact: Optional[str] = FormField(
+        None,
+        title="Emergency Contact",
+        input_type="text",
+        placeholder="Emergency contact name and phone",
+        help_text="Someone to contact in case of emergency",
+        icon="bi bi-person-exclamation",
+        max_length=100
+    )
 
 class MediumContactForm(FormModel):
     """Medium complexity form - Contact form with validation."""
@@ -530,6 +613,115 @@ def bootstrap_minimal():
                              success=False,
                              form_html=form_html)
 
+@app.route('/bootstrap/pets', methods=['GET', 'POST'])
+def bootstrap_pets():
+    """Bootstrap form with dynamic pet list using ListLayout."""
+    if request.method == 'POST':
+        # Handle form submission
+        form_data = request.form.to_dict(flat=False)
+        
+        # Extract owner data
+        owner_data = {
+            'owner_name': form_data.get('owner_name', [''])[0],
+            'email': form_data.get('email', [''])[0],
+            'address': form_data.get('address', [''])[0],
+            'emergency_contact': form_data.get('emergency_contact', [''])[0]
+        }
+        
+        # Extract pets data
+        pets_data = []
+        pet_index = 0
+        while f'item_{pet_index}_name' in form_data:
+            pet_data = {
+                'name': form_data.get(f'item_{pet_index}_name', [''])[0],
+                'species': form_data.get(f'item_{pet_index}_species', [''])[0],
+                'age': form_data.get(f'item_{pet_index}_age', [None])[0],
+                'is_vaccinated': f'item_{pet_index}_is_vaccinated' in form_data
+            }
+            if pet_data['name']:  # Only add pets with names
+                pets_data.append(pet_data)
+            pet_index += 1
+        
+        # Validate owner form
+        result = handle_form_submission(PetOwnerForm, owner_data)
+        
+        if result['success']:
+            return render_template('bootstrap_pets.html',
+                                 title="Pet Registration Form",
+                                 success=True,
+                                 owner_data=result['data'],
+                                 pets_data=pets_data)
+        else:
+            # Re-render form with errors
+            from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+            
+            renderer = EnhancedFormRenderer()
+            owner_form_html = renderer.render_form_from_model(PetOwnerForm.model_construct(), framework="bootstrap", include_submit_button=False, errors=result.get('errors', {}))
+            
+            # Create pet list layout
+            pet_list_layout = ListLayout(
+                form_model=PetModel,
+                min_items=0,
+                max_items=10,
+                add_button_text="Add Another Pet",
+                remove_button_text="Remove Pet",
+                section_design=SectionDesign(
+                    section_title="Your Pets",
+                    section_description="Add information about each of your pets",
+                    icon="pets",
+                    collapsible=False
+                ),
+                collapsible_items=True,
+                items_expanded_by_default=False
+            )
+            
+            pets_html = pet_list_layout.render(
+                data={'items': pets_data},
+                framework="bootstrap"
+            )
+            
+            return render_template('bootstrap_pets.html',
+                                 title="Pet Registration Form",
+                                 success=False,
+                                 owner_form_html=owner_form_html,
+                                 pets_html=pets_html,
+                                 errors=result.get('errors', {}))
+    else:
+        # GET request - show initial form
+        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        
+        renderer = EnhancedFormRenderer()
+        owner_form_html = renderer.render_form_from_model(PetOwnerForm.model_construct(), framework="bootstrap", include_submit_button=False)
+        
+        # Create pet list layout with sample data
+        pet_list_layout = ListLayout(
+            form_model=PetModel,
+            min_items=0,
+            max_items=10,
+            add_button_text="Add Another Pet",
+            remove_button_text="Remove Pet",
+            section_design=SectionDesign(
+                section_title="Your Pets",
+                section_description="Add information about each of your pets (optional)",
+                icon="pets",
+                collapsible=False
+            ),
+            collapsible_items=True,
+            items_expanded_by_default=False
+        )
+        
+        # Start with one empty pet form
+        pets_html = pet_list_layout.render(
+            data={'items': [{}]},
+            framework="bootstrap"
+        )
+        
+        return render_template('bootstrap_pets.html',
+                             title="Pet Registration Form",
+                             success=False,
+                             owner_form_html=owner_form_html,
+                             pets_html=pets_html)
+
 @app.route('/bootstrap/medium', methods=['GET', 'POST'])
 def bootstrap_medium():
     """Bootstrap medium complexity form example."""
@@ -611,6 +803,118 @@ def material_minimal():
                              theme="material",
                              success=False,
                              form_html=form_html)
+
+@app.route('/material/pets', methods=['GET', 'POST'])
+def material_pets():
+    """Material Design form with dynamic pet list using ListLayout."""
+    if request.method == 'POST':
+        # Handle form submission (same logic as bootstrap version)
+        form_data = request.form.to_dict(flat=False)
+        
+        # Extract owner data
+        owner_data = {
+            'owner_name': form_data.get('owner_name', [''])[0],
+            'email': form_data.get('email', [''])[0],
+            'address': form_data.get('address', [''])[0],
+            'emergency_contact': form_data.get('emergency_contact', [''])[0]
+        }
+        
+        # Extract pets data
+        pets_data = []
+        pet_index = 0
+        while f'item_{pet_index}_name' in form_data:
+            pet_data = {
+                'name': form_data.get(f'item_{pet_index}_name', [''])[0],
+                'species': form_data.get(f'item_{pet_index}_species', [''])[0],
+                'age': form_data.get(f'item_{pet_index}_age', [None])[0],
+                'is_vaccinated': f'item_{pet_index}_is_vaccinated' in form_data
+            }
+            if pet_data['name']:  # Only add pets with names
+                pets_data.append(pet_data)
+            pet_index += 1
+        
+        # Validate owner form
+        result = handle_form_submission(PetOwnerForm, owner_data)
+        
+        if result['success']:
+            return render_template('material_pets.html',
+                                 title="Pet Registration Form",
+                                 theme="material",
+                                 success=True,
+                                 owner_data=result['data'],
+                                 pets_data=pets_data)
+        else:
+            # Re-render form with errors
+            from pydantic_forms.material_renderer import MaterialDesign3Renderer
+            
+            renderer = MaterialDesign3Renderer()
+            owner_form_html = renderer.render_form_from_model(PetOwnerForm.model_construct(), include_submit_button=False, errors=result.get('errors', {}))
+            
+            # Create pet list layout
+            pet_list_layout = ListLayout(
+                form_model=PetModel,
+                min_items=0,
+                max_items=10,
+                add_button_text="Add Another Pet",
+                remove_button_text="Remove Pet",
+                section_design=SectionDesign(
+                    section_title="Your Pets",
+                    section_description="Add information about each of your pets",
+                    icon="pets",
+                    collapsible=False
+                ),
+                collapsible_items=True,
+                items_expanded_by_default=False
+            )
+            
+            pets_html = pet_list_layout.render(
+                data={'items': pets_data},
+                framework="material"
+            )
+            
+            return render_template('material_pets.html',
+                                 title="Pet Registration Form",
+                                 theme="material",
+                                 success=False,
+                                 owner_form_html=owner_form_html,
+                                 pets_html=pets_html,
+                                 errors=result.get('errors', {}))
+    else:
+        # GET request - show initial form
+        from pydantic_forms.material_renderer import MaterialDesign3Renderer
+        
+        renderer = MaterialDesign3Renderer()
+        owner_form_html = renderer.render_form_from_model(PetOwnerForm.model_construct(), include_submit_button=False)
+        
+        # Create pet list layout with sample data
+        pet_list_layout = ListLayout(
+            form_model=PetModel,
+            min_items=0,
+            max_items=10,
+            add_button_text="Add Another Pet",
+            remove_button_text="Remove Pet",
+            section_design=SectionDesign(
+                section_title="Your Pets",
+                section_description="Add information about each of your pets (optional)",
+                icon="pets",
+                collapsible=False
+            ),
+            collapsible_items=True,
+            items_expanded_by_default=False
+        )
+        
+        # Start with one empty pet form
+        pets_html = pet_list_layout.render(
+            data={'items': [{}]},
+            framework="material"
+        )
+        
+        return render_template('material_pets.html',
+                             title="Pet Registration Form",
+                             theme="material",
+                             success=False,
+                             owner_form_html=owner_form_html,
+                             pets_html=pets_html)
 
 @app.route('/material/medium', methods=['GET', 'POST'])
 def material_medium():
@@ -744,8 +1048,10 @@ if __name__ == "__main__":
     print("🚀 Starting Unified Pydantic Forms Demo...")
     print(f"📄 Home page: http://localhost:{port}/")
     print(f"🎨 Bootstrap examples: http://localhost:{port}/bootstrap/")
+    print(f"🐾 Pet registration (ListLayout): http://localhost:{port}/bootstrap/pets")
     print(f"🎨 Material examples: http://localhost:{port}/material/")
-    print(f"📐 Layout examples: http://localhost:{port}/layouts")
-    print("⚡ Features: Python 3.14+ templates, multiple themes, all layouts")
+    print(f"� Material pets (ListLayout): http://localhost:{port}/material/pets")
+    print(f"�📐 Layout examples: http://localhost:{port}/layouts")
+    print("⚡ Features: Python 3.14+ templates, multiple themes, ListLayout, all layouts")
     
     app.run(debug=True, port=port, host='0.0.0.0')

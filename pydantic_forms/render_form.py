@@ -39,15 +39,23 @@ def render_form_html(
         error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
         errors = error_dict
 
-    renderer = EnhancedFormRenderer(framework=framework)
+    # Use Material Design renderer if requested
+    if framework == "material":
+        from .simple_material_renderer import SimpleMaterialRenderer
+        renderer = SimpleMaterialRenderer()
+        form_html = renderer.render_form_from_model(
+            form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **kwargs
+        )
+    else:
+        renderer = EnhancedFormRenderer(framework=framework)
 
-    # For HTMX compatibility, add HTMX attributes
-    form_attrs = {"hx-post": htmx_post_url, "hx-target": "#form-response", "hx-swap": "innerHTML"}
-    form_attrs.update(kwargs)
+        # For HTMX compatibility, add HTMX attributes
+        form_attrs = {"hx-post": htmx_post_url, "hx-target": "#form-response", "hx-swap": "innerHTML"}
+        form_attrs.update(kwargs)
 
-    form_html = renderer.render_form_from_model(
-        form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **form_attrs
-    )
+        form_html = renderer.render_form_from_model(
+            form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **form_attrs
+        )
 
     # Add HTMX response container and scripts for backward compatibility
     form_html += '\n<div id="form-response"></div>'

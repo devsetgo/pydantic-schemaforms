@@ -32,10 +32,29 @@ class TextInput(FormInput):
 
         parts = []
 
-        # Add label with icon support
+        # Add label (without icon, since icon will be outside)
         if label is not False:  # Allow explicit False to skip label
-            label_html = build_label(field_name, label, required, icon, framework)
+            label_html = build_label(field_name, label, required, None, framework)  # No icon in label
             parts.append(render_template(label_html))
+
+        # Create input wrapper with icon if provided
+        if icon:
+            # Start input group with icon outside on the left
+            if framework == "bootstrap":
+                # Handle both with and without bi bi- prefix
+                icon_class = icon if icon.startswith("bi bi-") else f"bi bi-{icon}"
+                icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
+            elif framework == "material":
+                icon_html = f'<span class="input-icon"><i class="material-icons">{icon}</i></span>'
+            elif framework == "fontawesome":
+                icon_class = icon if icon.startswith("fas fa-") else f"fas fa-{icon}"
+                icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
+            else:
+                icon_html = f'<span class="input-icon">{icon}</span>'
+            
+            # Start wrapper div for icon + input
+            parts.append('<div class="input-with-icon">')
+            parts.append(icon_html)
 
         # Add input
         if help_text:
@@ -45,6 +64,10 @@ class TextInput(FormInput):
             kwargs["aria-describedby"] = f"{field_name}-error"
 
         parts.append(self.render(**kwargs))
+
+        # Close wrapper if icon was added
+        if icon:
+            parts.append('</div>')
 
         # Add help text
         if help_text:
