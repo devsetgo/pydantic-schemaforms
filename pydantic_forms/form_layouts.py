@@ -5,6 +5,8 @@ Provides VerticalLayout, HorizontalLayout, TabbedLayout with form composition ca
 
 from typing import Any, Dict, List, Optional, Type
 from abc import ABC, abstractmethod
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
 
 from .schema_form import FormModel, ValidationResult
 
@@ -137,6 +139,18 @@ class BaseLayout(ABC):
         self.form_config = form_config
         self._forms: List[FormModel] = []
         self._rendered_content: Optional[str] = None
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """
+        Pydantic core schema that allows layout classes to be used as field types.
+        This approach treats layouts as dictionaries for JSON schema generation.
+        """
+        # Return a dictionary schema that can be JSON serialized
+        # This allows the form renderer to work with layout fields
+        return core_schema.dict_schema()
 
     @abstractmethod
     def render(

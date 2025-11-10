@@ -96,16 +96,6 @@
                             Default Style
                         </a>
                         <div class="btn-group" role="group">
-                            {% if framework == "fastapi" %}
-                            <a href="/bootstrap/pets" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-bootstrap me-1"></i>
-                                Bootstrap
-                            </a>
-                            <a href="/material/pets" class="btn btn-outline-info btn-sm">
-                                <i class="bi bi-palette me-1"></i>
-                                Material
-                            </a>
-                            {% else %}
                             <a href="/pets?style=bootstrap" class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-bootstrap me-1"></i>
                                 Bootstrap
@@ -114,7 +104,6 @@
                                 <i class="bi bi-palette me-1"></i>
                                 Material
                             </a>
-                            {% endif %}
                         </div>
                     </div>
                     <small class="text-muted mt-2">List management</small>
@@ -143,16 +132,6 @@
                             Default Style
                         </a>
                         <div class="btn-group" role="group">
-                            {% if framework == "fastapi" %}
-                            <a href="/bootstrap/showcase" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-bootstrap me-1"></i>
-                                Bootstrap
-                            </a>
-                            <a href="/material/showcase" class="btn btn-outline-info btn-sm">
-                                <i class="bi bi-palette me-1"></i>
-                                Material
-                            </a>
-                            {% else %}
                             <a href="/showcase?style=bootstrap" class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-bootstrap me-1"></i>
                                 Bootstrap
@@ -161,7 +140,6 @@
                                 <i class="bi bi-palette me-1"></i>
                                 Material
                             </a>
-                            {% endif %}
                         </div>
                     </div>
                     <small class="text-muted mt-2">All components</small>
@@ -211,12 +189,6 @@
                 </p>
                 <div class="mt-auto">
                     <div class="d-grid gap-2">
-                        {% if framework == "fastapi" %}
-                        <a href="/bootstrap/login" class="btn btn-demo btn-sm">
-                            <i class="bi bi-arrow-right me-2"></i>
-                            Login Demo
-                        </a>
-                        {% else %}
                         <a href="/login" class="btn btn-demo btn-sm">
                             <i class="bi bi-arrow-right me-2"></i>
                             Login Demo
@@ -231,7 +203,6 @@
                                 Material
                             </a>
                         </div>
-                        {% endif %}
                     </div>
                     <small class="text-muted mt-2">Authentication</small>
                 </div>
@@ -254,7 +225,7 @@
                 </p>
                 <div class="mt-auto">
                     <div class="d-grid gap-2">
-                        <a href="/test-self-contained" class="btn btn-demo btn-sm">
+                        <a href="/self-contained" class="btn btn-demo btn-sm">
                             <i class="bi bi-arrow-right me-2"></i>
                             Run Test
                         </a>

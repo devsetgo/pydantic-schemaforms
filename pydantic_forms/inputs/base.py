@@ -302,6 +302,63 @@ class FormInput(BaseInput):
 
         return f"<input {attributes_str} />"
 
+    def render_with_label(self, label: Optional[str] = None, help_text: Optional[str] = None,
+                         error: Optional[str] = None, icon: Optional[str] = None, framework: str = "bootstrap", **kwargs) -> str:
+        """Render input with label, help text, error message, and icon support."""
+        field_name = kwargs.get("name", "")
+        required = kwargs.get("required", False)
+
+        parts = []
+
+        # Add label (without icon, since icon will be outside)
+        if label is not False:  # Allow explicit False to skip label
+            label_html = build_label(field_name, label, required, None, framework)  # No icon in label
+            parts.append(render_template(label_html))
+
+        # Create input wrapper with icon if provided
+        if icon:
+            # Start input group with icon outside on the left
+            if framework == "bootstrap":
+                # Handle both with and without bi bi- prefix
+                icon_class = icon if icon.startswith("bi bi-") else f"bi bi-{icon}"
+                icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
+            elif framework == "material":
+                icon_html = f'<span class="input-icon"><i class="material-icons">{icon}</i></span>'
+            elif framework == "fontawesome":
+                icon_class = icon if icon.startswith("fas fa-") else f"fas fa-{icon}"
+                icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
+            else:
+                icon_html = f'<span class="input-icon">{icon}</span>'
+            
+            # Start wrapper div for icon + input
+            parts.append('<div class="input-with-icon">')
+            parts.append(icon_html)
+
+        # Add input
+        if help_text:
+            kwargs["aria-describedby"] = f"{field_name}-help"
+        if error:
+            kwargs["aria-invalid"] = "true"
+            kwargs["aria-describedby"] = f"{field_name}-error"
+
+        parts.append(self.render(**kwargs))
+
+        # Close wrapper if icon was added
+        if icon:
+            parts.append('</div>')
+
+        # Add help text
+        if help_text:
+            help_html = build_help_text(field_name, help_text)
+            parts.append(render_template(help_html))
+
+        # Add error message
+        if error:
+            error_html = build_error_message(field_name, error)
+            parts.append(render_template(error_html))
+
+        return "\n".join(parts)
+
 
 class NumericInput(FormInput):
     """
@@ -346,3 +403,123 @@ class SelectInputBase(BaseInput):
         "multiple",
         "size",
     ]
+
+    def render_with_label(
+        self,
+        label: Optional[str] = None,
+        help_text: Optional[str] = None,
+        error: Optional[str] = None,
+        icon: Optional[str] = None,
+        framework: str = "bootstrap",
+        options: Optional[List[Dict[str, Any]]] = None,
+        **kwargs
+    ) -> str:
+        """
+        Render the input with its label, help text, error message, and optional icon.
+        This method is required for all input components to work with the form renderer.
+        
+        Args:
+            label: Label text for the input
+            help_text: Help text to display
+            error: Error message to display
+            icon: Icon name (will be mapped to framework)
+            framework: UI framework being used
+            options: Options for select/radio inputs
+            **kwargs: Additional attributes for the input
+        
+        Returns:
+            Complete HTML for the input with label and decorations
+        """
+        from ..icon_mapping import map_icon_for_framework
+        
+        # Ensure we have an input type
+        input_type = self.get_input_type()
+        
+        # Map icon to appropriate framework if provided
+        if icon:
+            icon = map_icon_for_framework(icon, framework)
+
+        # For selection inputs, we need options
+        if hasattr(self, 'render') and options is not None:
+            input_html = self.render(options=options, **kwargs)
+        else:
+            # Fallback rendering
+            attrs = self.validate_attributes(**kwargs)
+            attributes_str = self._build_attributes_string(attrs)
+            input_html = f'<select {attributes_str}></select>'
+
+        # Build the complete field HTML based on framework
+        field_parts = []
+
+        if framework == "bootstrap":
+            # Bootstrap styling
+            field_parts.append('<div class="mb-3">')
+            
+            if label:
+                field_parts.append(f'<label for="{kwargs.get("id", "")}" class="form-label">{escape(label)}</label>')
+            
+            if icon:
+                field_parts.append('<div class="input-group">')
+                field_parts.append(f'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>')
+                field_parts.append(input_html)
+                field_parts.append('</div>')
+            else:
+                field_parts.append(input_html)
+            
+            if help_text:
+                field_parts.append(f'<div class="form-text">{escape(help_text)}</div>')
+            
+            if error:
+                field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
+            
+            field_parts.append('</div>')
+
+        elif framework == "material":
+            # Material Design styling
+            field_parts.append('<div class="md-field">')
+            
+            if icon:
+                field_parts.append('<div class="md-field-with-icon">')
+                field_parts.append(f'<span class="md-icon material-icons">{icon}</span>')
+                field_parts.append('<div class="md-input-wrapper">')
+            
+            field_parts.append(input_html)
+            
+            if label:
+                field_parts.append(f'<label class="md-floating-label" for="{kwargs.get("id", "")}">{escape(label)}</label>')
+            
+            if icon:
+                field_parts.append('</div>')  # Close md-input-wrapper
+                field_parts.append('</div>')  # Close md-field-with-icon
+            
+            if help_text:
+                field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
+            
+            if error:
+                field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
+            
+            field_parts.append('</div>')
+
+        else:
+            # Basic/no framework styling
+            field_parts.append('<div class="field">')
+            
+            if label:
+                field_parts.append(f'<label for="{kwargs.get("id", "")}">{escape(label)}</label>')
+            
+            if icon:
+                field_parts.append(f'<div class="input-with-icon"><span class="input-icon">{icon}</span>')
+                field_parts.append(input_html)
+                field_parts.append('</div>')
+            else:
+                field_parts.append(input_html)
+            
+            if help_text:
+                field_parts.append(f'<div class="help-text">{escape(help_text)}</div>')
+            
+            if error:
+                field_parts.append(f'<div class="error-message">{escape(error)}</div>')
+            
+            field_parts.append('</div>')
+
+        return '\n'.join(field_parts)

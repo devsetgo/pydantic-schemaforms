@@ -1,654 +1,959 @@
 #!/usr/bin/env python3
 """
-FastAPI Example using Pydantic Forms with ListLayout
+FastAPI Example - Async Implementation
+=====================================
 
-A clean FastAPI demonstration focusing on the core functionality:
-- Pet registration form with dynamic ListLayout
-- Bootstrap and Material Design themes
-- Form validation and error handling
-- Modern async/await support
-- Proper use of pydantic-forms library for HTML generation
+This example demonstrates ALL pydantic-forms capabilities in an asynchronous FastAPI application.
+It showcases simple, medium, and complex forms with various layouts.
 
-Install dependencies:
-    pip install fastapi uvicorn python-multipart jinja2
+Forms demonstrated:
+- Simple: MinimalLoginForm (basic fields, validation)
+- Medium: UserRegistrationForm (multiple field types, icons, validation)  
+- Complex: CompleteShowcaseForm (model lists, dynamic fields, sections, all input types)
 
-Run with:
-    python fastapi_example.py
-
-Then visit:
-    - http://localhost:8000/ (main page)
-    - http://localhost:8000/bootstrap/login (Bootstrap login demo)
-    - http://localhost:8000/bootstrap/pets (Bootstrap pets demo)
-    - http://localhost:8000/material/pets (Material Design pets demo)
-    - http://localhost:8000/docs (Auto-generated API docs)
+Layouts demonstrated:
+- Bootstrap styling with external icons
+- Material Design 3 styling with external icons
+- Self-contained forms (zero dependencies)
+- Dynamic list layouts with add/remove functionality
+- Sectioned forms with collapsible sections
+- All input types (text, email, password, select, number, date, color, range, etc.)
+- API-first design with JSON schemas and OpenAPI documentation
 """
 
 import os
-from typing import Dict, Any, List, Optional
+import sys
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import uvicorn
+from typing import Dict, Any
+import asyncio
 
-# Import shared models
-from shared_models import (
-    PetModel, PetOwnerForm, MinimalLoginForm, UserRegistrationForm, PetRegistrationForm,
-    CompleteShowcaseForm, EmergencyContactModel, handle_form_submission
+# Add the parent directory to the path to import our library
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from examples.shared_models import (
+    # Simple Form
+    MinimalLoginForm,
+    # Medium Form
+    UserRegistrationForm, 
+    # Complex Form
+    CompleteShowcaseForm,
+    # Pet Forms
+    PetRegistrationForm,
+    # Layout Demonstration
+    LayoutDemonstrationForm,
+    # Utility functions
+    handle_form_submission
 )
-
-# Import pydantic-forms components
-from pydantic_forms.form_layouts import ListLayout, SectionDesign
-from pydantic_forms.enhanced_renderer import render_form_html, EnhancedFormRenderer
-# from pydantic_forms.material_renderer import MaterialDesign3Renderer  # Temporarily disabled due to syntax issues
-from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
-
-# ============================================================================
-# APPLICATION SETUP
-# ============================================================================
+from pydantic_forms.enhanced_renderer import render_form_html
 
 app = FastAPI(
-    title="FastAPI Pydantic Forms Demo",
-    description="Demonstration of pydantic-forms with ListLayout in FastAPI",
-    version="1.0.0"
+    title="Pydantic Forms - FastAPI Example",
+    description="Comprehensive showcase of pydantic-forms capabilities in async FastAPI",
+    version="25.Q4.1.beta"
 )
 
-# Mount static files
-if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Setup templates
 templates = Jinja2Templates(directory="templates")
 
-# ============================================================================
-# ROUTE HANDLERS
-# ============================================================================
+# Add custom JSON filter that handles date objects
+def safe_json_filter(obj):
+    """Custom JSON filter that handles date/datetime objects."""
+    import json
+    from datetime import date, datetime
+    
+    def json_serial(o):
+        """JSON serializer for objects not serializable by default json code"""
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
+        # Handle layout objects
+        elif hasattr(o, '__class__') and 'Layout' in o.__class__.__name__:
+            return {
+                "type": o.__class__.__name__,
+                "description": f"Layout object: {o.__class__.__name__}"
+            }
+        # Handle other common non-serializable objects
+        elif hasattr(o, '__dict__'):
+            return str(o)
+        raise TypeError(f"Object of type {type(o)} is not JSON serializable")
+    
+    return json.dumps(obj, indent=2, default=json_serial)
+
+# Register the custom filter
+templates.env.filters['safe_json'] = safe_json_filter
+
+# Mount static files if they exist
+if os.path.exists("examples/static"):
+    app.mount("/static", StaticFiles(directory="examples/static"), name="static")
+
+# ================================
+# HOME PAGE - ALL EXAMPLES
+# ================================
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    """Main demo page."""
+async def home(request: Request):
+    """Home page showcasing all form examples."""
     return templates.TemplateResponse("home.html", {
         "request": request,
-        "title": "FastAPI Pydantic Forms Demo",
         "framework": "fastapi",
         "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "renderer_info": "Enhanced Bootstrap Renderer"
+        "framework_type": "async"
     })
 
-@app.get("/user", response_class=HTMLResponse)
-async def user_get(request: Request, style: str = "bootstrap"):
-    """Show user registration form."""
-    # Use the same UserRegistrationForm for both frameworks
-    # The icon mapping system will automatically convert icons to the appropriate framework
-    form_html = render_form_html(UserRegistrationForm, framework=style)
-    framework_type = "material" if style == "material" else "bootstrap"
-    return templates.TemplateResponse("user.html", {
+# ================================
+# SIMPLE FORM - LOGIN
+# ================================
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = False):
+    """Simple form example - Login form (GET)."""
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except:
+            pass  # Ignore invalid JSON
+    elif demo or not data:
+        # Add demo data for easier testing
+        form_data = {
+            "username": "demo_user",
+            "password": "demo_pass",
+            "remember_me": True
+        }
+    
+    form_html = render_form_html(MinimalLoginForm, framework=style, form_data=form_data)
+    
+    return templates.TemplateResponse("form.html", {
         "request": request,
-        "title": "User Registration",
+        "title": "Login - Simple Form",
+        "description": "Demonstrates basic form fields and validation",
         "framework": "fastapi",
-        "framework_name": "FastAPI", 
-        "framework_type": framework_type,
-        "theme": framework_type,  # Add this for the template theme check
-        "success": False,
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
         "form_html": form_html
     })
 
-@app.post("/user", response_class=HTMLResponse)
-async def user_post(request: Request):
-    """Handle user registration form submission."""
+@app.post("/login", response_class=HTMLResponse)
+async def login_post(request: Request, style: str = "bootstrap"):
+    """Simple form example - Login form submission (async)."""
+    # Get form data asynchronously
     form_data = await request.form()
-    form_dict = dict(form_data)
     
-    result = handle_form_submission(UserRegistrationForm, form_dict)
+    # Handle form submission (async-compatible)
+    result = handle_form_submission(MinimalLoginForm, dict(form_data))
     
     if result['success']:
-        return templates.TemplateResponse("user.html", {
+        return templates.TemplateResponse("success.html", {
             "request": request,
-            "title": "Registration Success",
+            "title": "Login Successful",
+            "message": f"Welcome {result['data']['username']}!",
+            "data": result['data'],
             "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": True,
-            "user_data": result['data']
+            "framework_name": "FastAPI (Async)"
         })
     else:
-        form_html = render_form_html(UserRegistrationForm, framework="bootstrap", errors=result['errors'])
-        return templates.TemplateResponse("user.html", {
+        # Re-render form with errors
+        form_html = render_form_html(MinimalLoginForm, 
+                                   framework=style, 
+                                   errors=result['errors'])
+        
+        return templates.TemplateResponse("form.html", {
             "request": request,
-            "title": "User Registration",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": False,
+            "title": "Login - Simple Form",
+            "description": "Demonstrates basic form fields and validation",
+            "framework": "fastapi", 
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
             "form_html": form_html,
             "errors": result['errors']
         })
 
-@app.get("/pets", response_class=HTMLResponse)
-async def pets_get(request: Request, style: str = "bootstrap"):
-    """Show pet registration form with unified form."""
-    form_html = render_form_html(PetRegistrationForm, framework=style)
-    framework_type = "material" if style == "material" else "bootstrap"
-    return templates.TemplateResponse("pets.html", {
+# ================================
+# MEDIUM FORM - USER REGISTRATION  
+# ================================
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = False):
+    """Medium complexity form - User registration (GET)."""
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except:
+            pass  # Ignore invalid JSON
+    elif demo or not data:
+        # Add demo data for easier testing
+        form_data = {
+            "username": "alex_johnson",
+            "email": "alex.johnson@example.com",
+            "password": "SecurePass123!",
+            "confirm_password": "SecurePass123!",
+            "full_name": "Alex Johnson",
+            "age": 28,
+            "agree_terms": True,
+            "newsletter": True
+        }
+    
+    form_html = render_form_html(UserRegistrationForm, framework=style, form_data=form_data)
+    
+    return templates.TemplateResponse("form.html", {
         "request": request,
-        "title": "Pet Registration Form",
+        "title": "User Registration - Medium Form",
+        "description": "Demonstrates multiple field types, icons, and validation",
         "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": framework_type,
-        "success": False,
+        "framework_name": "FastAPI (Async)", 
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+# Alias for /user route (used in templates)
+@app.get("/user", response_class=HTMLResponse)
+async def user_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = False):
+    """Alias for user registration form."""
+    return await register_get(request, style, data, demo)
+
+@app.post("/register", response_class=HTMLResponse)
+async def register_post(request: Request, style: str = "bootstrap"):
+    """Medium complexity form - User registration submission (async)."""
+    # Get form data asynchronously
+    form_data = await request.form()
+    
+    # Handle form submission (async-compatible)
+    result = handle_form_submission(UserRegistrationForm, dict(form_data))
+    
+    if result['success']:
+        return templates.TemplateResponse("success.html", {
+            "request": request,
+            "title": "Registration Successful",
+            "message": f"Welcome {result['data']['username']}! Your account has been created.",
+            "data": result['data'],
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)"
+        })
+    else:
+        # Re-render form with errors
+        form_html = render_form_html(UserRegistrationForm,
+                                   framework=style,
+                                   errors=result['errors'])
+        
+        return templates.TemplateResponse("form.html", {
+            "request": request,
+            "title": "User Registration - Medium Form", 
+            "description": "Demonstrates multiple field types, icons, and validation",
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
+            "form_html": form_html,
+            "errors": result['errors']
+        })
+
+# Alias for /user route (used in templates)
+@app.post("/user", response_class=HTMLResponse)
+async def user_post(request: Request, style: str = "bootstrap"):
+    """Alias for user registration form submission."""
+    return await register_post(request, style)
+
+# ================================
+# COMPLEX FORM - COMPLETE SHOWCASE
+# ================================
+
+@app.get("/showcase", response_class=HTMLResponse)
+async def showcase_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = False):
+    """Complex form example - All features and field types (GET)."""
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except:
+            pass  # Ignore invalid JSON
+    elif demo:
+        # Add comprehensive demo data for all showcase features
+        form_data = {
+            "username": "showcase_user",
+            "email": "showcase@example.com",
+            "password": "ShowcasePass123!",
+            "full_name": "Demo Showcase User",
+            "bio": "This is a demo biography showcasing the textarea field with rich content. It demonstrates how longer text content appears in the form.",
+            "age": 32,
+            "birth_date": "1991-08-15",
+            "website": "https://example.com",
+            "phone": "+1 (555) 123-4567",
+            "country": "US",
+            "favorite_color": "#3498db",
+            "experience_level": 7,
+            "receive_notifications": True,
+            "newsletter_frequency": "weekly",
+            "account_type": "premium"
+        }
+    
+    form_html = render_form_html(CompleteShowcaseForm, framework=style, form_data=form_data)
+    
+    return templates.TemplateResponse("form.html", {
+        "request": request,
+        "title": "Complete Showcase - Complex Form",
+        "description": "Demonstrates ALL library features: model lists, sections, all input types",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+@app.post("/showcase", response_class=HTMLResponse) 
+async def showcase_post(request: Request, style: str = "bootstrap"):
+    """Complex form example - All features submission (async)."""
+    # Get form data asynchronously
+    form_data = await request.form()
+    
+    # Handle form submission (async-compatible)
+    result = handle_form_submission(CompleteShowcaseForm, dict(form_data))
+    
+    if result['success']:
+        return templates.TemplateResponse("success.html", {
+            "request": request,
+            "title": "Showcase Form Submitted Successfully",
+            "message": "All form data processed successfully!",
+            "data": result['data'],
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)"
+        })
+    else:
+        # Re-render form with errors
+        form_html = render_form_html(CompleteShowcaseForm,
+                                   framework=style,
+                                   errors=result['errors'])
+        
+        return templates.TemplateResponse("form.html", {
+            "request": request,
+            "title": "Complete Showcase - Complex Form",
+            "description": "Demonstrates ALL library features: model lists, sections, all input types", 
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
+            "form_html": form_html,
+            "errors": result['errors']
+        })
+
+# ================================
+# EDIT/UPDATE ENDPOINTS
+# ================================
+
+@app.get("/edit/login", response_class=HTMLResponse)
+async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool = False):
+    """Edit login form with sample data."""
+    # Sample existing data for editing
+    existing_data = {}
+    if demo:
+        existing_data = {
+            "username": "john_doe",
+            "remember_me": True
+        }
+    
+    form_html = render_form_html(MinimalLoginForm, framework=style, form_data=existing_data)
+    
+    return templates.TemplateResponse("form.html", {
+        "request": request,
+        "title": "Edit Login - Pre-filled Example",
+        "description": "Example of editing existing data",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+@app.get("/edit/register", response_class=HTMLResponse)
+async def edit_register_get(request: Request, style: str = "bootstrap", demo: bool = False):
+    """Edit registration form with sample data."""
+    # Sample existing data for editing
+    existing_data = {}
+    if demo:
+        existing_data = {
+            "username": "jane_smith",
+            "email": "jane.smith@example.com",
+            "full_name": "Jane Smith",
+            "age": 28,
+            "agree_terms": True,
+            "newsletter": False
+        }
+    
+    form_html = render_form_html(UserRegistrationForm, framework=style, form_data=existing_data)
+    
+    return templates.TemplateResponse("form.html", {
+        "request": request,
+        "title": "Edit User Registration - Pre-filled Example",
+        "description": "Example of editing existing user data",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+@app.get("/edit/dynamic", response_class=HTMLResponse)
+async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: bool = False):
+    """Edit layout form with sample data."""
+    # Sample existing data for editing the layout form
+    existing_data = {}
+    if demo:
+        existing_data = {
+            "vertical_tab": {
+                "first_name": "John",
+                "last_name": "Doe", 
+                "email": "john.doe@example.com",
+                "birth_date": "1988-03-12"
+            },
+            "horizontal_tab": {
+                "phone": "+1 (555) 123-4567",
+                "address": "123 Main Street",
+                "city": "New York",
+                "postal_code": "10001"
+            },
+            "tabbed_tab": {
+                "notification_email": True,
+                "notification_sms": False,
+                "theme": "dark",
+                "language": "en"
+            },
+            "list_tab": {
+                "project_name": "My Awesome Project",
+                "tasks": [
+                    {
+                        "task_name": "Update documentation",
+                        "priority": "medium",
+                        "due_date": "2024-12-10"
+                    }
+                ]
+            }
+        }
+    
+    # Use Enhanced Renderer directly like the main dynamic endpoint
+    if style == "material":
+        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        renderer = SimpleMaterialRenderer()
+        form_html = renderer.render_form_from_model(
+            LayoutDemonstrationForm, 
+            data=existing_data, 
+            errors={}, 
+            submit_url="/edit/dynamic",
+            include_submit_button=True
+        )
+    else:
+        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        renderer = EnhancedFormRenderer(framework=style)
+        form_html = renderer.render_form_from_model(
+            LayoutDemonstrationForm, 
+            data=existing_data, 
+            errors={}, 
+            submit_url="/edit/dynamic",
+            include_submit_button=True
+        )
+    
+    return templates.TemplateResponse("form.html", {
+        "request": request,
+        "title": "Edit Layout Demo - Pre-filled Example",
+        "description": "Example of editing existing layout data",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+# ================================
+# SPECIAL DEMOS
+# ================================
+
+# Alias routes for template compatibility
+@app.get("/pets", response_class=HTMLResponse)
+async def pets_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = False):
+    """Pet registration form - demonstrates dynamic lists and complex models."""
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except:
+            pass  # Ignore invalid JSON
+    elif demo:
+        # Add demo data for pet registration
+        form_data = {
+            "owner_name": "Sarah Thompson",
+            "owner_email": "sarah.thompson@email.com",
+            "owner_phone": "+1 (555) 987-6543",
+            "emergency_contact": "Mike Thompson - (555) 123-4567",
+            "pets": [
+                {
+                    "name": "Buddy",
+                    "species": "dog",
+                    "breed": "Golden Retriever",
+                    "age": 3,
+                    "weight": 65.5,
+                    "microchipped": True,
+                    "last_vet_visit": "2024-10-15",
+                    "special_needs": "Needs daily medication for hip dysplasia"
+                },
+                {
+                    "name": "Whiskers",
+                    "species": "cat",
+                    "breed": "Maine Coon",
+                    "age": 5,
+                    "weight": 12.3,
+                    "microchipped": True,
+                    "last_vet_visit": "2024-09-20",
+                    "special_needs": "Indoor only, sensitive to loud noises"
+                }
+            ]
+        }
+    
+    form_html = render_form_html(PetRegistrationForm, framework=style, form_data=form_data)
+    
+    return templates.TemplateResponse("form.html", {
+        "request": request,
+        "title": "Pet Registration - Dynamic Lists",
+        "description": "Demonstrates pet registration with dynamic lists and owner information",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
         "form_html": form_html
     })
 
 @app.post("/pets", response_class=HTMLResponse)
 async def pets_post(request: Request, style: str = "bootstrap"):
-    """Handle pet registration form submission."""
+    """Pet registration form submission."""
+    # Get form data asynchronously
     form_data = await request.form()
-    form_dict = dict(form_data)
     
-    result = handle_form_submission(PetRegistrationForm, form_dict)
+    # Handle form submission (async-compatible)
+    result = handle_form_submission(PetRegistrationForm, dict(form_data))
     
     if result['success']:
-        return templates.TemplateResponse("pets.html", {
+        return templates.TemplateResponse("success.html", {
             "request": request,
-            "title": "Pet Registration Success",
+            "title": "Pet Registration Successful",
+            "message": f"Successfully registered pets for {result['data']['owner_name']}!",
+            "data": result['data'],
             "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": style if style == "material" else "bootstrap",
-            "success": True,
-            "form_data": result['data']
+            "framework_name": "FastAPI (Async)"
         })
     else:
-        form_html = render_form_html(PetRegistrationForm, framework=style, errors=result['errors'])
-        return templates.TemplateResponse("pets.html", {
+        # Re-render form with errors
+        form_html = render_form_html(PetRegistrationForm,
+                                   framework=style,
+                                   errors=result['errors'])
+        
+        return templates.TemplateResponse("form.html", {
             "request": request,
-            "title": "Pet Registration Form",
+            "title": "Pet Registration - Dynamic Lists",
+            "description": "Demonstrates pet registration with dynamic lists and owner information",
             "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": style if style == "material" else "bootstrap",
-            "success": False,
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
             "form_html": form_html,
             "errors": result['errors']
         })
 
-@app.get("/showcase", response_class=HTMLResponse)
-async def showcase_get(request: Request, style: str = "bootstrap"):
-    """Show complete showcase form with all pydantic-forms capabilities."""
-    form_html = render_form_html(CompleteShowcaseForm, framework=style)
-    framework_type = "material" if style == "material" else "bootstrap"
-    return templates.TemplateResponse("showcase.html", {
-        "request": request,
-        "title": "Complete Features Showcase",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": framework_type,
-        "success": False,
-        "form_html": form_html
-    })
-
-@app.post("/showcase", response_class=HTMLResponse)
-async def showcase_post(request: Request, style: str = "bootstrap"):
-    """Handle complete showcase form submission."""
-    form_data = await request.form()
-    form_dict = dict(form_data)
-    
-    result = handle_form_submission(CompleteShowcaseForm, form_dict)
-    
-    if result['success']:
-        return templates.TemplateResponse("showcase.html", {
-            "request": request,
-            "title": "Showcase Form Success",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": style if style == "material" else "bootstrap",
-            "success": True,
-            "form_data": result['data']
-        })
-    else:
-        form_html = render_form_html(CompleteShowcaseForm, framework=style, errors=result['errors'])
-        return templates.TemplateResponse("showcase.html", {
-            "request": request,
-            "title": "Complete Features Showcase",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": style if style == "material" else "bootstrap",
-            "success": False,
-            "form_html": form_html,
-            "errors": result['errors']
-        })
+# All framework-specific endpoints removed in favor of cleaner style parameter approach
+# Use: /pets?style=bootstrap, /login?style=material, etc.
 
 @app.get("/dynamic", response_class=HTMLResponse)
-async def dynamic_get(request: Request, style: str = "bootstrap"):
-    """Show dynamic form demo."""
-    # Use the contact form for dynamic demo
-    from shared_models import MediumContactForm
-    form_html = render_form_html(MediumContactForm, framework=style)
-    framework_type = "material" if style == "material" else "bootstrap"
-    return templates.TemplateResponse("dynamic.html", {
+async def dynamic_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = False):
+    """Comprehensive layout demonstration - single form showcasing all layout types."""
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except:
+            pass  # Ignore invalid JSON
+    elif demo or not data:
+        # Add demo data for easier testing of all layout types
+        form_data = {
+            "vertical_tab": {
+                "first_name": "Alex",
+                "last_name": "Johnson",
+                "email": "alex.johnson@example.com",
+                "birth_date": "1990-05-15"
+            },
+            "horizontal_tab": {
+                "phone": "+1 (555) 987-6543",
+                "address": "456 Demo Street",
+                "city": "San Francisco",
+                "postal_code": "94102"
+            },
+            "tabbed_tab": {
+                "notification_email": True,
+                "notification_sms": False,
+                "theme": "dark",
+                "language": "en"
+            },
+            "list_tab": {
+                "project_name": "Demo Project",
+                "tasks": [
+                    {
+                        "task_name": "Complete project setup",
+                        "priority": "high",
+                        "due_date": "2024-12-01"
+                    },
+                    {
+                        "task_name": "Write documentation",
+                        "priority": "medium",
+                        "due_date": "2024-12-15"
+                    }
+                ]
+            }
+        }
+    
+    # Use Enhanced Renderer directly to avoid render_form_html wrapper issues
+    if style == "material":
+        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        renderer = SimpleMaterialRenderer()
+        form_html = renderer.render_form_from_model(
+            LayoutDemonstrationForm, 
+            data=form_data, 
+            errors={}, 
+            submit_url="/dynamic",
+            include_submit_button=True
+        )
+    else:
+        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        renderer = EnhancedFormRenderer(framework=style)
+        form_html = renderer.render_form_from_model(
+            LayoutDemonstrationForm, 
+            data=form_data, 
+            errors={}, 
+            submit_url="/dynamic",
+            include_submit_button=True
+        )
+    
+    return templates.TemplateResponse("form.html", {
         "request": request,
-        "title": "Dynamic Form Demo",
+        "title": "Layout Demonstration - All Types",
+        "description": "Single form showcasing Vertical, Horizontal, Tabbed, and List layouts",
         "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": framework_type,
-        "success": False,
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
         "form_html": form_html
     })
 
 @app.post("/dynamic", response_class=HTMLResponse)
-async def dynamic_post(request: Request):
-    """Handle dynamic form submission."""
-    form_data = await request.form()
-    return templates.TemplateResponse("dynamic.html", {
-        "request": request,
-        "title": "Dynamic Form Success",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "success": True,
-        "form_data": dict(form_data)
-    })
-
-@app.get("/bootstrap/login", response_class=HTMLResponse)
-async def bootstrap_login_get(request: Request):
-    """Show login form with Bootstrap styling."""
-    form_html = render_form_html(MinimalLoginForm, framework="bootstrap")
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "title": "Login Form",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "success": False,
-        "form_html": form_html
-    })
-
-@app.post("/bootstrap/login", response_class=HTMLResponse)
-async def bootstrap_login_post(request: Request):
-    """Handle login form submission."""
+async def dynamic_post(request: Request, style: str = "bootstrap"):
+    """Handle comprehensive layout demonstration form submission."""
+    # Get form data asynchronously
     form_data = await request.form()
     form_dict = dict(form_data)
     
-    result = handle_form_submission(MinimalLoginForm, form_dict)
-    
-    if result['success']:
-        return templates.TemplateResponse("login.html", {
+    try:
+        # Parse the flat form data into structured data
+        from pydantic_forms.integration import parse_nested_form_data
+        parsed_data = parse_nested_form_data(form_dict)
+        
+        # Structure the data to match the tabbed layout
+        structured_data = {
+            "personal_info": {
+                "first_name": parsed_data.get("first_name"),
+                "last_name": parsed_data.get("last_name"),
+                "email": parsed_data.get("email"),
+                "birth_date": parsed_data.get("birth_date")
+            },
+            "contact_info": {
+                "phone": parsed_data.get("phone"),
+                "address": parsed_data.get("address"),
+                "city": parsed_data.get("city"),
+                "postal_code": parsed_data.get("postal_code")
+            },
+            "preferences": {
+                "notification_email": parsed_data.get("notification_email", False),
+                "notification_sms": parsed_data.get("notification_sms", False),
+                "theme": parsed_data.get("theme"),
+                "language": parsed_data.get("language")
+            },
+            "tasks": {
+                "project_name": parsed_data.get("project_name"),
+                "tasks": parsed_data.get("tasks", [])
+            }
+        }
+        
+        # Remove None values
+        def clean_dict(d):
+            if isinstance(d, dict):
+                return {k: clean_dict(v) for k, v in d.items() if v is not None}
+            elif isinstance(d, list):
+                return [clean_dict(item) for item in d if item is not None]
+            else:
+                return d
+        
+        structured_data = clean_dict(structured_data)
+        
+        return templates.TemplateResponse("success.html", {
             "request": request,
-            "title": "Login Success",
+            "title": "Layout Demo Submitted Successfully",
+            "message": "All layout types processed successfully!",
+            "data": structured_data,
             "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": True,
-            "form_data": result['data']
+            "framework_name": "FastAPI (Async)"
         })
-    else:
-        form_html = render_form_html(MinimalLoginForm, framework="bootstrap", errors=result['errors'])
-        return templates.TemplateResponse("login.html", {
+        
+    except Exception as e:
+        # Re-render form with errors
+        if style == "material":
+            from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+            renderer = SimpleMaterialRenderer()
+            form_html = renderer.render_form_from_model(
+                LayoutDemonstrationForm, 
+                data={}, 
+                errors={"form": str(e)}, 
+                submit_url="/dynamic",
+                include_submit_button=True
+            )
+        else:
+            from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+            renderer = EnhancedFormRenderer(framework=style)
+            form_html = renderer.render_form_from_model(
+                LayoutDemonstrationForm, 
+                data={}, 
+                errors={"form": str(e)}, 
+                submit_url="/dynamic",
+                include_submit_button=True
+            )
+        
+        return templates.TemplateResponse("form.html", {
             "request": request,
-            "title": "Login Form",
+            "title": "Layout Demonstration - Error",
+            "description": "Form submission failed",
             "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": False,
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
             "form_html": form_html,
-            "errors": result['errors']
+            "errors": {"form": str(e)}
         })
-
-@app.get("/bootstrap/pets", response_class=HTMLResponse)
-async def bootstrap_pets_get(request: Request):
-    """Show Bootstrap pet registration form with unified form."""
-    form_html = render_form_html(PetRegistrationForm, framework="bootstrap")
-    return templates.TemplateResponse("pets.html", {
-        "request": request,
-        "title": "Pet Registration Form",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "success": False,
-        "form_html": form_html
-    })
-
-@app.post("/bootstrap/pets", response_class=HTMLResponse)
-async def bootstrap_pets_post(request: Request):
-    """Handle Bootstrap pet registration form submission."""
-    form_data = await request.form()
-    form_dict = dict(form_data)
+@app.get("/self-contained", response_class=HTMLResponse)
+async def self_contained(demo: bool = False):
+    """Self-contained form demo - zero external dependencies."""
+    from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
     
-    result = handle_form_submission(PetRegistrationForm, form_dict)
+    # Add demo data if requested
+    form_data = {}
+    if demo:
+        form_data = {
+            "username": "self_contained_user",
+            "email": "selfcontained@example.com",
+            "password": "DemoPass123!",
+            "confirm_password": "DemoPass123!",
+            "full_name": "Self Contained Demo",
+            "age": 25,
+            "agree_terms": True,
+            "newsletter": False
+        }
     
-    if result['success']:
-        return templates.TemplateResponse("pets.html", {
-            "request": request,
-            "title": "Pet Registration Success",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": True,
-            "form_data": result['data']
-        })
-    else:
-        form_html = render_form_html(PetRegistrationForm, framework="bootstrap", errors=result['errors'])
-        return templates.TemplateResponse("pets.html", {
-            "request": request,
-            "title": "Pet Registration Form",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": False,
-            "form_html": form_html,
-            "errors": result['errors']
-        })
-
-@app.get("/material/pets", response_class=HTMLResponse)
-async def material_pets_get(request: Request):
-    """Show Material Design pet registration form with unified form."""
-    # Use render_form_html with material framework to handle model_list properly
-    form_html = render_form_html(PetRegistrationForm, framework="material")
-    return templates.TemplateResponse("pets.html", {
-        "request": request,
-        "title": "Pet Registration Form",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "material",
-        "theme": "material",  # Use material theme
-        "success": False,
-        "form_html": form_html
-    })
-
-@app.post("/material/pets", response_class=HTMLResponse)
-async def material_pets_post(request: Request):
-    """Handle Material Design pet registration form submission."""
-    form_data = await request.form()
-    form_dict = dict(form_data)
+    renderer = SimpleMaterialRenderer()
+    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data)
     
-    result = handle_form_submission(PetRegistrationForm, form_dict)
-    
-    if result['success']:
-        return templates.TemplateResponse("pets.html", {
-            "request": request,
-            "title": "Pet Registration Success",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "material",
-            "success": True,
-            "form_data": result['data']
-        })
-    else:
-        form_html = render_form_html(PetRegistrationForm, framework="material", errors=result['errors'])
-        return templates.TemplateResponse("pets.html", {
-            "request": request,
-            "title": "Pet Registration Form",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "material",
-            "success": False,
-            "form_html": form_html,
-            "errors": result['errors']
-        })
-
-@app.get("/bootstrap/showcase", response_class=HTMLResponse)
-async def bootstrap_showcase_get(request: Request):
-    """Show Bootstrap complete showcase form."""
-    form_html = render_form_html(CompleteShowcaseForm, framework="bootstrap")
-    return templates.TemplateResponse("showcase.html", {
-        "request": request,
-        "title": "Bootstrap Features Showcase",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "success": False,
-        "form_html": form_html
-    })
-
-@app.post("/bootstrap/showcase", response_class=HTMLResponse)
-async def bootstrap_showcase_post(request: Request):
-    """Handle Bootstrap showcase form submission."""
-    form_data = await request.form()
-    form_dict = dict(form_data)
-    
-    result = handle_form_submission(CompleteShowcaseForm, form_dict)
-    
-    if result['success']:
-        return templates.TemplateResponse("showcase.html", {
-            "request": request,
-            "title": "Bootstrap Showcase Success",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": True,
-            "form_data": result['data']
-        })
-    else:
-        form_html = render_form_html(CompleteShowcaseForm, framework="bootstrap", errors=result['errors'])
-        return templates.TemplateResponse("showcase.html", {
-            "request": request,
-            "title": "Bootstrap Features Showcase",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "bootstrap",
-            "success": False,
-            "form_html": form_html,
-            "errors": result['errors']
-        })
-
-@app.get("/material/showcase", response_class=HTMLResponse)
-async def material_showcase_get(request: Request):
-    """Show Material Design complete showcase form."""
-    # Use the new working Material Design renderer
-    material_renderer = SimpleMaterialRenderer()
-    form_html = material_renderer.render_form_from_model(CompleteShowcaseForm)
-    return templates.TemplateResponse("showcase.html", {
-        "request": request,
-        "title": "Material Design Features Showcase",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "material",
-        "theme": "material",  # Use material theme
-        "success": False,
-        "form_html": form_html
-    })
-
-@app.post("/material/showcase", response_class=HTMLResponse)
-async def material_showcase_post(request: Request):
-    """Handle Material Design showcase form submission."""
-    form_data = await request.form()
-    form_dict = dict(form_data)
-    
-    result = handle_form_submission(CompleteShowcaseForm, form_dict)
-    
-    if result['success']:
-        return templates.TemplateResponse("showcase.html", {
-            "request": request,
-            "title": "Material Design Showcase Success",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "material",
-            "success": True,
-            "form_data": result['data']
-        })
-    else:
-        form_html = render_form_html(CompleteShowcaseForm, framework="material", errors=result['errors'])
-        return templates.TemplateResponse("showcase.html", {
-            "request": request,
-            "title": "Material Design Features Showcase",
-            "framework": "fastapi",
-            "framework_name": "FastAPI",
-            "framework_type": "material",
-            "theme": "material",  # Add theme for template
-            "success": False,
-            "form_html": form_html,
-            "errors": result['errors']
-        })
-
-# ============================================================================
-# API ENDPOINTS
-# ============================================================================
-
-@app.get("/api/health")
-async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "fastapi-pydantic-forms"}
-
-@app.get("/api/models/pet")
-async def get_pet_model_schema():
-    """Get Pet model JSON schema."""
-    return PetModel.model_json_schema()
-
-@app.get("/api/models/owner")
-async def get_owner_model_schema():
-    """Get Pet Owner model JSON schema."""
-    return PetOwnerForm.model_json_schema()
-
-# ============================================================================
-# ERROR HANDLERS
-# ============================================================================
-
-@app.exception_handler(404)
-async def not_found_handler(request: Request, exc: HTTPException):
-    """Handle 404 errors."""
-    return templates.TemplateResponse("404.html", {
-        "request": request,
-        "title": "Page Not Found",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "error_code": 404,
-        "error_message": "The page you're looking for doesn't exist."
-    }, status_code=404)
-
-@app.exception_handler(500)
-async def internal_error_handler(request: Request, exc: HTTPException):
-    """Handle 500 errors."""
-    return templates.TemplateResponse("500.html", {
-        "request": request,
-        "title": "Server Error",
-        "framework": "fastapi",
-        "framework_name": "FastAPI",
-        "framework_type": "bootstrap",
-        "error_code": 500,
-        "error_message": "An internal server error occurred."
-    }, status_code=500)
-
-# ============================================================================
-# MAIN APPLICATION
-# ============================================================================
-
-if __name__ == "__main__":
-    # Get port from environment variable or default to 8000
-    port = int(os.environ.get('FASTAPI_PORT', 8000))
-    
-    print("🚀 Starting FastAPI Pydantic Forms Example...")
-    print(f"📄 Home page: http://localhost:{port}/")
-    print(f"� User registration: http://localhost:{port}/user")
-    print(f"🐾 Pet registration: http://localhost:{port}/pets")
-    print(f"🎨 Complete showcase: http://localhost:{port}/showcase")
-    print(f"�🔐 Login form: http://localhost:{port}/bootstrap/login")
-    print(f"🐾 Bootstrap pets: http://localhost:{port}/bootstrap/pets")
-    print(f"🎨 Bootstrap showcase: http://localhost:{port}/bootstrap/showcase")
-    print(f"🐾 Material pets: http://localhost:{port}/material/pets")
-    print(f"🎨 Material showcase: http://localhost:{port}/material/showcase")
-    print(f"📚 API docs: http://localhost:{port}/docs")
-    print(f"🔍 Interactive docs: http://localhost:{port}/redoc")
-    print(f"🧪 Self-contained test: http://localhost:{port}/test-self-contained")
-    print("⚡ Features: Collapsible Cards, Dynamic Titles, All Input Types, Bootstrap/Material Design, Async support")
-
-@app.get("/test-icons", response_class=HTMLResponse)
-async def test_icons_get(request: Request):
-    """Test Material Design icons in forms."""
-    # Use existing UserRegistrationForm to test Material Design icons
-    # This demonstrates the simplicity: just use shared models + render_form_html
-    form_html = render_form_html(UserRegistrationForm, framework="material")
-    
-    return f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Material Design Icons Test</title>
-    </head>
-    <body>
-        <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
-            <h1 style="text-align: center; color: #6750a4; font-family: Roboto, sans-serif;">
-                🎨 Material Design Icons Test
-            </h1>
-            <p style="text-align: center; color: #49454f; font-family: Roboto, sans-serif;">
-                This form demonstrates Material Design 3 fields with Material Icons on the left<br>
-                <strong>Simple approach: UserRegistrationForm + render_form_html(framework="material")</strong>
-            </p>
-            {form_html}
-            <br><br>
-            <div style="text-align: center;">
-                <a href="/material/showcase" style="color: #6750a4; text-decoration: none;">← Back to Material Showcase</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-@app.get("/test-self-contained", response_class=HTMLResponse)
-async def test_self_contained_get(request: Request):
-    """Test self-contained form rendering."""
-    # Use the new working Material Design renderer for self-contained test
-    material_renderer = SimpleMaterialRenderer()
-    my_form = material_renderer.render_form_from_model(UserRegistrationForm)
-    
-    # Return minimal HTML with just the form
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastAPI Self-Contained Material Design Test</title>
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }}
-        .container {{ max-width: 600px; margin: 50px auto; padding: 20px; }}
-        .form-showcase {{ border: 2px solid #e7e0ec; border-radius: 16px; padding: 20px; background: #fef7ff; }}
-        .info-box {{ background: #f3f0ff; padding: 20px; border-radius: 12px; font-family: monospace; margin-top: 30px; }}
-        pre {{ background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e7e0ec; margin: 10px 0; }}
-        .nav-link {{ color: #6750a4; text-decoration: none; font-weight: bold; }}
-    </style>
+    <title>Self-Contained Form Demo</title>
 </head>
-<body>
-    <div class="container">
-        <h1>🎨 FastAPI Material Design Self-Contained Test</h1>
-        <p><strong>This demonstrates complete Material Design 3 autonomy.</strong></p>
-        <p>The form below includes ALL Material Design dependencies internally:</p>
-        
-        <!-- All Form Required Content -->
-        <div class="form-showcase">
-            {my_form}
-        </div>
-        
-        <hr style="margin: 40px 0;">
-        
-        <div class="info-box">
-            <h3>🎯 What you see above is Material Design 3 from just:</h3>
-            <pre>&lt;div&gt;
-    {{{{ my_form | safe }}}}
-&lt;/div&gt;</pre>
-            <p><strong>✅ Zero external dependencies required!</strong></p>
-            <ul style="margin: 0; padding-left: 20px;">
-                <li>No external CSS files needed</li>
-                <li>No external JavaScript files needed</li>
-                <li>No Google Fonts or CDN dependencies</li>
-                <li>Complete Material Design 3 styling embedded</li>
-                <li>Material Design interactions included</li>
-                <li>Self-contained and fully functional</li>
-            </ul>
-        </div>
-        
-        <div style="margin-top: 30px; text-align: center;">
-            <a href="/" class="nav-link">← Back to FastAPI Home</a>
-        </div>
+<body style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui;">
+    <h1>🎯 Self-Contained Form Demo (FastAPI)</h1>
+    <p><strong>This form includes ZERO external dependencies!</strong></p>
+    <p>Everything needed is embedded in the form HTML below:</p>
+    
+    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa;">
+        {form_html}
+    </div>
+    
+    <div style="margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
+        <h3>🔧 What's Included:</h3>
+        <ul>
+            <li>✅ Complete Material Design 3 CSS</li>
+            <li>✅ JavaScript for interactions</li>
+            <li>✅ Material Icons font</li>
+            <li>✅ Form validation and styling</li>
+            <li>✅ No external CDN dependencies</li>
+        </ul>
+        <p><strong>Template Usage:</strong> <code>&lt;div&gt;{{{{ form_html | safe }}}}&lt;/div&gt;</code></p>
+    </div>
+    
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+        <h3>📝 Raw HTML Source:</h3>
+        <p>This is the complete HTML generated by the <code>SimpleMaterialRenderer</code>:</p>
+        <details style="margin-top: 15px;">
+            <summary style="cursor: pointer; font-weight: bold; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+                Click to view raw HTML source
+            </summary>
+            <pre style="background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; overflow-x: auto; font-size: 12px; margin-top: 10px; white-space: pre-wrap; word-wrap: break-word;"><code>{form_html.replace('<', '&lt;').replace('>', '&gt;')}</code></pre>
+        </details>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="/" style="color: #0066cc; text-decoration: none;">← Back to FastAPI Examples</a>
     </div>
 </body>
 </html>"""
 
+# ================================
+# GENERAL FORM SUBMISSION HANDLER
+# ================================
+
+@app.post("/submit", response_class=HTMLResponse)
+async def general_submit_handler(request: Request):
+    """General form submission handler for forms that don't have specific handlers."""
+    try:
+        # Get form data
+        form_data = await request.form()
+        form_dict = dict(form_data)
+        
+        # Convert to a more readable format
+        processed_data = {}
+        for key, value in form_dict.items():
+            processed_data[key] = value
+        
+        return templates.TemplateResponse("success.html", {
+            "request": request,
+            "title": "Form Submitted Successfully",
+            "message": "Your form has been submitted successfully!",
+            "data": processed_data,
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)"
+        })
+        
+    except Exception as e:
+        return templates.TemplateResponse("500.html", {
+            "request": request,
+            "error": str(e),
+            "framework": "fastapi"
+        })
+
+# ================================
+# API ENDPOINTS (JSON RESPONSES)
+# ================================
+
+@app.get("/api/forms/{form_type}/schema")
+async def api_form_schema(form_type: str):
+    """API endpoint to get form schema as JSON."""
+    form_mapping = {
+        "login": MinimalLoginForm,
+        "register": UserRegistrationForm,
+        "pets": PetRegistrationForm,
+        "showcase": CompleteShowcaseForm,
+        "layouts": LayoutDemonstrationForm
+    }
+    
+    if form_type not in form_mapping:
+        raise HTTPException(status_code=404, detail="Form type not found")
+    
+    form_class = form_mapping[form_type]
+    schema = form_class.model_json_schema()
+    
+    return {
+        "form_type": form_type,
+        "schema": schema,
+        "framework": "fastapi"
+    }
+
+@app.post("/api/forms/{form_type}/submit")
+async def api_submit_form(form_type: str, request: Request):
+    """API endpoint for form submission."""
+    form_mapping = {
+        "login": MinimalLoginForm,
+        "register": UserRegistrationForm,
+        "pets": PetRegistrationForm,
+        "showcase": CompleteShowcaseForm,
+        "layouts": LayoutDemonstrationForm
+    }
+    
+    if form_type not in form_mapping:
+        raise HTTPException(status_code=404, detail="Form type not found")
+    
+    form_class = form_mapping[form_type]
+    
+    # Get JSON data asynchronously
+    json_data = await request.json()
+    
+    result = handle_form_submission(form_class, json_data)
+    
+    return {
+        "success": result['success'],
+        "data": result['data'] if result['success'] else None,
+        "errors": result['errors'],
+        "framework": "fastapi"
+    }
+
+@app.get("/api/forms/{form_type}/render")
+async def api_render_form(form_type: str, style: str = "bootstrap"):
+    """API endpoint to render form HTML."""
+    form_mapping = {
+        "login": MinimalLoginForm,
+        "register": UserRegistrationForm,
+        "pets": PetRegistrationForm,
+        "showcase": CompleteShowcaseForm,
+        "layouts": LayoutDemonstrationForm
+    }
+    
+    if form_type not in form_mapping:
+        raise HTTPException(status_code=404, detail="Form type not found")
+    
+    form_class = form_mapping[form_type]
+    form_html = render_form_html(form_class, framework=style)
+    
+    return {
+        "form_type": form_type,
+        "style": style,
+        "html": form_html,
+        "framework": "fastapi"
+    }
+
+# ================================
+# HEALTH CHECK
+# ================================
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "healthy", "framework": "fastapi", "version": "25.Q4.1.beta"}
+
+# ================================
+# RUN APPLICATION
+# ================================
+
 if __name__ == "__main__":
-    uvicorn.run(
-        "fastapi_example:app",
-        host="0.0.0.0",
-        port=port,
-        reload=True,
-        log_level="info"
-    )
+    print("🚀 Starting FastAPI Example (Async)")
+    print("=" * 60)
+    print("📋 Available Examples:")
+    print("   • Simple:  http://localhost:8000/login")
+    print("   • Medium:  http://localhost:8000/register")
+    print("   • Complex: http://localhost:8000/showcase")
+    print("   • Layouts: http://localhost:8000/dynamic")
+    print("")
+    print("🎨 Style Variants (add ?style= to any form):")
+    print("   • Bootstrap:       ?style=bootstrap")
+    print("   • Material Design: ?style=material")
+    print("")
+    print("🎯 Special Demos:")
+    print("   • Self-Contained: http://localhost:8000/self-contained")
+    print("   • API Docs:       http://localhost:8000/docs")
+    print("   • Home Page:      http://localhost:8000/")
+    print("")
+    print("🔧 API Endpoints:")
+    print("   • Schema:         http://localhost:8000/api/forms/register/schema")
+    print("   • Pet Schema:     http://localhost:8000/api/forms/pets/schema")
+    print("   • Layout Schema:  http://localhost:8000/api/forms/layouts/schema")
+    print("   • Render:         http://localhost:8000/api/forms/register/render")
+    print("   • Pet Render:     http://localhost:8000/api/forms/pets/render")
+    print("   • Layout Render:  http://localhost:8000/api/forms/layouts/render")
+    print("   • Submit:         POST http://localhost:8000/api/forms/register/submit")
+    print("   • Health:         http://localhost:8000/api/health")
+    print("=" * 60)
+    print("💡 To run this example:")
+    print("   make ex-run")
+    print("   # OR")
+    print("   uvicorn fastapi_example:app --port 8000 --reload")
+    print("=" * 60)

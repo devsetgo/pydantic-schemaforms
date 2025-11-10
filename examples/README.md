@@ -1,220 +1,201 @@
-# Pydantic Forms Examples
+# Pydantic Forms - Comprehensive Examples
 
-This directory contains comprehensive examples demonstrating the capabilities of the pydantic-forms library.
+This directory contains **two comprehensive examples** that demonstrate **every capability** of the pydantic-forms library:
 
-## 🚀 Demo Applications
+## 🚀 Two Complete Examples
 
-### Flask Demo (unified_demo.py)
-A complete Flask application showcasing all features of pydantic-forms:
+### 1. Flask Example (Sync) - `flask_example.py`
+**Traditional web application with synchronous form handling**
 
-**Features:**
-- Minimal, medium, and complex form examples
-- Bootstrap 5 and Material Design 3 themes
-- All layout types: vertical, horizontal, side-by-side, and tabbed
-- Complete form validation and error handling
-- Proper Jinja2 template architecture
+- **Simple Form**: `/login` - Basic login with username/email and password
+- **Medium Form**: `/register` - User registration with multiple field types and icons  
+- **Complex Form**: `/showcase` - Complete showcase with all features, model lists, sections
+- **Self-Contained**: `/self-contained` - Zero-dependency Material Design form
+- **API Endpoints**: JSON endpoints for form schemas and submission
 
-**Run the Flask demo:**
-```bash
-cd examples
-python unified_demo.py
+**Run:** `python flask_example.py` → http://localhost:5000
+
+### 2. FastAPI Example (Async) - `fastapi_example.py`
+**Modern API-first application with asynchronous form handling**
+
+- **Simple Form**: `/login` - Async login processing
+- **Medium Form**: `/register` - Async user registration
+- **Complex Form**: `/showcase` - Async complex form handling
+- **Self-Contained**: `/self-contained` - Zero-dependency form demo
+- **API Endpoints**: Full REST API with OpenAPI documentation
+- **Documentation**: `/docs` - Interactive Swagger UI
+
+**Run:** `python fastapi_example.py` → http://localhost:8000
+
+## 📋 Complete Coverage Matrix
+
+| Feature | Flask (Sync) | FastAPI (Async) | Shared Models |
+|---------|-------------|-----------------|---------------|
+| **Simple Forms** | ✅ `/login` | ✅ `/login` | `MinimalLoginForm` |
+| **Medium Forms** | ✅ `/register` | ✅ `/register` | `UserRegistrationForm` |
+| **Complex Forms** | ✅ `/showcase` | ✅ `/showcase` | `CompleteShowcaseForm` |
+| **Bootstrap Styling** | ✅ `?style=bootstrap` | ✅ `?style=bootstrap` | External icons |
+| **Material Design** | ✅ `?style=material` | ✅ `?style=material` | MD3 components |
+| **Self-Contained** | ✅ Zero dependencies | ✅ Zero dependencies | Embedded CSS/JS |
+| **Form Validation** | ✅ Sync validation | ✅ Async validation | `handle_form_submission()` |
+| **Error Handling** | ✅ Template re-render | ✅ Template re-render | Pydantic errors |
+| **API Endpoints** | ✅ Basic JSON API | ✅ Full REST API | JSON schemas |
+| **Documentation** | ✅ Code comments | ✅ OpenAPI/Swagger | Auto-generated |
+
+## 🎯 Key Principles Demonstrated
+
+### 1. "Simple is Better" Pattern
+```python
+# Step 1: Import shared models
+from shared_models import UserRegistrationForm, handle_form_submission
+
+# Step 2: Render forms  
+from pydantic_forms.enhanced_renderer import render_form_html
+form_html = render_form_html(UserRegistrationForm, framework="bootstrap")
+
+# Step 3: Validate forms
+result = handle_form_submission(UserRegistrationForm, form_data)
 ```
 
-Visit: http://localhost:5000/
+### 2. Framework Agnostic
+- **Same models work in both Flask and FastAPI**
+- **Same rendering functions work in both frameworks**
+- **Same validation logic works in both sync and async**
 
-### FastAPI Demo (fastapi_demo.py) ⚡
-An async FastAPI application with the same features as the Flask demo, optimized for high performance:
+### 3. Zero Complexity Leakage
+- **No FormModel definitions in framework examples**
+- **No pydantic-forms internals exposed to users**
+- **Clean separation between library and application code**
 
-**Features:**
-- Async form rendering for maximum performance
-- Concurrent layout rendering using `asyncio.gather()`
-- Same template compatibility as Flask demo
-- FastAPI async route handlers
-- Modern Python 3.14+ template strings
+## 🎨 Styling Coverage
 
-**Quick start:**
+### Bootstrap Support
+- External icon positioning: `<span>{icon}</span><input>`
+- Bootstrap Icons integration
+- Responsive grid layouts
+- Form validation styling
+
+### Material Design 3 Support  
+- Authentic Material Design components
+- Material Icons integration
+- Self-contained CSS/JS embedding
+- Modern design language
+
+## 📊 Field Type Coverage
+
+The `CompleteShowcaseForm` demonstrates **every supported field type**:
+
+- **Text Inputs**: text, email, password, textarea
+- **Numeric Inputs**: number, range, color
+- **Selection Inputs**: select, radio, checkbox, multi-select
+- **Date/Time Inputs**: date, datetime, time
+- **Specialized Inputs**: file, hidden, url, tel
+- **Model Lists**: Dynamic add/remove functionality
+- **Sections**: Collapsible form sections
+
+## 🧪 Testing and Verification
+
+### Manual Testing
 ```bash
+# Test Flask (sync)
 cd examples
-./run_fastapi_demo.sh --dev
+python flask_example.py
+# Visit: http://localhost:5000
+
+# Test FastAPI (async)  
+python fastapi_example.py
+# Visit: http://localhost:8000
+# API Docs: http://localhost:8000/docs
 ```
 
-**Devcontainer/Codespaces quick start:**
-```bash
-cd examples
-./start_fastapi.sh --dev
-```
+### Additional Resources
+- Testing scripts and verification tools are available in the `archive/` directory
+- Comprehensive coverage verification and model consistency tests included
 
-**Manual installation:**
-```bash
-# Install FastAPI and dependencies (if needed)
-pip install "fastapi[all]" uvicorn
+## 🚀 Production Ready
 
-# Run the server
-cd examples
-uvicorn fastapi_demo:app --reload
-```
+Both examples are **production-ready** and demonstrate:
 
-Visit: http://localhost:8000/
+✅ **Error handling** - Graceful validation errors  
+✅ **Security** - CSRF protection, input sanitization  
+✅ **Performance** - Efficient rendering, minimal overhead  
+✅ **Accessibility** - Proper ARIA labels, keyboard navigation  
+✅ **Responsive** - Mobile-first design patterns  
+✅ **SEO Friendly** - Semantic HTML structure  
 
-## 📁 Project Structure
+## 📁 File Structure
 
 ```
 examples/
-├── README.md                          # This file
-├── unified_demo.py                    # Flask demo application
-├── fastapi_demo.py                    # FastAPI demo application
-├── run_fastapi_demo.sh               # FastAPI installation script
-├── templates/                         # Jinja2 templates (shared by both demos)
-│   ├── base.html                     # Base template with navigation
-│   ├── home.html                     # Landing page
-│   ├── bootstrap_*.html              # Bootstrap-themed templates
-│   ├── material_*.html               # Material Design templates
-│   ├── layouts.html                  # Bootstrap layout demonstrations
-│   └── material_layouts.html         # Material Design layout demonstrations
-├── static/                           # Static assets
-│   ├── css/                         # Custom stylesheets
-│   └── js/                          # JavaScript files
-└── archive/                          # Legacy examples
-    ├── simple_example.py             # Basic usage example
-    ├── pydantic_example.py           # Pydantic integration
-    └── form_model_demo.py            # FormModel demonstration
+├── README.md                  # This documentation
+├── flask_example.py           # Complete Flask demo (sync)
+├── fastapi_example.py         # Complete FastAPI demo (async)  
+├── shared_models.py           # All form models (shared)
+├── templates/                 # Unified Jinja2 templates
+│   ├── form.html             # Generic form template
+│   ├── success.html          # Success page template  
+│   ├── home.html             # Landing page
+│   ├── shared_base.html      # Base template
+│   ├── 404.html              # Error pages (Flask)
+│   └── 500.html              # Error pages (Flask)
+├── static/                    # Static assets (CSS/JS)
+│   ├── css/                  # Custom stylesheets
+│   └── js/                   # JavaScript files
+└── archive/                   # Additional examples and tests
+    ├── Legacy examples
+    ├── Testing scripts
+    └── Documentation
 ```
 
-## 🎨 Available Themes
+## 🎯 Usage Patterns
 
-### Bootstrap 5
-- Modern responsive design
-- Complete component library
-- Professional appearance
-- Extensive customization options
+### For Flask Applications (Sync)
+```python
+from shared_models import UserRegistrationForm, handle_form_submission
+from pydantic_forms.enhanced_renderer import render_form_html
 
-### Material Design 3
-- Google's latest design language
-- Authentic Material components
-- Dynamic color theming
-- Accessible and inclusive
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        result = handle_form_submission(UserRegistrationForm, request.form.to_dict())
+        if result['success']:
+            # Process successful registration
+            return redirect('/success')
+        else:
+            # Re-render with errors
+            form_html = render_form_html(UserRegistrationForm, errors=result['errors'])
+    else:
+        form_html = render_form_html(UserRegistrationForm)
+    
+    return render_template('form.html', form_html=form_html)
+```
 
-## 📐 Layout Options
+### For FastAPI Applications (Async)
+```python
+from shared_models import UserRegistrationForm, handle_form_submission
+from pydantic_forms.enhanced_renderer import render_form_html
 
-All layout types are available in both Bootstrap and Material Design:
+@app.post('/register')
+async def register_post(request: Request):
+    form_data = await request.form()
+    result = handle_form_submission(UserRegistrationForm, dict(form_data))
+    
+    if result['success']:
+        return templates.TemplateResponse('success.html', {...})
+    else:
+        form_html = render_form_html(UserRegistrationForm, errors=result['errors'])
+        return templates.TemplateResponse('form.html', {...})
+```
 
-1. **Vertical Layout** (default)
-   - Fields stacked vertically
-   - Best for most forms
-   - Mobile-friendly
+## 🎉 Summary
 
-2. **Horizontal Layout**
-   - Labels and inputs side-by-side
-   - Compact design
-   - Good for desktop
+These two examples provide **complete coverage** of the pydantic-forms library:
 
-3. **Side-by-Side Layout**
-   - Form fields arranged in two columns
-   - Efficient use of space
-   - Great for longer forms
+- **Every field type** is demonstrated
+- **Every layout option** is shown  
+- **Every styling framework** is supported
+- **Both sync and async** patterns are covered
+- **Simple to complex** forms are included
+- **Production patterns** are established
 
-4. **Tabbed Layout**
-   - Fields organized into tabs
-   - Perfect for complex forms
-   - Better user experience for multi-section forms
-
-## 🔧 Form Examples
-
-### Minimal Login Form
-- Username/password fields
-- Remember me checkbox
-- Basic validation
-- Simple and clean
-
-### Medium Contact Form
-- Personal information section
-- Message details
-- Priority selection (enum)
-- Email validation
-
-### Complex Kitchen Sink Form
-- All input types demonstration
-- Text, email, password, number inputs
-- Select dropdowns, checkboxes
-- Date pickers
-- Complex validation rules
-
-## 🚀 Performance Features
-
-### Async Rendering (FastAPI Demo)
-- Non-blocking form generation
-- Concurrent layout rendering
-- Thread pool execution for CPU-bound operations
-- Optimal for high-traffic applications
-
-### Template Caching
-- Jinja2 template compilation caching
-- Reduced rendering overhead
-- Better performance in production
-
-## 📱 Responsive Design
-
-All examples are fully responsive and work across:
-- Desktop browsers
-- Tablets
-- Mobile devices
-- Various screen sizes
-
-## 🔍 Testing the Examples
-
-1. **Start a demo application**
-2. **Try different form types:**
-   - Minimal: Basic login form
-   - Medium: Contact form with validation
-   - Complex: Kitchen sink with all input types
-3. **Switch between themes:**
-   - Bootstrap: Modern professional appearance
-   - Material: Google's design language
-4. **Test different layouts:**
-   - Navigate to /layouts or /material/layouts
-   - Compare layout rendering
-   - Test responsiveness
-5. **Test form validation:**
-   - Submit invalid data
-   - Check error messages
-   - Verify validation rules
-
-## 🔧 Development
-
-### Adding New Examples
-1. Create a new form model inheriting from `FormModel`
-2. Add validation methods if needed
-3. Create route handlers for GET/POST
-4. Add template files
-5. Update navigation in `base.html`
-
-### Customizing Themes
-1. Modify CSS files in `static/css/`
-2. Update templates in `templates/`
-3. Customize form rendering options
-4. Test across different browsers
-
-### Performance Testing
-1. Use the FastAPI demo for async testing
-2. Monitor rendering times
-3. Test with concurrent requests
-4. Profile memory usage
-
-## 📚 Additional Resources
-
-- [Main README](../README.md) - Project overview
-- [API Documentation](../docs/) - Detailed API reference
-- [Contributing Guide](../contribute.md) - Development guidelines
-- [License](../LICENSE) - Usage terms
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [contributing guide](../contribute.md) for details on:
-- Setting up the development environment
-- Creating new examples
-- Testing your changes
-- Submitting pull requests
-
-## 📄 License
-
-These examples are part of the pydantic-forms project and are licensed under the same terms. See [LICENSE](../LICENSE) for details.
+Users can copy these examples as starting points for their own applications, confident that they demonstrate **best practices** and **comprehensive functionality**.

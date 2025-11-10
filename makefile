@@ -105,30 +105,14 @@ ruff: ## Format Python code with Ruff
 	ruff check --fix --exit-non-zero-on-fix --show-fixes $(EXAMPLE_PATH)
 
 
-ex-run: ## Run the example fast application
-# cp /workspaces/$(REPONAME)/examples/main.py /workspaces/$(REPONAME)/ex.py
-	uvicorn examples.main:app --port ${PORT} --reload  --log-level $(LOG_LEVEL)
-# rm /workspaces/$(REPONAME)/ex.py
+ex-run: ## Run the FastAPI example (async implementation)
+	cd examples && uvicorn fastapi_example:app --port 5000 --reload --log-level $(LOG_LEVEL)
 
-ex-flask: ## Run the Flask unified demo (development with reload on port ${PORT})
-	cd examples && FLASK_PORT=${PORT} $(PYTHON) unified_demo.py
+ex-flask: ## Run the Flask example (sync implementation)
+	cd examples && $(PYTHON) flask_example.py
 
-ex-flask-prod: ## Run the Flask unified demo (production with ${WORKER} workers on port ${PORT})
-	cd examples && gunicorn -w ${WORKER} -b 0.0.0.0:${PORT} --log-level $(LOG_LEVEL) unified_demo:app
+ex-test: ## Test that both examples can be imported successfully
+	cd examples && $(PYTHON) -c "import flask_example; print('✅ Flask example imports correctly')"
+	cd examples && $(PYTHON) -c "import fastapi_example; print('✅ FastAPI example imports correctly')"
+	@echo "🎉 Both examples are ready to run!"
 
-ex-fastapi: ## Run the FastAPI demo (development with reload on port ${PORT})
-	cd examples && uvicorn fastapi_demo:app --host 0.0.0.0 --port ${PORT} --reload --log-level $(LOG_LEVEL)
-
-ex-fastapi-prod: ## Run the FastAPI demo (production with ${WORKER} workers on port ${PORT})
-	cd examples && uvicorn fastapi_demo:app --host 0.0.0.0 --port ${PORT} --workers ${WORKER} --log-level $(LOG_LEVEL)
-
-ex-f: ## Run the example flask application
-	FLASK_APP=example.py python -m flask run --host 0.0.0.0 --port ${PORT} --reload
-
-js-build: ## Install JS dependencies and build form-bundle.js with Vite
-	cd PySchemaForms/static && \
-	npm install --legacy-peer-deps && \
-	npx vite build
-
-clear-pycache: ## Remove all __pycache__ directories
-	find . -type d -name "__pycache__" -exec rm -rf {} +

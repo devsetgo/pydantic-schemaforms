@@ -13,11 +13,15 @@ from enum import Enum
 
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+from pydantic_forms.validation import validate_form_data
 from pydantic import BaseModel, Field, EmailStr, field_validator
 from pydantic_forms.schema_form import FormModel
 from pydantic_forms.form_field import FormField
+from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout
+import re
+from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout
 
+from collections import defaultdict
 # ============================================================================
 # ENUMS AND CONSTANTS
 # ============================================================================
@@ -235,14 +239,19 @@ class UserRegistrationForm(FormModel):
         placeholder="Your age (optional)",
         help_text="Your age in years",
         icon="calendar",
-        minimum=13,
-        maximum=120
+        min_value=13,
+        max_value=120
     )
     
     role: UserRole = FormField(
         UserRole.USER,
         title="Account Type",
         input_type="select",
+        options=[
+            {"value": "user", "label": "👤 User"},
+            {"value": "admin", "label": "🔑 Admin"},
+            {"value": "moderator", "label": "🛡️ Moderator"}
+        ],
         help_text="Select your account type",
         icon="shield"
     )
@@ -954,38 +963,91 @@ class CompleteShowcaseForm(FormModel):
         return v
 
 # ============================================================================
-# LAYOUT CLASSES
-# ============================================================================
-
-from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout
-
-class VerticalFormLayout(VerticalLayout):
-    """Vertical layout - default stacked form layout."""
-    form = MinimalLoginForm
-
-class HorizontalFormLayout(HorizontalLayout):
-    """Horizontal layout - side-by-side form arrangement."""
-    form = MediumContactForm
-
-class TabbedFormLayout(TabbedLayout):
-    """Tabbed layout - single form split across multiple tabs."""
-    # Split the complex form into logical tabs
-    personal_info = VerticalLayout()
-    contact_details = VerticalLayout() 
-    preferences = VerticalLayout()
-
-# ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+def parse_nested_form_data(form_data):
+    """
+    Parse nested form data from flat keys to nested structure.
+    
+    Converts keys like 'pets[0].name' to nested dict structure:
+    {'pets': [{'name': 'value'}]}
+    
+    Args:
+        form_data: Dictionary with flat keys from HTML form submission
+        
+    Returns:
+        Dictionary with proper nested structure
+    """
+
+    
+    result = {}
+    array_data = defaultdict(lambda: defaultdict(dict))
+    
+    for key, value in form_data.items():
+        # Handle array notation like pets[0].name
+        array_match = re.match(r'^(\w+)\[(\d+)\]\.(\w+)$', key)
+        if array_match:
+            array_name, index, field_name = array_match.groups()
+            index = int(index)
+            
+            # Convert string values to appropriate types
+            converted_value = convert_form_value(value)
+            array_data[array_name][index][field_name] = converted_value
+        else:
+            # Regular field
+            result[key] = convert_form_value(value)
+    
+    # Convert array data to proper list format
+    for array_name, indexed_items in array_data.items():
+        # Sort by index and create list
+        items_list = []
+        for i in sorted(indexed_items.keys()):
+            items_list.append(indexed_items[i])
+        result[array_name] = items_list
+    
+    return result
+
+
+def convert_form_value(value):
+    """
+    Convert form string values to appropriate Python types.
+    
+    Args:
+        value: String value from form
+        
+    Returns:
+        Converted value (bool, int, float, or string)
+    """
+    if isinstance(value, str):
+        # Handle boolean values
+        if value.lower() == 'true':
+            return True
+        elif value.lower() == 'false':
+            return False
+        elif value.lower() in ('on', 'yes', '1'):
+            return True
+        elif value.lower() in ('off', 'no', '0'):
+            return False
+        
+        # Don't convert numeric values automatically - let Pydantic handle type conversion
+        # This prevents issues with password fields that contain only digits
+        # and other string fields that should remain as strings
+    
+    # Return as-is for strings, empty values, etc.
+    return value
+
 
 def handle_form_submission(form_class, form_data, success_message="Form submitted successfully!"):
     """Handle form submission with validation and error handling."""
     try:
-        # Import validation here to avoid circular imports
-        from pydantic_forms.validation import validate_form_data
+        
+        
+        # Parse nested form data (handles pets[0].name -> pets: [{name: ...}])
+        parsed_data = parse_nested_form_data(form_data)
         
         # Validate the form data using Pydantic
-        result = validate_form_data(form_class, form_data)
+        result = validate_form_data(form_class, parsed_data)
         
         if result.is_valid:
             # Return success response
@@ -1014,8 +1076,285 @@ __all__ = [
     # Form Models
     'PetModel', 'EmergencyContactModel', 'MinimalLoginForm', 'UserRegistrationForm', 
     'PetOwnerForm', 'PetRegistrationForm', 'MediumContactForm', 'CompleteShowcaseForm',
+    # Layout Demonstration Forms
+    'TaskItem', 'PersonalInfoForm', 'ContactInfoForm', 'PreferencesForm', 'TaskListForm',
+    'LayoutDemonstrationForm', 'ComprehensiveTabbedForm',
     # Layout Classes
-    'VerticalFormLayout', 'HorizontalFormLayout', 'TabbedFormLayout',
+    'VerticalFormLayout', 'HorizontalFormLayout', 'TabbedFormLayout', 'ListFormLayout',
     # Helper Functions
-    'handle_form_submission'
+    'handle_form_submission', 'parse_nested_form_data', 'convert_form_value'
 ]
+
+
+# ============================================================================
+# LAYOUT DEMONSTRATION FORMS
+# ============================================================================
+
+class TaskItem(FormModel):
+    """Individual task item for list layout demonstration."""
+    task_name: str = FormField(
+        title="Task Description",
+        input_type="text",
+        placeholder="Enter task description...",
+        help_text="What needs to be done?",
+        icon="check-square",
+        min_length=1,
+        max_length=100
+    )
+    
+    priority: str = FormField(
+        "medium",
+        title="Priority",
+        input_type="select",
+        options=[
+            {"value": "low", "label": "🟢 Low"},
+            {"value": "medium", "label": "🟡 Medium"},
+            {"value": "high", "label": "🟠 High"},
+            {"value": "urgent", "label": "🔴 Urgent"}
+        ],
+        help_text="How important is this task?",
+        icon="exclamation-triangle"
+    )
+    
+    due_date: Optional[date] = FormField(
+        None,
+        title="Due Date",
+        input_type="date",
+        help_text="When should this be completed? (optional)",
+        icon="calendar-date"
+    )
+    
+    completed: bool = FormField(
+        False,
+        title="Completed",
+        input_type="checkbox",
+        help_text="Is this task done?",
+        icon="check"
+    )
+
+
+class PersonalInfoForm(FormModel):
+    """Personal information form for vertical layout demonstration."""
+    
+    first_name: str = FormField(
+        title="First Name",
+        input_type="text",
+        placeholder="Enter your first name",
+        help_text="Your given name",
+        icon="person",
+        min_length=2,
+        max_length=50
+    )
+    
+    last_name: str = FormField(
+        title="Last Name",
+        input_type="text",
+        placeholder="Enter your last name",
+        help_text="Your family name",
+        icon="person",
+        min_length=2,
+        max_length=50
+    )
+    
+    email: EmailStr = FormField(
+        title="Email Address",
+        input_type="email",
+        placeholder="your.email@example.com",
+        help_text="Your email address",
+        icon="envelope"
+    )
+    
+    birth_date: Optional[date] = FormField(
+        None,
+        title="Date of Birth",
+        input_type="date",
+        help_text="Your birth date (optional)",
+        icon="calendar-date"
+    )
+
+
+class ContactInfoForm(FormModel):
+    """Contact information form for horizontal layout demonstration."""
+    
+    phone: Optional[str] = FormField(
+        None,
+        title="Phone Number",
+        input_type="tel",
+        placeholder="+1 (555) 123-4567",
+        help_text="Your contact phone number",
+        icon="telephone",
+        max_length=20
+    )
+    
+    address: str = FormField(
+        title="Street Address",
+        input_type="text",
+        placeholder="123 Main Street",
+        help_text="Your street address",
+        icon="house",
+        max_length=200
+    )
+    
+    city: str = FormField(
+        title="City",
+        input_type="text",
+        placeholder="Your city",
+        help_text="City where you live",
+        icon="building",
+        max_length=100
+    )
+    
+    postal_code: Optional[str] = FormField(
+        None,
+        title="Postal Code",
+        input_type="text",
+        placeholder="12345",
+        help_text="ZIP or postal code",
+        icon="mailbox",
+        max_length=10
+    )
+
+
+class PreferencesForm(FormModel):
+    """Preferences form for tabbed layout demonstration."""
+    
+    notification_email: bool = FormField(
+        True,
+        title="Email Notifications",
+        input_type="checkbox",
+        help_text="Receive notifications via email",
+        icon="envelope"
+    )
+    
+    notification_sms: bool = FormField(
+        False,
+        title="SMS Notifications",
+        input_type="checkbox",
+        help_text="Receive notifications via SMS",
+        icon="phone"
+    )
+    
+    theme: str = FormField(
+        "light",
+        title="UI Theme",
+        input_type="select",
+        options=[
+            {"value": "light", "label": "☀️ Light Theme"},
+            {"value": "dark", "label": "🌙 Dark Theme"},
+            {"value": "auto", "label": "🔄 Auto (System)"}
+        ],
+        help_text="Choose your preferred theme",
+        icon="palette"
+    )
+    
+    language: str = FormField(
+        "en",
+        title="Language",
+        input_type="select",
+        options=[
+            {"value": "en", "label": "🇺🇸 English"},
+            {"value": "es", "label": "🇪🇸 Spanish"},
+            {"value": "fr", "label": "🇫🇷 French"},
+            {"value": "de", "label": "🇩🇪 German"}
+        ],
+        help_text="Select your preferred language",
+        icon="globe"
+    )
+
+
+class TaskListForm(FormModel):
+    """Task management form for list layout demonstration."""
+    
+    project_name: str = FormField(
+        title="Project Name",
+        input_type="text",
+        placeholder="Enter project name",
+        help_text="Name of the project or task collection",
+        icon="folder",
+        min_length=2,
+        max_length=100,
+    )
+    
+    tasks: List[TaskItem] = FormField(
+        default_factory=list,
+        title="Task List",
+        input_type="model_list",
+        model_class=TaskItem,
+        help_text="Manage your tasks (dynamic list demonstration)",
+        icon="list-task",
+        min_items=1,
+        max_items=10,
+        add_button_text="Add Task",
+        remove_button_text="Remove Task",
+        collapsible_items=True,
+        items_expanded_by_default=True
+    )
+    
+    @field_validator('tasks')
+    @classmethod
+    def validate_tasks(cls, v):
+        if len(v) < 1:
+            raise ValueError('At least one task is required')
+        if len(v) > 10:
+            raise ValueError('Maximum 10 tasks allowed')
+        return v
+
+
+
+
+# ============================================================================
+# LAYOUT CLASSES
+# ============================================================================
+
+class VerticalFormLayout(VerticalLayout):
+    """Vertical layout - default stacked form layout."""
+    form = PersonalInfoForm
+
+class HorizontalFormLayout(HorizontalLayout):
+    """Horizontal layout - side-by-side form arrangement."""
+    form = ContactInfoForm
+
+class TabbedFormLayout(TabbedLayout):
+    """Tabbed layout - preferences organized in tabs."""
+    # Split preferences form into logical tabs for demonstration
+    notifications = PreferencesForm
+    appearance = PreferencesForm
+    
+class ListFormLayout(VerticalLayout):
+    """List layout - form with dynamic task list."""
+    form = TaskListForm
+
+class LayoutDemonstrationForm(FormModel):
+    """
+    Create a tabbed layout using VerticalLayout, HorizontalLayout, TabbedLayout, and ListLayout as the tabs.
+    
+    This demonstrates how to use layout classes as field types in a Pydantic form.
+    Each field represents a different layout type that can be rendered as a tab.
+    """
+    vertical_tab: VerticalFormLayout = FormField(
+        VerticalFormLayout(),
+        title="Personal Info",
+        input_type="layout",
+        help_text="Vertical layout demonstration"
+    )
+    
+    horizontal_tab: HorizontalFormLayout = FormField(
+        HorizontalFormLayout(),
+        title="Contact Info",
+        input_type="layout",
+        help_text="Horizontal layout demonstration"
+    )
+    
+    tabbed_tab: TabbedFormLayout = FormField(
+        TabbedFormLayout(),
+        title="Preferences",
+        input_type="layout",
+        help_text="Tabbed layout demonstration"
+    )
+    
+    list_tab: ListFormLayout = FormField(
+        ListFormLayout(),
+        title="Task List",
+        input_type="layout",
+        help_text="List layout demonstration"
+    )

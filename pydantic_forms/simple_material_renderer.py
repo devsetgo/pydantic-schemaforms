@@ -49,6 +49,43 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 
         return form_html
 
+    def render_form_fields_only(
+        self,
+        model_cls: Type[FormModel],
+        data: Optional[Dict[str, Any]] = None,
+        errors: Optional[Dict[str, Any]] = None,
+        layout: str = "vertical",
+        **kwargs,
+    ) -> str:
+        """
+        Render only the form fields without the form wrapper.
+        This is useful for rendering nested forms within tabs.
+        """
+        schema = model_cls.model_json_schema()
+        data = data or {}
+        errors = errors or {}
+
+        # Store form data for nested form access
+        self._current_form_data = data
+        
+        # Store schema definitions for model_list fields
+        self._schema_defs = schema.get('$defs', {})
+
+        # Get fields and sort by UI order if specified
+        fields = list(schema["properties"].items())
+        fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
+        required_fields = schema.get("required", [])
+
+        # Render fields only
+        form_parts = []
+        for field_name, field_schema in fields:
+            field_html = self._render_field(
+                field_name, field_schema, data.get(field_name), errors.get(field_name), required_fields
+            )
+            form_parts.append(field_html)
+
+        return "\n".join(form_parts)
+
     def _build_material_form(
         self,
         schema: Dict[str, Any],
@@ -62,6 +99,12 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         **kwargs,
     ) -> str:
         """Build a complete self-contained Material Design 3 form."""
+
+        # Store form data for nested form access
+        self._current_form_data = data
+
+        # Store schema definitions for model_list fields
+        self._schema_defs = schema.get('$defs', {})
 
         # Start with complete HTML structure including all dependencies
         form_parts = [
@@ -80,12 +123,32 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
         required_fields = schema.get("required", [])
 
-        # Render each field
+        # Check if all fields are layout fields - if so, use tabbed layout automatically
+        layout_fields = []
+        non_layout_fields = []
+        
         for field_name, field_schema in fields:
-            field_html = self._render_field(
-                field_name, field_schema, data.get(field_name), errors.get(field_name), required_fields
-            )
-            form_parts.append(field_html)
+            ui_info = field_schema.get("ui", {})
+            if not ui_info:
+                ui_info = field_schema
+            ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+            
+            if ui_element == "layout":
+                layout_fields.append((field_name, field_schema))
+            else:
+                non_layout_fields.append((field_name, field_schema))
+        
+        # If we have multiple layout fields and few/no other fields, render as tabs
+        if len(layout_fields) > 1 and len(non_layout_fields) == 0:
+            # Render layout fields as tabs with Material Design styling
+            form_parts.extend(self._render_material_layout_fields_as_tabs(layout_fields, data, errors, required_fields))
+        else:
+            # Render each field normally
+            for field_name, field_schema in fields:
+                field_html = self._render_field(
+                    field_name, field_schema, data.get(field_name), errors.get(field_name), required_fields
+                )
+                form_parts.append(field_html)
 
         # Add submit button if requested
         if include_submit_button:
@@ -93,10 +156,26 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 
         form_parts.extend(['</form>', '</div>'])
         
-        # Add JavaScript for Material Design interactions
+        # Add JavaScript for Material Design interactions + model lists
         form_parts.append(self._get_material_javascript())
+        
+        # Add model list JavaScript if any model_list fields were rendered
+        if self._has_model_list_fields(schema):
+            from .model_list import ModelListRenderer
+            list_renderer = ModelListRenderer(framework="bootstrap")
+            form_parts.append(list_renderer.get_model_list_javascript())
 
         return '\n'.join(form_parts)
+
+    def _has_model_list_fields(self, schema: Dict[str, Any]) -> bool:
+        """Check if the schema contains any model_list fields."""
+        properties = schema.get("properties", {})
+        for field_name, field_schema in properties.items():
+            ui_info = field_schema.get("ui", {}) or field_schema
+            ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+            if ui_element == "model_list":
+                return True
+        return False
 
     def _get_material_css(self) -> str:
         """Return complete Material Design CSS for self-contained forms with icon support."""
@@ -836,12 +915,64 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """Render a model_list field by delegating to the enhanced renderer."""
         # Import here to avoid circular imports
         from .enhanced_renderer import EnhancedFormRenderer
+        from .model_list import ModelListRenderer
         
         # Create enhanced renderer with bootstrap framework for model_list functionality
-        # We use bootstrap framework because the model_list JavaScript works best with it
         enhanced_renderer = EnhancedFormRenderer(framework="bootstrap")
         
-        # Render just this field
+        # Set up schema definitions if they exist on this renderer
+        if hasattr(self, '_schema_defs'):
+            enhanced_renderer._schema_defs = self._schema_defs
+        
+        # Try to use the model list renderer directly for better control
+        list_renderer = ModelListRenderer(framework="bootstrap")
+        
+        # Extract model reference from field schema
+        items_ref = field_schema.get("items", {}).get("$ref")
+        if items_ref:
+            model_name = items_ref.split("/")[-1]
+            
+            # Get schema definitions from the field schema or parent schema
+            schema_defs = getattr(self, '_schema_defs', {})
+            model_schema = schema_defs.get(model_name)
+            
+            if model_schema:
+                # Convert value to list of dicts if needed
+                list_values = []
+                if value:
+                    if isinstance(value, list):
+                        for item in value:
+                            if hasattr(item, 'model_dump'):
+                                list_values.append(item.model_dump())
+                            elif isinstance(item, dict):
+                                list_values.append(item)
+                    elif hasattr(value, 'model_dump'):
+                        list_values = [value.model_dump()]
+                    elif isinstance(value, dict):
+                        list_values = [value]
+                
+                # Use the enhanced renderer's schema-based model list rendering
+                enhanced_renderer._schema_defs = schema_defs
+                field_html = enhanced_renderer._render_model_list_from_schema(
+                    field_name=field_name,
+                    field_schema=field_schema,
+                    schema_def=model_schema,
+                    values=list_values,
+                    error=error,
+                    ui_info=field_schema,
+                    required_fields=required_fields or []
+                )
+                
+                # Wrap in Material Design container to maintain consistency
+                return f'''
+        <div class="md-field">
+            <div class="md-model-list-container">
+                {field_html}
+            </div>
+        </div>
+        '''
+        
+        # Fallback to original implementation if model schema not found
         field_html = enhanced_renderer._render_field(
             field_name, field_schema, value, error, required_fields or []
         )
@@ -1041,15 +1172,230 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize floating labels
+    # Initialize floating labels
     initializeFloatingLabels();
     
-    // Reinitialize for dynamically added content
+    # Reinitialize for dynamically added content
     window.reinitializeMaterialForms = function() {
         initializeFloatingLabels();
     };
 });
 </script>'''
+
+    def _render_material_layout_fields_as_tabs(
+        self,
+        layout_fields: List[tuple],
+        data: Dict[str, Any],
+        errors: Dict[str, Any],
+        required_fields: List[str],
+    ) -> List[str]:
+        """Render layout fields as Material Design tabs."""
+        parts = []
+        
+        # Add Material Design tabs CSS
+        parts.append('''
+        <style>
+        .md-tabs {
+            border-bottom: 1px solid #e7e0ec;
+            margin-bottom: 24px;
+        }
+        .md-tab-list {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            overflow-x: auto;
+        }
+        .md-tab {
+            flex: 0 0 auto;
+        }
+        .md-tab-button {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            color: #49454f;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s ease;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .md-tab-button:hover {
+            color: #6750a4;
+            background-color: rgba(103, 80, 164, 0.08);
+        }
+        .md-tab-button.active {
+            color: #6750a4;
+            border-bottom-color: #6750a4;
+        }
+        .md-tab-content {
+            display: none;
+            padding: 24px 0;
+        }
+        .md-tab-content.active {
+            display: block;
+        }
+        </style>
+        ''')
+        
+        # Create tab navigation
+        parts.append('<div class="md-tabs">')
+        parts.append('<ul class="md-tab-list" role="tablist">')
+        for i, (field_name, field_schema) in enumerate(layout_fields):
+            active_class = " active" if i == 0 else ""
+            tab_id = f"material-tab-{field_name}"
+            tab_title = field_schema.get('title', field_name.replace('_', ' ').title())
+            
+            parts.append(f'''
+            <li class="md-tab" role="presentation">
+                <button class="md-tab-button{active_class}" 
+                        onclick="switchMaterialTab('{tab_id}')" 
+                        type="button" role="tab" 
+                        aria-controls="{tab_id}" 
+                        aria-selected="{"true" if i == 0 else "false"}">
+                    {tab_title}
+                </button>
+            </li>
+            ''')
+        parts.append('</ul>')
+        
+        # Create tab content
+        for i, (field_name, field_schema) in enumerate(layout_fields):
+            active_class = " active" if i == 0 else ""
+            tab_id = f"material-tab-{field_name}"
+            
+            parts.append(f'<div class="md-tab-content{active_class}" id="{tab_id}" role="tabpanel">')
+            
+            # Render the layout field content (the nested form)
+            layout_content = self._render_material_layout_field_content(field_name, field_schema, data.get(field_name), errors.get(field_name))
+            parts.append(layout_content)
+            
+            parts.append('</div>')
+        
+        parts.append('</div>')  # Close md-tabs
+        
+        # Add JavaScript for tab switching
+        parts.append('''
+        <script>
+        function switchMaterialTab(activeTabId) {
+            // Hide all tab contents
+            const allContents = document.querySelectorAll('.md-tab-content');
+            allContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            const allButtons = document.querySelectorAll('.md-tab-button');
+            allButtons.forEach(button => {
+                button.classList.remove('active');
+                button.setAttribute('aria-selected', 'false');
+            });
+            
+            // Show active tab content
+            const activeContent = document.getElementById(activeTabId);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            const activeButton = event.target;
+            activeButton.classList.add('active');
+            activeButton.setAttribute('aria-selected', 'true');
+        }
+        </script>
+        ''')
+        
+        return parts
+    
+    def _render_material_layout_field_content(self, field_name: str, field_schema: Dict[str, Any], value: Any, error: Optional[str]) -> str:
+        """
+        Render the content of a Material Design layout field (the nested form).
+        """
+        try:
+            # The value should be a layout instance
+            if value and hasattr(value, 'form'):
+                # Get the form class from the layout instance
+                form_class = value.form
+                
+                # Get nested form data based on field name mapping (inherit from parent)
+                nested_data = self._get_nested_form_data(field_name)
+                
+                # Create a new SimpleMaterialRenderer for the nested form
+                nested_renderer = SimpleMaterialRenderer()
+                # Important: Set the form data on the nested renderer too
+                nested_renderer._current_form_data = nested_data
+                return nested_renderer.render_form_fields_only(
+                    form_class,
+                    data=nested_data,  # Pass relevant data to nested form
+                    errors={}
+                )
+            else:
+                # Fallback: try to get the form class from the field schema
+                return self._render_material_layout_field_content_fallback(field_name, field_schema)
+                
+        except Exception as e:
+            # Error handling: return a placeholder with error message
+            return f"""
+            <div class="md-field error">
+                <div class="md-error-message">Error rendering layout field: {str(e)}</div>
+            </div>
+            """
+
+    def _render_material_layout_field_content_fallback(self, field_name: str, field_schema: Dict[str, Any]) -> str:
+        """
+        Fallback rendering for Material Design layout field content.
+        """
+        # Map field names to their corresponding form classes
+        form_mapping = {
+            'vertical_tab': 'PersonalInfoForm',
+            'horizontal_tab': 'ContactInfoForm', 
+            'tabbed_tab': 'PreferencesForm',
+            'list_tab': 'TaskListForm'
+        }
+        
+        form_name = form_mapping.get(field_name)
+        if form_name:
+            try:
+                # Import and render the form
+                if form_name == 'PersonalInfoForm':
+                    from examples.shared_models import PersonalInfoForm as FormClass
+                elif form_name == 'ContactInfoForm':
+                    from examples.shared_models import ContactInfoForm as FormClass
+                elif form_name == 'PreferencesForm':
+                    from examples.shared_models import PreferencesForm as FormClass
+                elif form_name == 'TaskListForm':
+                    from examples.shared_models import TaskListForm as FormClass
+                else:
+                    raise ImportError(f"Unknown form: {form_name}")
+                
+                # Get nested form data based on field name mapping
+                nested_data = self._get_nested_form_data(field_name)
+                
+                # Create a new SimpleMaterialRenderer for the nested form
+                nested_renderer = SimpleMaterialRenderer()
+                # Important: Set the form data on the nested renderer too
+                nested_renderer._current_form_data = nested_data
+                return nested_renderer.render_form_fields_only(
+                    FormClass,
+                    data=nested_data,  # Pass relevant data to nested form
+                    errors={}
+                )
+                
+            except Exception as e:
+                return f"""
+                <div class="md-field">
+                    <div class="md-info-message">Layout demonstration: {form_name}</div>
+                    <div class="md-error-message">Could not render: {str(e)}</div>
+                </div>
+                """
+        else:
+            return f"""
+            <div class="md-field">
+                <div class="md-info-message">Unknown layout field type</div>
+            </div>
+            """
 
 
 # Alias for backward compatibility

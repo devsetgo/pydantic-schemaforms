@@ -24,63 +24,6 @@ class TextInput(FormInput):
 
         return f'<input {attributes_str} />'
 
-    def render_with_label(self, label: Optional[str] = None, help_text: Optional[str] = None,
-                         error: Optional[str] = None, icon: Optional[str] = None, framework: str = "bootstrap", **kwargs) -> str:
-        """Render input with label, help text, error message, and icon support."""
-        field_name = kwargs.get("name", "")
-        required = kwargs.get("required", False)
-
-        parts = []
-
-        # Add label (without icon, since icon will be outside)
-        if label is not False:  # Allow explicit False to skip label
-            label_html = build_label(field_name, label, required, None, framework)  # No icon in label
-            parts.append(render_template(label_html))
-
-        # Create input wrapper with icon if provided
-        if icon:
-            # Start input group with icon outside on the left
-            if framework == "bootstrap":
-                # Handle both with and without bi bi- prefix
-                icon_class = icon if icon.startswith("bi bi-") else f"bi bi-{icon}"
-                icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
-            elif framework == "material":
-                icon_html = f'<span class="input-icon"><i class="material-icons">{icon}</i></span>'
-            elif framework == "fontawesome":
-                icon_class = icon if icon.startswith("fas fa-") else f"fas fa-{icon}"
-                icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
-            else:
-                icon_html = f'<span class="input-icon">{icon}</span>'
-            
-            # Start wrapper div for icon + input
-            parts.append('<div class="input-with-icon">')
-            parts.append(icon_html)
-
-        # Add input
-        if help_text:
-            kwargs["aria-describedby"] = f"{field_name}-help"
-        if error:
-            kwargs["aria-invalid"] = "true"
-            kwargs["aria-describedby"] = f"{field_name}-error"
-
-        parts.append(self.render(**kwargs))
-
-        # Close wrapper if icon was added
-        if icon:
-            parts.append('</div>')
-
-        # Add help text
-        if help_text:
-            help_html = build_help_text(field_name, help_text)
-            parts.append(render_template(help_html))
-
-        # Add error message
-        if error:
-            error_html = build_error_message(field_name, error)
-            parts.append(render_template(error_html))
-
-        return "\n".join(parts)
-
 
 class PasswordInput(FormInput):
     """Password input field with masking."""

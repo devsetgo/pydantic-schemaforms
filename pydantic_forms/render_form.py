@@ -50,8 +50,14 @@ def render_form_html(
         renderer = EnhancedFormRenderer(framework=framework)
 
         # For HTMX compatibility, add HTMX attributes
-        form_attrs = {"hx-post": htmx_post_url, "hx-target": "#form-response", "hx-swap": "innerHTML"}
+        form_attrs = {
+            "hx-post": htmx_post_url, 
+            "hx-target": "#form-response", 
+            "hx-swap": "innerHTML"
+        }
         form_attrs.update(kwargs)
+        # Ensure action is set after kwargs update
+        form_attrs["action"] = htmx_post_url
 
         form_html = renderer.render_form_from_model(
             form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **form_attrs

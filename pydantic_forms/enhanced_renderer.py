@@ -161,6 +161,9 @@ class EnhancedFormRenderer:
         data = data or {}
         errors = errors or {}
 
+        # Store current form data for nested forms to access
+        self._current_form_data = data
+
         # Store schema definitions for model_list fields
         self._schema_defs = schema.get('$defs', {})
 
@@ -176,6 +179,8 @@ class EnhancedFormRenderer:
             "novalidate": True,  # Use custom validation
         }
         form_attrs.update(kwargs)
+        # Ensure action isn't overridden by kwargs
+        form_attrs["action"] = submit_url
 
         form_parts = [self._build_form_tag(form_attrs)]
 
@@ -188,8 +193,26 @@ class EnhancedFormRenderer:
         fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
         required_fields = schema.get("required", [])
 
-        # Render fields based on layout
-        if layout == "tabbed":
+        # Check if all fields are layout fields - if so, use tabbed layout automatically
+        layout_fields = []
+        non_layout_fields = []
+        
+        for field_name, field_schema in fields:
+            ui_info = field_schema.get("ui", {})
+            if not ui_info:
+                ui_info = field_schema
+            ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+            
+            if ui_element == "layout":
+                layout_fields.append((field_name, field_schema))
+            else:
+                non_layout_fields.append((field_name, field_schema))
+        
+        # If we have multiple layout fields and few/no other fields, render as tabs
+        if len(layout_fields) > 1 and len(non_layout_fields) == 0:
+            # Render layout fields as tabs
+            form_parts.extend(self._render_layout_fields_as_tabs(layout_fields, data, errors, required_fields))
+        elif layout == "tabbed":
             form_parts.extend(self._render_tabbed_layout(fields, data, errors, required_fields))
         elif layout == "side-by-side":
             form_parts.extend(self._render_side_by_side_layout(fields, data, errors, required_fields))
@@ -229,6 +252,63 @@ class EnhancedFormRenderer:
             if ui_element == "model_list":
                 return True
         return False
+    
+    def render_form_fields_only(
+        self,
+        model_cls: Type[FormModel],
+        data: Optional[Dict[str, Any]] = None,
+        errors: Optional[Dict[str, Any]] = None,
+        layout: str = "vertical",
+        **kwargs,
+    ) -> str:
+        """
+        Render only the form fields without the form wrapper.
+        This is useful for rendering nested forms within tabs.
+
+        Args:
+            model_cls: Pydantic model class with UI element specifications
+            data: Form data to populate fields with
+            errors: Validation errors to display
+            layout: Layout type - "vertical", "horizontal", "side-by-side", or "tabbed"
+            **kwargs: Additional rendering options
+
+        Returns:
+            HTML for form fields only (no <form> tags)
+        """
+        schema = model_cls.model_json_schema()
+        data = data or {}
+        errors = errors or {}
+
+        # Store current form data for nested forms to access
+        self._current_form_data = data
+
+        # Store schema definitions for model_list fields
+        self._schema_defs = schema.get('$defs', {})
+
+        # Handle SchemaFormValidationError format
+        if isinstance(errors, dict) and "errors" in errors:
+            errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
+
+        # Get fields and sort by UI order if specified
+        fields = list(schema["properties"].items())
+        fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
+        required_fields = schema.get("required", [])
+
+        form_parts = []
+
+        # Render fields based on layout
+        for field_name, field_schema in fields:
+            field_html = self._render_field(
+                field_name,
+                field_schema,
+                data.get(field_name),
+                errors.get(field_name),
+                required_fields,
+                layout,
+            )
+            form_parts.append(field_html)
+
+        return "\n".join(form_parts)
     
     async def render_form_from_model_async(
         self,
@@ -296,6 +376,10 @@ class EnhancedFormRenderer:
         ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
         if not ui_element:
             ui_element = self._infer_ui_element(field_schema)
+
+        # Handle layout fields specially - render the embedded form
+        if ui_element == "layout":
+            return self._render_layout_field(field_name, field_schema, value, error, ui_info)
 
         # Handle model_list specially since it doesn't use the standard input component pattern
         if ui_element == "model_list":
@@ -377,7 +461,13 @@ class EnhancedFormRenderer:
 
         # Add value if provided (except for password fields for security)
         if value is not None and ui_element != "password":
-            field_attrs["value"] = value
+            if ui_element == "checkbox":
+                # For checkboxes, set the checked attribute based on boolean value
+                if value is True or value == "true" or value == "1" or value == "on":
+                    field_attrs["checked"] = True
+                field_attrs["value"] = "1"  # Standard checkbox value
+            else:
+                field_attrs["value"] = value
         elif value is not None and ui_element == "password":
             # For password fields, set value only if it's a validation scenario
             field_attrs["value"] = value
@@ -678,6 +768,188 @@ class EnhancedFormRenderer:
         parts.append('</div>')
         return parts
     
+    def _render_layout_fields_as_tabs(
+        self,
+        layout_fields: List[tuple],
+        data: Dict[str, Any],
+        errors: Dict[str, Any],
+        required_fields: List[str],
+    ) -> List[str]:
+        """Render layout fields as tabs, with each layout field becoming a tab containing its form."""
+        parts = []
+        
+        # Create tab navigation
+        parts.append('<ul class="nav nav-tabs" id="layoutTabs" role="tablist">')
+        for i, (field_name, field_schema) in enumerate(layout_fields):
+            active_class = " active" if i == 0 else ""
+            tab_id = f"layout-tab-{field_name}"
+            tab_title = field_schema.get('title', field_name.replace('_', ' ').title())
+            
+            parts.append(f'''
+            <li class="nav-item" role="presentation">
+                <button class="nav-link{active_class}" id="{tab_id}-tab" data-bs-toggle="tab" 
+                        data-bs-target="#{tab_id}" type="button" role="tab" 
+                        aria-controls="{tab_id}" aria-selected="{"true" if i == 0 else "false"}">
+                    {tab_title}
+                </button>
+            </li>
+            ''')
+        parts.append('</ul>')
+        
+        # Create tab content
+        parts.append('<div class="tab-content" id="layoutTabContent">')
+        for i, (field_name, field_schema) in enumerate(layout_fields):
+            active_class = " show active" if i == 0 else ""
+            tab_id = f"layout-tab-{field_name}"
+            
+            parts.append(f'<div class="tab-pane fade{active_class}" id="{tab_id}" role="tabpanel" aria-labelledby="{tab_id}-tab">')
+            
+            # Get the UI info for this layout field
+            ui_info = field_schema.get("ui", {})
+            if not ui_info:
+                ui_info = field_schema
+            
+            # Render the layout field content (the nested form)
+            layout_content = self._render_layout_field_content(field_name, field_schema, data.get(field_name), errors.get(field_name), ui_info)
+            parts.append(layout_content)
+            
+            parts.append('</div>')
+        
+        parts.append('</div>')
+        return parts
+    
+    def _render_layout_field_content(self, field_name: str, field_schema: Dict[str, Any], value: Any, error: Optional[str], ui_info: Dict[str, Any]) -> str:
+        """
+        Render the content of a layout field (the nested form) without the section wrapper.
+        This is used when rendering layout fields as tab content.
+        """
+        try:
+            # The value should be a layout instance
+            if value and hasattr(value, 'form'):
+                # Get the form class from the layout instance
+                form_class = value.form
+                
+                # Get nested form data based on field name mapping
+                nested_data = self._get_nested_form_data(field_name)
+                
+                # Create a new renderer for the nested form to avoid data conflicts
+                nested_renderer = EnhancedFormRenderer(framework=self.framework)
+                nested_renderer._current_form_data = nested_data
+                
+                # Render only the form fields (no form wrapper to avoid nested forms)
+                return nested_renderer.render_form_fields_only(
+                    form_class,
+                    data=nested_data,  # Pass relevant data to nested form
+                    errors={},
+                    layout="vertical"  # Use vertical layout for embedded forms
+                )
+            else:
+                # Fallback: try to get the form class from the field schema
+                return self._render_layout_field_content_fallback(field_name, field_schema, ui_info)
+                
+        except Exception as e:
+            # Error handling: return a placeholder with error message
+            return f"""
+            <div class="layout-field-error alert alert-warning">
+                <p>Error rendering layout field: {str(e)}</p>
+                <small class="text-muted">{ui_info.get('help_text', '')}</small>
+            </div>
+            """
+
+    def _get_nested_form_data(self, field_name: str) -> Dict[str, Any]:
+        """
+        Get the data for nested forms based on the field name.
+        This maps the main form data to the appropriate nested form fields.
+        """
+        # Access the main form data (stored during form rendering)
+        main_data = getattr(self, '_current_form_data', {})
+        
+        # First check if there's direct nested data for this field
+        if field_name in main_data and isinstance(main_data[field_name], dict):
+            return main_data[field_name]
+        
+        # Fallback: Map layout field names to their corresponding form data
+        field_data_mapping = {
+            'vertical_tab': ['first_name', 'last_name', 'email', 'birth_date'],
+            'horizontal_tab': ['phone', 'address', 'city', 'postal_code'],
+            'tabbed_tab': ['notification_email', 'notification_sms', 'theme', 'language'],
+            'list_tab': ['project_name', 'tasks']
+        }
+        
+        # Get the fields that belong to this nested form
+        relevant_fields = field_data_mapping.get(field_name, [])
+        
+        # Extract only the relevant data for this nested form
+        nested_data = {}
+        for field in relevant_fields:
+            if field in main_data:
+                nested_data[field] = main_data[field]
+        
+        return nested_data
+        for field in relevant_fields:
+            if field in main_data:
+                nested_data[field] = main_data[field]
+        
+        return nested_data
+
+    def _render_layout_field_content_fallback(self, field_name: str, field_schema: Dict[str, Any], ui_info: Dict[str, Any]) -> str:
+        """
+        Fallback rendering for layout field content when the layout instance isn't available.
+        """
+        # Map field names to their corresponding form classes
+        form_mapping = {
+            'vertical_tab': 'PersonalInfoForm',
+            'horizontal_tab': 'ContactInfoForm', 
+            'tabbed_tab': 'PreferencesForm',
+            'list_tab': 'TaskListForm'
+        }
+        
+        form_name = form_mapping.get(field_name)
+        if form_name:
+            try:
+                # Import and render the form
+                if form_name == 'PersonalInfoForm':
+                    from examples.shared_models import PersonalInfoForm as FormClass
+                elif form_name == 'ContactInfoForm':
+                    from examples.shared_models import ContactInfoForm as FormClass
+                elif form_name == 'PreferencesForm':
+                    from examples.shared_models import PreferencesForm as FormClass
+                elif form_name == 'TaskListForm':
+                    from examples.shared_models import TaskListForm as FormClass
+                else:
+                    raise ImportError(f"Unknown form: {form_name}")
+                
+                # Get nested form data based on field name mapping
+                nested_data = self._get_nested_form_data(field_name)
+                
+                # Create a new renderer for the nested form to avoid data conflicts
+                nested_renderer = EnhancedFormRenderer(framework=self.framework)
+                nested_renderer._current_form_data = nested_data
+                
+                # Render only the form fields (no form wrapper to avoid nested forms)
+                return nested_renderer.render_form_fields_only(
+                    FormClass,
+                    data=nested_data,  # Pass relevant data to nested form
+                    errors={},
+                    layout="vertical"
+                )
+                
+            except Exception as e:
+                return f"""
+                <div class="layout-field-placeholder alert alert-info">
+                    <p>Layout demonstration: {form_name}</p>
+                    <small class="text-muted">{ui_info.get('help_text', '')}</small>
+                    <small class="text-danger d-block">Could not render: {str(e)}</small>
+                </div>
+                """
+        else:
+            return f"""
+            <div class="layout-field-unknown alert alert-secondary">
+                <p>Unknown layout field type</p>
+                <small class="text-muted">{ui_info.get('help_text', '')}</small>
+            </div>
+            """
+    
     def _group_fields_into_tabs(self, fields: List[tuple]) -> List[tuple]:
         """Group fields into logical tabs based on field names."""
         # Simple grouping logic - can be enhanced based on field metadata
@@ -968,6 +1240,133 @@ class EnhancedFormRenderer:
         """Render CSRF token field."""
         # This would integrate with your CSRF protection system
         return '<input type="hidden" name="csrf_token" value="__CSRF_TOKEN__" />'
+
+    def _render_layout_field(self, field_name: str, field_schema: Dict[str, Any], value: Any, error: Optional[str], ui_info: Dict[str, Any]) -> str:
+        """
+        Render a layout field by extracting and rendering its embedded form.
+        
+        Layout fields contain layout instances (VerticalFormLayout, HorizontalFormLayout, etc.)
+        that have a 'form' attribute pointing to the FormModel class to render.
+        """
+        try:
+            # The value should be a layout instance
+            if value and hasattr(value, 'form'):
+                # Get the form class from the layout instance
+                form_class = value.form
+                
+                # Render the embedded form
+                form_html = self.render_form_from_model(
+                    form_class,
+                    data={},  # Start with empty data
+                    errors={},
+                    layout="vertical",  # Use vertical layout for embedded forms
+                    include_submit_button=False  # Don't include submit button in nested forms
+                )
+                
+                # Wrap in a section with the field title
+                section_title = field_schema.get('title', field_name.replace('_', ' ').title())
+                help_text = ui_info.get('help_text', '')
+                
+                section_html = f"""
+                <div class="layout-field-section mb-4">
+                    <h5 class="layout-field-title">{section_title}</h5>
+                    {f'<p class="text-muted">{help_text}</p>' if help_text else ''}
+                    <div class="layout-field-content p-3 border rounded">
+                        {form_html}
+                    </div>
+                </div>
+                """
+                
+                return section_html
+            else:
+                # Fallback: try to get the form class from the field schema
+                # This handles cases where the value might not be properly set
+                return self._render_layout_field_fallback(field_name, field_schema, ui_info)
+                
+        except Exception as e:
+            # Error handling: return a placeholder with error message
+            return f"""
+            <div class="layout-field-error alert alert-warning">
+                <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
+                <p>Error rendering layout field: {str(e)}</p>
+                <small class="text-muted">{ui_info.get('help_text', '')}</small>
+            </div>
+            """
+
+    def _render_layout_field_fallback(self, field_name: str, field_schema: Dict[str, Any], ui_info: Dict[str, Any]) -> str:
+        """
+        Fallback rendering for layout fields when the layout instance isn't available.
+        
+        This tries to determine the form to render based on the field name and known patterns.
+        """
+        # Map field names to their corresponding form classes
+        # This is based on the LayoutDemonstrationForm structure
+        form_mapping = {
+            'vertical_tab': 'PersonalInfoForm',
+            'horizontal_tab': 'ContactInfoForm', 
+            'tabbed_tab': 'PreferencesForm',
+            'list_tab': 'TaskListForm'
+        }
+        
+        form_name = form_mapping.get(field_name)
+        if form_name:
+            # Try to import and render the form
+            try:
+                # Import the form class - this is a simplified approach
+                # In a real implementation, you'd want a more robust form resolution system
+                if form_name == 'PersonalInfoForm':
+                    from examples.shared_models import PersonalInfoForm as FormClass
+                elif form_name == 'ContactInfoForm':
+                    from examples.shared_models import ContactInfoForm as FormClass
+                elif form_name == 'PreferencesForm':
+                    from examples.shared_models import PreferencesForm as FormClass
+                elif form_name == 'TaskListForm':
+                    from examples.shared_models import TaskListForm as FormClass
+                else:
+                    raise ImportError(f"Unknown form: {form_name}")
+                
+                # Render the form
+                form_html = self.render_form_from_model(
+                    FormClass,
+                    data={},
+                    errors={},
+                    layout="vertical",
+                    include_submit_button=False
+                )
+                
+                # Wrap in a section
+                section_title = field_schema.get('title', field_name.replace('_', ' ').title())
+                help_text = ui_info.get('help_text', '')
+                
+                return f"""
+                <div class="layout-field-section mb-4">
+                    <h5 class="layout-field-title">{section_title}</h5>
+                    {f'<p class="text-muted">{help_text}</p>' if help_text else ''}
+                    <div class="layout-field-content p-3 border rounded">
+                        {form_html}
+                    </div>
+                </div>
+                """
+                
+            except Exception as e:
+                # If we can't import or render the form, show a placeholder
+                return f"""
+                <div class="layout-field-placeholder alert alert-info">
+                    <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
+                    <p>Layout demonstration: {form_name}</p>
+                    <small class="text-muted">{ui_info.get('help_text', '')}</small>
+                    <small class="text-danger d-block">Could not render: {str(e)}</small>
+                </div>
+                """
+        else:
+            # Unknown layout field
+            return f"""
+            <div class="layout-field-unknown alert alert-secondary">
+                <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
+                <p>Unknown layout field type</p>
+                <small class="text-muted">{ui_info.get('help_text', '')}</small>
+            </div>
+            """
 
     def _render_submit_button(self) -> str:
         """Render form submit button."""
