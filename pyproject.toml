@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-forms"
-version = "25.Q4.1.beta"
+version = "25.11.1b1"
 requires-python = ">=3.14"
 description = ""
 keywords = []
@@ -55,11 +55,12 @@ use_parentheses = true
 line_length = 100
 
 [tool.bumpcalver]
-version_format = "{current_date}.{build_count:03}"
-date_format = "%y.Q%q"
+version_format = "{current_date}.{build_count}"
+date_format = "%y.%-m"
 timezone = "America/New_York"
 git_tag = true
 auto_commit = false
+beta_format = "b{beta_count}"
 [[tool.bumpcalver.file]]
 path = "makefile"
 file_type = "makefile"

@@ -52,7 +52,7 @@ from pydantic_forms.enhanced_renderer import render_form_html
 app = FastAPI(
     title="Pydantic Forms - FastAPI Example",
     description="Comprehensive showcase of pydantic-forms capabilities in async FastAPI",
-    version="25.Q4.1.beta"
+    version="25.4.1b1"
 )
 
 templates = Jinja2Templates(directory="templates")
@@ -918,7 +918,7 @@ async def api_render_form(form_type: str, style: str = "bootstrap"):
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "framework": "fastapi", "version": "25.Q4.1.beta"}
+    return {"status": "healthy", "framework": "fastapi", "version": "25.4.1b1"}
 
 # ================================
 # RUN APPLICATION

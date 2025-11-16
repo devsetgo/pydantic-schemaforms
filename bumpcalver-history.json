@@ -1,5 +1,89 @@
 [
   {
+    "operation_id": "20251116_001558_281",
+    "timestamp": "2025-11-16T00:15:58.301631",
+    "version": "25.11.1.beta",
+    "files_updated": [
+      "/workspaces/pydantic-forms/makefile",
+      "/workspaces/pydantic-forms/pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties"
+    ],
+    "backups": {
+      "/workspaces/pydantic-forms/makefile": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001558_281_makefile",
+      "/workspaces/pydantic-forms/pyproject.toml": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001558_293_pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001558_293___init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001558_294_sonar-project.properties"
+    },
+    "git_tag": true,
+    "git_commit": false,
+    "git_commit_hash": null,
+    "git_tag_name": "25.11.1.beta"
+  },
+  {
+    "operation_id": "20251116_001511_668",
+    "timestamp": "2025-11-16T00:15:11.680511",
+    "version": "25.11.1.beta",
+    "files_updated": [
+      "/workspaces/pydantic-forms/makefile",
+      "/workspaces/pydantic-forms/pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties"
+    ],
+    "backups": {
+      "/workspaces/pydantic-forms/makefile": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001511_668_makefile",
+      "/workspaces/pydantic-forms/pyproject.toml": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001511_669_pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001511_670___init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001511_670_sonar-project.properties"
+    },
+    "git_tag": true,
+    "git_commit": false,
+    "git_commit_hash": null,
+    "git_tag_name": "25.11.1.beta"
+  },
+  {
+    "operation_id": "20251116_001413_019",
+    "timestamp": "2025-11-16T00:14:13.042990",
+    "version": "25.Q4.002.beta",
+    "files_updated": [
+      "/workspaces/pydantic-forms/makefile",
+      "/workspaces/pydantic-forms/pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties"
+    ],
+    "backups": {
+      "/workspaces/pydantic-forms/makefile": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001413_019_makefile",
+      "/workspaces/pydantic-forms/pyproject.toml": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001413_019_pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001413_019___init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties": "/workspaces/pydantic-forms/.bumpcalver/backups/20251116_001413_020_sonar-project.properties"
+    },
+    "git_tag": true,
+    "git_commit": false,
+    "git_commit_hash": null,
+    "git_tag_name": "25.Q4.002.beta"
+  },
+  {
+    "operation_id": "20251115_001448_423",
+    "timestamp": "2025-11-15T00:14:48.430499",
+    "version": "25.Q4.001.beta",
+    "files_updated": [
+      "/workspaces/pydantic-forms/makefile",
+      "/workspaces/pydantic-forms/pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties"
+    ],
+    "backups": {
+      "/workspaces/pydantic-forms/makefile": "/workspaces/pydantic-forms/.bumpcalver/backups/20251115_001448_423_makefile",
+      "/workspaces/pydantic-forms/pyproject.toml": "/workspaces/pydantic-forms/.bumpcalver/backups/20251115_001448_424_pyproject.toml",
+      "/workspaces/pydantic-forms/pydantic_forms/__init__.py": "/workspaces/pydantic-forms/.bumpcalver/backups/20251115_001448_424___init__.py",
+      "/workspaces/pydantic-forms/sonar-project.properties": "/workspaces/pydantic-forms/.bumpcalver/backups/20251115_001448_424_sonar-project.properties"
+    },
+    "git_tag": true,
+    "git_commit": false,
+    "git_commit_hash": null,
+    "git_tag_name": "25.Q4.001.beta"
+  },
+  {
     "operation_id": "20251110_000858_595",
     "timestamp": "2025-11-10T00:08:58.606218",
     "version": "25.Q4.001.beta",
