@@ -329,7 +329,7 @@ class FormInput(BaseInput):
                 icon_html = f'<span class="input-icon"><i class="{icon_class}"></i></span>'
             else:
                 icon_html = f'<span class="input-icon">{icon}</span>'
-            
+
             # Start wrapper div for icon + input
             parts.append('<div class="input-with-icon">')
             parts.append(icon_html)
@@ -417,7 +417,7 @@ class SelectInputBase(BaseInput):
         """
         Render the input with its label, help text, error message, and optional icon.
         This method is required for all input components to work with the form renderer.
-        
+
         Args:
             label: Label text for the input
             help_text: Help text to display
@@ -426,15 +426,15 @@ class SelectInputBase(BaseInput):
             framework: UI framework being used
             options: Options for select/radio inputs
             **kwargs: Additional attributes for the input
-        
+
         Returns:
             Complete HTML for the input with label and decorations
         """
         from ..icon_mapping import map_icon_for_framework
-        
+
         # Ensure we have an input type
-        input_type = self.get_input_type()
-        
+        self.get_input_type()
+
         # Map icon to appropriate framework if provided
         if icon:
             icon = map_icon_for_framework(icon, framework)
@@ -454,10 +454,10 @@ class SelectInputBase(BaseInput):
         if framework == "bootstrap":
             # Bootstrap styling
             field_parts.append('<div class="mb-3">')
-            
+
             if label:
                 field_parts.append(f'<label for="{kwargs.get("id", "")}" class="form-label">{escape(label)}</label>')
-            
+
             if icon:
                 field_parts.append('<div class="input-group">')
                 field_parts.append(f'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>')
@@ -465,61 +465,61 @@ class SelectInputBase(BaseInput):
                 field_parts.append('</div>')
             else:
                 field_parts.append(input_html)
-            
+
             if help_text:
                 field_parts.append(f'<div class="form-text">{escape(help_text)}</div>')
-            
+
             if error:
                 field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
-            
+
             field_parts.append('</div>')
 
         elif framework == "material":
             # Material Design styling
             field_parts.append('<div class="md-field">')
-            
+
             if icon:
                 field_parts.append('<div class="md-field-with-icon">')
                 field_parts.append(f'<span class="md-icon material-icons">{icon}</span>')
                 field_parts.append('<div class="md-input-wrapper">')
-            
+
             field_parts.append(input_html)
-            
+
             if label:
                 field_parts.append(f'<label class="md-floating-label" for="{kwargs.get("id", "")}">{escape(label)}</label>')
-            
+
             if icon:
                 field_parts.append('</div>')  # Close md-input-wrapper
                 field_parts.append('</div>')  # Close md-field-with-icon
-            
+
             if help_text:
                 field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
-            
+
             if error:
                 field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
-            
+
             field_parts.append('</div>')
 
         else:
             # Basic/no framework styling
             field_parts.append('<div class="field">')
-            
+
             if label:
                 field_parts.append(f'<label for="{kwargs.get("id", "")}">{escape(label)}</label>')
-            
+
             if icon:
                 field_parts.append(f'<div class="input-with-icon"><span class="input-icon">{icon}</span>')
                 field_parts.append(input_html)
                 field_parts.append('</div>')
             else:
                 field_parts.append(input_html)
-            
+
             if help_text:
                 field_parts.append(f'<div class="help-text">{escape(help_text)}</div>')
-            
+
             if error:
                 field_parts.append(f'<div class="error-message">{escape(error)}</div>')
-            
+
             field_parts.append('</div>')
 
         return '\n'.join(field_parts)

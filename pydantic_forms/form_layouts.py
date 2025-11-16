@@ -542,20 +542,20 @@ class ListLayout(BaseLayout):
     ) -> ValidationResult:
         """
         Validate all items in the list.
-        
+
         Args:
             form_data: Dictionary containing form data with item prefixes
             files: Optional file data
-            
+
         Returns:
             ValidationResult with aggregated errors from all list items
         """
         from .validation import ValidationResult
-        
+
         all_errors = {}
         all_warnings = {}
         valid_items = []
-        
+
         # Group form data by item index
         item_data = {}
         for key, value in form_data.items():
@@ -565,11 +565,11 @@ class ListLayout(BaseLayout):
                 if len(parts) >= 3:
                     item_index = int(parts[1])
                     field_name = parts[2]
-                    
+
                     if item_index not in item_data:
                         item_data[item_index] = {}
                     item_data[item_index][field_name] = value
-        
+
         # Validate each item
         for item_index, data in item_data.items():
             try:
@@ -580,14 +580,14 @@ class ListLayout(BaseLayout):
                 # Add validation errors for this item
                 item_key = f"item_{item_index}"
                 all_errors[item_key] = str(e)
-        
+
         # Check min/max constraints
         item_count = len(valid_items)
         if item_count < self.min_items:
             all_errors["list_constraint"] = f"At least {self.min_items} items required"
         if self.max_items and item_count > self.max_items:
             all_errors["list_constraint"] = f"Maximum {self.max_items} items allowed"
-        
+
         return ValidationResult(
             is_valid=len(all_errors) == 0,
             errors=all_errors,
@@ -603,38 +603,38 @@ class ListLayout(BaseLayout):
     ) -> str:
         """
         Render the list layout with dynamic add/remove functionality.
-        
+
         Args:
             data: Dictionary containing list data under 'items' key
             errors: Validation errors for display
             framework: UI framework (bootstrap/material)
-            
+
         Returns:
             HTML string with the complete list layout
         """
         # Extract renderer from the current context - this is a simplified approach
         # In practice, the renderer would be passed differently
         if framework == "material":
-            from .material_renderer import MaterialDesign3Renderer
+            from .simple_material_renderer import MaterialDesign3Renderer
             renderer = MaterialDesign3Renderer()
         else:
             from .enhanced_renderer import EnhancedFormRenderer
             renderer = EnhancedFormRenderer()
-        
+
         # Extract list items from data
         list_data = []
         if data and 'items' in data:
             list_data = data['items']
         elif data and isinstance(data, list):
             list_data = data
-        
+
         # Ensure minimum items
         while len(list_data) < self.min_items:
             list_data.append({})
 
         # Generate unique identifier for this list
         list_id = f"list_{id(self)}"
-        
+
         # Render header if section design is provided
         header_html = ""
         if self.section_design:
@@ -675,29 +675,29 @@ class ListLayout(BaseLayout):
         except Exception:
             # For empty forms, create with default values to avoid validation errors
             form_instance = self.form_model.model_construct()
-        
+
         # Render the form for this item WITHOUT submit button
         form_html = renderer.render_form_from_model(form_instance, framework=framework, include_submit_button=False)
-        
+
         # Add name prefixes to make each item unique
         form_html = self._add_name_prefixes(form_html, index)
-        
+
         # Add error messages if any
         error_html = ""
         if errors and f"item_{index}" in errors:
             error_html = f'<div class="alert alert-danger">{errors[f"item_{index}"]}</div>'
-        
+
         # Render remove button (only if we can remove items)
         remove_button_html = ""
         if len(item_data) > self.min_items or not item_data:  # Can remove if above minimum or empty
             remove_button_html = self._render_remove_button(index, list_id, framework)
 
         item_class = f"list-item {framework}-list-item"
-        
+
         if self.collapsible_items:
             # Render collapsible card
             return self._render_collapsible_item(
-                form_html, remove_button_html, error_html, index, 
+                form_html, remove_button_html, error_html, index,
                 list_id, framework, item_class, item_data
             )
         else:
@@ -712,20 +712,20 @@ class ListLayout(BaseLayout):
             </div>
             """
 
-    def _render_collapsible_item(self, form_html: str, remove_button_html: str, error_html: str, 
-                                index: int, list_id: str, framework: str, item_class: str, 
+    def _render_collapsible_item(self, form_html: str, remove_button_html: str, error_html: str,
+                                index: int, list_id: str, framework: str, item_class: str,
                                 item_data: Dict[str, Any]) -> str:
         """Render a collapsible card for the list item."""
         # Generate unique IDs for the collapsible item
         collapse_id = f"{list_id}_item_{index}"
-        
+
         # Determine if the item should be expanded by default
         expanded_class = "show" if self.items_expanded_by_default else ""
         expanded_attr = "true" if self.items_expanded_by_default else "false"
-        
+
         # Create a summary for the card header (first few non-empty field values)
         summary = self._create_item_summary(item_data, index)
-        
+
         if framework == "material":
             return f"""
             <div class="{item_class} collapsible-item" data-item-index="{index}">
@@ -750,7 +750,7 @@ class ListLayout(BaseLayout):
             return f"""
             <div class="{item_class} collapsible-item" data-item-index="{index}">
                 {error_html}
-                <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#{collapse_id}" 
+                <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#{collapse_id}"
                      aria-expanded="{expanded_attr}" aria-controls="{collapse_id}">
                     <div class="collapsible-title">
                         <i class="bi bi-chevron-down expand-icon"></i>
@@ -772,15 +772,15 @@ class ListLayout(BaseLayout):
         """Create a summary string for the collapsible item header."""
         if not item_data:
             return f"{self.form_model.__name__} #{index + 1}"
-        
+
         # Get the first few non-empty values to create a summary
         summary_parts = []
-        for key, value in item_data.items():
+        for _key, value in item_data.items():
             if value and len(summary_parts) < 2:  # Show up to 2 field values
                 if isinstance(value, str) and len(value) > 30:
                     value = value[:27] + "..."
                 summary_parts.append(str(value))
-        
+
         if summary_parts:
             return f"{self.form_model.__name__}: {' | '.join(summary_parts)}"
         else:
@@ -789,35 +789,35 @@ class ListLayout(BaseLayout):
     def _add_name_prefixes(self, form_html: str, index: int) -> str:
         """Add name prefixes to form inputs to make them unique."""
         import re
-        
+
         # Add index prefix to name attributes
         form_html = re.sub(
             r'name="([^"]*)"',
             rf'name="item_{index}_\1"',
             form_html
         )
-        
+
         # Add index prefix to id attributes
         form_html = re.sub(
             r'id="([^"]*)"',
             rf'id="item_{index}_\1"',
             form_html
         )
-        
+
         # Update for attributes to match new ids
         form_html = re.sub(
             r'for="([^"]*)"',
             rf'for="item_{index}_\1"',
             form_html
         )
-        
+
         return form_html
 
     def _render_add_button(self, list_id: str, framework: str) -> str:
         """Render the add button for creating new list items."""
         if framework == "material":
             return f"""
-            <button type="button" class="mdc-button mdc-button--raised list-add-btn" 
+            <button type="button" class="mdc-button mdc-button--raised list-add-btn"
                     data-list-id="{list_id}" onclick="addListItem('{list_id}')">
                 <span class="mdc-button__label">
                     <i class="material-icons">add</i> {self.add_button_text}
@@ -826,7 +826,7 @@ class ListLayout(BaseLayout):
             """
         else:  # bootstrap
             return f"""
-            <button type="button" class="btn btn-primary list-add-btn" 
+            <button type="button" class="btn btn-primary list-add-btn"
                     data-list-id="{list_id}" onclick="addListItem('{list_id}')">
                 <i class="bi bi-plus"></i> {self.add_button_text}
             </button>
@@ -836,8 +836,8 @@ class ListLayout(BaseLayout):
         """Render the remove button for deleting list items."""
         if framework == "material":
             return f"""
-            <button type="button" class="mdc-button mdc-button--outlined list-remove-btn" 
-                    data-item-index="{index}" data-list-id="{list_id}" 
+            <button type="button" class="mdc-button mdc-button--outlined list-remove-btn"
+                    data-item-index="{index}" data-list-id="{list_id}"
                     onclick="removeListItem('{list_id}', {index})">
                 <span class="mdc-button__label">
                     <i class="material-icons">remove</i> {self.remove_button_text}
@@ -846,8 +846,8 @@ class ListLayout(BaseLayout):
             """
         else:  # bootstrap
             return f"""
-            <button type="button" class="btn btn-outline-danger btn-sm list-remove-btn" 
-                    data-item-index="{index}" data-list-id="{list_id}" 
+            <button type="button" class="btn btn-outline-danger btn-sm list-remove-btn"
+                    data-item-index="{index}" data-list-id="{list_id}"
                     onclick="removeListItem('{list_id}', {index})">
                 <i class="bi bi-trash"></i> {self.remove_button_text}
             </button>
@@ -855,7 +855,7 @@ class ListLayout(BaseLayout):
 
     def _render_javascript(self, list_id: str, framework: str) -> str:
         """Render JavaScript for dynamic add/remove functionality."""
-        
+
         # Add collapsible toggle function for Material Design
         collapsible_js = ""
         if self.collapsible_items and framework == "material":
@@ -864,7 +864,7 @@ class ListLayout(BaseLayout):
             const content = document.getElementById(collapseId);
             const header = content.previousElementSibling;
             const icon = header.querySelector('.expand-icon');
-            
+
             if (content.classList.contains('show')) {
                 content.classList.remove('show');
                 icon.textContent = 'expand_more';
@@ -874,32 +874,32 @@ class ListLayout(BaseLayout):
             }
         }
         """
-        
+
         return f"""
         <script>
         {collapsible_js}
-        
+
         function addListItem(listId) {{
             const container = document.getElementById(listId + '-container');
             const items = container.querySelectorAll('.list-item');
             const newIndex = items.length;
-            
+
             // Check max items limit
             {f'if (newIndex >= {self.max_items}) {{ alert("Maximum {self.max_items} items allowed"); return; }}' if self.max_items else ''}
-            
+
             // Clone the first item as a template
             const firstItem = container.querySelector('.list-item');
             if (!firstItem) {{
                 console.error('No template item found to clone');
                 return;
             }}
-            
+
             const newItem = firstItem.cloneNode(true);
             newItem.setAttribute('data-item-index', newIndex);
-            
+
             // Update collapsible IDs if using collapsible items
             {self._render_collapsible_update_js(list_id, framework) if self.collapsible_items else ''}
-            
+
             // Update all form field names and IDs
             const inputs = newItem.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {{
@@ -918,7 +918,7 @@ class ListLayout(BaseLayout):
                     input.value = '';
                 }}
             }});
-            
+
             // Update labels 'for' attributes
             const labels = newItem.querySelectorAll('label');
             labels.forEach(label => {{
@@ -926,7 +926,7 @@ class ListLayout(BaseLayout):
                     label.setAttribute('for', label.getAttribute('for').replace(/^item_\\d+_/, `item_${{newIndex}}_`));
                 }}
             }});
-            
+
             // Update help text IDs
             const helpTexts = newItem.querySelectorAll('[id$="-help"]');
             helpTexts.forEach(helpText => {{
@@ -934,49 +934,49 @@ class ListLayout(BaseLayout):
                     helpText.id = helpText.id.replace(/^item_\\d+_/, `item_${{newIndex}}_`);
                 }}
             }});
-            
+
             // Update remove button
             const removeBtn = newItem.querySelector('.list-remove-btn');
             if (removeBtn) {{
                 removeBtn.setAttribute('data-item-index', newIndex);
                 removeBtn.setAttribute('onclick', `removeListItem('${{listId}}', ${{newIndex}})`);
             }}
-            
+
             // Update item summary for collapsible items
             const summary = newItem.querySelector('.item-summary');
             if (summary) {{
                 summary.textContent = `{self.form_model.__name__} #${{newIndex + 1}}`;
             }}
-            
+
             container.appendChild(newItem);
-            
+
             // Expand the new item if items are expanded by default
             {f'if ({str(self.items_expanded_by_default).lower()}) {{ const newCollapse = newItem.querySelector(".collapse"); if (newCollapse) newCollapse.classList.add("show"); }}' if self.collapsible_items else ''}
         }}
-        
+
         function removeListItem(listId, itemIndex) {{
             const container = document.getElementById(listId + '-container');
             const items = container.querySelectorAll('.list-item');
-            
+
             // Check minimum items limit
             if (items.length <= {self.min_items}) {{
                 alert('Minimum {self.min_items} items required');
                 return;
             }}
-            
+
             // Find and remove the item
             const itemToRemove = container.querySelector(`[data-item-index="${{itemIndex}}"]`);
             if (itemToRemove) {{
                 itemToRemove.remove();
-                
+
                 // Reindex remaining items
                 const remainingItems = container.querySelectorAll('.list-item');
                 remainingItems.forEach((item, index) => {{
                     item.setAttribute('data-item-index', index);
-                    
+
                     // Update collapsible IDs
                     {self._render_collapsible_reindex_js(list_id, framework) if self.collapsible_items else ''}
-                    
+
                     // Update all form field names and IDs
                     const inputs = item.querySelectorAll('input, select, textarea');
                     inputs.forEach(input => {{
@@ -987,7 +987,7 @@ class ListLayout(BaseLayout):
                             input.id = input.id.replace(/^item_\\d+_/, `item_${{index}}_`);
                         }}
                     }});
-                    
+
                     // Update labels 'for' attributes
                     const labels = item.querySelectorAll('label');
                     labels.forEach(label => {{
@@ -995,7 +995,7 @@ class ListLayout(BaseLayout):
                             label.setAttribute('for', label.getAttribute('for').replace(/^item_\\d+_/, `item_${{index}}_`));
                         }}
                     }});
-                    
+
                     // Update help text IDs
                     const helpTexts = item.querySelectorAll('[id$="-help"]');
                     helpTexts.forEach(helpText => {{
@@ -1003,14 +1003,14 @@ class ListLayout(BaseLayout):
                             helpText.id = helpText.id.replace(/^item_\\d+_/, `item_${{index}}_`);
                         }}
                     }});
-                    
+
                     // Update remove button
                     const removeBtn = item.querySelector('.list-remove-btn');
                     if (removeBtn) {{
                         removeBtn.setAttribute('data-item-index', index);
                         removeBtn.setAttribute('onclick', `removeListItem('${{listId}}', ${{index}})`);
                     }}
-                    
+
                     // Update item summary
                     const summary = item.querySelector('.item-summary');
                     if (summary) {{

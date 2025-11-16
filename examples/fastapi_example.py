@@ -26,7 +26,6 @@ import sys
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any
 import asyncio
 
@@ -83,9 +82,9 @@ def safe_json_filter(obj):
 # Register the custom filter
 templates.env.filters['safe_json'] = safe_json_filter
 
-# Mount static files if they exist
-if os.path.exists("examples/static"):
-    app.mount("/static", StaticFiles(directory="examples/static"), name="static")
+# Static files are not required for pydantic-forms functionality
+# All form behavior is self-contained within the library
+# app.mount("/static", StaticFiles(directory="examples/static"), name="static")
 
 # ================================
 # HOME PAGE - ALL EXAMPLES

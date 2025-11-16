@@ -5,7 +5,7 @@ This module provides a system to switch between different icon frameworks
 (Bootstrap Icons vs Material Design Icons) based on the UI framework being used.
 """
 
-from typing import Dict, Optional
+from typing import Optional
 
 # Icon mapping dictionary - maps semantic icon names to framework-specific icons
 ICON_MAPPING = {
@@ -15,7 +15,7 @@ ICON_MAPPING = {
         "material": "person"
     },
     "person-badge": {
-        "bootstrap": "bi bi-person-badge", 
+        "bootstrap": "bi bi-person-badge",
         "material": "badge"
     },
     "person-exclamation": {
@@ -26,7 +26,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-people",
         "material": "people"
     },
-    
+
     # Communication icons
     "envelope": {
         "bootstrap": "bi bi-envelope",
@@ -48,7 +48,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-at",
         "material": "alternate_email"
     },
-    
+
     # Security icons
     "lock": {
         "bootstrap": "bi bi-lock",
@@ -74,7 +74,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-shield-exclamation",
         "material": "warning"
     },
-    
+
     # Animals and Pets
     "heart": {
         "bootstrap": "bi bi-heart",
@@ -88,7 +88,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-heart-pulse",
         "material": "monitor_heart"
     },
-    
+
     # UI and Selection
     "collection": {
         "bootstrap": "bi bi-collection",
@@ -118,7 +118,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-toggle-on",
         "material": "toggle_on"
     },
-    
+
     # Numbers and Math
     "calendar": {
         "bootstrap": "bi bi-calendar",
@@ -156,7 +156,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-sliders",
         "material": "tune"
     },
-    
+
     # Visual and Media
     "palette": {
         "bootstrap": "bi bi-palette",
@@ -174,7 +174,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-award",
         "material": "military_tech"
     },
-    
+
     # Location and Places
     "house": {
         "bootstrap": "bi bi-house",
@@ -184,7 +184,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-globe",
         "material": "public"
     },
-    
+
     # Technology
     "cpu": {
         "bootstrap": "bi bi-cpu",
@@ -202,7 +202,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-search",
         "material": "search"
     },
-    
+
     # Communication and Messaging
     "chat-left-text": {
         "bootstrap": "bi bi-chat-left-text",
@@ -228,7 +228,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-bell",
         "material": "notifications"
     },
-    
+
     # UI Elements
     "textarea-resize": {
         "bootstrap": "bi bi-textarea-resize",
@@ -238,7 +238,7 @@ ICON_MAPPING = {
         "bootstrap": "bi bi-exclamation-triangle",
         "material": "warning"
     },
-    
+
     # Additional specific icons
     "person-lines-fill": {
         "bootstrap": "bi bi-person-lines-fill",
@@ -249,11 +249,11 @@ ICON_MAPPING = {
 def get_icon(semantic_name: str, framework: str = "bootstrap") -> Optional[str]:
     """
     Get the appropriate icon class for a given semantic name and framework.
-    
+
     Args:
         semantic_name: The semantic name of the icon (e.g., "person", "envelope")
         framework: The UI framework ("bootstrap" or "material")
-        
+
     Returns:
         The framework-specific icon class, or None if not found
     """
@@ -264,11 +264,11 @@ def get_icon(semantic_name: str, framework: str = "bootstrap") -> Optional[str]:
 def map_icon_for_framework(icon_value: str, target_framework: str = "bootstrap") -> str:
     """
     Convert an icon value to the appropriate framework.
-    
+
     Args:
         icon_value: Current icon value (could be Bootstrap "bi bi-person" or semantic "person")
         target_framework: Target framework ("bootstrap" or "material")
-        
+
     Returns:
         The icon value for the target framework
     """
@@ -277,7 +277,7 @@ def map_icon_for_framework(icon_value: str, target_framework: str = "bootstrap")
         semantic_name = icon_value.replace("bi bi-", "")
         mapped_icon = get_icon(semantic_name, target_framework)
         return mapped_icon if mapped_icon else icon_value
-    
+
     # If it's a semantic name, map it directly
     mapped_icon = get_icon(icon_value, target_framework)
     return mapped_icon if mapped_icon else icon_value
@@ -285,27 +285,27 @@ def map_icon_for_framework(icon_value: str, target_framework: str = "bootstrap")
 def update_field_icons_for_framework(form_fields: dict, framework: str = "bootstrap") -> dict:
     """
     Update all icon values in form fields for a specific framework.
-    
+
     Args:
         form_fields: Dictionary of form field definitions
         framework: Target framework ("bootstrap" or "material")
-        
+
     Returns:
         Updated form fields dictionary with framework-appropriate icons
     """
     updated_fields = {}
-    
+
     for field_name, field_config in form_fields.items():
         updated_config = field_config.copy()
-        
+
         if 'icon' in updated_config:
             updated_config['icon'] = map_icon_for_framework(
-                updated_config['icon'], 
+                updated_config['icon'],
                 framework
             )
-        
+
         updated_fields[field_name] = updated_config
-    
+
     return updated_fields
 
 # Convenience functions for specific frameworks

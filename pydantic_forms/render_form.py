@@ -51,8 +51,8 @@ def render_form_html(
 
         # For HTMX compatibility, add HTMX attributes
         form_attrs = {
-            "hx-post": htmx_post_url, 
-            "hx-target": "#form-response", 
+            "hx-post": htmx_post_url,
+            "hx-target": "#form-response",
             "hx-swap": "innerHTML"
         }
         form_attrs.update(kwargs)

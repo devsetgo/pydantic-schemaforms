@@ -67,7 +67,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 
         # Store form data for nested form access
         self._current_form_data = data
-        
+
         # Store schema definitions for model_list fields
         self._schema_defs = schema.get('$defs', {})
 
@@ -126,18 +126,18 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         # Check if all fields are layout fields - if so, use tabbed layout automatically
         layout_fields = []
         non_layout_fields = []
-        
+
         for field_name, field_schema in fields:
             ui_info = field_schema.get("ui", {})
             if not ui_info:
                 ui_info = field_schema
             ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
-            
+
             if ui_element == "layout":
                 layout_fields.append((field_name, field_schema))
             else:
                 non_layout_fields.append((field_name, field_schema))
-        
+
         # If we have multiple layout fields and few/no other fields, render as tabs
         if len(layout_fields) > 1 and len(non_layout_fields) == 0:
             # Render layout fields as tabs with Material Design styling
@@ -155,10 +155,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             form_parts.append(self._render_submit_button())
 
         form_parts.extend(['</form>', '</div>'])
-        
+
         # Add JavaScript for Material Design interactions + model lists
         form_parts.append(self._get_material_javascript())
-        
+
         # Add model list JavaScript if any model_list fields were rendered
         if self._has_model_list_fields(schema):
             from .model_list import ModelListRenderer
@@ -170,7 +170,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     def _has_model_list_fields(self, schema: Dict[str, Any]) -> bool:
         """Check if the schema contains any model_list fields."""
         properties = schema.get("properties", {})
-        for field_name, field_schema in properties.items():
+        for _field_name, field_schema in properties.items():
             ui_info = field_schema.get("ui", {}) or field_schema
             ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
             if ui_element == "model_list":
@@ -636,7 +636,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         padding: 24px 16px;
         border-radius: 28px;
     }
-    
+
     .md-field {
         margin-bottom: 24px;
     }
@@ -699,23 +699,23 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """Render a Material Design form field."""
         # Get UI info
         ui_info = field_schema.get("ui", {}) or field_schema
-        
+
         # Skip hidden fields
         if ui_info.get("hidden"):
             return f'<input type="hidden" name="{field_name}" value="{escape(str(value or ""))}">'
 
         # Determine input type
         input_type = ui_info.get("input_type") or ui_info.get("element") or self._infer_input_type(field_schema)
-        
+
         # Handle model_list specially - delegate to enhanced renderer
         if input_type == "model_list":
             return self._render_model_list_field(field_name, field_schema, value, error, required_fields)
-        
+
         # Get field properties
         label = field_schema.get("title", field_name.replace("_", " ").title())
         help_text = ui_info.get("help_text") or field_schema.get("description")
         is_required = field_name in (required_fields or [])
-        
+
         # Build field HTML using Material Design 3 patterns
         if input_type == "checkbox":
             return self._render_checkbox_field(field_name, label, value, error, help_text, is_required, ui_info)
@@ -735,28 +735,27 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         field_schema: Dict[str, Any]
     ) -> str:
         """Render a Material Design 3 outlined field with floating label and optional icon."""
-        error_class = " error" if error else ""
         required_text = " *" if is_required else ""
-        
+
         # Check for icon in UI info
         icon = ui_info.get("icon")
         # Map icon to Material Design framework
         if icon:
             icon = map_icon_for_framework(icon, "material")
         has_icon = icon is not None
-        
+
         # Start field container
         field_parts = ['<div class="md-field">']
-        
+
         # Create field wrapper that may contain icon + input
         if has_icon:
             field_parts.append('<div class="md-field-with-icon">')
             # Add icon outside the input on the left
             field_parts.append(f'<span class="md-icon material-icons">{icon}</span>')
-        
+
         # Create input wrapper for proper label positioning
         field_parts.append('<div class="md-input-wrapper">')
-        
+
         # Add the input/select/textarea
         if input_type == "textarea":
             field_parts.append(self._render_textarea_input(field_name, value, error, ui_info, has_icon))
@@ -764,25 +763,25 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             field_parts.append(self._render_select_input(field_name, value, error, ui_info, field_schema, has_icon))
         else:
             field_parts.append(self._render_text_input(field_name, input_type, value, error, ui_info, has_icon))
-        
+
         # Add floating label
         field_parts.append(f'<label class="md-floating-label" for="{field_name}">{escape(label)}{required_text}</label>')
-        
+
         # Close input wrapper
         field_parts.append('</div>')
-        
+
         # Close field wrapper if has icon
         if has_icon:
             field_parts.append('</div>')
-        
+
         # Add help text
         if help_text:
             field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
-            
+
         # Add error text
         if error:
             field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
-        
+
         # Close field container
         field_parts.append('</div>')
         return '\n'.join(field_parts)
@@ -794,7 +793,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error_class = " error" if error else ""
         value_attr = f' value="{escape(str(value))}"' if value else ""
         placeholder_attr = ' placeholder=" "'  # Single space for floating label to work
-        
+
         # Handle input attributes
         attrs = []
         if ui_info.get("min_value") is not None:
@@ -805,9 +804,9 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             attrs.append(f'minlength="{ui_info["min_length"]}"')
         if ui_info.get("max_length") is not None:
             attrs.append(f'maxlength="{ui_info["max_length"]}"')
-        
+
         attrs_str = " " + " ".join(attrs) if attrs else ""
-        
+
         return f'<input type="{input_type}" name="{field_name}" id="{field_name}" class="md-input{error_class}"{value_attr}{placeholder_attr}{attrs_str}>'
 
     def _render_textarea_input(
@@ -817,7 +816,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error_class = " error" if error else ""
         placeholder_attr = ' placeholder=" "'  # Single space for floating label to work
         value_content = escape(str(value)) if value else ""
-        
+
         return f'<textarea name="{field_name}" id="{field_name}" class="md-textarea{error_class}"{placeholder_attr}>{value_content}</textarea>'
 
     def _render_select_input(
@@ -826,15 +825,15 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """Render a Material Design select field."""
         error_class = " error" if error else ""
         options_html = []
-        
+
         # Get options from UI info or enum
         options = ui_info.get("options", [])
         if not options and "enum" in field_schema:
             options = [{"value": v, "label": v} for v in field_schema["enum"]]
-        
+
         # Add empty option
         options_html.append('<option value=""></option>')
-        
+
         # Add options
         for option in options:
             if isinstance(option, dict):
@@ -842,10 +841,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
                 opt_label = option.get("label", opt_value)
             else:
                 opt_value = opt_label = str(option)
-            
+
             selected = ' selected' if str(value) == str(opt_value) else ""
             options_html.append(f'<option value="{escape(str(opt_value))}">{selected}>{escape(str(opt_label))}</option>')
-        
+
         return f'<select name="{field_name}" id="{field_name}" class="md-select{error_class}">{"".join(options_html)}</select>'
 
     def _render_checkbox_field(
@@ -861,21 +860,21 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """Render a Material Design checkbox field."""
         checked = " checked" if value else ""
         required_text = " *" if is_required else ""
-        
+
         field_parts = ['<div class="md-field">']
         field_parts.append('<div class="md-checkbox-container">')
         field_parts.append(f'<input type="checkbox" name="{field_name}" id="{field_name}" class="md-checkbox"{checked} value="true">')
         field_parts.append(f'<label for="{field_name}" class="md-checkbox-label">{escape(label)}{required_text}</label>')
         field_parts.append('</div>')
-        
+
         # Add help text
         if help_text:
             field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
-            
+
         # Add error text
         if error:
             field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
-        
+
         field_parts.append('</div>')
         return '\n'.join(field_parts)
 
@@ -890,7 +889,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """Infer input type from field schema."""
         field_type = field_schema.get("type", "string")
         field_format = field_schema.get("format", "")
-        
+
         if field_format == "email":
             return "email"
         elif field_format == "date":
@@ -916,26 +915,26 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         # Import here to avoid circular imports
         from .enhanced_renderer import EnhancedFormRenderer
         from .model_list import ModelListRenderer
-        
+
         # Create enhanced renderer with bootstrap framework for model_list functionality
         enhanced_renderer = EnhancedFormRenderer(framework="bootstrap")
-        
+
         # Set up schema definitions if they exist on this renderer
         if hasattr(self, '_schema_defs'):
             enhanced_renderer._schema_defs = self._schema_defs
-        
+
         # Try to use the model list renderer directly for better control
-        list_renderer = ModelListRenderer(framework="bootstrap")
-        
+        ModelListRenderer(framework="bootstrap")
+
         # Extract model reference from field schema
         items_ref = field_schema.get("items", {}).get("$ref")
         if items_ref:
             model_name = items_ref.split("/")[-1]
-            
+
             # Get schema definitions from the field schema or parent schema
             schema_defs = getattr(self, '_schema_defs', {})
             model_schema = schema_defs.get(model_name)
-            
+
             if model_schema:
                 # Convert value to list of dicts if needed
                 list_values = []
@@ -950,7 +949,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
                         list_values = [value.model_dump()]
                     elif isinstance(value, dict):
                         list_values = [value]
-                
+
                 # Use the enhanced renderer's schema-based model list rendering
                 enhanced_renderer._schema_defs = schema_defs
                 field_html = enhanced_renderer._render_model_list_from_schema(
@@ -962,7 +961,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
                     ui_info=field_schema,
                     required_fields=required_fields or []
                 )
-                
+
                 # Wrap in Material Design container to maintain consistency
                 return f'''
         <div class="md-field">
@@ -971,12 +970,12 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             </div>
         </div>
         '''
-        
+
         # Fallback to original implementation if model schema not found
         field_html = enhanced_renderer._render_field(
             field_name, field_schema, value, error, required_fields or []
         )
-        
+
         # Wrap in Material Design container to maintain consistency
         return f'''
         <div class="md-field">
@@ -992,20 +991,20 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Material Design 3 form enhancements
-    
+
     // Floating label functionality for outlined text fields
     function initializeFloatingLabels() {
         const textFields = document.querySelectorAll('.md-input, .md-textarea, .md-select');
-        
+
         textFields.forEach(input => {
             const label = input.nextElementSibling;
             if (label && label.classList.contains('md-floating-label')) {
-                
+
                 // Check initial state
                 function updateLabelState() {
                     const hasValue = input.value && input.value.trim() !== '';
                     const isFocused = document.activeElement === input;
-                    
+
                     if (hasValue || isFocused) {
                         label.style.transform = 'translateY(-28px) scale(0.75)';
                         label.style.color = isFocused ? '#6750a4' : '#49454f';
@@ -1018,18 +1017,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         label.style.padding = '0';
                     }
                 }
-                
+
                 // Set up event listeners
                 input.addEventListener('focus', updateLabelState);
                 input.addEventListener('blur', updateLabelState);
                 input.addEventListener('input', updateLabelState);
-                
+
                 // Initial state check
                 updateLabelState();
             }
         });
     }
-    
+
     // Enhanced focus and blur effects
     const inputs = document.querySelectorAll('.md-input, .md-select, .md-textarea');
     inputs.forEach(input => {
@@ -1037,12 +1036,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.transform = 'scale(1.01)';
             this.style.transition = 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)';
         });
-        
+
         input.addEventListener('blur', function() {
             this.style.transform = 'scale(1)';
         });
     });
-    
+
     // Checkbox interactions with Material Design ripple effect
     const checkboxes = document.querySelectorAll('.md-checkbox');
     checkboxes.forEach(checkbox => {
@@ -1061,10 +1060,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 ripple.style.pointerEvents = 'none';
                 ripple.style.transform = 'scale(0)';
                 ripple.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                
+
                 this.style.position = 'relative';
                 this.appendChild(ripple);
-                
+
                 // Animate ripple
                 setTimeout(() => {
                     ripple.style.transform = 'scale(1)';
@@ -1080,27 +1079,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
+
     // Enhanced form validation with Material Design styling
     const form = document.querySelector('.md-form');
     if (form) {
         form.addEventListener('submit', function(e) {
             const requiredInputs = this.querySelectorAll('input[required], select[required], textarea[required]');
             let hasErrors = false;
-            
+
             requiredInputs.forEach(input => {
                 const value = input.type === 'checkbox' ? input.checked : input.value.trim();
                 const fieldContainer = input.closest('.md-field');
-                
+
                 if (!value) {
                     input.classList.add('error');
-                    
+
                     // Add error styling to label
                     const label = input.nextElementSibling;
                     if (label && label.classList.contains('md-floating-label')) {
                         label.style.color = '#ba1a1a';
                     }
-                    
+
                     // Create or update error message
                     let errorDiv = fieldContainer.querySelector('.md-error-text');
                     if (!errorDiv) {
@@ -1109,17 +1108,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         fieldContainer.appendChild(errorDiv);
                     }
                     errorDiv.textContent = 'This field is required';
-                    
+
                     hasErrors = true;
                 } else {
                     input.classList.remove('error');
-                    
+
                     // Remove error styling from label
                     const label = input.nextElementSibling;
                     if (label && label.classList.contains('md-floating-label')) {
                         label.style.color = input === document.activeElement ? '#6750a4' : '#49454f';
                     }
-                    
+
                     // Remove error message if it was dynamically added
                     const errorDiv = fieldContainer.querySelector('.md-error-text');
                     if (errorDiv && errorDiv.textContent === 'This field is required') {
@@ -1127,14 +1126,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-            
+
             if (hasErrors) {
                 e.preventDefault();
                 // Scroll to first error with smooth animation
                 const firstError = this.querySelector('.error');
                 if (firstError) {
-                    firstError.scrollIntoView({ 
-                        behavior: 'smooth', 
+                    firstError.scrollIntoView({
+                        behavior: 'smooth',
                         block: 'center',
                         inline: 'nearest'
                     });
@@ -1145,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         // Real-time validation for better UX
         const allInputs = form.querySelectorAll('input, select, textarea');
         allInputs.forEach(input => {
@@ -1153,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (this.hasAttribute('required')) {
                     const value = this.type === 'checkbox' ? this.checked : this.value.trim();
                     const fieldContainer = this.closest('.md-field');
-                    
+
                     if (!value) {
                         this.classList.add('error');
                         const label = this.nextElementSibling;
@@ -1171,10 +1170,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
     # Initialize floating labels
     initializeFloatingLabels();
-    
+
     # Reinitialize for dynamically added content
     window.reinitializeMaterialForms = function() {
         initializeFloatingLabels();
@@ -1191,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ) -> List[str]:
         """Render layout fields as Material Design tabs."""
         parts = []
-        
+
         # Add Material Design tabs CSS
         parts.append('''
         <style>
@@ -1239,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         </style>
         ''')
-        
+
         # Create tab navigation
         parts.append('<div class="md-tabs">')
         parts.append('<ul class="md-tab-list" role="tablist">')
@@ -1247,35 +1246,35 @@ document.addEventListener('DOMContentLoaded', function() {
             active_class = " active" if i == 0 else ""
             tab_id = f"material-tab-{field_name}"
             tab_title = field_schema.get('title', field_name.replace('_', ' ').title())
-            
+
             parts.append(f'''
             <li class="md-tab" role="presentation">
-                <button class="md-tab-button{active_class}" 
-                        onclick="switchMaterialTab('{tab_id}')" 
-                        type="button" role="tab" 
-                        aria-controls="{tab_id}" 
+                <button class="md-tab-button{active_class}"
+                        onclick="switchMaterialTab('{tab_id}')"
+                        type="button" role="tab"
+                        aria-controls="{tab_id}"
                         aria-selected="{"true" if i == 0 else "false"}">
                     {tab_title}
                 </button>
             </li>
             ''')
         parts.append('</ul>')
-        
+
         # Create tab content
         for i, (field_name, field_schema) in enumerate(layout_fields):
             active_class = " active" if i == 0 else ""
             tab_id = f"material-tab-{field_name}"
-            
+
             parts.append(f'<div class="md-tab-content{active_class}" id="{tab_id}" role="tabpanel">')
-            
+
             # Render the layout field content (the nested form)
             layout_content = self._render_material_layout_field_content(field_name, field_schema, data.get(field_name), errors.get(field_name))
             parts.append(layout_content)
-            
+
             parts.append('</div>')
-        
+
         parts.append('</div>')  # Close md-tabs
-        
+
         # Add JavaScript for tab switching
         parts.append('''
         <script>
@@ -1285,20 +1284,20 @@ document.addEventListener('DOMContentLoaded', function() {
             allContents.forEach(content => {
                 content.classList.remove('active');
             });
-            
+
             // Remove active class from all tab buttons
             const allButtons = document.querySelectorAll('.md-tab-button');
             allButtons.forEach(button => {
                 button.classList.remove('active');
                 button.setAttribute('aria-selected', 'false');
             });
-            
+
             // Show active tab content
             const activeContent = document.getElementById(activeTabId);
             if (activeContent) {
                 activeContent.classList.add('active');
             }
-            
+
             // Add active class to clicked button
             const activeButton = event.target;
             activeButton.classList.add('active');
@@ -1306,9 +1305,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         </script>
         ''')
-        
+
         return parts
-    
+
     def _render_material_layout_field_content(self, field_name: str, field_schema: Dict[str, Any], value: Any, error: Optional[str]) -> str:
         """
         Render the content of a Material Design layout field (the nested form).
@@ -1318,10 +1317,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if value and hasattr(value, 'form'):
                 # Get the form class from the layout instance
                 form_class = value.form
-                
+
                 # Get nested form data based on field name mapping (inherit from parent)
                 nested_data = self._get_nested_form_data(field_name)
-                
+
                 # Create a new SimpleMaterialRenderer for the nested form
                 nested_renderer = SimpleMaterialRenderer()
                 # Important: Set the form data on the nested renderer too
@@ -1334,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else:
                 # Fallback: try to get the form class from the field schema
                 return self._render_material_layout_field_content_fallback(field_name, field_schema)
-                
+
         except Exception as e:
             # Error handling: return a placeholder with error message
             return f"""
@@ -1350,11 +1349,11 @@ document.addEventListener('DOMContentLoaded', function() {
         # Map field names to their corresponding form classes
         form_mapping = {
             'vertical_tab': 'PersonalInfoForm',
-            'horizontal_tab': 'ContactInfoForm', 
+            'horizontal_tab': 'ContactInfoForm',
             'tabbed_tab': 'PreferencesForm',
             'list_tab': 'TaskListForm'
         }
-        
+
         form_name = form_mapping.get(field_name)
         if form_name:
             try:
@@ -1369,10 +1368,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     from examples.shared_models import TaskListForm as FormClass
                 else:
                     raise ImportError(f"Unknown form: {form_name}")
-                
+
                 # Get nested form data based on field name mapping
                 nested_data = self._get_nested_form_data(field_name)
-                
+
                 # Create a new SimpleMaterialRenderer for the nested form
                 nested_renderer = SimpleMaterialRenderer()
                 # Important: Set the form data on the nested renderer too
@@ -1382,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     data=nested_data,  # Pass relevant data to nested form
                     errors={}
                 )
-                
+
             except Exception as e:
                 return f"""
                 <div class="md-field">
@@ -1391,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 """
         else:
-            return f"""
+            return """
             <div class="md-field">
                 <div class="md-info-message">Unknown layout field type</div>
             </div>
