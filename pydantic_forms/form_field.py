@@ -3,14 +3,11 @@ Enhanced FormField class that matches the design_idea.py vision.
 Provides a clean interface for defining form fields with type validation and icon support.
 """
 
-from typing import Any, Dict, List, Optional, Union, Type, get_origin, get_args
+from typing import Any, Dict, List, Optional, Type, Union, get_args, get_origin
+
 from pydantic import Field as PydanticField
 
-from .input_types import (
-    is_input_type_valid,
-    get_default_input_type,
-    format_icon_class,
-)
+from .input_types import format_icon_class, get_default_input_type, is_input_type_valid
 
 
 class FormField:

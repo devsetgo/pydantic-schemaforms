@@ -3,10 +3,11 @@ Selection input components using Python 3.14 template strings.
 Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
-from typing import List, Dict, Any, Optional
 import string.templatelib
-from .base import SelectInputBase, FormInput
 from html import escape
+from typing import Any, Dict, List, Optional
+
+from .base import FormInput, SelectInputBase
 
 
 class SelectInput(SelectInputBase):
@@ -98,7 +99,15 @@ class CheckboxInput(FormInput):
         if "value" not in kwargs:
             kwargs["value"] = "1"
 
-        checkbox_html = super().render(**kwargs)
+        # Validate and format attributes
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+
+        # Build the attributes string
+        attributes_str = self._build_attributes_string(attrs)
+
+        # Render checkbox
+        checkbox_html = f'<input {attributes_str} />'
 
         if label:
             field_name = kwargs.get("name", "")

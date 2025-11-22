@@ -3,11 +3,9 @@ Tests for schema_form module - FormModel and Field functionality.
 """
 
 import pytest
-from typing import Optional, List
-from datetime import date
 from pydantic import ValidationError
 
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_forms.schema_form import Field, FormModel
 
 
 class TestField:

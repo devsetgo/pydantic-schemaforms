@@ -9,9 +9,11 @@ Requires: Python 3.14+
 
 import string.templatelib
 from typing import Any, Dict, Optional
-from functools import lru_cache
 
 # Import version check to ensure compatibility
+
+# Global template cache to avoid memory leaks from method-level lru_cache
+_template_cache: Dict[str, string.templatelib.Template] = {}
 
 
 class TemplateString:
@@ -34,10 +36,18 @@ class TemplateString:
         self.template_str = template_str
         self._compiled: Optional[string.templatelib.Template] = None
 
-    @lru_cache(maxsize=128)
     def _compile_template(self, template_str: str) -> string.templatelib.Template:
-        """Compile and cache template for performance."""
-        return string.templatelib.Template(template_str)
+        """Compile and cache template for performance using global cache."""
+        if template_str not in _template_cache:
+            # Limit cache size to prevent memory issues
+            if len(_template_cache) > 256:
+                # Remove oldest entries (simple FIFO)
+                oldest_key = next(iter(_template_cache))
+                del _template_cache[oldest_key]
+
+            _template_cache[template_str] = string.templatelib.Template(template_str)
+
+        return _template_cache[template_str]
 
     def render(self, **kwargs: Any) -> str:
         """

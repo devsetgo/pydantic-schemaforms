@@ -31,8 +31,14 @@ def verify_template_strings() -> None:
     Raises:
         ImportError: If string.templatelib is not available
     """
+    import importlib.util
+
     try:
-        import string.templatelib
+        spec = importlib.util.find_spec("string.templatelib")
+        if spec is None:
+            raise ImportError("string.templatelib module not found")
+        # Test that we can actually import it (don't keep the import)
+        __import__("string.templatelib")
     except ImportError as e:
         raise ImportError(
             f"string.templatelib is not available. "

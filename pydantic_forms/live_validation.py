@@ -8,8 +8,9 @@ Requires: Python 3.14+ (uses native template strings)
 """
 
 import json
-from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional
+
 from pydantic import BaseModel, ValidationError
 
 from .templates import TemplateString

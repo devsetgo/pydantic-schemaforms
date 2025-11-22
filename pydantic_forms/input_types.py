@@ -3,6 +3,7 @@ Input type constants and mappings for pydantic-forms.
 Provides organized collections of input types and validation mappings.
 """
 
+from datetime import date, datetime, time
 from typing import Dict, Set, Type
 
 # Text input types
@@ -137,8 +138,6 @@ VALID_INPUT_TYPES_BY_PYTHON_TYPE: Dict[Type, Set[str]] = {
 }
 
 # Special type mappings
-from datetime import date, datetime, time
-
 VALID_INPUT_TYPES_BY_PYTHON_TYPE.update(
     {
         date: {"date", "birthdate", "hidden"},

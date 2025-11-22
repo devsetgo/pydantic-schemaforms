@@ -2,16 +2,13 @@
 Integration tests - testing complete workflows and component interactions.
 """
 
-import pytest
 from datetime import date, datetime
-from pydantic import ValidationError
-from pydantic_forms.schema_form import FormModel, Field
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-from pydantic_forms.modern_renderer import ModernFormRenderer
-from pydantic_forms.validation import validate_form_data
 
+from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
 # from pydantic_forms.layouts import HorizontalLayout, VerticalLayout, GridLayout, CardLayout, TabLayout
 from pydantic_forms.integration import ReactJSONSchemaIntegration
+from pydantic_forms.schema_form import Field, FormModel
+from pydantic_forms.validation import validate_form_data
 
 
 class TestCompleteFormWorkflow:
@@ -314,19 +311,12 @@ class TestFormIntegration:
         json_schema = integration.generate_schema(simple_form_model)
 
         # Valid data should pass - test basic schema generation for now
-        valid_data = {
-            "name": "John Doe",
-            "email": "john@example.com",
-            "age": 30,
-            "newsletter": True,
-        }
 
         # Test that schema generation works
         assert json_schema is not None
         assert isinstance(json_schema, dict)
 
         # Invalid data test - for now just test that schema exists
-        invalid_data = {"name": "", "email": "not-an-email", "age": "not-a-number"}
 
         # Test that we can generate schema consistently
         schema2 = integration.generate_schema(simple_form_model)

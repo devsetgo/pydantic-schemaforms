@@ -3,36 +3,37 @@ Enhanced Form Renderer for Pydantic Models with UI Elements
 Supports UI element specifications similar to React JSON Schema Forms
 """
 
-from typing import Any, Dict, List, Optional, Type, Union
+import asyncio
 from html import escape
+from typing import Any, Dict, List, Optional, Type, Union
 
+from .icon_mapping import map_icon_for_framework
 from .inputs import (
-    TextInput,
-    PasswordInput,
-    EmailInput,
-    NumberInput,
     CheckboxInput,
-    SelectInput,
+    ColorInput,
     DateInput,
     DatetimeInput,
+    EmailInput,
     FileInput,
-    ColorInput,
-    RangeInput,
     HiddenInput,
-    RadioGroup,
-    TextArea,
-    SearchInput,
-    TelInput,
-    URLInput,
     MonthInput,
-    WeekInput,
+    NumberInput,
+    PasswordInput,
+    RadioGroup,
+    RangeInput,
+    SearchInput,
+    SelectInput,
+    TelInput,
+    TextArea,
+    TextInput,
     TimeInput,
-    build_label,
+    URLInput,
+    WeekInput,
     build_error_message,
     build_help_text,
+    build_label,
 )
 from .schema_form import FormModel
-from .icon_mapping import map_icon_for_framework
 
 
 class SchemaFormValidationError(Exception):
@@ -226,6 +227,7 @@ class EnhancedFormRenderer:
                     errors.get(field_name),
                     required_fields,
                     layout,
+                    errors,  # Pass full errors dictionary
                 )
                 form_parts.append(field_html)
 
@@ -305,6 +307,7 @@ class EnhancedFormRenderer:
                 errors.get(field_name),
                 required_fields,
                 layout,
+                errors,  # Pass full errors dictionary
             )
             form_parts.append(field_html)
 
@@ -360,6 +363,7 @@ class EnhancedFormRenderer:
         error: Optional[str] = None,
         required_fields: List[str] = None,
         layout: str = "vertical",
+        all_errors: Optional[Dict[str, str]] = None,
     ) -> str:
         """Render a single form field with its UI element."""
         # Check for UI info in nested 'ui' key or directly in field schema
@@ -424,6 +428,9 @@ class EnhancedFormRenderer:
                 elif isinstance(value, dict):
                     list_values = [value]
 
+            # Extract nested errors for this model list field
+            nested_errors = self._extract_nested_errors_for_field(field_name, all_errors)
+
             # If we have a model_class, use it; otherwise use the schema definition
             if model_class:
                 return list_renderer.render_model_list(
@@ -432,6 +439,7 @@ class EnhancedFormRenderer:
                     model_class=model_class,
                     values=list_values,
                     error=error,
+                    nested_errors=nested_errors,  # Pass nested errors
                     help_text=ui_info.get('help_text'),
                     is_required=field_name in (required_fields or []),
                     min_items=ui_info.get('min_items', 0),
@@ -758,6 +766,7 @@ class EnhancedFormRenderer:
                     errors.get(field_name),
                     required_fields,
                     "vertical",  # Use vertical layout within tabs
+                    errors,  # Pass full errors dictionary
                 )
                 parts.append(field_html)
 
@@ -1012,6 +1021,7 @@ class EnhancedFormRenderer:
                     errors.get(field_name),
                     required_fields,
                     "vertical",  # Use vertical layout within each column
+                    errors,  # Pass full errors dictionary
                 )
                 parts.append(field_html)
             parts.append('</div>')
@@ -1027,6 +1037,7 @@ class EnhancedFormRenderer:
                     errors.get(field_name),
                     required_fields,
                     "vertical",  # Use vertical layout within each column
+                    errors,  # Pass full errors dictionary
                 )
                 parts.append(field_html)
             parts.append('</div>')
@@ -1111,6 +1122,35 @@ class EnhancedFormRenderer:
 
         html += '</div>'
         return html
+
+    def _extract_nested_errors_for_field(self, field_name: str, all_errors: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Extract nested errors for a specific field from the complete error dictionary.
+        
+        For example, if field_name is 'pets' and all_errors contains 'pets[0].weight',
+        this returns {'0.weight': 'error message'}.
+        
+        Args:
+            field_name: The base field name (e.g., 'pets')
+            all_errors: Complete error dictionary with nested paths
+            
+        Returns:
+            Dictionary of nested errors with simplified paths
+        """
+        nested_errors = {}
+        field_prefix = f"{field_name}["
+        
+        for error_path, error_message in (all_errors or {}).items():
+            if error_path.startswith(field_prefix):
+                # Extract the part after the field name prefix
+                # e.g., 'pets[0].weight' -> '0].weight' after removing 'pets['
+                nested_part = error_path[len(field_prefix):]  # Remove 'pets['
+                if '].' in nested_part:
+                    # Replace ]. with . to get '0.weight' from '0].weight'
+                    simplified_path = nested_part.replace('].', '.')
+                    nested_errors[simplified_path] = error_message
+        
+        return nested_errors
 
     def _render_schema_list_item(
         self,
@@ -1216,7 +1256,8 @@ class EnhancedFormRenderer:
                         field_value,
                         None,  # error
                         [],   # required_fields
-                        "vertical"  # layout
+                        "vertical",  # layout
+                        None  # all_errors (not available in schema rendering)
                     )}
                 </div>'''
 
@@ -1407,9 +1448,6 @@ def render_form_html(
     # Use EnhancedFormRenderer for other frameworks
     renderer = EnhancedFormRenderer(framework=framework)
     return renderer.render_form_from_model(form_model_cls, data=form_data, errors=errors, layout=layout, **kwargs)
-
-
-import asyncio
 
 
 async def render_form_html_async(

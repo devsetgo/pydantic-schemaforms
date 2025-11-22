@@ -5,18 +5,9 @@ Provides horizontal, vertical, grid, tab, and accordion layouts.
 Requires: Python 3.14+ (no backward compatibility)
 """
 
-from typing import List, Dict, Any, Optional, Union
 import string.templatelib
-
-# Import version check to ensure compatibility
-
-
-class Layout:
-    """Layout base class placeholder."""
-    pass
-
-
 from html import escape
+from typing import Any, Dict, List, Optional, Union
 
 
 class BaseLayout:
@@ -49,10 +40,13 @@ class BaseLayout:
             styles.append(attrs["css_style"])
 
         try:
-            interpolation = Interpolation(
-                content=self.content, class_=" ".join(css_classes), style="; ".join(styles), **attrs
-            )
-            return self.template_renderer.substitute(interpolation.data)
+            template_data = {
+                "content": self.content,
+                "class_": " ".join(css_classes),
+                "style": "; ".join(styles),
+                **attrs
+            }
+            return self.template_renderer.substitute(**template_data)
         except Exception:
             # Fallback rendering
             return self._fallback_render(attrs)
@@ -292,14 +286,14 @@ function switchTab(tabId, buttonElement) {
         css_classes = attrs.get("class_", "")
         styles = attrs.get("style", "")
 
-        interpolation = Interpolation(
-            class_=css_classes,
-            style=styles,
-            tab_buttons="\n".join(tab_buttons),
-            tab_panels="\n".join(tab_panels),
-        )
+        template_data = {
+            "class_": css_classes,
+            "style": styles,
+            "tab_buttons": "\n".join(tab_buttons),
+            "tab_panels": "\n".join(tab_panels),
+        }
 
-        return self.template.substitute(interpolation.data)
+        return self.template_renderer.substitute(**template_data)
 
 
 class AccordionLayout:
@@ -402,11 +396,13 @@ function toggleAccordion(sectionId, buttonElement) {
         css_classes = attrs.get("class_", "")
         styles = attrs.get("style", "")
 
-        interpolation = Interpolation(
-            class_=css_classes, style=styles, accordion_sections="\n".join(accordion_sections)
-        )
+        template_data = {
+            "class_": css_classes,
+            "style": styles,
+            "accordion_sections": "\n".join(accordion_sections)
+        }
 
-        return self.template.substitute(interpolation.data)
+        return self.template_renderer.substitute(**template_data)
 
 
 class ModalLayout:
@@ -531,16 +527,16 @@ document.addEventListener('keydown', function(e) {
         css_classes = attrs.get("class_", "")
         styles = attrs.get("style", "")
 
-        interpolation = Interpolation(
-            modal_id=self.modal_id,
-            title=escape(self.title),
-            content=self.content,
-            footer=self.footer,
-            class_=css_classes,
-            style=styles,
-        )
+        template_data = {
+            "modal_id": self.modal_id,
+            "title": escape(self.title),
+            "content": self.content,
+            "footer": self.footer,
+            "class_": css_classes,
+            "style": styles,
+        }
 
-        return self.template.substitute(interpolation.data)
+        return self.template_renderer.substitute(**template_data)
 
 
 class CardLayout(BaseLayout):

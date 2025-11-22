@@ -4,6 +4,7 @@ Includes NumberInput, RangeInput, and specialized numeric inputs.
 """
 
 from typing import Union
+
 from .base import NumericInput
 
 

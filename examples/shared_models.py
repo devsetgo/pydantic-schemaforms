@@ -8,20 +8,21 @@ This module contains all the form models used across different framework example
 import os
 import sys
 from datetime import date, datetime
-from typing import Optional, List
 from enum import Enum
+from typing import List, Optional
 
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pydantic_forms.validation import validate_form_data
-from pydantic import BaseModel, Field, EmailStr, field_validator
-from pydantic_forms.schema_form import FormModel
-from pydantic_forms.form_field import FormField
-from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout
 import re
-from pydantic_forms.form_layouts import VerticalLayout, HorizontalLayout, TabbedLayout
-
 from collections import defaultdict
+
+from pydantic import EmailStr, field_validator
+
+from pydantic_forms.form_field import FormField
+from pydantic_forms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
+from pydantic_forms.schema_form import FormModel
+from pydantic_forms.validation import validate_form_data
+
 # ============================================================================
 # ENUMS AND CONSTANTS
 # ============================================================================
@@ -55,7 +56,7 @@ class Country(str, Enum):
 
 class PetModel(FormModel):
     """Enhanced pet information model showcasing various input types."""
-    
+
     name: str = FormField(
         title="Pet's Name",
         input_type="text",
@@ -65,7 +66,7 @@ class PetModel(FormModel):
         min_length=1,
         max_length=50
     )
-    
+
     species: str = FormField(
         title="Species",
         input_type="select",
@@ -82,7 +83,7 @@ class PetModel(FormModel):
         help_text="What type of animal is your pet?",
         icon="collection"
     )
-    
+
     age: Optional[int] = FormField(
         None,
         title="Age",
@@ -93,18 +94,18 @@ class PetModel(FormModel):
         min_value=0,
         max_value=50
     )
-    
+
     weight: Optional[float] = FormField(
         None,
         title="Weight (lbs)",
         input_type="number",
         placeholder="Pet's weight",
-        help_text="Weight in pounds (optional)",
+        help_text="Weight in pounds (optional - enter 0.01 for tiny pets like birds)",
         icon="speedometer2",
-        min_value=0.1,
+        min_value=0.01,
         max_value=500.0
     )
-    
+
     is_vaccinated: bool = FormField(
         False,
         title="Vaccinated",
@@ -112,7 +113,7 @@ class PetModel(FormModel):
         help_text="Is your pet up to date with vaccinations?",
         icon="shield-check"
     )
-    
+
     microchipped: bool = FormField(
         False,
         title="Microchipped",
@@ -120,7 +121,7 @@ class PetModel(FormModel):
         help_text="Does your pet have a microchip?",
         icon="cpu"
     )
-    
+
     breed: Optional[str] = FormField(
         None,
         title="Breed",
@@ -130,7 +131,7 @@ class PetModel(FormModel):
         icon="award",
         max_length=100
     )
-    
+
     color: Optional[str] = FormField(
         None,
         title="Primary Color",
@@ -138,7 +139,7 @@ class PetModel(FormModel):
         help_text="Primary color of your pet (optional)",
         icon="palette"
     )
-    
+
     last_vet_visit: Optional[date] = FormField(
         None,
         title="Last Vet Visit",
@@ -146,7 +147,7 @@ class PetModel(FormModel):
         help_text="When was the last veterinary checkup? (optional)",
         icon="calendar-date"
     )
-    
+
     special_needs: Optional[str] = FormField(
         None,
         title="Special Needs",
@@ -159,7 +160,7 @@ class PetModel(FormModel):
 
 class MinimalLoginForm(FormModel):
     """Minimal form example - Simple login form."""
-    
+
     username: str = FormField(
         title="Username",
         input_type="text",
@@ -169,16 +170,16 @@ class MinimalLoginForm(FormModel):
         min_length=3,
         max_length=50
     )
-    
+
     password: str = FormField(
-        title="Password", 
+        title="Password",
         input_type="password",
         placeholder="Enter your password",
         help_text="Your account password",
         icon="lock",
         min_length=6
     )
-    
+
     remember_me: bool = FormField(
         False,
         title="Remember me",
@@ -196,7 +197,7 @@ class MinimalLoginForm(FormModel):
 
 class UserRegistrationForm(FormModel):
     """User registration form with username, email, and password."""
-    
+
     username: str = FormField(
         title="Username",
         input_type="text",
@@ -206,7 +207,7 @@ class UserRegistrationForm(FormModel):
         min_length=3,
         max_length=50
     )
-    
+
     email: EmailStr = FormField(
         title="Email Address",
         input_type="email",
@@ -214,24 +215,24 @@ class UserRegistrationForm(FormModel):
         help_text="Your email address for account verification",
         icon="email"
     )
-    
+
     password: str = FormField(
-        title="Password", 
+        title="Password",
         input_type="password",
         placeholder="Create a strong password",
         help_text="Password must be at least 8 characters",
         icon="lock",
         min_length=8
     )
-    
+
     confirm_password: str = FormField(
-        title="Confirm Password", 
+        title="Confirm Password",
         input_type="password",
         placeholder="Confirm your password",
         help_text="Re-enter your password to confirm",
         icon="lock"
     )
-    
+
     age: Optional[int] = FormField(
         None,
         title="Age",
@@ -242,7 +243,7 @@ class UserRegistrationForm(FormModel):
         min_value=13,
         max_value=120
     )
-    
+
     role: UserRole = FormField(
         UserRole.USER,
         title="Account Type",
@@ -264,7 +265,7 @@ class UserRegistrationForm(FormModel):
         if not v.replace('_', '').replace('-', '').isalnum():
             raise ValueError("Username can only contain letters, numbers, hyphens, and underscores")
         return v.strip()
-    
+
     @field_validator("confirm_password")
     @classmethod
     def validate_passwords_match(cls, v, info):
@@ -274,7 +275,7 @@ class UserRegistrationForm(FormModel):
 
 class PetOwnerForm(FormModel):
     """Form that demonstrates ListLayout for pet management."""
-    
+
     owner_name: str = FormField(
         title="Owner Name",
         input_type="text",
@@ -284,7 +285,7 @@ class PetOwnerForm(FormModel):
         min_length=2,
         max_length=100
     )
-    
+
     email: EmailStr = FormField(
         title="Email Address",
         input_type="email",
@@ -292,7 +293,7 @@ class PetOwnerForm(FormModel):
         help_text="Your contact email address",
         icon="envelope"
     )
-    
+
     address: Optional[str] = FormField(
         None,
         title="Address",
@@ -302,7 +303,7 @@ class PetOwnerForm(FormModel):
         icon="house",
         max_length=500
     )
-    
+
     emergency_contact: Optional[str] = FormField(
         None,
         title="Emergency Contact",
@@ -315,7 +316,7 @@ class PetOwnerForm(FormModel):
 
 class PetRegistrationForm(FormModel):
     """Complete pet registration form with owner information and pets list."""
-    
+
     # Owner Information Section
     owner_name: str = FormField(
         title="Owner Name",
@@ -326,7 +327,7 @@ class PetRegistrationForm(FormModel):
         min_length=2,
         max_length=100
     )
-    
+
     email: EmailStr = FormField(
         title="Email Address",
         input_type="email",
@@ -334,7 +335,7 @@ class PetRegistrationForm(FormModel):
         help_text="Your contact email address",
         icon="envelope"
     )
-    
+
     address: Optional[str] = FormField(
         None,
         title="Address",
@@ -344,7 +345,7 @@ class PetRegistrationForm(FormModel):
         icon="house",
         max_length=500
     )
-    
+
     emergency_contact: Optional[str] = FormField(
         None,
         title="Emergency Contact",
@@ -354,7 +355,7 @@ class PetRegistrationForm(FormModel):
         icon="person-exclamation",
         max_length=100
     )
-    
+
     # Pets List Section - using model_list with collapsible cards
     pets: List[PetModel] = FormField(
         default_factory=list,
@@ -363,7 +364,7 @@ class PetRegistrationForm(FormModel):
         model_class=PetModel,
         help_text="Add information about each of your pets",
         icon="heart",
-        min_items=0,
+        min_items=1,
         max_items=10,
         add_button_text="Add Another Pet",
         remove_button_text="Remove Pet",
@@ -381,7 +382,7 @@ class PetRegistrationForm(FormModel):
 
 class MediumContactForm(FormModel):
     """Medium complexity form - Contact form with validation."""
-    
+
     # Personal Information
     first_name: str = FormField(
         title="First Name",
@@ -392,17 +393,17 @@ class MediumContactForm(FormModel):
         min_length=2,
         max_length=50
     )
-    
+
     last_name: str = FormField(
         title="Last Name",
-        input_type="text", 
+        input_type="text",
         placeholder="Enter your last name",
         help_text="Your family name",
         icon="person",
         min_length=2,
         max_length=50
     )
-    
+
     email: EmailStr = FormField(
         title="Email Address",
         input_type="email",
@@ -410,7 +411,7 @@ class MediumContactForm(FormModel):
         help_text="We'll never share your email",
         icon="envelope"
     )
-    
+
     phone: Optional[str] = FormField(
         None,
         title="Phone Number",
@@ -419,7 +420,7 @@ class MediumContactForm(FormModel):
         help_text="Optional phone number",
         icon="telephone"
     )
-    
+
     # Message Details
     subject: str = FormField(
         title="Subject",
@@ -430,7 +431,7 @@ class MediumContactForm(FormModel):
         min_length=5,
         max_length=200
     )
-    
+
     message: str = FormField(
         title="Message",
         input_type="textarea",
@@ -440,7 +441,7 @@ class MediumContactForm(FormModel):
         min_length=10,
         max_length=2000
     )
-    
+
     priority: Priority = FormField(
         Priority.MEDIUM,
         title="Priority Level",
@@ -449,7 +450,7 @@ class MediumContactForm(FormModel):
         help_text="How urgent is your request?",
         icon="exclamation-triangle"
     )
-    
+
     # Preferences
     subscribe_newsletter: bool = FormField(
         False,
@@ -468,7 +469,7 @@ class MediumContactForm(FormModel):
 
 class EmergencyContactModel(FormModel):
     """Emergency contact information model."""
-    
+
     name: str = FormField(
         title="Contact Name",
         input_type="text",
@@ -478,7 +479,7 @@ class EmergencyContactModel(FormModel):
         min_length=2,
         max_length=100
     )
-    
+
     relationship: str = FormField(
         title="Relationship",
         input_type="select",
@@ -494,7 +495,7 @@ class EmergencyContactModel(FormModel):
         help_text="Your relationship to this person",
         icon="people"
     )
-    
+
     phone: str = FormField(
         title="Phone Number",
         input_type="tel",
@@ -504,7 +505,7 @@ class EmergencyContactModel(FormModel):
         min_length=10,
         max_length=20
     )
-    
+
     email: Optional[EmailStr] = FormField(
         None,
         title="Email Address",
@@ -513,7 +514,7 @@ class EmergencyContactModel(FormModel):
         help_text="Email address (optional)",
         icon="envelope"
     )
-    
+
     available_24_7: bool = FormField(
         False,
         title="Available 24/7",
@@ -531,7 +532,7 @@ class CompleteShowcaseForm(FormModel):
     - Icons and help text
     - Multiple layout options
     """
-    
+
     # ======== PERSONAL INFORMATION SECTION ========
     first_name: str = FormField(
         title="First Name",
@@ -542,9 +543,9 @@ class CompleteShowcaseForm(FormModel):
         min_length=2,
         max_length=50
     )
-    
+
     last_name: str = FormField(
-        title="Last Name", 
+        title="Last Name",
         input_type="text",
         placeholder="Enter your last name",
         help_text="Your family name or surname",
@@ -552,7 +553,7 @@ class CompleteShowcaseForm(FormModel):
         min_length=2,
         max_length=50
     )
-    
+
     email: EmailStr = FormField(
         title="Email Address",
         input_type="email",
@@ -560,7 +561,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="We'll use this to contact you about your registration",
         icon="envelope"
     )
-    
+
     phone: Optional[str] = FormField(
         None,
         title="Phone Number",
@@ -570,7 +571,7 @@ class CompleteShowcaseForm(FormModel):
         icon="telephone",
         pattern=r"^[\+]?[1-9][\d]{0,15}$"
     )
-    
+
     birth_date: Optional[date] = FormField(
         None,
         title="Date of Birth",
@@ -578,7 +579,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Used to verify age requirements (optional)",
         icon="calendar-date"
     )
-    
+
     age: Optional[int] = FormField(
         None,
         title="Age",
@@ -589,7 +590,7 @@ class CompleteShowcaseForm(FormModel):
         min_value=13,
         max_value=120
     )
-    
+
     # ======== PREFERENCES SECTION ========
     favorite_color: Optional[str] = FormField(
         "#3498db",
@@ -598,7 +599,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Pick your favorite color",
         icon="palette"
     )
-    
+
     experience_level: str = FormField(
         title="Experience Level",
         input_type="select",
@@ -611,7 +612,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select your experience level",
         icon="trophy"
     )
-    
+
     newsletter_subscription: bool = FormField(
         True,
         title="Subscribe to Newsletter",
@@ -619,7 +620,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Receive updates and news about our services",
         icon="mailbox"
     )
-    
+
     rating: Optional[int] = FormField(
         None,
         title="Rate Your Interest (1-10)",
@@ -629,7 +630,7 @@ class CompleteShowcaseForm(FormModel):
         min_value=1,
         max_value=10
     )
-    
+
     # ======== ADDRESS INFORMATION ========
     address: Optional[str] = FormField(
         None,
@@ -640,7 +641,7 @@ class CompleteShowcaseForm(FormModel):
         icon="house",
         max_length=500
     )
-    
+
     country: Optional[Country] = FormField(
         None,
         title="Country",
@@ -657,7 +658,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select your country of residence",
         icon="globe"
     )
-    
+
     # ======== PETS SECTION (ENHANCED LIST) ========
     pets: List[PetModel] = FormField(
         default_factory=list,
@@ -681,7 +682,7 @@ class CompleteShowcaseForm(FormModel):
             "collapsed": False
         }
     )
-    
+
     # ======== EMERGENCY CONTACTS (ANOTHER LIST) ========
     emergency_contacts: List[EmergencyContactModel] = FormField(
         default_factory=list,
@@ -705,7 +706,7 @@ class CompleteShowcaseForm(FormModel):
             "collapsed": False
         }
     )
-    
+
     # ======== ADDITIONAL PREFERENCES ========
     special_requests: Optional[str] = FormField(
         None,
@@ -716,7 +717,7 @@ class CompleteShowcaseForm(FormModel):
         icon="chat-dots",
         max_length=1000
     )
-    
+
     terms_accepted: bool = FormField(
         False,
         title="I accept the Terms and Conditions",
@@ -724,7 +725,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="You must accept the terms to proceed",
         icon="check-square"
     )
-    
+
     @field_validator('terms_accepted')
     @classmethod
     def validate_terms(cls, v):
@@ -734,15 +735,15 @@ class CompleteShowcaseForm(FormModel):
 
 
 # === ADDITIONAL MODELS ===
-    
+
     email_field: EmailStr = FormField(
         title="Email Field",
-        input_type="email", 
+        input_type="email",
         placeholder="user@example.com",
         help_text="Must be a valid email address",
         icon="at"
     )
-    
+
     password_field: str = FormField(
         title="Password Field",
         input_type="password",
@@ -751,15 +752,15 @@ class CompleteShowcaseForm(FormModel):
         icon="shield-lock",
         min_length=8
     )
-    
+
     search_field: str = FormField(
-        title="Search Field", 
+        title="Search Field",
         input_type="search",
         placeholder="Search for something...",
         help_text="Search input with special styling",
         icon="search"
     )
-    
+
     url_field: str = FormField(
         title="URL Field",
         input_type="url",
@@ -767,15 +768,15 @@ class CompleteShowcaseForm(FormModel):
         help_text="Must be a valid URL",
         icon="link-45deg"
     )
-    
+
     tel_field: str = FormField(
         title="Telephone Field",
-        input_type="tel", 
+        input_type="tel",
         placeholder="+1-555-123-4567",
         help_text="Phone number input",
         icon="telephone"
     )
-    
+
     textarea_field: str = FormField(
         title="Text Area",
         input_type="textarea",
@@ -785,7 +786,7 @@ class CompleteShowcaseForm(FormModel):
         min_length=10,
         max_length=500
     )
-    
+
     # === NUMERIC INPUTS ===
     number_field: int = FormField(
         title="Number Input",
@@ -796,7 +797,7 @@ class CompleteShowcaseForm(FormModel):
         min_value=0,
         max_value=1000
     )
-    
+
     float_field: float = FormField(
         title="Decimal Number",
         input_type="number",
@@ -806,7 +807,7 @@ class CompleteShowcaseForm(FormModel):
         min_value=0.0,
         max_value=999.99
     )
-    
+
     range_field: int = FormField(
         25,
         title="Range Slider",
@@ -816,7 +817,7 @@ class CompleteShowcaseForm(FormModel):
         min_value=0,
         max_value=100
     )
-    
+
     # === SELECTION INPUTS ===
     select_field: str = FormField(
         title="Select Dropdown",
@@ -825,7 +826,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Choose one option from dropdown",
         icon="list"
     )
-    
+
     country_field: Country = FormField(
         Country.US,
         title="Country Selection",
@@ -834,7 +835,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select your country",
         icon="globe"
     )
-    
+
     radio_field: str = FormField(
         "medium",
         title="Radio Button Group",
@@ -843,7 +844,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select one option",
         icon="ui-radios"
     )
-    
+
     multiselect_field: List[str] = FormField(
         [],
         title="Multiple Selection",
@@ -852,7 +853,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select multiple programming languages",
         icon="list-check"
     )
-    
+
     # === BOOLEAN INPUTS ===
     checkbox_field: bool = FormField(
         False,
@@ -861,7 +862,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Check this box to agree",
         icon="check-square"
     )
-    
+
     switch_field: bool = FormField(
         True,
         title="Switch Toggle",
@@ -869,7 +870,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Toggle this switch",
         icon="toggle-on"
     )
-    
+
     # === DATE/TIME INPUTS ===
     date_field: date = FormField(
         title="Date Input",
@@ -877,21 +878,21 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select a date",
         icon="calendar-date"
     )
-    
+
     time_field: str = FormField(
         title="Time Input",
         input_type="time",
         help_text="Select a time",
         icon="clock"
     )
-    
+
     datetime_field: datetime = FormField(
         title="Date & Time",
         input_type="datetime-local",
         help_text="Select date and time",
         icon="calendar-event"
     )
-    
+
     # === SPECIALIZED INPUTS ===
     color_field: str = FormField(
         "#3498db",
@@ -900,21 +901,21 @@ class CompleteShowcaseForm(FormModel):
         help_text="Choose your favorite color",
         icon="palette"
     )
-    
+
     file_field: str = FormField(
         title="File Upload",
         input_type="file",
         help_text="Upload a file (max 10MB)",
         icon="cloud-upload"
     )
-    
+
     hidden_field: str = FormField(
         "hidden_value",
         title="Hidden Field",
         input_type="hidden",
         help_text="This field is hidden from users"
     )
-    
+
     # === USER PROFILE SECTION ===
     role: UserRole = FormField(
         UserRole.USER,
@@ -924,7 +925,7 @@ class CompleteShowcaseForm(FormModel):
         help_text="Select your role",
         icon="person-badge"
     )
-    
+
     bio: Optional[str] = FormField(
         None,
         title="Biography",
@@ -934,15 +935,15 @@ class CompleteShowcaseForm(FormModel):
         icon="person-lines-fill",
         max_length=1000
     )
-    
+
     newsletter: bool = FormField(
         False,
         title="Newsletter Subscription",
-        input_type="checkbox", 
+        input_type="checkbox",
         help_text="Receive our weekly newsletter",
         icon="envelope-heart"
     )
-    
+
     notifications: bool = FormField(
         True,
         title="Push Notifications",
@@ -969,35 +970,35 @@ class CompleteShowcaseForm(FormModel):
 def parse_nested_form_data(form_data):
     """
     Parse nested form data from flat keys to nested structure.
-    
+
     Converts keys like 'pets[0].name' to nested dict structure:
     {'pets': [{'name': 'value'}]}
-    
+
     Args:
         form_data: Dictionary with flat keys from HTML form submission
-        
+
     Returns:
         Dictionary with proper nested structure
     """
 
-    
+
     result = {}
     array_data = defaultdict(lambda: defaultdict(dict))
-    
+
     for key, value in form_data.items():
         # Handle array notation like pets[0].name
         array_match = re.match(r'^(\w+)\[(\d+)\]\.(\w+)$', key)
         if array_match:
             array_name, index, field_name = array_match.groups()
             index = int(index)
-            
+
             # Convert string values to appropriate types
             converted_value = convert_form_value(value)
             array_data[array_name][index][field_name] = converted_value
         else:
             # Regular field
             result[key] = convert_form_value(value)
-    
+
     # Convert array data to proper list format
     for array_name, indexed_items in array_data.items():
         # Sort by index and create list
@@ -1005,17 +1006,17 @@ def parse_nested_form_data(form_data):
         for i in sorted(indexed_items.keys()):
             items_list.append(indexed_items[i])
         result[array_name] = items_list
-    
+
     return result
 
 
 def convert_form_value(value):
     """
     Convert form string values to appropriate Python types.
-    
+
     Args:
         value: String value from form
-        
+
     Returns:
         Converted value (bool, int, float, or string)
     """
@@ -1029,11 +1030,11 @@ def convert_form_value(value):
             return True
         elif value.lower() in ('off', 'no', '0'):
             return False
-        
+
         # Don't convert numeric values automatically - let Pydantic handle type conversion
         # This prevents issues with password fields that contain only digits
         # and other string fields that should remain as strings
-    
+
     # Return as-is for strings, empty values, etc.
     return value
 
@@ -1041,14 +1042,14 @@ def convert_form_value(value):
 def handle_form_submission(form_class, form_data, success_message="Form submitted successfully!"):
     """Handle form submission with validation and error handling."""
     try:
-        
-        
+
+
         # Parse nested form data (handles pets[0].name -> pets: [{name: ...}])
         parsed_data = parse_nested_form_data(form_data)
-        
+
         # Validate the form data using Pydantic
         result = validate_form_data(form_class, parsed_data)
-        
+
         if result.is_valid:
             # Return success response
             return {
@@ -1074,11 +1075,11 @@ __all__ = [
     # Enums
     'Priority', 'UserRole', 'Country',
     # Form Models
-    'PetModel', 'EmergencyContactModel', 'MinimalLoginForm', 'UserRegistrationForm', 
+    'PetModel', 'EmergencyContactModel', 'MinimalLoginForm', 'UserRegistrationForm',
     'PetOwnerForm', 'PetRegistrationForm', 'MediumContactForm', 'CompleteShowcaseForm',
     # Layout Demonstration Forms
     'TaskItem', 'PersonalInfoForm', 'ContactInfoForm', 'PreferencesForm', 'TaskListForm',
-    'LayoutDemonstrationForm', 'ComprehensiveTabbedForm',
+    'LayoutDemonstrationForm',
     # Layout Classes
     'VerticalFormLayout', 'HorizontalFormLayout', 'TabbedFormLayout', 'ListFormLayout',
     # Helper Functions
@@ -1101,7 +1102,7 @@ class TaskItem(FormModel):
         min_length=1,
         max_length=100
     )
-    
+
     priority: str = FormField(
         "medium",
         title="Priority",
@@ -1115,7 +1116,7 @@ class TaskItem(FormModel):
         help_text="How important is this task?",
         icon="exclamation-triangle"
     )
-    
+
     due_date: Optional[date] = FormField(
         None,
         title="Due Date",
@@ -1123,7 +1124,7 @@ class TaskItem(FormModel):
         help_text="When should this be completed? (optional)",
         icon="calendar-date"
     )
-    
+
     completed: bool = FormField(
         False,
         title="Completed",
@@ -1135,7 +1136,7 @@ class TaskItem(FormModel):
 
 class PersonalInfoForm(FormModel):
     """Personal information form for vertical layout demonstration."""
-    
+
     first_name: str = FormField(
         title="First Name",
         input_type="text",
@@ -1145,7 +1146,7 @@ class PersonalInfoForm(FormModel):
         min_length=2,
         max_length=50
     )
-    
+
     last_name: str = FormField(
         title="Last Name",
         input_type="text",
@@ -1155,7 +1156,7 @@ class PersonalInfoForm(FormModel):
         min_length=2,
         max_length=50
     )
-    
+
     email: EmailStr = FormField(
         title="Email Address",
         input_type="email",
@@ -1163,7 +1164,7 @@ class PersonalInfoForm(FormModel):
         help_text="Your email address",
         icon="envelope"
     )
-    
+
     birth_date: Optional[date] = FormField(
         None,
         title="Date of Birth",
@@ -1175,7 +1176,7 @@ class PersonalInfoForm(FormModel):
 
 class ContactInfoForm(FormModel):
     """Contact information form for horizontal layout demonstration."""
-    
+
     phone: Optional[str] = FormField(
         None,
         title="Phone Number",
@@ -1185,7 +1186,7 @@ class ContactInfoForm(FormModel):
         icon="telephone",
         max_length=20
     )
-    
+
     address: str = FormField(
         title="Street Address",
         input_type="text",
@@ -1194,7 +1195,7 @@ class ContactInfoForm(FormModel):
         icon="house",
         max_length=200
     )
-    
+
     city: str = FormField(
         title="City",
         input_type="text",
@@ -1203,7 +1204,7 @@ class ContactInfoForm(FormModel):
         icon="building",
         max_length=100
     )
-    
+
     postal_code: Optional[str] = FormField(
         None,
         title="Postal Code",
@@ -1217,7 +1218,7 @@ class ContactInfoForm(FormModel):
 
 class PreferencesForm(FormModel):
     """Preferences form for tabbed layout demonstration."""
-    
+
     notification_email: bool = FormField(
         True,
         title="Email Notifications",
@@ -1225,7 +1226,7 @@ class PreferencesForm(FormModel):
         help_text="Receive notifications via email",
         icon="envelope"
     )
-    
+
     notification_sms: bool = FormField(
         False,
         title="SMS Notifications",
@@ -1233,7 +1234,7 @@ class PreferencesForm(FormModel):
         help_text="Receive notifications via SMS",
         icon="phone"
     )
-    
+
     theme: str = FormField(
         "light",
         title="UI Theme",
@@ -1246,7 +1247,7 @@ class PreferencesForm(FormModel):
         help_text="Choose your preferred theme",
         icon="palette"
     )
-    
+
     language: str = FormField(
         "en",
         title="Language",
@@ -1264,7 +1265,7 @@ class PreferencesForm(FormModel):
 
 class TaskListForm(FormModel):
     """Task management form for list layout demonstration."""
-    
+
     project_name: str = FormField(
         title="Project Name",
         input_type="text",
@@ -1274,7 +1275,7 @@ class TaskListForm(FormModel):
         min_length=2,
         max_length=100,
     )
-    
+
     tasks: List[TaskItem] = FormField(
         default_factory=list,
         title="Task List",
@@ -1289,7 +1290,7 @@ class TaskListForm(FormModel):
         collapsible_items=True,
         items_expanded_by_default=True
     )
-    
+
     @field_validator('tasks')
     @classmethod
     def validate_tasks(cls, v):
@@ -1319,7 +1320,7 @@ class TabbedFormLayout(TabbedLayout):
     # Split preferences form into logical tabs for demonstration
     notifications = PreferencesForm
     appearance = PreferencesForm
-    
+
 class ListFormLayout(VerticalLayout):
     """List layout - form with dynamic task list."""
     form = TaskListForm
@@ -1327,7 +1328,7 @@ class ListFormLayout(VerticalLayout):
 class LayoutDemonstrationForm(FormModel):
     """
     Create a tabbed layout using VerticalLayout, HorizontalLayout, TabbedLayout, and ListLayout as the tabs.
-    
+
     This demonstrates how to use layout classes as field types in a Pydantic form.
     Each field represents a different layout type that can be rendered as a tab.
     """
@@ -1337,21 +1338,21 @@ class LayoutDemonstrationForm(FormModel):
         input_type="layout",
         help_text="Vertical layout demonstration"
     )
-    
+
     horizontal_tab: HorizontalFormLayout = FormField(
         HorizontalFormLayout(),
         title="Contact Info",
         input_type="layout",
         help_text="Horizontal layout demonstration"
     )
-    
+
     tabbed_tab: TabbedFormLayout = FormField(
         TabbedFormLayout(),
         title="Preferences",
         input_type="layout",
         help_text="Tabbed layout demonstration"
     )
-    
+
     list_tab: ListFormLayout = FormField(
         ListFormLayout(),
         title="Task List",

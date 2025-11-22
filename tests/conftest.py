@@ -2,34 +2,34 @@
 PyTest configuration and fixtures for pydantic-forms tests.
 """
 
-import pytest
-from typing import Dict, Any, Optional, List
 from datetime import date
-from pydantic import ValidationError, EmailStr
+from typing import Any, Dict, List, Optional
 
-# Import pydantic-forms components
-from pydantic_forms.schema_form import FormModel, Field
+import pytest
+from pydantic import EmailStr, ValidationError
+
 from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
 from pydantic_forms.inputs import (
-    TextInput,
-    PasswordInput,
-    EmailInput,
-    NumberInput,
     CheckboxInput,
-    SelectInput,
+    ColorInput,
     DateInput,
     DatetimeInput,
+    EmailInput,
     FileInput,
-    ColorInput,
-    RangeInput,
     HiddenInput,
-    TextArea,
+    NumberInput,
+    PasswordInput,
+    RangeInput,
     SearchInput,
+    SelectInput,
     TelInput,
+    TextArea,
+    TextInput,
     URLInput,
 )
-from pydantic_forms.layouts import HorizontalLayout, VerticalLayout, GridLayout
-
+from pydantic_forms.layouts import GridLayout, HorizontalLayout, VerticalLayout
+# Import pydantic-forms components
+from pydantic_forms.schema_form import Field, FormModel
 
 # ==================== TEST FIXTURES ====================
 

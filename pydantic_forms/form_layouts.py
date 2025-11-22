@@ -3,8 +3,9 @@ Layout composition system for pydantic-forms that matches the design_idea.py vis
 Provides VerticalLayout, HorizontalLayout, TabbedLayout with form composition capabilities.
 """
 
-from typing import Any, Dict, List, Optional, Type
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Type
+
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 

@@ -4,6 +4,7 @@ Includes TextInput, PasswordInput, EmailInput, TextArea, and SearchInput.
 """
 
 from typing import Optional
+
 from .base import FormInput, render_template
 
 
@@ -127,7 +128,6 @@ class TextArea(FormInput):
         escaped_value = escape(str(value)) if value is not None else ""
 
         return f'<textarea {attributes_str}>{escaped_value}</textarea>'
-        return render_template(template)
 
 
 class URLInput(FormInput):

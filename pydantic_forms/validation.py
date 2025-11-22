@@ -6,11 +6,12 @@ Requires: Python 3.14+ (no backward compatibility)
 """
 
 import re
-from typing import Any, Dict, List, Optional, Callable, Union, Tuple
-from datetime import datetime, date
 import string.templatelib
-from pydantic import ValidationError
+from datetime import date, datetime
 from html import escape
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+from pydantic import ValidationError
 
 # Import version check to ensure compatibility
 
@@ -698,9 +699,47 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
     except ValidationError as e:
         errors = {}
         for error in e.errors():
-            field_name = error["loc"][0] if error["loc"] else "general"
-            error_message = error["msg"]
-            errors[field_name] = error_message
+            # Create more specific field paths for nested data
+            if error["loc"]:
+                # Handle nested field locations like ('pets', 0, 'weight')
+                field_path_parts = []
+                for loc_part in error["loc"]:
+                    if isinstance(loc_part, int):
+                        # This is an array index
+                        field_path_parts.append(f"[{loc_part}]")
+                    else:
+                        if field_path_parts:
+                            field_path_parts.append(f".{loc_part}")
+                        else:
+                            field_path_parts.append(str(loc_part))
+                
+                field_name = "".join(field_path_parts)
+                
+                # Create more user-friendly error messages
+                error_message = error["msg"]
+                error_type = error["type"]
+                
+                # Enhance error messages with context
+                if "greater_than_equal" in error_type:
+                    limit = error.get("ctx", {}).get("ge")
+                    if limit is not None:
+                        error_message = f"Must be {limit} or greater"
+                elif "less_than_equal" in error_type:
+                    limit = error.get("ctx", {}).get("le") 
+                    if limit is not None:
+                        error_message = f"Must be {limit} or less"
+                elif "min_length" in error_type:
+                    min_length = error.get("ctx", {}).get("min_length")
+                    if min_length is not None:
+                        error_message = f"Must be at least {min_length} characters"
+                elif "max_length" in error_type:
+                    max_length = error.get("ctx", {}).get("max_length")
+                    if max_length is not None:
+                        error_message = f"Must be no more than {max_length} characters"
+                
+                errors[field_name] = error_message
+            else:
+                errors["general"] = error["msg"]
 
         return ValidationResult(is_valid=False, errors=errors)
 

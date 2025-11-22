@@ -2,19 +2,20 @@
 Tests for integration module - framework integrations and external system connections.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import date
+
 from pydantic_forms.integration import (
-    FlaskIntegration,
-    FastAPIIntegration,
     DjangoIntegration,
-    ReactJSONSchemaIntegration,
-    VueFormulateIntegration,
+    FastAPIIntegration,
+    FlaskIntegration,
     JSONSchemaGenerator,
     OpenAPISchemaGenerator,
+    ReactJSONSchemaIntegration,
+    VueFormulateIntegration,
 )
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_forms.schema_form import Field, FormModel
 
 
 class TestFlaskIntegration:
@@ -155,7 +156,7 @@ class TestDjangoIntegration:
         integration = DjangoIntegration()
 
         # Mock Django forms
-        with patch("django.forms.Form") as mock_form_class:
+        with patch("django.forms.Form"):
             django_form = integration.create_django_form(simple_form_model)
 
             # Should create a Django form class
@@ -169,7 +170,7 @@ class TestDjangoIntegration:
         mock_model = Mock()
         mock_model._meta.fields = []
 
-        with patch("django.forms.ModelForm") as mock_model_form:
+        with patch("django.forms.ModelForm"):
             model_form = integration.create_model_form(simple_form_model, mock_model)
 
             assert model_form is not None
@@ -189,7 +190,7 @@ class TestDjangoIntegration:
         }
 
         # Mock Django HttpResponse
-        with patch("django.http.HttpResponse") as mock_response:
+        with patch("django.http.HttpResponse"):
             response = integration.handle_view(
                 mock_request, simple_form_model, template_name="form.html"
             )

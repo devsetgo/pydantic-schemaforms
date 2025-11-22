@@ -2,27 +2,25 @@
 Tests for input components - text, numeric, selection, datetime, and specialized inputs.
 """
 
-import pytest
-from datetime import date, time, datetime
-from pydantic import ValidationError
+from datetime import date
 
+from pydantic_forms.inputs.datetime_inputs import DateInput, DatetimeInput, TimeInput
+from pydantic_forms.inputs.numeric_inputs import IntegerInput, NumberInput, RangeInput
+from pydantic_forms.inputs.selection_inputs import (
+    CheckboxInput,
+    MultiSelectInput,
+    RadioInput,
+    SelectInput,
+)
+from pydantic_forms.inputs.specialized_inputs import ColorInput, FileInput, HiddenInput
 from pydantic_forms.inputs.text_inputs import (
-    TextInput,
     EmailInput,
     PasswordInput,
-    TextArea,
-    URLInput,
     TelInput,
+    TextArea,
+    TextInput,
+    URLInput,
 )
-from pydantic_forms.inputs.numeric_inputs import NumberInput, IntegerInput, RangeInput
-from pydantic_forms.inputs.selection_inputs import (
-    SelectInput,
-    CheckboxInput,
-    RadioInput,
-    MultiSelectInput,
-)
-from pydantic_forms.inputs.datetime_inputs import DateInput, TimeInput, DatetimeInput
-from pydantic_forms.inputs.specialized_inputs import ColorInput, FileInput, HiddenInput
 
 
 class TestTextInputs:
@@ -231,9 +229,8 @@ class TestDateTimeInputs:
 
     def test_date_input(self):
         """Test DateInput functionality."""
-        from datetime import date
 
-        test_date = date(2024, 1, 15)
+        date(2024, 1, 15)
         input_field = DateInput()
 
         html = input_field.render(name="birth_date", value="2024-01-15")
@@ -363,7 +360,7 @@ class TestInputIntegration:
 
     def test_input_from_form_field(self, sample_form_data):
         """Test creating inputs from FormModel fields."""
-        from pydantic_forms.schema_form import FormModel, Field
+        from pydantic_forms.schema_form import Field, FormModel
 
         class TestForm(FormModel):
             name: str = Field(..., ui_element="text")

@@ -2,10 +2,8 @@
 Tests for enhanced_renderer module - form rendering with multiple CSS frameworks.
 """
 
-import pytest
-from datetime import date
 from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_forms.schema_form import Field, FormModel
 
 
 class TestEnhancedFormRenderer:
@@ -109,7 +107,7 @@ class TestEnhancedFormRenderer:
         html = enhanced_renderer.render_form_from_model(simple_form_model, errors=errors_dict)
 
         # Should contain error messages
-        for field, error_message in errors_dict.items():
+        for _field, error_message in errors_dict.items():
             assert error_message in html
 
         # Should have error styling

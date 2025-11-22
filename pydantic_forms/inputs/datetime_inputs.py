@@ -3,8 +3,9 @@ Date and time input components using Python 3.14 template strings.
 Includes DateInput, TimeInput, DatetimeInput, MonthInput, WeekInput.
 """
 
+from datetime import date, datetime, time
 from typing import Optional, Union
-from datetime import date, time, datetime
+
 from .base import FormInput
 
 
@@ -26,7 +27,14 @@ class DateInput(FormInput):
         if "max" in kwargs and isinstance(kwargs["max"], date):
             kwargs["max"] = kwargs["max"].isoformat()
 
-        return super().render(**kwargs)
+        # Validate and format attributes
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+
+        # Build the attributes string
+        attributes_str = self._build_attributes_string(attrs)
+
+        return f'<input {attributes_str} />'
 
 
 class TimeInput(FormInput):
@@ -51,7 +59,14 @@ class TimeInput(FormInput):
         if "step" not in kwargs:
             kwargs["step"] = "60"  # 1 minute steps by default
 
-        return super().render(**kwargs)
+        # Validate and format attributes
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+
+        # Build the attributes string
+        attributes_str = self._build_attributes_string(attrs)
+
+        return f'<input {attributes_str} />'
 
 
 class DatetimeInput(FormInput):
@@ -79,7 +94,14 @@ class DatetimeInput(FormInput):
             current_time = datetime.now().strftime("%Y-%m-%dT%H:%M")
             kwargs["value"] = current_time
 
-        datetime_html = super().render(**kwargs)
+        # Validate and format attributes
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+
+        # Build the attributes string
+        attributes_str = self._build_attributes_string(attrs)
+        
+        datetime_html = f'<input {attributes_str} />'
 
         # Add "Set Now" button if requested
         if with_set_now_button:
@@ -139,7 +161,14 @@ class MonthInput(FormInput):
             elif isinstance(kwargs["max"], datetime):
                 kwargs["max"] = kwargs["max"].strftime("%Y-%m")
 
-        return super().render(**kwargs)
+        # Validate and format attributes
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+
+        # Build the attributes string
+        attributes_str = self._build_attributes_string(attrs)
+
+        return f'<input {attributes_str} />'
 
 
 class WeekInput(FormInput):
@@ -161,7 +190,14 @@ class WeekInput(FormInput):
                 year, week, _ = kwargs["value"].date().isocalendar()
                 kwargs["value"] = f"{year}-W{week:02d}"
 
-        return super().render(**kwargs)
+        # Validate and format attributes
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+
+        # Build the attributes string
+        attributes_str = self._build_attributes_string(attrs)
+
+        return f'<input {attributes_str} />'
 
 
 class DateRangeInput:

@@ -2,10 +2,8 @@
 Tests for modern_renderer module - advanced form rendering with modern web features.
 """
 
-import pytest
-from datetime import date, datetime
 from pydantic_forms.modern_renderer import ModernFormRenderer
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_forms.schema_form import Field, FormModel
 
 # Layout imports commented out due to template system issues
 # from pydantic_forms.layouts import HorizontalLayout, VerticalLayout, GridLayout, CardLayout
@@ -182,7 +180,7 @@ class TestModernFormRenderer:
 
     def test_input_component_integration(self):
         """Test integration with input components."""
-        renderer = ModernFormRenderer()
+        ModernFormRenderer()
 
         # Test that renderer can work with various input types
         input_types = [

@@ -3,19 +3,41 @@ Modern Form Renderer using Python 3.14 template strings and modular input system
 Provides high-performance form generation with multiple framework support.
 """
 
-from typing import Any, Dict, List, Optional, Callable
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from html import escape
+from typing import Any, Callable, Dict, List, Optional
 
 from .inputs import (
-    TextInput, PasswordInput, EmailInput, NumberInput, CheckboxInput,
-    SelectInput, DateInput, DatetimeInput, FileInput, ColorInput, RangeInput,
-    HiddenInput, RadioGroup, TextArea, SearchInput, TelInput, URLInput,
-    MonthInput, WeekInput, TimeInput, SubmitInput, ResetInput, ButtonInput,
-    CSRFInput, HoneypotInput, ToggleSwitch, MultiSelectInput,
-    build_label
+    ButtonInput,
+    CheckboxInput,
+    ColorInput,
+    CSRFInput,
+    DateInput,
+    DatetimeInput,
+    EmailInput,
+    FileInput,
+    HiddenInput,
+    HoneypotInput,
+    MonthInput,
+    MultiSelectInput,
+    NumberInput,
+    PasswordInput,
+    RadioGroup,
+    RangeInput,
+    ResetInput,
+    SearchInput,
+    SelectInput,
+    SubmitInput,
+    TelInput,
+    TextArea,
+    TextInput,
+    TimeInput,
+    ToggleSwitch,
+    URLInput,
+    WeekInput,
+    build_label,
 )
-from html import escape
 
 
 class FormField:

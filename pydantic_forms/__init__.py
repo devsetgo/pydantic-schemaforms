@@ -14,106 +14,102 @@ Features:
 IMPORTANT: This library requires Python 3.14+ and provides NO backward compatibility.
 """
 
-# Check Python version before any other imports
-from .version_check import check_python_version, verify_template_strings
-
 import logging
 import os
 
-# Core form building and rendering
-from .integration import (
-    FormBuilder,
-    AutoFormBuilder,
-    FormIntegration,
-    create_login_form,
-    create_registration_form,
-    create_contact_form,
-    create_form_from_model,
-    render_form_page,
+from .enhanced_renderer import (
+    EnhancedFormRenderer,
+    SchemaFormValidationError,
+    render_form_html_async,
 )
-
-# FormModel abstraction for Pydantic models with UI hints
-from .schema_form import FormModel, Field, form_validator, ValidationResult
-from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError, render_form_html_async
-from .render_form import render_form_html
-
 # Enhanced FormField matching design_idea.py vision
 from .form_field import (
-    FormField,
-    TextField,
-    EmailField,
-    NumberField,
-    SelectField,
     CheckboxField,
     DateField,
+    EmailField,
+    FormField,
+    NumberField,
+    SelectField,
     TextAreaField,
+    TextField,
 )
-
-# Input type constants and validation
-from .input_types import (
-    TEXT_INPUTS,
-    NUMERIC_INPUTS,
-    SELECTION_INPUTS,
-    DATETIME_INPUTS,
-    SPECIALIZED_INPUTS,
-    ALL_INPUT_TYPES,
-)
-
 # Layout composition system matching design_idea.py vision
 from .form_layouts import (
-    VerticalLayout,
+    FormDesign,
     HorizontalLayout,
-    TabbedLayout,
     ListLayout,
     SectionDesign,
-    FormDesign,
+    TabbedLayout,
+    VerticalLayout,
 )
-
-# Modern renderer with Python 3.14 template strings
-from .modern_renderer import ModernFormRenderer, FormDefinition, FormSection
-from .py314_renderer import ModernFormRenderer as Py314Renderer, RenderContext
-from .templates import TemplateString, FormTemplates
-
-# Live validation system
-from .live_validation import (
-    LiveValidator, HTMXValidationConfig, ValidationResponse,
-    create_email_validator, create_password_strength_validator
+# Input type constants and validation
+from .input_types import (
+    ALL_INPUT_TYPES,
+    DATETIME_INPUTS,
+    NUMERIC_INPUTS,
+    SELECTION_INPUTS,
+    SPECIALIZED_INPUTS,
+    TEXT_INPUTS,
 )
-
 # Comprehensive input types
 from .inputs import *
-
+# Core form building and rendering
+from .integration import (
+    AutoFormBuilder,
+    FormBuilder,
+    FormIntegration,
+    create_contact_form,
+    create_form_from_model,
+    create_login_form,
+    create_registration_form,
+    render_form_page,
+)
 # Layout system
 from .layouts import (
+    AccordionLayout,
+    CardLayout,
+    GridLayout,
     Layout,
     LayoutFactory,
-    HorizontalLayout,
-    VerticalLayout,
-    GridLayout,
+    ModalLayout,
     ResponsiveGridLayout,
     TabLayout,
-    AccordionLayout,
-    ModalLayout,
-    CardLayout,
 )
-
+# Live validation system
+from .live_validation import (
+    HTMXValidationConfig,
+    LiveValidator,
+    ValidationResponse,
+    create_email_validator,
+    create_password_strength_validator,
+)
+# Modern renderer with Python 3.14 template strings
+from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
+from .py314_renderer import ModernFormRenderer as Py314Renderer
+from .py314_renderer import RenderContext
+from .render_form import render_form_html
+# FormModel abstraction for Pydantic models with UI hints
+from .schema_form import Field, FormModel, ValidationResult, form_validator
+from .templates import FormTemplates, TemplateString
 # Validation system
 from .validation import (
-    ValidationRule,
-    RequiredRule,
-    MinLengthRule,
-    MaxLengthRule,
-    RegexRule,
-    EmailRule,
-    PhoneRule,
-    NumericRangeRule,
-    DateRangeRule,
+    CrossFieldRules,
     CustomRule,
+    DateRangeRule,
+    EmailRule,
     FieldValidator,
     FormValidator,
-    CrossFieldRules,
+    MaxLengthRule,
+    MinLengthRule,
+    NumericRangeRule,
+    PhoneRule,
+    RegexRule,
+    RequiredRule,
+    ValidationRule,
     create_validator,
 )
+# Check Python version before any other imports
+from .version_check import check_python_version, verify_template_strings
 
 # Legacy compatibility (deprecated) - archived modules
 # The following modules have been archived:

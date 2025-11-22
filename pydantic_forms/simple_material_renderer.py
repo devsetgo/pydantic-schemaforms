@@ -6,11 +6,12 @@ A clean, working Material Design 3 renderer for pydantic-forms.
 This renderer creates self-contained forms with embedded Material Design styling.
 """
 
-from typing import Any, Dict, List, Optional, Type
 from html import escape
+from typing import Any, Dict, List, Optional, Type
+
 from .enhanced_renderer import EnhancedFormRenderer
-from .schema_form import FormModel
 from .icon_mapping import map_icon_for_framework
+from .schema_form import FormModel
 
 
 class SimpleMaterialRenderer(EnhancedFormRenderer):

@@ -5,17 +5,18 @@ Integrates inputs, layouts, validation, and framework support into a unified sys
 Requires: Python 3.14+ (no backward compatibility)
 """
 
-from typing import Dict, Any, List, Optional, Union, Type
-from datetime import date, datetime
 import string.templatelib
-
-# Import version check to ensure compatibility
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
-from .inputs import *
+from .modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
 from .validation import create_validator
-from .modern_renderer import ModernFormRenderer, FormDefinition, FormField, FormSection
+
+# Import version check to ensure compatibility
+
+
 
 
 # Framework integration classes for testing compatibility
@@ -137,22 +138,22 @@ class ReactJSONSchemaIntegration:
 
             # Handle Union types (Optional fields)
             if hasattr(field_type, "__origin__") and field_type.__origin__ == Union:
-                non_none_types = [t for t in field_type.__args__ if t != type(None)]
+                non_none_types = [t for t in field_type.__args__ if t is not type(None)]
                 if non_none_types:
                     field_type = non_none_types[0]
 
             # Map Python types to JSON Schema types
-            if field_type == str:
+            if field_type is str:
                 schema_type = "string"
                 if "email" in field_name.lower():
                     properties[field_name] = {"type": schema_type, "format": "email"}
                 else:
                     properties[field_name] = {"type": schema_type}
-            elif field_type == int:
+            elif field_type is int:
                 properties[field_name] = {"type": "integer"}
-            elif field_type == float:
+            elif field_type is float:
                 properties[field_name] = {"type": "number"}
-            elif field_type == bool:
+            elif field_type is bool:
                 properties[field_name] = {"type": "boolean"}
             elif field_type in (date, datetime):
                 properties[field_name] = {"type": "string", "format": "date"}
@@ -174,7 +175,7 @@ class ReactJSONSchemaIntegration:
 
             # Handle Union types
             if hasattr(field_type, "__origin__") and field_type.__origin__ == Union:
-                non_none_types = [t for t in field_type.__args__ if t != type(None)]
+                non_none_types = [t for t in field_type.__args__ if t is not type(None)]
                 if non_none_types:
                     field_type = non_none_types[0]
 
@@ -218,7 +219,7 @@ class VueFormulateIntegration:
 
             # Handle Union types
             if hasattr(field_type, "__origin__") and field_type.__origin__ == Union:
-                non_none_types = [t for t in field_type.__args__ if t != type(None)]
+                non_none_types = [t for t in field_type.__args__ if t is not type(None)]
                 if non_none_types:
                     field_type = non_none_types[0]
 
@@ -229,7 +230,7 @@ class VueFormulateIntegration:
                 field_config["type"] = "email"
             elif "password" in field_name.lower():
                 field_config["type"] = "password"
-            elif field_type == bool:
+            elif field_type is bool:
                 field_config["type"] = "checkbox"
             elif field_type in (int, float):
                 field_config["type"] = "number"
@@ -271,19 +272,19 @@ class JSONSchemaGenerator:
 
     def generate_field_schema(self, field_type, field_info):
         """Generate schema for individual field."""
-        if field_type == str:
+        if field_type is str:
             schema = {"type": "string"}
             if hasattr(field_info, "description"):
                 schema["description"] = field_info.description
-        elif field_type == int:
+        elif field_type is int:
             schema = {"type": "integer"}
             if hasattr(field_info, "ge"):
                 schema["minimum"] = field_info.ge
             if hasattr(field_info, "le"):
                 schema["maximum"] = field_info.le
-        elif field_type == float:
+        elif field_type is float:
             schema = {"type": "number"}
-        elif field_type == bool:
+        elif field_type is bool:
             schema = {"type": "boolean"}
         else:
             schema = {"type": "string"}
@@ -354,17 +355,17 @@ class OpenAPISchemaGenerator:
 # Utility functions for integration
 def map_pydantic_to_json_schema_type(python_type):
     """Map Python types to JSON Schema types."""
-    if python_type == str:
+    if python_type is str:
         return "string"
-    elif python_type == int:
+    elif python_type is int:
         return "integer"
-    elif python_type == float:
+    elif python_type is float:
         return "number"
-    elif python_type == bool:
+    elif python_type is bool:
         return "boolean"
-    elif python_type == list:
+    elif python_type is list:
         return "array"
-    elif python_type == dict:
+    elif python_type is dict:
         return "object"
     else:
         return "string"
@@ -402,19 +403,12 @@ def convert_validation_rules(field_info, framework):
 
 def check_framework_availability(framework_name):
     """Check if a framework is available for import."""
+    import importlib.util
+
     try:
-        if framework_name == "flask":
-            import flask
-
-            return True
-        elif framework_name == "fastapi":
-            import fastapi
-
-            return True
-        elif framework_name == "django":
-            import django
-
-            return True
+        if framework_name in ["flask", "fastapi", "django"]:
+            spec = importlib.util.find_spec(framework_name)
+            return spec is not None
         return False
     except ImportError:
         return False
@@ -655,12 +649,12 @@ class AutoFormBuilder(FormBuilder):
         # Handle Union types (Optional fields)
         if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
             # Get the non-None type
-            non_none_types = [t for t in field_type.__args__ if t != type(None)]
+            non_none_types = [t for t in field_type.__args__ if t is not type(None)]
             if non_none_types:
                 field_type = non_none_types[0]
 
         # String fields
-        if field_type == str:
+        if field_type is str:
             if "email" in field_name.lower():
                 return "email"
             elif "password" in field_name.lower():
@@ -679,7 +673,7 @@ class AutoFormBuilder(FormBuilder):
             return "number"
 
         # Boolean fields
-        elif field_type == bool:
+        elif field_type is bool:
             return "checkbox"
 
         # Date/datetime fields
@@ -706,7 +700,7 @@ class FormIntegration:
     def flask_integration(form_builder: FormBuilder, request_data: Dict[str, Any] = None):
         """Integration helper for Flask."""
         try:
-            from flask import request, render_template_string
+            from flask import request
 
             if request.method == "POST":
                 data = request.form.to_dict()
@@ -728,7 +722,11 @@ class FormIntegration:
     async def fastapi_integration(form_builder: FormBuilder, request_data: Dict[str, Any] = None):
         """Integration helper for FastAPI."""
         try:
-            from fastapi import Request
+            import importlib.util
+
+            # Check if FastAPI is available without importing unused classes
+            if importlib.util.find_spec("fastapi") is None:
+                raise ImportError("FastAPI not found")
 
             if request_data:
                 is_valid, errors = form_builder.validate_data(request_data)
@@ -858,11 +856,13 @@ def render_form_page(
     form_html = form_builder.render(data or {}, errors or {})
     validation_script = form_builder.get_validation_script()
 
-    interpolation = Interpolation(
-        title=title, form_html=form_html, validation_script=validation_script
-    )
+    template_data = {
+        "title": title,
+        "form_html": form_html,
+        "validation_script": validation_script
+    }
 
-    return FORM_PAGE_TEMPLATE.substitute(interpolation.data)
+    return FORM_PAGE_TEMPLATE.substitute(**template_data)
 
 
 # Export main classes and functions

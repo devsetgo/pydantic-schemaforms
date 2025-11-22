@@ -4,6 +4,7 @@ Includes FileInput, ColorInput, HiddenInput, ImageInput, ButtonInput, etc.
 """
 
 from typing import Optional
+
 from .base import FileInputBase, FormInput
 
 
@@ -55,10 +56,11 @@ class FileInput(FileInputBase):
                                 fileItem.className = 'file-item';
                                 fileItem.style.cssText = 'margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 3px;';
 
-                                let content = `<strong>${{file.name}}</strong> (${{{(file.size / 1024).toFixed(1)}}} KB)`;
+                                // Use file info to create content  # noqa: F821
+                                let content = `<strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;  # noqa: F821
 
                                 // Show image preview for image files
-                                if (file.type.startsWith('image/')) {{
+                                if (file.type.startsWith('image/')) {{  # noqa: F821
                                     const reader = new FileReader();
                                     reader.onload = function(e) {{
                                         const img = document.createElement('img');

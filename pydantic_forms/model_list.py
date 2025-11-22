@@ -14,8 +14,9 @@ Features:
 - Configurable min/max items
 """
 
-from typing import Any, Dict, List, Optional, Type
 from html import escape
+from typing import Any, Dict, List, Optional, Type
+
 from pydantic_forms.schema_form import FormModel
 
 
@@ -37,6 +38,7 @@ class ModelListRenderer:
         model_class: Type[FormModel],
         values: List[Dict[str, Any]] = None,
         error: Optional[str] = None,
+        nested_errors: Optional[Dict[str, str]] = None,
         help_text: Optional[str] = None,
         is_required: bool = False,
         min_items: int = 0,
@@ -51,6 +53,8 @@ class ModelListRenderer:
             model_class: Pydantic model class for list items
             values: Current values for the list
             error: Validation error message
+            nested_errors: Nested validation errors (e.g., {'0.weight': 'Must be greater than 0'})
+            help_text: Help text for the field
             help_text: Help text for the field
             is_required: Whether the field is required
             min_items: Minimum number of items allowed
@@ -61,15 +65,16 @@ class ModelListRenderer:
             HTML string for the model list
         """
         values = values or []
+        nested_errors = nested_errors or {}
 
         if self.framework == "material":
             return self._render_material_list(
-                field_name, label, model_class, values, error, help_text,
+                field_name, label, model_class, values, error, nested_errors, help_text,
                 is_required, min_items, max_items, **kwargs
             )
         else:
             return self._render_bootstrap_list(
-                field_name, label, model_class, values, error, help_text,
+                field_name, label, model_class, values, error, nested_errors, help_text,
                 is_required, min_items, max_items, **kwargs
             )
 
@@ -80,6 +85,7 @@ class ModelListRenderer:
         model_class: Type[FormModel],
         values: List[Dict[str, Any]],
         error: Optional[str],
+        nested_errors: Optional[Dict[str, str]],
         help_text: Optional[str],
         is_required: bool,
         min_items: int,
@@ -105,14 +111,14 @@ class ModelListRenderer:
         # Render existing items
         for i, item_data in enumerate(values):
             html += self._render_bootstrap_list_item(
-                field_name, model_class, i, item_data
+                field_name, model_class, i, item_data, nested_errors
             )
 
         # If no items and min_items > 0, add empty items
         if not values and min_items > 0:
             for i in range(min_items):
                 html += self._render_bootstrap_list_item(
-                    field_name, model_class, i, {}
+                    field_name, model_class, i, {}, nested_errors
                 )
 
         html += f'''
@@ -147,7 +153,8 @@ class ModelListRenderer:
         field_name: str,
         model_class: Type[FormModel],
         index: int,
-        item_data: Dict[str, Any]
+        item_data: Dict[str, Any],
+        nested_errors: Optional[Dict[str, str]] = None
     ) -> str:
         """Render a single Bootstrap list item."""
 
@@ -175,6 +182,7 @@ class ModelListRenderer:
         # Render each field in the model
         schema = model_class.model_json_schema()
         properties = schema.get('properties', {})
+        nested_errors = nested_errors or {}
 
         for field_key, field_schema in properties.items():
             if field_key.startswith('_'):
@@ -182,6 +190,10 @@ class ModelListRenderer:
 
             field_value = item_data.get(field_key, '')
             input_name = f"{field_name}[{index}].{field_key}"
+            
+            # Get the error for this specific field from nested errors
+            # e.g., if nested_errors contains '0.weight': 'error', and we're at index 0, field_key 'weight'
+            field_error = nested_errors.get(f"{index}.{field_key}")
 
             html += f'''
                 <div class="col-md-6">
@@ -189,9 +201,10 @@ class ModelListRenderer:
                         input_name,
                         field_schema,
                         field_value,
-                        None,  # error
+                        field_error,  # Pass the specific field error
                         [],   # required_fields
-                        "vertical"  # layout
+                        "vertical",  # layout
+                        nested_errors  # Pass full nested errors dictionary
                     )}
                 </div>'''
 
@@ -208,6 +221,7 @@ class ModelListRenderer:
         model_class: Type[FormModel],
         values: List[Dict[str, Any]],
         error: Optional[str],
+        nested_errors: Optional[Dict[str, str]],
         help_text: Optional[str],
         is_required: bool,
         min_items: int,
@@ -232,14 +246,14 @@ class ModelListRenderer:
         # Render existing items
         for i, item_data in enumerate(values):
             html += self._render_material_list_item(
-                field_name, model_class, i, item_data
+                field_name, model_class, i, item_data, nested_errors
             )
 
         # If no items and min_items > 0, add empty items
         if not values and min_items > 0:
             for i in range(min_items):
                 html += self._render_material_list_item(
-                    field_name, model_class, i, {}
+                    field_name, model_class, i, {}, nested_errors
                 )
 
         html += f'''
@@ -276,7 +290,8 @@ class ModelListRenderer:
         field_name: str,
         model_class: Type[FormModel],
         index: int,
-        item_data: Dict[str, Any]
+        item_data: Dict[str, Any],
+        nested_errors: Optional[Dict[str, str]] = None
     ) -> str:
         """Render a single Material Design list item."""
 
@@ -305,6 +320,7 @@ class ModelListRenderer:
         # Render each field in the model
         schema = model_class.model_json_schema()
         properties = schema.get('properties', {})
+        nested_errors = nested_errors or {}
 
         for field_key, field_schema in properties.items():
             if field_key.startswith('_'):
@@ -312,19 +328,23 @@ class ModelListRenderer:
 
             field_value = item_data.get(field_key, '')
             input_name = f"{field_name}[{index}].{field_key}"
+            
+            # Get the error for this specific field from nested errors
+            field_error = nested_errors.get(f"{index}.{field_key}")
 
             # Get field info from the model
             getattr(model_class.model_fields.get(field_key), 'json_schema_extra', {}) or {}
 
             html += f'''
                         <div class="col-md-6">
-                            {renderer._render_material_field(
+                            {renderer._render_field(
                                 input_name,
                                 field_schema,
                                 field_value,
-                                None,  # error
+                                field_error,  # Pass the specific field error
                                 [],   # required_fields
-                                "vertical"  # layout
+                                "vertical",  # layout
+                                nested_errors  # Pass full nested errors dictionary
                             )}
                         </div>'''
 

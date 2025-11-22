@@ -12,85 +12,80 @@ All inputs use Python 3.14's native template strings for efficient HTML generati
 """
 
 # Base classes
-from .base import (
+from .base import (  # noqa: F401
     BaseInput,
+    FileInputBase,
     FormInput,
     NumericInput,
-    FileInputBase,
     SelectInputBase,
-    build_label,
     build_error_message,
     build_help_text,
+    build_label,
 )
-
-# Text inputs
-from .text_inputs import (
-    TextInput,
-    PasswordInput,
-    EmailInput,
-    SearchInput,
-    TextArea,
-    URLInput,
-    TelInput,
-    SSNInput,
-    PhoneInput,
-    CreditCardInput,
-    CurrencyInput,
+# DateTime inputs
+from .datetime_inputs import (  # noqa: F401
+    BirthdateInput,
+    DateInput,
+    DateRangeInput,
+    DatetimeInput,
+    MonthInput,
+    TimeInput,
+    TimeRangeInput,
+    WeekInput,
 )
-
 # Numeric inputs
-from .numeric_inputs import (
-    NumberInput,
-    RangeInput,
-    PercentageInput,
+from .numeric_inputs import (  # noqa: F401
+    AgeInput,
     DecimalInput,
     IntegerInput,
-    AgeInput,
+    NumberInput,
+    PercentageInput,
     QuantityInput,
-    ScoreInput,
+    RangeInput,
     RatingInput,
+    ScoreInput,
     SliderInput,
     TemperatureInput,
 )
-
 # Selection inputs
-from .selection_inputs import (
-    SelectInput,
-    MultiSelectInput,
-    CheckboxInput,
+from .selection_inputs import (  # noqa: F401
     CheckboxGroup,
-    RadioInput,
-    RadioGroup,
-    ToggleSwitch,
+    CheckboxInput,
     ComboBoxInput,
+    MultiSelectInput,
+    RadioGroup,
+    RadioInput,
+    SelectInput,
+    ToggleSwitch,
 )
-
-# DateTime inputs
-from .datetime_inputs import (
-    DateInput,
-    TimeInput,
-    DatetimeInput,
-    MonthInput,
-    WeekInput,
-    DateRangeInput,
-    TimeRangeInput,
-    BirthdateInput,
-)
-
 # Specialized inputs
-from .specialized_inputs import (
-    FileInput,
-    ImageInput,
-    ColorInput,
-    HiddenInput,
+from .specialized_inputs import (  # noqa: F401
     ButtonInput,
-    SubmitInput,
-    ResetInput,
-    CSRFInput,
-    HoneypotInput,
     CaptchaInput,
+    ColorInput,
+    CSRFInput,
+    FileInput,
+    HiddenInput,
+    HoneypotInput,
+    ImageInput,
     RatingStarsInput,
+    ResetInput,
+    SubmitInput,
     TagsInput,
+)
+# Text inputs
+from .text_inputs import (  # noqa: F401
+    CreditCardInput,
+    CurrencyInput,
+    EmailInput,
+    PasswordInput,
+    PhoneInput,
+    SearchInput,
+    SSNInput,
+    TelInput,
+    TextArea,
+    TextInput,
+    URLInput,
 )
 
 # Organized exports by category

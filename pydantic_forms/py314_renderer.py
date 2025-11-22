@@ -5,9 +5,10 @@ This module provides a high-performance form renderer that leverages Python 3.14
 native template string support for optimal rendering speed and developer experience.
 """
 
-from typing import Any, Dict, List, Optional, Union, get_type_hints, get_origin, get_args
-from pydantic import BaseModel
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Union, get_args, get_origin, get_type_hints
+
+from pydantic import BaseModel
 
 from .templates import FormTemplates, TemplateString
 
@@ -277,7 +278,7 @@ class ModernFormRenderer:
         }
 
         # Check for email in field name (common pattern)
-        if python_type == str:
+        if python_type is str:
             return 'text'  # Default to text, can be overridden
 
         return type_mapping.get(python_type, 'text')
