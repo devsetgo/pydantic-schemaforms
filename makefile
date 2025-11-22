@@ -27,7 +27,7 @@ autoflake: ## Remove unused imports and unused variables from Python code
 	autoflake --in-place --remove-all-unused-imports  --ignore-init-module-imports --remove-unused-variables -r $(EXAMPLE_PATH)
 
 black: ## Reformat Python code to follow the Black code style
-	black $(SERVICE_PATH)
+	$(PYTHON) -m black $(SERVICE_PATH)
 	# black $(TESTS_PATH)
 	# black $(EXAMPLE_PATH)
 
@@ -78,9 +78,9 @@ reinstall: ## Install the project's dependencie
 	$(PIP) install -r $(REQUIREMENTS_PATH)
 
 isort: ## Sort imports in Python code
-	isort $(SERVICE_PATH)
-	isort $(TESTS_PATH)
-	isort $(EXAMPLE_PATH)
+	$(PYTHON) -m isort $(SERVICE_PATH)
+	$(PYTHON) -m isort $(TESTS_PATH)
+	$(PYTHON) -m isort $(EXAMPLE_PATH)
 
 
 speedtest: ## Run a speed test
@@ -100,9 +100,9 @@ build: ## Build the project
 	python -m build
 
 ruff: ## Format Python code with Ruff
-	ruff check --fix --exit-non-zero-on-fix --show-fixes $(SERVICE_PATH)
-	ruff check --fix --exit-non-zero-on-fix --show-fixes $(TESTS_PATH)
-	ruff check --fix --exit-non-zero-on-fix --show-fixes $(EXAMPLE_PATH)
+	$(PYTHON) -m ruff check --fix --exit-non-zero-on-fix --show-fixes $(SERVICE_PATH)
+	$(PYTHON) -m ruff check --fix --exit-non-zero-on-fix --show-fixes $(TESTS_PATH)
+	$(PYTHON) -m ruff check --fix --exit-non-zero-on-fix --show-fixes $(EXAMPLE_PATH)
 
 
 ex-run: ## Run the FastAPI example (async implementation)
