@@ -31,13 +31,13 @@ class ValidationResponse:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'field_name': self.field_name,
-            'is_valid': self.is_valid,
-            'errors': self.errors,
-            'warnings': self.warnings,
-            'suggestions': self.suggestions,
-            'value': self.value,
-            'formatted_value': self.formatted_value
+            "field_name": self.field_name,
+            "is_valid": self.is_valid,
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "suggestions": self.suggestions,
+            "value": self.value,
+            "formatted_value": self.formatted_value,
         }
 
     def to_json(self) -> str:
@@ -93,15 +93,18 @@ class LiveValidator:
         self.field_configs: Dict[str, Dict[str, Any]] = {}
 
         # Template for validation responses
-        self.validation_template = TemplateString("""
+        self.validation_template = TemplateString(
+            """
 <div class="validation-feedback ${feedback_class}"
      id="${field_name}-feedback">
     ${feedback_content}
 </div>
-""")
+"""
+        )
 
         # Template for field with validation
-        self.field_template = TemplateString("""
+        self.field_template = TemplateString(
+            """
 <div class="form-group ${group_class}">
     ${label}
     <input type="${input_type}"
@@ -115,10 +118,12 @@ class LiveValidator:
         ${existing_feedback}
     </div>
 </div>
-""")
+"""
+        )
 
         # HTMX JavaScript template
-        self.htmx_script = TemplateString("""
+        self.htmx_script = TemplateString(
+            """
 <script>
 // HTMX Live Validation System
 document.addEventListener('DOMContentLoaded', function() {
@@ -231,9 +236,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-""")
+"""
+        )
 
-    def register_validator(self, field_name: str, validator: Callable[[Any], ValidationResponse]) -> None:
+    def register_validator(
+        self, field_name: str, validator: Callable[[Any], ValidationResponse]
+    ) -> None:
         """
         Register a custom validator for a field.
 
@@ -253,6 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
         model_fields = model_class.model_fields
 
         for field_name, field_info in model_fields.items():
+
             def create_model_validator(fname: str, finfo: Any):
                 def validator(value: Any) -> ValidationResponse:
                     try:
@@ -260,22 +269,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         test_data = {fname: value}
                         model_class.model_validate(test_data, strict=False)
 
-                        return ValidationResponse(
-                            field_name=fname,
-                            is_valid=True,
-                            value=value
-                        )
+                        return ValidationResponse(field_name=fname, is_valid=True, value=value)
                     except ValidationError as e:
                         errors = []
                         for error in e.errors():
-                            if error['loc'] == (fname,):
-                                errors.append(error['msg'])
+                            if error["loc"] == (fname,):
+                                errors.append(error["msg"])
 
                         return ValidationResponse(
-                            field_name=fname,
-                            is_valid=False,
-                            errors=errors,
-                            value=value
+                            field_name=fname, is_valid=False, errors=errors, value=value
                         )
 
                 return validator
@@ -298,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 field_name=field_name,
                 is_valid=True,
                 warnings=["No validator registered for this field"],
-                value=value
+                value=value,
             )
 
         validator = self.validators[field_name]
@@ -325,7 +327,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     def _generate_flask_endpoint(self) -> str:
         """Generate Flask validation endpoint code."""
-        template = TemplateString("""
+        template = TemplateString(
+            """
 from flask import request, jsonify
 from pydantic_forms.live_validation import ValidationResponse
 
@@ -350,12 +353,14 @@ def validate_field(field_name):
 
     except Exception as e:
         return f'<div class="invalid-feedback">Validation error: {str(e)}</div>', 500
-""")
+"""
+        )
         return template.render()
 
     def _generate_fastapi_endpoint(self) -> str:
         """Generate FastAPI validation endpoint code."""
-        template = TemplateString("""
+        template = TemplateString(
+            """
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pydantic_forms.live_validation import ValidationResponse
@@ -385,12 +390,14 @@ async def validate_field(field_name: str, request: ValidationRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Validation error: {str(e)}')
-""")
+"""
+        )
         return template.render()
 
     def _generate_django_endpoint(self) -> str:
         """Generate Django validation endpoint code."""
-        template = TemplateString("""
+        template = TemplateString(
+            """
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -427,7 +434,8 @@ def validate_field(request, field_name):
             f'<div class="invalid-feedback">Validation error: {str(e)}</div>',
             status=500
         )
-""")
+"""
+        )
         return template.render()
 
     def render_field_with_live_validation(
@@ -436,7 +444,7 @@ def validate_field(request, field_name):
         field_type: str = "text",
         value: Any = "",
         validation_endpoint: str = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Render a form field with live validation capabilities.
@@ -459,7 +467,7 @@ def validate_field(request, field_name):
             f'hx-post="{validation_endpoint}"',
             f'hx-target="#{field_name}-feedback"',
             'hx-swap="innerHTML"',
-            'data-validate-endpoint="true"'
+            'data-validate-endpoint="true"',
         ]
 
         if self.config.validate_on_blur:
@@ -473,7 +481,7 @@ def validate_field(request, field_name):
         # Build other attributes
         other_attrs = []
         for key, val in kwargs.items():
-            if key not in ['class', 'id', 'name']:
+            if key not in ["class", "id", "name"]:
                 other_attrs.append(f'{key}="{val}"')
 
         # Render field
@@ -481,12 +489,12 @@ def validate_field(request, field_name):
             field_name=field_name,
             input_type=field_type,
             value=str(value) if value is not None else "",
-            input_class=kwargs.get('class', ''),
-            group_class='',
+            input_class=kwargs.get("class", ""),
+            group_class="",
             label=f'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>',
-            validation_attributes=' '.join(validation_attrs),
-            other_attributes=' '.join(other_attrs),
-            existing_feedback=''
+            validation_attributes=" ".join(validation_attrs),
+            other_attributes=" ".join(other_attrs),
+            existing_feedback="",
         )
 
     def render_htmx_script(self) -> str:
@@ -496,20 +504,22 @@ def validate_field(request, field_name):
         Returns:
             HTML script tag with HTMX validation code
         """
-        config_json = json.dumps({
-            'validate_on_blur': self.config.validate_on_blur,
-            'validate_on_input': self.config.validate_on_input,
-            'validate_on_change': self.config.validate_on_change,
-            'debounce_ms': self.config.debounce_ms,
-            'show_success_indicators': self.config.show_success_indicators,
-            'show_warnings': self.config.show_warnings,
-            'show_suggestions': self.config.show_suggestions,
-            'clear_on_focus': self.config.clear_on_focus,
-            'success_class': self.config.success_class,
-            'error_class': self.config.error_class,
-            'warning_class': self.config.warning_class,
-            'loading_class': self.config.loading_class
-        })
+        config_json = json.dumps(
+            {
+                "validate_on_blur": self.config.validate_on_blur,
+                "validate_on_input": self.config.validate_on_input,
+                "validate_on_change": self.config.validate_on_change,
+                "debounce_ms": self.config.debounce_ms,
+                "show_success_indicators": self.config.show_success_indicators,
+                "show_warnings": self.config.show_warnings,
+                "show_suggestions": self.config.show_suggestions,
+                "clear_on_focus": self.config.clear_on_focus,
+                "success_class": self.config.success_class,
+                "error_class": self.config.error_class,
+                "warning_class": self.config.warning_class,
+                "loading_class": self.config.loading_class,
+            }
+        )
 
         return self.htmx_script.render(config_json=config_json)
 
@@ -522,27 +532,21 @@ def create_email_validator() -> Callable[[str], ValidationResponse]:
     def validate_email(value: str) -> ValidationResponse:
         if not value:
             return ValidationResponse(
-                field_name="email",
-                is_valid=False,
-                errors=["Email is required"],
-                value=value
+                field_name="email", is_valid=False, errors=["Email is required"], value=value
             )
 
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(email_pattern, value):
             return ValidationResponse(
                 field_name="email",
                 is_valid=False,
                 errors=["Please enter a valid email address"],
                 suggestions=["Example: user@example.com"],
-                value=value
+                value=value,
             )
 
         return ValidationResponse(
-            field_name="email",
-            is_valid=True,
-            value=value,
-            formatted_value=value.lower()
+            field_name="email", is_valid=True, value=value, formatted_value=value.lower()
         )
 
     return validate_email
@@ -560,15 +564,15 @@ def create_password_strength_validator(min_length: int = 8) -> Callable[[str], V
         if len(value) < min_length:
             errors.append(f"Password must be at least {min_length} characters long")
 
-        if not re.search(r'[A-Z]', value):
+        if not re.search(r"[A-Z]", value):
             warnings.append("Password should contain at least one uppercase letter")
             suggestions.append("Add an uppercase letter (A-Z)")
 
-        if not re.search(r'[a-z]', value):
+        if not re.search(r"[a-z]", value):
             warnings.append("Password should contain at least one lowercase letter")
             suggestions.append("Add a lowercase letter (a-z)")
 
-        if not re.search(r'\d', value):
+        if not re.search(r"\d", value):
             warnings.append("Password should contain at least one number")
             suggestions.append("Add a number (0-9)")
 
@@ -584,7 +588,7 @@ def create_password_strength_validator(min_length: int = 8) -> Callable[[str], V
             errors=errors,
             warnings=warnings,
             suggestions=suggestions,
-            value=value
+            value=value,
         )
 
     return validate_password

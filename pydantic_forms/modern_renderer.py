@@ -54,7 +54,7 @@ class FormField:
         value: Any = None,
         options: Optional[List[Dict[str, Any]]] = None,
         validators: Optional[List[Callable]] = None,
-        **kwargs
+        **kwargs,
     ):
         self.name = name
         self.field_type = field_type
@@ -97,7 +97,7 @@ class FormSection:
         layout: str = "vertical",
         collapsible: bool = False,
         collapsed: bool = False,
-        **kwargs
+        **kwargs,
     ):
         self.title = title
         self.fields = fields
@@ -121,7 +121,7 @@ class FormDefinition:
         live_validation: bool = True,
         csrf_protection: bool = False,
         honeypot_protection: bool = False,
-        **kwargs
+        **kwargs,
     ):
         self.title = title
         self.sections = sections or []
@@ -160,7 +160,7 @@ class ModernFormRenderer:
             "col_class": "col-md-12",
             "field_wrapper": "mb-3",
             "error_class": "invalid-feedback",
-            "help_class": "form-text"
+            "help_class": "form-text",
         },
         "material": {
             "css_url": "https://fonts.googleapis.com/icon?family=Material+Icons",
@@ -177,7 +177,7 @@ class ModernFormRenderer:
             "col_class": "col s12",
             "field_wrapper": "input-field",
             "error_class": "helper-text red-text",
-            "help_class": "helper-text"
+            "help_class": "helper-text",
         },
         "tailwind": {
             "css_url": "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css",
@@ -192,8 +192,8 @@ class ModernFormRenderer:
             "col_class": "",
             "field_wrapper": "mb-4",
             "error_class": "text-red-500 text-sm mt-1",
-            "help_class": "text-gray-500 text-sm mt-1"
-        }
+            "help_class": "text-gray-500 text-sm mt-1",
+        },
     }
 
     # Input type mapping to renderer classes
@@ -224,7 +224,7 @@ class ModernFormRenderer:
         "button": ButtonInput,
         "toggle": ToggleSwitch,
         "csrf": CSRFInput,
-        "honeypot": HoneypotInput
+        "honeypot": HoneypotInput,
     }
 
     def __init__(self, framework: str = "bootstrap", enable_async: bool = False):
@@ -239,12 +239,7 @@ class ModernFormRenderer:
             return self.render_form(form_def, **kwargs)
 
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            self.executor,
-            self.render_form,
-            form_def,
-            **kwargs
-        )
+        return await loop.run_in_executor(self.executor, self.render_form, form_def, **kwargs)
 
     def render_form(self, form_def: FormDefinition, **kwargs) -> str:
         """Render complete HTML form from FormDefinition."""
@@ -298,7 +293,7 @@ class ModernFormRenderer:
         submit_url = form_def.submit_url
 
         # Build the complete form template
-        template = t'''<!DOCTYPE html>
+        template = t"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -329,10 +324,11 @@ class ModernFormRenderer:
     {js_links}
     {validation_script}
 </body>
-</html>'''
+</html>"""
 
         # Import render_template function
         from .inputs.base import render_template
+
         return render_template(template)
 
     def _render_sections(self, sections: List[FormSection], config: Dict[str, str]) -> str:
@@ -371,14 +367,14 @@ class ModernFormRenderer:
             if section.collapsed:
                 section_class += " collapsed"
 
-        section_html = f'''
+        section_html = f"""
         <fieldset class="{section_class}">
             <legend class="section-title">{escape(section.title)}</legend>
             <div class="section-content">
                 {fields_container}
             </div>
         </fieldset>
-        '''
+        """
 
         return section_html
 
@@ -394,7 +390,7 @@ class ModernFormRenderer:
             "name": field.name,
             "id": field.name,
             "class": self._get_field_class(field.field_type, config),
-            **field.extra_attrs
+            **field.extra_attrs,
         }
 
         # Add common attributes
@@ -414,13 +410,13 @@ class ModernFormRenderer:
             field_attrs["legend"] = field.label
 
         # Render the input
-        if hasattr(renderer, 'render_with_label'):
+        if hasattr(renderer, "render_with_label"):
             # Use enhanced rendering with label, help text, and errors
             input_html = renderer.render_with_label(
                 label=field.label,
                 help_text=field.help_text,
                 error=field.errors[0] if field.errors else None,
-                **field_attrs
+                **field_attrs,
             )
         else:
             # Basic rendering
@@ -434,7 +430,9 @@ class ModernFormRenderer:
             if field.help_text:
                 parts.append(f'<div class="{config["help_class"]}">{escape(field.help_text)}</div>')
             if field.errors:
-                parts.append(f'<div class="{config["error_class"]}">{escape(field.errors[0])}</div>')
+                parts.append(
+                    f'<div class="{config["error_class"]}">{escape(field.errors[0])}</div>'
+                )
 
             input_html = "\n".join(parts)
 
@@ -459,18 +457,12 @@ class ModernFormRenderer:
     def _render_submit_button(self, config: Dict[str, str], text: str) -> str:
         """Render submit button."""
         submit_input = SubmitInput()
-        return submit_input.render(
-            value=text,
-            class_=config["button_class"]
-        )
+        return submit_input.render(value=text, class_=config["button_class"])
 
     def _render_reset_button(self, config: Dict[str, str], text: str) -> str:
         """Render reset button."""
         reset_input = ResetInput()
-        return reset_input.render(
-            value=text,
-            class_=f"{config['button_class']} btn-secondary"
-        )
+        return reset_input.render(value=text, class_=f"{config['button_class']} btn-secondary")
 
     def _build_css_links(self, config: Dict[str, str]) -> str:
         """Build CSS links for the framework."""
@@ -498,7 +490,7 @@ class ModernFormRenderer:
         if not form_def.live_validation:
             return ""
 
-        return '''
+        return """
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('main-form');
@@ -521,14 +513,14 @@ class ModernFormRenderer:
             });
         });
         </script>
-        '''
+        """
 
     def _build_form_attributes(self, form_def: FormDefinition, **kwargs) -> str:
         """Build additional form attributes."""
         attrs = []
 
         if form_def.live_validation:
-            attrs.append('novalidate')
+            attrs.append("novalidate")
 
         # Add HTMX attributes if specified
         if "hx_post" in kwargs:
@@ -542,7 +534,7 @@ class ModernFormRenderer:
 
     def _generate_custom_css(self, config: Dict[str, str]) -> str:
         """Generate framework-specific custom CSS."""
-        return '''
+        return """
         <style>
         .form-section {
             margin-bottom: 2rem;
@@ -563,4 +555,4 @@ class ModernFormRenderer:
             border-color: #28a745;
         }
         </style>
-        '''
+        """

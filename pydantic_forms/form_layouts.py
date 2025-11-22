@@ -593,7 +593,7 @@ class ListLayout(BaseLayout):
             is_valid=len(all_errors) == 0,
             errors=all_errors,
             warnings=all_warnings,
-            data={"valid_items": valid_items, "item_count": item_count}
+            data={"valid_items": valid_items, "item_count": item_count},
         )
 
     def render(
@@ -617,15 +617,17 @@ class ListLayout(BaseLayout):
         # In practice, the renderer would be passed differently
         if framework == "material":
             from .simple_material_renderer import MaterialDesign3Renderer
+
             renderer = MaterialDesign3Renderer()
         else:
             from .enhanced_renderer import EnhancedFormRenderer
+
             renderer = EnhancedFormRenderer()
 
         # Extract list items from data
         list_data = []
-        if data and 'items' in data:
-            list_data = data['items']
+        if data and "items" in data:
+            list_data = data["items"]
         elif data and isinstance(data, list):
             list_data = data
 
@@ -668,7 +670,15 @@ class ListLayout(BaseLayout):
         {js_html}
         """
 
-    def _render_list_item(self, renderer, item_data: Dict[str, Any], index: int, list_id: str, framework: str, errors: Optional[Dict[str, Any]] = None) -> str:
+    def _render_list_item(
+        self,
+        renderer,
+        item_data: Dict[str, Any],
+        index: int,
+        list_id: str,
+        framework: str,
+        errors: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """Render a single list item with form and remove button."""
         # Create form instance with data
         try:
@@ -678,7 +688,9 @@ class ListLayout(BaseLayout):
             form_instance = self.form_model.model_construct()
 
         # Render the form for this item WITHOUT submit button
-        form_html = renderer.render_form_from_model(form_instance, framework=framework, include_submit_button=False)
+        form_html = renderer.render_form_from_model(
+            form_instance, framework=framework, include_submit_button=False
+        )
 
         # Add name prefixes to make each item unique
         form_html = self._add_name_prefixes(form_html, index)
@@ -698,8 +710,14 @@ class ListLayout(BaseLayout):
         if self.collapsible_items:
             # Render collapsible card
             return self._render_collapsible_item(
-                form_html, remove_button_html, error_html, index,
-                list_id, framework, item_class, item_data
+                form_html,
+                remove_button_html,
+                error_html,
+                index,
+                list_id,
+                framework,
+                item_class,
+                item_data,
             )
         else:
             # Render standard item
@@ -713,9 +731,17 @@ class ListLayout(BaseLayout):
             </div>
             """
 
-    def _render_collapsible_item(self, form_html: str, remove_button_html: str, error_html: str,
-                                index: int, list_id: str, framework: str, item_class: str,
-                                item_data: Dict[str, Any]) -> str:
+    def _render_collapsible_item(
+        self,
+        form_html: str,
+        remove_button_html: str,
+        error_html: str,
+        index: int,
+        list_id: str,
+        framework: str,
+        item_class: str,
+        item_data: Dict[str, Any],
+    ) -> str:
         """Render a collapsible card for the list item."""
         # Generate unique IDs for the collapsible item
         collapse_id = f"{list_id}_item_{index}"
@@ -792,25 +818,13 @@ class ListLayout(BaseLayout):
         import re
 
         # Add index prefix to name attributes
-        form_html = re.sub(
-            r'name="([^"]*)"',
-            rf'name="item_{index}_\1"',
-            form_html
-        )
+        form_html = re.sub(r'name="([^"]*)"', rf'name="item_{index}_\1"', form_html)
 
         # Add index prefix to id attributes
-        form_html = re.sub(
-            r'id="([^"]*)"',
-            rf'id="item_{index}_\1"',
-            form_html
-        )
+        form_html = re.sub(r'id="([^"]*)"', rf'id="item_{index}_\1"', form_html)
 
         # Update for attributes to match new ids
-        form_html = re.sub(
-            r'for="([^"]*)"',
-            rf'for="item_{index}_\1"',
-            form_html
-        )
+        form_html = re.sub(r'for="([^"]*)"', rf'for="item_{index}_\1"', form_html)
 
         return form_html
 

@@ -43,7 +43,7 @@ class ModelListRenderer:
         is_required: bool = False,
         min_items: int = 0,
         max_items: int = 10,
-        **kwargs
+        **kwargs,
     ) -> str:
         """Render a dynamic list of models with add/remove functionality.
 
@@ -69,13 +69,31 @@ class ModelListRenderer:
 
         if self.framework == "material":
             return self._render_material_list(
-                field_name, label, model_class, values, error, nested_errors, help_text,
-                is_required, min_items, max_items, **kwargs
+                field_name,
+                label,
+                model_class,
+                values,
+                error,
+                nested_errors,
+                help_text,
+                is_required,
+                min_items,
+                max_items,
+                **kwargs,
             )
         else:
             return self._render_bootstrap_list(
-                field_name, label, model_class, values, error, nested_errors, help_text,
-                is_required, min_items, max_items, **kwargs
+                field_name,
+                label,
+                model_class,
+                values,
+                error,
+                nested_errors,
+                help_text,
+                is_required,
+                min_items,
+                max_items,
+                **kwargs,
             )
 
     def _render_bootstrap_list(
@@ -90,12 +108,11 @@ class ModelListRenderer:
         is_required: bool,
         min_items: int,
         max_items: int,
-        **kwargs
+        **kwargs,
     ) -> str:
         """Render Bootstrap-styled model list."""
 
-
-        html = f'''
+        html = f"""
         <div class="mb-3">
             <label class="form-label fw-bold">
                 {escape(label)}{' <span class="text-danger">*</span>' if is_required else ''}
@@ -106,7 +123,7 @@ class ModelListRenderer:
                  data-min-items="{min_items}"
                  data-max-items="{max_items}">
 
-                <div class="model-list-items" id="{field_name}-items">'''
+                <div class="model-list-items" id="{field_name}-items">"""
 
         # Render existing items
         for i, item_data in enumerate(values):
@@ -121,7 +138,7 @@ class ModelListRenderer:
                     field_name, model_class, i, {}, nested_errors
                 )
 
-        html += f'''
+        html += f"""
                 </div>
 
                 <div class="model-list-controls mt-2">
@@ -131,21 +148,21 @@ class ModelListRenderer:
                         <i class="bi bi-plus-circle"></i> Add {model_class.__name__.replace('Model', '')}
                     </button>
                 </div>
-            </div>'''
+            </div>"""
 
         if help_text:
-            html += f'''
+            html += f"""
             <div class="form-text text-muted">
                 <i class="bi bi-info-circle"></i> {escape(help_text)}
-            </div>'''
+            </div>"""
 
         if error:
-            html += f'''
+            html += f"""
             <div class="invalid-feedback d-block">
                 <i class="bi bi-exclamation-triangle"></i> {escape(error)}
-            </div>'''
+            </div>"""
 
-        html += '</div>'
+        html += "</div>"
         return html
 
     def _render_bootstrap_list_item(
@@ -154,7 +171,7 @@ class ModelListRenderer:
         model_class: Type[FormModel],
         index: int,
         item_data: Dict[str, Any],
-        nested_errors: Optional[Dict[str, str]] = None
+        nested_errors: Optional[Dict[str, str]] = None,
     ) -> str:
         """Render a single Bootstrap list item."""
 
@@ -163,7 +180,7 @@ class ModelListRenderer:
 
         renderer = EnhancedFormRenderer(framework="bootstrap")
 
-        html = f'''
+        html = f"""
         <div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="{index}">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <h6 class="mb-0 text-primary">
@@ -177,25 +194,25 @@ class ModelListRenderer:
                 </button>
             </div>
 
-            <div class="row">'''
+            <div class="row">"""
 
         # Render each field in the model
         schema = model_class.model_json_schema()
-        properties = schema.get('properties', {})
+        properties = schema.get("properties", {})
         nested_errors = nested_errors or {}
 
         for field_key, field_schema in properties.items():
-            if field_key.startswith('_'):
+            if field_key.startswith("_"):
                 continue
 
-            field_value = item_data.get(field_key, '')
+            field_value = item_data.get(field_key, "")
             input_name = f"{field_name}[{index}].{field_key}"
-            
+
             # Get the error for this specific field from nested errors
             # e.g., if nested_errors contains '0.weight': 'error', and we're at index 0, field_key 'weight'
             field_error = nested_errors.get(f"{index}.{field_key}")
 
-            html += f'''
+            html += f"""
                 <div class="col-md-6">
                     {renderer._render_field(
                         input_name,
@@ -206,11 +223,11 @@ class ModelListRenderer:
                         "vertical",  # layout
                         nested_errors  # Pass full nested errors dictionary
                     )}
-                </div>'''
+                </div>"""
 
-        html += '''
+        html += """
             </div>
-        </div>'''
+        </div>"""
 
         return html
 
@@ -226,11 +243,11 @@ class ModelListRenderer:
         is_required: bool,
         min_items: int,
         max_items: int,
-        **kwargs
+        **kwargs,
     ) -> str:
         """Render Material Design-styled model list."""
 
-        html = f'''
+        html = f"""
         <div class="mdc-form-field-container mb-4">
             <h6 class="mdc-typography--subtitle1 mb-3">
                 {escape(label)}{' *' if is_required else ''}
@@ -241,7 +258,7 @@ class ModelListRenderer:
                  data-min-items="{min_items}"
                  data-max-items="{max_items}">
 
-                <div class="model-list-items" id="{field_name}-items">'''
+                <div class="model-list-items" id="{field_name}-items">"""
 
         # Render existing items
         for i, item_data in enumerate(values):
@@ -256,7 +273,7 @@ class ModelListRenderer:
                     field_name, model_class, i, {}, nested_errors
                 )
 
-        html += f'''
+        html += f"""
                 </div>
 
                 <div class="model-list-controls mt-3">
@@ -268,21 +285,21 @@ class ModelListRenderer:
                         <span class="mdc-button__label">Add {model_class.__name__.replace('Model', '')}</span>
                     </button>
                 </div>
-            </div>'''
+            </div>"""
 
         if help_text:
-            html += f'''
+            html += f"""
             <div class="mdc-text-field-helper-text">
                 {escape(help_text)}
-            </div>'''
+            </div>"""
 
         if error:
-            html += f'''
+            html += f"""
             <div class="mdc-text-field-helper-text mdc-text-field-helper-text--validation-msg">
                 {escape(error)}
-            </div>'''
+            </div>"""
 
-        html += '</div>'
+        html += "</div>"
         return html
 
     def _render_material_list_item(
@@ -291,7 +308,7 @@ class ModelListRenderer:
         model_class: Type[FormModel],
         index: int,
         item_data: Dict[str, Any],
-        nested_errors: Optional[Dict[str, str]] = None
+        nested_errors: Optional[Dict[str, str]] = None,
     ) -> str:
         """Render a single Material Design list item."""
 
@@ -300,7 +317,7 @@ class ModelListRenderer:
 
         renderer = MaterialDesign3Renderer()
 
-        html = f'''
+        html = f"""
         <div class="model-list-item mdc-card mdc-card--outlined mb-3" data-index="{index}">
             <div class="mdc-card__primary-action">
                 <div class="mdc-card__content">
@@ -315,27 +332,27 @@ class ModelListRenderer:
                         </button>
                     </div>
 
-                    <div class="row">'''
+                    <div class="row">"""
 
         # Render each field in the model
         schema = model_class.model_json_schema()
-        properties = schema.get('properties', {})
+        properties = schema.get("properties", {})
         nested_errors = nested_errors or {}
 
         for field_key, field_schema in properties.items():
-            if field_key.startswith('_'):
+            if field_key.startswith("_"):
                 continue
 
-            field_value = item_data.get(field_key, '')
+            field_value = item_data.get(field_key, "")
             input_name = f"{field_name}[{index}].{field_key}"
-            
+
             # Get the error for this specific field from nested errors
             field_error = nested_errors.get(f"{index}.{field_key}")
 
             # Get field info from the model
-            getattr(model_class.model_fields.get(field_key), 'json_schema_extra', {}) or {}
+            getattr(model_class.model_fields.get(field_key), "json_schema_extra", {}) or {}
 
-            html += f'''
+            html += f"""
                         <div class="col-md-6">
                             {renderer._render_field(
                                 input_name,
@@ -346,19 +363,19 @@ class ModelListRenderer:
                                 "vertical",  # layout
                                 nested_errors  # Pass full nested errors dictionary
                             )}
-                        </div>'''
+                        </div>"""
 
-        html += '''
+        html += """
                     </div>
                 </div>
             </div>
-        </div>'''
+        </div>"""
 
         return html
 
     def get_model_list_javascript(self) -> str:
         """Return JavaScript for model list functionality with collapsible card support."""
-        return '''
+        return """
         <script>
         (function() {
             'use strict';
@@ -625,4 +642,4 @@ class ModelListRenderer:
             }
         }
         </script>
-        '''
+        """

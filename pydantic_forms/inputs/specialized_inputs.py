@@ -14,8 +14,14 @@ class FileInput(FileInputBase):
     def get_input_type(self) -> str:
         return "file"
 
-    def render(self, accept: Optional[str] = None, multiple: bool = False,
-               capture: Optional[str] = None, show_preview: bool = True, **kwargs) -> str:
+    def render(
+        self,
+        accept: Optional[str] = None,
+        multiple: bool = False,
+        capture: Optional[str] = None,
+        show_preview: bool = True,
+        **kwargs,
+    ) -> str:
         """Render file input with optional preview functionality."""
 
         if accept:
@@ -33,13 +39,13 @@ class FileInput(FileInputBase):
         attributes_str = self._build_attributes_string(attrs)
 
         # Render the input
-        file_html = f'<input {attributes_str} />'
+        file_html = f"<input {attributes_str} />"
 
         if show_preview:
             field_name = kwargs.get("name", "")
             field_id = kwargs.get("id", field_name)
 
-            preview_html = f'''
+            preview_html = f"""
             <div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
@@ -79,7 +85,7 @@ class FileInput(FileInputBase):
                 }}
             }});
             </script>
-            '''
+            """
             return f'<div class="file-input-group">{file_html}{preview_html}</div>'
 
         return file_html
@@ -89,8 +95,15 @@ class ImageInput(FormInput):
     """Image input that acts as a submit button."""
 
     valid_attributes = FormInput.valid_attributes + [
-        "src", "alt", "width", "height", "formaction", "formenctype",
-        "formmethod", "formnovalidate", "formtarget"
+        "src",
+        "alt",
+        "width",
+        "height",
+        "formaction",
+        "formenctype",
+        "formmethod",
+        "formnovalidate",
+        "formtarget",
     ]
 
     def get_input_type(self) -> str:
@@ -109,7 +122,7 @@ class ImageInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Render the input
-        return f'<input {attributes_str} />'
+        return f"<input {attributes_str} />"
 
 
 class ColorInput(FormInput):
@@ -129,7 +142,8 @@ class ColorInput(FormInput):
 
         # Use Python 3.14 template string literal and render it
         from .base import render_template
-        template = t'<input {attributes_str} />'
+
+        template = t"<input {attributes_str} />"
         color_html = render_template(template)
 
         if show_value:
@@ -137,7 +151,7 @@ class ColorInput(FormInput):
             field_id = kwargs.get("id", field_name)
             current_value = kwargs.get("value", "#000000")
 
-            value_display = f'''
+            value_display = f"""
             <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
                 <span id="{field_name}_value" style="font-family: monospace;">{current_value}</span>
                 <div id="{field_name}_swatch" style="width: 20px; height: 20px; background-color: {current_value}; border: 1px solid #ccc; margin-left: 5px;"></div>
@@ -156,7 +170,7 @@ class ColorInput(FormInput):
                 }}
             }});
             </script>
-            '''
+            """
             return f'<div class="color-input-group">{color_html}{value_display}</div>'
 
         return color_html
@@ -179,16 +193,15 @@ class HiddenInput(FormInput):
 
         # Use Python 3.14 template string literal and render it
         from .base import render_template
-        template = t'<input {attributes_str} />'
+
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
 class ButtonInput(FormInput):
     """Button input field."""
 
-    valid_attributes = FormInput.valid_attributes + [
-        "popovertarget", "popovertargetaction"
-    ]
+    valid_attributes = FormInput.valid_attributes + ["popovertarget", "popovertargetaction"]
 
     def get_input_type(self) -> str:
         return "button"
@@ -204,7 +217,8 @@ class ButtonInput(FormInput):
 
         # Use Python 3.14 template string literal and render it
         from .base import render_template
-        template = t'<input {attributes_str} />'
+
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -212,7 +226,11 @@ class SubmitInput(FormInput):
     """Submit button input."""
 
     valid_attributes = FormInput.valid_attributes + [
-        "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget"
+        "formaction",
+        "formenctype",
+        "formmethod",
+        "formnovalidate",
+        "formtarget",
     ]
 
     def get_input_type(self) -> str:
@@ -229,7 +247,8 @@ class SubmitInput(FormInput):
 
         # Use Python 3.14 template string literal and render it
         from .base import render_template
-        template = t'<input {attributes_str} />'
+
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -250,7 +269,8 @@ class ResetInput(FormInput):
 
         # Use Python 3.14 template string literal and render it
         from .base import render_template
-        template = t'<input {attributes_str} />'
+
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -283,6 +303,7 @@ class CaptchaInput:
 
     def __init__(self):
         import random
+
         self.num1 = random.randint(1, 10)
         self.num2 = random.randint(1, 10)
         self.answer = self.num1 + self.num2
@@ -304,12 +325,12 @@ class CaptchaInput:
             "required": True,
             "placeholder": "Enter the answer",
             "autocomplete": "off",
-            **kwargs
+            **kwargs,
         }
         text_html = text_input.render(**text_attrs)
 
         # Create the complete captcha
-        captcha_html = f'''
+        captcha_html = f"""
         <div class="captcha-input">
             <label for="{field_id}">What is {self.num1} + {self.num2}?</label>
             {text_html}
@@ -335,7 +356,7 @@ class CaptchaInput:
             }});
             </script>
         </div>
-        '''
+        """
 
         return captcha_html
 
@@ -349,17 +370,17 @@ class RatingStarsInput:
 
         # Create hidden input to store the rating value
         hidden_input = HiddenInput()
-        hidden_html = hidden_input.render(name=name, id=f"{field_id}_value", value=str(current_rating))
+        hidden_html = hidden_input.render(
+            name=name, id=f"{field_id}_value", value=str(current_rating)
+        )
 
         # Create star display
         stars_html = []
         for i in range(1, max_stars + 1):
             star_class = "star-filled" if i <= current_rating else "star-empty"
-            stars_html.append(
-                f'<span class="rating-star {star_class}" data-rating="{i}">★</span>'
-            )
+            stars_html.append(f'<span class="rating-star {star_class}" data-rating="{i}">★</span>')
 
-        rating_html = f'''
+        rating_html = f"""
         <div class="star-rating-input" data-name="{name}">
             <div class="stars" id="{field_id}_stars">
                 {''.join(stars_html)}
@@ -411,7 +432,7 @@ class RatingStarsInput:
             }});
             </script>
         </div>
-        '''
+        """
 
         return rating_html
 
@@ -419,8 +440,9 @@ class RatingStarsInput:
 class TagsInput:
     """Tags input widget for entering multiple tags."""
 
-    def render(self, name: str, placeholder: str = "Enter tags...",
-               separator: str = ",", **kwargs) -> str:
+    def render(
+        self, name: str, placeholder: str = "Enter tags...", separator: str = ",", **kwargs
+    ) -> str:
         """Render tags input widget."""
         field_id = kwargs.get("id", name)
         initial_tags = kwargs.get("value", "")
@@ -434,13 +456,13 @@ class TagsInput:
             "type": "text",
             "id": f"{field_id}_input",
             "placeholder": placeholder,
-            "autocomplete": "off"
+            "autocomplete": "off",
         }
 
         text_input = FormInput()
         text_html = text_input.render(**text_attrs)
 
-        tags_html = f'''
+        tags_html = f"""
         <div class="tags-input" data-name="{name}">
             <div class="tags-container" id="{field_id}_container"></div>
             {text_html}
@@ -523,6 +545,6 @@ class TagsInput:
             }});
             </script>
         </div>
-        '''
+        """
 
         return tags_html

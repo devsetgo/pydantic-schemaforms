@@ -38,8 +38,7 @@ class SelectInput(SelectInputBase):
         # Use template substitution
         try:
             return string.templatelib.Template(self.template).substitute(
-                attributes=attributes_str,
-                options=options_html
+                attributes=attributes_str, options=options_html
             )
         except Exception:
             # Fallback rendering
@@ -107,7 +106,7 @@ class CheckboxInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Render checkbox
-        checkbox_html = f'<input {attributes_str} />'
+        checkbox_html = f"<input {attributes_str} />"
 
         if label:
             field_name = kwargs.get("name", "")
@@ -347,9 +346,7 @@ class ComboBoxInput(SelectInput):
 
         try:
             return string.templatelib.Template(self.template).substitute(
-                input_attributes=input_attributes_str,
-                datalist_id=datalist_id,
-                options=options_html
+                input_attributes=input_attributes_str, datalist_id=datalist_id, options=options_html
             )
         except Exception:
             # Fallback rendering

@@ -42,6 +42,7 @@ def render_form_html(
     # Use Material Design renderer if requested
     if framework == "material":
         from .simple_material_renderer import SimpleMaterialRenderer
+
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **kwargs
@@ -53,7 +54,7 @@ def render_form_html(
         form_attrs = {
             "hx-post": htmx_post_url,
             "hx-target": "#form-response",
-            "hx-swap": "innerHTML"
+            "hx-swap": "innerHTML",
         }
         form_attrs.update(kwargs)
         # Ensure action is set after kwargs update

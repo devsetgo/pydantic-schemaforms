@@ -23,7 +23,7 @@ class TextInput(FormInput):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        return f'<input {attributes_str} />'
+        return f"<input {attributes_str} />"
 
 
 class PasswordInput(FormInput):
@@ -46,7 +46,7 @@ class PasswordInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -70,7 +70,7 @@ class EmailInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -94,16 +94,14 @@ class SearchInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
 class TextArea(FormInput):
     """Multi-line text input area."""
 
-    valid_attributes = FormInput.valid_attributes + [
-        "rows", "cols", "wrap", "resize"
-    ]
+    valid_attributes = FormInput.valid_attributes + ["rows", "cols", "wrap", "resize"]
 
     def get_input_type(self) -> str:
         return "textarea"  # Not a real input type, but used for identification
@@ -125,9 +123,10 @@ class TextArea(FormInput):
 
         # Escape the content value
         from html import escape
+
         escaped_value = escape(str(value)) if value is not None else ""
 
-        return f'<textarea {attributes_str}>{escaped_value}</textarea>'
+        return f"<textarea {attributes_str}>{escaped_value}</textarea>"
 
 
 class URLInput(FormInput):
@@ -154,7 +153,7 @@ class URLInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -182,11 +181,12 @@ class TelInput(FormInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
 # Specialized text inputs with formatting and validation
+
 
 class SSNInput(TextInput):
     """Social Security Number input with formatting."""
@@ -208,7 +208,7 @@ class SSNInput(TextInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -247,7 +247,7 @@ class CreditCardInput(TextInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)
 
 
@@ -269,5 +269,5 @@ class CurrencyInput(TextInput):
         attributes_str = self._build_attributes_string(attrs)
 
         # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
+        template = t"<input {attributes_str} />"
         return render_template(template)

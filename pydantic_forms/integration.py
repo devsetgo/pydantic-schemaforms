@@ -17,8 +17,6 @@ from .validation import create_validator
 # Import version check to ensure compatibility
 
 
-
-
 # Framework integration classes for testing compatibility
 class FlaskIntegration:
     """Flask framework integration."""
@@ -856,11 +854,7 @@ def render_form_page(
     form_html = form_builder.render(data or {}, errors or {})
     validation_script = form_builder.get_validation_script()
 
-    template_data = {
-        "title": title,
-        "form_html": form_html,
-        "validation_script": validation_script
-    }
+    template_data = {"title": title, "form_html": form_html, "validation_script": validation_script}
 
     return FORM_PAGE_TEMPLATE.substitute(**template_data)
 

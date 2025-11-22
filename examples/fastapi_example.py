@@ -318,7 +318,7 @@ async def showcase_post(request: Request, style: str = "bootstrap"):
             "data": result['data'],
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
-            "try_again_url": full_referer_path 
+            "try_again_url": full_referer_path
         })
     else:
         # Re-render form with errors
@@ -487,7 +487,7 @@ async def pets_get(request: Request, style: str = "bootstrap", data: str = None,
             "pets": [
                 {
                     "name": "Tweety",
-                    "species": "bird", 
+                    "species": "bird",
                     "breed": "Canary",
                     "age": 2,
                     "weight": 0.02,
@@ -586,7 +586,7 @@ async def pets_post(request: Request, style: str = "bootstrap"):
     # Get form data asynchronously
     form_data = await request.form()
     form_dict = dict(form_data)
-    
+
     # Handle form submission (async-compatible)
     result = handle_form_submission(PetRegistrationForm, form_dict)
     full_referer_path = create_refer_path(request)
@@ -608,7 +608,7 @@ async def pets_post(request: Request, style: str = "bootstrap"):
         except Exception:
             # Fallback to raw form data if parsing fails
             parsed_form_data = form_dict
-        
+
         # Re-render form with errors AND preserve user data
         form_html = render_form_html(PetRegistrationForm,
                                    framework=style,
@@ -887,9 +887,9 @@ async def general_submit_handler(request: Request):
         form_data = await request.form()
 
         # Get the referring URL (where the form came from)
-        referer = request.headers.get("referer", "")
+        request.headers.get("referer", "")
         full_referer_path = create_refer_path(request)
-        
+
         form_dict = dict(form_data)
         print(form_dict)
         return templates.TemplateResponse("success.html", {

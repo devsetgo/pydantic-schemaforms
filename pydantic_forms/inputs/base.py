@@ -145,7 +145,7 @@ class FormInput(BaseInput):
         icon: Optional[str] = None,
         framework: str = "bootstrap",
         options: Optional[List[Dict[str, Any]]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Render the input with its label, help text, error message, and optional icon.
@@ -170,7 +170,7 @@ class FormInput(BaseInput):
             icon = map_icon_for_framework(icon, framework)
 
         # Get the input HTML - call the render method of the specific input type
-        if hasattr(self, 'render'):
+        if hasattr(self, "render"):
             if options is not None:
                 input_html = self.render(options=options, **kwargs)
             else:
@@ -178,10 +178,10 @@ class FormInput(BaseInput):
         else:
             # Fallback rendering
             attrs = self.validate_attributes(**kwargs)
-            input_type = getattr(self, 'get_input_type', lambda: 'text')()
+            input_type = getattr(self, "get_input_type", lambda: "text")()
             attrs["type"] = input_type
             attributes_str = self._build_attributes_string(attrs)
-            input_html = f'<input {attributes_str} />'
+            input_html = f"<input {attributes_str} />"
 
         # Build the complete field HTML based on framework
         field_parts = []
@@ -190,42 +190,42 @@ class FormInput(BaseInput):
             # Bootstrap styling
             if label:
                 label_html = build_label(
-                    kwargs.get('name', 'field'), 
-                    label, 
-                    kwargs.get('required', False), 
-                    icon, 
-                    framework
+                    kwargs.get("name", "field"),
+                    label,
+                    kwargs.get("required", False),
+                    icon,
+                    framework,
                 )
                 field_parts.append(label_html)
-            
+
             field_parts.append(input_html)
-            
+
             if help_text:
                 field_parts.append(f'<div class="form-text">{escape(help_text)}</div>')
-            
+
             if error:
                 field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
         else:
             # Material Design or other frameworks
             if label:
                 label_html = build_label(
-                    kwargs.get('name', 'field'), 
-                    label, 
-                    kwargs.get('required', False), 
-                    icon, 
-                    framework
+                    kwargs.get("name", "field"),
+                    label,
+                    kwargs.get("required", False),
+                    icon,
+                    framework,
                 )
                 field_parts.append(label_html)
-            
+
             field_parts.append(input_html)
-            
+
             if help_text:
                 field_parts.append(f'<div class="help-text">{escape(help_text)}</div>')
-            
+
             if error:
                 field_parts.append(f'<div class="error-text">{escape(error)}</div>')
 
-        return '\n'.join(field_parts)
+        return "\n".join(field_parts)
 
 
 def build_label(
@@ -403,7 +403,7 @@ class SelectInputBase(BaseInput):
         icon: Optional[str] = None,
         framework: str = "bootstrap",
         options: Optional[List[Dict[str, Any]]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Render the input with its label, help text, error message, and optional icon.
@@ -431,13 +431,13 @@ class SelectInputBase(BaseInput):
             icon = map_icon_for_framework(icon, framework)
 
         # For selection inputs, we need options
-        if hasattr(self, 'render') and options is not None:
+        if hasattr(self, "render") and options is not None:
             input_html = self.render(options=options, **kwargs)
         else:
             # Fallback rendering
             attrs = self.validate_attributes(**kwargs)
             attributes_str = self._build_attributes_string(attrs)
-            input_html = f'<select {attributes_str}></select>'
+            input_html = f"<select {attributes_str}></select>"
 
         # Build the complete field HTML based on framework
         field_parts = []
@@ -447,13 +447,17 @@ class SelectInputBase(BaseInput):
             field_parts.append('<div class="mb-3">')
 
             if label:
-                field_parts.append(f'<label for="{kwargs.get("id", "")}" class="form-label">{escape(label)}</label>')
+                field_parts.append(
+                    f'<label for="{kwargs.get("id", "")}" class="form-label">{escape(label)}</label>'
+                )
 
             if icon:
                 field_parts.append('<div class="input-group">')
-                field_parts.append(f'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>')
+                field_parts.append(
+                    f'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>'
+                )
                 field_parts.append(input_html)
-                field_parts.append('</div>')
+                field_parts.append("</div>")
             else:
                 field_parts.append(input_html)
 
@@ -463,7 +467,7 @@ class SelectInputBase(BaseInput):
             if error:
                 field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
 
-            field_parts.append('</div>')
+            field_parts.append("</div>")
 
         elif framework == "material":
             # Material Design styling
@@ -477,11 +481,13 @@ class SelectInputBase(BaseInput):
             field_parts.append(input_html)
 
             if label:
-                field_parts.append(f'<label class="md-floating-label" for="{kwargs.get("id", "")}">{escape(label)}</label>')
+                field_parts.append(
+                    f'<label class="md-floating-label" for="{kwargs.get("id", "")}">{escape(label)}</label>'
+                )
 
             if icon:
-                field_parts.append('</div>')  # Close md-input-wrapper
-                field_parts.append('</div>')  # Close md-field-with-icon
+                field_parts.append("</div>")  # Close md-input-wrapper
+                field_parts.append("</div>")  # Close md-field-with-icon
 
             if help_text:
                 field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
@@ -489,7 +495,7 @@ class SelectInputBase(BaseInput):
             if error:
                 field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
 
-            field_parts.append('</div>')
+            field_parts.append("</div>")
 
         else:
             # Basic/no framework styling
@@ -499,9 +505,11 @@ class SelectInputBase(BaseInput):
                 field_parts.append(f'<label for="{kwargs.get("id", "")}">{escape(label)}</label>')
 
             if icon:
-                field_parts.append(f'<div class="input-with-icon"><span class="input-icon">{icon}</span>')
+                field_parts.append(
+                    f'<div class="input-with-icon"><span class="input-icon">{icon}</span>'
+                )
                 field_parts.append(input_html)
-                field_parts.append('</div>')
+                field_parts.append("</div>")
             else:
                 field_parts.append(input_html)
 
@@ -511,6 +519,6 @@ class SelectInputBase(BaseInput):
             if error:
                 field_parts.append(f'<div class="error-message">{escape(error)}</div>')
 
-            field_parts.append('</div>')
+            field_parts.append("</div>")
 
-        return '\n'.join(field_parts)
+        return "\n".join(field_parts)

@@ -34,7 +34,7 @@ class DateInput(FormInput):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        return f'<input {attributes_str} />'
+        return f"<input {attributes_str} />"
 
 
 class TimeInput(FormInput):
@@ -66,7 +66,7 @@ class TimeInput(FormInput):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        return f'<input {attributes_str} />'
+        return f"<input {attributes_str} />"
 
 
 class DatetimeInput(FormInput):
@@ -100,8 +100,8 @@ class DatetimeInput(FormInput):
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
-        
-        datetime_html = f'<input {attributes_str} />'
+
+        datetime_html = f"<input {attributes_str} />"
 
         # Add "Set Now" button if requested
         if with_set_now_button:
@@ -168,7 +168,7 @@ class MonthInput(FormInput):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        return f'<input {attributes_str} />'
+        return f"<input {attributes_str} />"
 
 
 class WeekInput(FormInput):
@@ -197,7 +197,7 @@ class WeekInput(FormInput):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        return f'<input {attributes_str} />'
+        return f"<input {attributes_str} />"
 
 
 class DateRangeInput:

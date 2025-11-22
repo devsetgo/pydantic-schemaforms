@@ -3,8 +3,8 @@
 Test script to debug validation issues with pet weight field.
 """
 
-import sys
 import os
+import sys
 
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -14,7 +14,7 @@ from examples.shared_models import PetRegistrationForm, handle_form_submission
 # Test the problematic form data you provided
 form_data = {
     "owner_name": "Sarah Thompson",
-    "email": "sarah.thompson@email.com", 
+    "email": "sarah.thompson@email.com",
     "address": "5 Marine Parade, ",
     "emergency_contact": "Mike Thompson - (555) 123-4567",
     "pets[0].name": "Tweety",
@@ -40,7 +40,7 @@ print("Testing validation...")
 # Test the form submission handler
 result = handle_form_submission(PetRegistrationForm, form_data)
 
-print(f"\nValidation result:")
+print("\nValidation result:")
 print(f"  Success: {result['success']}")
 
 if result['success']:

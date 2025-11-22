@@ -112,7 +112,8 @@ class FormTemplates:
     """
 
     # Input Templates
-    TEXT_INPUT = TemplateString("""
+    TEXT_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <input type="text"
@@ -129,9 +130,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    EMAIL_INPUT = TemplateString("""
+    EMAIL_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <input type="email"
@@ -148,9 +151,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    PASSWORD_INPUT = TemplateString("""
+    PASSWORD_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <div class="input-group">
@@ -172,9 +177,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    NUMBER_INPUT = TemplateString("""
+    NUMBER_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <input type="number"
@@ -194,9 +201,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    SELECT_INPUT = TemplateString("""
+    SELECT_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <select id="${id}"
@@ -212,9 +221,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    TEXTAREA_INPUT = TemplateString("""
+    TEXTAREA_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <textarea id="${id}"
@@ -231,9 +242,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    CHECKBOX_INPUT = TemplateString("""
+    CHECKBOX_INPUT = TemplateString(
+        """
 <div class="form-check ${wrapper_class}" style="${wrapper_style}">
     <input type="checkbox"
            id="${id}"
@@ -251,9 +264,11 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
-    RADIO_INPUT = TemplateString("""
+    RADIO_INPUT = TemplateString(
+        """
 <div class="form-group ${wrapper_class}" style="${wrapper_style}">
     ${label}
     <div class="radio-group">
@@ -262,10 +277,12 @@ class FormTemplates:
     ${help_text}
     ${error_message}
 </div>
-""")
+"""
+    )
 
     # Layout Templates
-    FORM_WRAPPER = TemplateString("""
+    FORM_WRAPPER = TemplateString(
+        """
 <form id="${form_id}"
       class="pydantic-form ${form_class}"
       style="${form_style}"
@@ -276,61 +293,79 @@ class FormTemplates:
     ${form_content}
     ${submit_buttons}
 </form>
-""")
+"""
+    )
 
-    VERTICAL_LAYOUT = TemplateString("""
+    VERTICAL_LAYOUT = TemplateString(
+        """
 <div class="vertical-layout ${layout_class}" style="${layout_style}">
     ${sections}
 </div>
-""")
+"""
+    )
 
-    HORIZONTAL_LAYOUT = TemplateString("""
+    HORIZONTAL_LAYOUT = TemplateString(
+        """
 <div class="horizontal-layout row ${layout_class}" style="${layout_style}">
     ${sections}
 </div>
-""")
+"""
+    )
 
-    SECTION = TemplateString("""
+    SECTION = TemplateString(
+        """
 <div class="form-section ${section_class}" style="${section_style}">
     ${section_title}
     ${section_content}
 </div>
-""")
+"""
+    )
 
     # Helper Templates
-    LABEL = TemplateString("""
+    LABEL = TemplateString(
+        """
 <label for="${for_id}" class="form-label ${label_class}" style="${label_style}">
     ${icon}${label_text}${required_indicator}
 </label>
-""")
+"""
+    )
 
-    HELP_TEXT = TemplateString("""
+    HELP_TEXT = TemplateString(
+        """
 <div class="form-text ${help_class}" style="${help_style}">
     ${help_content}
 </div>
-""")
+"""
+    )
 
-    ERROR_MESSAGE = TemplateString("""
+    ERROR_MESSAGE = TemplateString(
+        """
 <div class="invalid-feedback ${error_class}" style="${error_style}">
     ${error_content}
 </div>
-""")
+"""
+    )
 
-    ICON = TemplateString("""
+    ICON = TemplateString(
+        """
 <i class="bi bi-${icon_name} ${icon_class}" style="${icon_style}"></i>
-""")
+"""
+    )
 
     # Form Control Groups
-    INPUT_GROUP = TemplateString("""
+    INPUT_GROUP = TemplateString(
+        """
 <div class="input-group ${group_class}" style="${group_style}">
     ${prepend}
     ${input_element}
     ${append}
 </div>
-""")
+"""
+    )
 
     # Complete Page Templates
-    FORM_PAGE = TemplateString("""
+    FORM_PAGE = TemplateString(
+        """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -350,7 +385,8 @@ class FormTemplates:
     ${custom_scripts}
 </body>
 </html>
-""")
+"""
+    )
 
 
 def render_template(template: TemplateString, **kwargs: Any) -> str:
@@ -396,22 +432,19 @@ def validate_template_variables(template: TemplateString, **kwargs: Any) -> Dict
 
     # Extract variable names from template
     template_vars = set()
-    for match in re.finditer(r'\$\{(\w+)\}', template.template_str):
+    for match in re.finditer(r"\$\{(\w+)\}", template.template_str):
         template_vars.add(match.group(1))
 
     # Check which variables are satisfied
     provided_vars = set(kwargs.keys())
-    return {
-        var: var in provided_vars
-        for var in template_vars
-    }
+    return {var: var in provided_vars for var in template_vars}
 
 
 # Performance utilities
 def precompile_templates():
     """Precompile all form templates for optimal performance."""
     for attr_name in dir(FormTemplates):
-        if not attr_name.startswith('_'):
+        if not attr_name.startswith("_"):
             template = getattr(FormTemplates, attr_name)
             if isinstance(template, TemplateString):
                 # Trigger compilation by accessing _compile_template

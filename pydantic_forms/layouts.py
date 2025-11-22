@@ -44,7 +44,7 @@ class BaseLayout:
                 "content": self.content,
                 "class_": " ".join(css_classes),
                 "style": "; ".join(styles),
-                **attrs
+                **attrs,
             }
             return self.template_renderer.substitute(**template_data)
         except Exception:
@@ -399,7 +399,7 @@ function toggleAccordion(sectionId, buttonElement) {
         template_data = {
             "class_": css_classes,
             "style": styles,
-            "accordion_sections": "\n".join(accordion_sections)
+            "accordion_sections": "\n".join(accordion_sections),
         }
 
         return self.template_renderer.substitute(**template_data)
