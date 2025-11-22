@@ -18,7 +18,7 @@ classifiers = [
 	"Programming Language :: Python :: 3.14",
 	"Framework :: FastAPI",
 	"Framework :: Flask",
-	"Topic :: Internet :: WWW/HTTP :: Dynamic Content :: Forms",
+	"Topic :: Internet :: WWW/HTTP :: Dynamic Content",
 	"Operating System :: POSIX :: Linux",
 	"Operating System :: MacOS :: MacOS X",
 	"Operating System :: Microsoft :: Windows",
