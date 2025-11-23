@@ -20,6 +20,14 @@ _Date: 2025-11-23_
   The duplicate class definitions were collapsed into a single abstract `BaseInput`, and all input subclasses now inherit consistent attribute validation and rendering helpers.  
   _Files: `pydantic_forms/inputs/base.py` and consumers_
 
+- **UI metadata ignored for select/multiselect inputs** _(Resolved – 2025-11-23)_  
+  `ui_options["choices"]` and enum values were previously dropped, so select fields rendered warning comments instead of dropdowns. `EnhancedFormRenderer` now normalizes tuples/dicts into option maps, propagates attrs such as `multiple`, and the framework layer exposes `MultiSelectInput`, restoring `<select>` output.  
+  _Files: `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/frameworks.py`_
+
+- **File input preview template crashes rendering** _(Resolved – 2025-11-23)_  
+  The `FileInput` preview JavaScript embedded template-literal placeholders inside an f-string, causing `NameError: name 'file' is not defined` and suppressing `<input type="file">`. Escaping the `${...}` placeholders keeps the JS intact so the specialized-field tests pass again.  
+  _Files: `pydantic_forms/inputs/specialized_inputs.py`_
+
 - **Async/layout render duplication increases drift risk** _(Resolved – 2025-11-23)_  
   A single canonical `render_form_html` in `enhanced_renderer.py` now powers all entry points. The legacy wrapper adds HTMX defaults before delegating, and the async helper offloads the canonical function to a pool, eliminating divergent logic paths.  
   _Files: `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/render_form.py`
@@ -47,6 +55,7 @@ _Date: 2025-11-23_
 ## Testing & Tooling Gaps
 
 - `pytest` is listed in `requirements.txt` but not installed in the dev container; running `pytest` currently fails with `command not found`. Provide a reproducible test command (e.g., `pip install -r requirements.txt && pytest`) or add instructions to the makefile.
+- Targeted renderer coverage exists (`tests/test_enhanced_renderer.py`) and now passes, but there is still no CI job or documented workflow confirming the full suite (`pytest tests`). Add a recipe (e.g., `make test`) so contributors can run the same checks locally.
 - No regression tests cover the async renderer or model list component. After fixing the issues above, add tests that exercise keyword argument passing and concurrent renders to lock in expected behavior.
 
 ## Quick Wins / Follow-Up Tasks
@@ -55,7 +64,9 @@ _Date: 2025-11-23_
 2. ✅ _Done_ — Async rendering delegates through `functools.partial`; tests still needed.
 3. ✅ _Done_ — `_RenderContext` replaces mutable renderer state.
 4. ✅ _Done_ — Unified `BaseInput` implementation.
-5. ⏳ _Open_ — Still multiple layout stacks; consolidate to reduce maintenance.
-6. ⏳ _Open_ — Add caching for `model_json_schema()` and measure perf gains.
+5. ✅ _Done_ — Select/multiselect widgets honor `ui_options` metadata and multi-value attrs, preventing regressions in renderer coverage.
+6. ✅ _Done_ — File input preview template no longer throws `NameError`, so specialized inputs render in Bootstrap.
+7. ⏳ _Open_ — Still multiple layout stacks; consolidate to reduce maintenance.
+8. ⏳ _Open_ — Add caching for `model_json_schema()` and measure perf gains.
 
 These changes will reduce runtime bugs, lower maintenance overhead, and make it easier to add additional frameworks or inputs without duplicating logic across the codebase.
