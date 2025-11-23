@@ -1,59 +1,9 @@
-"""
-Advanced layout system for pydantic-forms using Python 3.14 template strings.
-Provides horizontal, vertical, grid, tab, and accordion layouts.
+"""Advanced layout system built on the shared BaseLayout abstraction."""
 
-Requires: Python 3.14+ (no backward compatibility)
-"""
-
-import string.templatelib
 from html import escape
 from typing import Any, Dict, List, Optional, Union
 
-
-class BaseLayout:
-    """Base class for all layout components."""
-
-    template: str = ""
-
-    def __init__(self, content: Union[str, List[str]] = "", **kwargs):
-        self.content = content if isinstance(content, str) else "\n".join(content)
-        self.attributes = kwargs
-        self.template_renderer = string.templatelib.Template(self.template)
-
-    def render(self, **kwargs) -> str:
-        """Render the layout component."""
-        # Merge instance attributes with render-time kwargs
-        attrs = {**self.attributes, **kwargs}
-
-        # Build CSS class string
-        css_classes = []
-        if "class_" in attrs:
-            css_classes.append(attrs["class_"])
-        if "css_class" in attrs:
-            css_classes.append(attrs["css_class"])
-
-        # Build style string
-        styles = []
-        if "style" in attrs:
-            styles.append(attrs["style"])
-        if "css_style" in attrs:
-            styles.append(attrs["css_style"])
-
-        try:
-            template_data = {
-                "content": self.content,
-                "class_": " ".join(css_classes),
-                "style": "; ".join(styles),
-                **attrs,
-            }
-            return self.template_renderer.substitute(**template_data)
-        except Exception:
-            # Fallback rendering
-            return self._fallback_render(attrs)
-
-    def _fallback_render(self, attrs: Dict[str, Any]) -> str:
-        """Fallback rendering if template interpolation fails."""
-        return f"<div>{self.content}</div>"
+from .layout_base import BaseLayout
 
 
 class HorizontalLayout(BaseLayout):
@@ -157,11 +107,10 @@ class ResponsiveGridLayout(GridLayout):
         super().__init__(content, columns=columns, gap=gap, **kwargs)
 
 
-class TabLayout:
+class TabLayout(BaseLayout):
     """Tab layout with JavaScript interactivity."""
 
-    template = string.templatelib.Template(
-        """
+    template = """
 <div class="tab-layout ${class_}" style="${style}">
     <div class="tab-navigation" role="tablist">
         ${tab_buttons}
@@ -227,31 +176,21 @@ function switchTab(tabId, buttonElement) {
 }
 </style>
     """
-    )
 
-    def __init__(self, tabs: List[Dict[str, str]], **kwargs):
-        """
-        Initialize tab layout.
-
-        Args:
-            tabs: List of dicts with 'title' and 'content' keys
-        """
+    def __init__(self, tabs: List[Dict[str, str]], **kwargs: Any) -> None:
+        super().__init__(content="", **kwargs)
         self.tabs = tabs
-        self.attributes = kwargs
 
-    def render(self, **kwargs) -> str:
-        """Render tab layout with navigation and panels."""
-        # Generate unique IDs for tabs
+    def render(self, **kwargs: Any) -> str:
         tab_ids = [f"tab-{i}" for i in range(len(self.tabs))]
 
-        # Build tab buttons
         tab_buttons = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
-            is_active = i == 0  # First tab is active by default
+            is_active = i == 0
             active_class = " active" if is_active else ""
             aria_selected = "true" if is_active else "false"
-
-            button = f"""
+            tab_buttons.append(
+                f"""
             <button class="tab-button{active_class}"
                     role="tab"
                     aria-selected="{aria_selected}"
@@ -260,17 +199,16 @@ function switchTab(tabId, buttonElement) {
                 {escape(tab['title'])}
             </button>
             """
-            tab_buttons.append(button)
+            )
 
-        # Build tab panels
         tab_panels = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
             display_style = "block" if is_active else "none"
             aria_hidden = "false" if is_active else "true"
             active_class = " active" if is_active else ""
-
-            panel = f"""
+            tab_panels.append(
+                f"""
             <div id="{tab_id}"
                  class="tab-panel{active_class}"
                  role="tabpanel"
@@ -279,28 +217,19 @@ function switchTab(tabId, buttonElement) {
                 {tab['content']}
             </div>
             """
-            tab_panels.append(panel)
+            )
 
-        # Merge attributes
-        attrs = {**self.attributes, **kwargs}
-        css_classes = attrs.get("class_", "")
-        styles = attrs.get("style", "")
-
-        template_data = {
-            "class_": css_classes,
-            "style": styles,
-            "tab_buttons": "\n".join(tab_buttons),
-            "tab_panels": "\n".join(tab_panels),
-        }
-
-        return self.template_renderer.substitute(**template_data)
+        return super().render(
+            tab_buttons="\n".join(tab_buttons),
+            tab_panels="\n".join(tab_panels),
+            **kwargs,
+        )
 
 
-class AccordionLayout:
+class AccordionLayout(BaseLayout):
     """Accordion layout with collapsible sections."""
 
-    template = string.templatelib.Template(
-        """
+    template = """
 <div class="accordion-layout ${class_}" style="${style}">
     ${accordion_sections}
 </div>
@@ -349,32 +278,21 @@ function toggleAccordion(sectionId, buttonElement) {
 }
 </style>
     """
-    )
 
-    def __init__(self, sections: List[Dict[str, str]], **kwargs):
-        """
-        Initialize accordion layout.
-
-        Args:
-            sections: List of dicts with 'title' and 'content' keys
-        """
+    def __init__(self, sections: List[Dict[str, str]], **kwargs: Any) -> None:
+        super().__init__(content="", **kwargs)
         self.sections = sections
-        self.attributes = kwargs
 
-    def render(self, **kwargs) -> str:
-        """Render accordion layout with collapsible sections."""
-        # Generate unique IDs for sections
+    def render(self, **kwargs: Any) -> str:
         section_ids = [f"accordion-{i}" for i in range(len(self.sections))]
-
-        # Build accordion sections
         accordion_sections = []
         for _i, (section_id, section) in enumerate(zip(section_ids, self.sections, strict=False)):
             is_expanded = section.get("expanded", False)
             display_style = "block" if is_expanded else "none"
             aria_expanded = "true" if is_expanded else "false"
             expanded_class = " expanded" if is_expanded else ""
-
-            section_html = f"""
+            accordion_sections.append(
+                f"""
             <div class="accordion-section">
                 <button class="accordion-header{expanded_class}"
                         aria-expanded="{aria_expanded}"
@@ -389,27 +307,18 @@ function toggleAccordion(sectionId, buttonElement) {
                 </div>
             </div>
             """
-            accordion_sections.append(section_html)
+            )
 
-        # Merge attributes
-        attrs = {**self.attributes, **kwargs}
-        css_classes = attrs.get("class_", "")
-        styles = attrs.get("style", "")
-
-        template_data = {
-            "class_": css_classes,
-            "style": styles,
-            "accordion_sections": "\n".join(accordion_sections),
-        }
-
-        return self.template_renderer.substitute(**template_data)
+        return super().render(
+            accordion_sections="\n".join(accordion_sections),
+            **kwargs,
+        )
 
 
-class ModalLayout:
+class ModalLayout(BaseLayout):
     """Modal dialog layout."""
 
-    template = string.templatelib.Template(
-        """
+    template = """
 <div class="modal-overlay ${class_}" id="${modal_id}" style="display: none; ${style}">
     <div class="modal-dialog" role="dialog" aria-labelledby="${modal_id}-title">
         <div class="modal-content">
@@ -512,31 +421,16 @@ document.addEventListener('keydown', function(e) {
 }
 </style>
     """
-    )
 
-    def __init__(self, modal_id: str, title: str, content: str, footer: str = "", **kwargs):
+    def __init__(self, modal_id: str, title: str, content: str, footer: str = "", **kwargs: Any) -> None:
+        default_footer = footer or f"<button onclick=\"closeModal('{modal_id}')\">Close</button>"
+        super().__init__(content=content, modal_id=modal_id, title=escape(title), footer=default_footer, **kwargs)
         self.modal_id = modal_id
         self.title = title
-        self.content = content
-        self.footer = footer or f"<button onclick=\"closeModal('{modal_id}')\">Close</button>"
-        self.attributes = kwargs
+        self.footer = default_footer
 
-    def render(self, **kwargs) -> str:
-        """Render modal layout."""
-        attrs = {**self.attributes, **kwargs}
-        css_classes = attrs.get("class_", "")
-        styles = attrs.get("style", "")
-
-        template_data = {
-            "modal_id": self.modal_id,
-            "title": escape(self.title),
-            "content": self.content,
-            "footer": self.footer,
-            "class_": css_classes,
-            "style": styles,
-        }
-
-        return self.template_renderer.substitute(**template_data)
+    def render(self, **kwargs: Any) -> str:
+        return super().render(**kwargs)
 
 
 class CardLayout(BaseLayout):

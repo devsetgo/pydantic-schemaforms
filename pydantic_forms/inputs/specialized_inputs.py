@@ -63,7 +63,7 @@ class FileInput(FileInputBase):
                                 fileItem.style.cssText = 'margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 3px;';
 
                                 // Use file info to create content  # noqa: F821
-                                let content = `<strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;  # noqa: F821
+                                let content = `<strong>${{file.name}}</strong> (${{(file.size / 1024).toFixed(1)}} KB)`;
 
                                 // Show image preview for image files
                                 if (file.type.startsWith('image/')) {{  # noqa: F821

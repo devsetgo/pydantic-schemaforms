@@ -32,18 +32,17 @@ def render_template(template_obj) -> str:
         return str(template_obj)
 
 
-class BaseInput:
-    """Base class for all form inputs."""
+class BaseInput(ABC):
+    """Common attribute handling + rendering contract for all input widgets."""
 
-    # Basic HTML attributes that are valid for all input types
-    valid_attributes = [
-        "id",
+    valid_attributes: List[str] = [
         "name",
+        "id",
         "class",
         "style",
         "title",
-        "lang",
         "dir",
+        "lang",
         "tabindex",
         "accesskey",
         "contenteditable",
@@ -61,42 +60,61 @@ class BaseInput:
         "aria-haspopup",
         "aria-invalid",
         "aria-required",
-        "data-*",  # Allow all data attributes
     ]
 
-    def validate_attributes(self, **kwargs) -> Dict[str, Any]:
-        """Validate and sanitize input attributes."""
-        validated = {}
+    @abstractmethod
+    def get_input_type(self) -> str:
+        """Return the HTML input type for concrete input classes."""
 
-        for key, value in kwargs.items():
-            # Allow data-* attributes
-            if key.startswith("data-") or key in self.valid_attributes:
-                # Handle boolean attributes
-                if isinstance(value, bool):
-                    if value:
-                        validated[key] = key  # HTML boolean attribute style
-                else:
-                    validated[key] = escape(str(value))
+    def validate_attributes(self, **kwargs) -> Dict[str, Any]:
+        """Validate and sanitize input attributes consistently across subclasses."""
+        validated: Dict[str, Any] = {}
+
+        name = kwargs.get("name")
+        if name:
+            validated["name"] = escape(str(name))
+
+        element_id = kwargs.get("id", name)
+        if element_id:
+            validated["id"] = escape(str(element_id))
+
+        for attr, value in kwargs.items():
+            if attr in {"name", "id"}:
+                continue
+
+            if attr in self.valid_attributes or attr.startswith("data-") or attr.startswith("aria-"):
+                formatted = self._format_attribute_value(attr, value)
+                if formatted:
+                    validated[attr] = formatted
             else:
-                # For now, allow unknown attributes with a warning
-                validated[key] = escape(str(value))
+                if value is not None:
+                    validated[attr] = escape(str(value))
 
         return validated
 
-    def _build_attributes_string(self, attrs: Dict[str, Any]) -> str:
-        """Build HTML attributes string from dictionary."""
-        if not attrs:
+    def _format_attribute_value(self, attr: str, value: Any) -> str:
+        if isinstance(value, bool):
+            return attr if value else ""
+        if value is None:
             return ""
+        if isinstance(value, (list, tuple, set)):
+            return " ".join(str(v) for v in value if v is not None)
+        return str(value)
 
-        parts = []
+    def _build_attributes_string(self, attrs: Dict[str, Any]) -> str:
+        parts: List[str] = []
         for key, value in attrs.items():
             if isinstance(value, bool):
                 if value:
                     parts.append(key)
-            elif value is not None:
-                parts.append(f'{key}="{value}"')
-
+            elif value not in (None, ""):
+                escaped_value = str(value).replace('"', "&quot;")
+                parts.append(f'{key}="{escaped_value}"')
         return " ".join(parts)
+
+    @abstractmethod
+    def render(self, **kwargs) -> str:
+        """Concrete inputs must implement HTML rendering."""
 
 
 class FormInput(BaseInput):
@@ -264,91 +282,6 @@ def build_help_text(field_name: str, help_text: str) -> str:
     """Build help text element."""
     return f'<div id="{escape(field_name)}-help" class="help-text">{escape(help_text)}</div>'
 
-
-class BaseInput(ABC):
-    """
-    Abstract base class for all form inputs.
-    Provides common functionality for HTML attribute handling and template rendering.
-    """
-
-    # Valid HTML attributes for this input type
-    valid_attributes: List[str] = [
-        "name",
-        "id",
-        "class",
-        "style",
-        "title",
-        "dir",
-        "lang",
-        "tabindex",
-        "accesskey",
-        "contenteditable",
-        "draggable",
-        "hidden",
-        "spellcheck",
-        "translate",
-    ]
-
-    @abstractmethod
-    def get_input_type(self) -> str:
-        """Return the HTML input type for this input."""
-        pass
-
-    def validate_attributes(self, **kwargs) -> Dict[str, Any]:
-        """
-        Validate and filter attributes for this input type.
-        Removes invalid attributes and formats values properly.
-        """
-        validated = {}
-
-        # Always include basic required attributes
-        validated["name"] = kwargs.get("name", "")
-        validated["id"] = kwargs.get("id", kwargs.get("name", ""))
-
-        # Process all provided attributes
-        for attr, value in kwargs.items():
-            if (
-                attr in self.valid_attributes
-                or attr.startswith("data-")
-                or attr.startswith("aria-")
-            ):
-                if value is not None and value != "":
-                    validated[attr] = self._format_attribute_value(attr, value)
-
-        return validated
-
-    def _format_attribute_value(self, attr: str, value: Any) -> str:
-        """Format attribute values for HTML output."""
-        if isinstance(value, bool):
-            # Boolean attributes in HTML5
-            return attr if value else ""
-        elif isinstance(value, (list, tuple)):
-            return " ".join(str(v) for v in value)
-        else:
-            return str(value)
-
-    def _build_attributes_string(self, attrs: Dict[str, Any]) -> str:
-        """Build HTML attributes string from dictionary."""
-        attr_parts = []
-
-        for attr, value in attrs.items():
-            if value and value != "":
-                if isinstance(value, bool) and value:
-                    attr_parts.append(attr)
-                else:
-                    # Escape quotes in attribute values
-                    escaped_value = str(value).replace('"', "&quot;")
-                    attr_parts.append(f'{attr}="{escaped_value}"')
-
-        return " ".join(attr_parts)
-
-    @abstractmethod
-    def render(self, **kwargs) -> str:
-        """
-        Render the input as HTML string.
-        Must be implemented by subclasses using Python 3.14 template strings.
-        """
-        pass
 
 
 class NumericInput(FormInput):

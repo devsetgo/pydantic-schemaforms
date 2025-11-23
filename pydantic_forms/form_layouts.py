@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Type
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
+from .layout_base import BaseLayout as SharedBaseLayout
 from .schema_form import FormModel, ValidationResult
 
 
@@ -131,12 +132,11 @@ class FormDesign:
         return framework_js.get(self.ui_theme, "")
 
 
-class BaseLayout(ABC):
-    """
-    Base class for all layout components in the composition system.
-    """
+class FormLayoutBase(SharedBaseLayout, ABC):
+    """Base class for layout components that orchestrate FormModel instances."""
 
     def __init__(self, form_config: Optional[SectionDesign] = None):
+        super().__init__(content="")
         self.form_config = form_config
         self._forms: List[FormModel] = []
         self._rendered_content: Optional[str] = None
@@ -145,12 +145,8 @@ class BaseLayout(ABC):
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler
     ) -> core_schema.CoreSchema:
-        """
-        Pydantic core schema that allows layout classes to be used as field types.
-        This approach treats layouts as dictionaries for JSON schema generation.
-        """
-        # Return a dictionary schema that can be JSON serialized
-        # This allows the form renderer to work with layout fields
+        """Allow layout classes to be used as field types within FormModel schemas."""
+
         return core_schema.dict_schema()
 
     @abstractmethod
@@ -160,19 +156,16 @@ class BaseLayout(ABC):
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
     ) -> str:
-        """Render the layout with its contained forms."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def validate(
         self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
     ) -> ValidationResult:
-        """Validate the layout's forms and return a ValidationResult."""
-        pass
+        raise NotImplementedError
 
     def _get_forms(self) -> List[Type[FormModel]]:
-        """Get all FormModel classes from the layout's attributes."""
-        forms = []
+        forms: List[Type[FormModel]] = []
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
             if isinstance(attr, type) and issubclass(attr, FormModel) and attr is not FormModel:
@@ -180,7 +173,11 @@ class BaseLayout(ABC):
         return forms
 
 
-class VerticalLayout(BaseLayout):
+# Backwards compatibility: historical name exported from this module
+BaseLayout = FormLayoutBase
+
+
+class VerticalLayout(FormLayoutBase):
     """
     Vertical layout that stacks forms vertically.
     Matches the design_idea.py vision.
@@ -251,7 +248,7 @@ class VerticalLayout(BaseLayout):
         )
 
 
-class HorizontalLayout(BaseLayout):
+class HorizontalLayout(FormLayoutBase):
     """
     Horizontal layout that arranges forms side by side.
     Matches the design_idea.py vision.
@@ -337,7 +334,7 @@ class HorizontalLayout(BaseLayout):
         )
 
 
-class TabbedLayout(BaseLayout):
+class TabbedLayout(FormLayoutBase):
     """
     Tabbed layout that organizes layouts/forms into tabs.
     Matches the design_idea.py vision where tab order is determined by declaration order.
@@ -503,7 +500,7 @@ class TabbedLayout(BaseLayout):
 </html>"""
 
 
-class ListLayout(BaseLayout):
+class ListLayout(FormLayoutBase):
     """
     Layout that renders a list of repeatable form sections with add/remove functionality.
     Each item in the list is a complete form instance that can be dynamically added or removed.

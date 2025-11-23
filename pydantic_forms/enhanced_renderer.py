@@ -4,35 +4,15 @@ Supports UI element specifications similar to React JSON Schema Forms
 """
 
 import asyncio
+from functools import partial
 from html import escape
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from .icon_mapping import map_icon_for_framework
-from .inputs import (
-    CheckboxInput,
-    ColorInput,
-    DateInput,
-    DatetimeInput,
-    EmailInput,
-    FileInput,
-    HiddenInput,
-    MonthInput,
-    NumberInput,
-    PasswordInput,
-    RadioGroup,
-    RangeInput,
-    SearchInput,
-    SelectInput,
-    TelInput,
-    TextArea,
-    TextInput,
-    TimeInput,
-    URLInput,
-    WeekInput,
-    build_error_message,
-    build_help_text,
-    build_label,
-)
+from .inputs import HiddenInput, build_error_message, build_help_text, build_label
+from .rendering.context import RenderContext
+from .rendering.frameworks import get_framework_config, get_input_component
+from .rendering.layout_engine import LayoutEngine, get_nested_form_data
 from .schema_form import FormModel
 
 
@@ -53,81 +33,11 @@ class EnhancedFormRenderer:
     Supports the same UI element specifications as React JSON Schema Forms.
     """
 
-    # Framework configurations
-    FRAMEWORKS = {
-        "bootstrap": {
-            "css_url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
-            "js_url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
-            "form_class": "needs-validation",
-            "input_class": "form-control",
-            "select_class": "form-select",
-            "checkbox_class": "form-check-input",
-            "radio_class": "form-check-input",
-            "button_class": "btn btn-primary",
-            "error_class": "invalid-feedback",
-            "label_class": "form-label",
-            "help_class": "form-text text-muted",
-            "field_wrapper_class": "mb-3",
-        },
-        "material": {
-            "css_url": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/css/materialize.min.css",
-            "js_url": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/js/materialize.min.js",
-            "form_class": "col s12",
-            "input_class": "validate",
-            "select_class": "browser-default",
-            "checkbox_class": "filled-in",
-            "radio_class": "",
-            "button_class": "btn waves-effect waves-light",
-            "error_class": "helper-text red-text",
-            "label_class": "",
-            "help_class": "helper-text",
-            "field_wrapper_class": "input-field col s12",
-        },
-        "none": {
-            "css_url": "",
-            "js_url": "",
-            "form_class": "",
-            "input_class": "",
-            "select_class": "",
-            "checkbox_class": "",
-            "radio_class": "",
-            "button_class": "",
-            "error_class": "error",
-            "label_class": "",
-            "help_class": "help-text",
-            "field_wrapper_class": "field",
-        },
-    }
-
-    # UI element to input component mapping
-    UI_ELEMENT_MAPPING = {
-        "text": TextInput,
-        "password": PasswordInput,
-        "email": EmailInput,
-        "number": NumberInput,
-        "range": RangeInput,
-        "checkbox": CheckboxInput,
-        "select": SelectInput,
-        "radio": RadioGroup,
-        "textarea": TextArea,
-        "date": DateInput,
-        "time": TimeInput,
-        "datetime": DatetimeInput,
-        "datetime-local": DatetimeInput,
-        "month": MonthInput,
-        "week": WeekInput,
-        "file": FileInput,
-        "color": ColorInput,
-        "hidden": HiddenInput,
-        "search": SearchInput,
-        "tel": TelInput,
-        "url": URLInput,
-    }
-
     def __init__(self, framework: str = "bootstrap"):
         """Initialize renderer with specified framework."""
         self.framework = framework
-        self.config = self.FRAMEWORKS.get(framework, self.FRAMEWORKS["bootstrap"])
+        self.config = get_framework_config(framework)
+        self._layout_engine = LayoutEngine(self)
 
     def render_form_from_model(
         self,
@@ -167,6 +77,7 @@ class EnhancedFormRenderer:
 
         # Store schema definitions for model_list fields
         self._schema_defs = schema.get("$defs", {})
+        context = RenderContext(form_data=data, schema_defs=self._schema_defs)
 
         # Handle SchemaFormValidationError format
         if isinstance(errors, dict) and "errors" in errors:
@@ -203,7 +114,10 @@ class EnhancedFormRenderer:
             if not ui_info:
                 ui_info = field_schema
             ui_element = (
-                ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+                ui_info.get("element")
+                or ui_info.get("ui_element")
+                or ui_info.get("widget")
+                or ui_info.get("input_type")
             )
 
             if ui_element == "layout":
@@ -215,13 +129,21 @@ class EnhancedFormRenderer:
         if len(layout_fields) > 1 and len(non_layout_fields) == 0:
             # Render layout fields as tabs
             form_parts.extend(
-                self._render_layout_fields_as_tabs(layout_fields, data, errors, required_fields)
+                self._render_layout_fields_as_tabs(
+                    layout_fields,
+                    data,
+                    errors,
+                    required_fields,
+                    context,
+                )
             )
         elif layout == "tabbed":
-            form_parts.extend(self._render_tabbed_layout(fields, data, errors, required_fields))
+            form_parts.extend(
+                self._render_tabbed_layout(fields, data, errors, required_fields, context)
+            )
         elif layout == "side-by-side":
             form_parts.extend(
-                self._render_side_by_side_layout(fields, data, errors, required_fields)
+                self._render_side_by_side_layout(fields, data, errors, required_fields, context)
             )
         else:
             # Render each field with appropriate layout
@@ -232,6 +154,7 @@ class EnhancedFormRenderer:
                     data.get(field_name),
                     errors.get(field_name),
                     required_fields,
+                    context,
                     layout,
                     errors,  # Pass full errors dictionary
                 )
@@ -258,7 +181,10 @@ class EnhancedFormRenderer:
         for _field_name, field_schema in properties.items():
             ui_info = field_schema.get("ui", {}) or field_schema
             ui_element = (
-                ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+                ui_info.get("element")
+                or ui_info.get("ui_element")
+                or ui_info.get("widget")
+                or ui_info.get("input_type")
             )
             if ui_element == "model_list":
                 return True
@@ -295,6 +221,7 @@ class EnhancedFormRenderer:
 
         # Store schema definitions for model_list fields
         self._schema_defs = schema.get("$defs", {})
+        context = RenderContext(form_data=data, schema_defs=self._schema_defs)
 
         # Handle SchemaFormValidationError format
         if isinstance(errors, dict) and "errors" in errors:
@@ -315,6 +242,7 @@ class EnhancedFormRenderer:
                 data.get(field_name),
                 errors.get(field_name),
                 required_fields,
+                context,
                 layout,
                 errors,  # Pass full errors dictionary
             )
@@ -370,11 +298,18 @@ class EnhancedFormRenderer:
         field_schema: Dict[str, Any],
         value: Any = None,
         error: Optional[str] = None,
-        required_fields: List[str] = None,
+        required_fields: Optional[List[str]] = None,
+        context: Optional[RenderContext] = None,
         layout: str = "vertical",
         all_errors: Optional[Dict[str, str]] = None,
     ) -> str:
         """Render a single form field with its UI element."""
+        if context is None:
+            context = RenderContext(
+                form_data=getattr(self, "_current_form_data", {}) or {},
+                schema_defs=getattr(self, "_schema_defs", {}) or {},
+            )
+
         # Check for UI info in nested 'ui' key or directly in field schema
         ui_info = field_schema.get("ui", {})
         if not ui_info:
@@ -386,13 +321,25 @@ class EnhancedFormRenderer:
             return self._render_hidden_field(field_name, field_schema, value)
 
         # Determine UI element type - check multiple possible keys
-        ui_element = ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+        ui_element = (
+            ui_info.get("element")
+            or ui_info.get("ui_element")
+            or ui_info.get("widget")
+            or ui_info.get("input_type")
+        )
         if not ui_element:
             ui_element = self._infer_ui_element(field_schema)
 
         # Handle layout fields specially - render the embedded form
         if ui_element == "layout":
-            return self._render_layout_field(field_name, field_schema, value, error, ui_info)
+            return self._render_layout_field(
+                field_name,
+                field_schema,
+                value,
+                error,
+                ui_info,
+                context,
+            )
 
         # Handle model_list specially since it doesn't use the standard input component pattern
         if ui_element == "model_list":
@@ -464,10 +411,11 @@ class EnhancedFormRenderer:
                     error=error,
                     ui_info=ui_info,
                     required_fields=required_fields,
+                    context=context,
                 )
 
         # Get input component
-        input_component = self.UI_ELEMENT_MAPPING.get(ui_element, TextInput)()
+        input_component = get_input_component(ui_element)()
 
         # Build field attributes
         field_attrs = {
@@ -490,8 +438,8 @@ class EnhancedFormRenderer:
             field_attrs["value"] = value
 
         # Add validation attributes
-        required_fields = required_fields or []
-        if field_name in required_fields:
+        resolved_required = required_fields or []
+        if field_name in resolved_required:
             field_attrs["required"] = True
 
         if "minLength" in field_schema:
@@ -519,37 +467,42 @@ class EnhancedFormRenderer:
         if ui_info.get("style"):
             field_attrs["style"] = ui_info["style"]
 
-        # Handle select/radio options separately
-        ui_options_list = ui_info.get("options", [])
+        ui_options_dict, ui_options_list = self._extract_ui_options(ui_info, field_schema)
+        if ui_options_dict:
+            field_attrs = self._apply_ui_option_attributes(field_attrs, ui_options_dict)
+
+        label_text = field_schema.get("title", field_name.replace("_", " ").title())
+        help_text = ui_info.get("help_text") or field_schema.get("description")
+        icon = ui_info.get("icon")
+        if icon:
+            icon = map_icon_for_framework(icon, self.framework)
 
         # Render the input
         try:
-            if ui_element in ("select", "radio"):
-                # Convert options to proper format for SelectInput/RadioGroup
-                if ui_options_list:
-                    formatted_options = []
-                    for option in ui_options_list:
-                        if isinstance(option, dict):
-                            formatted_options.append(option)
-                        else:
-                            # Convert string options to dict format
-                            formatted_options.append(
-                                {
-                                    "value": str(option),
-                                    "label": str(option),
-                                    "selected": (
-                                        str(option) == str(value) if value is not None else False
-                                    ),
-                                }
-                            )
+            if ui_element in ("select", "radio", "multiselect"):
+                selection_options = ui_options_list or []
+                if not selection_options and "enum" in field_schema:
+                    selection_options = field_schema["enum"]
+                if (
+                    not selection_options
+                    and isinstance(field_schema.get("items"), dict)
+                    and "enum" in field_schema.get("items", {})
+                ):
+                    selection_options = field_schema["items"]["enum"]
 
-                    # Use render_with_label for icon support
-                    label_text = field_schema.get("title", field_name.replace("_", " ").title())
-                    help_text = ui_info.get("help_text") or field_schema.get("description")
-                    icon = ui_info.get("icon")
-                    # Map icon to appropriate framework
-                    if icon:
-                        icon = map_icon_for_framework(icon, self.framework)
+                formatted_options = self._normalize_options(selection_options, value)
+
+                if not formatted_options:
+                    input_html = (
+                        f"<!-- Warning: No options provided for {ui_element} field '{field_name}' -->"
+                    )
+                else:
+                    field_attrs.pop("value", None)
+                    if ui_element == "radio":
+                        field_attrs.setdefault("group_name", field_name)
+                        field_attrs.setdefault("legend", label_text)
+                    if ui_element == "multiselect":
+                        field_attrs["multiple"] = True
 
                     input_html = input_component.render_with_label(
                         label=label_text,
@@ -560,17 +513,7 @@ class EnhancedFormRenderer:
                         options=formatted_options,
                         **field_attrs,
                     )
-                else:
-                    input_html = f"<!-- Warning: No options provided for {ui_element} field '{field_name}' -->"
             else:
-                # Regular input rendering with icon support
-                label_text = field_schema.get("title", field_name.replace("_", " ").title())
-                help_text = ui_info.get("help_text") or field_schema.get("description")
-                icon = ui_info.get("icon")
-                # Map icon to appropriate framework
-                if icon:
-                    icon = map_icon_for_framework(icon, self.framework)
-
                 input_html = input_component.render_with_label(
                     label=label_text,
                     help_text=help_text,
@@ -587,6 +530,117 @@ class EnhancedFormRenderer:
 
         # Return the input directly since render_with_label handles the complete field
         return f'<div class="{self.config["field_wrapper_class"]}">{input_html}</div>'
+
+    def _extract_ui_options(
+        self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], List[Any]]:
+        """Extract ui_options mapping and option choices for select-like inputs."""
+        raw_options = (
+            ui_info.get("options")
+            or ui_info.get("ui_options")
+            or field_schema.get("ui_options")
+            or {}
+        )
+
+        options_dict: Dict[str, Any] = raw_options if isinstance(raw_options, dict) else {}
+        options_list: List[Any] = []
+
+        if isinstance(raw_options, list):
+            options_list = raw_options
+        elif isinstance(options_dict, dict):
+            if isinstance(options_dict.get("choices"), list):
+                options_list = options_dict.get("choices", [])
+            elif isinstance(options_dict.get("options"), list):
+                options_list = options_dict.get("options", [])
+
+        return options_dict, options_list
+
+    def _apply_ui_option_attributes(
+        self, field_attrs: Dict[str, Any], ui_options: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Merge ui_options entries into field attributes while skipping choice data."""
+        if not ui_options:
+            return field_attrs
+
+        option_keys_to_skip = {"choices", "options", "async_options", "fetch_url"}
+
+        for key, option_value in ui_options.items():
+            if key in option_keys_to_skip:
+                continue
+            if isinstance(option_value, (list, dict)):
+                continue
+
+            if key == "class" and field_attrs.get("class"):
+                field_attrs["class"] = f'{field_attrs["class"]} {option_value}'.strip()
+            elif key == "style" and field_attrs.get("style"):
+                separator = "; " if not str(field_attrs["style"]).strip().endswith(";") else " "
+                field_attrs["style"] = f'{field_attrs["style"]}{separator}{option_value}'
+            else:
+                field_attrs[key] = option_value
+
+        return field_attrs
+
+    def _normalize_options(self, options: List[Any], current_value: Any) -> List[Dict[str, Any]]:
+        """Convert choice definitions into renderer-friendly dictionaries."""
+        if not options:
+            return []
+
+        normalized: List[Dict[str, Any]] = []
+
+        for option in options:
+            if isinstance(option, dict):
+                formatted = option.copy()
+                if "value" not in formatted:
+                    fallback_value = None
+                    for fallback_key in ("id", "key", "label"):
+                        if fallback_key in formatted:
+                            fallback_value = formatted[fallback_key]
+                            break
+                    formatted["value"] = fallback_value
+
+                if formatted.get("value") is None:
+                    formatted["value"] = formatted.get("label")
+
+                if not formatted.get("label"):
+                    formatted["label"] = str(formatted.get("value", ""))
+
+                formatted.setdefault(
+                    "selected",
+                    self._is_option_selected(formatted.get("value"), current_value),
+                )
+                normalized.append(formatted)
+            elif isinstance(option, (list, tuple)) and option:
+                value = option[0]
+                label = option[1] if len(option) > 1 else option[0]
+                normalized.append(
+                    {
+                        "value": value,
+                        "label": label,
+                        "selected": self._is_option_selected(value, current_value),
+                    }
+                )
+            else:
+                normalized.append(
+                    {
+                        "value": option,
+                        "label": option,
+                        "selected": self._is_option_selected(option, current_value),
+                    }
+                )
+
+        return normalized
+
+    def _is_option_selected(self, option_value: Any, current_value: Any) -> bool:
+        """Determine if an option should be marked as selected based on current value."""
+        if option_value is None or current_value is None:
+            return False
+
+        option_str = str(option_value)
+
+        if isinstance(current_value, (list, tuple, set)):
+            return option_str in {str(val) for val in current_value}
+
+        return option_str == str(current_value)
 
     def _render_hidden_field(
         self, field_name: str, field_schema: Dict[str, Any], value: Any
@@ -620,7 +674,7 @@ class EnhancedFormRenderer:
         """Get appropriate CSS class for input element."""
         if ui_element == "checkbox":
             return self.config["checkbox_class"]
-        elif ui_element in ("select", "radio"):
+        elif ui_element in ("select", "radio", "multiselect"):
             return self.config["select_class"]
         else:
             return self.config["input_class"]
@@ -744,57 +798,16 @@ class EnhancedFormRenderer:
         data: Dict[str, Any],
         errors: Dict[str, Any],
         required_fields: List[str],
+        context: RenderContext,
     ) -> List[str]:
         """Render fields in a tabbed layout."""
-        # Group fields into logical tabs
-        tabs = self._group_fields_into_tabs(fields)
-
-        parts = []
-
-        # Create tab navigation
-        parts.append('<ul class="nav nav-tabs" id="formTabs" role="tablist">')
-        for i, (tab_name, _) in enumerate(tabs):
-            active_class = " active" if i == 0 else ""
-            tab_id = f"tab-{tab_name.lower().replace(' ', '-')}"
-            parts.append(
-                f"""
-            <li class="nav-item" role="presentation">
-                <button class="nav-link{active_class}" id="{tab_id}-tab" data-bs-toggle="tab"
-                        data-bs-target="#{tab_id}" type="button" role="tab"
-                        aria-controls="{tab_id}" aria-selected="{"true" if i == 0 else "false"}">
-                    {tab_name}
-                </button>
-            </li>
-            """
-            )
-        parts.append("</ul>")
-
-        # Create tab content
-        parts.append('<div class="tab-content" id="formTabContent">')
-        for i, (tab_name, tab_fields) in enumerate(tabs):
-            active_class = " show active" if i == 0 else ""
-            tab_id = f"tab-{tab_name.lower().replace(' ', '-')}"
-            parts.append(
-                f'<div class="tab-pane fade{active_class}" id="{tab_id}" role="tabpanel" aria-labelledby="{tab_id}-tab">'
-            )
-
-            # Render fields in this tab
-            for field_name, field_schema in tab_fields:
-                field_html = self._render_field(
-                    field_name,
-                    field_schema,
-                    data.get(field_name),
-                    errors.get(field_name),
-                    required_fields,
-                    "vertical",  # Use vertical layout within tabs
-                    errors,  # Pass full errors dictionary
-                )
-                parts.append(field_html)
-
-            parts.append("</div>")
-
-        parts.append("</div>")
-        return parts
+        return self._layout_engine.render_tabbed_layout(
+            fields,
+            data,
+            errors,
+            required_fields,
+            context,
+        )
 
     def _render_layout_fields_as_tabs(
         self,
@@ -802,55 +815,16 @@ class EnhancedFormRenderer:
         data: Dict[str, Any],
         errors: Dict[str, Any],
         required_fields: List[str],
+        context: RenderContext,
     ) -> List[str]:
         """Render layout fields as tabs, with each layout field becoming a tab containing its form."""
-        parts = []
-
-        # Create tab navigation
-        parts.append('<ul class="nav nav-tabs" id="layoutTabs" role="tablist">')
-        for i, (field_name, field_schema) in enumerate(layout_fields):
-            active_class = " active" if i == 0 else ""
-            tab_id = f"layout-tab-{field_name}"
-            tab_title = field_schema.get("title", field_name.replace("_", " ").title())
-
-            parts.append(
-                f"""
-            <li class="nav-item" role="presentation">
-                <button class="nav-link{active_class}" id="{tab_id}-tab" data-bs-toggle="tab"
-                        data-bs-target="#{tab_id}" type="button" role="tab"
-                        aria-controls="{tab_id}" aria-selected="{"true" if i == 0 else "false"}">
-                    {tab_title}
-                </button>
-            </li>
-            """
-            )
-        parts.append("</ul>")
-
-        # Create tab content
-        parts.append('<div class="tab-content" id="layoutTabContent">')
-        for i, (field_name, field_schema) in enumerate(layout_fields):
-            active_class = " show active" if i == 0 else ""
-            tab_id = f"layout-tab-{field_name}"
-
-            parts.append(
-                f'<div class="tab-pane fade{active_class}" id="{tab_id}" role="tabpanel" aria-labelledby="{tab_id}-tab">'
-            )
-
-            # Get the UI info for this layout field
-            ui_info = field_schema.get("ui", {})
-            if not ui_info:
-                ui_info = field_schema
-
-            # Render the layout field content (the nested form)
-            layout_content = self._render_layout_field_content(
-                field_name, field_schema, data.get(field_name), errors.get(field_name), ui_info
-            )
-            parts.append(layout_content)
-
-            parts.append("</div>")
-
-        parts.append("</div>")
-        return parts
+        return self._layout_engine.render_layout_fields_as_tabs(
+            layout_fields,
+            data,
+            errors,
+            required_fields,
+            context,
+        )
 
     def _render_layout_field_content(
         self,
@@ -859,175 +833,43 @@ class EnhancedFormRenderer:
         value: Any,
         error: Optional[str],
         ui_info: Dict[str, Any],
+        context: RenderContext,
     ) -> str:
-        """
-        Render the content of a layout field (the nested form) without the section wrapper.
-        This is used when rendering layout fields as tab content.
-        """
-        try:
-            # The value should be a layout instance
-            if value and hasattr(value, "form"):
-                # Get the form class from the layout instance
-                form_class = value.form
+        """Render the content of a layout field (the nested form)."""
+        return self._layout_engine.render_layout_field_content(
+            field_name,
+            field_schema,
+            value,
+            error,
+            ui_info,
+            context,
+        )
 
-                # Get nested form data based on field name mapping
-                nested_data = self._get_nested_form_data(field_name)
+    def _get_nested_form_data(
+        self,
+        field_name: str,
+        main_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Adapter to share nested data helper across renderers."""
+        data = main_data if main_data is not None else getattr(self, "_current_form_data", {}) or {}
+        return get_nested_form_data(field_name, data)
 
-                # Create a new renderer for the nested form to avoid data conflicts
-                nested_renderer = EnhancedFormRenderer(framework=self.framework)
-                nested_renderer._current_form_data = nested_data
-
-                # Render only the form fields (no form wrapper to avoid nested forms)
-                return nested_renderer.render_form_fields_only(
-                    form_class,
-                    data=nested_data,  # Pass relevant data to nested form
-                    errors={},
-                    layout="vertical",  # Use vertical layout for embedded forms
-                )
-            else:
-                # Fallback: try to get the form class from the field schema
-                return self._render_layout_field_content_fallback(field_name, field_schema, ui_info)
-
-        except Exception as e:
-            # Error handling: return a placeholder with error message
-            return f"""
-            <div class="layout-field-error alert alert-warning">
-                <p>Error rendering layout field: {str(e)}</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
-            </div>
-            """
-
-    def _get_nested_form_data(self, field_name: str) -> Dict[str, Any]:
-        """
-        Get the data for nested forms based on the field name.
-        This maps the main form data to the appropriate nested form fields.
-        """
-        # Access the main form data (stored during form rendering)
-        main_data = getattr(self, "_current_form_data", {})
-
-        # First check if there's direct nested data for this field
-        if field_name in main_data and isinstance(main_data[field_name], dict):
-            return main_data[field_name]
-
-        # Fallback: Map layout field names to their corresponding form data
-        field_data_mapping = {
-            "vertical_tab": ["first_name", "last_name", "email", "birth_date"],
-            "horizontal_tab": ["phone", "address", "city", "postal_code"],
-            "tabbed_tab": ["notification_email", "notification_sms", "theme", "language"],
-            "list_tab": ["project_name", "tasks"],
-        }
-
-        # Get the fields that belong to this nested form
-        relevant_fields = field_data_mapping.get(field_name, [])
-
-        # Extract only the relevant data for this nested form
-        nested_data = {}
-        for field in relevant_fields:
-            if field in main_data:
-                nested_data[field] = main_data[field]
-
-        return nested_data
-        for field in relevant_fields:
-            if field in main_data:
-                nested_data[field] = main_data[field]
-
-        return nested_data
-
-    def _render_layout_field_content_fallback(
-        self, field_name: str, field_schema: Dict[str, Any], ui_info: Dict[str, Any]
-    ) -> str:
-        """
-        Fallback rendering for layout field content when the layout instance isn't available.
-        """
-        # Map field names to their corresponding form classes
-        form_mapping = {
-            "vertical_tab": "PersonalInfoForm",
-            "horizontal_tab": "ContactInfoForm",
-            "tabbed_tab": "PreferencesForm",
-            "list_tab": "TaskListForm",
-        }
-
-        form_name = form_mapping.get(field_name)
-        if form_name:
-            try:
-                # Import and render the form
-                if form_name == "PersonalInfoForm":
-                    from examples.shared_models import PersonalInfoForm as FormClass
-                elif form_name == "ContactInfoForm":
-                    from examples.shared_models import ContactInfoForm as FormClass
-                elif form_name == "PreferencesForm":
-                    from examples.shared_models import PreferencesForm as FormClass
-                elif form_name == "TaskListForm":
-                    from examples.shared_models import TaskListForm as FormClass
-                else:
-                    raise ImportError(f"Unknown form: {form_name}")
-
-                # Get nested form data based on field name mapping
-                nested_data = self._get_nested_form_data(field_name)
-
-                # Create a new renderer for the nested form to avoid data conflicts
-                nested_renderer = EnhancedFormRenderer(framework=self.framework)
-                nested_renderer._current_form_data = nested_data
-
-                # Render only the form fields (no form wrapper to avoid nested forms)
-                return nested_renderer.render_form_fields_only(
-                    FormClass,
-                    data=nested_data,  # Pass relevant data to nested form
-                    errors={},
-                    layout="vertical",
-                )
-
-            except Exception as e:
-                return f"""
-                <div class="layout-field-placeholder alert alert-info">
-                    <p>Layout demonstration: {form_name}</p>
-                    <small class="text-muted">{ui_info.get('help_text', '')}</small>
-                    <small class="text-danger d-block">Could not render: {str(e)}</small>
-                </div>
-                """
-        else:
-            return f"""
-            <div class="layout-field-unknown alert alert-secondary">
-                <p>Unknown layout field type</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
-            </div>
-            """
-
-    def _group_fields_into_tabs(self, fields: List[tuple]) -> List[tuple]:
-        """Group fields into logical tabs based on field names."""
-        # Simple grouping logic - can be enhanced based on field metadata
-        personal_fields = []
-        contact_fields = []
-        other_fields = []
-
-        for field_name, field_schema in fields:
-            field_lower = field_name.lower()
-            if any(
-                keyword in field_lower
-                for keyword in ["name", "username", "password", "bio", "role"]
-            ):
-                personal_fields.append((field_name, field_schema))
-            elif any(
-                keyword in field_lower
-                for keyword in ["email", "phone", "address", "subject", "message"]
-            ):
-                contact_fields.append((field_name, field_schema))
-            else:
-                other_fields.append((field_name, field_schema))
-
-        tabs = []
-        if personal_fields:
-            tabs.append(("Personal Info", personal_fields))
-        if contact_fields:
-            tabs.append(("Contact Details", contact_fields))
-        if other_fields:
-            tabs.append(("Additional", other_fields))
-
-        # If no logical grouping, put all in one tab
-        if not tabs:
-            tabs.append(("Form Fields", fields))
-
-        return tabs
+    def _render_side_by_side_layout(
+        self,
+        fields: List[tuple],
+        data: Dict[str, Any],
+        errors: Dict[str, Any],
+        required_fields: List[str],
+        context: RenderContext,
+    ) -> List[str]:
+        """Render fields in a side-by-side layout using Bootstrap grid."""
+        return self._layout_engine.render_side_by_side_layout(
+            fields,
+            data,
+            errors,
+            required_fields,
+            context,
+        )
 
     def _render_side_by_side_layout(
         self,
@@ -1097,10 +939,9 @@ class EnhancedFormRenderer:
         error: Optional[str],
         ui_info: Dict[str, Any],
         required_fields: List[str],
+        context: RenderContext,
     ) -> str:
         """Render a model list using schema definition instead of model class."""
-        from html import escape
-
         # Use simplified rendering for schema-based lists
 
         html = f"""
@@ -1119,17 +960,38 @@ class EnhancedFormRenderer:
 
         # Render existing items
         for i, item_data in enumerate(values):
-            html += self._render_schema_list_item(field_name, schema_def, i, item_data, ui_info)
+            html += self._render_schema_list_item(
+                field_name,
+                schema_def,
+                i,
+                item_data,
+                context,
+                ui_info,
+            )
 
         # If no items and minItems > 0, add empty items
         min_items = field_schema.get("minItems", 0)
         if not values and min_items > 0:
             for i in range(min_items):
-                html += self._render_schema_list_item(field_name, schema_def, i, {}, ui_info)
+                html += self._render_schema_list_item(
+                    field_name,
+                    schema_def,
+                    i,
+                    {},
+                    context,
+                    ui_info,
+                )
 
         # If no items at all, add one empty item for user convenience
         if not values and min_items == 0:
-            html += self._render_schema_list_item(field_name, schema_def, 0, {}, ui_info)
+            html += self._render_schema_list_item(
+                field_name,
+                schema_def,
+                0,
+                {},
+                context,
+                ui_info,
+            )
 
         html += f"""
                 </div>
@@ -1196,11 +1058,10 @@ class EnhancedFormRenderer:
         schema_def: Dict[str, Any],
         index: int,
         item_data: Dict[str, Any],
+        context: RenderContext,
         ui_info: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Render a single list item from schema definition with collapsible card support."""
-        from html import escape
-
         ui_info = ui_info or {}
         collapsible = ui_info.get("collapsible_items", True)
         expanded = ui_info.get("items_expanded", True)
@@ -1294,6 +1155,7 @@ class EnhancedFormRenderer:
                         field_value,
                         None,  # error
                         [],   # required_fields
+                        context,
                         "vertical",  # layout
                         None  # all_errors (not available in schema rendering)
                     )}
@@ -1324,130 +1186,17 @@ class EnhancedFormRenderer:
         value: Any,
         error: Optional[str],
         ui_info: Dict[str, Any],
+        context: RenderContext,
     ) -> str:
-        """
-        Render a layout field by extracting and rendering its embedded form.
-
-        Layout fields contain layout instances (VerticalFormLayout, HorizontalFormLayout, etc.)
-        that have a 'form' attribute pointing to the FormModel class to render.
-        """
-        try:
-            # The value should be a layout instance
-            if value and hasattr(value, "form"):
-                # Get the form class from the layout instance
-                form_class = value.form
-
-                # Render the embedded form
-                form_html = self.render_form_from_model(
-                    form_class,
-                    data={},  # Start with empty data
-                    errors={},
-                    layout="vertical",  # Use vertical layout for embedded forms
-                    include_submit_button=False,  # Don't include submit button in nested forms
-                )
-
-                # Wrap in a section with the field title
-                section_title = field_schema.get("title", field_name.replace("_", " ").title())
-                help_text = ui_info.get("help_text", "")
-
-                section_html = f"""
-                <div class="layout-field-section mb-4">
-                    <h5 class="layout-field-title">{section_title}</h5>
-                    {f'<p class="text-muted">{help_text}</p>' if help_text else ''}
-                    <div class="layout-field-content p-3 border rounded">
-                        {form_html}
-                    </div>
-                </div>
-                """
-
-                return section_html
-            else:
-                # Fallback: try to get the form class from the field schema
-                # This handles cases where the value might not be properly set
-                return self._render_layout_field_fallback(field_name, field_schema, ui_info)
-
-        except Exception as e:
-            # Error handling: return a placeholder with error message
-            return f"""
-            <div class="layout-field-error alert alert-warning">
-                <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
-                <p>Error rendering layout field: {str(e)}</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
-            </div>
-            """
-
-    def _render_layout_field_fallback(
-        self, field_name: str, field_schema: Dict[str, Any], ui_info: Dict[str, Any]
-    ) -> str:
-        """
-        Fallback rendering for layout fields when the layout instance isn't available.
-
-        This tries to determine the form to render based on the field name and known patterns.
-        """
-        # Map field names to their corresponding form classes
-        # This is based on the LayoutDemonstrationForm structure
-        form_mapping = {
-            "vertical_tab": "PersonalInfoForm",
-            "horizontal_tab": "ContactInfoForm",
-            "tabbed_tab": "PreferencesForm",
-            "list_tab": "TaskListForm",
-        }
-
-        form_name = form_mapping.get(field_name)
-        if form_name:
-            # Try to import and render the form
-            try:
-                # Import the form class - this is a simplified approach
-                # In a real implementation, you'd want a more robust form resolution system
-                if form_name == "PersonalInfoForm":
-                    from examples.shared_models import PersonalInfoForm as FormClass
-                elif form_name == "ContactInfoForm":
-                    from examples.shared_models import ContactInfoForm as FormClass
-                elif form_name == "PreferencesForm":
-                    from examples.shared_models import PreferencesForm as FormClass
-                elif form_name == "TaskListForm":
-                    from examples.shared_models import TaskListForm as FormClass
-                else:
-                    raise ImportError(f"Unknown form: {form_name}")
-
-                # Render the form
-                form_html = self.render_form_from_model(
-                    FormClass, data={}, errors={}, layout="vertical", include_submit_button=False
-                )
-
-                # Wrap in a section
-                section_title = field_schema.get("title", field_name.replace("_", " ").title())
-                help_text = ui_info.get("help_text", "")
-
-                return f"""
-                <div class="layout-field-section mb-4">
-                    <h5 class="layout-field-title">{section_title}</h5>
-                    {f'<p class="text-muted">{help_text}</p>' if help_text else ''}
-                    <div class="layout-field-content p-3 border rounded">
-                        {form_html}
-                    </div>
-                </div>
-                """
-
-            except Exception as e:
-                # If we can't import or render the form, show a placeholder
-                return f"""
-                <div class="layout-field-placeholder alert alert-info">
-                    <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
-                    <p>Layout demonstration: {form_name}</p>
-                    <small class="text-muted">{ui_info.get('help_text', '')}</small>
-                    <small class="text-danger d-block">Could not render: {str(e)}</small>
-                </div>
-                """
-        else:
-            # Unknown layout field
-            return f"""
-            <div class="layout-field-unknown alert alert-secondary">
-                <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
-                <p>Unknown layout field type</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
-            </div>
-            """
+        """Render a layout field by extracting and rendering its embedded form."""
+        return self._layout_engine.render_layout_field(
+            field_name,
+            field_schema,
+            value,
+            error,
+            ui_info,
+            context,
+        )
 
     def _render_submit_button(self) -> str:
         """Render form submit button."""
@@ -1520,12 +1269,19 @@ async def render_form_html_async(
     Returns:
         Complete HTML form as string
     """
-    # Handle SchemaFormValidationError
-    if isinstance(errors, SchemaFormValidationError):
-        error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
-        errors = error_dict
-
-    renderer = EnhancedFormRenderer(framework=framework)
-    return await renderer.render_form_from_model_async(
-        form_model_cls, data=form_data, errors=errors, layout=layout, **kwargs
+    render_callable = partial(
+        render_form_html,
+        form_model_cls,
+        form_data=form_data,
+        errors=errors,
+        framework=framework,
+        layout=layout,
+        **kwargs,
     )
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.get_event_loop()
+
+    return await loop.run_in_executor(None, render_callable)

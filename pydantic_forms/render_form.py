@@ -5,7 +5,10 @@ This module maintains compatibility with existing code while using the enhanced 
 
 from typing import Any, Dict, Optional, Type, Union
 
-from .enhanced_renderer import EnhancedFormRenderer, SchemaFormValidationError
+from .enhanced_renderer import (
+    SchemaFormValidationError,
+    render_form_html as _core_render_form_html,
+)
 from .schema_form import FormModel
 
 
@@ -34,35 +37,34 @@ def render_form_html(
     Returns:
         Complete HTML form as string
     """
-    # Handle SchemaFormValidationError
-    if isinstance(errors, SchemaFormValidationError):
-        error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
-        errors = error_dict
+    # Normalize kwargs + HTMX defaults
+    render_kwargs: Dict[str, Any] = dict(kwargs)
 
-    # Use Material Design renderer if requested
-    if framework == "material":
-        from .simple_material_renderer import SimpleMaterialRenderer
+    # Ensure submit_url is propagated to the shared implementation
+    render_kwargs.setdefault("submit_url", htmx_post_url)
+    submit_url = render_kwargs["submit_url"]
 
-        renderer = SimpleMaterialRenderer()
-        form_html = renderer.render_form_from_model(
-            form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **kwargs
-        )
-    else:
-        renderer = EnhancedFormRenderer(framework=framework)
-
-        # For HTMX compatibility, add HTMX attributes
-        form_attrs = {
+    # Apply HTMX defaults for non-material frameworks (legacy behavior)
+    if framework != "material":
+        htmx_attrs = {
             "hx-post": htmx_post_url,
             "hx-target": "#form-response",
             "hx-swap": "innerHTML",
         }
-        form_attrs.update(kwargs)
-        # Ensure action is set after kwargs update
-        form_attrs["action"] = htmx_post_url
+        for attr, value in htmx_attrs.items():
+            render_kwargs.setdefault(attr, value)
 
-        form_html = renderer.render_form_from_model(
-            form_model_cls, data=form_data, errors=errors, submit_url=htmx_post_url, **form_attrs
-        )
+    # Action/method fallbacks mirror the historical implementation
+    render_kwargs.setdefault("action", submit_url)
+    render_kwargs.setdefault("method", "POST")
+
+    form_html = _core_render_form_html(
+        form_model_cls,
+        form_data=form_data,
+        errors=errors,
+        framework=framework,
+        **render_kwargs,
+    )
 
     # Add HTMX response container and scripts for backward compatibility
     form_html += '\n<div id="form-response"></div>'

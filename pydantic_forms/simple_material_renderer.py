@@ -10,6 +10,8 @@ from html import escape
 from typing import Any, Dict, List, Optional, Type
 
 from .enhanced_renderer import EnhancedFormRenderer
+from .layout_base import BaseLayout
+from .rendering.context import RenderContext
 from .icon_mapping import map_icon_for_framework
 from .schema_form import FormModel
 
@@ -23,6 +25,17 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     def __init__(self):
         """Initialize Simple Material Design renderer."""
         super().__init__(framework="material")
+
+    def _build_render_context(self) -> RenderContext:
+        """Return a render context aligned with the enhanced renderer API."""
+        form_data = getattr(self, "_current_form_data", {}) or {}
+        schema_defs = getattr(self, "_schema_defs", {}) or {}
+        return RenderContext(form_data=form_data, schema_defs=schema_defs)
+
+    def _get_material_nested_form_data(self, field_name: str) -> Dict[str, Any]:
+        """Fetch nested form data using the enhanced renderer helper."""
+        form_data = getattr(self, "_current_form_data", {}) or {}
+        return super()._get_nested_form_data(field_name, form_data)
 
     def render_form_from_model(
         self,
@@ -44,6 +57,9 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         errors = errors or {}
 
         # Build complete self-contained form
+        self._current_form_data = data
+        self._schema_defs = schema.get("$defs", {})
+
         form_html = self._build_material_form(
             schema,
             data,
@@ -74,10 +90,8 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         data = data or {}
         errors = errors or {}
 
-        # Store form data for nested form access
+        # Store form data and schema defs for nested rendering helpers
         self._current_form_data = data
-
-        # Store schema definitions for model_list fields
         self._schema_defs = schema.get("$defs", {})
 
         # Get fields and sort by UI order if specified
@@ -145,7 +159,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             if not ui_info:
                 ui_info = field_schema
             ui_element = (
-                ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+                ui_info.get("element")
+                or ui_info.get("ui_element")
+                or ui_info.get("widget")
+                or ui_info.get("input_type")
             )
 
             if ui_element == "layout":
@@ -197,7 +214,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         for _field_name, field_schema in properties.items():
             ui_info = field_schema.get("ui", {}) or field_schema
             ui_element = (
-                ui_info.get("element") or ui_info.get("widget") or ui_info.get("input_type")
+                ui_info.get("element")
+                or ui_info.get("ui_element")
+                or ui_info.get("widget")
+                or ui_info.get("input_type")
             )
             if ui_element == "model_list":
                 return True
@@ -1001,6 +1021,8 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         # Try to use the model list renderer directly for better control
         ModelListRenderer(framework="bootstrap")
 
+        context = self._build_render_context()
+
         # Extract model reference from field schema
         items_ref = field_schema.get("items", {}).get("$ref")
         if items_ref:
@@ -1035,6 +1057,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
                     error=error,
                     ui_info=field_schema,
                     required_fields=required_fields or [],
+                    context=context,
                 )
 
                 # Wrap in Material Design container to maintain consistency
@@ -1048,7 +1071,12 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 
         # Fallback to original implementation if model schema not found
         field_html = enhanced_renderer._render_field(
-            field_name, field_schema, value, error, required_fields or []
+            field_name,
+            field_schema,
+            value,
+            error,
+            required_fields or [],
+            context,
         )
 
         # Wrap in Material Design container to maintain consistency
@@ -1400,24 +1428,27 @@ document.addEventListener('DOMContentLoaded', function() {
         Render the content of a Material Design layout field (the nested form).
         """
         try:
-            # The value should be a layout instance
+            if isinstance(value, BaseLayout):
+                nested_data = self._get_material_nested_form_data(field_name)
+                return value.render(
+                    data=nested_data,
+                    errors=None,
+                    renderer=self,
+                    framework=self.framework,
+                )
+
             if value and hasattr(value, "form"):
-                # Get the form class from the layout instance
                 form_class = value.form
-
-                # Get nested form data based on field name mapping (inherit from parent)
-                nested_data = self._get_nested_form_data(field_name)
-
-                # Create a new SimpleMaterialRenderer for the nested form
+                nested_data = self._get_material_nested_form_data(field_name)
                 nested_renderer = SimpleMaterialRenderer()
-                # Important: Set the form data on the nested renderer too
                 nested_renderer._current_form_data = nested_data
                 return nested_renderer.render_form_fields_only(
-                    form_class, data=nested_data, errors={}  # Pass relevant data to nested form
+                    form_class,
+                    data=nested_data,
+                    errors={},
                 )
-            else:
-                # Fallback: try to get the form class from the field schema
-                return self._render_material_layout_field_content_fallback(field_name, field_schema)
+
+            return self._render_material_layout_field_content_fallback(field_name, field_schema)
 
         except Exception as e:
             # Error handling: return a placeholder with error message
@@ -1457,7 +1488,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     raise ImportError(f"Unknown form: {form_name}")
 
                 # Get nested form data based on field name mapping
-                nested_data = self._get_nested_form_data(field_name)
+                nested_data = self._get_material_nested_form_data(field_name)
 
                 # Create a new SimpleMaterialRenderer for the nested form
                 nested_renderer = SimpleMaterialRenderer()
