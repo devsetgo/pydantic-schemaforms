@@ -4,28 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-forms"
-version = "25.11.1b1"
+version = "25.11.1.beta"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
-keywords = ["pydantic", "forms", "ui", "htmx"]
+keywords = [ "pydantic", "forms", "ui", "htmx",]
 readme = "README.md"
-classifiers = [
-	"License :: OSI Approved :: MIT License",
-	"Development Status :: 4 - Beta",
-	"Programming Language :: Python",
-	"Programming Language :: Python :: 3",
-	"Programming Language :: Python :: 3 :: Only",
-	"Programming Language :: Python :: 3.14",
-	"Framework :: FastAPI",
-	"Framework :: Flask",
-	"Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-	"Operating System :: POSIX :: Linux",
-	"Operating System :: MacOS :: MacOS X",
-	"Operating System :: Microsoft :: Windows",
-]
-dependencies = [
-	"pydantic>=2.7","pydantic-extra-types[all]>=2.10.6"
-]
+classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 4 - Beta", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
+dependencies = [ "pydantic>=2.7", "pydantic-extra-types[all]>=2.10.6",]
 [[project.authors]]
 name = "Mike Ryan"
 
@@ -41,15 +26,9 @@ Documentation = "https://devsetgo.github.io/pydantic-forms/"
 Repository = "https://github.com/devsetgo/pydantic-forms"
 
 [project.optional-dependencies]
-fastapi = ["fastapi>=0.110", "uvicorn>=0.30"]
-flask = ["flask>=3.0"]
-dev = [
-	"fastapi[all]==0.121.2",
-	"Flask==3.1.2",
-	"pytest==9.0.1",
-	"pytest-asyncio==1.3.0",
-	"pytest-cov==7.0.0",
-]
+fastapi = [ "fastapi>=0.110", "uvicorn>=0.30",]
+flask = [ "flask>=3.0",]
+dev = [ "fastapi[all]==0.121.2", "Flask==3.1.2", "pytest==9.0.1", "pytest-asyncio==1.3.0", "pytest-cov==7.0.0",]
 
 [project.scripts]
 
@@ -115,10 +94,6 @@ exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n    
 select = [ "C", "F", "E", "W", "B",]
 ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
 
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401", "F403"]  # Allow unused imports and star imports in package init files
-"**/inputs/specialized_inputs.py" = ["F821"]  # Allow undefined names for JavaScript variables in templates
-
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
@@ -135,6 +110,10 @@ norecursedirs = [ "/tests",]
 testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [ "F401", "F403",]
+"**/inputs/specialized_inputs.py" = [ "F821",]
 
 [tool.hatch.build.targets.sdist]
 include = [ "/pydantic_forms",]

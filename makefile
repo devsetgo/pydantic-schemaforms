@@ -1,6 +1,6 @@
 # Variables
 REPONAME = pydantic-forms
-APP_VERSION = 25.11.1b1
+APP_VERSION = 25.11.1.beta
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
