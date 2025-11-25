@@ -8,13 +8,17 @@ _Date: 2025-11-23_
   `pyproject.toml` now declares `pydantic>=2.7`, framework extras, and lists `pydantic_forms` as the packaged module with classifiers aligned to `requires-python = ">=3.14"`. Editable installs and wheels now pull the libraries the code imports.  
   _Files: `pyproject.toml`, `makefile`_
 
-- **`render_form_from_model_async` cannot accept keyword arguments** _(Resolved – 2025-11-23)_  
-  The async helper now delegates through a `functools.partial` that preserves keyword arguments before submitting to the executor, preventing `TypeError` when callers pass layout or framework overrides.  
+- **`render_form_from_model_async` drops keyword arguments** _(Open – 2025-11-23)_  
+  The async helper still calls `loop.run_in_executor` with `self.render_form_from_model` and positional arguments only, so any `**kwargs` (framework overrides, layout hints, csrf toggles) are silently discarded before the synchronous renderer executes. Until this swaps in a `functools.partial` (or equivalent) that binds the keyword arguments, async callers cannot supply the same options that the sync entry point supports.  
   _Files: `pydantic_forms/enhanced_renderer.py`_
 
-- **Renderer instances keep mutable request-scoped state** _(Resolved – 2025-11-23)_  
-  Rendering now flows through an immutable `_RenderContext` dataclass that is threaded through helper methods, eliminating shared mutable attributes and keeping concurrent requests isolated.  
+- **Renderer instances keep mutable request-scoped state** _(Open – 2025-11-23)_  
+  `_render_field` still lazily creates a `RenderContext` by reading `self._current_form_data` / `_schema_defs`, which are mutated per request on the renderer singleton. Concurrent requests can stomp on one another’s state and leak user data. The renderer needs to pass context explicitly rather than reaching back into shared attributes.  
   _Files: `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/simple_material_renderer.py`_
+
+- **Side-by-side layout crashes with extra arguments** _(Resolved – 2025-11-25)_  
+  The duplicate `_render_side_by_side_layout` definition was removed and all callers now route through `LayoutEngine.render_side_by_side_layout`, which composes rows via the shared `FlexHorizontalLayout`. Layout rendering no longer raises `TypeError` and the markup stays consistent with other BaseLayout-powered sections.  
+  _Files: `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/layout_engine.py`_
 
 - **Duplicate `BaseInput` class definitions cause inconsistent behavior** _(Resolved – 2025-11-23)_  
   The duplicate class definitions were collapsed into a single abstract `BaseInput`, and all input subclasses now inherit consistent attribute validation and rendering helpers.  
@@ -35,13 +39,13 @@ _Date: 2025-11-23_
 ## Medium Priority Refactors & Optimizations
 
 - **Renderer modules exceed 1,400 lines**  
-  `pydantic_forms/enhanced_renderer.py` and `pydantic_forms/simple_material_renderer.py` contain renderer configuration, layout logic, input dispatch, and async helpers in one file. Splitting responsibilities (schema parsing, layout orchestration, input rendering, framework theming) would drastically improve readability and testability.
+  `pydantic_forms/enhanced_renderer.py` and `pydantic_forms/simple_material_renderer.py` contain renderer configuration, layout logic, input dispatch, and async helpers in one file. Splitting responsibilities (schema parsing, layout orchestration, input rendering, framework theming) would drastically improve readability and testability. _Progress – 2025-11-25_: shared helpers now live in `pydantic_forms/rendering/schema_parser.py` and `pydantic_forms/rendering/field_renderer.py`, and `EnhancedFormRenderer` delegates per-field rendering to the helper, but layout/model-list code is still inline and the Material renderer has not been updated yet.
 
 - **Multiple layout systems compete**  
-  There are two unrelated layout stacks (`pydantic_forms/form_layouts.py` and `pydantic_forms/layouts.py`) plus bespoke layout handling in `EnhancedFormRenderer`. Consolidate around one abstraction (e.g., `BaseLayout`) and have renderers consume it so maintenance effort is not tripled.
+  There are two unrelated layout stacks (`pydantic_forms/form_layouts.py` and `pydantic_forms/layouts.py`) plus bespoke layout handling in `EnhancedFormRenderer`. Consolidate around one abstraction (e.g., `BaseLayout`) and have renderers consume it so maintenance effort is not tripled. _Progress – 2025-11-25_: tab, layout-field, and side-by-side rendering now use `ComponentTabLayout` / `FlexHorizontalLayout` / `CardLayout`; `ListLayout` also renders through `FlexVerticalLayout`, but `ListLayout`’s per-item cards and other custom layouts still duplicate markup.
 
 - **Schema handling recomputes per request**  
-  Every render call invokes `model_cls.model_json_schema()` and walks the resulting dict. For forms that render frequently, cache the schema + UI metadata per model (perhaps via `functools.lru_cache`) and only clone when necessary to inject request data.
+  Every render call invokes `model_cls.model_json_schema()` and walks the resulting dict. For forms that render frequently, cache the schema + UI metadata per model (perhaps via `functools.lru_cache`) and only clone when necessary to inject request data. _Progress – 2025-11-25_: `build_schema_metadata` now wraps the heavy schema generation in an LRU cache with a reset hook, dramatically reducing the cost for repeated renders of the same `FormModel`. We still rely on callers not to mutate the returned metadata.
 
 - **`templates.py` global cache lacks thread/process coordination**  
   The `_template_cache` dictionary is mutated without locking and only bounded by an eviction of the first key. Consider `functools.lru_cache` or `collections.OrderedDict` plus a lock so multi-threaded renderers do not race.
@@ -61,12 +65,13 @@ _Date: 2025-11-23_
 ## Quick Wins / Follow-Up Tasks
 
 1. ✅ _Done_ — `pyproject.toml` metadata now ships the right package with declared deps.
-2. ✅ _Done_ — Async rendering delegates through `functools.partial`; tests still needed.
-3. ✅ _Done_ — `_RenderContext` replaces mutable renderer state.
+2. ⏳ _Open_ — Async rendering still bypasses keyword arguments; needs `functools.partial` (or similar) before executor dispatch.
+3. ⏳ _Open_ — `_RenderContext` is not actually threaded through; renderer continues mutating shared attributes per request.
 4. ✅ _Done_ — Unified `BaseInput` implementation.
 5. ✅ _Done_ — Select/multiselect widgets honor `ui_options` metadata and multi-value attrs, preventing regressions in renderer coverage.
 6. ✅ _Done_ — File input preview template no longer throws `NameError`, so specialized inputs render in Bootstrap.
 7. ⏳ _Open_ — Still multiple layout stacks; consolidate to reduce maintenance.
-8. ⏳ _Open_ — Add caching for `model_json_schema()` and measure perf gains.
+8. ✅ _Done_ — Added an LRU cache for `build_schema_metadata`, plus a manual reset helper for tests/hot reload.
+9. ✅ _Done_ — Deduplicated `_render_side_by_side_layout`; layout rendering now flows through `LayoutEngine` and the shared BaseLayout components.
 
 These changes will reduce runtime bugs, lower maintenance overhead, and make it easier to add additional frameworks or inputs without duplicating logic across the codebase.

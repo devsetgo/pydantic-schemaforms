@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from html import escape
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from .context import RenderContext
 from ..layout_base import BaseLayout
+from ..layouts import CardLayout, HorizontalLayout as FlexHorizontalLayout
+from ..layouts import TabLayout as ComponentTabLayout
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..enhanced_renderer import EnhancedFormRenderer
@@ -29,50 +32,39 @@ class LayoutEngine:
         context: RenderContext,
     ) -> List[str]:
         tabs = self._group_fields_into_tabs(fields)
-        parts: List[str] = []
+        if not tabs:
+            return []
 
-        parts.append('<ul class="nav nav-tabs" id="formTabs" role="tablist">')
-        for i, (tab_name, _) in enumerate(tabs):
-            active_class = " active" if i == 0 else ""
-            tab_id = f"tab-{tab_name.lower().replace(' ', '-')}"
-            parts.append(
-                f"""
-            <li class="nav-item" role="presentation">
-                <button class="nav-link{active_class}" id="{tab_id}-tab" data-bs-toggle="tab"
-                        data-bs-target="#{tab_id}" type="button" role="tab"
-                        aria-controls="{tab_id}" aria-selected="{"true" if i == 0 else "false"}">
-                    {tab_name}
-                </button>
-            </li>
-            """
-            )
-        parts.append("</ul>")
-
-        parts.append('<div class="tab-content" id="formTabContent">')
-        for i, (tab_name, tab_fields) in enumerate(tabs):
-            active_class = " show active" if i == 0 else ""
-            tab_id = f"tab-{tab_name.lower().replace(' ', '-')}"
-            parts.append(
-                f'<div class="tab-pane fade{active_class}" id="{tab_id}" role="tabpanel" aria-labelledby="{tab_id}-tab">'
-            )
-
+        tab_payload: List[Dict[str, str]] = []
+        for tab_name, tab_fields in tabs:
+            field_html_parts: List[str] = []
             for field_name, field_schema in tab_fields:
-                field_html = self._renderer._render_field(  # noqa: SLF001 - intentional internal call
-                    field_name,
-                    field_schema,
-                    data.get(field_name),
-                    errors.get(field_name),
-                    required_fields,
-                    context,
-                    "vertical",
-                    errors,
+                field_html_parts.append(
+                    self._renderer._render_field(  # noqa: SLF001 - intentional internal call
+                        field_name,
+                        field_schema,
+                        data.get(field_name),
+                        errors.get(field_name),
+                        required_fields,
+                        context,
+                        "vertical",
+                        errors,
+                    )
                 )
-                parts.append(field_html)
 
-            parts.append("</div>")
+            tab_payload.append(
+                {
+                    "title": tab_name,
+                    "content": "".join(field_html_parts),
+                }
+            )
 
-        parts.append("</div>")
-        return parts
+        component = ComponentTabLayout(
+            tabs=tab_payload,
+            class_="tabbed-layout",
+        )
+
+        return [component.render(framework=self._renderer.framework)]
 
     def render_layout_fields_as_tabs(
         self,
@@ -82,34 +74,11 @@ class LayoutEngine:
         required_fields: List[str],
         context: RenderContext,
     ) -> List[str]:
-        parts: List[str] = []
+        if not layout_fields:
+            return []
 
-        parts.append('<ul class="nav nav-tabs" id="layoutTabs" role="tablist">')
-        for i, (field_name, field_schema) in enumerate(layout_fields):
-            active_class = " active" if i == 0 else ""
-            tab_id = f"layout-tab-{field_name}"
-            tab_title = field_schema.get("title", field_name.replace("_", " ").title())
-            parts.append(
-                f"""
-            <li class="nav-item" role="presentation">
-                <button class="nav-link{active_class}" id="{tab_id}-tab" data-bs-toggle="tab"
-                        data-bs-target="#{tab_id}" type="button" role="tab"
-                        aria-controls="{tab_id}" aria-selected="{"true" if i == 0 else "false"}">
-                    {tab_title}
-                </button>
-            </li>
-            """
-            )
-        parts.append("</ul>")
-
-        parts.append('<div class="tab-content" id="layoutTabContent">')
-        for i, (field_name, field_schema) in enumerate(layout_fields):
-            active_class = " show active" if i == 0 else ""
-            tab_id = f"layout-tab-{field_name}"
-            parts.append(
-                f'<div class="tab-pane fade{active_class}" id="{tab_id}" role="tabpanel" aria-labelledby="{tab_id}-tab">'
-            )
-
+        tabs_payload: List[Dict[str, str]] = []
+        for field_name, field_schema in layout_fields:
             ui_info = field_schema.get("ui", {}) or field_schema
             layout_content = self.render_layout_field_content(
                 field_name,
@@ -119,11 +88,19 @@ class LayoutEngine:
                 ui_info,
                 context,
             )
-            parts.append(layout_content)
-            parts.append("</div>")
+            tabs_payload.append(
+                {
+                    "title": field_schema.get("title", field_name.replace("_", " ").title()),
+                    "content": layout_content,
+                }
+            )
 
-        parts.append("</div>")
-        return parts
+        component = ComponentTabLayout(
+            tabs=tabs_payload,
+            class_="layout-tabbed-section",
+        )
+
+        return [component.render(framework=self._renderer.framework)]
 
     def render_layout_field_content(
         self,
@@ -134,27 +111,10 @@ class LayoutEngine:
         ui_info: Dict[str, Any],
         context: RenderContext,
     ) -> str:
-        try:
-            if isinstance(value, BaseLayout):
-                nested_data = get_nested_form_data(field_name, context.form_data)
-                return value.render(
-                    data=nested_data,
-                    errors=None,
-                    renderer=self._renderer,
-                    framework=self._renderer.framework,
-                )
-
-            return self.render_layout_field_content_fallback(
-                field_name, field_schema, ui_info, context
-            )
-
-        except Exception as exc:  # pragma: no cover - defensive HTML message
-            return f"""
-            <div class="layout-field-error alert alert-warning">
-                <p>Error rendering layout field: {str(exc)}</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
-            </div>
-            """
+        section_title = field_schema.get("title", field_name.replace("_", " ").title())
+        help_text = ui_info.get("help_text", "")
+        body_html = self._build_layout_body(field_name, field_schema, value, ui_info, context)
+        return self._render_layout_card(section_title, body_html, help_text)
 
     def render_layout_field_content_fallback(
         self,
@@ -222,11 +182,10 @@ class LayoutEngine:
             field_pairs.append((fields[i], fields[i + 1] if i + 1 < len(fields) else None))
 
         for left_field, right_field in field_pairs:
-            parts.append('<div class="row">')
-            parts.append('<div class="col-md-6">')
+            columns: List[str] = []
             if left_field:
                 field_name, field_schema = left_field
-                parts.append(
+                columns.append(
                     self._renderer._render_field(  # noqa: SLF001
                         field_name,
                         field_schema,
@@ -238,12 +197,10 @@ class LayoutEngine:
                         errors,
                     )
                 )
-            parts.append("</div>")
 
-            parts.append('<div class="col-md-6">')
             if right_field:
                 field_name, field_schema = right_field
-                parts.append(
+                columns.append(
                     self._renderer._render_field(  # noqa: SLF001
                         field_name,
                         field_schema,
@@ -255,8 +212,22 @@ class LayoutEngine:
                         errors,
                     )
                 )
-            parts.append("</div>")
-            parts.append("</div>")
+
+            layout = FlexHorizontalLayout(
+                content=[f'<div class="side-by-side-column">{col}</div>' for col in columns],
+                class_="side-by-side-row",
+                gap="1.5rem",
+                align_items="flex-start",
+            )
+
+            parts.append(
+                layout.render(
+                    data=data,
+                    errors=errors,
+                    renderer=self._renderer,
+                    framework=self._renderer.framework,
+                )
+            )
 
         return parts
 
@@ -269,38 +240,32 @@ class LayoutEngine:
         ui_info: Dict[str, Any],
         context: RenderContext,
     ) -> str:
+        section_title = field_schema.get("title", field_name.replace("_", " ").title())
+        help_text = ui_info.get("help_text", "")
+        body_html = self._build_layout_body(field_name, field_schema, value, ui_info, context)
+        return self._render_layout_card(section_title, body_html, help_text)
+
+    def _build_layout_body(
+        self,
+        field_name: str,
+        field_schema: Dict[str, Any],
+        value: Any,
+        ui_info: Dict[str, Any],
+        context: RenderContext,
+    ) -> str:
         try:
             if isinstance(value, BaseLayout):
                 nested_data = get_nested_form_data(field_name, context.form_data)
-                form_html = value.render(
+                return value.render(
                     data=nested_data,
                     errors=None,
                     renderer=self._renderer,
                     framework=self._renderer.framework,
                 )
 
-                section_title = field_schema.get("title", field_name.replace("_", " ").title())
-                help_text = ui_info.get("help_text", "")
-                return f"""
-                <div class="layout-field-section mb-4">
-                    <h5 class="layout-field-title">{section_title}</h5>
-                    {f'<p class="text-muted">{help_text}</p>' if help_text else ''}
-                    <div class="layout-field-content p-3 border rounded">
-                        {form_html}
-                    </div>
-                </div>
-                """
-
             return self.render_layout_field_fallback(field_name, field_schema, ui_info, context)
-
-        except Exception as exc:  # pragma: no cover
-            return f"""
-            <div class="layout-field-error alert alert-warning">
-                <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
-                <p>Error rendering layout field: {str(exc)}</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
-            </div>
-            """
+        except Exception as exc:  # pragma: no cover - defensive message
+            return self._layout_error_message(field_name, field_schema, ui_info, exc)
 
     def render_layout_field_fallback(
         self,
@@ -338,35 +303,60 @@ class LayoutEngine:
                     layout="vertical",
                     include_submit_button=False,
                 )
-
-                section_title = field_schema.get("title", field_name.replace("_", " ").title())
-                help_text = ui_info.get("help_text", "")
-                return f"""
-                <div class="layout-field-section mb-4">
-                    <h5 class="layout-field-title">{section_title}</h5>
-                    {f'<p class="text-muted">{help_text}</p>' if help_text else ''}
-                    <div class="layout-field-content p-3 border rounded">
-                        {form_html}
-                    </div>
-                </div>
-                """
+                return form_html
             except Exception as exc:  # pragma: no cover
                 return f"""
                 <div class="layout-field-placeholder alert alert-info">
-                    <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
-                    <p>Layout demonstration: {form_name}</p>
-                    <small class="text-muted">{ui_info.get('help_text', '')}</small>
-                    <small class="text-danger d-block">Could not render: {str(exc)}</small>
+                    <p>Layout demonstration: {escape(form_name)}</p>
+                    <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
+                    <small class="text-danger d-block">Could not render: {escape(str(exc))}</small>
                 </div>
                 """
 
         return f"""
             <div class="layout-field-unknown alert alert-secondary">
-                <h5>{field_schema.get('title', field_name.replace('_', ' ').title())}</h5>
                 <p>Unknown layout field type</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
+                <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
             </div>
             """
+
+    def _render_layout_card(self, title: str, body_html: str, help_text: str) -> str:
+        content_parts: List[str] = []
+        if help_text:
+            content_parts.append(
+                f'<p class="text-muted mb-2">{escape(help_text)}</p>'
+            )
+
+        content_parts.append(f'<div class="layout-field-content">{body_html}</div>')
+
+        card = CardLayout(
+            title=title,
+            content="".join(content_parts),
+            class_="layout-field-section mb-4",
+        )
+
+        return card.render(
+            data={},
+            errors={},
+            renderer=self._renderer,
+            framework=self._renderer.framework,
+        )
+
+    def _layout_error_message(
+        self,
+        field_name: str,
+        field_schema: Dict[str, Any],
+        ui_info: Dict[str, Any],
+        exc: Exception,
+    ) -> str:
+        title = field_schema.get("title", field_name.replace("_", " ").title())
+        help_text = ui_info.get("help_text", "")
+        return f"""
+        <div class="layout-field-error alert alert-warning">
+            <p>Error rendering layout field "{escape(title)}": {escape(str(exc))}</p>
+            {f'<small class="text-muted">{escape(help_text)}</small>' if help_text else ''}
+        </div>
+        """
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -10,6 +10,9 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
 from .layout_base import BaseLayout as SharedBaseLayout
+from .layouts import HorizontalLayout as FlexHorizontalLayout
+from .layouts import TabLayout as ComponentTabLayout
+from .layouts import VerticalLayout as FlexVerticalLayout
 from .schema_form import FormModel, ValidationResult
 
 
@@ -141,6 +144,33 @@ class FormLayoutBase(SharedBaseLayout, ABC):
         self._forms: List[FormModel] = []
         self._rendered_content: Optional[str] = None
 
+    # ------------------------------------------------------------------
+    # Shared helpers so concrete layouts can lean on BaseLayout subclasses
+    # ------------------------------------------------------------------
+    def _section_header(self, framework: str) -> str:
+        if self.form_config and hasattr(self.form_config, "render_header"):
+            return self.form_config.render_header(framework)
+        return ""
+
+    def _section_class(self, base_class: str) -> str:
+        if not self.form_config:
+            return base_class
+
+        classes = [base_class]
+        collapsible = getattr(self.form_config, "collapsible", False)
+        collapsed = getattr(self.form_config, "collapsed", False)
+        css_class = getattr(self.form_config, "css_class", "")
+
+        if collapsible:
+            classes.append("collapsible")
+            if collapsed:
+                classes.append("collapsed")
+
+        if css_class:
+            classes.append(css_class)
+
+        return " ".join(classes)
+
     @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type: Any, handler: GetCoreSchemaHandler
@@ -163,6 +193,18 @@ class FormLayoutBase(SharedBaseLayout, ABC):
         self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
     ) -> ValidationResult:
         raise NotImplementedError
+
+    def _render_form_instances(
+        self,
+        *,
+        data: Optional[Dict[str, Any]],
+        errors: Optional[Dict[str, Any]],
+        framework: str,
+    ) -> List[str]:
+        rendered: List[str] = []
+        for form_cls in self._get_forms():
+            rendered.append(form_cls.render_form(data=data, errors=errors, framework=framework))
+        return rendered
 
     def _get_forms(self) -> List[Type[FormModel]]:
         forms: List[Type[FormModel]] = []
@@ -189,29 +231,25 @@ class VerticalLayout(FormLayoutBase):
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
     ) -> str:
-        """Render forms in vertical layout."""
-        content_parts = []
+        content_parts: List[str] = []
+        header = self._section_header(framework)
+        if header:
+            content_parts.append(header)
 
-        # Add section header if configured
-        if self.form_config:
-            content_parts.append(self.form_config.render_header(framework))
+        content_parts.extend(
+            self._render_form_instances(data=data, errors=errors, framework=framework)
+        )
 
-        # Render each form
-        forms = self._get_forms()
-        for form_cls in forms:
-            form_html = form_cls.render_form(data=data, errors=errors, framework=framework)
-            content_parts.append(form_html)
+        layout = FlexVerticalLayout(
+            content=content_parts,
+            class_=self._section_class("vertical-layout"),
+        )
 
-        # Wrap in vertical layout container
-        content = "\n".join(content_parts)
-
-        container_class = "vertical-layout"
-        if self.form_config and self.form_config.collapsible:
-            container_class += " collapsible"
-            if self.form_config.collapsed:
-                container_class += " collapsed"
-
-        return f'<div class="{container_class}">{content}</div>'
+        return layout.render(
+            data=data or {},
+            errors=errors or {},
+            framework=framework,
+        )
 
     def validate(
         self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
@@ -260,45 +298,28 @@ class HorizontalLayout(FormLayoutBase):
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
     ) -> str:
-        """Render forms in horizontal layout."""
-        content_parts = []
+        header_html = self._section_header(framework)
 
-        # Add section header if configured
-        if self.form_config:
-            content_parts.append(self.form_config.render_header(framework))
+        column_content = [
+            f'<div class="horizontal-layout-column">{html}</div>'
+            for html in self._render_form_instances(data=data, errors=errors, framework=framework)
+        ]
 
-        # Render each form in columns
-        forms = self._get_forms()
-        form_columns = []
+        layout = FlexHorizontalLayout(
+            content=column_content,
+            class_=self._section_class("horizontal-layout"),
+            justify_content="space-between",
+        )
 
-        for form_cls in forms:
-            form_html = form_cls.render_form(data=data, errors=errors, framework=framework)
+        layout_html = layout.render(
+            data=data or {},
+            errors=errors or {},
+            framework=framework,
+        )
 
-            if framework == "bootstrap":
-                column_html = f'<div class="col">{form_html}</div>'
-            else:
-                column_html = f'<div class="horizontal-layout-column">{form_html}</div>'
-
-            form_columns.append(column_html)
-
-        # Wrap columns in row
-        if framework == "bootstrap":
-            columns_html = f'<div class="row">{"".join(form_columns)}</div>'
-        else:
-            columns_html = f'<div class="horizontal-layout-row">{"".join(form_columns)}</div>'
-
-        content_parts.append(columns_html)
-
-        # Wrap in horizontal layout container
-        content = "\n".join(content_parts)
-
-        container_class = "horizontal-layout"
-        if self.form_config and self.form_config.collapsible:
-            container_class += " collapsible"
-            if self.form_config.collapsed:
-                container_class += " collapsed"
-
-        return f'<div class="{container_class}">{content}</div>'
+        if header_html:
+            return f"{header_html}{layout_html}"
+        return layout_html
 
     def validate(
         self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
@@ -351,61 +372,30 @@ class TabbedLayout(FormLayoutBase):
         framework: str = "bootstrap",
     ) -> str:
         """Render the tabbed layout with all tabs."""
-        # Get all layout attributes in declaration order
         layouts = self._get_layouts()
-
         if not layouts:
             return '<div class="alert alert-warning">No layouts found in tabbed layout</div>'
 
-        # Generate tab navigation
-        tab_nav_items = []
-        tab_content_panes = []
-
-        for i, (tab_name, layout_instance) in enumerate(layouts):
-            tab_id = f"tab-{tab_name}"
-            is_active = i == 0
-
-            # Tab navigation item
-            active_class = " active" if is_active else ""
-            nav_item = f"""
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link{active_class}" id="{tab_id}-tab"
-                            data-bs-toggle="tab" data-bs-target="#{tab_id}"
-                            type="button" role="tab" aria-controls="{tab_id}"
-                            aria-selected="{str(is_active).lower()}">
-                        {tab_name.replace('_', ' ').title()}
-                    </button>
-                </li>"""
-            tab_nav_items.append(nav_item)
-
-            # Tab content pane
-            active_class = " show active" if is_active else ""
+        tabs_payload: List[Dict[str, str]] = []
+        for tab_name, layout_instance in layouts:
             layout_html = layout_instance.render(data=data, errors=errors, framework=framework)
-            content_pane = f"""
-                <div class="tab-pane fade{active_class}" id="{tab_id}"
-                     role="tabpanel" aria-labelledby="{tab_id}-tab">
-                    {layout_html}
-                </div>"""
-            tab_content_panes.append(content_pane)
+            tabs_payload.append(
+                {
+                    "title": tab_name.replace("_", " ").title(),
+                    "content": layout_html,
+                }
+            )
 
-        # Build complete tabbed interface
-        form_title = ""
+        tab_component = ComponentTabLayout(
+            tabs=tabs_payload,
+            class_="tabbed-layout",
+        )
+
+        tabs_html = tab_component.render(framework=framework)
+
         if self.form_config:
             form_title = f'<h2 class="form-title">{self.form_config.form_name}</h2>'
-
-        tabs_html = f"""
-            {form_title}
-            <div class="tabbed-layout">
-                <ul class="nav nav-tabs" id="form-tabs" role="tablist">
-                    {"".join(tab_nav_items)}
-                </ul>
-                <div class="tab-content" id="form-tab-content">
-                    {"".join(tab_content_panes)}
-                </div>
-            </div>"""
-
-        # Wrap in complete page if FormDesign is provided
-        if self.form_config:
+            tabs_html = f"{form_title}{tabs_html}"
             return self._render_complete_page(tabs_html)
 
         return tabs_html
@@ -530,6 +520,7 @@ class ListLayout(FormLayoutBase):
             section_title=f"{form_model.__name__} List",
             section_description=f"List of {form_model.__name__} items",
         )
+        self.form_config = self.section_design
 
     def get_form_models(self) -> List[Type[FormModel]]:
         """Get all FormModel classes from the layout."""
@@ -636,9 +627,7 @@ class ListLayout(FormLayoutBase):
         list_id = f"list_{id(self)}"
 
         # Render header if section design is provided
-        header_html = ""
-        if self.section_design:
-            header_html = self.section_design.render_header(framework)
+        header_html = self._section_header(framework)
 
         # Render existing items
         items_html = ""
@@ -649,21 +638,40 @@ class ListLayout(FormLayoutBase):
         add_button_html = self._render_add_button(list_id, framework)
 
         # Container CSS class
-        container_class = f"list-layout {framework}-list-layout"
+        container_class = self._section_class(f"list-layout {framework}-list-layout")
         if self.section_design and self.section_design.css_class:
             container_class += f" {self.section_design.css_class}"
 
         # Render JavaScript for dynamic functionality
         js_html = self._render_javascript(list_id, framework)
 
-        return f"""
-        <div class="{container_class}" data-list-id="{list_id}">
-            {header_html}
+        layout_content = []
+        if header_html:
+            layout_content.append(header_html)
+
+        layout_content.append(
+            f"""
             <div class="list-items-container" id="{list_id}-container">
                 {items_html}
             </div>
             {add_button_html}
-        </div>
+            """
+        )
+
+        layout = FlexVerticalLayout(
+            content=layout_content,
+            class_=container_class,
+            gap="1rem",
+        )
+
+        layout_html = layout.render(
+            data=data or {},
+            errors=errors or {},
+            framework=framework,
+        )
+
+        return f"""
+        {layout_html}
         {js_html}
         """
 
