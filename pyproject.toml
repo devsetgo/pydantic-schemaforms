@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-forms"
-version = "25.11.1.beta"
+version = "25.11.2.beta"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "ui", "htmx",]

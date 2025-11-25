@@ -7,12 +7,13 @@ This renderer creates self-contained forms with embedded Material Design styling
 """
 
 from html import escape
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from .enhanced_renderer import EnhancedFormRenderer
+from .icon_mapping import map_icon_for_framework
 from .layout_base import BaseLayout
 from .rendering.context import RenderContext
-from .icon_mapping import map_icon_for_framework
+from .rendering.schema_parser import SchemaMetadata, build_schema_metadata, resolve_ui_element
 from .schema_form import FormModel
 
 
@@ -25,6 +26,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     def __init__(self):
         """Initialize Simple Material Design renderer."""
         super().__init__(framework="material")
+        self._current_errors: Dict[str, Any] = {}
 
     def _build_render_context(self) -> RenderContext:
         """Return a render context aligned with the enhanced renderer API."""
@@ -52,16 +54,17 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """
         Render a complete self-contained Material Design 3 form.
         """
-        schema = model_cls.model_json_schema()
+        metadata = build_schema_metadata(model_cls)
         data = data or {}
         errors = errors or {}
 
         # Build complete self-contained form
         self._current_form_data = data
-        self._schema_defs = schema.get("$defs", {})
+        self._current_errors = errors
+        self._schema_defs = metadata.schema_defs
 
         form_html = self._build_material_form(
-            schema,
+            metadata,
             data,
             errors,
             submit_url,
@@ -86,18 +89,17 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         Render only the form fields without the form wrapper.
         This is useful for rendering nested forms within tabs.
         """
-        schema = model_cls.model_json_schema()
+        metadata = build_schema_metadata(model_cls)
         data = data or {}
         errors = errors or {}
 
         # Store form data and schema defs for nested rendering helpers
         self._current_form_data = data
-        self._schema_defs = schema.get("$defs", {})
+        self._current_errors = errors
+        self._schema_defs = metadata.schema_defs
 
-        # Get fields and sort by UI order if specified
-        fields = list(schema["properties"].items())
-        fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
-        required_fields = schema.get("required", [])
+        fields = metadata.fields
+        required_fields = metadata.required_fields
 
         # Render fields only
         form_parts = []
@@ -115,7 +117,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 
     def _build_material_form(
         self,
-        schema: Dict[str, Any],
+        metadata: SchemaMetadata,
         data: Dict[str, Any],
         errors: Dict[str, Any],
         submit_url: str,
@@ -127,11 +129,12 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     ) -> str:
         """Build a complete self-contained Material Design 3 form."""
 
-        # Store form data for nested form access
+        # Store form data and errors for nested form access
         self._current_form_data = data
+        self._current_errors = errors
 
         # Store schema definitions for model_list fields
-        self._schema_defs = schema.get("$defs", {})
+        self._schema_defs = metadata.schema_defs
 
         # Start with complete HTML structure including all dependencies
         form_parts = [
@@ -145,30 +148,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         if include_csrf:
             form_parts.append('<input type="hidden" name="csrf_token" value="csrf_placeholder">')
 
-        # Get fields and sort by UI order
-        fields = list(schema["properties"].items())
-        fields.sort(key=lambda x: x[1].get("ui", {}).get("order", 999))
-        required_fields = schema.get("required", [])
-
-        # Check if all fields are layout fields - if so, use tabbed layout automatically
-        layout_fields = []
-        non_layout_fields = []
-
-        for field_name, field_schema in fields:
-            ui_info = field_schema.get("ui", {})
-            if not ui_info:
-                ui_info = field_schema
-            ui_element = (
-                ui_info.get("element")
-                or ui_info.get("ui_element")
-                or ui_info.get("widget")
-                or ui_info.get("input_type")
-            )
-
-            if ui_element == "layout":
-                layout_fields.append((field_name, field_schema))
-            else:
-                non_layout_fields.append((field_name, field_schema))
+        fields = metadata.fields
+        required_fields = metadata.required_fields
+        layout_fields = metadata.layout_fields
+        non_layout_fields = metadata.non_layout_fields
 
         # If we have multiple layout fields and few/no other fields, render as tabs
         if len(layout_fields) > 1 and len(non_layout_fields) == 0:
@@ -200,7 +183,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         form_parts.append(self._get_material_javascript())
 
         # Add model list JavaScript if any model_list fields were rendered
-        if self._has_model_list_fields(schema):
+        if self._has_model_list_fields(fields):
             from .model_list import ModelListRenderer
 
             list_renderer = ModelListRenderer(framework="bootstrap")
@@ -208,18 +191,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
 
         return "\n".join(form_parts)
 
-    def _has_model_list_fields(self, schema: Dict[str, Any]) -> bool:
-        """Check if the schema contains any model_list fields."""
-        properties = schema.get("properties", {})
-        for _field_name, field_schema in properties.items():
-            ui_info = field_schema.get("ui", {}) or field_schema
-            ui_element = (
-                ui_info.get("element")
-                or ui_info.get("ui_element")
-                or ui_info.get("widget")
-                or ui_info.get("input_type")
-            )
-            if ui_element == "model_list":
+    def _has_model_list_fields(self, fields: List[Tuple[str, Dict[str, Any]]]) -> bool:
+        """Check if the current schema metadata contains any model_list fields."""
+        for _field_name, field_schema in fields:
+            if resolve_ui_element(field_schema) == "model_list":
                 return True
         return False
 
@@ -1006,80 +981,21 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error: Optional[str] = None,
         required_fields: List[str] = None,
     ) -> str:
-        """Render a model_list field by delegating to the enhanced renderer."""
-        # Import here to avoid circular imports
-        from .enhanced_renderer import EnhancedFormRenderer
-        from .model_list import ModelListRenderer
-
-        # Create enhanced renderer with bootstrap framework for model_list functionality
-        enhanced_renderer = EnhancedFormRenderer(framework="bootstrap")
-
-        # Set up schema definitions if they exist on this renderer
-        if hasattr(self, "_schema_defs"):
-            enhanced_renderer._schema_defs = self._schema_defs
-
-        # Try to use the model list renderer directly for better control
-        ModelListRenderer(framework="bootstrap")
-
         context = self._build_render_context()
+        all_errors = getattr(self, "_current_errors", {}) or {}
+        required = required_fields or []
 
-        # Extract model reference from field schema
-        items_ref = field_schema.get("items", {}).get("$ref")
-        if items_ref:
-            model_name = items_ref.split("/")[-1]
-
-            # Get schema definitions from the field schema or parent schema
-            schema_defs = getattr(self, "_schema_defs", {})
-            model_schema = schema_defs.get(model_name)
-
-            if model_schema:
-                # Convert value to list of dicts if needed
-                list_values = []
-                if value:
-                    if isinstance(value, list):
-                        for item in value:
-                            if hasattr(item, "model_dump"):
-                                list_values.append(item.model_dump())
-                            elif isinstance(item, dict):
-                                list_values.append(item)
-                    elif hasattr(value, "model_dump"):
-                        list_values = [value.model_dump()]
-                    elif isinstance(value, dict):
-                        list_values = [value]
-
-                # Use the enhanced renderer's schema-based model list rendering
-                enhanced_renderer._schema_defs = schema_defs
-                field_html = enhanced_renderer._render_model_list_from_schema(
-                    field_name=field_name,
-                    field_schema=field_schema,
-                    schema_def=model_schema,
-                    values=list_values,
-                    error=error,
-                    ui_info=field_schema,
-                    required_fields=required_fields or [],
-                    context=context,
-                )
-
-                # Wrap in Material Design container to maintain consistency
-                return f"""
-        <div class="md-field">
-            <div class="md-model-list-container">
-                {field_html}
-            </div>
-        </div>
-        """
-
-        # Fallback to original implementation if model schema not found
-        field_html = enhanced_renderer._render_field(
+        field_html = self._field_renderer.render_field(
             field_name,
             field_schema,
             value,
             error,
-            required_fields or [],
+            required,
             context,
+            "vertical",
+            all_errors,
         )
 
-        # Wrap in Material Design container to maintain consistency
         return f"""
         <div class="md-field">
             <div class="md-model-list-container">
