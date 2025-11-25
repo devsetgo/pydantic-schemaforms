@@ -296,12 +296,11 @@ class LayoutEngine:
                     raise ImportError(f"Unknown form: {form_name}")
 
                 nested_data = get_nested_form_data(field_name, context.form_data)
-                form_html = self._renderer.render_form_from_model(
+                form_html = self._renderer.render_form_fields_only(
                     FormClass,
                     data=nested_data,
                     errors={},
                     layout="vertical",
-                    include_submit_button=False,
                 )
                 return form_html
             except Exception as exc:  # pragma: no cover

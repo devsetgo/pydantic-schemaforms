@@ -201,10 +201,44 @@ class FormLayoutBase(SharedBaseLayout, ABC):
         errors: Optional[Dict[str, Any]],
         framework: str,
     ) -> List[str]:
+        """Render nested FormModel instances without wrapping them in nested <form> tags."""
+
         rendered: List[str] = []
+        renderer = self._get_renderer_for_framework(framework)
+
         for form_cls in self._get_forms():
-            rendered.append(form_cls.render_form(data=data, errors=errors, framework=framework))
+            if renderer:
+                rendered.append(
+                    renderer.render_form_fields_only(
+                        form_cls,
+                        data=data,
+                        errors=errors,
+                    )
+                )
+            else:
+                # Fallback for unexpected frameworks without dedicated renderer helpers
+                rendered.append(
+                    form_cls.render_form(
+                        data=data,
+                        errors=errors,
+                        framework=framework,
+                        include_submit_button=False,
+                    )
+                )
+
         return rendered
+
+    def _get_renderer_for_framework(self, framework: str):
+        """Return a renderer capable of rendering fields-only for nested layouts."""
+
+        if framework == "material":
+            from .simple_material_renderer import SimpleMaterialRenderer
+
+            return SimpleMaterialRenderer()
+
+        from .enhanced_renderer import EnhancedFormRenderer
+
+        return EnhancedFormRenderer(framework=framework)
 
     def _get_forms(self) -> List[Type[FormModel]]:
         forms: List[Type[FormModel]] = []

@@ -689,7 +689,7 @@ async def layouts_get(request: Request, style: str = "bootstrap", data: str = No
             LayoutDemonstrationForm,
             data=form_data,
             errors={},
-            submit_url="/dynamic",
+            submit_url=f"/layouts?style={style}",
             include_submit_button=True
         )
     else:
@@ -699,7 +699,7 @@ async def layouts_get(request: Request, style: str = "bootstrap", data: str = No
             LayoutDemonstrationForm,
             data=form_data,
             errors={},
-            submit_url="/dynamic",
+            submit_url=f"/layouts?style={style}",
             include_submit_button=True
         )
 
@@ -783,7 +783,7 @@ async def layouts_post(request: Request, style: str = "bootstrap"):
                 LayoutDemonstrationForm,
                 data={},
                 errors={"form": str(e)},
-                submit_url="/dynamic",
+                submit_url=f"/layouts?style={style}",
                 include_submit_button=True
             )
         else:
@@ -793,7 +793,7 @@ async def layouts_post(request: Request, style: str = "bootstrap"):
                 LayoutDemonstrationForm,
                 data={},
                 errors={"form": str(e)},
-                submit_url="/dynamic",
+                submit_url=f"/layouts?style={style}",
                 include_submit_button=True
             )
 
@@ -1023,7 +1023,7 @@ if __name__ == "__main__":
     print("   • Simple:  http://localhost:8000/login")
     print("   • Medium:  http://localhost:8000/register")
     print("   • Complex: http://localhost:8000/showcase")
-    print("   • Layouts: http://localhost:8000/dynamic")
+    print("   • Layouts: http://localhost:8000/layouts")
     print("")
     print("🎨 Style Variants (add ?style= to any form):")
     print("   • Bootstrap:       ?style=bootstrap")

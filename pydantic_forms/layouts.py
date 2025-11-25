@@ -192,6 +192,7 @@ function switchTab(tabId, buttonElement) {
             tab_buttons.append(
                 f"""
             <button class="tab-button{active_class}"
+                    type="button"
                     role="tab"
                     aria-selected="{aria_selected}"
                     aria-controls="{tab_id}"
