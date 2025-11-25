@@ -119,7 +119,7 @@ from .version_check import check_python_version, verify_template_strings
 # - ui_elements.py -> use inputs/ directory structure instead
 # - template_compat.py -> empty/unused
 
-__version__ = "25.11.2.beta"
+__version__ = "25.11.3.beta"
 __author__ = "Pydantic Forms Team"
 __description__ = "Modern form generation library for Python 3.14+"
 
