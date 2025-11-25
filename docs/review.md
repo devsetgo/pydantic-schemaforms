@@ -1,6 +1,6 @@
 # Library Review – pydantic-forms
 
-_Date: 2025-11-23_
+_Date: 2025-11-25_
 
 ## Critical / High Priority Findings
 
@@ -8,8 +8,12 @@ _Date: 2025-11-23_
   `pyproject.toml` now declares `pydantic>=2.7`, framework extras, and lists `pydantic_forms` as the packaged module with classifiers aligned to `requires-python = ">=3.14"`. Editable installs and wheels now pull the libraries the code imports.  
   _Files: `pyproject.toml`, `makefile`_
 
-- **`render_form_from_model_async` drops keyword arguments** _(Open – 2025-11-23)_  
-  The async helper still calls `loop.run_in_executor` with `self.render_form_from_model` and positional arguments only, so any `**kwargs` (framework overrides, layout hints, csrf toggles) are silently discarded before the synchronous renderer executes. Until this swaps in a `functools.partial` (or equivalent) that binds the keyword arguments, async callers cannot supply the same options that the sync entry point supports.  
+- **`EnhancedFormRenderer` file corruption prevented imports** _(Resolved – 2025-11-25)_  
+  The renderer module had been truncated to an empty file, breaking every caller that imported `EnhancedFormRenderer`/`render_form_html`. The class has been reconstructed, delegating per-field rendering to `FieldRenderer`, wiring `LayoutEngine`, and reinstating the synchronous/async top-level helpers so downstream modules load again.  
+  _Files: `pydantic_forms/enhanced_renderer.py`_
+
+- **`render_form_from_model_async` still unusable with kwargs** _(Open – 2025-11-25)_  
+  The helper now tries to pass `**kwargs` directly into `loop.run_in_executor`, but that coroutine only accepts positional arguments, so any call that supplies layout/framework overrides raises `TypeError: run_in_executor() got an unexpected keyword argument`. The method needs to wrap `self.render_form_from_model` in `functools.partial` (or build a small closure) before dispatching to the executor so keywords survive the handoff.  
   _Files: `pydantic_forms/enhanced_renderer.py`_
 
 - **Renderer instances keep mutable request-scoped state** _(Open – 2025-11-23)_  
@@ -47,14 +51,16 @@ _Date: 2025-11-23_
 - **Schema handling recomputes per request**  
   Every render call invokes `model_cls.model_json_schema()` and walks the resulting dict. For forms that render frequently, cache the schema + UI metadata per model (perhaps via `functools.lru_cache`) and only clone when necessary to inject request data. _Progress – 2025-11-25_: `build_schema_metadata` now wraps the heavy schema generation in an LRU cache with a reset hook, dramatically reducing the cost for repeated renders of the same `FormModel`. We still rely on callers not to mutate the returned metadata.
 
-- **`templates.py` global cache lacks thread/process coordination**  
-  The `_template_cache` dictionary is mutated without locking and only bounded by an eviction of the first key. Consider `functools.lru_cache` or `collections.OrderedDict` plus a lock so multi-threaded renderers do not race.
+- **`templates.py` global cache lacks thread/process coordination** _(Resolved – 2025-11-25)_  
+  The cache now uses an `OrderedDict` guarded by an `RLock`, applies LRU-style eviction via `_TEMPLATE_CACHE_MAX`, and the concurrent stress test (32 threads × 2,000 iterations) confirmed stable compilation under contention. Rendering APIs in this container remain stubs, so the follow-up test hammers the compilation/cache path only.  
+  _Files: `pydantic_forms/templates.py`, ad-hoc stress harness_
 
-- **Integration helpers include unused/dead code**  
-  Example: `check_framework_availability` in `pydantic_forms/integration.py` is never invoked. Prune unused helpers or wire them into tests to ensure they stay functional.
+- **Integration helpers include unused/dead code** _(Resolved – 2025-11-25)_  
+  The `check_framework_availability` helper now has regression coverage in `tests/test_integration.py::test_missing_framework_handling`, so import-time drift will be caught in CI without keeping unused production wiring around. Other integration utilities remain exercised via the same suite.
 
-- **Model list rendering mixes HTML with data extraction**  
-  `pydantic_forms/model_list.py` contains several near-identical methods for Bootstrap vs Material output. Extract shared pieces (button rendering, item iteration, error handling) and drive differences via template fragments.
+- **Model list rendering mixes HTML with data extraction** _(Resolved – 2025-11-25)_  
+  `ModelListRenderer` now uses a shared `_render_list` pipeline plus `ModelListTheme` fragments to control framework-specific markup. Bootstrap and Material variants reuse the same iteration, button, and error handling logic, while per-item rendering sets up renderer context correctly (fixing the missing `layout/all_errors` wiring) and switches the Material path to `SimpleMaterialRenderer`.  
+  _Files: `pydantic_forms/model_list.py`_
 
 ## Testing & Tooling Gaps
 
