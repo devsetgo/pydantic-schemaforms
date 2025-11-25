@@ -36,11 +36,9 @@ class FieldRenderer:
         layout: str = "vertical",
         all_errors: Optional[Dict[str, str]] = None,
     ) -> str:
+
         if context is None:
-            context = RenderContext(
-                form_data=getattr(self._renderer, "_current_form_data", {}) or {},
-                schema_defs=getattr(self._renderer, "_schema_defs", {}) or {},
-            )
+            raise ValueError("RenderContext is required for field rendering")
 
         ui_info = field_schema.get("ui", {}) or field_schema
 
@@ -206,7 +204,7 @@ class FieldRenderer:
             items_ref = field_schema.get("items", {}).get("$ref")
             if items_ref:
                 model_name = items_ref.split("/")[-1]
-                schema_defs = getattr(self._renderer, "_schema_defs", {}) or {}
+                schema_defs = context.schema_defs or {}
                 schema_def = schema_defs.get(model_name)
                 if not schema_def:
                     return (

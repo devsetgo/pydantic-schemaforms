@@ -35,8 +35,6 @@ class EnhancedFormRenderer:
         self.config = get_framework_config(framework)
         self._layout_engine = LayoutEngine(self)
         self._field_renderer = FieldRenderer(self)
-        self._current_form_data: Dict[str, Any] = {}
-        self._schema_defs: Dict[str, Any] = {}
 
     def render_form_from_model(
         self,
@@ -56,9 +54,7 @@ class EnhancedFormRenderer:
         data = data or {}
         errors = errors or {}
 
-        self._current_form_data = data
-        self._schema_defs = metadata.schema_defs
-        context = RenderContext(form_data=data, schema_defs=self._schema_defs)
+        context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
         if isinstance(errors, dict) and "errors" in errors:
             errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
@@ -145,9 +141,7 @@ class EnhancedFormRenderer:
         data = data or {}
         errors = errors or {}
 
-        self._current_form_data = data
-        self._schema_defs = metadata.schema_defs
-        context = RenderContext(form_data=data, schema_defs=self._schema_defs)
+        context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
         if isinstance(errors, dict) and "errors" in errors:
             errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
@@ -277,8 +271,7 @@ class EnhancedFormRenderer:
         field_name: str,
         main_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        data = main_data if main_data is not None else getattr(self, "_current_form_data", {}) or {}
-        return get_nested_form_data(field_name, data)
+        return get_nested_form_data(field_name, main_data or {})
 
     def _render_side_by_side_layout(
         self,

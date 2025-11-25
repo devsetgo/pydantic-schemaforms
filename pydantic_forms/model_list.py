@@ -19,6 +19,7 @@ from html import escape
 from typing import Any, Callable, Dict, List, Optional, Type
 
 from pydantic_forms.schema_form import FormModel
+from pydantic_forms.rendering.context import RenderContext
 
 
 @dataclass(frozen=True)
@@ -235,14 +236,13 @@ class ModelListRenderer:
     ) -> str:
         """Render a single Bootstrap list item."""
 
-        # Import here to avoid circular imports
         from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
 
         renderer = EnhancedFormRenderer(framework="bootstrap")
 
         schema = model_class.model_json_schema()
-        renderer._schema_defs = schema.get("definitions", {})  # type: ignore[attr-defined]
-        renderer._current_form_data = item_data  # type: ignore[attr-defined]
+        schema_defs = schema.get("$defs") or schema.get("definitions", {}) or {}
+        nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
         required_fields = schema.get("required", [])
         nested_errors = nested_errors or {}
 
@@ -284,7 +284,7 @@ class ModelListRenderer:
                         field_value,
                         field_error,
                         required_fields=required_fields,
-                        context=None,
+                        context=nested_context,
                         layout="vertical",
                         all_errors=nested_errors,
                     )}
@@ -306,15 +306,13 @@ class ModelListRenderer:
     ) -> str:
         """Render a single Material Design list item."""
 
-        # Import here to avoid circular imports
         from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
 
         renderer = SimpleMaterialRenderer()
 
         schema = model_class.model_json_schema()
-        renderer._schema_defs = schema.get("definitions", {})  # type: ignore[attr-defined]
-        renderer._current_form_data = item_data  # type: ignore[attr-defined]
-        renderer._current_errors = nested_errors or {}  # type: ignore[attr-defined]
+        schema_defs = schema.get("$defs") or schema.get("definitions", {}) or {}
+        nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
         required_fields = schema.get("required", [])
         nested_errors = nested_errors or {}
 
@@ -359,6 +357,8 @@ class ModelListRenderer:
                                 field_value,
                                 field_error,
                                 required_fields,
+                                context=nested_context,
+                                all_errors=nested_errors,
                             )}
                         </div>"""
 

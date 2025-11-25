@@ -26,17 +26,9 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     def __init__(self):
         """Initialize Simple Material Design renderer."""
         super().__init__(framework="material")
-        self._current_errors: Dict[str, Any] = {}
 
-    def _build_render_context(self) -> RenderContext:
-        """Return a render context aligned with the enhanced renderer API."""
-        form_data = getattr(self, "_current_form_data", {}) or {}
-        schema_defs = getattr(self, "_schema_defs", {}) or {}
-        return RenderContext(form_data=form_data, schema_defs=schema_defs)
-
-    def _get_material_nested_form_data(self, field_name: str) -> Dict[str, Any]:
+    def _get_material_nested_form_data(self, field_name: str, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """Fetch nested form data using the enhanced renderer helper."""
-        form_data = getattr(self, "_current_form_data", {}) or {}
         return super()._get_nested_form_data(field_name, form_data)
 
     def render_form_from_model(
@@ -54,19 +46,21 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         """
         Render a complete self-contained Material Design 3 form.
         """
+
         metadata = build_schema_metadata(model_cls)
         data = data or {}
         errors = errors or {}
 
-        # Build complete self-contained form
-        self._current_form_data = data
-        self._current_errors = errors
-        self._schema_defs = metadata.schema_defs
+        if isinstance(errors, dict) and "errors" in errors:
+            errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
 
-        form_html = self._build_material_form(
+        context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
+
+        return self._build_material_form(
             metadata,
             data,
             errors,
+            context,
             submit_url,
             method,
             include_csrf,
@@ -74,8 +68,6 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             layout,
             **kwargs,
         )
-
-        return form_html
 
     def render_form_fields_only(
         self,
@@ -89,29 +81,33 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         Render only the form fields without the form wrapper.
         This is useful for rendering nested forms within tabs.
         """
+
         metadata = build_schema_metadata(model_cls)
         data = data or {}
         errors = errors or {}
 
-        # Store form data and schema defs for nested rendering helpers
-        self._current_form_data = data
-        self._current_errors = errors
-        self._schema_defs = metadata.schema_defs
+        if isinstance(errors, dict) and "errors" in errors:
+            errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
+
+        context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
         fields = metadata.fields
         required_fields = metadata.required_fields
 
-        # Render fields only
-        form_parts = []
+        form_parts: List[str] = []
         for field_name, field_schema in fields:
-            field_html = self._render_field(
-                field_name,
-                field_schema,
-                data.get(field_name),
-                errors.get(field_name),
-                required_fields,
+            form_parts.append(
+                self._render_field(
+                    field_name,
+                    field_schema,
+                    data.get(field_name),
+                    errors.get(field_name),
+                    required_fields,
+                    context,
+                    layout,
+                    errors,
+                )
             )
-            form_parts.append(field_html)
 
         return "\n".join(form_parts)
 
@@ -120,6 +116,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         metadata: SchemaMetadata,
         data: Dict[str, Any],
         errors: Dict[str, Any],
+        context: RenderContext,
         submit_url: str,
         method: str,
         include_csrf: bool,
@@ -129,14 +126,6 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     ) -> str:
         """Build a complete self-contained Material Design 3 form."""
 
-        # Store form data and errors for nested form access
-        self._current_form_data = data
-        self._current_errors = errors
-
-        # Store schema definitions for model_list fields
-        self._schema_defs = metadata.schema_defs
-
-        # Start with complete HTML structure including all dependencies
         form_parts = [
             "<!-- Material Design 3 Self-Contained Form -->",
             self._get_material_css(),
@@ -144,7 +133,6 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             f'<form method="{method}" action="{submit_url}" class="md-form" novalidate>',
         ]
 
-        # Add CSRF if requested
         if include_csrf:
             form_parts.append('<input type="hidden" name="csrf_token" value="csrf_placeholder">')
 
@@ -153,16 +141,16 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         layout_fields = metadata.layout_fields
         non_layout_fields = metadata.non_layout_fields
 
-        # If we have multiple layout fields and few/no other fields, render as tabs
         if len(layout_fields) > 1 and len(non_layout_fields) == 0:
-            # Render layout fields as tabs with Material Design styling
             form_parts.extend(
                 self._render_material_layout_fields_as_tabs(
-                    layout_fields, data, errors, required_fields
+                    layout_fields,
+                    data,
+                    errors,
+                    required_fields,
                 )
             )
         else:
-            # Render each field normally
             for field_name, field_schema in fields:
                 field_html = self._render_field(
                     field_name,
@@ -170,19 +158,18 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
                     data.get(field_name),
                     errors.get(field_name),
                     required_fields,
+                    context,
+                    layout,
+                    errors,
                 )
                 form_parts.append(field_html)
 
-        # Add submit button if requested
         if include_submit_button:
             form_parts.append(self._render_submit_button())
 
         form_parts.extend(["</form>", "</div>"])
-
-        # Add JavaScript for Material Design interactions + model lists
         form_parts.append(self._get_material_javascript())
 
-        # Add model list JavaScript if any model_list fields were rendered
         if self._has_model_list_fields(fields):
             from .model_list import ModelListRenderer
 
@@ -715,51 +702,62 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         field_schema: Dict[str, Any],
         value: Any = None,
         error: Optional[str] = None,
-        required_fields: List[str] = None,
+        required_fields: Optional[List[str]] = None,
+        context: Optional[RenderContext] = None,
+        _layout: str = "vertical",
+        all_errors: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Render a Material Design form field."""
-        # Get UI info
+
+        context = context or RenderContext(form_data={}, schema_defs={})
         ui_info = field_schema.get("ui", {}) or field_schema
 
-        # Skip hidden fields
         if ui_info.get("hidden"):
             return f'<input type="hidden" name="{field_name}" value="{escape(str(value or ""))}">'
 
-        # Determine input type
         input_type = (
             ui_info.get("input_type")
             or ui_info.get("element")
             or self._infer_input_type(field_schema)
         )
 
-        # Handle model_list specially - delegate to enhanced renderer
         if input_type == "model_list":
             return self._render_model_list_field(
-                field_name, field_schema, value, error, required_fields
+                field_name,
+                field_schema,
+                value,
+                error,
+                required_fields,
+                context,
+                all_errors,
             )
 
-        # Get field properties
         label = field_schema.get("title", field_name.replace("_", " ").title())
         help_text = ui_info.get("help_text") or field_schema.get("description")
         is_required = field_name in (required_fields or [])
 
-        # Build field HTML using Material Design 3 patterns
         if input_type == "checkbox":
             return self._render_checkbox_field(
-                field_name, label, value, error, help_text, is_required, ui_info
-            )
-        else:
-            return self._render_outlined_field(
                 field_name,
-                input_type,
                 label,
                 value,
                 error,
                 help_text,
                 is_required,
                 ui_info,
-                field_schema,
             )
+
+        return self._render_outlined_field(
+            field_name,
+            input_type,
+            label,
+            value,
+            error,
+            help_text,
+            is_required,
+            ui_info,
+            field_schema,
+        )
 
     def _render_outlined_field(
         self,
@@ -980,9 +978,11 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         value: Any = None,
         error: Optional[str] = None,
         required_fields: List[str] = None,
+        context: Optional[RenderContext] = None,
+        all_errors: Optional[Dict[str, Any]] = None,
     ) -> str:
-        context = self._build_render_context()
-        all_errors = getattr(self, "_current_errors", {}) or {}
+        context = context or RenderContext(form_data={}, schema_defs={})
+        all_errors = all_errors or {}
         required = required_fields or []
 
         field_html = self._field_renderer.render_field(
@@ -1202,10 +1202,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     def _render_material_layout_fields_as_tabs(
         self,
-        layout_fields: List[tuple],
+        layout_fields: List[Tuple[str, Dict[str, Any]]],
         data: Dict[str, Any],
         errors: Dict[str, Any],
-        required_fields: List[str],
+        _required_fields: List[str],
     ) -> List[str]:
         """Render layout fields as Material Design tabs."""
         parts = []
@@ -1294,7 +1294,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             # Render the layout field content (the nested form)
             layout_content = self._render_material_layout_field_content(
-                field_name, field_schema, data.get(field_name), errors.get(field_name)
+                field_name,
+                field_schema,
+                data,
+                errors,
             )
             parts.append(layout_content)
 
@@ -1338,14 +1341,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return parts
 
     def _render_material_layout_field_content(
-        self, field_name: str, field_schema: Dict[str, Any], value: Any, error: Optional[str]
+        self,
+        field_name: str,
+        field_schema: Dict[str, Any],
+        form_data: Dict[str, Any],
+        errors: Dict[str, Any],
     ) -> str:
         """
         Render the content of a Material Design layout field (the nested form).
         """
+        value = form_data.get(field_name)
         try:
             if isinstance(value, BaseLayout):
-                nested_data = self._get_material_nested_form_data(field_name)
+                nested_data = self._get_material_nested_form_data(field_name, form_data)
                 return value.render(
                     data=nested_data,
                     errors=None,
@@ -1355,16 +1363,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if value and hasattr(value, "form"):
                 form_class = value.form
-                nested_data = self._get_material_nested_form_data(field_name)
+                nested_data = self._get_material_nested_form_data(field_name, form_data)
                 nested_renderer = SimpleMaterialRenderer()
-                nested_renderer._current_form_data = nested_data
                 return nested_renderer.render_form_fields_only(
                     form_class,
                     data=nested_data,
                     errors={},
                 )
 
-            return self._render_material_layout_field_content_fallback(field_name, field_schema)
+            return self._render_material_layout_field_content_fallback(
+                field_name,
+                field_schema,
+                form_data,
+            )
 
         except Exception as e:
             # Error handling: return a placeholder with error message
@@ -1375,7 +1386,10 @@ document.addEventListener('DOMContentLoaded', function() {
             """
 
     def _render_material_layout_field_content_fallback(
-        self, field_name: str, field_schema: Dict[str, Any]
+        self,
+        field_name: str,
+        field_schema: Dict[str, Any],
+        form_data: Dict[str, Any],
     ) -> str:
         """
         Fallback rendering for Material Design layout field content.
@@ -1404,14 +1418,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     raise ImportError(f"Unknown form: {form_name}")
 
                 # Get nested form data based on field name mapping
-                nested_data = self._get_material_nested_form_data(field_name)
+                nested_data = self._get_material_nested_form_data(field_name, form_data)
 
-                # Create a new SimpleMaterialRenderer for the nested form
                 nested_renderer = SimpleMaterialRenderer()
-                # Important: Set the form data on the nested renderer too
-                nested_renderer._current_form_data = nested_data
                 return nested_renderer.render_form_fields_only(
-                    FormClass, data=nested_data, errors={}  # Pass relevant data to nested form
+                    FormClass,
+                    data=nested_data,
+                    errors={},
                 )
 
             except Exception as e:
