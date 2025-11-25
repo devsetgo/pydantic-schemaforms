@@ -186,9 +186,7 @@ class EnhancedFormRenderer:
     ) -> str:
         """Async wrapper for render_form_from_model."""
 
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
+        render_callable = partial(
             self.render_form_from_model,
             model_cls,
             data,
@@ -200,6 +198,9 @@ class EnhancedFormRenderer:
             layout,
             **kwargs,
         )
+
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, render_callable)
 
     def _build_form_tag(self, attrs: Dict[str, Any]) -> str:
         attr_strings = [f'{key}="{escape(str(value))}"' for key, value in attrs.items() if value is not None]
