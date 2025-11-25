@@ -7,13 +7,17 @@ native string.templatelib. No backward compatibility is provided.
 Requires: Python 3.14+
 """
 
+from collections import OrderedDict
 import string.templatelib
+from threading import RLock
 from typing import Any, Dict, Optional
 
 # Import version check to ensure compatibility
 
-# Global template cache to avoid memory leaks from method-level lru_cache
-_template_cache: Dict[str, string.templatelib.Template] = {}
+# Global template cache with explicit locking for thread safety
+_TEMPLATE_CACHE_MAX = 256
+_template_cache: "OrderedDict[str, string.templatelib.Template]" = OrderedDict()
+_template_cache_lock = RLock()
 
 
 class TemplateString:
@@ -38,16 +42,17 @@ class TemplateString:
 
     def _compile_template(self, template_str: str) -> string.templatelib.Template:
         """Compile and cache template for performance using global cache."""
-        if template_str not in _template_cache:
-            # Limit cache size to prevent memory issues
-            if len(_template_cache) > 256:
-                # Remove oldest entries (simple FIFO)
-                oldest_key = next(iter(_template_cache))
-                del _template_cache[oldest_key]
+        with _template_cache_lock:
+            template = _template_cache.get(template_str)
+            if template is None:
+                template = string.templatelib.Template(template_str)
+                _template_cache[template_str] = template
+                if len(_template_cache) > _TEMPLATE_CACHE_MAX:
+                    _template_cache.popitem(last=False)
+            else:
+                _template_cache.move_to_end(template_str)
 
-            _template_cache[template_str] = string.templatelib.Template(template_str)
-
-        return _template_cache[template_str]
+            return template
 
     def render(self, **kwargs: Any) -> str:
         """
