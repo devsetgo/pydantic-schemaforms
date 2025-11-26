@@ -206,6 +206,13 @@ UserForm.render_form(framework="none", submit_url="/submit")
 - No framework dependencies
 - Easy to style with custom CSS
 
+## Renderer Architecture
+
+- **EnhancedFormRenderer** is the canonical renderer. It walks the Pydantic `FormModel`, feeds the shared `LayoutEngine`, and delegates chrome/assets to a `RendererTheme`.
+- **ModernFormRenderer** now piggybacks on Enhanced by generating a throwaway `FormModel` from legacy `FormDefinition`/`FormField` helpers. It exists so existing builder/integration code keeps working while still benefiting from the shared pipeline. (The old `Py314Renderer` alias has been removed; import `ModernFormRenderer` directly when you need the builder DSL.)
+
+Because everything flows through Enhanced, fixes to layout, validation, or framework themes immediately apply to every renderer (Bootstrap, Material, embedded/self-contained, etc.). Choose the renderer based on the API surface you prefer (Pydantic models for `FormModel` or the builder DSL for `ModernFormRenderer`); the generated HTML is orchestrated by the same core engine either way.
+
 ---
 
 ## Advanced Examples

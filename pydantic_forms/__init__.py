@@ -86,8 +86,7 @@ from .live_validation import (
 )
 # Modern renderer with Python 3.14 template strings
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
-from .py314_renderer import ModernFormRenderer as Py314Renderer
-from .py314_renderer import RenderContext
+from .rendering.context import RenderContext
 from .render_form import render_form_html
 # FormModel abstraction for Pydantic models with UI hints
 from .schema_form import Field, FormModel, ValidationResult, form_validator

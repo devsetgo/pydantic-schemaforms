@@ -12,9 +12,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   Layout definitions now live exclusively in `layout_base.BaseLayout` + `rendering/layout_engine`. The new `LayoutComposer` API exposes the canonical Horizontal/Vertical/Tabbed primitives, while `pydantic_forms.layouts`/`pydantic_forms.form_layouts` only re-export the engine with `DeprecationWarning`s. Enhanced and Material renderers both call into `LayoutEngine`, so markup is consistent across frameworks, and the tutorial documents LayoutComposer as the single supported API.
   _Files:_ `pydantic_forms/rendering/layout_engine.py`, `pydantic_forms/layouts.py`, `pydantic_forms/form_layouts.py`, `pydantic_forms/simple_material_renderer.py`
 
-- **Renderer logic duplicated across frameworks (High)**
-  Enhanced and Simple Material now share the same orchestration pipeline via the new `RendererTheme` abstraction and `MaterialEmbeddedTheme`, eliminating the duplicated CSS/JS scaffolding that previously lived in `simple_material_renderer.py`. Modern and py314 still reimplement schema walking and HTML wrappers, so the next step is to port them onto `EnhancedFormRenderer` + theme instances and consolidate their assets under `pydantic_forms/rendering/themes.py`. This keeps per-framework concerns (CSS/JS, field chrome, submit buttons) in small strategies while ensuring the shared renderer stays the single code path.
-  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/modern_renderer.py`, `pydantic_forms/py314_renderer.py`
+- **Renderer logic duplicated across frameworks (Resolved)**
+  Enhanced and Simple Material share the same orchestration pipeline via the new `RendererTheme` abstraction and `MaterialEmbeddedTheme`, eliminating the duplicated CSS/JS scaffolding that previously lived in `simple_material_renderer.py`. The Modern renderer now builds a temporary `FormModel` and hands off to `EnhancedFormRenderer`, and the redundant `Py314Renderer` alias has been removed entirely. Framework-specific assets live in `RendererTheme` strategies, so there is a single schema walk/layout path regardless of entry point.
+  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/modern_renderer.py`
 
 - **Integration helpers mix unrelated responsibilities (High)**
   Even after removing the unused Django module, the remaining Flask/FastAPI helpers, builder utilities, and schema/validation glue still live side-by-side under `pydantic_forms/integration`. Imports are heavy and tightly coupled, making cold starts slow and hampering selective reuse. Split the framework-specific adapters (`sync.py`, `async_support.py`, future `fastapi.py`/`flask.py`) from the shared schema/validation utilities so dependencies stay optional and targeted tests can run without pulling the entire stack.
@@ -45,7 +45,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 ## Recommended Next Steps
 
-1. Finish extracting renderer-specific themes/templates so modern/py314 join the shared orchestration path and update docs/tests to reflect the new theme workflow.
+1. Continue extracting renderer-specific themes/templates so future frameworks plug into the shared orchestration path and keep docs/tests aligned with the RendererTheme workflow.
 2. Split the integration surface by framework (Flask/FastAPI/etc.) and keep schema/validation helpers lightweight and optional.
 3. Refactor model list and input metadata to rely on templates/strategies rather than inline HTML.
 4. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.

@@ -2,6 +2,8 @@
 
 This directory contains **two comprehensive examples** that demonstrate **every capability** of the pydantic-forms library:
 
+> **Renderer note:** Both the Flask and FastAPI demos call straight into `EnhancedFormRenderer` (via `render_form_html`) so they automatically benefit from the shared schema parser, layout engine, and theme hooks. If you prefer the legacy builder DSL (`FormBuilder`, `FormDefinition`, etc.), those helpers now go through `ModernFormRenderer`, which is itself a thin wrapper around the same Enhanced pipeline. In other words, whether you start from a Pydantic `FormModel` or the builder DSL, you are exercising the exact same orchestration layer showcased in these examples.
+
 ## 🚀 Two Complete Examples
 
 ### 1. Flask Example (Sync) - `flask_example.py`
