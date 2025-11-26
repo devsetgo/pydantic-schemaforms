@@ -16,9 +16,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   Enhanced and Simple Material share the same orchestration pipeline via the new `RendererTheme` abstraction and `MaterialEmbeddedTheme`, eliminating the duplicated CSS/JS scaffolding that previously lived in `simple_material_renderer.py`. The Modern renderer now builds a temporary `FormModel` and hands off to `EnhancedFormRenderer`, and the redundant `Py314Renderer` alias has been removed entirely. Framework-specific assets live in `RendererTheme` strategies, so there is a single schema walk/layout path regardless of entry point.
   _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/modern_renderer.py`
 
-- **Integration helpers mix unrelated responsibilities (High)**
-  Even after removing the unused Django module, the remaining Flask/FastAPI helpers, builder utilities, and schema/validation glue still live side-by-side under `pydantic_forms/integration`. Imports are heavy and tightly coupled, making cold starts slow and hampering selective reuse. Split the framework-specific adapters (`sync.py`, `async_support.py`, future `fastapi.py`/`flask.py`) from the shared schema/validation utilities so dependencies stay optional and targeted tests can run without pulling the entire stack.
-  _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/builder.py`, `pydantic_forms/integration/schema.py`, `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`
+- **Integration helpers mix unrelated responsibilities (Addressed)**
+  The synchronous/async adapters now live in `pydantic_forms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_forms.integration` no longer drags in optional framework glue unless those helpers are actually accessed. Follow-up work can add dedicated `fastapi.py`/`flask.py` adapters inside the new `frameworks` namespace without coupling them to JSON/OpenAPI generation.
+  _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/frameworks/`, `pydantic_forms/integration/builder.py`
 
 ## Medium Priority Refactors & Opportunities
 
@@ -46,7 +46,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 ## Recommended Next Steps
 
 1. Continue extracting renderer-specific themes/templates so future frameworks plug into the shared orchestration path and keep docs/tests aligned with the RendererTheme workflow.
-2. Split the integration surface by framework (Flask/FastAPI/etc.) and keep schema/validation helpers lightweight and optional.
+2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
 3. Refactor model list and input metadata to rely on templates/strategies rather than inline HTML.
 4. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
 5. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for renderers/model lists.

@@ -52,6 +52,8 @@ _FIELD_TYPE_ANNOTATIONS: Dict[str, Any] = {
     "multiselect": List[str],
 }
 
+_HONEYPOT_FIELD_NAME = "honeypot_trap"
+
 
 def _resolve_annotation(field_type: str) -> Any:
     return _FIELD_TYPE_ANNOTATIONS.get(field_type, str)
@@ -241,8 +243,8 @@ class FormDefinition:
             annotation, model_field = field.as_model_field(order, section_title)
             field_defs[field.name] = (annotation, model_field)
 
-        if self.honeypot_protection and "__honeypot" not in field_defs:
-            field_defs["__honeypot"] = (
+        if self.honeypot_protection and _HONEYPOT_FIELD_NAME not in field_defs:
+            field_defs[_HONEYPOT_FIELD_NAME] = (
                 str,
                 SchemaField(
                     default="",

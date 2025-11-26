@@ -1,9 +1,9 @@
-"""Modular integration helpers for pydantic-forms."""
+"""Integration convenience imports with lazy framework adapters."""
 
 from __future__ import annotations
 
-from .adapters import FormIntegration
-from .async_support import handle_async_form
+from typing import TYPE_CHECKING, Any
+
 from .builder import (
     AutoFormBuilder,
     FormBuilder,
@@ -15,7 +15,6 @@ from .builder import (
 )
 from .react import ReactJSONSchemaIntegration
 from .schema import JSONSchemaGenerator, OpenAPISchemaGenerator
-from .sync import handle_sync_form, normalize_form_data
 from .utils import (
     check_framework_availability,
     convert_validation_rules,
@@ -23,6 +22,9 @@ from .utils import (
     map_ui_element_to_framework,
 )
 from .vue import VueFormulateIntegration
+
+if TYPE_CHECKING:  # pragma: no cover - import-time only for type hints
+    from .frameworks import FormIntegration, handle_async_form, handle_sync_form, normalize_form_data
 
 __all__ = [
     "FormBuilder",
@@ -45,3 +47,24 @@ __all__ = [
     "convert_validation_rules",
     "check_framework_availability",
 ]
+
+_LAZY_EXPORTS = {
+    "FormIntegration": ("pydantic_forms.integration.frameworks", "FormIntegration"),
+    "handle_sync_form": ("pydantic_forms.integration.frameworks", "handle_sync_form"),
+    "handle_async_form": ("pydantic_forms.integration.frameworks", "handle_async_form"),
+    "normalize_form_data": ("pydantic_forms.integration.frameworks", "normalize_form_data"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _LAZY_EXPORTS:
+        module_name, attr = _LAZY_EXPORTS[name]
+        module = __import__(module_name, fromlist=[attr])
+        value = getattr(module, attr)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__() -> list[str]:  # pragma: no cover - mirrors __all__ for help()
+    return sorted(set(__all__))
