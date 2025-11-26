@@ -123,4 +123,3 @@ class BaseLayout:
     def _merge_styles(attrs: Dict[str, Any]) -> str:
         styles: Iterable[str] = filter(None, [attrs.pop("style", ""), attrs.pop("css_style", "")])
         return "; ".join(s for s in styles if s)
-

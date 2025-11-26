@@ -58,7 +58,7 @@ cover/
 *.mo
 *.pot
 
-# Django stuff:
+# Local framework artifacts:
 *.log
 local_settings.py
 db.sqlite3

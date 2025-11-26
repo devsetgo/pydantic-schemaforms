@@ -75,7 +75,7 @@ Backend frameworks should pass the framework detection variables:
 
 ```python
 # Flask example
-return render_template('user.html', 
+return render_template('user.html',
                      framework="flask",
                      framework_name="Flask",
                      framework_type="bootstrap",
@@ -84,7 +84,7 @@ return render_template('user.html',
 # FastAPI example
 return templates.TemplateResponse("user.html", {
     "request": request,
-    "framework": "fastapi", 
+    "framework": "fastapi",
     "framework_name": "FastAPI",
     "framework_type": "material",
     "form_html": form_html

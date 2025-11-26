@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Pydantic Forms Demo</title>
-    
+
     <!-- Material Design Components -->
     <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
+
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -69,7 +69,7 @@
         .list-item-content {
             padding-right: 4rem; /* Make room for the remove button */
         }
-        
+
         /* Ensure remove button stays within its container */
         .list-item .list-remove-btn {
             position: absolute !important;
@@ -156,7 +156,7 @@
             color: #000;
             background-color: #ff9800;
         }
-        
+
         /* Material Design form overrides */
         .mdc-text-field {
             width: 100%;
@@ -169,31 +169,31 @@
         .mdc-form-field {
             margin-bottom: 1rem;
         }
-        
+
         /* Enhanced Material Design styling for forms */
         .material-form-field {
             margin-bottom: 1.5rem;
         }
-        
+
         .material-form-field .mdc-text-field--outlined {
             width: 100%;
         }
-        
+
         .material-form-field .mdc-select--outlined {
             width: 100%;
         }
-        
+
         .material-form-field .mdc-checkbox {
             margin-right: 0.5rem;
         }
-        
+
         .material-form-section {
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
+
         .material-form-section h3 {
             color: #1976d2;
             font-weight: 500;
@@ -202,7 +202,7 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         @media (max-width: 768px) {
             .col-md-6 {
                 flex: 0 0 100%;
@@ -228,7 +228,7 @@
                 {% if owner_data.emergency_contact %}
                     <p><strong>Emergency Contact:</strong> {{ owner_data.emergency_contact }}</p>
                 {% endif %}
-                
+
                 {% if pets_data %}
                     <h5>Registered Pets:</h5>
                     <ul>
@@ -248,7 +248,7 @@
                     <p><em>No pets registered.</em></p>
                 {% endif %}
             </div>
-            
+
             <div style="text-align: center;">
                 <button class="mdc-button mdc-button--raised" onclick="window.location.href='/material/pets'">
                     <span class="mdc-button__label">Register Another</span>
@@ -264,7 +264,7 @@
                             {{ owner_form_html|safe }}
                         </div>
                     </div>
-                    
+
                     <!-- Pets Section -->
                     <div class="col-md-6">
                         <div class="material-form-section">
@@ -272,7 +272,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Submit Button -->
                 <div class="row mt-4">
                     <div class="col-12">
@@ -315,7 +315,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Auto-initialize all MDC components
             mdc.autoInit();
-            
+
             // Manually initialize specific components if needed
             const textFields = document.querySelectorAll('.mdc-text-field');
             textFields.forEach(textField => {
@@ -323,21 +323,21 @@
                     mdc.textField.MDCTextField.attachTo(textField);
                 }
             });
-            
+
             const selects = document.querySelectorAll('.mdc-select');
             selects.forEach(select => {
                 if (!select.MDCSelect) {
                     mdc.select.MDCSelect.attachTo(select);
                 }
             });
-            
+
             const buttons = document.querySelectorAll('.mdc-button');
             buttons.forEach(button => {
                 if (!button.MDCRipple) {
                     mdc.ripple.MDCRipple.attachTo(button);
                 }
             });
-            
+
             const checkboxes = document.querySelectorAll('.mdc-checkbox');
             checkboxes.forEach(checkbox => {
                 if (!checkbox.MDCCheckbox) {
@@ -345,7 +345,7 @@
                 }
             });
         });
-        
+
         // Add form validation
         (function() {
             'use strict';

@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Generate code for validation endpoints in various frameworks.
 
         Args:
-            framework: Web framework (flask, fastapi, django)
+            framework: Web framework (flask or fastapi)
 
         Returns:
             Code string for validation endpoints
@@ -320,10 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return self._generate_flask_endpoint()
         elif framework.lower() == "fastapi":
             return self._generate_fastapi_endpoint()
-        elif framework.lower() == "django":
-            return self._generate_django_endpoint()
         else:
-            raise ValueError(f"Unsupported framework: {framework}")
+            raise ValueError("Unsupported framework. Use 'flask' or 'fastapi'.")
 
     def _generate_flask_endpoint(self) -> str:
         """Generate Flask validation endpoint code."""
@@ -390,50 +388,6 @@ async def validate_field(field_name: str, request: ValidationRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Validation error: {str(e)}')
-"""
-        )
-        return template.render()
-
-    def _generate_django_endpoint(self) -> str:
-        """Generate Django validation endpoint code."""
-        template = TemplateString(
-            """
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-import json
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def validate_field(request, field_name):
-    '''Live validation endpoint for individual fields.'''
-    try:
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-            value = data.get('value')
-        else:
-            value = request.POST.get('value')
-
-        # Get the validator instance (you need to inject this)
-        validator = get_validator_instance()  # Implement this function
-
-        response = validator.validate_field(field_name, value)
-
-        if response.is_valid:
-            feedback_html = '<div class="valid-feedback">✓ Valid</div>'
-            status = 200
-        else:
-            errors_html = '<br>'.join(response.errors)
-            feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
-            status = 400
-
-        return HttpResponse(feedback_html, status=status)
-
-    except Exception as e:
-        return HttpResponse(
-            f'<div class="invalid-feedback">Validation error: {str(e)}</div>',
-            status=500
-        )
 """
         )
         return template.render()

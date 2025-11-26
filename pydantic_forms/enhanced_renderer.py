@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
+from .rendering.themes import DefaultTheme, RendererTheme
 from .rendering.layout_engine import LayoutEngine, get_nested_form_data
 from .rendering.schema_parser import SchemaMetadata, build_schema_metadata, resolve_ui_element
 from .schema_form import FormModel
@@ -30,11 +31,12 @@ class SchemaFormValidationError(Exception):
 class EnhancedFormRenderer:
     """Render Pydantic FormModels into HTML using UI metadata."""
 
-    def __init__(self, framework: str = "bootstrap"):
+    def __init__(self, framework: str = "bootstrap", theme: Optional[RendererTheme] = None):
         self.framework = framework
         self.config = get_framework_config(framework)
         self._layout_engine = LayoutEngine(self)
         self._field_renderer = FieldRenderer(self)
+        self._theme: RendererTheme = theme or DefaultTheme()
 
     def render_form_from_model(
         self,
@@ -67,8 +69,14 @@ class EnhancedFormRenderer:
         }
         form_attrs.update(kwargs)
         form_attrs["action"] = submit_url  # kwargs must not override action
+        form_attrs = self._theme.transform_form_attributes(form_attrs)
 
-        form_parts = [self._build_form_tag(form_attrs)]
+        form_parts: List[str] = []
+        before_form = self._theme.before_form()
+        if before_form:
+            form_parts.append(before_form)
+
+        form_parts.append(self._theme.open_form_tag(self._build_form_tag, form_attrs))
 
         if include_csrf:
             form_parts.append(self._render_csrf_field())
@@ -114,7 +122,11 @@ class EnhancedFormRenderer:
         if include_submit_button:
             form_parts.append(self._render_submit_button())
 
-        form_parts.append("</form>")
+        form_parts.append(self._theme.close_form_tag())
+
+        after_form = self._theme.after_form()
+        if after_form:
+            form_parts.append(after_form)
 
         has_model_list_fields = any(
             resolve_ui_element(field_schema) == "model_list" for _name, field_schema in fields
@@ -122,7 +134,7 @@ class EnhancedFormRenderer:
         if has_model_list_fields:
             from .model_list import ModelListRenderer
 
-            list_renderer = ModelListRenderer(framework=self.framework)
+            list_renderer = ModelListRenderer(framework=self._model_list_framework())
             form_parts.append(list_renderer.get_model_list_javascript())
 
         return "\n".join(form_parts)
@@ -326,7 +338,12 @@ class EnhancedFormRenderer:
 
     def _render_submit_button(self) -> str:
         button_class = self.config["button_class"]
-        return f'<button type="submit" class="{button_class}">Submit</button>'
+        return self._theme.render_submit_button(button_class)
+
+    def _model_list_framework(self) -> str:
+        """Allow subclasses to control which framework powers model list assets."""
+
+        return self.framework
 
 
 def render_form_html(

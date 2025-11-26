@@ -2,9 +2,9 @@
 Tests for layouts module - form layout and organization components.
 """
 
-from pydantic_forms.layouts import (
+from pydantic_forms.layout_base import BaseLayout
+from pydantic_forms.rendering.layout_engine import (
     AccordionLayout,
-    BaseLayout,
     CardLayout,
     GridLayout,
     HorizontalLayout,

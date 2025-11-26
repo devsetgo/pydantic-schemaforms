@@ -3,14 +3,14 @@
     {% set field_value = form_data.get(field.name) if form_data else (field.value if field.get('value') else '') %}
     {% set field_error = errors.get(field.name) if errors else None %}
     {% set has_error = field_error is not none %}
-    
+
     <div class="mb-3">
         {% if field.type == 'checkbox' %}
             <div class="form-check">
-                <input 
-                    class="form-check-input{% if has_error %} is-invalid{% endif %}" 
-                    type="checkbox" 
-                    id="{{ field.name }}" 
+                <input
+                    class="form-check-input{% if has_error %} is-invalid{% endif %}"
+                    type="checkbox"
+                    id="{{ field.name }}"
                     name="{{ field.name }}"
                     value="true"
                     {% if field.get('checked') or (field_value and field_value != 'false') %}checked{% endif %}
@@ -27,7 +27,7 @@
                     <div class="invalid-feedback">{{ field_error }}</div>
                 {% endif %}
             </div>
-        
+
         {% elif field.type == 'radio' %}
             <label class="form-label">
                 {{ field.label }}
@@ -35,10 +35,10 @@
             </label>
             {% for option in field.options %}
                 <div class="form-check">
-                    <input 
-                        class="form-check-input{% if has_error %} is-invalid{% endif %}" 
-                        type="radio" 
-                        id="{{ field.name }}_{{ option.value }}" 
+                    <input
+                        class="form-check-input{% if has_error %} is-invalid{% endif %}"
+                        type="radio"
+                        id="{{ field.name }}_{{ option.value }}"
                         name="{{ field.name }}"
                         value="{{ option.value }}"
                         {% if option.get('selected') or option.value == field_value %}checked{% endif %}
@@ -55,20 +55,20 @@
             {% if has_error %}
                 <div class="invalid-feedback d-block">{{ field_error }}</div>
             {% endif %}
-        
+
         {% elif field.type == 'select' %}
             <label for="{{ field.name }}" class="form-label">
                 {{ field.label }}
                 {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
             </label>
-            <select 
-                class="form-select{% if has_error %} is-invalid{% endif %}" 
-                id="{{ field.name }}" 
+            <select
+                class="form-select{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
                 name="{{ field.name }}"
                 {% if field.get('required') %}required{% endif %}
             >
                 {% for option in field.options %}
-                    <option 
+                    <option
                         value="{{ option.value }}"
                         {% if option.get('selected') or option.value == field_value %}selected{% endif %}
                     >
@@ -82,22 +82,22 @@
             {% if has_error %}
                 <div class="invalid-feedback">{{ field_error }}</div>
             {% endif %}
-        
+
         {% elif field.type == 'multiselect' %}
             <label for="{{ field.name }}" class="form-label">
                 {{ field.label }}
                 {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
             </label>
-            <select 
-                class="form-select{% if has_error %} is-invalid{% endif %}" 
-                id="{{ field.name }}" 
+            <select
+                class="form-select{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
                 name="{{ field.name }}"
                 multiple
                 size="4"
                 {% if field.get('required') %}required{% endif %}
             >
                 {% for option in field.options %}
-                    <option 
+                    <option
                         value="{{ option.value }}"
                         {% if option.value in (field_value or []) %}selected{% endif %}
                     >
@@ -112,15 +112,15 @@
             {% if has_error %}
                 <div class="invalid-feedback">{{ field_error }}</div>
             {% endif %}
-        
+
         {% elif field.type == 'textarea' %}
             <label for="{{ field.name }}" class="form-label">
                 {{ field.label }}
                 {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
             </label>
-            <textarea 
-                class="form-control{% if has_error %} is-invalid{% endif %}" 
-                id="{{ field.name }}" 
+            <textarea
+                class="form-control{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
                 name="{{ field.name }}"
                 rows="{{ field.get('rows', 3) }}"
                 {% if field.get('placeholder') %}placeholder="{{ field.placeholder }}"{% endif %}
@@ -133,16 +133,16 @@
             {% if has_error %}
                 <div class="invalid-feedback">{{ field_error }}</div>
             {% endif %}
-        
+
         {% elif field.type == 'range' %}
             <label for="{{ field.name }}" class="form-label">
                 {{ field.label }}
                 {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
             </label>
-            <input 
-                type="range" 
-                class="form-range{% if has_error %} is-invalid{% endif %}" 
-                id="{{ field.name }}" 
+            <input
+                type="range"
+                class="form-range{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
                 name="{{ field.name }}"
                 min="{{ field.get('min', 0) }}"
                 max="{{ field.get('max', 100) }}"
@@ -162,17 +162,17 @@
             {% if has_error %}
                 <div class="invalid-feedback d-block">{{ field_error }}</div>
             {% endif %}
-        
+
         {% else %}
             {# Standard input types: text, email, password, url, tel, number, date, time, datetime-local, color, file #}
             <label for="{{ field.name }}" class="form-label">
                 {{ field.label }}
                 {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
             </label>
-            <input 
-                type="{{ field.type }}" 
-                class="form-control{% if has_error %} is-invalid{% endif %}" 
-                id="{{ field.name }}" 
+            <input
+                type="{{ field.type }}"
+                class="form-control{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
                 name="{{ field.name }}"
                 value="{{ field_value }}"
                 {% if field.get('placeholder') %}placeholder="{{ field.placeholder }}"{% endif %}

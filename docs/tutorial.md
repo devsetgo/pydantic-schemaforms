@@ -66,11 +66,11 @@ def hello_form():
         # Get the name they typed and display it
         user_name = request.form['name']
         return f"<h1>Hello {user_name}! Nice to meet you!</h1>"
-    
+
     # If they haven't submitted yet, show the form
     # Build a simple form with one text input
     form = FormBuilder().text_input("name", "What's your name?").render()
-    
+
     # Create a complete HTML page with our form
     html_page = """
     <!DOCTYPE html>
@@ -88,7 +88,7 @@ def hello_form():
     </body>
     </html>
     """
-    
+
     return render_template_string(html_page, form=form)
 
 # Start the web server
@@ -120,7 +120,7 @@ app = Flask(__name__)
 @app.route("/", methods=["GET", "POST"])
 def hello_form():
 ```
-**What this does:** 
+**What this does:**
 - `@app.route("/")`: Says "when someone visits the main page of our website, run this function"
 - `methods=["GET", "POST"]`: Allows both viewing the page (GET) and submitting forms (POST)
 - `def hello_form():`: Creates a function that handles both showing and processing our form
@@ -244,6 +244,34 @@ if request.method == "POST":
     age = request.form['age']
     return f"<h1>Hello {name}!</h1><p>It's nice to meet someone from {city} who is {age} years old!</p>"
 ```
+
+## Bonus: Compose Layouts with LayoutComposer
+
+Once you are comfortable rendering a single form, you can arrange multiple snippets with the **LayoutComposer** API. This is the single public entry point for layout primitives and it lives next to the renderer internals.
+
+```python
+from pydantic_forms import FormBuilder
+from pydantic_forms.rendering.layout_engine import LayoutComposer
+
+contact_form = (FormBuilder()
+                .text_input("name", "What's your name?")
+                .email_input("email", "Where can we reach you?")
+                .render())
+
+profile_card = LayoutComposer.card("Profile", contact_form)
+settings_card = LayoutComposer.card("Settings", "<p>Coming soon...</p>")
+
+two_column_layout = LayoutComposer.horizontal(
+    profile_card,
+    settings_card,
+    gap="2rem",
+    justify_content="space-between",
+)
+
+html = two_column_layout.render()
+```
+
+Every helper inside `LayoutComposer` returns a `BaseLayout` subclass, so you can freely nest them (e.g., a vertical stack of cards that contain grids). The legacy `pydantic_forms.layouts` and `pydantic_forms.form_layouts` modules now emit `DeprecationWarning`s and simply re-export this API for backward compatibility.
 
 ## What You've Learned
 

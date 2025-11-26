@@ -27,7 +27,11 @@ from pydantic_forms.inputs import (
     TextInput,
     URLInput,
 )
-from pydantic_forms.layouts import GridLayout, HorizontalLayout, VerticalLayout
+from pydantic_forms.rendering.layout_engine import (
+    GridLayout,
+    HorizontalLayout,
+    VerticalLayout,
+)
 # Import pydantic-forms components
 from pydantic_forms.schema_form import Field, FormModel
 

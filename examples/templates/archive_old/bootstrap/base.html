@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Pydantic Forms Demo{% endblock %} - Bootstrap</title>
-    
+
     <!-- Bootstrap 5.3.8 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eTW8O3UHfpWjCyqhEGlHt1eWO3DI" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    
+
     <!-- Custom Bootstrap Styles -->
     <link href="{{ url_for('static', filename='css/bootstrap-custom.css') }}" rel="stylesheet">
-    
+
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -21,11 +21,11 @@
             <a class="navbar-brand fw-bold" href="{{ url_for('bootstrap_index') }}">
                 <i class="bi bi-bootstrap"></i> Pydantic Forms <span class="badge bg-light text-primary ms-2">Bootstrap</span>
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
@@ -49,7 +49,7 @@
                         </a>
                     </li>
                 </ul>
-                
+
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -66,14 +66,14 @@
             </div>
         </div>
     </nav>
-    
+
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
             {% block content %}{% endblock %}
         </div>
     </main>
-    
+
     <!-- Footer -->
     <footer class="footer mt-5 py-4 bg-light border-top">
         <div class="container">
@@ -100,13 +100,13 @@
             </div>
         </div>
     </footer>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-s7EHOhfGJr1vCE5SnH9zJGiN4fhxOEHKGF+8F5g5L8n" crossorigin="anonymous"></script>
-    
+
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/bootstrap-forms.js') }}"></script>
-    
+
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -99,7 +99,7 @@
                     {% if owner_data.emergency_contact %}
                         <p><strong>Emergency Contact:</strong> {{ owner_data.emergency_contact }}</p>
                     {% endif %}
-                    
+
                     {% if pets_data %}
                         <h5>Registered Pets:</h5>
                         <ul>
@@ -119,7 +119,7 @@
                         <p><em>No pets registered.</em></p>
                     {% endif %}
                 </div>
-                
+
                 <div class="text-center">
                     <a href="/bootstrap/pets" class="btn btn-primary">Register Another</a>
                 </div>
@@ -131,13 +131,13 @@
                             <h3><i class="bi bi-person"></i> Owner Information</h3>
                             {{ owner_form_html|safe }}
                         </div>
-                        
+
                         <!-- Pets Section -->
                         <div class="col-md-6">
                             {{ pets_html|safe }}
                         </div>
                     </div>
-                    
+
                     <!-- Submit Button -->
                     <div class="row mt-4">
                         <div class="col-12">

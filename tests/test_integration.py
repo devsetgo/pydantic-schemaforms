@@ -2,201 +2,107 @@
 Tests for integration module - framework integrations and external system connections.
 """
 
-from unittest.mock import Mock, patch
 
 import pytest
 
 from pydantic_forms.integration import (
-    DjangoIntegration,
-    FastAPIIntegration,
-    FlaskIntegration,
+    FormBuilder,
+    FormIntegration,
     JSONSchemaGenerator,
     OpenAPISchemaGenerator,
     ReactJSONSchemaIntegration,
     VueFormulateIntegration,
+    handle_async_form,
+    handle_sync_form,
 )
 from pydantic_forms.schema_form import Field, FormModel
 
 
-class TestFlaskIntegration:
-    """Test Flask framework integration."""
-
-    def test_flask_integration_creation(self):
-        """Test basic FlaskIntegration creation."""
-        integration = FlaskIntegration()
-        assert integration is not None
-        assert hasattr(integration, "create_route")
-        assert hasattr(integration, "handle_form_submission")
-        assert hasattr(integration, "render_form_template")
-
-    @patch("flask.request")
-    def test_flask_form_handling(self, mock_request, simple_form_model):
-        """Test Flask form handling."""
-        # Mock Flask request data
-        mock_request.method = "POST"
-        mock_request.form = {
-            "name": "John Doe",
-            "email": "john@example.com",
-            "age": "25",
-            "newsletter": "on",
-        }
-
-        integration = FlaskIntegration()
-
-        # Test form handling
-        result = integration.handle_form_submission(simple_form_model, mock_request)
-
-        assert result is not None
-        assert hasattr(result, "is_valid")
-        if result.is_valid:
-            assert result.data["name"] == "John Doe"
-            assert result.data["email"] == "john@example.com"
-
-    def test_flask_route_creation(self, simple_form_model):
-        """Test Flask route creation."""
-        integration = FlaskIntegration()
-
-        # Create a mock Flask app
-        mock_app = Mock()
-        mock_app.route = Mock(return_value=lambda f: f)
-
-        # Test route creation
-        route_func = integration.create_route(
-            mock_app, "/contact", simple_form_model, methods=["GET", "POST"]
-        )
-
-        assert callable(route_func)
-        mock_app.route.assert_called_once()
-
-    def test_flask_template_rendering(self, simple_form_model):
-        """Test Flask template rendering."""
-        integration = FlaskIntegration()
-
-        # Mock render_template
-        with patch("flask.render_template") as mock_render:
-            mock_render.return_value = "<html>Form</html>"
-
-            html = integration.render_form_template(
-                "form.html", form_model=simple_form_model, framework="bootstrap"
-            )
-
-            assert html == "<html>Form</html>"
-            mock_render.assert_called_once()
+def _build_form_builder(form_model):
+    builder = FormBuilder(model=form_model)
+    builder.text_input("name", "Name")
+    builder.email_input("email", "Email")
+    builder.number_input("age", "Age")
+    builder.checkbox_input("newsletter", "Newsletter")
+    return builder
 
 
-class TestFastAPIIntegration:
-    """Test FastAPI framework integration."""
+class TestGenericServerIntegrations:
+    """Test the generic sync/async integration helpers used by WSGI/ASGI servers."""
 
-    def test_fastapi_integration_creation(self):
-        """Test basic FastAPIIntegration creation."""
-        integration = FastAPIIntegration()
-        assert integration is not None
-        assert hasattr(integration, "create_endpoint")
-        assert hasattr(integration, "create_form_dependency")
-        assert hasattr(integration, "generate_openapi_schema")
+    def test_handle_sync_form_success(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        data = {"name": "John Doe", "email": "john@example.com", "age": 30, "newsletter": True}
 
-    def test_fastapi_endpoint_creation(self, simple_form_model):
-        """Test FastAPI endpoint creation."""
-        integration = FastAPIIntegration()
+        result = handle_sync_form(builder, submitted_data=data)
 
-        # Mock FastAPI app
-        mock_app = Mock()
-        mock_app.post = Mock(return_value=lambda f: f)
-        mock_app.get = Mock(return_value=lambda f: f)
+        assert result["success"] is True
+        assert result["data"] == data
 
-        # Test endpoint creation
-        endpoint_func = integration.create_endpoint(mock_app, "/submit-form", simple_form_model)
+    def test_handle_sync_form_errors_include_html(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        invalid_data = {"name": "J", "email": "not-an-email", "age": 10, "newsletter": False}
 
-        assert callable(endpoint_func)
-        mock_app.post.assert_called()
+        result = handle_sync_form(builder, submitted_data=invalid_data)
 
-    def test_fastapi_form_dependency(self, simple_form_model):
-        """Test FastAPI form dependency creation."""
-        integration = FastAPIIntegration()
+        assert result["success"] is False
+        assert "errors" in result and "email" in result["errors"]
+        assert "form_html" in result
 
-        # Create form dependency
-        form_dependency = integration.create_form_dependency(simple_form_model)
+    def test_handle_sync_form_initial_render(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
 
-        assert callable(form_dependency)
+        result = handle_sync_form(builder)
 
-        # Test with mock request data
-        mock_data = {"name": "Jane Doe", "email": "jane@example.com", "age": 30, "newsletter": True}
+        assert "form_html" in result
+        assert isinstance(result["form_html"], str)
 
-        # The dependency should validate the data
-        result = form_dependency(mock_data)
-        assert hasattr(result, "name")
-        assert result.name == "Jane Doe"
+    @pytest.mark.asyncio
+    async def test_handle_async_form_success(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        data = {"name": "Jane Doe", "email": "jane@example.com", "age": 28, "newsletter": True}
 
-    def test_fastapi_openapi_schema(self, simple_form_model):
-        """Test FastAPI OpenAPI schema generation."""
-        integration = FastAPIIntegration()
+        result = await handle_async_form(builder, submitted_data=data)
 
-        schema = integration.generate_openapi_schema(simple_form_model)
+        assert result["success"] is True
+        assert result["data"] == data
 
-        assert isinstance(schema, dict)
-        assert "properties" in schema
-        assert "name" in schema["properties"]
-        assert "email" in schema["properties"]
-        assert "required" in schema
+    @pytest.mark.asyncio
+    async def test_handle_async_form_errors_include_html(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        invalid_data = {"name": "J", "email": "bad", "age": 5, "newsletter": False}
 
+        result = await handle_async_form(builder, submitted_data=invalid_data)
 
-class TestDjangoIntegration:
-    """Test Django framework integration."""
+        assert result["success"] is False
+        assert "errors" in result and "email" in result["errors"]
+        assert "form_html" in result
 
-    def test_django_integration_creation(self):
-        """Test basic DjangoIntegration creation."""
-        integration = DjangoIntegration()
-        assert integration is not None
-        assert hasattr(integration, "create_django_form")
-        assert hasattr(integration, "create_model_form")
-        assert hasattr(integration, "handle_view")
+    @pytest.mark.asyncio
+    async def test_handle_async_form_initial_render(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
 
-    def test_django_form_creation(self, simple_form_model):
-        """Test Django form creation from Pydantic model."""
-        integration = DjangoIntegration()
+        result = await handle_async_form(builder)
 
-        # Mock Django forms
-        with patch("django.forms.Form"):
-            django_form = integration.create_django_form(simple_form_model)
+        assert "form_html" in result
+        assert isinstance(result["form_html"], str)
 
-            # Should create a Django form class
-            assert django_form is not None
+    def test_form_integration_sync_alias(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        data = {"name": "Sync", "email": "sync@example.com", "age": 40, "newsletter": True}
 
-    def test_django_model_form_creation(self, simple_form_model):
-        """Test Django ModelForm creation."""
-        integration = DjangoIntegration()
+        result = FormIntegration.sync_integration(builder, submitted_data=data)
 
-        # Mock Django model
-        mock_model = Mock()
-        mock_model._meta.fields = []
+        assert result["success"] is True
 
-        with patch("django.forms.ModelForm"):
-            model_form = integration.create_model_form(simple_form_model, mock_model)
+    @pytest.mark.asyncio
+    async def test_form_integration_async_alias(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        data = {"name": "Async", "email": "async@example.com", "age": 34, "newsletter": True}
 
-            assert model_form is not None
+        result = await FormIntegration.async_integration(builder, submitted_data=data)
 
-    def test_django_view_handling(self, simple_form_model):
-        """Test Django view handling."""
-        integration = DjangoIntegration()
-
-        # Mock Django request
-        mock_request = Mock()
-        mock_request.method = "POST"
-        mock_request.POST = {
-            "name": "Test User",
-            "email": "test@example.com",
-            "age": "25",
-            "newsletter": "on",
-        }
-
-        # Mock Django HttpResponse
-        with patch("django.http.HttpResponse"):
-            response = integration.handle_view(
-                mock_request, simple_form_model, template_name="form.html"
-            )
-
-            # Should handle the request
-            assert response is not None
+        assert result["success"] is True
 
 
 class TestReactJSONSchemaIntegration:
@@ -523,28 +429,3 @@ class TestIntegrationErrorHandling:
         assert isinstance(schema, dict)
         assert "properties" in schema
         assert "field" in schema["properties"]
-
-
-# Helper functions for integration tests
-def create_mock_flask_app():
-    """Create a mock Flask app for testing."""
-    mock_app = Mock()
-    mock_app.route = Mock(return_value=lambda f: f)
-    return mock_app
-
-
-def create_mock_fastapi_app():
-    """Create a mock FastAPI app for testing."""
-    mock_app = Mock()
-    mock_app.post = Mock(return_value=lambda f: f)
-    mock_app.get = Mock(return_value=lambda f: f)
-    return mock_app
-
-
-def create_mock_django_request(data=None):
-    """Create a mock Django request for testing."""
-    mock_request = Mock()
-    mock_request.method = "POST" if data else "GET"
-    mock_request.POST = data or {}
-    mock_request.GET = {}
-    return mock_request

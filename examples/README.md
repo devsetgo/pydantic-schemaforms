@@ -8,7 +8,7 @@ This directory contains **two comprehensive examples** that demonstrate **every 
 **Traditional web application with synchronous form handling**
 
 - **Simple Form**: `/login` - Basic login with username/email and password
-- **Medium Form**: `/register` - User registration with multiple field types and icons  
+- **Medium Form**: `/register` - User registration with multiple field types and icons
 - **Complex Form**: `/showcase` - Complete showcase with all features, model lists, sections
 - **Self-Contained**: `/self-contained` - Zero-dependency Material Design form
 - **API Endpoints**: JSON endpoints for form schemas and submission
@@ -49,7 +49,7 @@ This directory contains **two comprehensive examples** that demonstrate **every 
 # Step 1: Import shared models
 from shared_models import UserRegistrationForm, handle_form_submission
 
-# Step 2: Render forms  
+# Step 2: Render forms
 from pydantic_forms.enhanced_renderer import render_form_html
 form_html = render_form_html(UserRegistrationForm, framework="bootstrap")
 
@@ -75,7 +75,7 @@ result = handle_form_submission(UserRegistrationForm, form_data)
 - Responsive grid layouts
 - Form validation styling
 
-### Material Design 3 Support  
+### Material Design 3 Support
 - Authentic Material Design components
 - Material Icons integration
 - Self-contained CSS/JS embedding
@@ -102,7 +102,7 @@ cd examples
 python flask_example.py
 # Visit: http://localhost:5000
 
-# Test FastAPI (async)  
+# Test FastAPI (async)
 python fastapi_example.py
 # Visit: http://localhost:8000
 # API Docs: http://localhost:8000/docs
@@ -116,12 +116,12 @@ python fastapi_example.py
 
 Both examples are **production-ready** and demonstrate:
 
-✅ **Error handling** - Graceful validation errors  
-✅ **Security** - CSRF protection, input sanitization  
-✅ **Performance** - Efficient rendering, minimal overhead  
-✅ **Accessibility** - Proper ARIA labels, keyboard navigation  
-✅ **Responsive** - Mobile-first design patterns  
-✅ **SEO Friendly** - Semantic HTML structure  
+✅ **Error handling** - Graceful validation errors
+✅ **Security** - CSRF protection, input sanitization
+✅ **Performance** - Efficient rendering, minimal overhead
+✅ **Accessibility** - Proper ARIA labels, keyboard navigation
+✅ **Responsive** - Mobile-first design patterns
+✅ **SEO Friendly** - Semantic HTML structure
 
 ## 📁 File Structure
 
@@ -129,11 +129,11 @@ Both examples are **production-ready** and demonstrate:
 examples/
 ├── README.md                  # This documentation
 ├── flask_example.py           # Complete Flask demo (sync)
-├── fastapi_example.py         # Complete FastAPI demo (async)  
+├── fastapi_example.py         # Complete FastAPI demo (async)
 ├── shared_models.py           # All form models (shared)
 ├── templates/                 # Unified Jinja2 templates
 │   ├── form.html             # Generic form template
-│   ├── success.html          # Success page template  
+│   ├── success.html          # Success page template
 │   ├── home.html             # Landing page
 │   ├── shared_base.html      # Base template
 │   ├── 404.html              # Error pages (Flask)
@@ -166,7 +166,7 @@ def register():
             form_html = render_form_html(UserRegistrationForm, errors=result['errors'])
     else:
         form_html = render_form_html(UserRegistrationForm)
-    
+
     return render_template('form.html', form_html=form_html)
 ```
 
@@ -179,7 +179,7 @@ from pydantic_forms.enhanced_renderer import render_form_html
 async def register_post(request: Request):
     form_data = await request.form()
     result = handle_form_submission(UserRegistrationForm, dict(form_data))
-    
+
     if result['success']:
         return templates.TemplateResponse('success.html', {...})
     else:
@@ -192,7 +192,7 @@ async def register_post(request: Request):
 These two examples provide **complete coverage** of the pydantic-forms library:
 
 - **Every field type** is demonstrated
-- **Every layout option** is shown  
+- **Every layout option** is shown
 - **Every styling framework** is supported
 - **Both sync and async** patterns are covered
 - **Simple to complex** forms are included

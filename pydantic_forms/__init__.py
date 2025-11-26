@@ -36,11 +36,9 @@ from .form_field import (
 # Layout composition system matching design_idea.py vision
 from .form_layouts import (
     FormDesign,
-    HorizontalLayout,
     ListLayout,
     SectionDesign,
     TabbedLayout,
-    VerticalLayout,
 )
 # Input type constants and validation
 from .input_types import (
@@ -65,15 +63,18 @@ from .integration import (
     render_form_page,
 )
 # Layout system
-from .layouts import (
+from .rendering.layout_engine import (
     AccordionLayout,
     CardLayout,
     GridLayout,
     Layout,
     LayoutFactory,
+    LayoutComposer,
     ModalLayout,
     ResponsiveGridLayout,
     TabLayout,
+    HorizontalLayout,
+    VerticalLayout,
 )
 # Live validation system
 from .live_validation import (
@@ -170,6 +171,7 @@ __all__ = [
     "TabbedLayout",
     "ListLayout",
     "Layout",
+    "LayoutComposer",
     # Validation system
     "create_validator",
     "FormValidator",

@@ -37,7 +37,7 @@
 - ✅ **Built-in Validation**: Client-side HTML5 + server-side Pydantic validation
 - 🔧 **React JSON Schema Forms Compatible**: Uses familiar `ui_element`, `ui_autofocus`, `ui_options` syntax
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
-- 🌐 **Framework Agnostic**: Works with Flask, FastAPI, Django, or any Python web framework
+- 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
 
 ---
 

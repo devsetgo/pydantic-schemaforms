@@ -7,4 +7,3 @@ Please feel to contribute to this project. Adding common functions is the intent
 - Add or improve documentation
 - Add or improve Tests
 - Report or fix a bug
-

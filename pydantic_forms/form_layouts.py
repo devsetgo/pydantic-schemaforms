@@ -1,8 +1,12 @@
 """
-Layout composition system for pydantic-forms that matches the design_idea.py vision.
-Provides VerticalLayout, HorizontalLayout, TabbedLayout with form composition capabilities.
+Legacy form layout composition helpers.
+
+This module is deprecated in favor of composing ``BaseLayout`` instances directly via
+``pydantic_forms.rendering.layout_engine.LayoutComposer`` and rendering them through the
+shared ``LayoutEngine``.
 """
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type
 
@@ -10,9 +14,9 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
 from .layout_base import BaseLayout as SharedBaseLayout
-from .layouts import HorizontalLayout as FlexHorizontalLayout
-from .layouts import TabLayout as ComponentTabLayout
-from .layouts import VerticalLayout as FlexVerticalLayout
+from .rendering.layout_engine import HorizontalLayout as FlexHorizontalLayout
+from .rendering.layout_engine import TabLayout as ComponentTabLayout
+from .rendering.layout_engine import VerticalLayout as FlexVerticalLayout
 from .schema_form import FormModel, ValidationResult
 
 
@@ -135,11 +139,22 @@ class FormDesign:
         return framework_js.get(self.ui_theme, "")
 
 
+_DEPRECATION_MESSAGE = (
+    "pydantic_forms.form_layouts will be removed in a future release. Compose layouts "
+    "using LayoutComposer + LayoutEngine instead."
+)
+
+
+def _warn_form_layouts_deprecated() -> None:
+    warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=3)
+
+
 class FormLayoutBase(SharedBaseLayout, ABC):
     """Base class for layout components that orchestrate FormModel instances."""
 
     def __init__(self, form_config: Optional[SectionDesign] = None):
         super().__init__(content="")
+        _warn_form_layouts_deprecated()
         self.form_config = form_config
         self._forms: List[FormModel] = []
         self._rendered_content: Optional[str] = None

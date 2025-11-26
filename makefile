@@ -69,7 +69,7 @@ help:  ## Display this help message
 install: ## Install the project's dependencie
 	$(PIP) install -r $(REQUIREMENTS_PATH)
 	pip install -e .
-	
+
 local-install: ## Install the project
 	 pip install -e .
 
@@ -115,4 +115,3 @@ ex-test: ## Test that both examples can be imported successfully
 	cd examples && $(PYTHON) -c "import flask_example; print('✅ Flask example imports correctly')"
 	cd examples && $(PYTHON) -c "import fastapi_example; print('✅ FastAPI example imports correctly')"
 	@echo "🎉 Both examples are ready to run!"
-
