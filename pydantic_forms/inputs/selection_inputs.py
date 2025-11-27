@@ -3,8 +3,8 @@ Selection input components using Python 3.14 template strings.
 Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
-import string.templatelib
 from html import escape
+from string import Template
 from typing import Any, Dict, List, Optional
 
 from .base import FormInput, SelectInputBase
@@ -39,9 +39,7 @@ class SelectInput(SelectInputBase):
 
         # Use template substitution
         try:
-            return string.templatelib.Template(self.template).substitute(
-                attributes=attributes_str, options=options_html
-            )
+            return Template(self.template).substitute(attributes=attributes_str, options=options_html)
         except Exception:
             # Fallback rendering
             return f"<select {attributes_str}>{options_html}</select>"
@@ -188,7 +186,7 @@ class CheckboxGroup(SelectInputBase):
         legend_text = legend or group_name.replace("_", " ").title()
 
         try:
-            return string.templatelib.Template(self.template).substitute(
+            return Template(self.template).substitute(
                 fieldset_attributes=fieldset_attributes_str,
                 legend=escape(legend_text),
                 checkboxes=checkboxes_html,
@@ -212,6 +210,14 @@ class RadioInput(FormInput):
 
     def get_input_type(self) -> str:
         return "radio"
+
+    def render(self, **kwargs) -> str:
+        """Render a radio input element."""
+
+        attrs = self.validate_attributes(**kwargs)
+        attrs["type"] = self.get_input_type()
+        attributes_str = self._build_attributes_string(attrs)
+        return f"<input {attributes_str} />"
 
 
 class RadioGroup(SelectInputBase):
@@ -277,7 +283,7 @@ class RadioGroup(SelectInputBase):
         legend_text = legend or group_name.replace("_", " ").title()
 
         try:
-            return string.templatelib.Template(self.template).substitute(
+            return Template(self.template).substitute(
                 fieldset_attributes=fieldset_attributes_str,
                 legend=escape(legend_text),
                 radio_buttons=radio_buttons_html,
@@ -294,6 +300,9 @@ class RadioGroup(SelectInputBase):
 
 class ToggleSwitch(CheckboxInput):
     """Toggle switch styled as a modern switch instead of checkbox."""
+
+    ui_element = "toggle"
+    ui_element_aliases = ("toggle_switch", "checkbox_toggle")
 
     def render(self, **kwargs) -> str:
         """Render toggle switch with custom styling."""
@@ -324,6 +333,8 @@ class ToggleSwitch(CheckboxInput):
 class ComboBoxInput(SelectInput):
     """Combo box input that combines text input with dropdown selection."""
 
+    ui_element = "combobox"
+
     template = """<div class="combobox-wrapper">
     <input type="text" ${input_attributes} list="${datalist_id}" />
     <datalist id="${datalist_id}">
@@ -353,7 +364,7 @@ class ComboBoxInput(SelectInput):
         input_attributes_str = self._build_attributes_string(input_attrs)
 
         try:
-            return string.templatelib.Template(self.template).substitute(
+            return Template(self.template).substitute(
                 input_attributes=input_attributes_str, datalist_id=datalist_id, options=options_html
             )
         except Exception:

@@ -155,6 +155,7 @@ class FormModel(BaseModel):
     @classmethod
     def get_json_schema(cls) -> Dict[str, Any]:
         """Get JSON schema with UI element information extracted from field annotations."""
+        cls.ensure_dynamic_fields()
         schema = cls.model_json_schema() if hasattr(cls, "model_json_schema") else cls.schema()
         properties = schema.get("properties", {})
         enhanced_props = {}
@@ -248,6 +249,26 @@ class FormModel(BaseModel):
 
         renderer = EnhancedFormRenderer(framework=framework)
         return renderer.render_form_from_model(cls, data=data, errors=errors, **kwargs)
+
+    @classmethod
+    def ensure_dynamic_fields(cls) -> bool:
+        """Detect FieldInfo attributes assigned after class creation."""
+
+        processed: set[str] = set(getattr(cls, "_dynamic_field_names", set()))
+        new_fields: List[str] = []
+
+        for attr_name, attr_value in cls.__dict__.items():
+            if not isinstance(attr_value, FieldInfo):
+                continue
+            if attr_name in processed:
+                continue
+            new_fields.append(attr_name)
+
+        if not new_fields:
+            return False
+
+        cls._dynamic_field_names = processed.union(new_fields)
+        return True
 
     @classmethod
     def get_example_form_data(cls: Type["FormModel"]) -> dict:

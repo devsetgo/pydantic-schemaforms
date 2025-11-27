@@ -1,0 +1,440 @@
+<form method="POST" action="/pets" class="needs-validation" novalidate="True">
+<div class="mb-3"><label for="owner_name"><i class="bi bi-person"></i> Owner Name *</label>
+<input name="owner_name" id="owner_name" class="form-control" value="Sarah Thompson" required="required" minlength="2" maxlength="11" placeholder="Enter your full name" pattern="\d{3}-\d{2}-\d{4}" inputmode="numeric" autocomplete="off" type="text" />
+<div class="form-text">Your full name as the pet owner</div></div>
+<div class="mb-3"><label for="email"><i class="bi bi-envelope"></i> Email Address *</label>
+<input name="email" id="email" class="form-control" value="sarah.thompson@email.com" required="required" placeholder="your.email@example.com" inputmode="email" type="email" />
+<div class="form-text">Your contact email address</div></div>
+<div class="mb-3"><label for="address"><i class="bi bi-house"></i> Address</label>
+<textarea name="address" id="address" class="form-control" placeholder="Enter your full address...">5 Marine Parade, </textarea>
+<div class="form-text">Your home address (optional)</div></div>
+<div class="mb-3"><label for="emergency_contact"><i class="bi bi-person-exclamation"></i> Emergency Contact</label>
+<input name="emergency_contact" id="emergency_contact" class="form-control" value="Mike Thompson - (555) 123-4567" placeholder="Emergency contact name and phone" pattern="\d{3}-\d{2}-\d{4}" maxlength="11" inputmode="numeric" autocomplete="off" type="text" />
+<div class="form-text">Someone to contact in case of emergency</div></div>
+<div class="mb-3">
+    <label class="form-label fw-bold">
+        Your Pets
+    </label>
+    <div class="model-list-container" data-field-name="pets"          data-min-items="1" data-max-items="10">
+        <div class="model-list-items" id="pets-items">
+
+        <div class="model-list-item card border mb-3"
+             data-index="0"
+             data-title-template="Item #{index}"
+             data-field-name="pets">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <button class="btn btn-link text-decoration-none p-0 text-start"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#pets_item_0_content"
+                            aria-expanded="true"
+                            aria-controls="pets_item_0_content">
+                        <i class="bi bi-chevron-down me-2"></i>
+                        <i class="bi bi-card-list me-2"></i>
+                        Item #1
+                    </button>
+                </h6>
+                <button type="button"
+                        class="btn btn-outline-danger btn-sm remove-item-btn"
+                        data-index="0"
+                        data-field-name="pets"
+                        title="Remove this item">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            <div class="collapse  show" id="pets_item_0_content">
+                <div class="card-body"><div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].name"><i class="bi bi-heart"></i> Pet&#x27;s Name</label>
+<input name="pets[0].name" id="pets[0].name" class="form-control" value="Tweety" minlength="1" maxlength="11" placeholder="Enter your pet's name" pattern="\d{3}-\d{2}-\d{4}" inputmode="numeric" autocomplete="off" type="text" />
+<div class="form-text">The name of your pet</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><div class="mb-3">
+<label for="pets[0].species" class="form-label">Species</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-bi bi-collection"></i></span>
+<select name="pets[0].species" id="pets[0].species" class="form-select"><option value="Dog" selected>Dog 🐕</option>
+<option value="Cat">Cat 🐱</option>
+<option value="Bird">Bird 🐦</option>
+<option value="Fish">Fish 🐠</option>
+<option value="Rabbit">Rabbit 🐰</option>
+<option value="Hamster">Hamster 🐹</option>
+<option value="Reptile">Reptile 🦎</option>
+<option value="Other">Other 🐾</option></select>
+</div>
+<div class="form-text">What type of animal is your pet?</div>
+</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].age"><i class="bi bi-calendar"></i> Age</label>
+<input name="pets[0].age" id="pets[0].age" class="form-control" value="2" placeholder="Pet's age in years%" min="0" max="100" step="0.1" inputmode="numeric" type="number" />
+<div class="form-text">How old is your pet? (optional)</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].weight"><i class="bi bi-speedometer2"></i> Weight (lbs)</label>
+<input name="pets[0].weight" id="pets[0].weight" class="form-control" value="-0.98" placeholder="Pet's weight%" min="0" max="100" step="0.1" inputmode="numeric" type="number" />
+<div class="form-text">Weight in pounds (optional - enter 0.01 for tiny pets like birds)</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].is_vaccinated"><i class="bi bi-shield-check"></i> Vaccinated</label>
+<input name="pets[0].is_vaccinated" id="pets[0].is_vaccinated" class="form-check-input" value="1" type="checkbox" />
+<div class="form-text">Is your pet up to date with vaccinations?</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].microchipped"><i class="bi bi-cpu"></i> Microchipped</label>
+<input name="pets[0].microchipped" id="pets[0].microchipped" class="form-check-input" value="1" type="checkbox" />
+<div class="form-text">Does your pet have a microchip?</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].breed"><i class="bi bi-award"></i> Breed</label>
+<input name="pets[0].breed" id="pets[0].breed" class="form-control" value="Canary" placeholder="e.g., Golden Retriever, Persian Cat" pattern="\d{3}-\d{2}-\d{4}" maxlength="11" inputmode="numeric" autocomplete="off" type="text" />
+<div class="form-text">Specific breed of your pet (optional)</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].color"><i class="bi bi-palette"></i> Primary Color</label>
+<div class="color-input-group"><input name="pets[0].color" id="pets[0].color" class="form-control" value="#000000" type="color" />
+            <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
+                <span id="pets[0].color_value" style="font-family: monospace;">#000000</span>
+                <div id="pets[0].color_swatch" style="width: 20px; height: 20px; background-color: #000000; border: 1px solid #ccc; margin-left: 5px;"></div>
+            </div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const colorInput = document.getElementById('pets[0].color');
+                const valueSpan = document.getElementById('pets[0].color_value');
+                const swatch = document.getElementById('pets[0].color_swatch');
+
+                if (colorInput && valueSpan && swatch) {
+                    colorInput.addEventListener('input', function() {
+                        valueSpan.textContent = this.value;
+                        swatch.style.backgroundColor = this.value;
+                    });
+                }
+            });
+            </script>
+            </div>
+<div class="form-text">Primary color of your pet (optional)</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].last_vet_visit"><i class="bi bi-calendar-date"></i> Last Vet Visit</label>
+<div class="birthdate-input-group"><input name="pets[0].last_vet_visit" id="pets[0].last_vet_visit" class="form-control" value="2024-11-01" max="2025-11-27" min="1875-01-01" type="date" />
+            <div class="age-display" id="pets[0].last_vet_visit_age" style="margin-top: 5px; font-size: 0.9em; color: #666;"></div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const birthdateField = document.getElementById('pets[0].last_vet_visit');
+                const ageDisplay = document.getElementById('pets[0].last_vet_visit_age');
+
+                function calculateAge() {
+                    if (birthdateField.value && ageDisplay) {
+                        const birthDate = new Date(birthdateField.value);
+                        const today = new Date();
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+
+                        ageDisplay.textContent = age >= 0 ? `Age: ${age} years` : '';
+                    }
+                }
+
+                if (birthdateField) {
+                    birthdateField.addEventListener('change', calculateAge);
+                    calculateAge(); // Calculate on load if value is set
+                }
+            });
+            </script>
+            </div>
+<div class="form-text">When was the last veterinary checkup? (optional)</div></div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="mb-3"><label for="pets[0].special_needs"><i class="bi bi-heart-pulse"></i> Special Needs</label>
+<textarea name="pets[0].special_needs" id="pets[0].special_needs" class="form-control" placeholder="Any special care requirements, medications, allergies, etc.">Requires daily singing practice and fresh seed mix</textarea>
+<div class="form-text">Describe any special care requirements (optional)</div></div>
+                </div></div>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="model-list-controls mt-2">
+            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn"                     data-target="pets">
+                <i class="bi bi-plus-circle"></i>                 Add Item
+            </button>
+        </div>
+    </div>
+    <div class="form-text text-muted">
+                <i class="bi bi-info-circle"></i> Add information about each of your pets
+            </div>
+</div>
+<button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+        <script>
+        (function() {
+            'use strict';
+
+            // Ensure this runs after DOM is loaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeModelLists);
+            } else {
+                initializeModelLists();
+            }
+
+            function initializeModelLists() {
+                // Add item functionality
+                const addButtons = document.querySelectorAll('.add-item-btn');
+                addButtons.forEach(button => {
+                    if (!button.hasAttribute('data-initialized')) {
+                        button.setAttribute('data-initialized', 'true');
+                        button.addEventListener('click', handleAddItem);
+                    }
+                });
+
+                // Remove item functionality - use direct event listeners
+                const removeButtons = document.querySelectorAll('.remove-item-btn');
+                removeButtons.forEach(button => {
+                    if (!button.hasAttribute('data-initialized')) {
+                        button.setAttribute('data-initialized', 'true');
+                        button.addEventListener('click', handleRemoveItem);
+                    }
+                });
+
+                // Also set up delegation for dynamically added buttons
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.remove-item-btn') && !e.target.closest('.remove-item-btn').hasAttribute('data-initialized')) {
+                        const button = e.target.closest('.remove-item-btn');
+                        button.setAttribute('data-initialized', 'true');
+                        handleRemoveItem.call(button, e);
+                    }
+                });
+            }
+
+            function handleAddItem(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const fieldName = this.dataset.target;
+                const container = document.querySelector(`[data-field-name="${fieldName}"]`);
+                if (!container) return;
+
+                const itemsContainer = container.querySelector('.model-list-items');
+                const maxItems = parseInt(container.dataset.maxItems || '10');
+                const currentItems = itemsContainer.querySelectorAll('.model-list-item').length;
+
+                if (currentItems >= maxItems) {
+                    alert(`Maximum ${maxItems} items allowed.`);
+                    return;
+                }
+
+                addNewListItem(fieldName, currentItems);
+                updateItemIndices(itemsContainer);
+            }
+
+            function handleRemoveItem(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const button = e.currentTarget || this;
+                const item = button.closest('.model-list-item');
+                if (!item) return;
+
+                const container = item.closest('.model-list-container');
+                if (!container) return;
+
+                const minItems = parseInt(container.dataset.minItems || '0');
+                const itemsContainer = container.querySelector('.model-list-items');
+                const currentItems = itemsContainer.querySelectorAll('.model-list-item').length;
+
+                if (currentItems <= minItems) {
+                    alert(`Minimum ${minItems} items required.`);
+                    return;
+                }
+
+                // Check if item has data
+                const hasData = Array.from(item.querySelectorAll('input, select, textarea')).some(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        return input.checked;
+                    }
+                    return input.value && input.value.trim() !== '';
+                });
+
+                if (hasData) {
+                    if (!confirm('Are you sure you want to remove this item? All data will be lost.')) {
+                        return;
+                    }
+                }
+
+                item.remove();
+                updateItemIndices(itemsContainer);
+            }
+
+            // Update titles when input fields change
+            document.addEventListener('input', function(e) {
+                if (e.target.name && (e.target.name.includes('.name') || e.target.name.includes('.relationship'))) {
+                    updateItemTitle(e.target);
+                }
+            });
+
+            // Handle collapse icons
+            document.addEventListener('click', function(e) {
+                const collapseButton = e.target.closest('[data-bs-toggle="collapse"]');
+                if (collapseButton) {
+                    const icon = collapseButton.querySelector('.bi-chevron-down, .bi-chevron-right');
+                    if (icon) {
+                        setTimeout(() => {
+                            const isExpanded = collapseButton.getAttribute('aria-expanded') === 'true';
+                            icon.className = isExpanded ? 'bi bi-chevron-down me-2' : 'bi bi-chevron-right me-2';
+                        }, 50);
+                    }
+                }
+            });
+        })();
+
+        function addNewListItem(fieldName, index) {
+            const container = document.querySelector(`[data-field-name="${fieldName}"]`);
+            const itemsContainer = container.querySelector('.model-list-items');
+
+            // Get the first item as a template if it exists
+            const firstItem = itemsContainer.querySelector('.model-list-item');
+            if (firstItem) {
+                const newItem = firstItem.cloneNode(true);
+
+                // Clear all input values
+                newItem.querySelectorAll('input, select, textarea').forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+
+                // Update data-index
+                newItem.dataset.index = index;
+
+                // Update field names and IDs
+                updateFieldNames(newItem, fieldName, index);
+
+                // Update collapse IDs
+                updateCollapseIds(newItem, fieldName, index);
+
+                // Expand the new item
+                const collapseDiv = newItem.querySelector('.collapse');
+                if (collapseDiv) {
+                    collapseDiv.classList.add('show');
+                }
+
+                // Update collapse button aria-expanded
+                const collapseButton = newItem.querySelector('[data-bs-toggle="collapse"]');
+                if (collapseButton) {
+                    collapseButton.setAttribute('aria-expanded', 'true');
+                    const icon = collapseButton.querySelector('.bi-chevron-down, .bi-chevron-right');
+                    if (icon) {
+                        icon.className = 'bi bi-chevron-down me-2';
+                    }
+                }
+
+                itemsContainer.appendChild(newItem);
+            }
+        }
+
+        function updateItemIndices(container) {
+            const items = container.querySelectorAll('.model-list-item');
+            items.forEach((item, index) => {
+                item.dataset.index = index;
+
+                // Update field names first
+                const fieldName = container.closest('.model-list-container').dataset.fieldName;
+                updateFieldNames(item, fieldName, index);
+                updateCollapseIds(item, fieldName, index);
+
+                // Update title using the dynamic template
+                updateItemTitleFromData(item, index);
+            });
+        }
+
+        function updateFieldNames(item, fieldName, index) {
+            item.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.name) {
+                    // Update name attribute to use correct index
+                    input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
+                }
+                if (input.id) {
+                    // Update id attribute
+                    input.id = input.id.replace(/\[\d+\]/, `[${index}]`);
+                }
+            });
+
+            item.querySelectorAll('label').forEach(label => {
+                if (label.getAttribute('for')) {
+                    label.setAttribute('for', label.getAttribute('for').replace(/\[\d+\]/, `[${index}]`));
+                }
+            });
+        }
+
+        function updateCollapseIds(item, fieldName, index) {
+            const collapseDiv = item.querySelector('.collapse');
+            const collapseButton = item.querySelector('[data-bs-toggle="collapse"]');
+
+            if (collapseDiv && collapseButton) {
+                const newId = `${fieldName}_item_${index}_content`;
+                collapseDiv.id = newId;
+                collapseButton.setAttribute('data-bs-target', `#${newId}`);
+                collapseButton.setAttribute('aria-controls', newId);
+            }
+        }
+
+        function updateItemTitle(inputElement) {
+            const item = inputElement.closest('.model-list-item');
+            if (!item) return;
+
+            updateItemTitleFromData(item);
+        }
+
+        function updateItemTitleFromData(item, forceIndex = null) {
+            const index = forceIndex !== null ? forceIndex : parseInt(item.dataset.index);
+            const titleTemplate = item.dataset.titleTemplate || 'Item #{index}';
+            const titleElement = item.querySelector('h6 button, h6 span');
+
+            if (!titleElement) return;
+
+            // Extract current form data from the item
+            const formData = { index: index + 1 };
+            item.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.name) {
+                    // Extract field name (e.g., "pets[0].name" -> "name")
+                    const fieldMatch = input.name.match(/\.([^.]+)$/);
+                    if (fieldMatch) {
+                        const fieldName = fieldMatch[1];
+                        if (input.type === 'checkbox') {
+                            formData[fieldName] = input.checked;
+                        } else {
+                            formData[fieldName] = input.value || '';
+                        }
+                    }
+                }
+            });
+
+            // Generate title from template
+            let newTitle;
+            try {
+                newTitle = titleTemplate.replace(/\{([^}]+)\}/g, (match, key) => {
+                    return formData[key] || '';
+                });
+            } catch (e) {
+                newTitle = `Item #${index + 1}`;
+            }
+
+            // Update the title while preserving icons
+            const cardIcon = '<i class="bi bi-card-list me-2"></i>';
+            if (titleElement.tagName === 'BUTTON') {
+                const chevronIcon = titleElement.querySelector('.bi-chevron-down, .bi-chevron-right');
+                const chevronHtml = chevronIcon ? chevronIcon.outerHTML : '<i class="bi bi-chevron-down me-2"></i>';
+                titleElement.innerHTML = `${chevronHtml}${cardIcon}${newTitle}`;
+            } else {
+                titleElement.innerHTML = `${cardIcon}${newTitle}`;
+            }
+        }
+        </script>
+        
