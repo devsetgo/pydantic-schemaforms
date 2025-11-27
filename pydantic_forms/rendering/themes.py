@@ -32,6 +32,7 @@ from html import escape
 from typing import Callable, Dict, Optional, Type
 
 from .frameworks import get_framework_config
+from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
 
 
 class RendererTheme:
@@ -95,10 +96,82 @@ class RendererTheme:
 
         return ""
 
+    def tab_component_assets(self) -> str:
+        """Return CSS/JS assets for tab layouts."""
+
+        return TAB_COMPONENT_ASSETS
+
+    def accordion_component_assets(self) -> str:
+        """Return CSS/JS assets for accordion layouts."""
+
+        return ACCORDION_COMPONENT_ASSETS
+
     def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
         """Return framework-specific markup for layout/card sections."""
 
         return ""
+
+    def render_model_list_container(
+        self,
+        *,
+        field_name: str,
+        label: str,
+        is_required: bool,
+        min_items: int,
+        max_items: int,
+        items_html: str,
+        help_text: Optional[str],
+        error: Optional[str],
+        add_button_label: str,
+    ) -> str:
+        """Render framework-aware markup for schema-driven model lists."""
+
+        required_indicator = ' <span class="text-danger">*</span>' if is_required else ""
+        help_block = (
+            f'<div class="form-text text-muted">\n                <i class="bi bi-info-circle"></i> {escape(help_text)}\n            </div>'
+            if help_text
+            else ""
+        )
+        error_block = (
+            f'<div class="invalid-feedback d-block">\n                <i class="bi bi-exclamation-triangle"></i> {escape(error)}\n            </div>'
+            if error
+            else ""
+        )
+
+        html_parts = [
+            '<div class="mb-3">',
+            '    <label class="form-label fw-bold">',
+            f'        {escape(label)}{required_indicator}',
+            '    </label>',
+            f'    <div class="model-list-container" data-field-name="{field_name}" '
+            f'         data-min-items="{min_items}" data-max-items="{max_items}">',
+            f'        <div class="model-list-items" id="{field_name}-items">',
+        ]
+
+        if items_html:
+            html_parts.append(items_html)
+
+        html_parts.extend(
+            [
+                '        </div>',
+                '        <div class="model-list-controls mt-2">',
+                f'            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" '
+                f'                    data-target="{field_name}">',
+                '                <i class="bi bi-plus-circle"></i> '
+                f'                {escape(add_button_label)}',
+                '            </button>',
+                '        </div>',
+                '    </div>',
+            ]
+        )
+
+        if help_block:
+            html_parts.append(f'    {help_block}')
+        if error_block:
+            html_parts.append(f'    {error_block}')
+
+        html_parts.append('</div>')
+        return "\n".join(html_parts)
 
 
 class DefaultTheme(RendererTheme):

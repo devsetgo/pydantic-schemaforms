@@ -9,6 +9,7 @@ from ..icon_mapping import map_icon_for_framework
 from ..inputs import HiddenInput
 from ..rendering.context import RenderContext
 from ..rendering.frameworks import get_input_component
+from .themes import RendererTheme
 
 
 class FieldRenderer:
@@ -415,79 +416,79 @@ class FieldRenderer:
         required_fields: List[str],
         context: RenderContext,
     ) -> str:
-        html = f"""
-        <div class="mb-3">
-            <label class="form-label fw-bold">
-                {escape(field_schema.get('title', field_name.replace('_', ' ').title()))}
-                {' <span class="text-danger">*</span>' if field_name in (required_fields or []) else ''}
-            </label>
-
-            <div class="model-list-container"
-                 data-field-name="{field_name}"
-                 data-min-items="{field_schema.get('minItems', 0)}"
-                 data-max-items="{field_schema.get('maxItems', 10)}">
-
-                <div class="model-list-items" id="{field_name}-items">"""
+        items_parts: List[str] = []
 
         for i, item_data in enumerate(values):
-            html += self._render_schema_list_item(
-                field_name,
-                schema_def,
-                i,
-                item_data,
-                context,
-                ui_info,
+            items_parts.append(
+                self._render_schema_list_item(
+                    field_name,
+                    schema_def,
+                    i,
+                    item_data,
+                    context,
+                    ui_info,
+                )
             )
 
         min_items = field_schema.get("minItems", 0)
         if not values and min_items > 0:
             for i in range(min_items):
-                html += self._render_schema_list_item(
+                items_parts.append(
+                    self._render_schema_list_item(
+                        field_name,
+                        schema_def,
+                        i,
+                        {},
+                        context,
+                        ui_info,
+                    )
+                )
+
+        if not values and min_items == 0:
+            items_parts.append(
+                self._render_schema_list_item(
                     field_name,
                     schema_def,
-                    i,
+                    0,
                     {},
                     context,
                     ui_info,
                 )
-
-        if not values and min_items == 0:
-            html += self._render_schema_list_item(
-                field_name,
-                schema_def,
-                0,
-                {},
-                context,
-                ui_info,
             )
 
-        html += f"""
-                </div>
-
-                <div class="model-list-controls mt-2">
-                    <button type="button"
-                            class="btn btn-outline-primary btn-sm add-item-btn"
-                            data-target="{field_name}">
-                        <i class="bi bi-plus-circle"></i> Add Item
-                    </button>
-                </div>
-            </div>"""
-
+        items_html = "".join(items_parts)
+        max_items = field_schema.get("maxItems", 10)
         help_text = ui_info.get("help_text") or field_schema.get("description")
-        if help_text:
-            html += f"""
-            <div class="form-text text-muted">
-                <i class="bi bi-info-circle"></i> {escape(help_text)}
-            </div>"""
+        label = field_schema.get("title", field_name.replace("_", " ").title())
+        add_button_label = ui_info.get("add_button_label", "Add Item")
+        is_required = field_name in (required_fields or [])
 
-        if error:
-            html += f"""
-            <div class="invalid-feedback d-block">
-                <i class="bi bi-exclamation-triangle"></i> {escape(error)}
-            </div>"""
+        if self.theme:
+            themed_html = self.theme.render_model_list_container(
+                field_name=field_name,
+                label=label,
+                is_required=is_required,
+                min_items=min_items,
+                max_items=max_items,
+                items_html=items_html,
+                help_text=help_text,
+                error=error,
+                add_button_label=add_button_label,
+            )
+            if themed_html:
+                return themed_html
 
-        html += "</div>"
-        return html
+        return RendererTheme().render_model_list_container(
+            field_name=field_name,
+            label=label,
+            is_required=is_required,
+            min_items=min_items,
+            max_items=max_items,
+            items_html=items_html,
+            help_text=help_text,
+            error=error,
+            add_button_label=add_button_label,
+        )
 
     def extract_nested_errors_for_field(
         self, field_name: str, all_errors: Dict[str, Any]

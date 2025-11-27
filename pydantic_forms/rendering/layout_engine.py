@@ -6,6 +6,7 @@ from html import escape
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .context import RenderContext
+from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
 from ..layout_base import BaseLayout
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -135,59 +136,7 @@ class TabLayout(BaseLayout):
         ${tab_panels}
     </div>
 </div>
-<script>
-function switchTab(tabId, buttonElement) {
-    const tabLayout = buttonElement.closest('.tab-layout');
-    const panels = tabLayout.querySelectorAll('.tab-panel');
-    const buttons = tabLayout.querySelectorAll('.tab-button');
-
-    panels.forEach(panel => {
-        panel.style.display = 'none';
-        panel.setAttribute('aria-hidden', 'true');
-    });
-
-    buttons.forEach(button => {
-        button.classList.remove('active');
-        button.setAttribute('aria-selected', 'false');
-    });
-
-    const selectedPanel = document.getElementById(tabId);
-    if (selectedPanel) {
-        selectedPanel.style.display = 'block';
-        selectedPanel.setAttribute('aria-hidden', 'false');
-    }
-
-    buttonElement.classList.add('active');
-    buttonElement.setAttribute('aria-selected', 'true');
-}
-</script>
-<style>
-.tab-layout .tab-navigation {
-    border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 1rem;
-}
-.tab-layout .tab-button {
-    background: none;
-    border: none;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-right: 0.5rem;
-}
-.tab-layout .tab-button:hover {
-    background-color: #f5f5f5;
-}
-.tab-layout .tab-button.active {
-    border-bottom-color: #007bff;
-    color: #007bff;
-}
-.tab-layout .tab-panel {
-    display: none;
-}
-.tab-layout .tab-panel.active {
-    display: block;
-}
-</style>
+${component_assets}
     """
 
     def __init__(self, tabs: List[Dict[str, str]], **kwargs: Any) -> None:
@@ -233,9 +182,18 @@ function switchTab(tabId, buttonElement) {
             """
             )
 
+        renderer = kwargs.get("renderer")
+        assets = TAB_COMPONENT_ASSETS
+        theme = getattr(renderer, "theme", None) if renderer else None
+        if theme:
+            themed_assets = theme.tab_component_assets()
+            if themed_assets:
+                assets = themed_assets
+
         return super().render(
             tab_buttons="\n".join(tab_buttons),
             tab_panels="\n".join(tab_panels),
+            component_assets=assets,
             **kwargs,
         )
 
@@ -247,50 +205,7 @@ class AccordionLayout(BaseLayout):
 <div class="accordion-layout ${class_}" style="${style}">
     ${accordion_sections}
 </div>
-<script>
-function toggleAccordion(sectionId, buttonElement) {
-    const content = document.getElementById(sectionId);
-    const isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
-
-    if (isExpanded) {
-        content.style.display = 'none';
-        buttonElement.setAttribute('aria-expanded', 'false');
-        buttonElement.classList.remove('expanded');
-    } else {
-        content.style.display = 'block';
-        buttonElement.setAttribute('aria-expanded', 'true');
-        buttonElement.classList.add('expanded');
-    }
-}
-</script>
-<style>
-.accordion-layout .accordion-section {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-}
-.accordion-layout .accordion-header {
-    background: none;
-    border: none;
-    width: 100%;
-    text-align: left;
-    padding: 1rem;
-    cursor: pointer;
-    background-color: #f8f9fa;
-    font-weight: 500;
-}
-.accordion-layout .accordion-header:hover {
-    background-color: #e9ecef;
-}
-.accordion-layout .accordion-header.expanded {
-    background-color: #007bff;
-    color: white;
-}
-.accordion-layout .accordion-content {
-    padding: 1rem;
-    border-top: 1px solid #e0e0e0;
-}
-</style>
+${component_assets}
     """
 
     def __init__(self, sections: List[Dict[str, str]], **kwargs: Any) -> None:
@@ -323,8 +238,17 @@ function toggleAccordion(sectionId, buttonElement) {
             """
             )
 
+        renderer = kwargs.get("renderer")
+        assets = ACCORDION_COMPONENT_ASSETS
+        theme = getattr(renderer, "theme", None) if renderer else None
+        if theme:
+            themed_assets = theme.accordion_component_assets()
+            if themed_assets:
+                assets = themed_assets
+
         return super().render(
             accordion_sections="\n".join(accordion_sections),
+            component_assets=assets,
             **kwargs,
         )
 
@@ -609,7 +533,12 @@ class LayoutEngine:
             class_="tabbed-layout",
         )
 
-        return [component.render(framework=self._renderer.framework)]
+        return [
+            component.render(
+                framework=self._renderer.framework,
+                renderer=self._renderer,
+            )
+        ]
 
     def render_layout_fields_as_tabs(
         self,
@@ -645,7 +574,12 @@ class LayoutEngine:
             class_="layout-tabbed-section",
         )
 
-        return [component.render(framework=self._renderer.framework)]
+        return [
+            component.render(
+                framework=self._renderer.framework,
+                renderer=self._renderer,
+            )
+        ]
 
     def render_layout_field_content(
         self,
