@@ -4,7 +4,7 @@ _Date: 2025-11-27_
 
 ## Executive Summary
 
-The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config. Recent cleanup moved the `_THEME_MAP` lookup after the theme subclasses and hardened `RendererTheme.render_model_list_container` to escape field-name-derived attributes so lints and security scanners stay quiet. The remaining structural debt sits around finishing theme-driven markup extraction for other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
+The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config. Recent cleanup moved the `_THEME_MAP` lookup after the theme subclasses, hardened `RendererTheme.render_model_list_container` to escape field-name-derived attributes, and added integration tests that render Bootstrap/Material model lists end-to-end so theme regressions surface quickly. The remaining structural debt sits around finishing theme-driven markup extraction for other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
 
 ## Critical / High Priority Findings
 
@@ -49,7 +49,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 ## Testing & Tooling Gaps
 
 - `make tests` now runs pre-commit + pytest + badge generation, but the docs still describe manual pytest invocation. Document the single entry point (and its prerequisites) so contributors understand the authoritative workflow and potential runtime costs.
-- Renderer behavior (async paths, model lists, layout selection) still lacks automated coverage. After consolidating the layout/renderer code, prioritize high-level integration tests that render representative forms for each framework (including tab/accordion assets and the new theme-aware model list container hooks).
+- Renderer behavior (async paths, layout selection) still lacks automated coverage. Model-list integration tests now exercise Bootstrap/Material themes end-to-end, but tabs/accordions and async renderers still need framework-level fixtures.
 - Ruff uncovered several ordering/import mistakes (`from __future__` position, `_THEME_MAP` accessing undefined subclasses). Add a lint target (or wire `make ruff` into CI) so style/import regressions fail fast before docs/tests work begins.
 
 ## Recommended Next Steps
@@ -58,6 +58,6 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
 3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
 4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
-5. Finish moving model-list presentation into themes/templates so `_render_bootstrap_list_item`/`_render_material_list_item` only describe data and theme hooks own the markup.
+5. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
 6. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
-7. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for renderers/model lists.
+7. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
