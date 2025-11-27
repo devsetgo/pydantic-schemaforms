@@ -20,16 +20,11 @@ from typing import Any, Callable, Dict, List, Optional, Type
 
 from pydantic_forms.schema_form import FormModel
 from pydantic_forms.rendering.context import RenderContext
+from pydantic_forms.rendering.themes import RendererTheme, get_theme_for_framework
 
 
 @dataclass(frozen=True)
-class ModelListTheme:
-    outer_wrapper_class: str
-    label_builder: Callable[[str, bool], str]
-    help_builder: Callable[[str], str]
-    error_builder: Callable[[str], str]
-    add_button_builder: Callable[[str, str], str]
-    control_wrapper_class: str
+class ModelListThemeConfig:
     item_renderer: Callable[[str, Type[FormModel], int, Dict[str, Any], Optional[Dict[str, str]]], str]
 
 
@@ -80,9 +75,11 @@ class ModelListRenderer:
         values = values or []
         nested_errors = nested_errors or {}
 
-        theme = self._get_theme_config()
+        theme = self._resolve_theme()
+        theme_config = self._get_theme_config()
         return self._render_list(
             theme,
+            theme_config,
             field_name,
             label,
             model_class,
@@ -97,7 +94,8 @@ class ModelListRenderer:
 
     def _render_list(
         self,
-        theme: ModelListTheme,
+        theme: RendererTheme,
+        theme_config: ModelListThemeConfig,
         field_name: str,
         label: str,
         model_class: Type[FormModel],
@@ -115,116 +113,55 @@ class ModelListRenderer:
         nested_errors = nested_errors or {}
         model_label = model_class.__name__.replace("Model", "") or model_class.__name__
 
-        html_parts: List[str] = [
-            f'<div class="{theme.outer_wrapper_class}">',
-            theme.label_builder(label, is_required),
-            (
-                f'<div class="model-list-container" data-field-name="{field_name}" '
-                f'data-min-items="{min_items}" data-max-items="{max_items}">'  # noqa: E501
-            ),
-            f'    <div class="model-list-items" id="{field_name}-items">',
-        ]
+        html_parts: List[str] = []
 
         for index, item_data in enumerate(values):
             html_parts.append(
-                theme.item_renderer(field_name, model_class, index, item_data, nested_errors)
+                theme_config.item_renderer(field_name, model_class, index, item_data, nested_errors)
             )
 
         if not values and min_items > 0:
             for index in range(min_items):
                 html_parts.append(
-                    theme.item_renderer(field_name, model_class, index, {}, nested_errors)
+                    theme_config.item_renderer(field_name, model_class, index, {}, nested_errors)
                 )
 
-        html_parts.append("    </div>")
-        html_parts.append(
-            f'    <div class="{theme.control_wrapper_class}">'  # noqa: E501
-            f'{theme.add_button_builder(field_name, model_label)}</div>'
+        items_html = "\n".join(html_parts)
+
+        themed_container = theme.render_model_list_container(
+            field_name=field_name,
+            label=label,
+            is_required=is_required,
+            min_items=min_items,
+            max_items=max_items,
+            items_html=items_html,
+            help_text=help_text,
+            error=error,
+            add_button_label=f"Add {model_label}",
         )
-        html_parts.append("</div>")
+        if themed_container:
+            return themed_container
 
-        if help_text:
-            html_parts.append(theme.help_builder(help_text))
-        if error:
-            html_parts.append(theme.error_builder(error))
+        default_theme = RendererTheme()
+        return default_theme.render_model_list_container(
+            field_name=field_name,
+            label=label,
+            is_required=is_required,
+            min_items=min_items,
+            max_items=max_items,
+            items_html=items_html,
+            help_text=help_text,
+            error=error,
+            add_button_label=f"Add {model_label}",
+        )
 
-        html_parts.append("</div>")
-        return "\n".join(html_parts)
-
-    def _get_theme_config(self) -> ModelListTheme:
-        """Return theme fragments for the active framework."""
-
+    def _get_theme_config(self) -> ModelListThemeConfig:
         if self.framework == "material":
-            def label_builder(label: str, is_required: bool) -> str:
-                indicator = " *" if is_required else ""
-                return (
-                    f'<h6 class="mdc-typography--subtitle1 mb-3">'
-                    f"{escape(label)}{indicator}</h6>"
-                )
+            return ModelListThemeConfig(item_renderer=self._render_material_list_item)
+        return ModelListThemeConfig(item_renderer=self._render_bootstrap_list_item)
 
-            def help_builder(text: str) -> str:
-                return f'<div class="mdc-text-field-helper-text">{escape(text)}</div>'
-
-            def error_builder(message: str) -> str:
-                return (
-                    '<div class="mdc-text-field-helper-text '
-                    'mdc-text-field-helper-text--validation-msg">'
-                    f"{escape(message)}</div>"
-                )
-
-            def add_button(field_name: str, model_label: str) -> str:
-                return (
-                    f'<button type="button" class="mdc-button mdc-button--outlined add-item-btn" '
-                    f'data-target="{field_name}">'  # noqa: E501
-                    '<span class="mdc-button__ripple"></span>'
-                    '<i class="material-icons mdc-button__icon">add_circle</i>'
-                    f'<span class="mdc-button__label">Add {escape(model_label)}</span>'
-                    "</button>"
-                )
-
-            return ModelListTheme(
-                outer_wrapper_class="mdc-form-field-container mb-4",
-                label_builder=label_builder,
-                help_builder=help_builder,
-                error_builder=error_builder,
-                add_button_builder=add_button,
-                control_wrapper_class="model-list-controls mt-3",
-                item_renderer=self._render_material_list_item,
-            )
-
-        def label_builder(label: str, is_required: bool) -> str:
-            indicator = ' <span class="text-danger">*</span>' if is_required else ""
-            return f'<label class="form-label fw-bold">{escape(label)}{indicator}</label>'
-
-        def help_builder(text: str) -> str:
-            return (
-                '<div class="form-text text-muted">'
-                f'<i class="bi bi-info-circle"></i> {escape(text)}</div>'
-            )
-
-        def error_builder(message: str) -> str:
-            return (
-                '<div class="invalid-feedback d-block">'
-                f'<i class="bi bi-exclamation-triangle"></i> {escape(message)}</div>'
-            )
-
-        def add_button(field_name: str, model_label: str) -> str:
-            return (
-                f'<button type="button" class="btn btn-outline-primary btn-sm add-item-btn" '
-                f'data-target="{field_name}">'  # noqa: E501
-                '<i class="bi bi-plus-circle"></i> '
-                f"Add {escape(model_label)}</button>"
-            )
-
-        return ModelListTheme(
-            outer_wrapper_class="mb-3",
-            label_builder=label_builder,
-            help_builder=help_builder,
-            error_builder=error_builder,
-            add_button_builder=add_button,
-            control_wrapper_class="model-list-controls mt-2",
-            item_renderer=self._render_bootstrap_list_item,
-        )
+    def _resolve_theme(self) -> RendererTheme:
+        return get_theme_for_framework(self.framework)
 
     def _render_bootstrap_list_item(
         self,
