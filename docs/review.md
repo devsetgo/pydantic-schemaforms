@@ -38,6 +38,14 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `validation.py` and `live_validation.py` maintain parallel rule sets and response objects. Choose a single canonical rule representation and let live validation adapt it so fixes land in one place.
   _Files:_ `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`
 
+- **Theme/style contract still ad-hoc**
+  Supporting additional frameworks (Shadcn, future Bootstrap/Material releases) will require more than the current string-based `framework` flag. Introduce a `FormStyle` descriptor or versioned theme registry so renderers can pick assets/layout chrome based on `{framework, version, variant}` without branching throughout the codebase.
+  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/frameworks.py`
+
+- **Extension hooks for inputs/layouts under-specified**
+  While the new `inputs.registry` makes discovery automatic, there is no documented API for third-party/paid components to register additional inputs or layouts. Provide a stable plugin hook (entry points or `register_inputs()` helpers) and layout strategy interface so extensions can add HTMX/JS-backed widgets without patching core modules.
+  _Files:_ `pydantic_forms/inputs/registry.py`, `pydantic_forms/layouts.py`, `pydantic_forms/rendering/layout_engine.py`
+
 ## Testing & Tooling Gaps
 
 - `make tests` now runs pre-commit + pytest + badge generation, but the docs still describe manual pytest invocation. Document the single entry point (and its prerequisites) so contributors understand the authoritative workflow and potential runtime costs.
@@ -47,6 +55,8 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 1. Continue extracting renderer-specific themes/templates so future frameworks plug into the shared orchestration path and keep docs/tests aligned with the RendererTheme workflow.
 2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
-3. Refactor the model list renderer to rely on templates/strategies rather than inline HTML.
-4. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
-5. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for renderers/model lists.
+3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
+4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
+5. Refactor the model list renderer to rely on templates/strategies rather than inline HTML.
+6. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
+7. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for renderers/model lists.
