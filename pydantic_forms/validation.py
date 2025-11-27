@@ -5,10 +5,12 @@ Provides both client-side JavaScript validation and server-side Python validatio
 Requires: Python 3.14+ (no backward compatibility)
 """
 
+from __future__ import annotations
+
 import re
-import string.templatelib
 from datetime import date, datetime
 from html import escape
+from string import Template
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from pydantic import ValidationError
@@ -18,6 +20,8 @@ from pydantic import ValidationError
 
 class ValidationRule:
     """Base class for validation rules."""
+
+    rule_name = "base"
 
     def __init__(self, message: str = "Invalid value", client_side: bool = True):
         self.message = message
@@ -42,9 +46,25 @@ class ValidationRule:
         """Override in subclasses to provide JavaScript validation."""
         return ""
 
+    def to_descriptor(self) -> Dict[str, Any]:
+        """Return a serializable descriptor for this rule."""
+
+        descriptor = {
+            "type": self.rule_name,
+            "message": self.message,
+            "client": self.client_side,
+        }
+        descriptor.update(self._descriptor_params())
+        return descriptor
+
+    def _descriptor_params(self) -> Dict[str, Any]:
+        return {}
+
 
 class RequiredRule(ValidationRule):
     """Validates that a field has a value."""
+
+    rule_name = "required"
 
     def __init__(self, message: str = "This field is required"):
         super().__init__(message)
@@ -64,6 +84,8 @@ class RequiredRule(ValidationRule):
 
 class MinLengthRule(ValidationRule):
     """Validates minimum string length."""
+
+    rule_name = "min_length"
 
     def __init__(self, min_length: int, message: str = None):
         self.min_length = min_length
@@ -85,9 +107,14 @@ class MinLengthRule(ValidationRule):
         }}
         """
 
+    def _descriptor_params(self) -> Dict[str, Any]:
+        return {"min_length": self.min_length}
+
 
 class MaxLengthRule(ValidationRule):
     """Validates maximum string length."""
+
+    rule_name = "max_length"
 
     def __init__(self, max_length: int, message: str = None):
         self.max_length = max_length
@@ -109,9 +136,14 @@ class MaxLengthRule(ValidationRule):
         }}
         """
 
+    def _descriptor_params(self) -> Dict[str, Any]:
+        return {"max_length": self.max_length}
+
 
 class RegexRule(ValidationRule):
     """Validates against a regular expression pattern."""
+
+    rule_name = "regex"
 
     def __init__(self, pattern: str, message: str = "Invalid format", flags: int = 0):
         self.pattern = pattern
@@ -135,9 +167,14 @@ class RegexRule(ValidationRule):
         }}
         """
 
+    def _descriptor_params(self) -> Dict[str, Any]:
+        return {"pattern": self.pattern}
+
 
 class EmailRule(RegexRule):
     """Validates email addresses."""
+
+    rule_name = "email"
 
     def __init__(self, message: str = "Please enter a valid email address"):
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -147,6 +184,8 @@ class EmailRule(RegexRule):
 class PhoneRule(RegexRule):
     """Validates phone numbers."""
 
+    rule_name = "phone"
+
     def __init__(self, message: str = "Please enter a valid phone number"):
         # Accepts various phone formats
         pattern = r"^[\+]?[1-9]?[\d\s\-\(\)\.]{10,15}$"
@@ -155,6 +194,8 @@ class PhoneRule(RegexRule):
 
 class NumericRangeRule(ValidationRule):
     """Validates numeric values within a range."""
+
+    rule_name = "numeric_range"
 
     def __init__(
         self,
@@ -215,9 +256,14 @@ class NumericRangeRule(ValidationRule):
             """
         return ""
 
+    def _descriptor_params(self) -> Dict[str, Any]:
+        return {"min": self.min_value, "max": self.max_value}
+
 
 class DateRangeRule(ValidationRule):
     """Validates dates within a range."""
+
+    rule_name = "date_range"
 
     def __init__(
         self,
@@ -294,9 +340,17 @@ class DateRangeRule(ValidationRule):
             """
         return ""
 
+    def _descriptor_params(self) -> Dict[str, Any]:
+        return {
+            "min_date": self.min_date.isoformat() if self.min_date else None,
+            "max_date": self.max_date.isoformat() if self.max_date else None,
+        }
+
 
 class CustomRule(ValidationRule):
     """Custom validation using a callback function."""
+
+    rule_name = "custom"
 
     def __init__(
         self,
@@ -404,7 +458,7 @@ class FieldValidator:
         if not js_validations:
             return ""
 
-        template = string.templatelib.Template(
+        template = Template(
             """
 function validate${field_name_camel}(value) {
     ${validations}
@@ -419,6 +473,46 @@ function validate${field_name_camel}(value) {
         return template.substitute(
             field_name_camel=field_name_camel, validations="\n    ".join(js_validations)
         )
+
+    def to_rule_descriptors(self) -> List[Dict[str, Any]]:
+        """Return serializable descriptors for all rules."""
+
+        return [rule.to_descriptor() for rule in self.rules]
+
+    def to_schema(self) -> Dict[str, Any]:
+        """Return a schema payload for this field."""
+
+        return {
+            "field": self.field_name,
+            "rules": self.to_rule_descriptors(),
+        }
+
+
+class ValidationSchema:
+    """Aggregate FieldValidator instances into a reusable schema."""
+
+    def __init__(self) -> None:
+        self._fields: Dict[str, FieldValidator] = {}
+
+    def add_field(self, validator: FieldValidator) -> "ValidationSchema":
+        self._fields[validator.field_name] = validator
+        return self
+
+    def to_dict(self) -> Dict[str, List[Dict[str, Any]]]:
+        return {name: validator.to_rule_descriptors() for name, validator in self._fields.items()}
+
+    def validators(self) -> List[FieldValidator]:
+        return list(self._fields.values())
+
+    def build_live_validator(self):  # pragma: no cover - thin wrapper
+        """Create a LiveValidator pre-populated with this schema."""
+
+        from .live_validation import LiveValidator
+
+        live_validator = LiveValidator()
+        for validator in self.validators():
+            live_validator.register_field_validator(validator)
+        return live_validator
 
 
 class FormValidator:
@@ -507,7 +601,7 @@ class FormValidator:
                 field_name_camel = "".join(word.capitalize() for word in field_name.split("_"))
                 field_validations.append(f"    '{field_name}': validate{field_name_camel}")
 
-        template = string.templatelib.Template(
+        template = Template(
             """
 <script>
 ${field_functions}
@@ -760,6 +854,7 @@ __all__ = [
     "DateRangeRule",
     "CustomRule",
     "FieldValidator",
+    "ValidationSchema",
     "FormValidator",
     "CrossFieldRules",
     "create_validator",

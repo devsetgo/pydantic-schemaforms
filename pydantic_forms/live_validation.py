@@ -9,11 +9,14 @@ Requires: Python 3.14+ (uses native template strings)
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, ValidationError
 
 from .templates import TemplateString
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .validation import FieldValidator, ValidationSchema
 
 
 @dataclass
@@ -250,6 +253,31 @@ document.addEventListener('DOMContentLoaded', function() {
             validator: Function that takes a value and returns ValidationResponse
         """
         self.validators[field_name] = validator
+
+    def register_field_validator(self, field_validator: "FieldValidator") -> None:
+        """Register a FieldValidator for live use."""
+
+        def _runner(value: Any) -> ValidationResponse:
+            is_valid, errors = field_validator.validate(value)
+            return ValidationResponse(
+                field_name=field_validator.field_name,
+                is_valid=is_valid,
+                errors=errors,
+                value=value,
+            )
+
+        self.validators[field_validator.field_name] = _runner
+        existing = self.field_configs.get(field_validator.field_name, {})
+        self.field_configs[field_validator.field_name] = {
+            **existing,
+            "rules": field_validator.to_rule_descriptors(),
+        }
+
+    def register_schema(self, schema: "ValidationSchema") -> None:
+        """Register all FieldValidators contained in a ValidationSchema."""
+
+        for field_validator in schema.validators():
+            self.register_field_validator(field_validator)
 
     def register_model_validator(self, model_class: type[BaseModel]) -> None:
         """
