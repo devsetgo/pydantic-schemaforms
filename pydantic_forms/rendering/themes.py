@@ -309,6 +309,185 @@ class MaterialEmbeddedTheme(RendererTheme):
             ]
         )
 
+    def tab_component_assets(self) -> str:
+        return """
+<script>
+function switchTab(tabId, buttonElement) {
+    const tabLayout = buttonElement.closest('.tab-layout');
+    const panels = tabLayout.querySelectorAll('.tab-panel');
+    const buttons = tabLayout.querySelectorAll('.tab-button');
+
+    panels.forEach(panel => {
+        panel.style.display = 'none';
+        panel.setAttribute('aria-hidden', 'true');
+    });
+
+    buttons.forEach(button => {
+        button.classList.remove('active');
+        button.setAttribute('aria-selected', 'false');
+    });
+
+    const selectedPanel = document.getElementById(tabId);
+    if (selectedPanel) {
+        selectedPanel.style.display = 'block';
+        selectedPanel.setAttribute('aria-hidden', 'false');
+    }
+
+    buttonElement.classList.add('active');
+    buttonElement.setAttribute('aria-selected', 'true');
+}
+</script>
+<style>
+.md-form-container .tab-layout {
+    border-radius: 28px !important;
+    background: #fff !important;
+    border: 1px solid #e7e0ec !important;
+    padding: 16px 24px !important;
+    margin-bottom: 28px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+}
+
+.md-form-container .tab-layout .tab-navigation {
+    display: flex !important;
+    gap: 4px !important;
+    border-bottom: 1px solid #e7e0ec !important;
+    margin-bottom: 16px !important;
+}
+
+.md-form-container .tab-layout .tab-button {
+    border: none !important;
+    background: transparent !important;
+    color: #49454f !important;
+    font-weight: 500 !important;
+    padding: 0.75rem 1rem !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    transition: color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.md-form-container .tab-layout .tab-button.active {
+    color: #6750a4 !important;
+    border-bottom-color: #6750a4 !important;
+    font-weight: 600 !important;
+}
+
+.md-form-container .tab-layout .tab-button:hover {
+    background: rgba(103, 80, 164, 0.08) !important;
+}
+
+.md-form-container .tab-layout .tab-panel {
+    padding: 8px 0 !important;
+}
+</style>
+"""
+
+    def accordion_component_assets(self) -> str:
+        return """
+<script>
+function toggleAccordion(sectionId, buttonElement) {
+    const content = document.getElementById(sectionId);
+    const isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
+
+    if (isExpanded) {
+        content.style.display = 'none';
+        buttonElement.setAttribute('aria-expanded', 'false');
+        buttonElement.classList.remove('expanded');
+    } else {
+        content.style.display = 'block';
+        buttonElement.setAttribute('aria-expanded', 'true');
+        buttonElement.classList.add('expanded');
+    }
+}
+</script>
+<style>
+.md-form-container .accordion-layout {
+    border: none !important;
+    padding: 0 !important;
+}
+
+.md-form-container .accordion-layout .accordion-section {
+    border: 1px solid #e7e0ec !important;
+    border-radius: 24px !important;
+    margin-bottom: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+.md-form-container .accordion-layout .accordion-header {
+    background: transparent !important;
+    color: #1c1b1f !important;
+    font-weight: 600 !important;
+    padding: 1rem 1.25rem !important;
+    border: none !important;
+    border-radius: 24px 24px 0 0 !important;
+}
+
+.md-form-container .accordion-layout .accordion-header.expanded {
+    background: #e8def8 !important;
+    color: #1c1b1f !important;
+}
+
+.md-form-container .accordion-layout .accordion-content {
+    padding: 1rem 1.25rem 1.5rem !important;
+}
+</style>
+"""
+
+    def render_model_list_container(
+        self,
+        *,
+        field_name: str,
+        label: str,
+        is_required: bool,
+        min_items: int,
+        max_items: int,
+        items_html: str,
+        help_text: Optional[str],
+        error: Optional[str],
+        add_button_label: str,
+    ) -> str:
+        required_class = " required" if is_required else ""
+        help_block = (
+            f'<p class="md-help-text">{escape(help_text)}</p>' if help_text else ""
+        )
+        error_block = (
+            f'<p class="md-error-text">{escape(error)}</p>' if error else ""
+        )
+
+        parts = [
+            '<section class="md-model-list-wrapper">',
+            f'  <label class="md-field-label{required_class}">{escape(label)}</label>',
+            f'  <div class="model-list-container md-model-list-container" data-field-name="{field_name}" '
+            f'       data-min-items="{min_items}" data-max-items="{max_items}">',
+            '    <div class="model-list-items md-model-list-items" '
+            f'         id="{field_name}-items">',
+        ]
+
+        if items_html:
+            parts.append(f"      {items_html}")
+
+        parts.extend(
+            [
+                "    </div>",
+                '    <div class="md-model-list-actions">',
+                f'      <button type="button" class="md-button md-button-tonal add-item-btn" '
+                f'              data-target="{field_name}">',
+                '        <span class="material-icons md-button__icon">add</span>',
+                f'        <span class="md-button__label">{escape(add_button_label)}</span>',
+                '      </button>',
+                '    </div>',
+                '  </div>',
+            ]
+        )
+
+        if help_block:
+            parts.append(f'  {help_block}')
+        if error_block:
+            parts.append(f'  {error_block}')
+
+        parts.append('</section>')
+        return "\n".join(parts)
+
     @staticmethod
     def _build_css() -> str:
         return """<style>
@@ -397,6 +576,49 @@ class MaterialEmbeddedTheme(RendererTheme):
 .md-model-list-container .btn-danger {
     background: #ba1a1a !important;
     border-color: #ba1a1a !important;
+}
+
+.md-model-list-wrapper {
+    background: transparent !important;
+    margin-bottom: 32px !important;
+}
+
+.md-model-list-container {
+    border: 1px solid #e7e0ec !important;
+    border-radius: 24px !important;
+    padding: 16px 20px !important;
+    background: #fff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+.md-model-list-items {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+}
+
+.md-model-list-actions {
+    margin-top: 12px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+.md-button-tonal {
+    background: #e8def8 !important;
+    color: #1c1b1f !important;
+}
+
+.md-button-tonal:hover {
+    background: #cdc2db !important;
+}
+
+.md-button__icon {
+    margin-right: 8px !important;
+    font-size: 20px !important;
+}
+
+.md-button__label {
+    font-weight: 500 !important;
 }
 
 /* Layout card styling */
