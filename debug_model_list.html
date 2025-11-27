@@ -1,0 +1,176 @@
+<div class="mb-3">
+    <label class="form-label fw-bold">
+        Your Pets <span class="text-danger">*</span>
+    </label>
+    <div class="model-list-container" data-field-name="pets"          data-min-items="1" data-max-items="10">
+        <div class="model-list-items" id="pets-items">
+<div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="0" data-field-name="pets">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="mb-0 text-primary">
+            <i class="bi bi-card-list"></i>
+            Pet #1
+        </h6>
+        <button type="button"
+                class="btn btn-outline-danger btn-sm remove-item-btn"
+                data-index="0" aria-label="Remove this item">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+    <div class="row">
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].name"><i class="bi bi-heart"></i> Pet&#x27;s Name</label>
+<input name="pets[0].name" id="pets[0].name" class="form-control" value="Tweety" minlength="1" maxlength="11" placeholder="Enter your pet's name" pattern="\d{3}-\d{2}-\d{4}" inputmode="numeric" autocomplete="off" type="text" />
+<div class="form-text">The name of your pet</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><div class="mb-3">
+<label for="pets[0].species" class="form-label">Species</label>
+<div class="input-group">
+<span class="input-group-text"><i class="bi bi-bi bi-collection"></i></span>
+
+            <div class="combobox-wrapper">
+                <input type="text" name="pets[0].species" id="pets[0].species" class="form-select" list="pets[0].species_datalist" />
+                <datalist id="pets[0].species_datalist">
+                    <option value="Dog">Dog 🐕</option>
+<option value="Cat">Cat 🐱</option>
+<option value="Bird">Bird 🐦</option>
+<option value="Fish">Fish 🐠</option>
+<option value="Rabbit">Rabbit 🐰</option>
+<option value="Hamster">Hamster 🐹</option>
+<option value="Reptile">Reptile 🦎</option>
+<option value="Other">Other 🐾</option>
+
+                </datalist>
+            </div>
+            
+</div>
+<div class="form-text">What type of animal is your pet?</div>
+</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].age"><i class="bi bi-calendar"></i> Age</label>
+<input name="pets[0].age" id="pets[0].age" class="form-control" value="2" placeholder="Pet's age in years%" min="0" max="100" step="0.1" inputmode="numeric" type="number" />
+<div class="form-text">How old is your pet? (optional)</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].weight"><i class="bi bi-speedometer2"></i> Weight (lbs)</label>
+<input name="pets[0].weight" id="pets[0].weight" class="form-control" value="-0.98" placeholder="Pet's weight%" min="0" max="100" step="0.1" inputmode="numeric" type="number" />
+<div class="form-text">Weight in pounds (optional - enter 0.01 for tiny pets like birds)</div>
+<div class="invalid-feedback d-block">Must be 0.01 or greater</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].is_vaccinated"><i class="bi bi-shield-check"></i> Vaccinated</label>
+
+        <div class="toggle-switch-wrapper">
+            <input name="pets[0].is_vaccinated" id="pets[0].is_vaccinated" class="form-check-input toggle-switch" value="1" type="checkbox" />
+            <label for="pets[0].is_vaccinated" class="toggle-switch-label">
+                <span class="toggle-switch-slider"></span>
+                
+            </label>
+        </div>
+        
+<div class="form-text">Is your pet up to date with vaccinations?</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].microchipped"><i class="bi bi-cpu"></i> Microchipped</label>
+
+        <div class="toggle-switch-wrapper">
+            <input name="pets[0].microchipped" id="pets[0].microchipped" class="form-check-input toggle-switch" value="1" type="checkbox" />
+            <label for="pets[0].microchipped" class="toggle-switch-label">
+                <span class="toggle-switch-slider"></span>
+                
+            </label>
+        </div>
+        
+<div class="form-text">Does your pet have a microchip?</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].breed"><i class="bi bi-award"></i> Breed</label>
+<input name="pets[0].breed" id="pets[0].breed" class="form-control" value="Canary" placeholder="e.g., Golden Retriever, Persian Cat" pattern="\d{3}-\d{2}-\d{4}" maxlength="11" inputmode="numeric" autocomplete="off" type="text" />
+<div class="form-text">Specific breed of your pet (optional)</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].color"><i class="bi bi-palette"></i> Primary Color</label>
+<div class="color-input-group"><input name="pets[0].color" id="pets[0].color" class="form-control" value="#000000" type="color" />
+            <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
+                <span id="pets[0].color_value" style="font-family: monospace;">#000000</span>
+                <div id="pets[0].color_swatch" style="width: 20px; height: 20px; background-color: #000000; border: 1px solid #ccc; margin-left: 5px;"></div>
+            </div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const colorInput = document.getElementById('pets[0].color');
+                const valueSpan = document.getElementById('pets[0].color_value');
+                const swatch = document.getElementById('pets[0].color_swatch');
+
+                if (colorInput && valueSpan && swatch) {
+                    colorInput.addEventListener('input', function() {
+                        valueSpan.textContent = this.value;
+                        swatch.style.backgroundColor = this.value;
+                    });
+                }
+            });
+            </script>
+            </div>
+<div class="form-text">Primary color of your pet (optional)</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].last_vet_visit"><i class="bi bi-calendar-date"></i> Last Vet Visit</label>
+<div class="birthdate-input-group"><input name="pets[0].last_vet_visit" id="pets[0].last_vet_visit" class="form-control" value="2024-11-01" max="2025-11-27" min="1875-01-01" type="date" />
+            <div class="age-display" id="pets[0].last_vet_visit_age" style="margin-top: 5px; font-size: 0.9em; color: #666;"></div>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const birthdateField = document.getElementById('pets[0].last_vet_visit');
+                const ageDisplay = document.getElementById('pets[0].last_vet_visit_age');
+
+                function calculateAge() {
+                    if (birthdateField.value && ageDisplay) {
+                        const birthDate = new Date(birthdateField.value);
+                        const today = new Date();
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+
+                        ageDisplay.textContent = age >= 0 ? `Age: ${age} years` : '';
+                    }
+                }
+
+                if (birthdateField) {
+                    birthdateField.addEventListener('change', calculateAge);
+                    calculateAge(); // Calculate on load if value is set
+                }
+            });
+            </script>
+            </div>
+<div class="form-text">When was the last veterinary checkup? (optional)</div></div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3"><label for="pets[0].special_needs"><i class="bi bi-heart-pulse"></i> Special Needs</label>
+<textarea name="pets[0].special_needs" id="pets[0].special_needs" class="form-control" placeholder="Any special care requirements, medications, allergies, etc.">Requires daily singing practice and fresh seed mix</textarea>
+<div class="form-text">Describe any special care requirements (optional)</div></div>
+                </div>
+</div>
+</div>
+        </div>
+        <div class="model-list-controls mt-2">
+            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn"                     data-target="pets">
+                <i class="bi bi-plus-circle"></i>                 Add Your Pets
+            </button>
+        </div>
+    </div>
+    <div class="form-text text-muted">
+                <i class="bi bi-info-circle"></i> Add information about each of your pets
+            </div>
+</div>
