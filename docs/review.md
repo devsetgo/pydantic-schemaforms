@@ -26,9 +26,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   Input classes now declare their `ui_element` (plus optional aliases) and a lightweight registry walks the class hierarchy to expose a mapping. `rendering/frameworks.py` imports that registry instead of maintaining its own list, so adding a new component only requires updating the input module where it already lives.
   _Files:_ `pydantic_forms/inputs/base.py`, `pydantic_forms/inputs/*`, `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/frameworks.py`
 
-- **Model list renderer mixes logic with theme markup**
-  Bootstrap and Material variants are hard-coded in `ModelListRenderer`, limiting extensibility. Introduce a first-class `ModelListTheme` protocol or template bundle so future frameworks can override presentation without copying list iteration logic.
-  _Files:_ `pydantic_forms/model_list.py`
+- **Model list renderer mixes logic with theme markup (Partially Resolved)**
+  `ModelListRenderer` now delegates container markup (labels/help/errors/add buttons) through the shared `RendererTheme.render_model_list_container` hook so Bootstrap/Material share the same surface as schema-driven lists. Remaining follow-up: migrate the per-framework card/title markup inside `_render_bootstrap_list_item` and `_render_material_list_item` into theme/template hooks so adding Shadcn or other frameworks only requires providing a theme, not new renderer classes.
+  _Files:_ `pydantic_forms/model_list.py`, `pydantic_forms/rendering/themes.py`
 
 - **Template engine under-used**
   `pydantic_forms/templates.py` provides compiled template caching, yet the renderers still concatenate large CSS/JS/HTML strings manually. Moving repeated fragments (form wrapper, Material assets, layout shells) into cached templates would shorten renderer modules and make unit testing simpler.
@@ -49,7 +49,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 ## Testing & Tooling Gaps
 
 - `make tests` now runs pre-commit + pytest + badge generation, but the docs still describe manual pytest invocation. Document the single entry point (and its prerequisites) so contributors understand the authoritative workflow and potential runtime costs.
-- Renderer behavior (async paths, model lists, layout selection) still lacks automated coverage. After consolidating the layout/renderer code, prioritize high-level integration tests that render representative forms for each framework.
+- Renderer behavior (async paths, model lists, layout selection) still lacks automated coverage. After consolidating the layout/renderer code, prioritize high-level integration tests that render representative forms for each framework (including tab/accordion assets and the new theme-aware model list container hooks).
 
 ## Recommended Next Steps
 
@@ -57,6 +57,6 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
 3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
 4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
-5. Refactor the model list renderer to rely on templates/strategies rather than inline HTML.
+5. Finish moving model-list presentation into themes/templates so `_render_bootstrap_list_item`/`_render_material_list_item` only describe data and theme hooks own the markup.
 6. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
 7. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for renderers/model lists.

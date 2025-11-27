@@ -45,7 +45,7 @@ class EnhancedFormRenderer:
         )
         self._theme: RendererTheme = resolved_theme
         if hasattr(self._theme, "config"):
-            self.config = getattr(self._theme, "config")
+            self.config = self._theme.config
         else:
             self.config = get_framework_config(framework)
         self._layout_engine = LayoutEngine(self)

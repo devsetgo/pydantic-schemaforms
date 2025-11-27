@@ -1,18 +1,12 @@
-_THEME_MAP: Dict[str, Type[RendererTheme]] = {
-    "bootstrap": BootstrapTheme,
-    "material": MaterialTheme,
-    "none": PlainTheme,
-}
+"""Renderer theme helpers for enhanced form renderers."""
 
+from __future__ import annotations
 
-def get_theme_for_framework(framework: str, *, include_assets: bool = False) -> RendererTheme:
-    """Return a RendererTheme instance that matches the requested framework."""
+from html import escape
+from typing import Callable, Dict, Optional, Type
 
-    theme_cls = _THEME_MAP.get(framework.lower())
-    if theme_cls is None:
-        return FrameworkTheme(framework, include_assets=include_assets)
-    return theme_cls(include_assets=include_assets)
-
+from .frameworks import get_framework_config
+from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
 
 __all__ = [
     "RendererTheme",
@@ -24,15 +18,6 @@ __all__ = [
     "MaterialEmbeddedTheme",
     "get_theme_for_framework",
 ]
-"""Renderer theme helpers for enhanced form renderers."""
-
-from __future__ import annotations
-
-from html import escape
-from typing import Callable, Dict, Optional, Type
-
-from .frameworks import get_framework_config
-from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
 
 
 class RendererTheme:
@@ -127,6 +112,9 @@ class RendererTheme:
         """Render framework-aware markup for schema-driven model lists."""
 
         required_indicator = ' <span class="text-danger">*</span>' if is_required else ""
+        safe_field_name = escape(field_name, quote=True)
+        items_container_id = escape(f"{field_name}-items", quote=True)
+        add_button_target = escape(field_name, quote=True)
         help_block = (
             f'<div class="form-text text-muted">\n                <i class="bi bi-info-circle"></i> {escape(help_text)}\n            </div>'
             if help_text
@@ -143,9 +131,9 @@ class RendererTheme:
             '    <label class="form-label fw-bold">',
             f'        {escape(label)}{required_indicator}',
             '    </label>',
-            f'    <div class="model-list-container" data-field-name="{field_name}" '
+            f'    <div class="model-list-container" data-field-name="{safe_field_name}" '
             f'         data-min-items="{min_items}" data-max-items="{max_items}">',
-            f'        <div class="model-list-items" id="{field_name}-items">',
+            f'        <div class="model-list-items" id="{items_container_id}">',
         ]
 
         if items_html:
@@ -156,7 +144,7 @@ class RendererTheme:
                 '        </div>',
                 '        <div class="model-list-controls mt-2">',
                 f'            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" '
-                f'                    data-target="{field_name}">',
+                f'                    data-target="{add_button_target}">',
                 '                <i class="bi bi-plus-circle"></i> '
                 f'                {escape(add_button_label)}',
                 '            </button>',
@@ -253,7 +241,7 @@ class MaterialEmbeddedTheme(RendererTheme):
         self._css = self._build_css()
         self._js = self._build_js()
 
-    
+
     def before_form(self) -> str:
         return "\n".join(
             [
@@ -1269,3 +1257,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 """
+
+
+_THEME_MAP: Dict[str, Type[RendererTheme]] = {
+    "bootstrap": BootstrapTheme,
+    "material": MaterialTheme,
+    "none": PlainTheme,
+}
+
+
+def get_theme_for_framework(framework: str, *, include_assets: bool = False) -> RendererTheme:
+    """Return a RendererTheme instance that matches the requested framework."""
+
+    theme_cls = _THEME_MAP.get(framework.lower())
+    if theme_cls is None:
+        return FrameworkTheme(framework, include_assets=include_assets)
+    return theme_cls(include_assets=include_assets)

@@ -182,13 +182,16 @@ class ModelListRenderer:
         nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
         required_fields = schema.get("required", [])
         nested_errors = nested_errors or {}
+        model_title = model_class.__name__.replace("Model", "") or model_class.__name__
+        safe_model_title = escape(model_title)
+        safe_header_label = f"{safe_model_title} #{index + 1}"
 
         html = f"""
         <div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="{index}">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <h6 class="mb-0 text-primary">
                     <i class="bi bi-card-list"></i>
-                    {model_class.__name__.replace('Model', '')} #{index + 1}
+                    {safe_header_label}
                 </h6>
                 <button type="button"
                         class="btn btn-outline-danger btn-sm remove-item-btn"
@@ -252,6 +255,9 @@ class ModelListRenderer:
         nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
         required_fields = schema.get("required", [])
         nested_errors = nested_errors or {}
+        model_title = model_class.__name__.replace("Model", "") or model_class.__name__
+        safe_model_title = escape(model_title)
+        safe_header_label = f"{safe_model_title} #{index + 1}"
 
         html = f"""
         <div class="model-list-item mdc-card mdc-card--outlined mb-3" data-index="{index}">
@@ -259,7 +265,7 @@ class ModelListRenderer:
                 <div class="mdc-card__content">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mdc-typography--subtitle2 mb-0">
-                            {model_class.__name__.replace('Model', '')} #{index + 1}
+                            {safe_header_label}
                         </h6>
                         <button type="button"
                                 class="mdc-icon-button remove-item-btn"

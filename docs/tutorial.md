@@ -273,6 +273,51 @@ html = two_column_layout.render()
 
 Every helper inside `LayoutComposer` returns a `BaseLayout` subclass, so you can freely nest them (e.g., a vertical stack of cards that contain grids). The legacy `pydantic_forms.layouts` and `pydantic_forms.form_layouts` modules now emit `DeprecationWarning`s and simply re-export this API for backward compatibility.
 
+## Theme Hooks for Tabs, Accordions, and Model Lists
+
+The renderers no longer embed framework-specific HTML in random places. Instead, `RendererTheme` exposes hook methods so you can replace the shared assets in one spot:
+
+- `tab_component_assets()` and `accordion_component_assets()` return the CSS/JS that power tab/accordion interactions. The default implementation ships with Bootstrap-flavored styling, while `MaterialEmbeddedTheme` overrides both to emit Material Design tokens.
+- `render_layout_section()` controls how layout cards/tabs are wrapped, replacing the inline `CardLayout` markup when a theme wants its own chrome.
+- `render_model_list_container()` owns the wrapper for schema-driven and class-based `ModelListRenderer` instances (labels, help/error text, add buttons, etc.). Bootstrap/Material both call through this hook now, so future frameworks only need to provide a theme—not duplicate renderer code.
+
+Creating a custom theme is straightforward:
+
+```python
+from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_forms.rendering.themes import RendererTheme
+
+
+class ShadcnTheme(RendererTheme):
+    name = "shadcn"
+
+    def tab_component_assets(self) -> str:
+        return """<script>/* shadcn tab switching */</script><style>.tab-button{font-family:var(--font-sans);}</style>"""
+
+    def render_model_list_container(self, **kwargs) -> str:
+        items_html = kwargs["items_html"] or ""
+        return f"""
+        <section class="shadcn-card">
+            <div class="shadcn-card__header">
+                <h3>{kwargs['label']}</h3>
+            </div>
+            <div class="shadcn-card__content">{items_html}</div>
+            <div class="shadcn-card__footer">
+                <button class="btn" data-target="{kwargs['field_name']}">
+                    {kwargs['add_button_label']}
+                </button>
+            </div>
+        </section>
+        """
+
+
+# Inject the theme while rendering
+renderer = EnhancedFormRenderer(theme=ShadcnTheme())
+html = renderer.render_form_from_model(MyForm)
+```
+
+Because both `FieldRenderer` and `ModelListRenderer` read from the active theme first, this one class controls the chrome for schema-derived fields, nested layouts, and repeatable models. Tests should assert for the presence of your wrapper classes (e.g., `.shadcn-card`) to verify the integration.
+
 ## What You've Learned
 
 🎯 **You now know how to:**
