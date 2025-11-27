@@ -14,19 +14,11 @@ Features:
 - Configurable min/max items
 """
 
-from dataclasses import dataclass
-from html import escape
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from pydantic_forms.schema_form import FormModel
 from pydantic_forms.rendering.context import RenderContext
 from pydantic_forms.rendering.themes import RendererTheme, get_theme_for_framework
-
-
-@dataclass(frozen=True)
-class ModelListThemeConfig:
-    item_renderer: Callable[[str, Type[FormModel], int, Dict[str, Any], Optional[Dict[str, str]]], str]
-
 
 class ModelListRenderer:
     """Renderer for dynamic model lists with add/remove functionality."""
@@ -76,10 +68,8 @@ class ModelListRenderer:
         nested_errors = nested_errors or {}
 
         theme = self._resolve_theme()
-        theme_config = self._get_theme_config()
         return self._render_list(
             theme,
-            theme_config,
             field_name,
             label,
             model_class,
@@ -95,7 +85,6 @@ class ModelListRenderer:
     def _render_list(
         self,
         theme: RendererTheme,
-        theme_config: ModelListThemeConfig,
         field_name: str,
         label: str,
         model_class: Type[FormModel],
@@ -112,18 +101,45 @@ class ModelListRenderer:
         values = values or []
         nested_errors = nested_errors or {}
         model_label = model_class.__name__.replace("Model", "") or model_class.__name__
+        add_button_label = f"Add {label or model_label}" if label else f"Add {model_label}"
 
         html_parts: List[str] = []
 
         for index, item_data in enumerate(values):
+            item_body = self._render_item_body(
+                field_name,
+                model_class,
+                index,
+                item_data,
+                nested_errors,
+            )
             html_parts.append(
-                theme_config.item_renderer(field_name, model_class, index, item_data, nested_errors)
+                theme.render_model_list_item(
+                    field_name=field_name,
+                    model_label=model_label,
+                    index=index,
+                    body_html=item_body,
+                    remove_button_aria_label="Remove this item",
+                )
             )
 
         if not values and min_items > 0:
             for index in range(min_items):
+                item_body = self._render_item_body(
+                    field_name,
+                    model_class,
+                    index,
+                    {},
+                    nested_errors,
+                )
                 html_parts.append(
-                    theme_config.item_renderer(field_name, model_class, index, {}, nested_errors)
+                    theme.render_model_list_item(
+                        field_name=field_name,
+                        model_label=model_label,
+                        index=index,
+                        body_html=item_body,
+                        remove_button_aria_label="Remove this item",
+                    )
                 )
 
         items_html = "\n".join(html_parts)
@@ -137,7 +153,7 @@ class ModelListRenderer:
             items_html=items_html,
             help_text=help_text,
             error=error,
-            add_button_label=f"Add {model_label}",
+            add_button_label=add_button_label,
         )
         if themed_container:
             return themed_container
@@ -152,16 +168,35 @@ class ModelListRenderer:
             items_html=items_html,
             help_text=help_text,
             error=error,
-            add_button_label=f"Add {model_label}",
+            add_button_label=add_button_label,
         )
-
-    def _get_theme_config(self) -> ModelListThemeConfig:
-        if self.framework == "material":
-            return ModelListThemeConfig(item_renderer=self._render_material_list_item)
-        return ModelListThemeConfig(item_renderer=self._render_bootstrap_list_item)
 
     def _resolve_theme(self) -> RendererTheme:
         return get_theme_for_framework(self.framework)
+
+    def _render_item_body(
+        self,
+        field_name: str,
+        model_class: Type[FormModel],
+        index: int,
+        item_data: Dict[str, Any],
+        nested_errors: Optional[Dict[str, str]] = None,
+    ) -> str:
+        if self.framework == "material":
+            return self._render_material_list_item(
+                field_name,
+                model_class,
+                index,
+                item_data,
+                nested_errors,
+            )
+        return self._render_bootstrap_list_item(
+            field_name,
+            model_class,
+            index,
+            item_data,
+            nested_errors,
+        )
 
     def _render_bootstrap_list_item(
         self,
@@ -182,25 +217,8 @@ class ModelListRenderer:
         nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
         required_fields = schema.get("required", [])
         nested_errors = nested_errors or {}
-        model_title = model_class.__name__.replace("Model", "") or model_class.__name__
-        safe_model_title = escape(model_title)
-        safe_header_label = f"{safe_model_title} #{index + 1}"
 
-        html = f"""
-        <div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="{index}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="mb-0 text-primary">
-                    <i class="bi bi-card-list"></i>
-                    {safe_header_label}
-                </h6>
-                <button type="button"
-                        class="btn btn-outline-danger btn-sm remove-item-btn"
-                        data-index="{index}">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-
-            <div class="row">"""
+        html = ["<div class=\"row\">"]
 
         # Render each field in the model
         properties = schema.get("properties", {})
@@ -216,8 +234,9 @@ class ModelListRenderer:
             # e.g., if nested_errors contains '0.weight': 'error', and we're at index 0, field_key 'weight'
             field_error = nested_errors.get(f"{index}.{field_key}")
 
-            html += f"""
-                <div class="col-md-6">
+            html.append(
+                f"""
+                <div class=\"col-md-6\">
                     {renderer._render_field(
                         input_name,
                         field_schema,
@@ -229,12 +248,11 @@ class ModelListRenderer:
                         all_errors=nested_errors,
                     )}
                 </div>"""
+            )
 
-        html += """
-            </div>
-        </div>"""
+        html.append("</div>")
 
-        return html
+        return "\n".join(html)
 
     def _render_material_list_item(
         self,
@@ -255,26 +273,8 @@ class ModelListRenderer:
         nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
         required_fields = schema.get("required", [])
         nested_errors = nested_errors or {}
-        model_title = model_class.__name__.replace("Model", "") or model_class.__name__
-        safe_model_title = escape(model_title)
-        safe_header_label = f"{safe_model_title} #{index + 1}"
 
-        html = f"""
-        <div class="model-list-item mdc-card mdc-card--outlined mb-3" data-index="{index}">
-            <div class="mdc-card__primary-action">
-                <div class="mdc-card__content">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mdc-typography--subtitle2 mb-0">
-                            {safe_header_label}
-                        </h6>
-                        <button type="button"
-                                class="mdc-icon-button remove-item-btn"
-                                data-index="{index}">
-                            <i class="material-icons">delete</i>
-                        </button>
-                    </div>
-
-                    <div class="row">"""
+        html = ["<div class=\"row\">"]
 
         # Render each field in the model
         properties = schema.get("properties", {})
@@ -292,8 +292,9 @@ class ModelListRenderer:
             # Get field info from the model
             getattr(model_class.model_fields.get(field_key), "json_schema_extra", {}) or {}
 
-            html += f"""
-                        <div class="col-md-6">
+            html.append(
+                f"""
+                        <div class=\"col-md-6\">
                             {renderer._render_field(
                                 input_name,
                                 field_schema,
@@ -304,14 +305,11 @@ class ModelListRenderer:
                                 all_errors=nested_errors,
                             )}
                         </div>"""
+            )
 
-        html += """
-                    </div>
-                </div>
-            </div>
-        </div>"""
+        html.append("</div>")
 
-        return html
+        return "\n".join(html)
 
     def get_model_list_javascript(self) -> str:
         """Return JavaScript for model list functionality with collapsible card support."""

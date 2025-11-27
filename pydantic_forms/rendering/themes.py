@@ -161,6 +161,41 @@ class RendererTheme:
         html_parts.append('</div>')
         return "\n".join(html_parts)
 
+    def render_model_list_item(
+        self,
+        *,
+        field_name: str,
+        model_label: str,
+        index: int,
+        body_html: str,
+        remove_button_aria_label: str,
+    ) -> str:
+        """Render a single model list item wrapper."""
+
+        safe_label = escape(model_label)
+        safe_field_name = escape(field_name, quote=True)
+        safe_remove_label = escape(remove_button_aria_label)
+
+        return "\n".join(
+            [
+                f'<div class="model-list-item border rounded p-3 mb-2 bg-light" '
+                f'data-index="{index}" data-field-name="{safe_field_name}">',
+                '    <div class="d-flex justify-content-between align-items-start mb-2">',
+                '        <h6 class="mb-0 text-primary">',
+                '            <i class="bi bi-card-list"></i>',
+                f'            {safe_label} #{index + 1}',
+                '        </h6>',
+                '        <button type="button"',
+                '                class="btn btn-outline-danger btn-sm remove-item-btn"',
+                f'                data-index="{index}" aria-label="{safe_remove_label}">',
+                '            <i class="bi bi-trash"></i>',
+                '        </button>',
+                '    </div>',
+                f'    {body_html}',
+                '</div>',
+            ]
+        )
+
 
 class DefaultTheme(RendererTheme):
     """Default theme used for Bootstrap/plain frameworks."""
@@ -222,6 +257,42 @@ class MaterialTheme(FrameworkTheme):
 
     def __init__(self, include_assets: bool = False) -> None:
         super().__init__("material", include_assets=include_assets)
+
+    def render_model_list_item(
+        self,
+        *,
+        field_name: str,
+        model_label: str,
+        index: int,
+        body_html: str,
+        remove_button_aria_label: str,
+    ) -> str:
+        safe_label = escape(model_label)
+        safe_field_name = escape(field_name, quote=True)
+        safe_remove_label = escape(remove_button_aria_label)
+
+        return "\n".join(
+            [
+                '<div class="model-list-item mdc-card mdc-card--outlined mb-3" '
+                f'data-index="{index}" data-field-name="{safe_field_name}">',
+                '    <div class="mdc-card__primary-action">',
+                '        <div class="mdc-card__content">',
+                '            <div class="d-flex justify-content-between align-items-center mb-3">',
+                '                <h6 class="mdc-typography--subtitle2 mb-0">',
+                f'                    {safe_label} #{index + 1}',
+                '                </h6>',
+                '                <button type="button"',
+                '                        class="mdc-icon-button remove-item-btn"',
+                f'                        data-index="{index}" aria-label="{safe_remove_label}">',
+                '                    <i class="material-icons">delete</i>',
+                '                </button>',
+                '            </div>',
+                f'            {body_html}',
+                '        </div>',
+                '    </div>',
+                '</div>',
+            ]
+        )
 
 
 class PlainTheme(FrameworkTheme):
@@ -476,6 +547,39 @@ function toggleAccordion(sectionId, buttonElement) {
         parts.append('</section>')
         return "\n".join(parts)
 
+    def render_model_list_item(
+        self,
+        *,
+        field_name: str,
+        model_label: str,
+        index: int,
+        body_html: str,
+        remove_button_aria_label: str,
+    ) -> str:
+        safe_label = escape(model_label)
+        safe_field = escape(field_name, quote=True)
+        safe_remove_label = escape(remove_button_aria_label)
+
+        return "\n".join(
+            [
+                '<section class="md-model-card" '
+                f'data-index="{index}" data-field-name="{safe_field}">',
+                '  <header class="md-model-card__header">',
+                '    <h6 class="mdc-typography--subtitle2 mb-0">',
+                f'      {safe_label} #{index + 1}',
+                '    </h6>',
+                '    <button type="button" class="md-icon-button remove-item-btn"',
+                f'            data-index="{index}" aria-label="{safe_remove_label}">',
+                '      <span class="material-icons">delete</span>',
+                '    </button>',
+                '  </header>',
+                '  <div class="md-model-card__body">',
+                f'    {body_html}',
+                '  </div>',
+                '</section>',
+            ]
+        )
+
     @staticmethod
     def _build_css() -> str:
         return """<style>
@@ -583,6 +687,25 @@ function toggleAccordion(sectionId, buttonElement) {
     display: flex !important;
     flex-direction: column !important;
     gap: 16px !important;
+}
+
+.md-model-card {
+    border: 1px solid #e7e0ec !important;
+    border-radius: 20px !important;
+    background: #ffffff !important;
+    padding: 16px 20px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+.md-model-card__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+}
+
+.md-model-card__body {
+    padding: 0 !important;
 }
 
 .md-model-list-actions {

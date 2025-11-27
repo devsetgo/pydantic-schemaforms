@@ -280,6 +280,7 @@ The renderers no longer embed framework-specific HTML in random places. Instead,
 - `tab_component_assets()` and `accordion_component_assets()` return the CSS/JS that power tab/accordion interactions. The default implementation ships with Bootstrap-flavored styling, while `MaterialEmbeddedTheme` overrides both to emit Material Design tokens.
 - `render_layout_section()` controls how layout cards/tabs are wrapped, replacing the inline `CardLayout` markup when a theme wants its own chrome.
 - `render_model_list_container()` owns the wrapper for schema-driven and class-based `ModelListRenderer` instances (labels, help/error text, add buttons, etc.). Bootstrap/Material both call through this hook now, so future frameworks only need to provide a theme—not duplicate renderer code.
+- `render_model_list_item()` owns the per-item chrome (card header, remove buttons, data attributes) for both schema-driven and imperative model lists. The renderer builds the inner field grid and hands the HTML off to this hook so your theme fully owns the markup users interact with.
 
 Creating a custom theme is straightforward:
 
@@ -308,6 +309,22 @@ class ShadcnTheme(RendererTheme):
                 </button>
             </div>
         </section>
+        """
+
+    def render_model_list_item(self, **kwargs) -> str:
+        body_html = kwargs["body_html"]
+        label = kwargs["model_label"]
+        index = kwargs["index"] + 1
+        return f"""
+        <article class="shadcn-model-item" data-index="{index}">
+            <header class="shadcn-model-item__header">
+                <h4>{label} #{index}</h4>
+                <button type="button" class="ghost-btn remove-item-btn" data-index="{kwargs['index']}">
+                    Remove
+                </button>
+            </header>
+            <div class="shadcn-model-item__body">{body_html}</div>
+        </article>
         """
 
 

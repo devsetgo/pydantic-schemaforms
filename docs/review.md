@@ -26,8 +26,8 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   Input classes now declare their `ui_element` (plus optional aliases) and a lightweight registry walks the class hierarchy to expose a mapping. `rendering/frameworks.py` imports that registry instead of maintaining its own list, so adding a new component only requires updating the input module where it already lives.
   _Files:_ `pydantic_forms/inputs/base.py`, `pydantic_forms/inputs/*`, `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/frameworks.py`
 
-- **Model list renderer mixes logic with theme markup (Partially Resolved)**
-  `ModelListRenderer` now delegates container markup (labels/help/errors/add buttons) through the shared `RendererTheme.render_model_list_container` hook so Bootstrap/Material share the same surface as schema-driven lists, and both the theme container and per-item headers escape user-derived labels to avoid HTML/attribute injection. Remaining follow-up: migrate the per-framework card/title markup inside `_render_bootstrap_list_item` and `_render_material_list_item` into theme/template hooks so adding Shadcn or other frameworks only requires providing a theme, not new renderer classes.
+- **Model list renderer mixes logic with theme markup (Resolved)**
+  `ModelListRenderer` now delegates both containers and per-item chrome through `RendererTheme` hooks: `render_model_list_container()` and the new `render_model_list_item()` (with Material/embedded overrides) wrap the renderer-supplied field grid so frameworks own every byte of markup. Bootstrap/Material share the same plumbing, labels/help/errors/add buttons stay in the theme, and tests cover that custom themes can inject their own classes when rendering lists.
   _Files:_ `pydantic_forms/model_list.py`, `pydantic_forms/rendering/themes.py`
 
 - **Template engine under-used**
