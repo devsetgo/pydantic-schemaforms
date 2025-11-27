@@ -865,6 +865,12 @@ class LayoutEngine:
             """
 
     def _render_layout_card(self, title: str, body_html: str, help_text: str) -> str:
+        theme = getattr(self._renderer, "theme", None)
+        if theme:
+            themed_section = theme.render_layout_section(title, body_html, help_text)
+            if themed_section:
+                return themed_section
+
         content_parts: List[str] = []
         if help_text:
             content_parts.append(

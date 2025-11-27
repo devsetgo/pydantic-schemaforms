@@ -95,6 +95,11 @@ class RendererTheme:
 
         return ""
 
+    def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
+        """Return framework-specific markup for layout/card sections."""
+
+        return ""
+
 
 class DefaultTheme(RendererTheme):
     """Default theme used for Bootstrap/plain frameworks."""
@@ -211,6 +216,26 @@ class MaterialEmbeddedTheme(RendererTheme):
             ]
         )
 
+    def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
+        help_markup = (
+            f'<p class="md-layout-card__help">{escape(help_text)}</p>' if help_text else ""
+        )
+        return "\n".join(
+            [
+                '<section class="md-layout-card">',
+                '  <header class="md-layout-card__header">',
+                f'    <span class="md-layout-card__title">{escape(title)}</span>',
+                '  </header>',
+                '  <div class="md-layout-card__body">',
+                f"    {help_markup}",
+                '    <div class="md-layout-card__content">',
+                f"      {body_html}",
+                '    </div>',
+                '  </div>',
+                '</section>',
+            ]
+        )
+
     @staticmethod
     def _build_css() -> str:
         return """<style>
@@ -299,6 +324,38 @@ class MaterialEmbeddedTheme(RendererTheme):
 .md-model-list-container .btn-danger {
     background: #ba1a1a !important;
     border-color: #ba1a1a !important;
+}
+
+/* Layout card styling */
+.md-layout-card {
+    background: #ffffff !important;
+    border-radius: 24px !important;
+    padding: 24px 28px !important;
+    margin-bottom: 32px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1) !important;
+    border: 1px solid #e7e0ec !important;
+}
+
+.md-layout-card__header {
+    margin-bottom: 12px !important;
+}
+
+.md-layout-card__title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #1c1b1f !important;
+}
+
+.md-layout-card__help {
+    color: #49454f !important;
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+}
+
+.md-layout-card__content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
 }
 
 .md-field-label {
