@@ -4,7 +4,7 @@ Base classes and utilities for form inputs with Python 3.14 template strings.
 
 from abc import ABC, abstractmethod
 from html import escape
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # Add t() fallback for Python <3.14 compatibility
@@ -35,6 +35,8 @@ def render_template(template_obj) -> str:
 class BaseInput(ABC):
     """Common attribute handling + rendering contract for all input widgets."""
 
+    ui_element: Optional[str] = None
+    ui_element_aliases: Tuple[str, ...] = ()
     valid_attributes: List[str] = [
         "name",
         "id",

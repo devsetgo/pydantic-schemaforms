@@ -22,9 +22,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 ## Medium Priority Refactors & Opportunities
 
-- **Input component metadata duplicated**
-  Every new input requires edits in both `pydantic_forms/inputs/*` and `rendering/frameworks.py`. Consider declaring framework-agnostic metadata (valid attributes, default templates, icon support) on the input classes themselves and generating the framework registry from that source of truth.
-  _Files:_ `pydantic_forms/inputs/`, `pydantic_forms/rendering/frameworks.py`
+- **Input component metadata duplicated (Resolved)**
+  Input classes now declare their `ui_element` (plus optional aliases) and a lightweight registry walks the class hierarchy to expose a mapping. `rendering/frameworks.py` imports that registry instead of maintaining its own list, so adding a new component only requires updating the input module where it already lives.
+  _Files:_ `pydantic_forms/inputs/base.py`, `pydantic_forms/inputs/*`, `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/frameworks.py`
 
 - **Model list renderer mixes logic with theme markup**
   Bootstrap and Material variants are hard-coded in `ModelListRenderer`, limiting extensibility. Introduce a first-class `ModelListTheme` protocol or template bundle so future frameworks can override presentation without copying list iteration logic.
@@ -47,6 +47,6 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 1. Continue extracting renderer-specific themes/templates so future frameworks plug into the shared orchestration path and keep docs/tests aligned with the RendererTheme workflow.
 2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
-3. Refactor model list and input metadata to rely on templates/strategies rather than inline HTML.
+3. Refactor the model list renderer to rely on templates/strategies rather than inline HTML.
 4. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
 5. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for renderers/model lists.

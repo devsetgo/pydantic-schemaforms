@@ -13,6 +13,8 @@ from .base import FormInput, SelectInputBase
 class SelectInput(SelectInputBase):
     """Dropdown select input with support for single and multiple selection."""
 
+    ui_element = "select"
+
     template = """<select ${attributes}>${options}</select>"""
 
     valid_attributes = SelectInputBase.valid_attributes + ["size", "multiple", "autofocus"]
@@ -76,6 +78,8 @@ class SelectInput(SelectInputBase):
 class MultiSelectInput(SelectInput):
     """Multi-select dropdown with enhanced functionality."""
 
+    ui_element = "multiselect"
+
     def render(self, options: List[Dict[str, Any]], **kwargs) -> str:
         """Render multi-select with multiple attribute set."""
         kwargs["multiple"] = True
@@ -84,6 +88,8 @@ class MultiSelectInput(SelectInput):
 
 class CheckboxInput(FormInput):
     """Single checkbox input."""
+
+    ui_element = "checkbox"
 
     template = """<input type="checkbox" ${attributes} />"""
 
@@ -210,6 +216,8 @@ class RadioInput(FormInput):
 
 class RadioGroup(SelectInputBase):
     """Group of radio button inputs for single selection."""
+
+    ui_element = "radio"
 
     template = """<fieldset class="radio-group" ${fieldset_attributes}>
     <legend>${legend}</legend>

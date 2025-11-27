@@ -11,6 +11,8 @@ from .base import FileInputBase, FormInput
 class FileInput(FileInputBase):
     """File upload input with drag-and-drop support."""
 
+    ui_element = "file"
+
     def get_input_type(self) -> str:
         return "file"
 
@@ -128,6 +130,8 @@ class ImageInput(FormInput):
 class ColorInput(FormInput):
     """Color picker input."""
 
+    ui_element = "color"
+
     def get_input_type(self) -> str:
         return "color"
 
@@ -178,6 +182,8 @@ class ColorInput(FormInput):
 
 class HiddenInput(FormInput):
     """Hidden input field."""
+
+    ui_element = "hidden"
 
     def get_input_type(self) -> str:
         return "hidden"

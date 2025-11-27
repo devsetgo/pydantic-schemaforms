@@ -11,6 +11,8 @@ from .base import NumericInput
 class NumberInput(NumericInput):
     """Standard numeric input field with step controls."""
 
+    ui_element = "number"
+
     template = """<input type="number" ${attributes} />"""
 
     def get_input_type(self) -> str:
@@ -30,6 +32,8 @@ class NumberInput(NumericInput):
 
 class RangeInput(NumericInput):
     """Range slider input for selecting values within a range."""
+
+    ui_element = "range"
 
     template = """<input type="range" ${attributes} />"""
 

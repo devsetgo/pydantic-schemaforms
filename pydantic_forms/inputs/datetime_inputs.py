@@ -12,6 +12,8 @@ from .base import FormInput
 class DateInput(FormInput):
     """Date input field with date picker."""
 
+    ui_element = "date"
+
     template = """<input type="date" ${attributes} />"""
 
     def get_input_type(self) -> str:
@@ -39,6 +41,8 @@ class DateInput(FormInput):
 
 class TimeInput(FormInput):
     """Time input field with time picker."""
+
+    ui_element = "time"
 
     template = """<input type="time" ${attributes} />"""
 
@@ -71,6 +75,9 @@ class TimeInput(FormInput):
 
 class DatetimeInput(FormInput):
     """Datetime-local input field with datetime picker."""
+
+    ui_element = "datetime"
+    ui_element_aliases = ("datetime-local",)
 
     template = """<input type="datetime-local" ${attributes} />"""
 
@@ -135,6 +142,8 @@ class DatetimeInput(FormInput):
 class MonthInput(FormInput):
     """Month input field for selecting year and month."""
 
+    ui_element = "month"
+
     template = """<input type="month" ${attributes} />"""
 
     def get_input_type(self) -> str:
@@ -173,6 +182,8 @@ class MonthInput(FormInput):
 
 class WeekInput(FormInput):
     """Week input field for selecting year and week number."""
+
+    ui_element = "week"
 
     template = """<input type="week" ${attributes} />"""
 

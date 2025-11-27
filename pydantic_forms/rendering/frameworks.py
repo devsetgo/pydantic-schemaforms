@@ -4,29 +4,9 @@ from __future__ import annotations
 
 from typing import Dict, Type
 
-from ..inputs import (
-    CheckboxInput,
-    ColorInput,
-    DateInput,
-    DatetimeInput,
-    EmailInput,
-    FileInput,
-    HiddenInput,
-    MonthInput,
-    MultiSelectInput,
-    NumberInput,
-    PasswordInput,
-    RadioGroup,
-    RangeInput,
-    SearchInput,
-    SelectInput,
-    TelInput,
-    TextArea,
-    TextInput,
-    TimeInput,
-    URLInput,
-    WeekInput,
-)
+from ..inputs import TextInput
+from ..inputs.base import BaseInput
+from ..inputs.registry import get_input_component_map
 
 # Framework configurations extracted from the enhanced renderer to keep the class slim.
 FRAMEWORKS: Dict[str, Dict[str, str]] = {
@@ -74,30 +54,7 @@ FRAMEWORKS: Dict[str, Dict[str, str]] = {
     },
 }
 
-UI_ELEMENT_MAPPING: Dict[str, Type] = {
-    "text": TextInput,
-    "password": PasswordInput,
-    "email": EmailInput,
-    "number": NumberInput,
-    "range": RangeInput,
-    "checkbox": CheckboxInput,
-    "select": SelectInput,
-    "multiselect": MultiSelectInput,
-    "radio": RadioGroup,
-    "textarea": TextArea,
-    "date": DateInput,
-    "time": TimeInput,
-    "datetime": DatetimeInput,
-    "datetime-local": DatetimeInput,
-    "month": MonthInput,
-    "week": WeekInput,
-    "file": FileInput,
-    "color": ColorInput,
-    "hidden": HiddenInput,
-    "search": SearchInput,
-    "tel": TelInput,
-    "url": URLInput,
-}
+UI_ELEMENT_MAPPING: Dict[str, Type[BaseInput]] = get_input_component_map()
 
 
 def get_framework_config(framework: str) -> Dict[str, str]:

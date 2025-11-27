@@ -11,6 +11,8 @@ from .base import FormInput, render_template
 class TextInput(FormInput):
     """Standard text input field."""
 
+    ui_element = "text"
+
     def get_input_type(self) -> str:
         return "text"
 
@@ -28,6 +30,8 @@ class TextInput(FormInput):
 
 class PasswordInput(FormInput):
     """Password input field with masking."""
+
+    ui_element = "password"
 
     def get_input_type(self) -> str:
         return "password"
@@ -53,6 +57,8 @@ class PasswordInput(FormInput):
 class EmailInput(FormInput):
     """Email input field with built-in validation."""
 
+    ui_element = "email"
+
     def get_input_type(self) -> str:
         return "email"
 
@@ -77,6 +83,8 @@ class EmailInput(FormInput):
 class SearchInput(FormInput):
     """Search input field with search-specific behavior."""
 
+    ui_element = "search"
+
     def get_input_type(self) -> str:
         return "search"
 
@@ -100,6 +108,8 @@ class SearchInput(FormInput):
 
 class TextArea(FormInput):
     """Multi-line text input area."""
+
+    ui_element = "textarea"
 
     valid_attributes = FormInput.valid_attributes + ["rows", "cols", "wrap", "resize"]
 
@@ -132,6 +142,8 @@ class TextArea(FormInput):
 class URLInput(FormInput):
     """URL input field with URL validation."""
 
+    ui_element = "url"
+
     def get_input_type(self) -> str:
         return "url"
 
@@ -159,6 +171,8 @@ class URLInput(FormInput):
 
 class TelInput(FormInput):
     """Telephone input field with phone number formatting."""
+
+    ui_element = "tel"
 
     def get_input_type(self) -> str:
         return "tel"
