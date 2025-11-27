@@ -1,10 +1,10 @@
 # Codebase Review – pydantic-forms
 
-_Date: 2025-11-26_
+_Date: 2025-11-27_
 
 ## Executive Summary
 
-The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes were introduced (`RendererTheme`, `MaterialEmbeddedTheme`) so the Enhanced and Simple Material renderers now share orchestration logic instead of duplicating HTML/CSS/JS scaffolding. The remaining structural debt sits around finishing the renderer deduplication for the other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
+The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config. The remaining structural debt sits around finishing theme-driven markup extraction for other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
 
 ## Critical / High Priority Findings
 
@@ -38,9 +38,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `validation.py` and `live_validation.py` maintain parallel rule sets and response objects. Choose a single canonical rule representation and let live validation adapt it so fixes land in one place.
   _Files:_ `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`
 
-- **Theme/style contract still ad-hoc**
-  Supporting additional frameworks (Shadcn, future Bootstrap/Material releases) will require more than the current string-based `framework` flag. Introduce a `FormStyle` descriptor or versioned theme registry so renderers can pick assets/layout chrome based on `{framework, version, variant}` without branching throughout the codebase.
-  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/frameworks.py`
+- **Theme/style contract partially centralized**
+  `RendererTheme` now includes concrete `FrameworkTheme` subclasses for Bootstrap/Material/plain plus `get_theme_for_framework`, and both enhanced + field renderers request classes/assets from the active theme before falling back to legacy configs. The missing piece is extracting the remaining inline markup/layout chrome (tabs, wrappers, assets) into theme- or template-driven bundles and describing a version-aware contract (`FormStyle`-like descriptor) so Bootstrap 6, Material variants, or Shadcn can plug in without renderer edits.
+  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/field_renderer.py`, `pydantic_forms/rendering/frameworks.py`
 
 - **Extension hooks for inputs/layouts under-specified**
   While the new `inputs.registry` makes discovery automatic, there is no documented API for third-party/paid components to register additional inputs or layouts. Provide a stable plugin hook (entry points or `register_inputs()` helpers) and layout strategy interface so extensions can add HTMX/JS-backed widgets without patching core modules.
@@ -53,7 +53,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 ## Recommended Next Steps
 
-1. Continue extracting renderer-specific themes/templates so future frameworks plug into the shared orchestration path and keep docs/tests aligned with the RendererTheme workflow.
+1. Continue extracting renderer-specific themes/templates (tabs, wrappers, asset bundles) so the new `FrameworkTheme` registry fully owns markup/classes and future frameworks plug into the shared orchestration path without editing renderers; update docs/tests alongside the contract.
 2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
 3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
 4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
