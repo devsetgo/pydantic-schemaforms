@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
@@ -152,6 +152,16 @@ class FormModel(BaseModel):
     rich schemas for form rendering similar to React JSON Schema Forms.
     """
 
+    __runtime_fields__: Dict[str, Tuple[Any, FieldInfo]] = {}
+    __runtime_model_cache__: Optional[Type["FormModel"]] = None
+    _dynamic_field_names: Set[str] = set()
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        cls.__runtime_fields__ = {}
+        cls.__runtime_model_cache__ = None
+        cls._dynamic_field_names = set()
+
     @classmethod
     def get_json_schema(cls) -> Dict[str, Any]:
         """Get JSON schema with UI element information extracted from field annotations."""
@@ -251,11 +261,41 @@ class FormModel(BaseModel):
         return renderer.render_form_from_model(cls, data=data, errors=errors, **kwargs)
 
     @classmethod
+    def register_field(
+        cls,
+        field_name: str,
+        *,
+        annotation: Any = Any,
+        field: Optional[FieldInfo] = None,
+    ) -> FieldInfo:
+        """Register a new field on the model at runtime."""
+
+        field_info = field or Field(...)
+        field_info.annotation = annotation or Any
+        setattr(cls, field_name, field_info)
+
+        runtime_fields = dict(getattr(cls, "__runtime_fields__", {}))
+        runtime_fields[field_name] = (annotation or Any, field_info)
+        cls.__runtime_fields__ = runtime_fields
+        cls.__runtime_model_cache__ = None
+        cls.ensure_dynamic_fields()
+
+        try:  # Reset schema cache so renderers pick up new field definitions
+            from .rendering.schema_parser import reset_schema_metadata_cache
+
+            reset_schema_metadata_cache()
+        except Exception:  # pragma: no cover - best effort in loose import situations
+            pass
+
+        return field_info
+
+    @classmethod
     def ensure_dynamic_fields(cls) -> bool:
         """Detect FieldInfo attributes assigned after class creation."""
 
         processed: set[str] = set(getattr(cls, "_dynamic_field_names", set()))
         new_fields: List[str] = []
+        runtime_fields = dict(getattr(cls, "__runtime_fields__", {}))
 
         for attr_name, attr_value in cls.__dict__.items():
             if not isinstance(attr_value, FieldInfo):
@@ -263,12 +303,51 @@ class FormModel(BaseModel):
             if attr_name in processed:
                 continue
             new_fields.append(attr_name)
+            runtime_fields.setdefault(
+                attr_name,
+                (
+                    getattr(attr_value, "annotation", Any) or Any,
+                    attr_value,
+                ),
+            )
+            cls.__runtime_model_cache__ = None
 
         if not new_fields:
             return False
 
+        cls.__runtime_fields__ = runtime_fields
         cls._dynamic_field_names = processed.union(new_fields)
         return True
+
+    @classmethod
+    def get_runtime_model(cls) -> Type["FormModel"]:
+        """Return a model class that includes any registered runtime fields."""
+
+        cls.ensure_dynamic_fields()
+
+        if not getattr(cls, "__runtime_fields__", {}):
+            return cls
+
+        if cls.__runtime_model_cache__ is not None:
+            return cls.__runtime_model_cache__
+
+        from pydantic import create_model
+
+        field_definitions = {
+            name: (annotation, field_info)
+            for name, (annotation, field_info) in cls.__runtime_fields__.items()
+        }
+
+        runtime_model = create_model(
+            f"{cls.__name__}Runtime",
+            __base__=cls,
+            **field_definitions,
+        )
+        # TODO: Suppress the UserWarning about shadowed fields once the helper
+        #       grows a local model_config; the runtime class is expected.
+
+        cls.__runtime_model_cache__ = runtime_model
+        return runtime_model
 
     @classmethod
     def get_example_form_data(cls: Type["FormModel"]) -> dict:

@@ -34,6 +34,11 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `pydantic_forms/templates.py` provides compiled template caching, yet the renderers still concatenate large CSS/JS/HTML strings manually. Moving repeated fragments (form wrapper, Material assets, layout shells) into cached templates would shorten renderer modules and make unit testing simpler.
   _Files:_ `pydantic_forms/templates.py`, renderer modules
 
+- **Runtime field registration surfaced (New)**
+  Dynamically extending a `FormModel` is now supported via `FormModel.register_field()`, which wires the new `FieldInfo` into the schema cache and the validation stack by synthesizing a runtime subclass when necessary. Legacy `setattr(MyForm, name, Field(...))` still works for rendering, but the helper ensures `validate_form_data()` and HTMX live validation enforce the same constraints without manual plumbing.
+  _Files:_ `pydantic_forms/schema_form.py`, `pydantic_forms/validation.py`, `tests/test_integration_workflow.py`
+  _TODO:_ The temporary `DynamicFormRuntime` created by `pydantic.create_model()` emits a `UserWarning` about shadowing parent attributes. If this becomes noisy, add a local `model_config = {"ignored_types": ...}` or suppress the warning via the helper before rebuilding the runtime model.
+
 - **Validation rule duplication**
   `validation.py` and `live_validation.py` maintain parallel rule sets and response objects. Choose a single canonical rule representation and let live validation adapt it so fixes land in one place.
   _Files:_ `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`

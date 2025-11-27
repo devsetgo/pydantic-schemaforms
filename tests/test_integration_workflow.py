@@ -336,7 +336,11 @@ class TestPerformanceWorkflow:
         # Dynamically add fields to test performance
         field_count = 50
         for i in range(field_count):
-            setattr(LargeForm, f"field_{i}", Field(..., ui_element="text"))
+            LargeForm.register_field(
+                f"field_{i}",
+                annotation=str,
+                field=Field(..., ui_element="text"),
+            )
 
         html = enhanced_renderer.render_form_from_model(LargeForm)
         assert len(html) > 0
@@ -344,6 +348,26 @@ class TestPerformanceWorkflow:
         # Check that all fields are present
         for i in range(field_count):
             assert f'name="field_{i}"' in html
+
+    def test_dynamic_field_validation(self):
+        """Ensure register_field definitions participate in validation."""
+
+        class DynamicForm(FormModel):
+            pass
+
+        DynamicForm.register_field(
+            "nickname",
+            annotation=str,
+            field=Field(..., ui_element="text", min_length=3),
+        )
+
+        invalid = validate_form_data(DynamicForm, {"nickname": ""})
+        assert not invalid.is_valid
+        assert "nickname" in invalid.errors
+
+        valid = validate_form_data(DynamicForm, {"nickname": "Ace"})
+        assert valid.is_valid
+        assert valid.data["nickname"] == "Ace"
 
     def test_batch_validation(self, simple_form_model):
         """Test batch validation of multiple form submissions."""

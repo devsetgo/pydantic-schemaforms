@@ -780,9 +780,15 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
     Returns:
         ValidationResult with is_valid, data, and errors
     """
+    runtime_model = (
+        form_model_class.get_runtime_model()
+        if hasattr(form_model_class, "get_runtime_model")
+        else form_model_class
+    )
+
     try:
         # Create instance to validate
-        validated_instance = form_model_class(**data)
+        validated_instance = runtime_model(**data)
 
         # Convert to dict for consistent return format
         validated_data = validated_instance.model_dump()

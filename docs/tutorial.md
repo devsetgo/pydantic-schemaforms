@@ -335,6 +335,38 @@ html = renderer.render_form_from_model(MyForm)
 
 Because both `FieldRenderer` and `ModelListRenderer` read from the active theme first, this one class controls the chrome for schema-derived fields, nested layouts, and repeatable models. Tests should assert for the presence of your wrapper classes (e.g., `.shadcn-card`) to verify the integration.
 
+## Runtime Fields and New UI Elements
+
+Need to add fields after a form model is defined? Call `FormModel.register_field()` to describe the type and UI metadata at runtime. The helper keeps the renderer, the validation stack, and the live schema in sync:
+
+```python
+from pydantic_forms.schema_form import Field, FormModel
+
+class ProfileForm(FormModel):
+    pass
+
+ProfileForm.register_field(
+    "nickname",
+    annotation=str,
+    field=Field(..., ui_element="text", min_length=3),
+)
+
+ProfileForm.register_field(
+    "terms_accepted",
+    annotation=bool,
+    field=Field(False, ui_element="toggle"),
+)
+```
+
+`register_field` stores the new `FieldInfo`, rebuilds the runtime validator, and clears the schema cache, so `EnhancedFormRenderer`, `validate_form_data`, and the HTMX live validator all see the same set of fields. If you prefer to continue using `setattr(MyForm, name, Field(...))`, the renderer still picks up the new entries, but validation will only engage when the helper is used.
+
+Two new `ui_element` identifiers ship with this release:
+
+- `"toggle"` – renders the `ToggleSwitch` wrapper and maps to a checkbox value server-side.
+- `"combobox"` – renders the enhanced combo-box (text input backed by a datalist) so users can search or pick from known options.
+
+These map directly to the corresponding input components, so you can reference them in `Field(..., ui_element="toggle")` or inside `ui_options` blocks without writing custom renderer glue.
+
 ## What You've Learned
 
 🎯 **You now know how to:**
