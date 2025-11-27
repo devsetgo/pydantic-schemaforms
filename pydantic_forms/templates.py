@@ -8,6 +8,7 @@ Requires: Python 3.14+
 """
 
 from collections import OrderedDict
+import string
 import string.templatelib
 from threading import RLock
 from typing import Any, Dict, Optional
@@ -16,7 +17,7 @@ from typing import Any, Dict, Optional
 
 # Global template cache with explicit locking for thread safety
 _TEMPLATE_CACHE_MAX = 256
-_template_cache: "OrderedDict[str, string.templatelib.Template]" = OrderedDict()
+_template_cache: "OrderedDict[str, string.Template]" = OrderedDict()
 _template_cache_lock = RLock()
 
 
@@ -38,14 +39,14 @@ class TemplateString:
             template_str: Template string with ${variable} placeholders
         """
         self.template_str = template_str
-        self._compiled: Optional[string.templatelib.Template] = None
+        self._compiled: Optional[string.Template] = None
 
-    def _compile_template(self, template_str: str) -> string.templatelib.Template:
+    def _compile_template(self, template_str: str) -> string.Template:
         """Compile and cache template for performance using global cache."""
         with _template_cache_lock:
             template = _template_cache.get(template_str)
             if template is None:
-                template = string.templatelib.Template(template_str)
+                template = string.Template(template_str)
                 _template_cache[template_str] = template
                 if len(_template_cache) > _TEMPLATE_CACHE_MAX:
                     _template_cache.popitem(last=False)
@@ -313,6 +314,72 @@ class FormTemplates:
         """
 <div class="horizontal-layout row ${layout_class}" style="${layout_style}">
     ${sections}
+</div>
+"""
+    )
+
+    TAB_LAYOUT = TemplateString(
+        """
+<div class="tab-layout ${layout_class}" style="${layout_style}">
+    <div class="tab-navigation" role="tablist">
+        ${tab_buttons}
+    </div>
+    <div class="tab-content">
+        ${tab_panels}
+    </div>
+</div>
+${component_assets}
+"""
+    )
+
+    TAB_BUTTON = TemplateString(
+        """
+<button class="tab-button${active_class}"
+        type="button"
+        role="tab"
+        aria-selected="${aria_selected}"
+        aria-controls="${tab_id}"
+        onclick="switchTab('${tab_id}', this)">
+    ${title}
+</button>
+"""
+    )
+
+    TAB_PANEL = TemplateString(
+        """
+<div id="${tab_id}"
+     class="tab-panel${active_class}"
+     role="tabpanel"
+     style="display: ${display_style};"
+     aria-hidden="${aria_hidden}">
+    ${content}
+</div>
+"""
+    )
+
+    ACCORDION_LAYOUT = TemplateString(
+        """
+<div class="accordion-layout ${layout_class}" style="${layout_style}">
+    ${sections}
+</div>
+${component_assets}
+"""
+    )
+
+    ACCORDION_SECTION = TemplateString(
+        """
+<div class="accordion-section">
+    <button class="accordion-header${expanded_class}"
+            aria-expanded="${aria_expanded}"
+            aria-controls="${section_id}"
+            onclick="toggleAccordion('${section_id}', this)">
+        ${title}
+    </button>
+    <div id="${section_id}"
+         class="accordion-content"
+         style="display: ${display_style};">
+        ${content}
+    </div>
 </div>
 """
     )

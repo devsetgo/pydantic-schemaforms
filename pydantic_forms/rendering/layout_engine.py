@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .context import RenderContext
 from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
+from ..templates import FormTemplates
 from ..layout_base import BaseLayout
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -144,45 +145,38 @@ ${component_assets}
         self.tabs = tabs
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
+        attrs: Dict[str, Any] = {**self.attributes, **kwargs}
+        layout_class = self._merge_classes(attrs)
+        layout_style = self._merge_styles(attrs)
+
         tab_ids = [f"tab-{i}" for i in range(len(self.tabs))]
 
         tab_buttons: List[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
-            active_class = " active" if is_active else ""
-            aria_selected = "true" if is_active else "false"
             tab_buttons.append(
-                f"""
-            <button class="tab-button{active_class}"
-                    type="button"
-                    role="tab"
-                    aria-selected="{aria_selected}"
-                    aria-controls="{tab_id}"
-                    onclick="switchTab('{tab_id}', this)">
-                {escape(tab['title'])}
-            </button>
-            """
+                FormTemplates.TAB_BUTTON.render(
+                    active_class=" active" if is_active else "",
+                    aria_selected="true" if is_active else "false",
+                    tab_id=tab_id,
+                    title=escape(tab["title"]),
+                )
             )
 
         tab_panels: List[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
-            display_style = "block" if is_active else "none"
-            aria_hidden = "false" if is_active else "true"
-            active_class = " active" if is_active else ""
             tab_panels.append(
-                f"""
-            <div id="{tab_id}"
-                 class="tab-panel{active_class}"
-                 role="tabpanel"
-                 style="display: {display_style};"
-                 aria-hidden="{aria_hidden}">
-                {tab['content']}
-            </div>
-            """
+                FormTemplates.TAB_PANEL.render(
+                    tab_id=tab_id,
+                    active_class=" active" if is_active else "",
+                    display_style="block" if is_active else "none",
+                    aria_hidden="false" if is_active else "true",
+                    content=tab["content"],
+                )
             )
 
-        renderer = kwargs.get("renderer")
+        renderer = attrs.get("renderer")
         assets = TAB_COMPONENT_ASSETS
         theme = getattr(renderer, "theme", None) if renderer else None
         if theme:
@@ -190,11 +184,12 @@ ${component_assets}
             if themed_assets:
                 assets = themed_assets
 
-        return super().render(
+        return FormTemplates.TAB_LAYOUT.render(
+            layout_class=layout_class,
+            layout_style=layout_style,
             tab_buttons="\n".join(tab_buttons),
             tab_panels="\n".join(tab_panels),
             component_assets=assets,
-            **kwargs,
         )
 
 
@@ -213,32 +208,26 @@ ${component_assets}
         self.sections = sections
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
+        attrs: Dict[str, Any] = {**self.attributes, **kwargs}
+        layout_class = self._merge_classes(attrs)
+        layout_style = self._merge_styles(attrs)
+
         section_ids = [f"accordion-{i}" for i in range(len(self.sections))]
         accordion_sections: List[str] = []
         for _i, (section_id, section) in enumerate(zip(section_ids, self.sections, strict=False)):
             is_expanded = section.get("expanded", False)
-            display_style = "block" if is_expanded else "none"
-            aria_expanded = "true" if is_expanded else "false"
-            expanded_class = " expanded" if is_expanded else ""
             accordion_sections.append(
-                f"""
-            <div class="accordion-section">
-                <button class="accordion-header{expanded_class}"
-                        aria-expanded="{aria_expanded}"
-                        aria-controls="{section_id}"
-                        onclick="toggleAccordion('{section_id}', this)">
-                    {escape(section['title'])}
-                </button>
-                <div id="{section_id}"
-                     class="accordion-content"
-                     style="display: {display_style};">
-                    {section['content']}
-                </div>
-            </div>
-            """
+                FormTemplates.ACCORDION_SECTION.render(
+                    section_id=section_id,
+                    expanded_class=" expanded" if is_expanded else "",
+                    aria_expanded="true" if is_expanded else "false",
+                    display_style="block" if is_expanded else "none",
+                    title=escape(section["title"]),
+                    content=section["content"],
+                )
             )
 
-        renderer = kwargs.get("renderer")
+        renderer = attrs.get("renderer")
         assets = ACCORDION_COMPONENT_ASSETS
         theme = getattr(renderer, "theme", None) if renderer else None
         if theme:
@@ -246,10 +235,11 @@ ${component_assets}
             if themed_assets:
                 assets = themed_assets
 
-        return super().render(
-            accordion_sections="\n".join(accordion_sections),
+        return FormTemplates.ACCORDION_LAYOUT.render(
+            layout_class=layout_class,
+            layout_style=layout_style,
+            sections="\n".join(accordion_sections),
             component_assets=assets,
-            **kwargs,
         )
 
 
