@@ -43,6 +43,14 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `validation.py` and `live_validation.py` maintain parallel rule sets and response objects. Choose a single canonical rule representation and let live validation adapt it so fixes land in one place.
   _Files:_ `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`
 
+- **Input namespace still re-exports everything**
+  Importing `pydantic_forms.inputs` pulls every concrete widget into memory via `from .inputs import *` in `pydantic_forms/__init__.py`. This balloons import time, runs heavyweight template compilation for unused widgets, and makes tree-shaking impossible. Break the module into lazy subpackages (e.g. `inputs.selection`, `inputs.numeric`) and expose a documented `register_inputs()` hook rather than wildcard re-exports.
+  _Files:_ `pydantic_forms/__init__.py`, `pydantic_forms/inputs/__init__.py`, `pydantic_forms/inputs/base.py`
+
+- **Integration facade duplicated across namespaces**
+  Both `pydantic_forms.integration` and `pydantic_forms.integration.frameworks` ship near-identical `FormIntegration`, `handle_sync_form`, and `handle_async_form` helpers. The split partially addressed optional dependency imports, but the duplicated codepaths raise maintenance risk and keep the builder (`FormBuilder`) tightly coupled to synchronous helpers. Collapse the shared logic into one module and let `__init__.py` lazily re-export thin facades.
+  _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/adapters.py`, `pydantic_forms/integration/frameworks/*`
+
 - **Theme/style contract partially centralized**
   `RendererTheme` now includes concrete `FrameworkTheme` subclasses for Bootstrap/Material/plain plus `get_theme_for_framework`, and both enhanced + field renderers request classes/assets from the active theme before falling back to legacy configs. The missing piece is extracting the remaining inline markup/layout chrome (tabs, wrappers, assets) into theme- or template-driven bundles and describing a version-aware contract (`FormStyle`-like descriptor) so Bootstrap 6, Material variants, or Shadcn can plug in without renderer edits.
   _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/field_renderer.py`, `pydantic_forms/rendering/frameworks.py`
@@ -63,6 +71,8 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
 3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
 4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
-5. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
-6. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
-7. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
+5. Break the `pydantic_forms.inputs` wildcard export into lazy modules, document a plugin hook, and teach `EnhancedFormRenderer` to import components on demand so custom inputs do not require monkeypatching.
+6. Trim the duplicated integration facades by moving sync/async helpers into a single module, exposing lazy imports from `pydantic_forms.integration`, and adding framework-specific entry points (`integration.fastapi`, `integration.flask`).
+7. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
+8. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
+9. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
