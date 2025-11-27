@@ -4,7 +4,7 @@ _Date: 2025-11-27_
 
 ## Executive Summary
 
-The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config. The remaining structural debt sits around finishing theme-driven markup extraction for other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
+The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config. Recent cleanup moved the `_THEME_MAP` lookup after the theme subclasses and hardened `RendererTheme.render_model_list_container` to escape field-name-derived attributes so lints and security scanners stay quiet. The remaining structural debt sits around finishing theme-driven markup extraction for other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
 
 ## Critical / High Priority Findings
 
@@ -27,7 +27,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   _Files:_ `pydantic_forms/inputs/base.py`, `pydantic_forms/inputs/*`, `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/frameworks.py`
 
 - **Model list renderer mixes logic with theme markup (Partially Resolved)**
-  `ModelListRenderer` now delegates container markup (labels/help/errors/add buttons) through the shared `RendererTheme.render_model_list_container` hook so Bootstrap/Material share the same surface as schema-driven lists. Remaining follow-up: migrate the per-framework card/title markup inside `_render_bootstrap_list_item` and `_render_material_list_item` into theme/template hooks so adding Shadcn or other frameworks only requires providing a theme, not new renderer classes.
+  `ModelListRenderer` now delegates container markup (labels/help/errors/add buttons) through the shared `RendererTheme.render_model_list_container` hook so Bootstrap/Material share the same surface as schema-driven lists, and both the theme container and per-item headers escape user-derived labels to avoid HTML/attribute injection. Remaining follow-up: migrate the per-framework card/title markup inside `_render_bootstrap_list_item` and `_render_material_list_item` into theme/template hooks so adding Shadcn or other frameworks only requires providing a theme, not new renderer classes.
   _Files:_ `pydantic_forms/model_list.py`, `pydantic_forms/rendering/themes.py`
 
 - **Template engine under-used**
@@ -50,6 +50,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 - `make tests` now runs pre-commit + pytest + badge generation, but the docs still describe manual pytest invocation. Document the single entry point (and its prerequisites) so contributors understand the authoritative workflow and potential runtime costs.
 - Renderer behavior (async paths, model lists, layout selection) still lacks automated coverage. After consolidating the layout/renderer code, prioritize high-level integration tests that render representative forms for each framework (including tab/accordion assets and the new theme-aware model list container hooks).
+- Ruff uncovered several ordering/import mistakes (`from __future__` position, `_THEME_MAP` accessing undefined subclasses). Add a lint target (or wire `make ruff` into CI) so style/import regressions fail fast before docs/tests work begins.
 
 ## Recommended Next Steps
 
