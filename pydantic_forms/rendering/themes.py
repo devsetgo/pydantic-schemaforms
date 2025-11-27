@@ -1,9 +1,37 @@
+_THEME_MAP: Dict[str, Type[RendererTheme]] = {
+    "bootstrap": BootstrapTheme,
+    "material": MaterialTheme,
+    "none": PlainTheme,
+}
+
+
+def get_theme_for_framework(framework: str, *, include_assets: bool = False) -> RendererTheme:
+    """Return a RendererTheme instance that matches the requested framework."""
+
+    theme_cls = _THEME_MAP.get(framework.lower())
+    if theme_cls is None:
+        return FrameworkTheme(framework, include_assets=include_assets)
+    return theme_cls(include_assets=include_assets)
+
+
+__all__ = [
+    "RendererTheme",
+    "DefaultTheme",
+    "FrameworkTheme",
+    "BootstrapTheme",
+    "MaterialTheme",
+    "PlainTheme",
+    "MaterialEmbeddedTheme",
+    "get_theme_for_framework",
+]
 """Renderer theme helpers for enhanced form renderers."""
 
 from __future__ import annotations
 
 from html import escape
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional, Type
+
+from .frameworks import get_framework_config
 
 
 class RendererTheme:
@@ -46,11 +74,95 @@ class RendererTheme:
         class_attr = f' class="{button_class}"' if button_class else ""
         return f'<button type="submit"{class_attr}>{label}</button>'
 
+    # --- Framework-specific extension hooks -------------------------------------------------
+    def form_class(self) -> str:
+        """Return the base CSS class for <form> elements (if any)."""
+
+        return ""
+
+    def field_wrapper_class(self) -> str:
+        """Return the wrapper class for individual input blocks."""
+
+        return ""
+
+    def input_class(self, ui_element: str) -> str:
+        """Return the CSS class applied to rendered inputs."""
+
+        return ""
+
+    def button_class(self) -> str:
+        """Return the CSS class used for submit buttons."""
+
+        return ""
+
 
 class DefaultTheme(RendererTheme):
     """Default theme used for Bootstrap/plain frameworks."""
 
     name = "default"
+
+
+class FrameworkTheme(RendererTheme):
+    """Renderer theme that mirrors the legacy framework config mapping."""
+
+    def __init__(self, framework: str, include_assets: bool = False, submit_label: str = "Submit") -> None:
+        super().__init__(submit_label=submit_label)
+        self.framework = framework
+        self.config = get_framework_config(framework)
+        self.include_assets = include_assets
+
+    def before_form(self) -> str:
+        if not self.include_assets:
+            return ""
+        css_url = self.config.get("css_url")
+        if css_url:
+            return f'<link rel="stylesheet" href="{css_url}" />'
+        return ""
+
+    def after_form(self) -> str:
+        if not self.include_assets:
+            return ""
+        js_url = self.config.get("js_url")
+        if js_url:
+            return f'<script src="{js_url}"></script>'
+        return ""
+
+    def form_class(self) -> str:
+        return self.config.get("form_class", "")
+
+    def field_wrapper_class(self) -> str:
+        return self.config.get("field_wrapper_class", "")
+
+    def input_class(self, ui_element: str) -> str:
+        if ui_element == "checkbox":
+            return self.config.get("checkbox_class", "")
+        if ui_element in {"select", "radio", "multiselect"}:
+            return self.config.get("select_class", "")
+        return self.config.get("input_class", "")
+
+    def button_class(self) -> str:
+        return self.config.get("button_class", "")
+
+
+class BootstrapTheme(FrameworkTheme):
+    name = "bootstrap"
+
+    def __init__(self, include_assets: bool = False) -> None:
+        super().__init__("bootstrap", include_assets=include_assets)
+
+
+class MaterialTheme(FrameworkTheme):
+    name = "material"
+
+    def __init__(self, include_assets: bool = False) -> None:
+        super().__init__("material", include_assets=include_assets)
+
+
+class PlainTheme(FrameworkTheme):
+    name = "plain"
+
+    def __init__(self, include_assets: bool = False) -> None:
+        super().__init__("none", include_assets=include_assets)
 
 
 class MaterialEmbeddedTheme(RendererTheme):
@@ -63,6 +175,7 @@ class MaterialEmbeddedTheme(RendererTheme):
         self._css = self._build_css()
         self._js = self._build_js()
 
+    
     def before_form(self) -> str:
         return "\n".join(
             [

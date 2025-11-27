@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
-from .rendering.themes import DefaultTheme, RendererTheme
+from .rendering.themes import RendererTheme, get_theme_for_framework
 from .rendering.layout_engine import LayoutEngine, get_nested_form_data
 from .rendering.schema_parser import SchemaMetadata, build_schema_metadata, resolve_ui_element
 from .schema_form import FormModel
@@ -31,12 +31,29 @@ class SchemaFormValidationError(Exception):
 class EnhancedFormRenderer:
     """Render Pydantic FormModels into HTML using UI metadata."""
 
-    def __init__(self, framework: str = "bootstrap", theme: Optional[RendererTheme] = None):
+    def __init__(
+        self,
+        framework: str = "bootstrap",
+        theme: Optional[RendererTheme] = None,
+        *,
+        include_framework_assets: bool = False,
+    ):
         self.framework = framework
-        self.config = get_framework_config(framework)
+        resolved_theme = theme or get_theme_for_framework(
+            framework,
+            include_assets=include_framework_assets,
+        )
+        self._theme: RendererTheme = resolved_theme
+        if hasattr(self._theme, "config"):
+            self.config = getattr(self._theme, "config")
+        else:
+            self.config = get_framework_config(framework)
         self._layout_engine = LayoutEngine(self)
         self._field_renderer = FieldRenderer(self)
-        self._theme: RendererTheme = theme or DefaultTheme()
+
+    @property
+    def theme(self) -> RendererTheme:
+        return self._theme
 
     def render_form_from_model(
         self,
@@ -61,10 +78,11 @@ class EnhancedFormRenderer:
         if isinstance(errors, dict) and "errors" in errors:
             errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
 
+        default_form_class = self._theme.form_class() or self.config.get("form_class", "")
         form_attrs = {
             "method": method,
             "action": submit_url,
-            "class": self.config["form_class"],
+            "class": default_form_class,
             "novalidate": True,
         }
         form_attrs.update(kwargs)
@@ -337,7 +355,7 @@ class EnhancedFormRenderer:
         )
 
     def _render_submit_button(self) -> str:
-        button_class = self.config["button_class"]
+        button_class = self._theme.button_class() or self.config.get("button_class", "")
         return self._theme.render_submit_button(button_class)
 
     def _model_list_framework(self) -> str:

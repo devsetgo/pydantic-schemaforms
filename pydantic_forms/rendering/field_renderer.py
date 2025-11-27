@@ -25,6 +25,10 @@ class FieldRenderer:
     def framework(self) -> str:
         return self._renderer.framework
 
+    @property
+    def theme(self):
+        return getattr(self._renderer, "theme", None)
+
     def render_field(
         self,
         field_name: str,
@@ -181,7 +185,14 @@ class FieldRenderer:
         except Exception as exc:  # pragma: no cover - defensive fallback
             input_html = f"<!-- Error rendering {ui_element}: {str(exc)} -->"
 
-        return f'<div class="{self.config["field_wrapper_class"]}">{input_html}</div>'
+        wrapper_class = ""
+        if self.theme:
+            wrapper_class = self.theme.field_wrapper_class() or ""
+        if not wrapper_class:
+            wrapper_class = self.config.get("field_wrapper_class", "")
+        if wrapper_class:
+            return f'<div class="{wrapper_class}">{input_html}</div>'
+        return input_html
 
     def _render_model_list_field(
         self,
@@ -382,11 +393,16 @@ class FieldRenderer:
         return "text"
 
     def _get_input_class(self, ui_element: str) -> str:
+        themed_class = ""
+        if self.theme:
+            themed_class = self.theme.input_class(ui_element)
+        if themed_class:
+            return themed_class
         if ui_element == "checkbox":
-            return self.config["checkbox_class"]
+            return self.config.get("checkbox_class", "")
         if ui_element in ("select", "radio", "multiselect"):
-            return self.config["select_class"]
-        return self.config["input_class"]
+            return self.config.get("select_class", "")
+        return self.config.get("input_class", "")
 
     def render_model_list_from_schema(
         self,
