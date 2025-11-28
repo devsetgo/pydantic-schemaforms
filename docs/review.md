@@ -30,9 +30,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `ModelListRenderer` now delegates both containers and per-item chrome through `RendererTheme` hooks: `render_model_list_container()` and the new `render_model_list_item()` (with Material/embedded overrides) wrap the renderer-supplied field grid so frameworks own every byte of markup. Bootstrap/Material share the same plumbing, labels/help/errors/add buttons stay in the theme, and tests cover that custom themes can inject their own classes when rendering lists.
   _Files:_ `pydantic_forms/model_list.py`, `pydantic_forms/rendering/themes.py`
 
-- **Template engine under-used**
-  `pydantic_forms/templates.py` provides compiled template caching, yet the renderers still concatenate large CSS/JS/HTML strings manually. Moving repeated fragments (form wrapper, Material assets, layout shells) into cached templates would shorten renderer modules and make unit testing simpler.
-  _Files:_ `pydantic_forms/templates.py`, renderer modules
+- **Template engine under-used (In Progress)**
+  The Material renderer now pulls its field chrome (wrappers, icons, controls, checkbox/model-list containers, submit buttons) from cached templates in `templates.py`, which removes the largest block of manual string concatenation. Enhanced/Bootstrap renderers still inline form wrappers, layout shells, and assets. Continue migrating those fragments so tests can exercise template output directly and the theme contract stays consistent.
+  _Files:_ `pydantic_forms/templates.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/enhanced_renderer.py`
 
 - **Runtime field registration surfaced (New)**
   Dynamically extending a `FormModel` is now supported via `FormModel.register_field()`, which wires the new `FieldInfo` into the schema cache and the validation stack by synthesizing a runtime subclass when necessary. Legacy `setattr(MyForm, name, Field(...))` still works for rendering, but the helper ensures `validate_form_data()` and HTMX live validation enforce the same constraints without manual plumbing.
@@ -43,9 +43,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `validation.py` and `live_validation.py` maintain parallel rule sets and response objects. Choose a single canonical rule representation and let live validation adapt it so fixes land in one place.
   _Files:_ `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`
 
-- **Input namespace still re-exports everything**
-  Importing `pydantic_forms.inputs` pulls every concrete widget into memory via `from .inputs import *` in `pydantic_forms/__init__.py`. This balloons import time, runs heavyweight template compilation for unused widgets, and makes tree-shaking impossible. Break the module into lazy subpackages (e.g. `inputs.selection`, `inputs.numeric`) and expose a documented `register_inputs()` hook rather than wildcard re-exports.
-  _Files:_ `pydantic_forms/__init__.py`, `pydantic_forms/inputs/__init__.py`, `pydantic_forms/inputs/base.py`
+- **Input namespace still re-exports everything (Resolved)**
+  The root package now exposes inputs via module-level `__getattr__`, delegating to a lazy-loading facade in `pydantic_forms.inputs`. No wildcard imports remain, so importing `pydantic_forms` does not instantiate every widget or template; consumers still get `from pydantic_forms import TextInput` via the cached attribute. Future work can build on the same facade to document a plugin hook for third-party inputs.
+  _Files:_ `pydantic_forms/__init__.py`, `pydantic_forms/inputs/__init__.py`
 
 - **Integration facade duplicated across namespaces**
   Both `pydantic_forms.integration` and `pydantic_forms.integration.frameworks` ship near-identical `FormIntegration`, `handle_sync_form`, and `handle_async_form` helpers. The split partially addressed optional dependency imports, but the duplicated codepaths raise maintenance risk and keep the builder (`FormBuilder`) tightly coupled to synchronous helpers. Collapse the shared logic into one module and let `__init__.py` lazily re-export thin facades.
@@ -68,11 +68,10 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 ## Recommended Next Steps
 
 1. Continue extracting renderer-specific themes/templates (tabs, wrappers, asset bundles) so the new `FrameworkTheme` registry fully owns markup/classes and future frameworks plug into the shared orchestration path without editing renderers; update docs/tests alongside the contract.
-2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
-3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
-4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
-5. Break the `pydantic_forms.inputs` wildcard export into lazy modules, document a plugin hook, and teach `EnhancedFormRenderer` to import components on demand so custom inputs do not require monkeypatching.
-6. Trim the duplicated integration facades by moving sync/async helpers into a single module, exposing lazy imports from `pydantic_forms.integration`, and adding framework-specific entry points (`integration.fastapi`, `integration.flask`).
-7. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
-8. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
-9. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
+2. Trim the duplicated integration facades by moving sync/async helpers into a single module, exposing lazy imports from `pydantic_forms.integration`, and adding framework-specific entry points (`integration.fastapi`, `integration.flask`).
+3. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
+4. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
+5. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
+6. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
+7. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
+8. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
