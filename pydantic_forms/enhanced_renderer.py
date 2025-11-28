@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 from functools import partial
-from html import escape
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from .rendering.context import RenderContext
