@@ -16,6 +16,7 @@ IMPORTANT: This library requires Python 3.14+ and provides NO backward compatibi
 
 import logging
 import os
+from importlib import import_module
 
 from .enhanced_renderer import (
     EnhancedFormRenderer,
@@ -49,8 +50,8 @@ from .input_types import (
     SPECIALIZED_INPUTS,
     TEXT_INPUTS,
 )
-# Comprehensive input types
-from .inputs import *
+# Input component export metadata
+from .inputs import __all__ as _INPUT_EXPORTS
 # Core form building and rendering
 from .integration import (
     AutoFormBuilder,
@@ -184,7 +185,7 @@ __all__ = [
     "SPECIALIZED_INPUTS",
     # Framework integration
     "FormIntegration",
-]
+] + list(_INPUT_EXPORTS)
 
 # Quick start documentation
 __doc__ = """
@@ -253,3 +254,18 @@ result = FormIntegration.flask_integration(form)
 result = await FormIntegration.fastapi_integration(form, data)
 ```
 """
+
+
+def __getattr__(name: str):
+    """Expose input components lazily at the package root."""
+
+    if name in _INPUT_EXPORTS:
+        inputs_module = import_module("pydantic_forms.inputs")
+        attr = getattr(inputs_module, name)
+        globals()[name] = attr
+        return attr
+    raise AttributeError(f"module 'pydantic_forms' has no attribute '{name}'")
+
+
+def __dir__():  # pragma: no cover - improves interactive discovery
+    return sorted(set(list(globals().keys()) + __all__))

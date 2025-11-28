@@ -1,92 +1,7 @@
-"""
-Pydantic Forms Input Components
+"""Lazy-loading facade for pydantic-forms input components."""
 
-This module provides all the input components organized by category:
-- Text Inputs: TextInput, PasswordInput, EmailInput, TextArea, etc.
-- Numeric Inputs: NumberInput, RangeInput, PercentageInput, etc.
-- Selection Inputs: SelectInput, RadioGroup, CheckboxInput, etc.
-- DateTime Inputs: DateInput, TimeInput, DatetimeInput, etc.
-- Specialized Inputs: FileInput, ColorInput, HiddenInput, etc.
-
-All inputs use Python 3.14's native template strings for efficient HTML generation.
-"""
-
-# Base classes
-from .base import (  # noqa: F401
-    BaseInput,
-    FileInputBase,
-    FormInput,
-    NumericInput,
-    SelectInputBase,
-    build_error_message,
-    build_help_text,
-    build_label,
-)
-# DateTime inputs
-from .datetime_inputs import (  # noqa: F401
-    BirthdateInput,
-    DateInput,
-    DateRangeInput,
-    DatetimeInput,
-    MonthInput,
-    TimeInput,
-    TimeRangeInput,
-    WeekInput,
-)
-# Numeric inputs
-from .numeric_inputs import (  # noqa: F401
-    AgeInput,
-    DecimalInput,
-    IntegerInput,
-    NumberInput,
-    PercentageInput,
-    QuantityInput,
-    RangeInput,
-    RatingInput,
-    ScoreInput,
-    SliderInput,
-    TemperatureInput,
-)
-# Selection inputs
-from .selection_inputs import (  # noqa: F401
-    CheckboxGroup,
-    CheckboxInput,
-    ComboBoxInput,
-    MultiSelectInput,
-    RadioGroup,
-    RadioInput,
-    SelectInput,
-    ToggleSwitch,
-)
-# Specialized inputs
-from .specialized_inputs import (  # noqa: F401
-    ButtonInput,
-    CaptchaInput,
-    ColorInput,
-    CSRFInput,
-    FileInput,
-    HiddenInput,
-    HoneypotInput,
-    ImageInput,
-    RatingStarsInput,
-    ResetInput,
-    SubmitInput,
-    TagsInput,
-)
-# Text inputs
-from .text_inputs import (  # noqa: F401
-    CreditCardInput,
-    CurrencyInput,
-    EmailInput,
-    PasswordInput,
-    PhoneInput,
-    SearchInput,
-    SSNInput,
-    TelInput,
-    TextArea,
-    TextInput,
-    URLInput,
-)
+from importlib import import_module
+from typing import Dict
 
 # Organized exports by category
 TEXT_INPUTS = [
@@ -162,3 +77,35 @@ UTILITIES = ["build_label", "build_error_message", "build_help_text"]
 ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS + SPECIALIZED_INPUTS
 
 __all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES
+
+_MODULE_MAP: Dict[str, str] = {}
+
+# Wire categories to their modules without importing them eagerly
+for _name in BASE_CLASSES + UTILITIES:
+    _MODULE_MAP[_name] = "pydantic_forms.inputs.base"
+for _name in DATETIME_INPUTS:
+    _MODULE_MAP[_name] = "pydantic_forms.inputs.datetime_inputs"
+for _name in NUMERIC_INPUTS:
+    _MODULE_MAP[_name] = "pydantic_forms.inputs.numeric_inputs"
+for _name in SELECTION_INPUTS:
+    _MODULE_MAP[_name] = "pydantic_forms.inputs.selection_inputs"
+for _name in SPECIALIZED_INPUTS:
+    _MODULE_MAP[_name] = "pydantic_forms.inputs.specialized_inputs"
+for _name in TEXT_INPUTS:
+    _MODULE_MAP[_name] = "pydantic_forms.inputs.text_inputs"
+
+
+def __getattr__(name: str):
+    """Lazily import concrete input classes on first access."""
+
+    if name not in _MODULE_MAP:
+        raise AttributeError(f"module 'pydantic_forms.inputs' has no attribute '{name}'")
+
+    module = import_module(_MODULE_MAP[name])
+    attr = getattr(module, name)
+    globals()[name] = attr
+    return attr
+
+
+def __dir__():  # pragma: no cover - aids interactive discovery
+    return sorted(set(list(globals().keys()) + __all__))
