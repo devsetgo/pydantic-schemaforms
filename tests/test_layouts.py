@@ -2,12 +2,16 @@
 Tests for layouts module - form layout and organization components.
 """
 
+from types import SimpleNamespace
+
 from pydantic_forms.layout_base import BaseLayout
+from pydantic_forms.rendering.form_style import FormStyle, FormStyleTemplates
 from pydantic_forms.rendering.layout_engine import (
     AccordionLayout,
     CardLayout,
     GridLayout,
     HorizontalLayout,
+    LayoutEngine,
     Layout,
     LayoutFactory,
     ModalLayout,
@@ -15,6 +19,7 @@ from pydantic_forms.rendering.layout_engine import (
     TabLayout,
     VerticalLayout,
 )
+from pydantic_forms.templates import TemplateString
 
 
 class TestBaseLayout:
@@ -587,3 +592,47 @@ class TestLayoutIntegration:
         assert "Grid" in html
         assert "horizontal-layout" in html
         assert "grid-layout" in html
+
+
+class TestFormStyleLayoutSections:
+    """Ensure layout sections honor FormStyle templates."""
+
+    def test_layout_card_uses_custom_form_style_template(self):
+        section_template = TemplateString(
+            """
+<section class="custom-layout" data-title="${title}">
+    ${help_html}
+    <div class="custom-body">${body_html}</div>
+</section>
+"""
+        )
+        help_template = TemplateString(
+            """
+<aside class="custom-help">${help_text}</aside>
+"""
+        )
+
+        custom_style = FormStyle(
+            framework="custom",
+            templates=FormStyleTemplates(
+                layout_section=section_template,
+                layout_help=help_template,
+            ),
+        )
+
+        class DummyTheme:
+            def __init__(self, style):
+                self.form_style = style
+
+            def render_layout_section(self, *_args, **_kwargs):  # pragma: no cover - simple stub
+                return ""
+
+        renderer = SimpleNamespace(theme=DummyTheme(custom_style), framework="custom")
+        engine = LayoutEngine(renderer)
+
+        html = engine._render_layout_card("Section Title", "<div>Body</div>", "Needs <script>alert(1)</script>")
+
+        assert "custom-layout" in html
+        assert "custom-body" in html
+        assert "custom-help" in html
+        assert "Needs &lt;script&gt;alert(1)&lt;/script&gt;" in html

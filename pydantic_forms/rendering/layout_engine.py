@@ -804,25 +804,25 @@ class LayoutEngine:
             if themed_section:
                 return themed_section
 
-        content_parts: List[str] = []
+        form_style = getattr(theme, "form_style", None) if theme else None
+        templates = getattr(form_style, "templates", None)
+
+        layout_template = getattr(templates, "layout_section", None)
+        if layout_template is None:
+            layout_template = _DEFAULT_FORM_STYLE.templates.layout_section
+
+        help_template = getattr(templates, "layout_help", None)
+        if help_template is None:
+            help_template = _DEFAULT_FORM_STYLE.templates.layout_help
+
+        help_html = ""
         if help_text:
-            content_parts.append(
-                f'<p class="text-muted mb-2">{escape(help_text)}</p>'
-            )
+            help_html = help_template.render(help_text=escape(help_text))
 
-        content_parts.append(f'<div class="layout-field-content">{body_html}</div>')
-
-        card = CardLayout(
-            title=title,
-            content="".join(content_parts),
-            class_="layout-field-section mb-4",
-        )
-
-        return card.render(
-            data={},
-            errors={},
-            renderer=self._renderer,
-            framework=self._renderer.framework,
+        return layout_template.render(
+            title=escape(title),
+            help_html=help_html,
+            body_html=body_html,
         )
 
     def _layout_error_message(
