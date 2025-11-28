@@ -460,6 +460,125 @@ ${component_assets}
 """
     )
 
+    # Material Templates
+    MATERIAL_FIELD_CONTAINER = TemplateString(
+        """
+<div class="md-field">
+    ${field_body}
+    ${help_text}
+    ${error_text}
+</div>
+"""
+    )
+
+    MATERIAL_FIELD_WITH_ICON = TemplateString(
+        """
+<div class="md-field-with-icon">
+    ${icon_markup}
+    ${input_wrapper}
+</div>
+"""
+    )
+
+    MATERIAL_FIELD_INPUT_WRAPPER = TemplateString(
+        """
+<div class="md-input-wrapper">
+    ${input_control}
+    <label class="md-floating-label" for="${field_id}">${label}${required_indicator}</label>
+</div>
+"""
+    )
+
+    MATERIAL_ICON = TemplateString(
+        """
+<span class="md-icon material-icons">${icon_name}</span>
+"""
+    )
+
+    MATERIAL_TEXT_INPUT = TemplateString(
+        """
+<input type="${input_type}"
+       name="${name}"
+       id="${field_id}"
+       class="md-input${error_class}"
+       value="${value}"
+        placeholder=" " ${attributes}>
+"""
+    )
+
+    MATERIAL_TEXTAREA = TemplateString(
+        """
+<textarea name="${name}"
+          id="${field_id}"
+          class="md-textarea${error_class}"
+          placeholder=" ">${value}</textarea>
+"""
+    )
+
+    MATERIAL_SELECT = TemplateString(
+        """
+<select name="${name}"
+        id="${field_id}"
+        class="md-select${error_class}">
+    ${options}
+</select>
+"""
+    )
+
+    MATERIAL_SELECT_OPTION = TemplateString(
+        """
+<option value="${value}"${selected}>${label}</option>
+"""
+    )
+
+    MATERIAL_HELP_TEXT = TemplateString(
+        """
+<div class="md-help-text">${help_content}</div>
+"""
+    )
+
+    MATERIAL_ERROR_TEXT = TemplateString(
+        """
+<div class="md-error-text">${error_content}</div>
+"""
+    )
+
+    MATERIAL_CHECKBOX_FIELD = TemplateString(
+        """
+<div class="md-field">
+    <div class="md-checkbox-container">
+        <input type="checkbox"
+               name="${name}"
+               id="${field_id}"
+               class="md-checkbox"
+               value="true"
+               ${checked}>
+        <label for="${field_id}" class="md-checkbox-label">${label}${required_indicator}</label>
+    </div>
+    ${help_text}
+    ${error_text}
+</div>
+"""
+    )
+
+    MATERIAL_SUBMIT_BUTTON = TemplateString(
+        """
+<div class="md-field">
+    <button type="submit" class="md-button md-button-filled">${label}</button>
+</div>
+"""
+    )
+
+    MATERIAL_MODEL_LIST_WRAPPER = TemplateString(
+        """
+<div class="md-field">
+    <div class="md-model-list-container">
+        ${content}
+    </div>
+</div>
+"""
+    )
+
 
 def render_template(template: TemplateString, **kwargs: Any) -> str:
     """

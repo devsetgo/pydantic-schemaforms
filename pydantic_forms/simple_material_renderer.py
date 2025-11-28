@@ -13,6 +13,7 @@ from .enhanced_renderer import EnhancedFormRenderer
 from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
 from .rendering.themes import MaterialEmbeddedTheme
+from .templates import FormTemplates, render_template
 
 
 class SimpleMaterialRenderer(EnhancedFormRenderer):
@@ -24,6 +25,79 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     def __init__(self):
         """Initialize Simple Material Design renderer."""
         super().__init__(framework="material", theme=MaterialEmbeddedTheme())
+
+    # --- Template helpers -------------------------------------------------
+    def _attr(self, value: Any) -> str:
+        """HTML-escape attribute values, treating None as empty."""
+
+        if value is None:
+            return ""
+        return escape(str(value))
+
+    def _render_help_block(self, help_text: Optional[str]) -> str:
+        if not help_text:
+            return ""
+        return render_template(
+            FormTemplates.MATERIAL_HELP_TEXT,
+            help_content=escape(str(help_text)),
+        )
+
+    def _render_error_block(self, error: Optional[str]) -> str:
+        if not error:
+            return ""
+        return render_template(
+            FormTemplates.MATERIAL_ERROR_TEXT,
+            error_content=escape(str(error)),
+        )
+
+    def _wrap_field_body(
+        self,
+        *,
+        field_body: str,
+        help_text: Optional[str],
+        error: Optional[str],
+    ) -> str:
+        """Wrap a field body with shared help/error blocks."""
+
+        return render_template(
+            FormTemplates.MATERIAL_FIELD_CONTAINER,
+            field_body=field_body,
+            help_text=self._render_help_block(help_text),
+            error_text=self._render_error_block(error),
+        )
+
+    def _wrap_with_icon(self, icon: Optional[str], input_wrapper: str) -> str:
+        if not icon:
+            return input_wrapper
+
+        icon_markup = render_template(FormTemplates.MATERIAL_ICON, icon_name=escape(icon))
+        return render_template(
+            FormTemplates.MATERIAL_FIELD_WITH_ICON,
+            icon_markup=icon_markup,
+            input_wrapper=input_wrapper,
+        )
+
+    def _build_text_input_attributes(self, ui_info: Dict[str, Any]) -> str:
+        attrs = []
+        mapping = {
+            "min_value": "min",
+            "max_value": "max",
+            "min_length": "minlength",
+            "max_length": "maxlength",
+            "step": "step",
+        }
+        for source, attr_name in mapping.items():
+            if ui_info.get(source) is not None:
+                attrs.append(f'{attr_name}="{escape(str(ui_info[source]))}"')
+
+        extra = ui_info.get("attributes")
+        if isinstance(extra, dict):
+            for attr_name, attr_value in extra.items():
+                if attr_value is None:
+                    continue
+                attrs.append(f'{attr_name}="{escape(str(attr_value))}"')
+
+        return " ".join(attrs)
 
     def _render_field(
         self,
@@ -110,55 +184,27 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             icon = map_icon_for_framework(icon, "material")
         has_icon = icon is not None
 
-        # Start field container
-        field_parts = ['<div class="md-field">']
-
-        # Create field wrapper that may contain icon + input
-        if has_icon:
-            field_parts.append('<div class="md-field-with-icon">')
-            # Add icon outside the input on the left
-            field_parts.append(f'<span class="md-icon material-icons">{icon}</span>')
-
-        # Create input wrapper for proper label positioning
-        field_parts.append('<div class="md-input-wrapper">')
-
-        # Add the input/select/textarea
         if input_type == "textarea":
-            field_parts.append(
-                self._render_textarea_input(field_name, value, error, ui_info, has_icon)
-            )
+            control_html = self._render_textarea_input(field_name, value, error, ui_info)
         elif input_type == "select":
-            field_parts.append(
-                self._render_select_input(field_name, value, error, ui_info, field_schema, has_icon)
-            )
+            control_html = self._render_select_input(field_name, value, error, ui_info, field_schema)
         else:
-            field_parts.append(
-                self._render_text_input(field_name, input_type, value, error, ui_info, has_icon)
-            )
+            control_html = self._render_text_input(field_name, input_type, value, error, ui_info)
 
-        # Add floating label
-        field_parts.append(
-            f'<label class="md-floating-label" for="{field_name}">{escape(label)}{required_text}</label>'
+        input_wrapper = render_template(
+            FormTemplates.MATERIAL_FIELD_INPUT_WRAPPER,
+            input_control=control_html,
+            field_id=self._attr(field_name),
+            label=escape(label),
+            required_indicator=required_text,
         )
 
-        # Close input wrapper
-        field_parts.append("</div>")
-
-        # Close field wrapper if has icon
-        if has_icon:
-            field_parts.append("</div>")
-
-        # Add help text
-        if help_text:
-            field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
-
-        # Add error text
-        if error:
-            field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
-
-        # Close field container
-        field_parts.append("</div>")
-        return "\n".join(field_parts)
+        field_body = self._wrap_with_icon(icon if has_icon else None, input_wrapper)
+        return self._wrap_field_body(
+            field_body=field_body,
+            help_text=help_text,
+            error=error,
+        )
 
     def _render_text_input(
         self,
@@ -167,27 +213,20 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         value: Any,
         error: Optional[str],
         ui_info: Dict[str, Any],
-        has_icon: bool = False,
     ) -> str:
         """Render a Material Design text input."""
         error_class = " error" if error else ""
-        value_attr = f' value="{escape(str(value))}"' if value else ""
-        placeholder_attr = ' placeholder=" "'  # Single space for floating label to work
-
-        # Handle input attributes
-        attrs = []
-        if ui_info.get("min_value") is not None:
-            attrs.append(f'min="{ui_info["min_value"]}"')
-        if ui_info.get("max_value") is not None:
-            attrs.append(f'max="{ui_info["max_value"]}"')
-        if ui_info.get("min_length") is not None:
-            attrs.append(f'minlength="{ui_info["min_length"]}"')
-        if ui_info.get("max_length") is not None:
-            attrs.append(f'maxlength="{ui_info["max_length"]}"')
-
-        attrs_str = " " + " ".join(attrs) if attrs else ""
-
-        return f'<input type="{input_type}" name="{field_name}" id="{field_name}" class="md-input{error_class}"{value_attr}{placeholder_attr}{attrs_str}>'
+        attrs = self._build_text_input_attributes(ui_info)
+        value_attr = self._attr(value) if value else ""
+        return render_template(
+            FormTemplates.MATERIAL_TEXT_INPUT,
+            input_type=input_type,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            error_class=error_class,
+            value=value_attr,
+            attributes=attrs,
+        )
 
     def _render_textarea_input(
         self,
@@ -195,14 +234,17 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         value: Any,
         error: Optional[str],
         ui_info: Dict[str, Any],
-        has_icon: bool = False,
     ) -> str:
         """Render a Material Design textarea."""
         error_class = " error" if error else ""
-        placeholder_attr = ' placeholder=" "'  # Single space for floating label to work
-        value_content = escape(str(value)) if value else ""
-
-        return f'<textarea name="{field_name}" id="{field_name}" class="md-textarea{error_class}"{placeholder_attr}>{value_content}</textarea>'
+        value_content = escape(str(value)) if value is not None else ""
+        return render_template(
+            FormTemplates.MATERIAL_TEXTAREA,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            error_class=error_class,
+            value=value_content,
+        )
 
     def _render_select_input(
         self,
@@ -211,34 +253,55 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error: Optional[str],
         ui_info: Dict[str, Any],
         field_schema: Dict[str, Any],
-        has_icon: bool = False,
     ) -> str:
         """Render a Material Design select field."""
         error_class = " error" if error else ""
-        options_html = []
+        options = self._build_select_options(ui_info, field_schema)
+        rendered_options = [
+            render_template(
+                FormTemplates.MATERIAL_SELECT_OPTION,
+                value="",
+                selected="",
+                label="",
+            )
+        ]
 
-        # Get options from UI info or enum
+        for opt_value, opt_label in options:
+            is_selected = str(value) == str(opt_value)
+            rendered_options.append(
+                render_template(
+                    FormTemplates.MATERIAL_SELECT_OPTION,
+                    value=self._attr(opt_value),
+                    selected=' selected="selected"' if is_selected else "",
+                    label=escape(str(opt_label)),
+                )
+            )
+
+        return render_template(
+            FormTemplates.MATERIAL_SELECT,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            error_class=error_class,
+            options="".join(rendered_options),
+        )
+
+    def _build_select_options(self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]) -> List[List[str]]:
+        """Normalize select option definitions."""
+
         options = ui_info.get("options", [])
         if not options and "enum" in field_schema:
             options = [{"value": v, "label": v} for v in field_schema["enum"]]
 
-        # Add empty option
-        options_html.append('<option value=""></option>')
-
-        # Add options
+        normalized: List[List[str]] = []
         for option in options:
             if isinstance(option, dict):
                 opt_value = option.get("value", "")
                 opt_label = option.get("label", opt_value)
             else:
                 opt_value = opt_label = str(option)
+            normalized.append([opt_value, opt_label])
 
-            selected = " selected" if str(value) == str(opt_value) else ""
-            options_html.append(
-                f'<option value="{escape(str(opt_value))}">{selected}>{escape(str(opt_label))}</option>'
-            )
-
-        return f'<select name="{field_name}" id="{field_name}" class="md-select{error_class}">{"".join(options_html)}</select>'
+        return normalized
 
     def _render_checkbox_field(
         self,
@@ -251,36 +314,23 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         ui_info: Dict[str, Any],
     ) -> str:
         """Render a Material Design checkbox field."""
-        checked = " checked" if value else ""
         required_text = " *" if is_required else ""
 
-        field_parts = ['<div class="md-field">']
-        field_parts.append('<div class="md-checkbox-container">')
-        field_parts.append(
-            f'<input type="checkbox" name="{field_name}" id="{field_name}" class="md-checkbox"{checked} value="true">'
+        checked_attr = 'checked="checked"' if value else ""
+        return render_template(
+            FormTemplates.MATERIAL_CHECKBOX_FIELD,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            label=escape(label),
+            required_indicator=required_text,
+            checked=checked_attr,
+            help_text=self._render_help_block(help_text),
+            error_text=self._render_error_block(error),
         )
-        field_parts.append(
-            f'<label for="{field_name}" class="md-checkbox-label">{escape(label)}{required_text}</label>'
-        )
-        field_parts.append("</div>")
-
-        # Add help text
-        if help_text:
-            field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
-
-        # Add error text
-        if error:
-            field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
-
-        field_parts.append("</div>")
-        return "\n".join(field_parts)
 
     def _render_submit_button(self) -> str:
         """Render a Material Design submit button."""
-        return """
-        <div class="md-field">
-            <button type="submit" class="md-button md-button-filled">Submit</button>
-        </div>"""
+        return render_template(FormTemplates.MATERIAL_SUBMIT_BUTTON, label="Submit")
 
     def _infer_input_type(self, field_schema: Dict[str, Any]) -> str:
         """Infer input type from field schema."""
@@ -325,13 +375,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             all_errors,
         )
 
-        return f"""
-        <div class="md-field">
-            <div class="md-model-list-container">
-                {field_html}
-            </div>
-        </div>
-        """
+        return render_template(FormTemplates.MATERIAL_MODEL_LIST_WRAPPER, content=field_html)
 
     def _model_list_framework(self) -> str:
         """Material renderer still leverages Bootstrap model list assets."""
