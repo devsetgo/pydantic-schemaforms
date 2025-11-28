@@ -27,6 +27,7 @@ class FormIntegration:
             render_on_error=render_on_error,
         )
 
+    @staticmethod
     async def async_integration(
         form_builder: FormBuilder,
         *,
