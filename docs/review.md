@@ -1,3 +1,4 @@
+
 # Codebase Review – pydantic-forms
 
 _Date: 2025-11-27_
@@ -17,7 +18,7 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/modern_renderer.py`
 
 - **Integration helpers mix unrelated responsibilities (Addressed)**
-  The synchronous/async adapters now live in `pydantic_forms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_forms.integration` no longer drags in optional framework glue unless those helpers are actually accessed. Follow-up work can add dedicated `fastapi.py`/`flask.py` adapters inside the new `frameworks` namespace without coupling them to JSON/OpenAPI generation.
+  The synchronous/async adapters now live in `pydantic_forms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_forms.integration` no longer drags in optional framework glue unless those helpers are actually accessed.
   _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/frameworks/`, `pydantic_forms/integration/builder.py`
 
 ## Medium Priority Refactors & Opportunities
@@ -68,9 +69,8 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 ## Recommended Next Steps
 
 1. Continue extracting renderer-specific themes/templates (tabs, wrappers, asset bundles) so the new `FrameworkTheme` registry fully owns markup/classes and future frameworks plug into the shared orchestration path without editing renderers; update docs/tests alongside the contract.
-2. Build dedicated framework modules (Flask/FastAPI/etc.) on top of the new `integration.frameworks` namespace so optional dependencies and tests stay isolated.
-3. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
-4. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
-5. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
-6. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
-7. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
+2. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
+3. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
+4. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
+5. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
+6. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
