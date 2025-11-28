@@ -6,7 +6,7 @@ from html import escape
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from .context import RenderContext
-from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
+from .form_style import get_form_style
 from ..templates import FormTemplates
 from ..layout_base import BaseLayout
 
@@ -15,6 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 Renderable = Union[str, List[str]]
+_DEFAULT_FORM_STYLE = get_form_style("default", "default")
 
 
 class HorizontalLayout(BaseLayout):
@@ -177,14 +178,18 @@ ${component_assets}
             )
 
         renderer = attrs.get("renderer")
-        assets = TAB_COMPONENT_ASSETS
         theme = getattr(renderer, "theme", None) if renderer else None
+        template = _DEFAULT_FORM_STYLE.templates.tab_layout
+        assets = _DEFAULT_FORM_STYLE.assets.tab_assets
         if theme:
             themed_assets = theme.tab_component_assets()
             if themed_assets:
                 assets = themed_assets
+            themed_template = getattr(theme, "tab_layout_template", None)
+            if callable(themed_template):
+                template = themed_template()
 
-        return FormTemplates.TAB_LAYOUT.render(
+        return template.render(
             layout_class=layout_class,
             layout_style=layout_style,
             tab_buttons="\n".join(tab_buttons),
@@ -228,14 +233,18 @@ ${component_assets}
             )
 
         renderer = attrs.get("renderer")
-        assets = ACCORDION_COMPONENT_ASSETS
         theme = getattr(renderer, "theme", None) if renderer else None
+        template = _DEFAULT_FORM_STYLE.templates.accordion_layout
+        assets = _DEFAULT_FORM_STYLE.assets.accordion_assets
         if theme:
             themed_assets = theme.accordion_component_assets()
             if themed_assets:
                 assets = themed_assets
+            themed_template = getattr(theme, "accordion_layout_template", None)
+            if callable(themed_template):
+                template = themed_template()
 
-        return FormTemplates.ACCORDION_LAYOUT.render(
+        return template.render(
             layout_class=layout_class,
             layout_style=layout_style,
             sections="\n".join(accordion_sections),

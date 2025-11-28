@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from html import escape
-from typing import Callable, Dict, Optional, Type
+from typing import Dict, Optional, Type
 
 from .frameworks import get_framework_config
-from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
+from .form_style import FormStyle, get_form_style
+from ..templates import TemplateString
 
 __all__ = [
     "RendererTheme",
@@ -24,9 +25,18 @@ class RendererTheme:
     """Lightweight hook points for wrapping rendered forms per framework."""
 
     name = "default"
+    style_variant = "default"
 
     def __init__(self, submit_label: str = "Submit") -> None:
         self.submit_label = submit_label
+        self.form_style: FormStyle = get_form_style("default", "default")
+        self._load_form_style(self.name, self.style_variant)
+
+    def _load_form_style(self, framework: str, variant: str | None = None) -> None:
+        try:
+            self.form_style = get_form_style(framework, variant)
+        except KeyError:
+            self.form_style = get_form_style("default", "default")
 
     def transform_form_attributes(self, attrs: Dict[str, str]) -> Dict[str, str]:
         """Adjust form attributes before rendering."""
@@ -36,22 +46,55 @@ class RendererTheme:
     def before_form(self) -> str:
         """Markup inserted before the opening form tag."""
 
-        return ""
-
-    def open_form_tag(self, build_form_tag: Callable[[Dict[str, str]], str], attrs: Dict[str, str]) -> str:
-        """Return the opening form tag (wrappers can override)."""
-
-        return build_form_tag(attrs)
-
-    def close_form_tag(self) -> str:
-        """Return the closing form tag plus any wrapper closures."""
-
-        return "</form>"
+        return self.form_style.assets.before_form
 
     def after_form(self) -> str:
         """Markup appended after the closing form tag."""
 
-        return ""
+        return self.form_style.assets.after_form
+
+    def render_form_wrapper(
+        self,
+        *,
+        form_attrs: Dict[str, str],
+        csrf_token: str,
+        form_content: str,
+        submit_markup: str,
+    ) -> str:
+        template = self.form_wrapper_template()
+        attrs = form_attrs.copy()
+        form_id = attrs.pop("id", "")
+        form_class = attrs.get("class", "")
+        form_style = attrs.get("style", "")
+        method = attrs.get("method", "POST")
+        action = attrs.get("action", "")
+
+        reserved = {"id", "class", "style", "method", "action"}
+        extra_attrs = []
+        for key, value in attrs.items():
+            if key in reserved:
+                continue
+            if value is None or value is False:
+                continue
+            if value is True:
+                extra_attrs.append(key)
+            else:
+                extra_attrs.append(f'{key}="{escape(str(value))}"')
+
+        wrapper = template.render(
+            form_id=escape(str(form_id)) if form_id else "",
+            form_class=escape(str(form_class)) if form_class else "",
+            form_style=escape(str(form_style)) if form_style else "",
+            method=escape(str(method)) if method else "POST",
+            action=escape(str(action)) if action else "",
+            form_attributes=" ".join(extra_attrs),
+            csrf_token=csrf_token,
+            form_content=form_content,
+            submit_buttons=submit_markup,
+        )
+
+        blocks = [fragment for fragment in [self.before_form(), wrapper, self.after_form()] if fragment]
+        return "\n".join(blocks)
 
     def render_submit_button(self, button_class: str) -> str:
         """Return HTML for the submit button."""
@@ -84,12 +127,27 @@ class RendererTheme:
     def tab_component_assets(self) -> str:
         """Return CSS/JS assets for tab layouts."""
 
-        return TAB_COMPONENT_ASSETS
+        return self.form_style.assets.tab_assets
 
     def accordion_component_assets(self) -> str:
         """Return CSS/JS assets for accordion layouts."""
 
-        return ACCORDION_COMPONENT_ASSETS
+        return self.form_style.assets.accordion_assets
+
+    def form_wrapper_template(self) -> TemplateString:
+        """Return the template used for the outer <form> element."""
+
+        return self.form_style.templates.form_wrapper
+
+    def tab_layout_template(self) -> TemplateString:
+        """Return the template used when rendering tab layouts."""
+
+        return self.form_style.templates.tab_layout
+
+    def accordion_layout_template(self) -> TemplateString:
+        """Return the template used for accordion layouts."""
+
+        return self.form_style.templates.accordion_layout
 
     def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
         """Return framework-specific markup for layout/card sections."""
@@ -330,11 +388,13 @@ class MaterialEmbeddedTheme(RendererTheme):
         attrs.setdefault("novalidate", "novalidate")
         return attrs
 
-    def close_form_tag(self) -> str:
-        return "</form>\n</div>"
-
     def after_form(self) -> str:
-        return self._js
+        return "\n".join(
+            [
+                "</div>",
+                self._js,
+            ]
+        )
 
     def render_submit_button(self, button_class: str) -> str:
         classes = "md-button md-button-filled"

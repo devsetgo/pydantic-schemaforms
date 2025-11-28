@@ -89,15 +89,8 @@ class EnhancedFormRenderer:
         form_attrs["action"] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
 
-        form_parts: List[str] = []
-        before_form = self._theme.before_form()
-        if before_form:
-            form_parts.append(before_form)
-
-        form_parts.append(self._theme.open_form_tag(self._build_form_tag, form_attrs))
-
-        if include_csrf:
-            form_parts.append(self._render_csrf_field())
+        csrf_markup = self._render_csrf_field() if include_csrf else ""
+        form_body_parts: List[str] = []
 
         fields = metadata.fields
         required_fields = metadata.required_fields
@@ -105,7 +98,7 @@ class EnhancedFormRenderer:
         non_layout_fields = metadata.non_layout_fields
 
         if len(layout_fields) > 1 and len(non_layout_fields) == 0:
-            form_parts.extend(
+            form_body_parts.extend(
                 self._render_layout_fields_as_tabs(
                     layout_fields,
                     data,
@@ -115,16 +108,16 @@ class EnhancedFormRenderer:
                 )
             )
         elif layout == "tabbed":
-            form_parts.extend(
+            form_body_parts.extend(
                 self._render_tabbed_layout(fields, data, errors, required_fields, context)
             )
         elif layout == "side-by-side":
-            form_parts.extend(
+            form_body_parts.extend(
                 self._render_side_by_side_layout(fields, data, errors, required_fields, context)
             )
         else:
             for field_name, field_schema in fields:
-                form_parts.append(
+                form_body_parts.append(
                     self._render_field(
                         field_name,
                         field_schema,
@@ -137,14 +130,16 @@ class EnhancedFormRenderer:
                     )
                 )
 
-        if include_submit_button:
-            form_parts.append(self._render_submit_button())
+        submit_markup = self._render_submit_button() if include_submit_button else ""
 
-        form_parts.append(self._theme.close_form_tag())
+        form_markup = self._theme.render_form_wrapper(
+            form_attrs=form_attrs,
+            csrf_token=csrf_markup,
+            form_content="\n".join(form_body_parts),
+            submit_markup=submit_markup,
+        )
 
-        after_form = self._theme.after_form()
-        if after_form:
-            form_parts.append(after_form)
+        output_parts = [form_markup]
 
         has_model_list_fields = any(
             resolve_ui_element(field_schema) == "model_list" for _name, field_schema in fields
@@ -153,9 +148,9 @@ class EnhancedFormRenderer:
             from .model_list import ModelListRenderer
 
             list_renderer = ModelListRenderer(framework=self._model_list_framework())
-            form_parts.append(list_renderer.get_model_list_javascript())
+            output_parts.append(list_renderer.get_model_list_javascript())
 
-        return "\n".join(form_parts)
+        return "\n".join(output_parts)
 
     def render_form_fields_only(
         self,
@@ -225,10 +220,6 @@ class EnhancedFormRenderer:
 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, render_callable)
-
-    def _build_form_tag(self, attrs: Dict[str, Any]) -> str:
-        attr_strings = [f'{key}="{escape(str(value))}"' for key, value in attrs.items() if value is not None]
-        return f"<form {' '.join(attr_strings)}>"
 
     def _render_field(
         self,
