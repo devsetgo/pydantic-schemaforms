@@ -92,7 +92,7 @@ app.mount("/static", StaticFiles(directory=_base_dir / "img"), name="static")
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Home page showcasing all form examples."""
-    return templates.TemplateResponse("home.html", {
+    return templates.TemplateResponse(request, "home.html", {
         "request": request,
         "framework": "fastapi",
         "framework_name": "FastAPI",
@@ -124,7 +124,7 @@ async def login_get(request: Request, style: str = "bootstrap", data: str = None
 
     form_html = render_form_html(MinimalLoginForm, framework=style, form_data=form_data)
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Login - Simple Form",
         "description": "Demonstrates basic form fields and validation",
@@ -145,7 +145,7 @@ async def login_post(request: Request, style: str = "bootstrap"):
     result = handle_form_submission(MinimalLoginForm, form_dict)
     full_referer_path = create_refer_path(request)
     if result['success']:
-        return templates.TemplateResponse("success.html", {
+        return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Login Successful",
             "message": f"Welcome {result['data']['username']}!",
@@ -162,7 +162,7 @@ async def login_post(request: Request, style: str = "bootstrap"):
                                    form_data=form_dict,
                                    errors=result['errors'])
 
-        return templates.TemplateResponse("form.html", {
+        return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Login - Simple Form",
             "description": "Demonstrates basic form fields and validation",
@@ -204,7 +204,7 @@ async def register_get(request: Request, style: str = "bootstrap", data: str = N
 
     form_html = render_form_html(UserRegistrationForm, framework=style, form_data=form_data)
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "User Registration - Medium Form",
         "description": "Demonstrates multiple field types, icons, and validation",
@@ -231,7 +231,7 @@ async def register_post(request: Request, style: str = "bootstrap"):
     result = handle_form_submission(UserRegistrationForm, form_dict)
     full_referer_path = create_refer_path(request)
     if result['success']:
-        return templates.TemplateResponse("success.html", {
+        return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Registration Successful",
             "message": f"Welcome {result['data']['username']}! Your account has been created.",
@@ -248,7 +248,7 @@ async def register_post(request: Request, style: str = "bootstrap"):
                                    form_data=form_dict,
                                    errors=result['errors'])
 
-        return templates.TemplateResponse("form.html", {
+        return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "User Registration - Medium Form",
             "description": "Demonstrates multiple field types, icons, and validation",
@@ -296,7 +296,7 @@ async def showcase_get(request: Request, style: str = "bootstrap", data: str = N
 
     form_html = render_form_html(CompleteShowcaseForm, framework=style, form_data=form_data)
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Complete Showcase - Complex Form",
         "description": "Demonstrates ALL library features: model lists, sections, all input types",
@@ -316,7 +316,7 @@ async def showcase_post(request: Request, style: str = "bootstrap"):
     result = handle_form_submission(CompleteShowcaseForm, dict(form_data))
     full_referer_path = create_refer_path(request)
     if result['success']:
-        return templates.TemplateResponse("success.html", {
+        return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Showcase Form Submitted Successfully",
             "message": "All form data processed successfully!",
@@ -331,7 +331,7 @@ async def showcase_post(request: Request, style: str = "bootstrap"):
                                    framework=style,
                                    errors=result['errors'])
 
-        return templates.TemplateResponse("form.html", {
+        return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Complete Showcase - Complex Form",
             "description": "Demonstrates ALL library features: model lists, sections, all input types",
@@ -359,7 +359,7 @@ async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool 
 
     form_html = render_form_html(MinimalLoginForm, framework=style, form_data=existing_data)
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Edit Login - Pre-filled Example",
         "description": "Example of editing existing data",
@@ -386,7 +386,7 @@ async def edit_register_get(request: Request, style: str = "bootstrap", demo: bo
 
     form_html = render_form_html(UserRegistrationForm, framework=style, form_data=existing_data)
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Edit User Registration - Pre-filled Example",
         "description": "Example of editing existing user data",
@@ -455,7 +455,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             include_submit_button=True
         )
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Edit Layout Demo - Pre-filled Example",
         "description": "Example of editing existing layout data",
@@ -575,7 +575,7 @@ async def pets_get(request: Request, style: str = "bootstrap", data: str = None,
 
     form_html = render_form_html(PetRegistrationForm, framework=style, form_data=form_data, submit_url="/pets")
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Pet Registration - Dynamic Lists",
         "description": "Demonstrates pet registration with dynamic lists and owner information",
@@ -596,7 +596,7 @@ async def pets_post(request: Request, style: str = "bootstrap"):
     result = handle_form_submission(PetRegistrationForm, form_dict)
     full_referer_path = create_refer_path(request)
     if result['success']:
-        return templates.TemplateResponse("success.html", {
+        return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Pet Registration Successful",
             "message": f"Successfully registered pets for {result['data']['owner_name']}!",
@@ -621,7 +621,7 @@ async def pets_post(request: Request, style: str = "bootstrap"):
                                    errors=result['errors'],
                                    submit_url="/pets")
 
-        return templates.TemplateResponse("form.html", {
+        return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Pet Registration - Dynamic Lists",
             "description": "Demonstrates pet registration with dynamic lists and owner information",
@@ -708,7 +708,7 @@ async def layouts_get(request: Request, style: str = "bootstrap", data: str = No
             include_submit_button=True
         )
 
-    return templates.TemplateResponse("form.html", {
+    return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Layout Demonstration - All Types",
         "description": "Single form showcasing Vertical, Horizontal, Tabbed, and List layouts",
@@ -769,7 +769,7 @@ async def layouts_post(request: Request, style: str = "bootstrap"):
 
         structured_data = clean_dict(structured_data)
 
-        return templates.TemplateResponse("success.html", {
+        return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Layout Demo Submitted Successfully",
             "message": "All layout types processed successfully!",
@@ -802,7 +802,7 @@ async def layouts_post(request: Request, style: str = "bootstrap"):
                 include_submit_button=True
             )
 
-        return templates.TemplateResponse("form.html", {
+        return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Layout Demonstration - Error",
             "description": "Form submission failed",
@@ -897,7 +897,7 @@ async def general_submit_handler(request: Request):
 
         form_dict = dict(form_data)
         print(form_dict)
-        return templates.TemplateResponse("success.html", {
+        return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Form Submitted Successfully",
             "message": "Your form has been submitted successfully!",
@@ -908,7 +908,7 @@ async def general_submit_handler(request: Request):
         })
 
     except Exception as e:
-        return templates.TemplateResponse("500.html", {
+        return templates.TemplateResponse(request, "500.html", {
             "request": request,
             "error": str(e),
             "framework": "fastapi"

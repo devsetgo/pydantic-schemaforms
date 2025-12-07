@@ -116,6 +116,10 @@ class FormField:
         ui_schema = {k: v for k, v in ui_schema.items() if v is not None}
 
         # Create and return the underlying Pydantic Field
+        # Move any remaining kwargs to json_schema_extra to avoid deprecation warnings
+        final_schema = ui_schema.copy()
+        final_schema.update(kwargs)
+
         return PydanticField(
             default=default,
             alias=alias,
@@ -124,7 +128,7 @@ class FormField:
             examples=examples,
             exclude=exclude,
             discriminator=discriminator,
-            json_schema_extra=ui_schema,
+            json_schema_extra=final_schema,
             frozen=frozen,
             validate_default=validate_default,
             repr=repr,
@@ -140,7 +144,6 @@ class FormField:
             allow_inf_nan=allow_inf_nan,
             min_length=min_length,
             max_length=max_length,
-            **kwargs,
         )
 
     @classmethod
