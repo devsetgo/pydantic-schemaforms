@@ -70,15 +70,23 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 ## Recommended Next Steps
 
-1. **Suppress remaining expected deprecation warnings (Optional)** — The 8 remaining warnings are intentional (`form_layouts` deprecation notice and Pydantic JSON schema serialization hints). These can be suppressed in pytest config if noise becomes an issue, but they serve as migration guides for users.
+1. ✅ **Document unified validation engine (COMPLETED)** — Created comprehensive `docs/validation_guide.md` (787 lines) with:
+   - `ValidationResponse`, `FieldValidator`, `FormValidator`, and `ValidationSchema` API documentation
+   - Server-side validation patterns with `validate_form_data()` and custom rules
+   - Real-time HTMX validation with `LiveValidator` and `HTMXValidationConfig`
+   - Cross-field validation examples (age consent, password matching, conditional fields)
+   - Convenience validators (`create_email_validator()`, `create_password_strength_validator()`)
+   - Complete end-to-end sync + HTMX flow example with FastAPI endpoints and HTML templates
+   - Testing patterns and Pydantic v2 deprecation resolution notes
+   - References to layout-demo smoke test coverage and tab rendering verification
 
-2. **Field-level chrome routing (Optional)** — Help and error blocks for individual fields could route through `FormStyle` templates for complete consistency (deferred; form-level chrome now centralized).
+2. **Suppress remaining expected deprecation warnings (Optional)** — The 8 remaining warnings are intentional (`form_layouts` deprecation notice and Pydantic JSON schema serialization hints). These can be suppressed in pytest config if noise becomes an issue, but they serve as migration guides for users.
 
-3. **Version-aware style variants** — Define `FormStyle` variant descriptors (e.g., `"bootstrap:5"`, `"material:3"`) so framework upgrades are data-driven; enable plugin registration for third-party themes without renderer edits.
+3. **Field-level chrome routing (Optional)** — Help and error blocks for individual fields could route through `FormStyle` templates for complete consistency (deferred; form-level chrome now centralized).
 
-4. **Extension hooks for inputs/layouts** — Document and expose plugin entry points in `inputs.registry` and `layout_engine` so commercial/OSS components register without patching core.
+4. **Version-aware style variants** — Define `FormStyle` variant descriptors (e.g., `"bootstrap:5"`, `"material:3"`) so framework upgrades are data-driven; enable plugin registration for third-party themes without renderer edits.
 
-5. **Document unified validation engine** — Add short guide/examples showing how `ValidationResponse`, convenience validators, and `ValidationSchema.build_live_validator()` are used across sync + HTMX flows; include cross-field examples. Also document layout-demo smoke coverage, tab rendering fixes, and Pydantic v2 deprecation resolution.
+5. **Extension hooks for inputs/layouts** — Document and expose plugin entry points in `inputs.registry` and `layout_engine` so commercial/OSS components register without patching core.
 
 6. **Automated E2E coverage for layouts/async** — Extend test suite to include tabs, accordions, and async renderer paths; existing layout-demo smoke test now asserts initial tab content renders and tab buttons exist for Bootstrap/Material. Consider a headless browser pass if JS-driven tab switching needs to be explicitly exercised.
 
