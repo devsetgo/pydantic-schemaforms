@@ -46,6 +46,8 @@ def test_layout_demo_material_initial_tab_renders():
     body = resp.text
     # Material tabs use shared tab-panel with active class and display:block on first
     assert "tab-panel active" in body or "tab-panel  active" in body
+    # Tab buttons should have generic tab-button class for JS-less toggling
+    assert "tab-button" in body
     assert "Alex" in body
     assert "Personal Info" in body
 
