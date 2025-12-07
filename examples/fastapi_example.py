@@ -24,6 +24,8 @@ Layouts demonstrated:
 import os
 import sys
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -48,7 +50,9 @@ app = FastAPI(
     version="25.4.1b1"
 )
 
-templates = Jinja2Templates(directory="templates")
+_base_dir = Path(__file__).resolve().parent
+
+templates = Jinja2Templates(directory=_base_dir / "templates")
 
 # Add custom JSON filter that handles date objects
 def safe_json_filter(obj):
@@ -79,7 +83,7 @@ templates.env.filters['safe_json'] = safe_json_filter
 
 # Mount /static to serve images (for favicon, etc.)
 from fastapi.staticfiles import StaticFiles
-app.mount("/static", StaticFiles(directory="img"), name="static")
+app.mount("/static", StaticFiles(directory=_base_dir / "img"), name="static")
 
 # ================================
 # HOME PAGE - ALL EXAMPLES
