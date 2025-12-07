@@ -150,13 +150,21 @@ ${component_assets}
         layout_class = self._merge_classes(attrs)
         layout_style = self._merge_styles(attrs)
 
+        renderer = attrs.get("renderer")
+        theme = getattr(renderer, "theme", None) if renderer else None
+
         tab_ids = [f"tab-{i}" for i in range(len(self.tabs))]
 
         tab_buttons: List[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
+            button_template = FormTemplates.TAB_BUTTON
+            if theme:
+                tpl = getattr(theme.form_style.templates, "tab_button", None)
+                if tpl:
+                    button_template = tpl
             tab_buttons.append(
-                FormTemplates.TAB_BUTTON.render(
+                button_template.render(
                     active_class=" active" if is_active else "",
                     aria_selected="true" if is_active else "false",
                     tab_id=tab_id,
@@ -167,8 +175,13 @@ ${component_assets}
         tab_panels: List[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
+            panel_template = FormTemplates.TAB_PANEL
+            if theme:
+                tpl = getattr(theme.form_style.templates, "tab_panel", None)
+                if tpl:
+                    panel_template = tpl
             tab_panels.append(
-                FormTemplates.TAB_PANEL.render(
+                panel_template.render(
                     tab_id=tab_id,
                     active_class=" active" if is_active else "",
                     display_style="block" if is_active else "none",
@@ -177,8 +190,6 @@ ${component_assets}
                 )
             )
 
-        renderer = attrs.get("renderer")
-        theme = getattr(renderer, "theme", None) if renderer else None
         template = _DEFAULT_FORM_STYLE.templates.tab_layout
         assets = _DEFAULT_FORM_STYLE.assets.tab_assets
         if theme:
@@ -217,12 +228,20 @@ ${component_assets}
         layout_class = self._merge_classes(attrs)
         layout_style = self._merge_styles(attrs)
 
+        renderer = attrs.get("renderer")
+        theme = getattr(renderer, "theme", None) if renderer else None
+
         section_ids = [f"accordion-{i}" for i in range(len(self.sections))]
         accordion_sections: List[str] = []
         for _i, (section_id, section) in enumerate(zip(section_ids, self.sections, strict=False)):
             is_expanded = section.get("expanded", False)
+            section_template = FormTemplates.ACCORDION_SECTION
+            if theme:
+                tpl = getattr(theme.form_style.templates, "accordion_section", None)
+                if tpl:
+                    section_template = tpl
             accordion_sections.append(
-                FormTemplates.ACCORDION_SECTION.render(
+                section_template.render(
                     section_id=section_id,
                     expanded_class=" expanded" if is_expanded else "",
                     aria_expanded="true" if is_expanded else "false",
@@ -232,8 +251,6 @@ ${component_assets}
                 )
             )
 
-        renderer = attrs.get("renderer")
-        theme = getattr(renderer, "theme", None) if renderer else None
         template = _DEFAULT_FORM_STYLE.templates.accordion_layout
         assets = _DEFAULT_FORM_STYLE.assets.accordion_assets
         if theme:

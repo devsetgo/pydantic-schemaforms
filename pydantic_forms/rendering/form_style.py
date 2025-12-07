@@ -164,6 +164,142 @@ MATERIAL_LAYOUT_HELP_TEMPLATE = TemplateString(
 """
 )
 
+# Framework-specific tab/accordion templates
+BOOTSTRAP_TAB_LAYOUT_TEMPLATE = TemplateString(
+    """
+<div class="tab-layout nav-tabs-wrapper ${layout_class}" style="${layout_style}">
+    <ul class="nav nav-tabs" role="tablist">
+        ${tab_buttons}
+    </ul>
+    <div class="tab-content">
+        ${tab_panels}
+    </div>
+</div>
+${component_assets}
+"""
+)
+
+BOOTSTRAP_TAB_BUTTON_TEMPLATE = TemplateString(
+    """
+<li class="nav-item" role="presentation">
+    <button class="nav-link${active_class}"
+            id="${tab_id}-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#${tab_id}"
+            type="button"
+            role="tab"
+            aria-controls="${tab_id}"
+            aria-selected="${aria_selected}">
+        ${title}
+    </button>
+</li>
+"""
+)
+
+BOOTSTRAP_TAB_PANEL_TEMPLATE = TemplateString(
+    """
+<div class="tab-pane fade${active_class}"
+     id="${tab_id}"
+     role="tabpanel"
+     aria-labelledby="${tab_id}-tab">
+    ${content}
+</div>
+"""
+)
+
+BOOTSTRAP_ACCORDION_LAYOUT_TEMPLATE = TemplateString(
+    """
+<div class="accordion ${layout_class}" id="${layout_id}" style="${layout_style}">
+    ${sections}
+</div>
+${component_assets}
+"""
+)
+
+BOOTSTRAP_ACCORDION_SECTION_TEMPLATE = TemplateString(
+    """
+<div class="accordion-item">
+    <h2 class="accordion-header" id="${section_id}-header">
+        <button class="accordion-button${expanded_class}" type="button" data-bs-toggle="collapse" data-bs-target="#${section_id}"
+            aria-expanded="${aria_expanded}" aria-controls="${section_id}">
+            ${title}
+        </button>
+    </h2>
+    <div id="${section_id}" class="accordion-collapse collapse${expanded_class}" aria-labelledby="${section_id}-header">
+        <div class="accordion-body">${content}</div>
+    </div>
+</div>
+"""
+)
+
+PLAIN_TAB_LAYOUT_TEMPLATE = TemplateString(
+    """
+<div class="tab-layout ${layout_class}" style="${layout_style}">
+    <div class="tab-navigation" role="tablist">${tab_buttons}</div>
+    <div class="tab-content">${tab_panels}</div>
+</div>
+${component_assets}
+"""
+)
+
+PLAIN_TAB_BUTTON_TEMPLATE = FormTemplates.TAB_BUTTON
+PLAIN_TAB_PANEL_TEMPLATE = FormTemplates.TAB_PANEL
+
+PLAIN_ACCORDION_LAYOUT_TEMPLATE = TemplateString(
+    """
+<div class="accordion-layout ${layout_class}" style="${layout_style}">
+    ${sections}
+</div>
+${component_assets}
+"""
+)
+
+PLAIN_ACCORDION_SECTION_TEMPLATE = FormTemplates.ACCORDION_SECTION
+
+MATERIAL_TAB_LAYOUT_TEMPLATE = TemplateString(
+    """
+<div class="md-tab-layout ${layout_class}" style="${layout_style}">
+    <div class="md-tab-navigation" role="tablist">${tab_buttons}</div>
+    <div class="md-tab-content">${tab_panels}</div>
+</div>
+${component_assets}
+"""
+)
+
+MATERIAL_TAB_BUTTON_TEMPLATE = TemplateString(
+    """
+<button class="md-tab-button${active_class}" type="button" role="tab"
+        aria-selected="${aria_selected}" aria-controls="${tab_id}" onclick="switchTab('${tab_id}', this)">
+    ${title}
+</button>
+"""
+)
+
+MATERIAL_TAB_PANEL_TEMPLATE = FormTemplates.TAB_PANEL
+
+MATERIAL_ACCORDION_LAYOUT_TEMPLATE = TemplateString(
+    """
+<div class="md-accordion-layout ${layout_class}" style="${layout_style}">
+    ${sections}
+</div>
+${component_assets}
+"""
+)
+
+MATERIAL_ACCORDION_SECTION_TEMPLATE = TemplateString(
+    """
+<div class="md-accordion-section">
+    <button class="md-accordion-header${expanded_class}" aria-expanded="${aria_expanded}"
+            aria-controls="${section_id}" onclick="toggleAccordion('${section_id}', this)">
+        ${title}
+    </button>
+    <div id="${section_id}" class="md-accordion-content" style="display: ${display_style};">
+        ${content}
+    </div>
+</div>
+"""
+)
+
 MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
         """
 <section class="md-model-list-wrapper" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
@@ -222,7 +358,10 @@ class FormStyleTemplates:
 
     form_wrapper: TemplateString = FormTemplates.FORM_WRAPPER
     tab_layout: TemplateString = FormTemplates.TAB_LAYOUT
+    tab_button: TemplateString = FormTemplates.TAB_BUTTON
+    tab_panel: TemplateString = FormTemplates.TAB_PANEL
     accordion_layout: TemplateString = FormTemplates.ACCORDION_LAYOUT
+    accordion_section: TemplateString = FormTemplates.ACCORDION_SECTION
     layout_section: TemplateString = DEFAULT_LAYOUT_SECTION_TEMPLATE
     layout_help: TemplateString = DEFAULT_LAYOUT_HELP_TEMPLATE
     model_list_container: TemplateString = DEFAULT_MODEL_LIST_CONTAINER_TEMPLATE
@@ -286,7 +425,18 @@ _DEFAULT_STYLE = FormStyle(
 )
 
 register_form_style(_DEFAULT_STYLE)
-register_form_style(FormStyle(framework="bootstrap"))
+register_form_style(
+    FormStyle(
+        framework="bootstrap",
+        templates=FormStyleTemplates(
+            tab_layout=BOOTSTRAP_TAB_LAYOUT_TEMPLATE,
+            tab_button=BOOTSTRAP_TAB_BUTTON_TEMPLATE,
+            tab_panel=BOOTSTRAP_TAB_PANEL_TEMPLATE,
+            accordion_layout=BOOTSTRAP_ACCORDION_LAYOUT_TEMPLATE,
+            accordion_section=BOOTSTRAP_ACCORDION_SECTION_TEMPLATE,
+        ),
+    )
+)
 
 register_form_style(
     FormStyle(
@@ -294,6 +444,11 @@ register_form_style(
         templates=FormStyleTemplates(
             layout_section=PLAIN_LAYOUT_SECTION_TEMPLATE,
             layout_help=PLAIN_LAYOUT_HELP_TEMPLATE,
+            tab_layout=PLAIN_TAB_LAYOUT_TEMPLATE,
+            tab_button=PLAIN_TAB_BUTTON_TEMPLATE,
+            tab_panel=PLAIN_TAB_PANEL_TEMPLATE,
+            accordion_layout=PLAIN_ACCORDION_LAYOUT_TEMPLATE,
+            accordion_section=PLAIN_ACCORDION_SECTION_TEMPLATE,
             model_list_container=PLAIN_MODEL_LIST_CONTAINER_TEMPLATE,
             model_list_item=PLAIN_MODEL_LIST_ITEM_TEMPLATE,
             model_list_help=PLAIN_MODEL_LIST_HELP_TEMPLATE,
@@ -306,6 +461,11 @@ register_form_style(
 _MATERIAL_TEMPLATES = FormStyleTemplates(
     layout_section=MATERIAL_LAYOUT_SECTION_TEMPLATE,
     layout_help=MATERIAL_LAYOUT_HELP_TEMPLATE,
+    tab_layout=MATERIAL_TAB_LAYOUT_TEMPLATE,
+    tab_button=MATERIAL_TAB_BUTTON_TEMPLATE,
+    tab_panel=MATERIAL_TAB_PANEL_TEMPLATE,
+    accordion_layout=MATERIAL_ACCORDION_LAYOUT_TEMPLATE,
+    accordion_section=MATERIAL_ACCORDION_SECTION_TEMPLATE,
     model_list_container=MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE,
     model_list_item=MATERIAL_MODEL_LIST_ITEM_TEMPLATE,
     model_list_help=MATERIAL_MODEL_LIST_HELP_TEMPLATE,

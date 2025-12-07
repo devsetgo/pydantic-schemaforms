@@ -198,3 +198,51 @@ def test_model_list_respects_custom_form_style_templates() -> None:
 
     button_html = renderer._theme.render_submit_button("ignored-class")
     assert "custom-submit" in button_html
+
+
+def test_tab_layout_uses_form_style_templates() -> None:
+    custom_templates = FormStyleTemplates(
+        tab_layout=TemplateString("<div class='custom-tab-layout'>${tab_buttons}${tab_panels}</div>"),
+        tab_button=TemplateString("<button class='custom-tab-btn'>${title}</button>"),
+        tab_panel=TemplateString("<section class='custom-tab-panel'>${content}</section>"),
+    )
+
+    register_form_style(FormStyle(framework="tab-test", templates=custom_templates))
+
+    class _TabTheme(RendererTheme):
+        name = "tab-test"
+
+    stub_renderer = _StubRenderer(_TabTheme())
+    layout = TabLayout([
+        {"title": "A", "content": "Alpha"},
+        {"title": "B", "content": "Beta"},
+    ])
+
+    html = layout.render(renderer=stub_renderer, framework="bootstrap")
+
+    assert "custom-tab-layout" in html
+    assert "custom-tab-btn" in html
+    assert "custom-tab-panel" in html
+
+
+def test_accordion_layout_uses_form_style_templates() -> None:
+    custom_templates = FormStyleTemplates(
+        accordion_layout=TemplateString("<div class='custom-accordion'>${sections}</div>"),
+        accordion_section=TemplateString("<article class='custom-acc-section'>${title}${content}</article>"),
+    )
+
+    register_form_style(FormStyle(framework="acc-test", templates=custom_templates))
+
+    class _AccTheme(RendererTheme):
+        name = "acc-test"
+
+    stub_renderer = _StubRenderer(_AccTheme())
+    layout = AccordionLayout([
+        {"title": "Q1", "content": "A1"},
+        {"title": "Q2", "content": "A2"},
+    ])
+
+    html = layout.render(renderer=stub_renderer, framework="bootstrap")
+
+    assert "custom-accordion" in html
+    assert "custom-acc-section" in html
