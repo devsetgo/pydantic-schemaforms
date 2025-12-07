@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from ..layout_base import BaseLayout
 from ..templates import FormTemplates
 from .context import RenderContext
-from .form_style import get_form_style
+from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..enhanced_renderer import EnhancedFormRenderer
@@ -180,10 +180,16 @@ ${component_assets}
                 tpl = getattr(theme.form_style.templates, "tab_panel", None)
                 if tpl:
                     panel_template = tpl
+
+            # Bootstrap tab panels need `show active` to display initial content
+            active_class = " active"
+            if panel_template is BOOTSTRAP_TAB_PANEL_TEMPLATE:  # type: ignore[name-defined]
+                active_class = " show active"
+
             tab_panels.append(
                 panel_template.render(
                     tab_id=tab_id,
-                    active_class=" active" if is_active else "",
+                    active_class=active_class if is_active else "",
                     display_style="block" if is_active else "none",
                     aria_hidden="false" if is_active else "true",
                     content=tab["content"],

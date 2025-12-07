@@ -9,12 +9,16 @@ Requires: Python 3.14+ (uses native template strings)
 
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from pydantic import BaseModel, ValidationError
 
 from .templates import TemplateString
-from .validation import ValidationResponse
+from .validation import (
+    ValidationResponse,
+    create_email_validator,
+    create_password_strength_validator,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from .validation import FieldValidator, ValidationSchema
@@ -477,9 +481,6 @@ async def validate_field(field_name: str, request: ValidationRequest):
 
         return self.htmx_script.render(config_json=config_json)
 
-
-# Re-export convenience functions from validation module for convenience
-from .validation import create_email_validator, create_password_strength_validator
 
 __all__ = [
     "ValidationResponse",

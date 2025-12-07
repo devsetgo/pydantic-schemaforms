@@ -11,7 +11,7 @@ from pydantic_forms.rendering.form_style import (
 from pydantic_forms.rendering.layout_engine import AccordionLayout, TabLayout
 from pydantic_forms.rendering.themes import RendererTheme
 from pydantic_forms.schema_form import FormModel
-from pydantic_forms.templates import FormTemplates, TemplateString
+from pydantic_forms.templates import TemplateString
 
 
 class _StubTheme(RendererTheme):

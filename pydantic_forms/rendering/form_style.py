@@ -258,9 +258,9 @@ PLAIN_ACCORDION_SECTION_TEMPLATE = FormTemplates.ACCORDION_SECTION
 
 MATERIAL_TAB_LAYOUT_TEMPLATE = TemplateString(
     """
-<div class="md-tab-layout ${layout_class}" style="${layout_style}">
-    <div class="md-tab-navigation" role="tablist">${tab_buttons}</div>
-    <div class="md-tab-content">${tab_panels}</div>
+<div class="tab-layout md-tab-layout ${layout_class}" style="${layout_style}">
+    <div class="tab-navigation md-tab-navigation" role="tablist">${tab_buttons}</div>
+    <div class="tab-content md-tab-content">${tab_panels}</div>
 </div>
 ${component_assets}
 """
@@ -268,7 +268,7 @@ ${component_assets}
 
 MATERIAL_TAB_BUTTON_TEMPLATE = TemplateString(
     """
-<button class="md-tab-button${active_class}" type="button" role="tab"
+<button class="tab-button md-tab-button${active_class}" type="button" role="tab"
         aria-selected="${aria_selected}" aria-controls="${tab_id}" onclick="switchTab('${tab_id}', this)">
     ${title}
 </button>

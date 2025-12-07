@@ -28,6 +28,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # Add the parent directory to the path to import our library
@@ -82,7 +83,6 @@ templates.env.filters['safe_json'] = safe_json_filter
 
 
 # Mount /static to serve images (for favicon, etc.)
-from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory=_base_dir / "img"), name="static")
 
 # ================================
