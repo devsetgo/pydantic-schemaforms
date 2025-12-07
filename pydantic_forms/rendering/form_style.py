@@ -321,14 +321,16 @@ MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
 
 MATERIAL_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
         """
-<section class="md-model-card" data-index="${index}" data-field-name="${field_name}">
-    <header class="md-model-card__header">
-        <h6 class="mdc-typography--subtitle2 mb-0">${model_label} #${display_index}</h6>
-        <button type="button" class="md-icon-button remove-item-btn" data-index="${index}" aria-label="${remove_button_aria_label}">
-            <span class="material-icons">delete</span>
-        </button>
-    </header>
-    <div class="md-model-card__body">${body_html}</div>
+<section class="md-model-card mdc-card mdc-card--outlined" data-index="${index}" data-field-name="${field_name}">
+    <div class="mdc-card__primary-action">
+        <header class="md-model-card__header">
+            <h6 class="mdc-typography--subtitle2 mb-0">${model_label} #${display_index}</h6>
+            <button type="button" class="md-icon-button mdc-icon-button remove-item-btn" data-index="${index}" aria-label="${remove_button_aria_label}">
+                <span class="material-icons">delete</span>
+            </button>
+        </header>
+        <div class="md-model-card__body">${body_html}</div>
+    </div>
 </section>
 """
 )

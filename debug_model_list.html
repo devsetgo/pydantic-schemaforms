@@ -1,8 +1,7 @@
-<div class="mb-3">
-    <label class="form-label fw-bold">
-        Your Pets <span class="text-danger">*</span>
-    </label>
-    <div class="model-list-container" data-field-name="pets"          data-min-items="1" data-max-items="10">
+
+<div class="mb-3 model-list-block" data-field-name="pets" data-min-items="1" data-max-items="10">
+    <label class="form-label fw-bold">Your Pets <span class="text-danger">*</span></label>
+    <div class="model-list-container" data-field-name="pets" data-min-items="1" data-max-items="10">
         <div class="model-list-items" id="pets-items">
 <div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="0" data-field-name="pets">
     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -10,9 +9,7 @@
             <i class="bi bi-card-list"></i>
             Pet #1
         </h6>
-        <button type="button"
-                class="btn btn-outline-danger btn-sm remove-item-btn"
-                data-index="0" aria-label="Remove this item">
+        <button type="button" class="btn btn-outline-danger btn-sm remove-item-btn" data-index="0" aria-label="Remove this item">
             <i class="bi bi-trash"></i>
         </button>
     </div>
@@ -100,7 +97,7 @@
 
                 <div class="col-md-6">
                     <div class="mb-3"><label for="pets[0].last_vet_visit"><i class="bi bi-calendar-date"></i> Last Vet Visit</label>
-<div class="birthdate-input-group"><input name="pets[0].last_vet_visit" id="pets[0].last_vet_visit" class="form-control" value="2024-11-01" max="2025-11-27" min="1875-01-01" type="date" />
+<div class="birthdate-input-group"><input name="pets[0].last_vet_visit" id="pets[0].last_vet_visit" class="form-control" value="2024-11-01" max="2025-12-07" min="1875-01-01" type="date" />
             <div class="age-display" id="pets[0].last_vet_visit_age" style="margin-top: 5px; font-size: 0.9em; color: #666;"></div>
             <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -139,14 +136,15 @@
                 </div>
 </div>
 </div>
-        </div>
+</div>
         <div class="model-list-controls mt-2">
-            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn"                     data-target="pets">
-                <i class="bi bi-plus-circle"></i>                 Add Your Pets
+            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" data-target="pets">
+                <i class="bi bi-plus-circle"></i> Add Your Pets
             </button>
         </div>
     </div>
-    <div class="form-text text-muted">
-                <i class="bi bi-info-circle"></i> Add information about each of your pets
-            </div>
+    
+<div class="form-text text-muted model-list-help">Add information about each of your pets</div>
+
+    
 </div>
