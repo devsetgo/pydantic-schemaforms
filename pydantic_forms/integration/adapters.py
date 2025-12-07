@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from .builder import FormBuilder
 from .async_support import handle_async_form
+from .builder import FormBuilder
 from .sync import handle_sync_form
 
 

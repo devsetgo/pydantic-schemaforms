@@ -24,7 +24,12 @@ from .utils import (
 from .vue import VueFormulateIntegration
 
 if TYPE_CHECKING:  # pragma: no cover - import-time only for type hints
-    from .frameworks import FormIntegration, handle_async_form, handle_sync_form, normalize_form_data
+    from .frameworks import (
+        FormIntegration,
+        handle_async_form,
+        handle_sync_form,
+        normalize_form_data,
+    )
 
 __all__ = [
     "FormBuilder",

@@ -5,10 +5,10 @@ from __future__ import annotations
 from html import escape
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
+from ..layout_base import BaseLayout
+from ..templates import FormTemplates
 from .context import RenderContext
 from .form_style import get_form_style
-from ..templates import FormTemplates
-from ..layout_base import BaseLayout
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..enhanced_renderer import EnhancedFormRenderer
@@ -612,13 +612,21 @@ class LayoutEngine:
         if form_name:
             try:
                 if form_name == "PersonalInfoForm":
-                    from examples.shared_models import PersonalInfoForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 elif form_name == "ContactInfoForm":
-                    from examples.shared_models import ContactInfoForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 elif form_name == "PreferencesForm":
-                    from examples.shared_models import PreferencesForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        PreferencesForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 elif form_name == "TaskListForm":
-                    from examples.shared_models import TaskListForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 else:  # pragma: no cover - exhaustive safety
                     raise ImportError(f"Unknown form: {form_name}")
 
@@ -763,13 +771,21 @@ class LayoutEngine:
         if form_name:
             try:
                 if form_name == "PersonalInfoForm":
-                    from examples.shared_models import PersonalInfoForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 elif form_name == "ContactInfoForm":
-                    from examples.shared_models import ContactInfoForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 elif form_name == "PreferencesForm":
-                    from examples.shared_models import PreferencesForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        PreferencesForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 elif form_name == "TaskListForm":
-                    from examples.shared_models import TaskListForm as FormClass  # pylint: disable=import-outside-toplevel
+                    from examples.shared_models import (
+                        TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
+                    )
                 else:
                     raise ImportError(f"Unknown form: {form_name}")
 

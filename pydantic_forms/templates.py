@@ -7,9 +7,9 @@ native string.templatelib. No backward compatibility is provided.
 Requires: Python 3.14+
 """
 
-from collections import OrderedDict
 import string
 import string.templatelib
+from collections import OrderedDict
 from threading import RLock
 from typing import Any, Dict, Optional
 

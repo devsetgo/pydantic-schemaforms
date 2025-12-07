@@ -5,10 +5,8 @@ This module maintains compatibility with existing code while using the enhanced 
 
 from typing import Any, Dict, Optional, Type, Union
 
-from .enhanced_renderer import (
-    SchemaFormValidationError,
-    render_form_html as _core_render_form_html,
-)
+from .enhanced_renderer import SchemaFormValidationError
+from .enhanced_renderer import render_form_html as _core_render_form_html
 from .schema_form import FormModel
 
 

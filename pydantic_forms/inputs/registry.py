@@ -5,7 +5,13 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Dict, Iterable, List, Set, Tuple, Type
 
-from . import datetime_inputs, numeric_inputs, selection_inputs, specialized_inputs, text_inputs  # noqa: F401
+from . import (  # noqa: F401
+    datetime_inputs,
+    numeric_inputs,
+    selection_inputs,
+    specialized_inputs,
+    text_inputs,
+)
 from .base import BaseInput
 
 

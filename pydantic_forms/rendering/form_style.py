@@ -30,6 +30,59 @@ DEFAULT_LAYOUT_HELP_TEMPLATE = TemplateString(
 """
 )
 
+DEFAULT_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
+    """
+<div class="mb-3 model-list-block" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
+    <label class="form-label fw-bold">${label}${required_indicator}</label>
+    <div class="model-list-container" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
+        <div class="model-list-items" id="${items_id}">${items_html}</div>
+        <div class="model-list-controls mt-2">
+            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" data-target="${field_name}">
+                <i class="bi bi-plus-circle"></i> ${add_button_label}
+            </button>
+        </div>
+    </div>
+    ${help_html}
+    ${error_html}
+</div>
+"""
+)
+
+DEFAULT_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
+    """
+<div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="${index}" data-field-name="${field_name}">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="mb-0 text-primary">
+            <i class="bi bi-card-list"></i>
+            ${model_label} #${display_index}
+        </h6>
+        <button type="button" class="btn btn-outline-danger btn-sm remove-item-btn" data-index="${index}" aria-label="${remove_button_aria_label}">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+    ${body_html}
+</div>
+"""
+)
+
+DEFAULT_MODEL_LIST_HELP_TEMPLATE = TemplateString(
+    """
+<div class="form-text text-muted model-list-help">${help_text}</div>
+"""
+)
+
+DEFAULT_MODEL_LIST_ERROR_TEMPLATE = TemplateString(
+    """
+<div class="invalid-feedback d-block model-list-error">${error_text}</div>
+"""
+)
+
+DEFAULT_SUBMIT_BUTTON_TEMPLATE = TemplateString(
+    """
+<button type="submit" class="${button_class}">${submit_label}</button>
+"""
+)
+
 PLAIN_LAYOUT_SECTION_TEMPLATE = TemplateString(
     """
 <section class="layout-field-section">
@@ -45,6 +98,47 @@ PLAIN_LAYOUT_SECTION_TEMPLATE = TemplateString(
 PLAIN_LAYOUT_HELP_TEMPLATE = TemplateString(
     """
 <p class="layout-field-help">${help_text}</p>
+"""
+)
+
+PLAIN_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
+    """
+<div class="model-list-block" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
+    <div class="model-list-items" id="${items_id}">${items_html}</div>
+    <button type="button" class="add-item-btn" data-target="${field_name}">${add_button_label}</button>
+    ${help_html}
+    ${error_html}
+</div>
+"""
+)
+
+PLAIN_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
+    """
+<div class="model-list-item" data-index="${index}" data-field-name="${field_name}">
+    <div class="model-list-header">
+        <span>${model_label} #${display_index}</span>
+        <button type="button" class="remove-item-btn" data-index="${index}" aria-label="${remove_button_aria_label}">Remove</button>
+    </div>
+    ${body_html}
+</div>
+"""
+)
+
+PLAIN_MODEL_LIST_HELP_TEMPLATE = TemplateString(
+    """
+<div class="model-list-help">${help_text}</div>
+"""
+)
+
+PLAIN_MODEL_LIST_ERROR_TEMPLATE = TemplateString(
+    """
+<div class="model-list-error">${error_text}</div>
+"""
+)
+
+PLAIN_SUBMIT_BUTTON_TEMPLATE = TemplateString(
+    """
+<button type="submit">${submit_label}</button>
 """
 )
 
@@ -70,6 +164,57 @@ MATERIAL_LAYOUT_HELP_TEMPLATE = TemplateString(
 """
 )
 
+MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
+        """
+<section class="md-model-list-wrapper" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
+    <label class="md-field-label">${label}${required_indicator}</label>
+    <div class="model-list-container md-model-list-container" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
+        <div class="model-list-items md-model-list-items" id="${items_id}">${items_html}</div>
+        <div class="md-model-list-actions">
+            <button type="button" class="md-button md-button-tonal add-item-btn" data-target="${field_name}">
+                <span class="material-icons md-button__icon">add</span>
+                <span class="md-button__label">${add_button_label}</span>
+            </button>
+        </div>
+    </div>
+    ${help_html}
+    ${error_html}
+</section>
+"""
+)
+
+MATERIAL_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
+        """
+<section class="md-model-card" data-index="${index}" data-field-name="${field_name}">
+    <header class="md-model-card__header">
+        <h6 class="mdc-typography--subtitle2 mb-0">${model_label} #${display_index}</h6>
+        <button type="button" class="md-icon-button remove-item-btn" data-index="${index}" aria-label="${remove_button_aria_label}">
+            <span class="material-icons">delete</span>
+        </button>
+    </header>
+    <div class="md-model-card__body">${body_html}</div>
+</section>
+"""
+)
+
+MATERIAL_MODEL_LIST_HELP_TEMPLATE = TemplateString(
+        """
+<p class="md-help-text">${help_text}</p>
+"""
+)
+
+MATERIAL_MODEL_LIST_ERROR_TEMPLATE = TemplateString(
+        """
+<p class="md-error-text">${error_text}</p>
+"""
+)
+
+MATERIAL_SUBMIT_BUTTON_TEMPLATE = TemplateString(
+        """
+<button type="submit" class="md-button md-button-filled">${submit_label}</button>
+"""
+)
+
 
 @dataclass(frozen=True)
 class FormStyleTemplates:
@@ -80,6 +225,11 @@ class FormStyleTemplates:
     accordion_layout: TemplateString = FormTemplates.ACCORDION_LAYOUT
     layout_section: TemplateString = DEFAULT_LAYOUT_SECTION_TEMPLATE
     layout_help: TemplateString = DEFAULT_LAYOUT_HELP_TEMPLATE
+    model_list_container: TemplateString = DEFAULT_MODEL_LIST_CONTAINER_TEMPLATE
+    model_list_item: TemplateString = DEFAULT_MODEL_LIST_ITEM_TEMPLATE
+    model_list_help: TemplateString = DEFAULT_MODEL_LIST_HELP_TEMPLATE
+    model_list_error: TemplateString = DEFAULT_MODEL_LIST_ERROR_TEMPLATE
+    submit_button: TemplateString = DEFAULT_SUBMIT_BUTTON_TEMPLATE
 
 
 @dataclass(frozen=True)
@@ -144,6 +294,11 @@ register_form_style(
         templates=FormStyleTemplates(
             layout_section=PLAIN_LAYOUT_SECTION_TEMPLATE,
             layout_help=PLAIN_LAYOUT_HELP_TEMPLATE,
+            model_list_container=PLAIN_MODEL_LIST_CONTAINER_TEMPLATE,
+            model_list_item=PLAIN_MODEL_LIST_ITEM_TEMPLATE,
+            model_list_help=PLAIN_MODEL_LIST_HELP_TEMPLATE,
+            model_list_error=PLAIN_MODEL_LIST_ERROR_TEMPLATE,
+            submit_button=PLAIN_SUBMIT_BUTTON_TEMPLATE,
         ),
     )
 )
@@ -151,6 +306,11 @@ register_form_style(
 _MATERIAL_TEMPLATES = FormStyleTemplates(
     layout_section=MATERIAL_LAYOUT_SECTION_TEMPLATE,
     layout_help=MATERIAL_LAYOUT_HELP_TEMPLATE,
+    model_list_container=MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE,
+    model_list_item=MATERIAL_MODEL_LIST_ITEM_TEMPLATE,
+    model_list_help=MATERIAL_MODEL_LIST_HELP_TEMPLATE,
+    model_list_error=MATERIAL_MODEL_LIST_ERROR_TEMPLATE,
+    submit_button=MATERIAL_SUBMIT_BUTTON_TEMPLATE,
 )
 
 register_form_style(

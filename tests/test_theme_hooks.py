@@ -3,9 +3,15 @@
 from typing import Dict, Optional, Type
 
 from pydantic_forms.model_list import ModelListRenderer
+from pydantic_forms.rendering.form_style import (
+    FormStyle,
+    FormStyleTemplates,
+    register_form_style,
+)
 from pydantic_forms.rendering.layout_engine import AccordionLayout, TabLayout
 from pydantic_forms.rendering.themes import RendererTheme
 from pydantic_forms.schema_form import FormModel
+from pydantic_forms.templates import FormTemplates, TemplateString
 
 
 class _StubTheme(RendererTheme):
@@ -121,3 +127,74 @@ def test_model_list_renderer_delegates_container_to_theme() -> None:
     assert "Add Pets" in html  # comes from add_button_label argument
     assert "custom-item" in html
     assert "item-body" in html
+
+
+def test_model_list_uses_form_style_templates() -> None:
+    renderer = ModelListRenderer(framework="bootstrap")
+
+    html = renderer.render_model_list(
+        field_name="pets",
+        label="Pets",
+        model_class=_StubModel,
+        values=[{"name": "Rex"}],
+        min_items=0,
+        max_items=5,
+    )
+
+    assert "model-list-block" in html
+    assert "model-list-items" in html
+    assert "add-item-btn" in html
+
+
+def test_model_list_respects_custom_form_style_templates() -> None:
+    custom_templates = FormStyleTemplates(
+        model_list_container=TemplateString(
+            "<div class='mlc' data-name='${field_name}'>${items_html}${help_html}${error_html}</div>"
+        ),
+        model_list_item=TemplateString(
+            "<div class='mli' data-idx='${index}'>${body_html}</div>"
+        ),
+        model_list_help=TemplateString("<span class='ml-help'>${help_text}</span>"),
+        model_list_error=TemplateString("<span class='ml-err'>${error_text}</span>"),
+        submit_button=TemplateString("<button class='custom-submit'>${submit_label}</button>"),
+        # inherit defaults for other templates
+    )
+
+    register_form_style(
+        FormStyle(
+            framework="custom-style",
+            templates=custom_templates,
+        )
+    )
+
+    class _CustomTheme(RendererTheme):
+        name = "custom-style"
+
+    class _CustomListRenderer(ModelListRenderer):
+        def __init__(self) -> None:
+            super().__init__(framework="custom-style")
+            self._theme = _CustomTheme()
+
+        def _resolve_theme(self) -> RendererTheme:  # type: ignore[override]
+            return self._theme
+
+    renderer = _CustomListRenderer()
+
+    html = renderer.render_model_list(
+        field_name="pets",
+        label="Pets",
+        model_class=_StubModel,
+        values=[{"name": "Rex"}],
+        help_text="Helpful",
+        error="Oops",
+        min_items=0,
+        max_items=5,
+    )
+
+    assert "mlc" in html
+    assert "mli" in html
+    assert "ml-help" in html
+    assert "ml-err" in html
+
+    button_html = renderer._theme.render_submit_button("ignored-class")
+    assert "custom-submit" in button_html

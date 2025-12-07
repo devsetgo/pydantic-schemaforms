@@ -5,9 +5,9 @@ from __future__ import annotations
 from html import escape
 from typing import Dict, Optional, Type
 
-from .frameworks import get_framework_config
-from .form_style import FormStyle, get_form_style
 from ..templates import TemplateString
+from .form_style import FormStyle, get_form_style
+from .frameworks import get_framework_config
 
 __all__ = [
     "RendererTheme",
@@ -98,10 +98,11 @@ class RendererTheme:
 
     def render_submit_button(self, button_class: str) -> str:
         """Return HTML for the submit button."""
-
-        label = escape(self.submit_label)
-        class_attr = f' class="{button_class}"' if button_class else ""
-        return f'<button type="submit"{class_attr}>{label}</button>'
+        template = self.form_style.templates.submit_button
+        return template.render(
+            submit_label=escape(self.submit_label),
+            button_class=escape(button_class) if button_class else "",
+        )
 
     # --- Framework-specific extension hooks -------------------------------------------------
     def form_class(self) -> str:
@@ -168,56 +169,27 @@ class RendererTheme:
         add_button_label: str,
     ) -> str:
         """Render framework-aware markup for schema-driven model lists."""
-
+        templates = self.form_style.templates
         required_indicator = ' <span class="text-danger">*</span>' if is_required else ""
-        safe_field_name = escape(field_name, quote=True)
-        items_container_id = escape(f"{field_name}-items", quote=True)
-        add_button_target = escape(field_name, quote=True)
-        help_block = (
-            f'<div class="form-text text-muted">\n                <i class="bi bi-info-circle"></i> {escape(help_text)}\n            </div>'
-            if help_text
-            else ""
+        help_html = (
+            templates.model_list_help.render(help_text=escape(help_text)) if help_text else ""
         )
-        error_block = (
-            f'<div class="invalid-feedback d-block">\n                <i class="bi bi-exclamation-triangle"></i> {escape(error)}\n            </div>'
-            if error
-            else ""
+        error_html = (
+            templates.model_list_error.render(error_text=escape(error)) if error else ""
         )
 
-        html_parts = [
-            '<div class="mb-3">',
-            '    <label class="form-label fw-bold">',
-            f'        {escape(label)}{required_indicator}',
-            '    </label>',
-            f'    <div class="model-list-container" data-field-name="{safe_field_name}" '
-            f'         data-min-items="{min_items}" data-max-items="{max_items}">',
-            f'        <div class="model-list-items" id="{items_container_id}">',
-        ]
-
-        if items_html:
-            html_parts.append(items_html)
-
-        html_parts.extend(
-            [
-                '        </div>',
-                '        <div class="model-list-controls mt-2">',
-                f'            <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" '
-                f'                    data-target="{add_button_target}">',
-                '                <i class="bi bi-plus-circle"></i> '
-                f'                {escape(add_button_label)}',
-                '            </button>',
-                '        </div>',
-                '    </div>',
-            ]
+        return templates.model_list_container.render(
+            field_name=escape(field_name, quote=True),
+            label=escape(label) if label else "",
+            required_indicator=required_indicator,
+            min_items=str(min_items),
+            max_items=str(max_items),
+            items_id=escape(f"{field_name}-items", quote=True),
+            items_html=items_html,
+            add_button_label=escape(add_button_label),
+            help_html=help_html,
+            error_html=error_html,
         )
-
-        if help_block:
-            html_parts.append(f'    {help_block}')
-        if error_block:
-            html_parts.append(f'    {error_block}')
-
-        html_parts.append('</div>')
-        return "\n".join(html_parts)
 
     def render_model_list_item(
         self,
@@ -229,29 +201,14 @@ class RendererTheme:
         remove_button_aria_label: str,
     ) -> str:
         """Render a single model list item wrapper."""
-
-        safe_label = escape(model_label)
-        safe_field_name = escape(field_name, quote=True)
-        safe_remove_label = escape(remove_button_aria_label)
-
-        return "\n".join(
-            [
-                f'<div class="model-list-item border rounded p-3 mb-2 bg-light" '
-                f'data-index="{index}" data-field-name="{safe_field_name}">',
-                '    <div class="d-flex justify-content-between align-items-start mb-2">',
-                '        <h6 class="mb-0 text-primary">',
-                '            <i class="bi bi-card-list"></i>',
-                f'            {safe_label} #{index + 1}',
-                '        </h6>',
-                '        <button type="button"',
-                '                class="btn btn-outline-danger btn-sm remove-item-btn"',
-                f'                data-index="{index}" aria-label="{safe_remove_label}">',
-                '            <i class="bi bi-trash"></i>',
-                '        </button>',
-                '    </div>',
-                f'    {body_html}',
-                '</div>',
-            ]
+        templates = self.form_style.templates
+        return templates.model_list_item.render(
+            field_name=escape(field_name, quote=True),
+            model_label=escape(model_label),
+            index=str(index),
+            display_index=str(index + 1),
+            body_html=body_html,
+            remove_button_aria_label=escape(remove_button_aria_label),
         )
 
 
@@ -325,31 +282,12 @@ class MaterialTheme(FrameworkTheme):
         body_html: str,
         remove_button_aria_label: str,
     ) -> str:
-        safe_label = escape(model_label)
-        safe_field_name = escape(field_name, quote=True)
-        safe_remove_label = escape(remove_button_aria_label)
-
-        return "\n".join(
-            [
-                '<div class="model-list-item mdc-card mdc-card--outlined mb-3" '
-                f'data-index="{index}" data-field-name="{safe_field_name}">',
-                '    <div class="mdc-card__primary-action">',
-                '        <div class="mdc-card__content">',
-                '            <div class="d-flex justify-content-between align-items-center mb-3">',
-                '                <h6 class="mdc-typography--subtitle2 mb-0">',
-                f'                    {safe_label} #{index + 1}',
-                '                </h6>',
-                '                <button type="button"',
-                '                        class="mdc-icon-button remove-item-btn"',
-                f'                        data-index="{index}" aria-label="{safe_remove_label}">',
-                '                    <i class="material-icons">delete</i>',
-                '                </button>',
-                '            </div>',
-                f'            {body_html}',
-                '        </div>',
-                '    </div>',
-                '</div>',
-            ]
+        return super().render_model_list_item(
+            field_name=field_name,
+            model_label=model_label,
+            index=index,
+            body_html=body_html,
+            remove_button_aria_label=remove_button_aria_label,
         )
 
 

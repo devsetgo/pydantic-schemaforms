@@ -35,12 +35,7 @@ from .form_field import (
     TextField,
 )
 # Layout composition system matching design_idea.py vision
-from .form_layouts import (
-    FormDesign,
-    ListLayout,
-    SectionDesign,
-    TabbedLayout,
-)
+from .form_layouts import FormDesign, ListLayout, SectionDesign, TabbedLayout
 # Input type constants and validation
 from .input_types import (
     ALL_INPUT_TYPES,
@@ -63,20 +58,6 @@ from .integration import (
     create_registration_form,
     render_form_page,
 )
-# Layout system
-from .rendering.layout_engine import (
-    AccordionLayout,
-    CardLayout,
-    GridLayout,
-    Layout,
-    LayoutFactory,
-    LayoutComposer,
-    ModalLayout,
-    ResponsiveGridLayout,
-    TabLayout,
-    HorizontalLayout,
-    VerticalLayout,
-)
 # Live validation system
 from .live_validation import (
     HTMXValidationConfig,
@@ -87,8 +68,22 @@ from .live_validation import (
 )
 # Modern renderer with Python 3.14 template strings
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
-from .rendering.context import RenderContext
 from .render_form import render_form_html
+from .rendering.context import RenderContext
+# Layout system
+from .rendering.layout_engine import (
+    AccordionLayout,
+    CardLayout,
+    GridLayout,
+    HorizontalLayout,
+    Layout,
+    LayoutComposer,
+    LayoutFactory,
+    ModalLayout,
+    ResponsiveGridLayout,
+    TabLayout,
+    VerticalLayout,
+)
 # FormModel abstraction for Pydantic models with UI hints
 from .schema_form import Field, FormModel, ValidationResult, form_validator
 from .templates import FormTemplates, TemplateString

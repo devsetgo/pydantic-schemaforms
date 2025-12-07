@@ -16,9 +16,10 @@ Features:
 
 from typing import Any, Dict, List, Optional, Type
 
-from pydantic_forms.schema_form import FormModel
 from pydantic_forms.rendering.context import RenderContext
 from pydantic_forms.rendering.themes import RendererTheme, get_theme_for_framework
+from pydantic_forms.schema_form import FormModel
+
 
 class ModelListRenderer:
     """Renderer for dynamic model lists with add/remove functionality."""

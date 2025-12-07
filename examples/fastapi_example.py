@@ -76,9 +76,10 @@ def safe_json_filter(obj):
 # Register the custom filter
 templates.env.filters['safe_json'] = safe_json_filter
 
-# Static files are not required for pydantic-forms functionality
-# All form behavior is self-contained within the library
-# app.mount("/static", StaticFiles(directory="examples/static"), name="static")
+
+# Mount /static to serve images (for favicon, etc.)
+from fastapi.staticfiles import StaticFiles
+app.mount("/static", StaticFiles(directory="img"), name="static")
 
 # ================================
 # HOME PAGE - ALL EXAMPLES
