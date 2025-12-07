@@ -8,10 +8,10 @@ synchronous validation and live HTMX validation using a single rule set.
 
 from pydantic_forms.live_validation import LiveValidator, ValidationResponse
 from pydantic_forms.validation import (
-    create_email_validator,
-    create_password_strength_validator,
     FieldValidator,
     ValidationSchema,
+    create_email_validator,
+    create_password_strength_validator,
 )
 
 
@@ -57,9 +57,7 @@ class TestConsolidatedValidationEngine:
 
     def test_email_validator_from_live_validation_module(self):
         """Email validator should be accessible from live_validation.py."""
-        from pydantic_forms.live_validation import (
-            create_email_validator as live_create_email,
-        )
+        from pydantic_forms.live_validation import create_email_validator as live_create_email
 
         validator = live_create_email()
         valid = validator("user@example.com")

@@ -6,11 +6,10 @@ and that the first tab is marked active so content is visible on page load.
 
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 import examples.fastapi_example as fastapi_example
 from examples.fastapi_example import app
 from fastapi.templating import Jinja2Templates
+from fastapi.testclient import TestClient
 
 
 def _patch_templates_to_repo_root() -> None:

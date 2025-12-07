@@ -3,11 +3,7 @@
 from typing import Dict, Optional, Type
 
 from pydantic_forms.model_list import ModelListRenderer
-from pydantic_forms.rendering.form_style import (
-    FormStyle,
-    FormStyleTemplates,
-    register_form_style,
-)
+from pydantic_forms.rendering.form_style import FormStyle, FormStyleTemplates, register_form_style
 from pydantic_forms.rendering.layout_engine import AccordionLayout, TabLayout
 from pydantic_forms.rendering.themes import RendererTheme
 from pydantic_forms.schema_form import FormModel

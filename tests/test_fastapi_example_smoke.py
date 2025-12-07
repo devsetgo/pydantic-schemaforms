@@ -6,11 +6,10 @@ so it always resolves correctly from the repo root.
 
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 import examples.fastapi_example as fastapi_example
 from examples.fastapi_example import app
 from fastapi.templating import Jinja2Templates
+from fastapi.testclient import TestClient
 
 
 def _patch_templates_to_repo_root() -> None:
