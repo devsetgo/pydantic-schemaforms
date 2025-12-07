@@ -7,7 +7,9 @@ Requires: Python 3.14+ (no backward compatibility)
 
 from __future__ import annotations
 
+import json
 import re
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from html import escape
 from string import Template
@@ -16,6 +18,35 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from pydantic import ValidationError
 
 # Import version check to ensure compatibility
+
+
+@dataclass
+class ValidationResponse:
+    """Response from validation (server-side or live HTMX)."""
+
+    field_name: str
+    is_valid: bool
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    suggestions: List[str] = field(default_factory=list)
+    value: Any = None
+    formatted_value: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "field_name": self.field_name,
+            "is_valid": self.is_valid,
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "suggestions": self.suggestions,
+            "value": self.value,
+            "formatted_value": self.formatted_value,
+        }
+
+    def to_json(self) -> str:
+        """Convert to JSON string."""
+        return json.dumps(self.to_dict())
 
 
 class ValidationRule:
@@ -759,6 +790,74 @@ def create_validator() -> FormValidator:
     return FormValidator()
 
 
+# Convenience functions for common validation patterns
+def create_email_validator() -> Callable[[str], ValidationResponse]:
+    """Create a validator for email fields."""
+
+    def validate_email(value: str) -> ValidationResponse:
+        if not value:
+            return ValidationResponse(
+                field_name="email", is_valid=False, errors=["Email is required"], value=value
+            )
+
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        if not re.match(email_pattern, value):
+            return ValidationResponse(
+                field_name="email",
+                is_valid=False,
+                errors=["Please enter a valid email address"],
+                suggestions=["Example: user@example.com"],
+                value=value,
+            )
+
+        return ValidationResponse(
+            field_name="email", is_valid=True, value=value, formatted_value=value.lower()
+        )
+
+    return validate_email
+
+
+def create_password_strength_validator(min_length: int = 8) -> Callable[[str], ValidationResponse]:
+    """Create a validator for password strength."""
+
+    def validate_password(value: str) -> ValidationResponse:
+        errors = []
+        warnings = []
+        suggestions = []
+
+        if len(value) < min_length:
+            errors.append(f"Password must be at least {min_length} characters long")
+
+        if not re.search(r"[A-Z]", value):
+            warnings.append("Password should contain at least one uppercase letter")
+            suggestions.append("Add an uppercase letter (A-Z)")
+
+        if not re.search(r"[a-z]", value):
+            warnings.append("Password should contain at least one lowercase letter")
+            suggestions.append("Add a lowercase letter (a-z)")
+
+        if not re.search(r"\d", value):
+            warnings.append("Password should contain at least one number")
+            suggestions.append("Add a number (0-9)")
+
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            warnings.append("Password should contain at least one special character")
+            suggestions.append("Add a special character (!@#$%^&*)")
+
+        is_valid = len(errors) == 0
+
+        return ValidationResponse(
+            field_name="password",
+            is_valid=is_valid,
+            errors=errors,
+            warnings=warnings,
+            suggestions=suggestions,
+            value=value,
+        )
+
+    return validate_password
+
+
 # Validation result class for integration
 class ValidationResult:
     """Result of form validation."""
@@ -849,6 +948,7 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
 
 # Export validation rules for easy access
 __all__ = [
+    "ValidationResponse",
     "ValidationRule",
     "RequiredRule",
     "MinLengthRule",
@@ -864,6 +964,8 @@ __all__ = [
     "FormValidator",
     "CrossFieldRules",
     "create_validator",
+    "create_email_validator",
+    "create_password_strength_validator",
     "ValidationResult",
     "validate_form_data",
 ]

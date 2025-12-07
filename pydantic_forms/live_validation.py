@@ -8,44 +8,16 @@ Requires: Python 3.14+ (uses native template strings)
 """
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, ValidationError
 
 from .templates import TemplateString
+from .validation import ValidationResponse
 
 if TYPE_CHECKING:  # pragma: no cover
     from .validation import FieldValidator, ValidationSchema
-
-
-@dataclass
-class ValidationResponse:
-    """Response from server-side validation."""
-
-    field_name: str
-    is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    suggestions: List[str] = field(default_factory=list)
-    value: Any = None
-    formatted_value: Optional[str] = None
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "field_name": self.field_name,
-            "is_valid": self.is_valid,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "suggestions": self.suggestions,
-            "value": self.value,
-            "formatted_value": self.formatted_value,
-        }
-
-    def to_json(self) -> str:
-        """Convert to JSON string."""
-        return json.dumps(self.to_dict())
 
 
 @dataclass
@@ -506,71 +478,13 @@ async def validate_field(field_name: str, request: ValidationRequest):
         return self.htmx_script.render(config_json=config_json)
 
 
-# Convenience functions for common validation patterns
-def create_email_validator() -> Callable[[str], ValidationResponse]:
-    """Create a validator for email fields."""
-    import re
+# Re-export convenience functions from validation module for convenience
+from .validation import create_email_validator, create_password_strength_validator
 
-    def validate_email(value: str) -> ValidationResponse:
-        if not value:
-            return ValidationResponse(
-                field_name="email", is_valid=False, errors=["Email is required"], value=value
-            )
-
-        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-        if not re.match(email_pattern, value):
-            return ValidationResponse(
-                field_name="email",
-                is_valid=False,
-                errors=["Please enter a valid email address"],
-                suggestions=["Example: user@example.com"],
-                value=value,
-            )
-
-        return ValidationResponse(
-            field_name="email", is_valid=True, value=value, formatted_value=value.lower()
-        )
-
-    return validate_email
-
-
-def create_password_strength_validator(min_length: int = 8) -> Callable[[str], ValidationResponse]:
-    """Create a validator for password strength."""
-    import re
-
-    def validate_password(value: str) -> ValidationResponse:
-        errors = []
-        warnings = []
-        suggestions = []
-
-        if len(value) < min_length:
-            errors.append(f"Password must be at least {min_length} characters long")
-
-        if not re.search(r"[A-Z]", value):
-            warnings.append("Password should contain at least one uppercase letter")
-            suggestions.append("Add an uppercase letter (A-Z)")
-
-        if not re.search(r"[a-z]", value):
-            warnings.append("Password should contain at least one lowercase letter")
-            suggestions.append("Add a lowercase letter (a-z)")
-
-        if not re.search(r"\d", value):
-            warnings.append("Password should contain at least one number")
-            suggestions.append("Add a number (0-9)")
-
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
-            warnings.append("Password should contain at least one special character")
-            suggestions.append("Add a special character (!@#$%^&*)")
-
-        is_valid = len(errors) == 0
-
-        return ValidationResponse(
-            field_name="password",
-            is_valid=is_valid,
-            errors=errors,
-            warnings=warnings,
-            suggestions=suggestions,
-            value=value,
-        )
-
-    return validate_password
+__all__ = [
+    "ValidationResponse",
+    "HTMXValidationConfig",
+    "LiveValidator",
+    "create_email_validator",
+    "create_password_strength_validator",
+]

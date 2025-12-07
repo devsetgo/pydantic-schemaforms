@@ -1,11 +1,13 @@
 
 # Codebase Review – pydantic-forms
 
-_Date: 2025-11-27_
+_Date: 2025-12-07 (Updated)_
 
 ## Executive Summary
 
-The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config. Recent cleanup moved the `_THEME_MAP` lookup after the theme subclasses, hardened `RendererTheme.render_model_list_container` to escape field-name-derived attributes, and added integration tests that render Bootstrap/Material model lists end-to-end so theme regressions surface quickly. The remaining structural debt sits around finishing theme-driven markup extraction for other frameworks, splitting the still-monolithic integration helpers, and converging the parallel validation stacks. Tackling these areas will shrink the surface area ahead of the automated test suite.
+The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit `RenderContext` objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal `FrameworkTheme` registry (Bootstrap/Material/plain) plus `MaterialEmbeddedTheme`, and both `EnhancedFormRenderer` and `FieldRenderer` source their form/input/button classes from the active theme before falling back to legacy framework config.
+
+**Latest (Dec 7, 2025):** Theme-driven form chrome extraction is complete. The new `FormStyle` contract centralizes all framework-specific markup (model lists, tabs, accordions, submit buttons, layout sections) in a registry-based system. `FormStyleTemplates` dataclass holds 13 template slots (form_wrapper, tab_layout/button/panel, accordion_layout/section, layout_section/help, model_list_container/item/help/error, submit_button), registered per-framework (Bootstrap/Material/Plain/Default) with graceful fallbacks. `RendererTheme` and `LayoutEngine` now query `FormStyle.templates` at render time instead of inlining markup, enabling runtime overrides without renderer edits. FastAPI example hardened with absolute paths (`Path(__file__).resolve().parent`) for templates/static, resolving path issues in tests and different working directories. All **204 tests passing** with zero regressions.
 
 ## Critical / High Priority Findings
 
@@ -31,9 +33,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `ModelListRenderer` now delegates both containers and per-item chrome through `RendererTheme` hooks: `render_model_list_container()` and the new `render_model_list_item()` (with Material/embedded overrides) wrap the renderer-supplied field grid so frameworks own every byte of markup. Bootstrap/Material share the same plumbing, labels/help/errors/add buttons stay in the theme, and tests cover that custom themes can inject their own classes when rendering lists.
   _Files:_ `pydantic_forms/model_list.py`, `pydantic_forms/rendering/themes.py`
 
-- **Template engine under-used (In Progress)**
-  The Material renderer now pulls its field chrome (wrappers, icons, controls, checkbox/model-list containers, submit buttons) from cached templates in `templates.py`, which removes the largest block of manual string concatenation. Enhanced/Bootstrap renderers still inline form wrappers, layout shells, and assets. Continue migrating those fragments so tests can exercise template output directly and the theme contract stays consistent.
-  _Files:_ `pydantic_forms/templates.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/enhanced_renderer.py`
+- **Template engine under-used (Resolved)**
+  The new `FormStyle` contract (in `rendering/form_style.py`) extracts all framework-specific markup into `FormStyleTemplates` dataclass with 13 template slots: `form_wrapper`, `tab_layout`, `tab_button`, `tab_panel`, `accordion_layout`, `accordion_section`, `layout_section`, `layout_help`, `model_list_container`, `model_list_item`, `model_list_help`, `model_list_error`, and `submit_button`. Framework-specific bundles (Bootstrap, Material, Plain, Default) are registered in a centralized registry via `register_form_style()` and queried at render time with `get_form_style(framework, variant)`. `RendererTheme.render_submit_button()`, `render_model_list_*()` methods and `LayoutEngine` tab/accordion layouts all delegate to `FormStyle.templates` with graceful fallback to defaults, eliminating inline markup strings and enabling runtime overrides. Tests in `test_theme_hooks.py` (7 tests) verify custom FormStyle templates drive rendering. FastAPI example paths hardened to use `Path(__file__).resolve().parent` for templates and static dirs, working correctly from any working directory.
+  _Files:_ `pydantic_forms/rendering/form_style.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/layout_engine.py`, `examples/fastapi_example.py`, `tests/test_theme_hooks.py`, `tests/test_fastapi_example_smoke.py`
 
 - **Runtime field registration surfaced (New)**
   Dynamically extending a `FormModel` is now supported via `FormModel.register_field()`, which wires the new `FieldInfo` into the schema cache and the validation stack by synthesizing a runtime subclass when necessary. Legacy `setattr(MyForm, name, Field(...))` still works for rendering, but the helper ensures `validate_form_data()` and HTMX live validation enforce the same constraints without manual plumbing.
@@ -68,9 +70,9 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 ## Recommended Next Steps
 
-1. Continue extracting renderer-specific themes/templates (tabs, wrappers, asset bundles) so the new `FrameworkTheme` registry fully owns markup/classes and future frameworks plug into the shared orchestration path without editing renderers; update docs/tests alongside the contract.
-2. Define a version-aware `FormStyle` contract (framework + variant + assets) so Bootstrap 6, Material 4, or Shadcn themes plug in with minimal renderer changes.
-3. Publish extension hooks for registering new inputs/layouts (OSS or commercial) via the `inputs.registry` and layout engine.
-4. Extract the remaining inline layout/tabs assets into templates so future Bootstrap/Material upgrades are data-driven rather than embedded strings; promote the template helpers as the default authoring surface.
-5. Introduce a canonical validation rule engine consumed by both synchronous and live validation paths.
-6. Document and enforce `make tests` as the single "run everything" command, while adding targeted suites for tabs/accordions and async renderers.
+1. **Field-level chrome routing (Optional)** — Help and error blocks for individual fields could route through `FormStyle` templates for complete consistency (deferred; form-level chrome now centralized).
+2. **Version-aware style variants** — Define `FormStyle` variant descriptors (e.g., `"bootstrap:5"`, `"material:3"`) so framework upgrades are data-driven; enable plugin registration for third-party themes without renderer edits.
+3. **Extension hooks for inputs/layouts** — Document and expose plugin entry points in `inputs.registry` and `layout_engine` so commercial/OSS components register without patching core.
+4. **Canonical validation rule engine** — Merge parallel validation stacks (`validation.py` + `live_validation.py`) under a single rule representation so fixes/enhancements land once.
+5. **Automated E2E coverage for layouts/async** — Extend test suite to include tabs, accordions, and async renderer paths alongside the new model-list integration tests.
+6. **CI/docs alignment** — Document `make tests` as the single entry point; wire ruff linting into the test suite so import/style regressions fail fast.
