@@ -3,6 +3,7 @@ Enhanced FormField class that matches the design_idea.py vision.
 Provides a clean interface for defining form fields with type validation and icon support.
 """
 
+import inspect
 from typing import Any, Dict, List, Optional, Type, Union, get_args, get_origin
 
 from pydantic import Field as PydanticField
@@ -119,6 +120,19 @@ class FormField:
         # Move any remaining kwargs to json_schema_extra to avoid deprecation warnings
         final_schema = ui_schema.copy()
         final_schema.update(kwargs)
+
+        def _sanitize(value: Any) -> Any:
+            if isinstance(value, dict):
+                return {k: _sanitize(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [_sanitize(v) for v in value]
+            if inspect.isclass(value):
+                return f"{value.__module__}.{value.__name__}"
+            if callable(value):
+                return getattr(value, "__name__", repr(value))
+            return value
+
+        final_schema = {k: _sanitize(v) for k, v in final_schema.items()}
 
         return PydanticField(
             default=default,

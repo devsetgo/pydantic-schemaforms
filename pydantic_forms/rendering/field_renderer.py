@@ -210,6 +210,8 @@ class FieldRenderer:
 
         list_renderer = ModelListRenderer(framework=self.framework)
         model_class = ui_info.get("model_class")
+        if model_class and not isinstance(model_class, type):
+            model_class = None
         schema_def: Optional[Dict[str, Any]] = None
 
         if not model_class:
