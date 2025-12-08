@@ -58,15 +58,15 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
   `RendererTheme` now includes concrete `FrameworkTheme` subclasses for Bootstrap/Material/plain plus `get_theme_for_framework`, and both enhanced + field renderers request classes/assets from the active theme before falling back to legacy configs. `FormStyle` registry now handles framework-level templates (including field-level chrome) and supports version-aware descriptors (e.g., `bootstrap:5`, `material:3`) with fallbacks to base framework/default.
   _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/field_renderer.py`, `pydantic_forms/rendering/frameworks.py`, `pydantic_forms/rendering/form_style.py`
 
-- **Extension hooks for inputs/layouts under-specified**
-  While the new `inputs.registry` makes discovery automatic, there is no documented API for third-party/paid components to register additional inputs or layouts. Provide a stable plugin hook (entry points or `register_inputs()` helpers) and layout strategy interface so extensions can add HTMX/JS-backed widgets without patching core modules.
-  _Files:_ `pydantic_forms/inputs/registry.py`, `pydantic_forms/layouts.py`, `pydantic_forms/rendering/layout_engine.py`
+- **Plugin hooks for inputs/layouts (NEW)**
+  Input components can now be registered via `register_input_class()` and `register_inputs()` in `inputs/registry.py` with automatic cache invalidation. Layout renderers can be registered via `LayoutEngine.register_layout_renderer()` and referenced from form fields using `layout_handler` metadata. Both APIs support resettable state for testing. Docs page `docs/plugin_hooks.md` explains usage and packaging patterns.
+  _Files:_ `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/layout_engine.py`, `docs/plugin_hooks.md`, `tests/test_plugin_hooks.py`
 
 ## Testing & Tooling Gaps
 
-- `make tests` now runs pre-commit + pytest + badge generation, but the docs still describe manual pytest invocation. Document the single entry point (and its prerequisites) so contributors understand the authoritative workflow and potential runtime costs.
-- Renderer behavior (async paths, layout selection) still lacks automated coverage. Model-list integration tests now exercise Bootstrap/Material themes end-to-end, but tabs/accordions and async renderers still need framework-level fixtures.
-- Ruff uncovered several ordering/import mistakes (`from __future__` position, `_THEME_MAP` accessing undefined subclasses). Add a lint target (or wire `make ruff` into CI) so style/import regressions fail fast before docs/tests work begins.
+- `make tests` now runs pre-commit + pytest + badge generation; document it as the single entry point so contributors use the authoritative workflow.
+- ✅ **Renderer behavior E2E coverage (COMPLETED)** — Added `tests/test_e2e_layouts_async.py` with 14 tests: unit tests for tab/accordion DOM structure, aria attributes, display state; integration tests for `LayoutDemonstrationForm` with nested fields and model lists; async equivalence tests. All passing.
+- Ruff linting: verify it's wired into CI (`.pre-commit-config.yaml` or `make ruff` target) so import/style regressions fail fast.
 
 ## Recommended Next Steps
 
@@ -86,8 +86,8 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 4. ✅ **Version-aware style variants (COMPLETED)** — `FormStyle` descriptors accept framework + variant (e.g., `"bootstrap:5"`, `"material:3"`) with graceful fallbacks to the framework base and default style. Aliases registered for Bootstrap 5 and Material 3 reuse existing templates; lookup stays backward compatible.
 
-5. **Extension hooks for inputs/layouts** — Document and expose plugin entry points in `inputs.registry` and `layout_engine` so commercial/OSS components register without patching core.
+5. ✅ **Extension hooks for inputs/layouts (COMPLETED)** — Plugin registration API added: `register_input_class()` / `register_inputs()` in `inputs/registry` with cache clearing, and `LayoutEngine.register_layout_renderer()` with metadata-driven dispatch. Documented in `docs/plugin_hooks.md` with examples and best practices.
 
-6. **Automated E2E coverage for layouts/async** — Extend test suite to include tabs, accordions, and async renderer paths; existing layout-demo smoke test now asserts initial tab content renders and tab buttons exist for Bootstrap/Material. Consider a headless browser pass if JS-driven tab switching needs to be explicitly exercised.
+6. ✅ **Automated E2E coverage for layouts/async (COMPLETED)** — Added comprehensive `tests/test_e2e_layouts_async.py` (14 tests) covering: unit tests for tab/accordion DOM structure, aria attributes, and display state; integration tests for `LayoutDemonstrationForm` tab/layout field rendering with nested content and model lists; async tests verifying `render_form_from_model_async()` produces identical HTML to sync path, handles errors gracefully, and supports concurrent rendering. All tests passing.
 
 7. **CI/docs alignment** — Document `make tests` as the single entry point; wire ruff linting into the test suite so import/style regressions fail fast.
