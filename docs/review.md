@@ -64,9 +64,8 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 ## Testing & Tooling Gaps
 
-- `make tests` now runs pre-commit + pytest + badge generation; document it as the single entry point so contributors use the authoritative workflow.
 - ✅ **Renderer behavior E2E coverage (COMPLETED)** — Added `tests/test_e2e_layouts_async.py` with 14 tests: unit tests for tab/accordion DOM structure, aria attributes, display state; integration tests for `LayoutDemonstrationForm` with nested fields and model lists; async equivalence tests. All passing.
-- Ruff linting: verify it's wired into CI (`.pre-commit-config.yaml` or `make ruff` target) so import/style regressions fail fast.
+- ✅ **CI/docs alignment (COMPLETED)** — Documented `make tests` as single entry point in new `docs/testing_workflow.md` (comprehensive guide with test organization, linting rules, CI/CD integration, troubleshooting). **Ruff now enabled in `.pre-commit-config.yaml`** and enforced as part of `make tests` before pytest runs.
 
 ## Recommended Next Steps
 
@@ -90,4 +89,4 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 
 6. ✅ **Automated E2E coverage for layouts/async (COMPLETED)** — Added comprehensive `tests/test_e2e_layouts_async.py` (14 tests) covering: unit tests for tab/accordion DOM structure, aria attributes, and display state; integration tests for `LayoutDemonstrationForm` tab/layout field rendering with nested content and model lists; async tests verifying `render_form_from_model_async()` produces identical HTML to sync path, handles errors gracefully, and supports concurrent rendering. All tests passing.
 
-7. **CI/docs alignment** — Document `make tests` as the single entry point; wire ruff linting into the test suite so import/style regressions fail fast.
+7. ✅ **CI/docs alignment (COMPLETED)** — Documented `make tests` as single entry point in new `docs/testing_workflow.md` (comprehensive guide with test organization, linting rules, CI/CD integration, troubleshooting). **Ruff now enabled in `.pre-commit-config.yaml`** and enforced as part of `make tests` before pytest runs. All 217+ tests passing with integrated linting.

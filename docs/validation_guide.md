@@ -80,7 +80,7 @@ form_validator.field("email").add_rule(EmailRule())
 def validate_age_and_consent(data):
     age = data.get("age")
     consent = data.get("parental_consent")
-    
+
     if age is not None and age < 18 and not consent:
         return False, {
             "parental_consent": ["Parental consent required for users under 18"]
@@ -245,11 +245,11 @@ live_validator.register_field_validator(email_validator)
 async def validate_email(request: Request):
     data = await request.form()
     value = data.get("email", "")
-    
+
     # Get validator for this field
     validator = live_validator.get_field_validator("email")
     response = validator.validate(value)
-    
+
     # Render feedback HTML
     if response.is_valid:
         return f"""
@@ -307,7 +307,7 @@ def validate_minor_consent(data):
     """Minors must have parental consent."""
     age = data.get("age")
     consent = data.get("parental_consent")
-    
+
     if age is not None and age < 18 and not consent:
         return False, {
             "parental_consent": [
@@ -336,7 +336,7 @@ def validate_emergency_contact(data):
     """Emergency contact required if no direct phone provided."""
     has_phone = bool(data.get("phone"))
     has_emergency_contact = bool(data.get("emergency_contact"))
-    
+
     if not has_phone and not has_emergency_contact:
         return False, {
             "emergency_contact": [
@@ -355,7 +355,7 @@ def validate_passwords_match(data):
     """Ensure password and confirm_password match."""
     password = data.get("password", "")
     confirm = data.get("confirm_password", "")
-    
+
     if password and confirm and password != confirm:
         return False, {
             "confirm_password": ["Passwords do not match"]
@@ -487,26 +487,26 @@ class RegistrationForm(FormModel):
         max_length=20,
         help_text="3–20 alphanumeric characters"
     )
-    
+
     email: str = FormField(
         title="Email Address",
         input_type="email",
         help_text="We'll send a confirmation link"
     )
-    
+
     password: str = FormField(
         title="Password",
         input_type="password",
         min_length=8,
         help_text="Must be at least 8 characters"
     )
-    
+
     confirm_password: str = FormField(
         title="Confirm Password",
         input_type="password",
         help_text="Re-enter your password"
     )
-    
+
     age: int = FormField(
         title="Age",
         input_type="number",
@@ -572,10 +572,10 @@ def show_registration():
 async def handle_registration(request: Request):
     # Get form data
     form_data = await request.form()
-    
+
     # Server-side validation
     result = validate_form_data(RegistrationForm, dict(form_data))
-    
+
     if result.is_valid:
         # Process registration
         return JSONResponse({
@@ -596,10 +596,10 @@ async def handle_registration(request: Request):
 async def validate_username(request: Request):
     data = await request.form()
     value = data.get("username", "")
-    
+
     validator = form_validator.field("username")
     response = validator.validate(value)
-    
+
     if response.is_valid:
         return HTMLResponse(
             f'<div class="valid-feedback">✓ Available</div>'
@@ -614,9 +614,9 @@ async def validate_username(request: Request):
 async def validate_email(request: Request):
     data = await request.form()
     value = data.get("email", "")
-    
+
     response = form_validator.field("email").validate(value)
-    
+
     if response.is_valid:
         return HTMLResponse(
             f'<div class="valid-feedback">✓ Valid email</div>'
@@ -691,12 +691,12 @@ from pydantic_forms.validation import (
 def test_email_validation():
     email_validator = FieldValidator("email")
     email_validator.add_rule(EmailRule())
-    
+
     # Valid email
     response = email_validator.validate("user@example.com")
     assert response.is_valid
     assert response.errors == []
-    
+
     # Invalid email
     response = email_validator.validate("not-an-email")
     assert not response.is_valid
@@ -704,19 +704,19 @@ def test_email_validation():
 
 def test_cross_field_validation():
     form_validator = FormValidator()
-    
+
     def validate_passwords(data):
         if data.get("password") != data.get("confirm"):
             return False, {"confirm": ["Passwords don't match"]}
         return True, {}
-    
+
     form_validator.add_cross_field_rule(validate_passwords)
-    
+
     is_valid, errors = form_validator.validate({
         "password": "secret",
         "confirm": "different"
     })
-    
+
     assert not is_valid
     assert "confirm" in errors
 ```

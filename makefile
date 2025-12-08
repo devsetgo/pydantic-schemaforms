@@ -87,14 +87,18 @@ speedtest: ## Run a speed test
 	if [ ! -f speedtest/http_request.so ]; then gcc -shared -o speedtest/http_request.so speedtest/http_request.c -lcurl -fPIC; fi
 	python3 speedtest/loop.py
 
-test: ## Run the project's tests
-	pre-commit run -a
+test: ## Run the project's tests (linting + pytest + coverage badges)
+	@echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."
+	$(PYTHON) -m pre_commit run -a
+	@echo "✅ Pre-commit passed. Running pytest..."
 	pytest
+	@echo "📊 Generating coverage and test badges..."
 	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml
 	genbadge tests -i /workspaces/$(REPONAME)/report.xml
 	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$(shell pwd)</source>|" coverage.xml
+	@echo "✨ Tests complete. Badges updated."
 
-tests: test ## Run the project's tests
+tests: test ## Alias for 'test' - Run the project's tests
 
 build: ## Build the project
 	python -m build
