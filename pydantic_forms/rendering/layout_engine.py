@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from html import escape
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ..layout_base import BaseLayout
 from ..templates import FormTemplates
@@ -16,6 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 Renderable = Union[str, List[str]]
 _DEFAULT_FORM_STYLE = get_form_style("default", "default")
+LayoutRenderer = Callable[[str, Dict[str, Any], Any, Dict[str, Any], RenderContext, "LayoutEngine"], str]
 
 
 class HorizontalLayout(BaseLayout):
@@ -508,8 +509,27 @@ Layout = LayoutComposer
 class LayoutEngine:
     """Encapsulates layout rendering routines for form renderers."""
 
+    _custom_renderers: Dict[str, LayoutRenderer] = {}
+
     def __init__(self, renderer: "EnhancedFormRenderer") -> None:
         self._renderer = renderer
+
+    # ------------------------------------------------------------------
+    # Registration hooks
+    # ------------------------------------------------------------------
+    @classmethod
+    def register_layout_renderer(cls, name: str, renderer: LayoutRenderer) -> None:
+        """Register a custom layout renderer callable by name."""
+
+        if not callable(renderer):  # pragma: no cover - defensive
+            raise TypeError("renderer must be callable")
+        cls._custom_renderers[name] = renderer
+
+    @classmethod
+    def reset_layout_renderers(cls) -> None:
+        """Clear custom layout renderers (useful in tests)."""
+
+        cls._custom_renderers.clear()
 
     # ------------------------------------------------------------------
     # Public API used by EnhancedFormRenderer
@@ -763,6 +783,12 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         try:
+            handler_name = ui_info.get("layout_handler") or ui_info.get("layout_renderer")
+            if handler_name:
+                handler = self._custom_renderers.get(str(handler_name))
+                if handler:
+                    return handler(field_name, field_schema, value, ui_info, context, self)
+
             if isinstance(value, BaseLayout):
                 nested_data = get_nested_form_data(field_name, context.form_data)
                 return value.render(
