@@ -110,6 +110,11 @@ norecursedirs = [ "/tests",]
 testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
+filterwarnings = [
+    "ignore:pydantic_forms.form_layouts will be removed in a future release",
+    "ignore:Default value .* is not JSON serializable",
+    "ignore:Using extra keyword arguments on.*Field.*is deprecated",
+]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = [ "F401", "F403",]

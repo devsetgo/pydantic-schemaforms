@@ -83,6 +83,18 @@ DEFAULT_SUBMIT_BUTTON_TEMPLATE = TemplateString(
 """
 )
 
+DEFAULT_FIELD_HELP_TEMPLATE = TemplateString(
+    """
+<small class="form-text text-muted d-block mt-1 field-help">${help_text}</small>
+"""
+)
+
+DEFAULT_FIELD_ERROR_TEMPLATE = TemplateString(
+    """
+<div class="invalid-feedback d-block field-error">${error_text}</div>
+"""
+)
+
 PLAIN_LAYOUT_SECTION_TEMPLATE = TemplateString(
     """
 <section class="layout-field-section">
@@ -133,6 +145,18 @@ PLAIN_MODEL_LIST_HELP_TEMPLATE = TemplateString(
 PLAIN_MODEL_LIST_ERROR_TEMPLATE = TemplateString(
     """
 <div class="model-list-error">${error_text}</div>
+"""
+)
+
+PLAIN_FIELD_HELP_TEMPLATE = TemplateString(
+    """
+<small class="field-help">${help_text}</small>
+"""
+)
+
+PLAIN_FIELD_ERROR_TEMPLATE = TemplateString(
+    """
+<div class="field-error">${error_text}</div>
 """
 )
 
@@ -347,6 +371,18 @@ MATERIAL_MODEL_LIST_ERROR_TEMPLATE = TemplateString(
 """
 )
 
+MATERIAL_FIELD_HELP_TEMPLATE = TemplateString(
+        """
+<p class="md-field-help-text">${help_text}</p>
+"""
+)
+
+MATERIAL_FIELD_ERROR_TEMPLATE = TemplateString(
+        """
+<p class="md-field-error-text">${error_text}</p>
+"""
+)
+
 MATERIAL_SUBMIT_BUTTON_TEMPLATE = TemplateString(
         """
 <button type="submit" class="md-button md-button-filled">${submit_label}</button>
@@ -370,6 +406,8 @@ class FormStyleTemplates:
     model_list_item: TemplateString = DEFAULT_MODEL_LIST_ITEM_TEMPLATE
     model_list_help: TemplateString = DEFAULT_MODEL_LIST_HELP_TEMPLATE
     model_list_error: TemplateString = DEFAULT_MODEL_LIST_ERROR_TEMPLATE
+    field_help: TemplateString = DEFAULT_FIELD_HELP_TEMPLATE
+    field_error: TemplateString = DEFAULT_FIELD_ERROR_TEMPLATE
     submit_button: TemplateString = DEFAULT_SUBMIT_BUTTON_TEMPLATE
 
 
@@ -436,6 +474,8 @@ register_form_style(
             tab_panel=BOOTSTRAP_TAB_PANEL_TEMPLATE,
             accordion_layout=BOOTSTRAP_ACCORDION_LAYOUT_TEMPLATE,
             accordion_section=BOOTSTRAP_ACCORDION_SECTION_TEMPLATE,
+            field_help=DEFAULT_FIELD_HELP_TEMPLATE,
+            field_error=DEFAULT_FIELD_ERROR_TEMPLATE,
         ),
     )
 )
@@ -455,6 +495,8 @@ register_form_style(
             model_list_item=PLAIN_MODEL_LIST_ITEM_TEMPLATE,
             model_list_help=PLAIN_MODEL_LIST_HELP_TEMPLATE,
             model_list_error=PLAIN_MODEL_LIST_ERROR_TEMPLATE,
+            field_help=PLAIN_FIELD_HELP_TEMPLATE,
+            field_error=PLAIN_FIELD_ERROR_TEMPLATE,
             submit_button=PLAIN_SUBMIT_BUTTON_TEMPLATE,
         ),
     )
@@ -472,6 +514,8 @@ _MATERIAL_TEMPLATES = FormStyleTemplates(
     model_list_item=MATERIAL_MODEL_LIST_ITEM_TEMPLATE,
     model_list_help=MATERIAL_MODEL_LIST_HELP_TEMPLATE,
     model_list_error=MATERIAL_MODEL_LIST_ERROR_TEMPLATE,
+    field_help=MATERIAL_FIELD_HELP_TEMPLATE,
+    field_error=MATERIAL_FIELD_ERROR_TEMPLATE,
     submit_button=MATERIAL_SUBMIT_BUTTON_TEMPLATE,
 )
 
