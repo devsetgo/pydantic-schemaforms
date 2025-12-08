@@ -438,6 +438,25 @@ class FormStyle:
 _FORM_STYLE_REGISTRY: Dict[Tuple[str, str], FormStyle] = {}
 
 
+def _parse_framework_variant(framework: str, variant: str | None = None) -> Tuple[str, str]:
+    """Normalize framework/variant inputs, supporting descriptor syntax like "bootstrap:5".
+
+    Accepts either:
+    - framework="bootstrap", variant="5"
+    - framework="bootstrap:5", variant=None
+    - framework="bootstrap", variant=None (falls back to "default")
+    """
+
+    if variant:
+        return framework, variant
+
+    if ":" in framework:
+        base, version = framework.split(":", 1)
+        return base, version
+
+    return framework, "default"
+
+
 def register_form_style(style: FormStyle) -> None:
     """Register or override a `FormStyle` for a framework/variant pair."""
 
@@ -447,10 +466,18 @@ def register_form_style(style: FormStyle) -> None:
 def get_form_style(framework: str, variant: str | None = None) -> FormStyle:
     """Return the registered style for a framework/variant pair."""
 
-    key = (framework, variant or "default")
+    # First try the normalized descriptor (supports "framework:version" shortcuts)
+    key = _parse_framework_variant(framework, variant)
     if key in _FORM_STYLE_REGISTRY:
         return _FORM_STYLE_REGISTRY[key]
 
+    # Fallback to the base framework with default variant (e.g., "bootstrap" -> ("bootstrap", "default"))
+    base_framework, _ = key
+    base_key = (base_framework, "default")
+    if base_key in _FORM_STYLE_REGISTRY:
+        return _FORM_STYLE_REGISTRY[base_key]
+
+    # Final fallback to the global default style
     fallback = ("default", "default")
     if fallback in _FORM_STYLE_REGISTRY:
         return _FORM_STYLE_REGISTRY[fallback]
@@ -468,6 +495,23 @@ register_form_style(_DEFAULT_STYLE)
 register_form_style(
     FormStyle(
         framework="bootstrap",
+        templates=FormStyleTemplates(
+            tab_layout=BOOTSTRAP_TAB_LAYOUT_TEMPLATE,
+            tab_button=BOOTSTRAP_TAB_BUTTON_TEMPLATE,
+            tab_panel=BOOTSTRAP_TAB_PANEL_TEMPLATE,
+            accordion_layout=BOOTSTRAP_ACCORDION_LAYOUT_TEMPLATE,
+            accordion_section=BOOTSTRAP_ACCORDION_SECTION_TEMPLATE,
+            field_help=DEFAULT_FIELD_HELP_TEMPLATE,
+            field_error=DEFAULT_FIELD_ERROR_TEMPLATE,
+        ),
+    )
+)
+
+# Bootstrap v5 alias (descriptor access: "bootstrap:5")
+register_form_style(
+    FormStyle(
+        framework="bootstrap",
+        variant="5",
         templates=FormStyleTemplates(
             tab_layout=BOOTSTRAP_TAB_LAYOUT_TEMPLATE,
             tab_button=BOOTSTRAP_TAB_BUTTON_TEMPLATE,
@@ -522,6 +566,15 @@ _MATERIAL_TEMPLATES = FormStyleTemplates(
 register_form_style(
     FormStyle(
         framework="material",
+        templates=_MATERIAL_TEMPLATES,
+    )
+)
+
+# Material Design v3 alias (descriptor access: "material:3")
+register_form_style(
+    FormStyle(
+        framework="material",
+        variant="3",
         templates=_MATERIAL_TEMPLATES,
     )
 )
