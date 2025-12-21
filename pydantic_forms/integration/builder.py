@@ -21,14 +21,23 @@ class FormBuilder:
         model: Optional[Type[BaseModel]] = None,
         framework: str = "bootstrap",
         theme: str = "default",
+        *,
+        include_framework_assets: bool = False,
+        asset_mode: str = "vendored",
     ):
         self.model = model
         self.framework = framework
         self.theme = theme
+        self.include_framework_assets = include_framework_assets
+        self.asset_mode = asset_mode
         self.fields: List[FormField] = []
         self.sections: List[FormSection] = []
         self.validator = create_validator()
-        self.renderer = ModernFormRenderer()
+        self.renderer = ModernFormRenderer(
+            framework=framework,
+            include_framework_assets=include_framework_assets,
+            asset_mode=asset_mode,
+        )
         self.layout_type = "vertical"
         self.form_attrs: Dict[str, Any] = {}
         self.csrf_enabled = True

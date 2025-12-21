@@ -268,8 +268,20 @@ class FormDefinition:
 class ModernFormRenderer(EnhancedFormRenderer):
     """Thin wrapper around EnhancedFormRenderer for legacy entry points."""
 
-    def __init__(self, framework: str = "bootstrap", theme: Optional[RendererTheme] = None):
-        super().__init__(framework=framework, theme=theme)
+    def __init__(
+        self,
+        framework: str = "bootstrap",
+        theme: Optional[RendererTheme] = None,
+        *,
+        include_framework_assets: bool = False,
+        asset_mode: str = "vendored",
+    ):
+        super().__init__(
+            framework=framework,
+            theme=theme,
+            include_framework_assets=include_framework_assets,
+            asset_mode=asset_mode,
+        )
 
     def render_form(
         self,
@@ -385,7 +397,12 @@ class ModernFormRenderer(EnhancedFormRenderer):
             return self
 
         theme = self._clone_theme()
-        return ModernFormRenderer(framework=framework, theme=theme)
+        return ModernFormRenderer(
+            framework=framework,
+            theme=theme,
+            include_framework_assets=self.include_framework_assets,
+            asset_mode=self.asset_mode,
+        )
 
     def _clone_theme(self) -> Optional[RendererTheme]:
         theme_cls = type(self._theme)

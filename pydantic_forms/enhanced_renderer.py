@@ -39,6 +39,7 @@ class EnhancedFormRenderer:
         asset_mode: str = "vendored",
     ):
         self.framework = framework
+        self.include_framework_assets = include_framework_assets
         resolved_theme = theme or get_theme_for_framework(
             framework,
             include_assets=include_framework_assets,
