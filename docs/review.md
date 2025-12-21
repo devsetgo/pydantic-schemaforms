@@ -28,7 +28,6 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 - **Consistent asset selection:** A consistent `asset_mode` pattern is now threaded through the main entry points (enhanced renderer, modern renderer/builder, legacy wrappers) so “cdn vs vendored” behavior is deterministic.
 - **Operational stability:** `vendor_manifest.json` checksum verification is enforced by tests, and pre-commit is configured to avoid mutating vendored assets and generated test artifacts.
 - **Remaining high-impact gaps:**
-  - **Sync/async simplicity:** There are good entry points already, but the public surface area still feels like multiple “right ways” depending on whether you start from render helpers vs. integration adapters.
   - **Debug rendering mode:** There is no first-class debug panel that can expose (1) rendered HTML/assets, (2) the Python form/model source, (3) validation rules/schema, and (4) live validation output — which would be extremely valuable during adoption.
 
 ## Design Rules (Non‑Negotiables)
@@ -139,9 +138,13 @@ These rules are intended to prevent “helpful” drift away from the original c
   The canonical sync/async helpers now live only in `integration/adapters.py`, `integration/sync.py`, and `integration/async_support.py`. The `integration.frameworks` package re-exports those implementations for legacy imports, and `FormIntegration.async_integration` was converted to a `@staticmethod` so the API is identical in both namespaces. Optional dependencies remain isolated via lazy imports, but there is now exactly one code path for validation + rendering logic.
   _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/adapters.py`, `pydantic_forms/integration/frameworks/*`
 
-- **Public sync/async “one obvious way” still needs a pass (Opportunity)**
-  The internal orchestration looks clean, but the user-facing path can be simplified further so users can pick exactly one sync call and exactly one async call (and everything else becomes compatibility wrappers).
-  _Files:_ `pydantic_forms/integration/adapters.py`, `pydantic_forms/integration/sync.py`, `pydantic_forms/integration/async_support.py`, `pydantic_forms/render_form.py`
+- **Public sync/async “one obvious way” (Resolved)**
+  Canonical entry points now exist and are exported from the root package:
+  - Sync: `handle_form()`
+  - Async: `handle_form_async()`
+
+  Legacy helpers (`handle_sync_form`, `handle_async_form`, `FormIntegration.*`) remain as compatibility wrappers.
+  _Files:_ `pydantic_forms/integration/adapters.py`, `pydantic_forms/integration/__init__.py`, `pydantic_forms/__init__.py`, `docs/quickstart.md`, `tests/test_integration.py`
 
 - **Theme/style contract centralized**
   `RendererTheme` now includes concrete `FrameworkTheme` subclasses for Bootstrap/Material/plain plus `get_theme_for_framework`, and both enhanced + field renderers request classes/assets from the active theme before falling back to legacy configs. `FormStyle` registry now handles framework-level templates (including field-level chrome) and supports version-aware descriptors (e.g., `bootstrap:5`, `material:3`) with fallbacks to base framework/default.
@@ -192,10 +195,12 @@ These rules are intended to prevent “helpful” drift away from the original c
   **Tooling note (important)**
   - Pre-commit should exclude vendored assets and generated artifacts (coverage/test reports, debug HTML) from whitespace/EOF fixers to keep checksum verification and `make tests` stable.
 
-9. 🔶 **Define one canonical sync + one canonical async entry point (Recommended — Selected Next)** — Keep the current adapter functions, but publicly document and bless exactly one sync call and one async call (and make everything else thin wrappers).
-    - Goal: “If you can render, validate, and handle POST with these two functions, you’re done.”
-    - Ensure both paths accept the same inputs (model type, request/form-data mapping, theme/style config).
-    _Files:_ `pydantic_forms/integration/adapters.py`, `pydantic_forms/__init__.py`, `docs/quickstart.md`
+9. ✅ **Define one canonical sync + one canonical async entry point (COMPLETED)** — Canonical entry points exist and are documented:
+  - Sync: `handle_form()`
+  - Async: `handle_form_async()`
+
+  Both are exported from `pydantic_forms` and covered by integration tests.
+  _Files:_ `pydantic_forms/integration/adapters.py`, `pydantic_forms/__init__.py`, `docs/quickstart.md`, `tests/test_integration.py`
 
 10. 🔶 **Add a first-class debug rendering mode (Requested)** — Implement a `debug=True` option that wraps the form in a collapsed debug panel with tabs:
    - **Rendered output**: raw HTML (including the CSS/JS assets block)
