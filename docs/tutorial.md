@@ -13,7 +13,7 @@ By the end of this tutorial, you'll understand:
 ## What You Need Before Starting
 
 Before we begin, make sure you have:
-- **Python 3.9 or newer** installed on your computer
+- **Python 3.14 or newer** installed on your computer
 - **Basic Python knowledge** (variables, functions, imports)
 - **A text editor** (VS Code, PyCharm, or even Notepad++)
 - **5-10 minutes** of your time
