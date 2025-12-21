@@ -7,6 +7,8 @@ _Date: 2025-12-21 (Updated)_
 
 `pydantic-forms` is in a solid place architecturally: there is now a single schema→field→layout rendering pipeline, theme/style are first-class and overrideable, and the test suite exercises both sync and async rendering across layout primitives. The remaining work is less about “more features” and more about locking the product to its original promise:
 
+- **Python 3.14+ only:** this library targets Python 3.14 and higher, and does not support earlier Python versions.
+
 - ship **all** required HTML/CSS/JS from the library (no external CDNs by default)
 - keep UI + validation configuration **expressed via Pydantic** (schema is the source of truth)
 - make sync + async usage **boringly simple** (one obvious way)
@@ -32,6 +34,10 @@ The renderer refactor eliminated shared mutable state and restored the enhanced/
 ## Design Rules (Non‑Negotiables)
 
 These rules are intended to prevent “helpful” drift away from the original concept.
+
+0. **Python version policy**
+  - The library supports **Python 3.14 and higher only**.
+  - Avoid guidance that suggests compatibility with older Python versions.
 
 1. **Library ships the experience**
     - Default output must be fully functional offline: no third-party CDN assets (JS/CSS/fonts) unless explicitly opted in.
