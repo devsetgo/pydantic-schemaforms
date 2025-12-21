@@ -9,10 +9,11 @@ repo_url: 'https://github.com/devsetgo/bumpcalver'
 copyright: 'Copyright &copy; 2024 - 2025 Mike Ryan'
 
 nav:
-    - Introduction: 'index.md'
-    - Tutorial: 'tutorial.md'
-    - Plugin Hooks: 'plugin_hooks.md'
-    - Testing Workflow: 'testing_workflow.md'
+  - Introduction: 'index.md'
+  - Tutorial: 'tutorial.md'
+  - Plugin Hooks: 'plugin_hooks.md'
+  - Assets: 'assets.md'
+  - Testing Workflow: 'testing_workflow.md'
     # - QuickStart: 'quickstart.md'
     # - Modules: 'models.md'
     # - Examples:

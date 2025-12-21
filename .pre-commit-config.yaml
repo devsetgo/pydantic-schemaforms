@@ -1,3 +1,5 @@
+exclude: '^(htmlcov/|coverage\.xml|report\.xml|debug_.*\.html)'
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -5,7 +7,9 @@ repos:
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
+        exclude: ^pydantic_forms/assets/vendor/
       - id: trailing-whitespace
+        exclude: ^pydantic_forms/assets/vendor/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.1

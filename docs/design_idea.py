@@ -13,6 +13,32 @@ from pydantic_forms.schema_form import (
     EmailStr,
 )
 
+
+class _RuffAppStub:
+    def route(self, *_args: Any, **_kwargs: Any):
+        def decorator(func):
+            return func
+
+        return decorator
+
+
+class _RuffFormStub:
+    def to_dict(self) -> Dict[str, Any]:
+        return {}
+
+
+class _RuffRequestStub:
+    method: str = "GET"
+    form: _RuffFormStub = _RuffFormStub()
+    files: Dict[str, Any] = {}
+
+
+# NOTE: This file is a design sketch used in docs.
+# These stubs exist only to keep static linters (e.g., Ruff) happy.
+# Real applications should import and configure Flask (or another framework).
+app = _RuffAppStub()
+request = _RuffRequestStub()
+
 # types should have defaults based off python data types where applicable to apply pydantic input type
 # e.g., str -> "", int -> 0, float -> 0.0,
 # The Form Model should allow the user to specify a text area for a string field, a select dropdown for an enum field, etc.

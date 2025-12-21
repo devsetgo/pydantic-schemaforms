@@ -1,4 +1,3 @@
-import pytest
 
 
 def test_render_form_page_offline_by_default() -> None:

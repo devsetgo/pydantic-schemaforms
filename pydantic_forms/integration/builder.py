@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from ..modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
 from ..assets.runtime import framework_css_tag, framework_js_tag
-from ..rendering.frameworks import get_framework_config
 from ..validation import create_validator
 
 
