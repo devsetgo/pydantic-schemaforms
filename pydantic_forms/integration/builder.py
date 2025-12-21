@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import string.templatelib
+import string
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 
 from ..modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
+from ..rendering.frameworks import get_framework_config
 from ..validation import create_validator
 
 
@@ -324,7 +325,7 @@ def create_form_from_model(model: Type[BaseModel], **kwargs: Any) -> AutoFormBui
     return AutoFormBuilder(model, **kwargs)
 
 
-FORM_PAGE_TEMPLATE = string.templatelib.Template(
+FORM_PAGE_TEMPLATE = string.Template(
     """
 <!DOCTYPE html>
 <html lang="en">
@@ -332,7 +333,7 @@ FORM_PAGE_TEMPLATE = string.templatelib.Template(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    ${framework_css_tag}
     <style>
         body { background-color: #f8f9fa; }
         .form-container {
@@ -358,7 +359,7 @@ FORM_PAGE_TEMPLATE = string.templatelib.Template(
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    ${framework_js_tag}
     ${validation_script}
 </body>
 </html>
@@ -366,11 +367,30 @@ FORM_PAGE_TEMPLATE = string.templatelib.Template(
 )
 
 
+def _framework_asset_tags(*, framework: str, include_framework_assets: bool, asset_mode: str) -> Dict[str, str]:
+    if not include_framework_assets:
+        return {"framework_css_tag": "", "framework_js_tag": ""}
+
+    if asset_mode != "cdn":
+        return {"framework_css_tag": "", "framework_js_tag": ""}
+
+    config = get_framework_config(framework)
+    css_url = config.get("css_url", "")
+    js_url = config.get("js_url", "")
+
+    css_tag = f'<link href="{css_url}" rel="stylesheet">' if css_url else ""
+    js_tag = f'<script src="{js_url}"></script>' if js_url else ""
+    return {"framework_css_tag": css_tag, "framework_js_tag": js_tag}
+
+
 def render_form_page(
     form_builder: FormBuilder,
     title: str = "Form",
     data: Optional[Dict[str, Any]] = None,
     errors: Optional[Dict[str, List[str]]] = None,
+    *,
+    include_framework_assets: bool = False,
+    asset_mode: str = "vendored",
 ) -> str:
     form_html = form_builder.render(data or {}, errors or {})
     validation_script = form_builder.get_validation_script()
@@ -379,6 +399,13 @@ def render_form_page(
         "form_html": form_html,
         "validation_script": validation_script,
     }
+    template_data.update(
+        _framework_asset_tags(
+            framework=form_builder.framework,
+            include_framework_assets=include_framework_assets,
+            asset_mode=asset_mode,
+        )
+    )
     return FORM_PAGE_TEMPLATE.substitute(**template_data)
 
 

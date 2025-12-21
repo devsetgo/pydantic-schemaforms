@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Type, Union
 
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
+from .assets.runtime import htmx_script_tag
 from .schema_form import FormModel
 
 
@@ -16,6 +17,8 @@ def render_form_html(
     errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
     htmx_post_url: str = "/submit",
     framework: str = "bootstrap",
+    *,
+    asset_mode: str = "vendored",
     **kwargs,
 ) -> str:
     """
@@ -64,9 +67,11 @@ def render_form_html(
         **render_kwargs,
     )
 
-    # Add HTMX response container and scripts for backward compatibility
+    # Add HTMX response container and scripts for backward compatibility.
+    # Default is offline-by-default: vendored HTMX is inlined unless asset_mode="cdn".
     form_html += '\n<div id="form-response"></div>'
-    form_html += '\n<script src="https://unpkg.com/htmx.org@2.0.6"></script>'
-    form_html += '\n<script src="https://unpkg.com/imask"></script>'
+    htmx_tag = htmx_script_tag(asset_mode=asset_mode)
+    if htmx_tag:
+        form_html += f"\n{htmx_tag}"
 
     return form_html

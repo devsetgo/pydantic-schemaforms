@@ -581,10 +581,6 @@ function toggleAccordion(sectionId, buttonElement) {
     @staticmethod
     def _build_css() -> str:
         return """<style>
-/* Import Material Icons and Roboto font */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
 /* Material Design 3 Self-Contained Styles - Using !important to override any conflicting styles */
 .md-form-container {
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;

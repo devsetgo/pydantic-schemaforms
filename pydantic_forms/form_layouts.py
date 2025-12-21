@@ -89,6 +89,7 @@ class FormDesign:
         form_method: str = "post",
         error_notification_style: str = "inline",
         show_debug_info: bool = False,
+        asset_mode: str = "vendored",
         **kwargs,
     ):
         self.ui_theme = ui_theme
@@ -100,6 +101,7 @@ class FormDesign:
         self.form_method = form_method.lower()
         self.error_notification_style = error_notification_style
         self.show_debug_info = show_debug_info
+        self.asset_mode = asset_mode
         self.extra_attrs = kwargs
 
     def get_form_attributes(self) -> Dict[str, str]:
@@ -117,6 +119,12 @@ class FormDesign:
 
     def get_framework_css_url(self) -> str:
         """Get the CSS URL for the selected framework."""
+        if self.ui_theme == "custom":
+            return self.ui_theme_custom_css or ""
+
+        if self.asset_mode != "cdn":
+            return ""
+
         framework_css = {
             "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
             "material": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/css/materialize.min.css",
@@ -130,6 +138,9 @@ class FormDesign:
 
     def get_framework_js_url(self) -> str:
         """Get the JavaScript URL for the selected framework."""
+        if self.asset_mode != "cdn":
+            return ""
+
         framework_js = {
             "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
             "material": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/js/materialize.min.js",

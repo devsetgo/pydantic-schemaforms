@@ -21,6 +21,8 @@ REQUIREMENTS_PATH = requirements.txt
 
 .PHONY: autoflake black cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test
 
+.PHONY: vendor-update-htmx vendor-verify
+
 autoflake: ## Remove unused imports and unused variables from Python code
 	autoflake --in-place --remove-all-unused-imports  --ignore-init-module-imports --remove-unused-variables -r $(SERVICE_PATH)
 	autoflake --in-place --remove-all-unused-imports  --ignore-init-module-imports --remove-unused-variables -r $(TESTS_PATH)
@@ -97,6 +99,12 @@ test: ## Run the project's tests (linting + pytest + coverage badges)
 	genbadge tests -i /workspaces/$(REPONAME)/report.xml
 	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$(shell pwd)</source>|" coverage.xml
 	@echo "✨ Tests complete. Badges updated."
+
+vendor-update-htmx: ## Vendor the latest HTMX into package assets (or set HTMX_VERSION=2.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-htmx $(if $(HTMX_VERSION),--version $(HTMX_VERSION),)
+
+vendor-verify: ## Verify vendored assets match manifest checksums
+	$(PYTHON) scripts/vendor_assets.py verify --require-nonempty
 
 tests: test ## Alias for 'test' - Run the project's tests
 

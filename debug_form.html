@@ -5,7 +5,7 @@
       method="POST"
       action="/pets"
       novalidate>
-
+    
     <div class="mb-3"><label for="owner_name"><i class="bi bi-person"></i> Owner Name *</label>
 <input name="owner_name" id="owner_name" class="form-control" value="Sarah Thompson" required="required" minlength="2" maxlength="11" placeholder="Enter your full name" pattern="\d{3}-\d{2}-\d{4}" inputmode="numeric" autocomplete="off" type="text" />
 <div class="form-text">Your full name as the pet owner</div></div>
@@ -20,12 +20,12 @@
 <div class="form-text">Someone to contact in case of emergency</div></div>
 
 <div class="mb-3 model-list-block" data-field-name="pets" data-min-items="1" data-max-items="10">
-    <label class="form-label fw-bold">Your Pets</label>
+    <label class="form-label fw-bold">Your Pets <span class="text-danger">*</span></label>
     <div class="model-list-container" data-field-name="pets" data-min-items="1" data-max-items="10">
         <div class="model-list-items" id="pets-items">
         <div class="model-list-item card border mb-3"
              data-index="0"
-             data-title-template="Item #{index}"
+             data-title-template="Pet #{index}: {name}"
              data-field-name="pets">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">
@@ -33,11 +33,11 @@
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#pets_item_0_content"
-                            aria-expanded="true"
+                            aria-expanded="false"
                             aria-controls="pets_item_0_content">
-                        <i class="bi bi-chevron-down me-2"></i>
+                        <i class="bi bi-chevron-right me-2"></i>
                         <i class="bi bi-card-list me-2"></i>
-                        Item #1
+                        Pet #1: Tweety
                     </button>
                 </h6>
                 <button type="button"
@@ -48,7 +48,7 @@
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
-            <div class="collapse  show" id="pets_item_0_content">
+            <div class="collapse collapse show" id="pets_item_0_content">
                 <div class="card-body"><div class="row">
                 <div class="col-lg-4 col-md-6">
                     <div class="mb-3"><label for="pets[0].name"><i class="bi bi-heart"></i> Pet&#x27;s Name</label>
@@ -123,7 +123,7 @@
                 </div>
                 <div class="col-lg-4 col-md-6">
                     <div class="mb-3"><label for="pets[0].last_vet_visit"><i class="bi bi-calendar-date"></i> Last Vet Visit</label>
-<div class="birthdate-input-group"><input name="pets[0].last_vet_visit" id="pets[0].last_vet_visit" class="form-control" value="2024-11-01" max="2025-12-07" min="1875-01-01" type="date" />
+<div class="birthdate-input-group"><input name="pets[0].last_vet_visit" id="pets[0].last_vet_visit" class="form-control" value="2024-11-01" max="2025-12-21" min="1875-01-01" type="date" />
             <div class="age-display" id="pets[0].last_vet_visit_age" style="margin-top: 5px; font-size: 0.9em; color: #666;"></div>
             <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -168,13 +168,13 @@
             </button>
         </div>
     </div>
-
+    
 <div class="form-text text-muted model-list-help">Add information about each of your pets</div>
 
-
+    
 </div>
 
-
+    
 <button type="submit" class="btn btn-primary">Submit</button>
 
 </form>
@@ -446,4 +446,4 @@
             }
         }
         </script>
-
+        

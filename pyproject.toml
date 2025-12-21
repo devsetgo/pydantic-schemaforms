@@ -122,7 +122,8 @@ filterwarnings = [
 
 [tool.hatch.build.targets.sdist]
 include = [ "/pydantic_forms",]
-exclude = [ "*.json", "pkg/_compat.py",]
+exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "pydantic_forms",]
+include = [ "pydantic_forms/assets/**",]

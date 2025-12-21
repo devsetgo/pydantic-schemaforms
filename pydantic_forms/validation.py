@@ -659,7 +659,7 @@ function validateForm(formElement) {
 
     // Validate each field
     for (const [fieldName, validator] of Object.entries(formValidators)) {
-        const input = formElement.querySelector(`[name="${fieldName}"]`);
+        const input = formElement.querySelector(`[name="$${fieldName}"]`);
         if (input) {
             const error = validator(input.value);
             if (error) {
