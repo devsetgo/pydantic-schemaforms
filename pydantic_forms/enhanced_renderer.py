@@ -36,13 +36,16 @@ class EnhancedFormRenderer:
         theme: Optional[RendererTheme] = None,
         *,
         include_framework_assets: bool = False,
+        asset_mode: str = "vendored",
     ):
         self.framework = framework
         resolved_theme = theme or get_theme_for_framework(
             framework,
             include_assets=include_framework_assets,
+            asset_mode=asset_mode,
         )
         self._theme: RendererTheme = resolved_theme
+        self.asset_mode = asset_mode
         if hasattr(self._theme, "config"):
             self.config = self._theme.config
         else:

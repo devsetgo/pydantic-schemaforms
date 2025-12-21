@@ -221,14 +221,24 @@ class DefaultTheme(RendererTheme):
 class FrameworkTheme(RendererTheme):
     """Renderer theme that mirrors the legacy framework config mapping."""
 
-    def __init__(self, framework: str, include_assets: bool = False, submit_label: str = "Submit") -> None:
+    def __init__(
+        self,
+        framework: str,
+        include_assets: bool = False,
+        *,
+        asset_mode: str = "vendored",
+        submit_label: str = "Submit",
+    ) -> None:
         super().__init__(submit_label=submit_label)
         self.framework = framework
         self.config = get_framework_config(framework)
         self.include_assets = include_assets
+        self.asset_mode = asset_mode
 
     def before_form(self) -> str:
         if not self.include_assets:
+            return ""
+        if self.asset_mode != "cdn":
             return ""
         css_url = self.config.get("css_url")
         if css_url:
@@ -237,6 +247,8 @@ class FrameworkTheme(RendererTheme):
 
     def after_form(self) -> str:
         if not self.include_assets:
+            return ""
+        if self.asset_mode != "cdn":
             return ""
         js_url = self.config.get("js_url")
         if js_url:
@@ -263,15 +275,15 @@ class FrameworkTheme(RendererTheme):
 class BootstrapTheme(FrameworkTheme):
     name = "bootstrap"
 
-    def __init__(self, include_assets: bool = False) -> None:
-        super().__init__("bootstrap", include_assets=include_assets)
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
+        super().__init__("bootstrap", include_assets=include_assets, asset_mode=asset_mode)
 
 
 class MaterialTheme(FrameworkTheme):
     name = "material"
 
-    def __init__(self, include_assets: bool = False) -> None:
-        super().__init__("material", include_assets=include_assets)
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
+        super().__init__("material", include_assets=include_assets, asset_mode=asset_mode)
 
     def render_model_list_item(
         self,
@@ -294,8 +306,8 @@ class MaterialTheme(FrameworkTheme):
 class PlainTheme(FrameworkTheme):
     name = "plain"
 
-    def __init__(self, include_assets: bool = False) -> None:
-        super().__init__("none", include_assets=include_assets)
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
+        super().__init__("none", include_assets=include_assets, asset_mode=asset_mode)
 
 
 class MaterialEmbeddedTheme(RendererTheme):
@@ -1383,10 +1395,15 @@ _THEME_MAP: Dict[str, Type[RendererTheme]] = {
 }
 
 
-def get_theme_for_framework(framework: str, *, include_assets: bool = False) -> RendererTheme:
+def get_theme_for_framework(
+    framework: str,
+    *,
+    include_assets: bool = False,
+    asset_mode: str = "vendored",
+) -> RendererTheme:
     """Return a RendererTheme instance that matches the requested framework."""
 
     theme_cls = _THEME_MAP.get(framework.lower())
     if theme_cls is None:
-        return FrameworkTheme(framework, include_assets=include_assets)
-    return theme_cls(include_assets=include_assets)
+        return FrameworkTheme(framework, include_assets=include_assets, asset_mode=asset_mode)
+    return theme_cls(include_assets=include_assets, asset_mode=asset_mode)
