@@ -1,4 +1,4 @@
-exclude: '^(htmlcov/|coverage\.xml|report\.xml|debug_.*\.html)'
+exclude: '^(htmlcov/|coverage\.xml|report\.xml|debug_.*\.html|.*-badge\.svg)'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

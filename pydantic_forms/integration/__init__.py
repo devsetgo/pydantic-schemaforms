@@ -26,6 +26,8 @@ from .vue import VueFormulateIntegration
 if TYPE_CHECKING:  # pragma: no cover - import-time only for type hints
     from .frameworks import (
         FormIntegration,
+        handle_form,
+        handle_form_async,
         handle_async_form,
         handle_sync_form,
         normalize_form_data,
@@ -44,6 +46,8 @@ __all__ = [
     "create_contact_form",
     "create_form_from_model",
     "render_form_page",
+    "handle_form",
+    "handle_form_async",
     "handle_sync_form",
     "handle_async_form",
     "normalize_form_data",
@@ -55,6 +59,8 @@ __all__ = [
 
 _LAZY_EXPORTS = {
     "FormIntegration": ("pydantic_forms.integration.frameworks", "FormIntegration"),
+    "handle_form": ("pydantic_forms.integration.frameworks", "handle_form"),
+    "handle_form_async": ("pydantic_forms.integration.frameworks", "handle_form_async"),
     "handle_sync_form": ("pydantic_forms.integration.frameworks", "handle_sync_form"),
     "handle_async_form": ("pydantic_forms.integration.frameworks", "handle_async_form"),
     "normalize_form_data": ("pydantic_forms.integration.frameworks", "normalize_form_data"),

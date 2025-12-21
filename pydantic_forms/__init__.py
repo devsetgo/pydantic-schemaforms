@@ -56,6 +56,8 @@ from .integration import (
     create_form_from_model,
     create_login_form,
     create_registration_form,
+    handle_form,
+    handle_form_async,
     render_form_page,
 )
 # Live validation system
@@ -177,6 +179,8 @@ __all__ = [
     "SPECIALIZED_INPUTS",
     # Framework integration
     "FormIntegration",
+    "handle_form",
+    "handle_form_async",
 ] + list(_INPUT_EXPORTS)
 
 # Quick start documentation

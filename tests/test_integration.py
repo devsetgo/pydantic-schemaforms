@@ -13,6 +13,8 @@ from pydantic_forms.integration import (
     ReactJSONSchemaIntegration,
     VueFormulateIntegration,
     handle_async_form,
+    handle_form,
+    handle_form_async,
     handle_sync_form,
 )
 from pydantic_forms.schema_form import Field, FormModel
@@ -57,6 +59,15 @@ class TestGenericServerIntegrations:
         assert "form_html" in result
         assert isinstance(result["form_html"], str)
 
+    def test_handle_form_sync_alias(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        data = {"name": "Alias", "email": "alias@example.com", "age": 30, "newsletter": True}
+
+        result = handle_form(builder, submitted_data=data)
+
+        assert result["success"] is True
+        assert result["data"] == data
+
     @pytest.mark.asyncio
     async def test_handle_async_form_success(self, simple_form_model):
         builder = _build_form_builder(simple_form_model)
@@ -86,6 +97,16 @@ class TestGenericServerIntegrations:
 
         assert "form_html" in result
         assert isinstance(result["form_html"], str)
+
+    @pytest.mark.asyncio
+    async def test_handle_form_async_alias(self, simple_form_model):
+        builder = _build_form_builder(simple_form_model)
+        data = {"name": "Alias", "email": "alias@example.com", "age": 30, "newsletter": True}
+
+        result = await handle_form_async(builder, submitted_data=data)
+
+        assert result["success"] is True
+        assert result["data"] == data
 
     def test_form_integration_sync_alias(self, simple_form_model):
         builder = _build_form_builder(simple_form_model)
