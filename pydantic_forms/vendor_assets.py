@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+import tarfile
+import zipfile
 from typing import Any
 from urllib.request import Request, urlopen
 
@@ -77,6 +80,77 @@ def latest_htmx_version() -> str:
     return tag[1:] if tag.startswith('v') else tag
 
 
+def npm_package_metadata(package_name: str) -> dict[str, Any]:
+    """Fetch package metadata from the npm registry."""
+    url = f'https://registry.npmjs.org/{package_name}'
+    data = http_get_bytes(url)
+    payload = json.loads(data.decode('utf-8'))
+    if not isinstance(payload, dict):
+        raise ValueError(f'npm registry payload for {package_name} was not an object')
+    return payload
+
+
+def latest_npm_version(package_name: str) -> str:
+    payload = npm_package_metadata(package_name)
+    dist_tags = payload.get('dist-tags')
+    if not isinstance(dist_tags, dict):
+        raise ValueError(f'npm registry payload for {package_name} missing dist-tags')
+    latest = dist_tags.get('latest')
+    if not isinstance(latest, str) or not latest.strip():
+        raise ValueError(f'npm registry payload for {package_name} missing latest dist-tag')
+    return latest.strip()
+
+
+def npm_tarball_url(package_name: str, version: str) -> str:
+    payload = npm_package_metadata(package_name)
+    versions = payload.get('versions')
+    if not isinstance(versions, dict) or version not in versions:
+        raise ValueError(f'npm registry payload for {package_name} missing version {version}')
+    meta = versions.get(version)
+    if not isinstance(meta, dict):
+        raise ValueError(f'npm registry payload for {package_name}@{version} invalid')
+    dist = meta.get('dist')
+    if not isinstance(dist, dict):
+        raise ValueError(f'npm registry payload for {package_name}@{version} missing dist')
+    url = dist.get('tarball')
+    if not isinstance(url, str) or not url.strip():
+        raise ValueError(f'npm registry payload for {package_name}@{version} missing tarball url')
+    return url.strip()
+
+
+def _safe_member_bytes_from_tgz(tgz_bytes: bytes, member_path: str) -> bytes:
+    """Extract a single file from an npm .tgz (tar.gz) blob.
+
+    npm tarballs are typically prefixed with "package/".
+    """
+    with tarfile.open(fileobj=io.BytesIO(tgz_bytes), mode='r:gz') as tf:
+        # Accept both with/without the "package/" prefix.
+        candidates = [f'package/{member_path.lstrip("/")}', member_path.lstrip('/')]
+        for name in candidates:
+            try:
+                member = tf.getmember(name)
+            except KeyError:
+                continue
+            if not member.isfile():
+                raise ValueError(f'npm tarball member is not a file: {name}')
+            f = tf.extractfile(member)
+            if f is None:
+                raise ValueError(f'failed to extract npm tarball member: {name}')
+            return f.read()
+    raise FileNotFoundError(f'missing file in npm tarball: {member_path}')
+
+
+def _write_vendored_file(*, rel_path: Path, data: bytes, source_url: str) -> dict[str, str]:
+    abs_path = project_root() / rel_path
+    ensure_parent_dir(abs_path)
+    abs_path.write_bytes(data)
+    return {
+        'path': rel_path.as_posix(),
+        'sha256': sha256_bytes(data),
+        'source_url': source_url,
+    }
+
+
 def vendor_htmx(*, version: str | None = None) -> VendoredFile:
     """Download and vendor HTMX into the package assets folder.
 
@@ -88,17 +162,11 @@ def vendor_htmx(*, version: str | None = None) -> VendoredFile:
 
     js_bytes = http_get_bytes(download_url)
     js_rel_path = Path('pydantic_forms/assets/vendor/htmx/htmx.min.js')
-    js_abs_path = project_root() / js_rel_path
-    ensure_parent_dir(js_abs_path)
-    js_abs_path.write_bytes(js_bytes)
-    js_hash = sha256_bytes(js_bytes)
+    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=download_url)
 
     license_bytes = http_get_bytes(license_url)
     license_rel_path = Path('pydantic_forms/assets/vendor/htmx/LICENSE')
-    license_abs_path = project_root() / license_rel_path
-    ensure_parent_dir(license_abs_path)
-    license_abs_path.write_bytes(license_bytes)
-    license_hash = sha256_bytes(license_bytes)
+    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=license_url)
 
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):
@@ -108,22 +176,146 @@ def vendor_htmx(*, version: str | None = None) -> VendoredFile:
         'name': 'htmx',
         'version': resolved_version,
         'files': [
-            {
-                'path': js_rel_path.as_posix(),
-                'sha256': js_hash,
-                'source_url': download_url,
-            },
-            {
-                'path': license_rel_path.as_posix(),
-                'sha256': license_hash,
-                'source_url': license_url,
-            },
+            js_entry,
+            license_entry,
         ],
     }
     upsert_asset_entry(manifest, name='htmx', entry=entry)
     write_manifest(manifest)
 
-    return VendoredFile(path=js_rel_path.as_posix(), sha256=js_hash, source_url=download_url)
+    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=download_url)
+
+
+def vendor_imask(*, version: str | None = None) -> VendoredFile:
+    """Download and vendor IMask (npm) into the package assets folder."""
+
+    package = 'imask'
+    resolved_version = version or latest_npm_version(package)
+    tarball_url = npm_tarball_url(package, resolved_version)
+    tgz = http_get_bytes(tarball_url)
+
+    # Common dist paths for the imask package
+    js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/imask.min.js')
+    js_rel_path = Path('pydantic_forms/assets/vendor/imask/imask.min.js')
+    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
+
+    license_bytes: bytes
+    try:
+        license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
+    except FileNotFoundError:
+        license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
+    license_rel_path = Path('pydantic_forms/assets/vendor/imask/LICENSE')
+    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'imask',
+        'version': resolved_version,
+        'files': [
+            js_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='imask', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=tarball_url)
+
+
+def vendor_materialize(*, version: str = '1.0.0') -> VendoredFile:
+    """Download and vendor @materializecss/materialize (npm) assets."""
+    package = '@materializecss/materialize'
+    resolved_version = version
+    tarball_url = npm_tarball_url(package, resolved_version)
+    tgz = http_get_bytes(tarball_url)
+
+    css_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/css/materialize.min.css')
+    css_rel_path = Path('pydantic_forms/assets/vendor/materialize/materialize.min.css')
+    css_entry = _write_vendored_file(rel_path=css_rel_path, data=css_bytes, source_url=tarball_url)
+
+    js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/js/materialize.min.js')
+    js_rel_path = Path('pydantic_forms/assets/vendor/materialize/materialize.min.js')
+    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
+
+    license_bytes: bytes
+    try:
+        license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
+    except FileNotFoundError:
+        license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
+    license_rel_path = Path('pydantic_forms/assets/vendor/materialize/LICENSE')
+    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'materialize',
+        'version': resolved_version,
+        'files': [
+            css_entry,
+            js_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='materialize', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=tarball_url)
+
+
+def vendor_bootstrap(*, version: str = '5.3.0') -> VendoredFile:
+    """Download and vendor Bootstrap dist assets from GitHub releases."""
+    resolved_version = version
+    zip_url = f'https://github.com/twbs/bootstrap/releases/download/v{resolved_version}/bootstrap-{resolved_version}-dist.zip'
+    license_url = f'https://raw.githubusercontent.com/twbs/bootstrap/v{resolved_version}/LICENSE'
+    zip_bytes = http_get_bytes(zip_url)
+
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+        names = zf.namelist()
+        css_candidates = [n for n in names if n.endswith('bootstrap.min.css')]
+        js_candidates = [n for n in names if n.endswith('bootstrap.bundle.min.js')]
+
+        if not css_candidates:
+            raise FileNotFoundError('missing bootstrap.min.css in bootstrap dist zip')
+        if not js_candidates:
+            raise FileNotFoundError('missing bootstrap.bundle.min.js in bootstrap dist zip')
+
+        css_bytes = zf.read(css_candidates[0])
+        js_bytes = zf.read(js_candidates[0])
+
+    # The dist ZIP does not reliably include the license; fetch from upstream tag.
+    license_bytes = http_get_bytes(license_url)
+
+    css_rel_path = Path('pydantic_forms/assets/vendor/bootstrap/bootstrap.min.css')
+    css_entry = _write_vendored_file(rel_path=css_rel_path, data=css_bytes, source_url=zip_url)
+
+    js_rel_path = Path('pydantic_forms/assets/vendor/bootstrap/bootstrap.bundle.min.js')
+    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=zip_url)
+
+    license_rel_path = Path('pydantic_forms/assets/vendor/bootstrap/LICENSE')
+    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=license_url)
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'bootstrap',
+        'version': resolved_version,
+        'files': [
+            css_entry,
+            js_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='bootstrap', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=zip_url)
 
 
 def verify_manifest_files(*, require_nonempty: bool = False) -> None:

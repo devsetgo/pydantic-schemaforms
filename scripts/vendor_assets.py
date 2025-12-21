@@ -11,7 +11,10 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from pydantic_forms.vendor_assets import (
     load_manifest,
+    vendor_bootstrap,
     vendor_htmx,
+    vendor_imask,
+    vendor_materialize,
     verify_manifest_files,
 )
 
@@ -22,6 +25,15 @@ def main(argv: list[str]) -> int:
 
     p_update = sub.add_parser('update-htmx', help='Download and vendor the latest (or specified) HTMX.')
     p_update.add_argument('--version', default=None, help='HTMX version (e.g. 2.0.7). Defaults to latest.')
+
+    p_imask = sub.add_parser('update-imask', help='Download and vendor the latest (or specified) IMask (npm).')
+    p_imask.add_argument('--version', default=None, help='IMask version. Defaults to npm latest.')
+
+    p_bootstrap = sub.add_parser('update-bootstrap', help='Download and vendor Bootstrap dist assets.')
+    p_bootstrap.add_argument('--version', default='5.3.0', help='Bootstrap version (default: 5.3.0).')
+
+    p_materialize = sub.add_parser('update-materialize', help='Download and vendor Materialize CSS (npm).')
+    p_materialize.add_argument('--version', default='1.0.0', help='Materialize version (default: 1.0.0).')
 
     p_verify = sub.add_parser('verify', help='Verify vendored files match manifest checksums.')
     p_verify.add_argument(
@@ -37,6 +49,24 @@ def main(argv: list[str]) -> int:
     if args.cmd == 'update-htmx':
         info = vendor_htmx(version=args.version)
         print(f"Vendored HTMX from {info.source_url}")
+        print(f"Wrote {info.path} (sha256={info.sha256})")
+        return 0
+
+    if args.cmd == 'update-imask':
+        info = vendor_imask(version=args.version)
+        print(f"Vendored IMask from {info.source_url}")
+        print(f"Wrote {info.path} (sha256={info.sha256})")
+        return 0
+
+    if args.cmd == 'update-bootstrap':
+        info = vendor_bootstrap(version=args.version)
+        print(f"Vendored Bootstrap from {info.source_url}")
+        print(f"Wrote {info.path} (sha256={info.sha256})")
+        return 0
+
+    if args.cmd == 'update-materialize':
+        info = vendor_materialize(version=args.version)
+        print(f"Vendored Materialize from {info.source_url}")
         print(f"Wrote {info.path} (sha256={info.sha256})")
         return 0
 

@@ -103,6 +103,15 @@ test: ## Run the project's tests (linting + pytest + coverage badges)
 vendor-update-htmx: ## Vendor the latest HTMX into package assets (or set HTMX_VERSION=2.x.y)
 	$(PYTHON) scripts/vendor_assets.py update-htmx $(if $(HTMX_VERSION),--version $(HTMX_VERSION),)
 
+vendor-update-imask: ## Vendor the latest IMask into package assets (or set IMASK_VERSION=2.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-imask --version "$(IMASK_VERSION)"
+
+vendor-update-bootstrap: ## Vendor the latest Bootstrap into package assets (or set BOOTSTRAP_VERSION=5.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-bootstrap --version "$(BOOTSTRAP_VERSION)"
+
+vendor-update-materialize: ## Vendor the latest Materialize into package assets (or set MATERIALIZE_VERSION=1.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-materialize --version "$(MATERIALIZE_VERSION)"
+
 vendor-verify: ## Verify vendored assets match manifest checksums
 	$(PYTHON) scripts/vendor_assets.py verify --require-nonempty
 

@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from pydantic import BaseModel
 
 from ..modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
+from ..assets.runtime import framework_css_tag, framework_js_tag
 from ..rendering.frameworks import get_framework_config
 from ..validation import create_validator
 
@@ -380,15 +381,8 @@ def _framework_asset_tags(*, framework: str, include_framework_assets: bool, ass
     if not include_framework_assets:
         return {"framework_css_tag": "", "framework_js_tag": ""}
 
-    if asset_mode != "cdn":
-        return {"framework_css_tag": "", "framework_js_tag": ""}
-
-    config = get_framework_config(framework)
-    css_url = config.get("css_url", "")
-    js_url = config.get("js_url", "")
-
-    css_tag = f'<link href="{css_url}" rel="stylesheet">' if css_url else ""
-    js_tag = f'<script src="{js_url}"></script>' if js_url else ""
+    css_tag = framework_css_tag(framework=framework, asset_mode=asset_mode)
+    js_tag = framework_js_tag(framework=framework, asset_mode=asset_mode)
     return {"framework_css_tag": css_tag, "framework_js_tag": js_tag}
 
 

@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Type, Union
 
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
-from .assets.runtime import htmx_script_tag
+from .assets.runtime import htmx_script_tag, imask_script_tag
 from .schema_form import FormModel
 
 
@@ -19,6 +19,7 @@ def render_form_html(
     framework: str = "bootstrap",
     *,
     asset_mode: str = "vendored",
+    include_imask: bool = False,
     **kwargs,
 ) -> str:
     """
@@ -73,5 +74,10 @@ def render_form_html(
     htmx_tag = htmx_script_tag(asset_mode=asset_mode)
     if htmx_tag:
         form_html += f"\n{htmx_tag}"
+
+    if include_imask:
+        imask_tag = imask_script_tag(asset_mode=asset_mode)
+        if imask_tag:
+            form_html += f"\n{imask_tag}"
 
     return form_html

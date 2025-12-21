@@ -6,6 +6,7 @@ from html import escape
 from typing import Dict, Optional, Type
 
 from ..templates import TemplateString
+from ..assets.runtime import framework_css_tag, framework_js_tag
 from .form_style import FormStyle, get_form_style
 from .frameworks import get_framework_config
 
@@ -236,24 +237,21 @@ class FrameworkTheme(RendererTheme):
         self.asset_mode = asset_mode
 
     def before_form(self) -> str:
-        if not self.include_assets:
-            return ""
-        if self.asset_mode != "cdn":
-            return ""
-        css_url = self.config.get("css_url")
-        if css_url:
-            return f'<link rel="stylesheet" href="{css_url}" />'
-        return ""
+        blocks = [super().before_form()]
+        if self.include_assets:
+            css = framework_css_tag(framework=self.framework, asset_mode=self.asset_mode)
+            if css:
+                blocks.append(css)
+        return "\n".join([b for b in blocks if b])
 
     def after_form(self) -> str:
-        if not self.include_assets:
-            return ""
-        if self.asset_mode != "cdn":
-            return ""
-        js_url = self.config.get("js_url")
-        if js_url:
-            return f'<script src="{js_url}"></script>'
-        return ""
+        blocks = []
+        if self.include_assets:
+            js = framework_js_tag(framework=self.framework, asset_mode=self.asset_mode)
+            if js:
+                blocks.append(js)
+        blocks.append(super().after_form())
+        return "\n".join([b for b in blocks if b])
 
     def form_class(self) -> str:
         return self.config.get("form_class", "")

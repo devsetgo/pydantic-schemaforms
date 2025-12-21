@@ -14,6 +14,7 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
 from .layout_base import BaseLayout as SharedBaseLayout
+from .assets.runtime import framework_css_tag, framework_js_tag
 from .rendering.layout_engine import HorizontalLayout as FlexHorizontalLayout
 from .rendering.layout_engine import TabLayout as ComponentTabLayout
 from .rendering.layout_engine import VerticalLayout as FlexVerticalLayout
@@ -505,8 +506,9 @@ class TabbedLayout(FormLayoutBase):
         if not self.form_config:
             return form_html
 
-        css_url = self.form_config.get_framework_css_url()
-        js_url = self.form_config.get_framework_js_url()
+        asset_mode = getattr(self.form_config, "asset_mode", "vendored")
+        css_tag = framework_css_tag(framework=self.form_config.ui_theme, asset_mode=asset_mode)
+        js_tag = framework_js_tag(framework=self.form_config.ui_theme, asset_mode=asset_mode)
 
         # Get form attributes
         form_attrs = self.form_config.get_form_attributes()
@@ -518,7 +520,7 @@ class TabbedLayout(FormLayoutBase):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{self.form_config.form_name}</title>
-    {f'<link href="{css_url}" rel="stylesheet">' if css_url else ''}
+    {css_tag}
     <style>
         body {{ background-color: #f8f9fa; }}
         .form-container {{
@@ -545,7 +547,7 @@ class TabbedLayout(FormLayoutBase):
         </div>
     </div>
 
-    {f'<script src="{js_url}"></script>' if js_url else ''}
+    {js_tag}
 </body>
 </html>"""
 
