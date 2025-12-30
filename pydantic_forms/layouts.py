@@ -1,46 +1,46 @@
-"""Deprecated layout wrappers.
+# """Deprecated layout wrappers.
 
-The canonical layout primitives now live in ``pydantic_forms.rendering.layout_engine``.
-"""
+# The canonical layout primitives now live in ``pydantic_forms.rendering.layout_engine``.
+# """
 
-from __future__ import annotations
+# from __future__ import annotations
 
-import warnings
+# import warnings
 
-from .layout_base import BaseLayout
-from .rendering.layout_engine import (
-    AccordionLayout,
-    CardLayout,
-    GridLayout,
-    HorizontalLayout,
-    LayoutComposer,
-    ModalLayout,
-    ResponsiveGridLayout,
-    TabLayout,
-    VerticalLayout,
-)
+# from .layout_base import BaseLayout
+# from .rendering.layout_engine import (
+#     AccordionLayout,
+#     CardLayout,
+#     GridLayout,
+#     HorizontalLayout,
+#     LayoutComposer,
+#     ModalLayout,
+#     ResponsiveGridLayout,
+#     TabLayout,
+#     VerticalLayout,
+# )
 
-warnings.warn(
-    "pydantic_forms.layouts is deprecated. Import layout primitives from "
-    "pydantic_forms.rendering.layout_engine instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+# warnings.warn(
+#     "pydantic_forms.layouts is deprecated. Import layout primitives from "
+#     "pydantic_forms.rendering.layout_engine instead.",
+#     DeprecationWarning,
+#     stacklevel=2,
+# )
 
-LayoutFactory = LayoutComposer
-Layout = LayoutComposer
+# LayoutFactory = LayoutComposer
+# Layout = LayoutComposer
 
-__all__ = [
-    "BaseLayout",
-    "AccordionLayout",
-    "CardLayout",
-    "GridLayout",
-    "HorizontalLayout",
-    "Layout",
-    "LayoutFactory",
-    "LayoutComposer",
-    "ModalLayout",
-    "ResponsiveGridLayout",
-    "TabLayout",
-    "VerticalLayout",
-]
+# __all__ = [
+#     "BaseLayout",
+#     "AccordionLayout",
+#     "CardLayout",
+#     "GridLayout",
+#     "HorizontalLayout",
+#     "Layout",
+#     "LayoutFactory",
+#     "LayoutComposer",
+#     "ModalLayout",
+#     "ResponsiveGridLayout",
+#     "TabLayout",
+#     "VerticalLayout",
+# ]

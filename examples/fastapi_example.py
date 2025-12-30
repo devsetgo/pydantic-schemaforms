@@ -896,7 +896,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         })
 
 @app.get("/self-contained", response_class=HTMLResponse)
-async def self_contained(demo: bool = True):
+async def self_contained(demo: bool = True, debug: bool = True):
     """Self-contained form demo - zero external dependencies."""
     from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
 
@@ -915,7 +915,7 @@ async def self_contained(demo: bool = True):
         }
 
     renderer = SimpleMaterialRenderer()
-    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data)
+    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug)
 
     return f"""<!DOCTYPE html>
 <html lang="en">

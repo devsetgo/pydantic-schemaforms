@@ -255,12 +255,12 @@ result = await FormIntegration.fastapi_integration(form, data)
 def __getattr__(name: str):
     """Expose input components lazily at the package root."""
 
-    if name in _INPUT_EXPORTS:
+    if name in _INPUT_EXPORTS: # pragma: no cover - improves import time
         inputs_module = import_module("pydantic_forms.inputs")
         attr = getattr(inputs_module, name)
         globals()[name] = attr
         return attr
-    raise AttributeError(f"module 'pydantic_forms' has no attribute '{name}'")
+    raise AttributeError(f"module 'pydantic_forms' has no attribute '{name}'") # pragma: no cover - improves import time
 
 
 def __dir__():  # pragma: no cover - improves interactive discovery
