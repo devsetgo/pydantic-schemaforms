@@ -1,6 +1,5 @@
 """Comprehensive tests for datetime and other input modules."""
 
-import pytest
 from datetime import date, datetime, time
 from pydantic_forms.inputs.datetime_inputs import (
     DateInput,
@@ -12,7 +11,6 @@ from pydantic_forms.inputs.datetime_inputs import (
 from pydantic_forms.inputs.numeric_inputs import NumberInput, RangeInput
 from pydantic_forms.inputs.text_inputs import EmailInput, URLInput, SearchInput
 from pydantic_forms.inputs.specialized_inputs import FileInput, ColorInput
-from unittest.mock import Mock, patch
 
 
 class TestDateInput:
@@ -22,7 +20,7 @@ class TestDateInput:
         """Test basic date input rendering."""
         date_input = DateInput()
         result = date_input.render(name="birth_date", id="birth_date")
-        
+
         assert "type=\"date\"" in result
         assert "name=\"birth_date\"" in result
 
@@ -30,12 +28,12 @@ class TestDateInput:
         """Test date input with date object."""
         date_input = DateInput()
         test_date = date(2024, 1, 15)
-        
+
         result = date_input.render(
             name="date_field",
             value=test_date
         )
-        
+
         assert "2024-01-15" in result
         assert "type=\"date\"" in result
 
@@ -43,24 +41,24 @@ class TestDateInput:
         """Test date input with min date."""
         date_input = DateInput()
         min_date = date(2024, 1, 1)
-        
+
         result = date_input.render(
             name="date_field",
             min=min_date
         )
-        
+
         assert "2024-01-01" in result
 
     def test_date_input_with_max_date(self):
         """Test date input with max date."""
         date_input = DateInput()
         max_date = date(2024, 12, 31)
-        
+
         result = date_input.render(
             name="date_field",
             max=max_date
         )
-        
+
         assert "2024-12-31" in result
 
     def test_date_input_get_input_type(self):
@@ -81,7 +79,7 @@ class TestTimeInput:
         """Test basic time input rendering."""
         time_input = TimeInput()
         result = time_input.render(name="time_field", id="time_field")
-        
+
         assert "type=\"time\"" in result
         assert "name=\"time_field\"" in result
 
@@ -89,43 +87,43 @@ class TestTimeInput:
         """Test time input with time object."""
         time_input = TimeInput()
         test_time = time(14, 30)
-        
+
         result = time_input.render(
             name="time_field",
             value=test_time
         )
-        
+
         assert "14:30" in result
 
     def test_time_input_with_min_time(self):
         """Test time input with min time."""
         time_input = TimeInput()
         min_time = time(9, 0)
-        
+
         result = time_input.render(
             name="time_field",
             min=min_time
         )
-        
+
         assert "09:00" in result
 
     def test_time_input_with_max_time(self):
         """Test time input with max time."""
         time_input = TimeInput()
         max_time = time(17, 30)
-        
+
         result = time_input.render(
             name="time_field",
             max=max_time
         )
-        
+
         assert "17:30" in result
 
     def test_time_input_default_step(self):
         """Test time input default step."""
         time_input = TimeInput()
         result = time_input.render(name="time_field")
-        
+
         assert "step=\"60\"" in result
 
     def test_time_input_custom_step(self):
@@ -135,7 +133,7 @@ class TestTimeInput:
             name="time_field",
             step="30"
         )
-        
+
         assert "step=\"30\"" in result
 
     def test_time_input_get_input_type(self):
@@ -151,7 +149,7 @@ class TestDatetimeInput:
         """Test basic datetime input rendering."""
         dt_input = DatetimeInput()
         result = dt_input.render(name="datetime_field", id="datetime_field")
-        
+
         assert "type=\"datetime-local\"" in result
         assert "name=\"datetime_field\"" in result
 
@@ -159,36 +157,36 @@ class TestDatetimeInput:
         """Test datetime input with datetime object."""
         dt_input = DatetimeInput()
         test_dt = datetime(2024, 1, 15, 14, 30)
-        
+
         result = dt_input.render(
             name="datetime_field",
             value=test_dt
         )
-        
+
         assert "2024-01-15T14:30" in result
 
     def test_datetime_input_with_min_datetime(self):
         """Test datetime input with min datetime."""
         dt_input = DatetimeInput()
         min_dt = datetime(2024, 1, 1, 0, 0)
-        
+
         result = dt_input.render(
             name="datetime_field",
             min=min_dt
         )
-        
+
         assert "2024-01-01T00:00" in result
 
     def test_datetime_input_with_max_datetime(self):
         """Test datetime input with max datetime."""
         dt_input = DatetimeInput()
         max_dt = datetime(2024, 12, 31, 23, 59)
-        
+
         result = dt_input.render(
             name="datetime_field",
             max=max_dt
         )
-        
+
         assert "2024-12-31T23:59" in result
 
     def test_datetime_input_get_input_type(self):
@@ -209,19 +207,19 @@ class TestMonthInput:
         """Test basic month input rendering."""
         month_input = MonthInput()
         result = month_input.render(name="month_field", id="month_field")
-        
+
         assert "type=\"month\"" in result
         assert "name=\"month_field\"" in result
 
     def test_month_input_with_month_value(self):
         """Test month input with month value."""
         month_input = MonthInput()
-        
+
         result = month_input.render(
             name="month_field",
             value="2024-01"
         )
-        
+
         assert "2024-01" in result
 
     def test_month_input_get_input_type(self):
@@ -237,19 +235,19 @@ class TestWeekInput:
         """Test basic week input rendering."""
         week_input = WeekInput()
         result = week_input.render(name="week_field", id="week_field")
-        
+
         assert "type=\"week\"" in result
         assert "name=\"week_field\"" in result
 
     def test_week_input_with_week_value(self):
         """Test week input with week value."""
         week_input = WeekInput()
-        
+
         result = week_input.render(
             name="week_field",
             value="2024-W01"
         )
-        
+
         assert "2024-W01" in result
 
     def test_week_input_get_input_type(self):
@@ -265,7 +263,7 @@ class TestNumberInput:
         """Test basic number input rendering."""
         num_input = NumberInput()
         result = num_input.render(name="number_field", id="number_field")
-        
+
         assert "type=\"number\"" in result
         assert "name=\"number_field\"" in result
 
@@ -276,7 +274,7 @@ class TestNumberInput:
             name="quantity",
             value=42
         )
-        
+
         assert "42" in result
 
     def test_number_input_with_min(self):
@@ -286,7 +284,7 @@ class TestNumberInput:
             name="age",
             min=0
         )
-        
+
         assert "min=\"0\"" in result
 
     def test_number_input_with_max(self):
@@ -296,7 +294,7 @@ class TestNumberInput:
             name="age",
             max=150
         )
-        
+
         assert "max=\"150\"" in result
 
     def test_number_input_with_step(self):
@@ -306,7 +304,7 @@ class TestNumberInput:
             name="price",
             step=0.01
         )
-        
+
         assert "step=" in result
 
 
@@ -317,7 +315,7 @@ class TestRangeInput:
         """Test basic range input rendering."""
         range_input = RangeInput()
         result = range_input.render(name="range_field", id="range_field")
-        
+
         assert "type=\"range\"" in result
         assert "name=\"range_field\"" in result
 
@@ -328,7 +326,7 @@ class TestRangeInput:
             name="volume",
             value=50
         )
-        
+
         assert "value=\"50\"" in result
 
     def test_range_input_with_min_max(self):
@@ -339,7 +337,7 @@ class TestRangeInput:
             min=0,
             max=100
         )
-        
+
         assert "min=\"0\"" in result
         assert "max=\"100\"" in result
 
@@ -351,7 +349,7 @@ class TestEmailInput:
         """Test basic email input rendering."""
         email_input = EmailInput()
         result = email_input.render(name="email_field", id="email_field")
-        
+
         assert "type=\"email\"" in result
 
     def test_email_input_with_value(self):
@@ -361,7 +359,7 @@ class TestEmailInput:
             name="email",
             value="user@example.com"
         )
-        
+
         assert "user@example.com" in result
 
     def test_email_input_with_multiple(self):
@@ -371,7 +369,7 @@ class TestEmailInput:
             name="emails",
             multiple=True
         )
-        
+
         assert "multiple" in result
 
 
@@ -382,7 +380,7 @@ class TestUrlInput:
         """Test basic URL input rendering."""
         url_input = URLInput()
         result = url_input.render(name="url_field", id="url_field")
-        
+
         assert "type=\"url\"" in result
 
     def test_url_input_with_value(self):
@@ -392,7 +390,7 @@ class TestUrlInput:
             name="website",
             value="https://example.com"
         )
-        
+
         assert "https://example.com" in result
 
 
@@ -403,7 +401,7 @@ class TestSearchInput:
         """Test basic search input rendering."""
         search_input = SearchInput()
         result = search_input.render(name="search_field", id="search_field")
-        
+
         assert "type=\"search\"" in result
 
     def test_search_input_with_placeholder(self):
@@ -413,7 +411,7 @@ class TestSearchInput:
             name="search",
             placeholder="Search..."
         )
-        
+
         assert "placeholder=\"Search...\"" in result
 
 
@@ -424,7 +422,7 @@ class TestFileInput:
         """Test basic file input rendering."""
         file_input = FileInput()
         result = file_input.render(name="file_field", id="file_field")
-        
+
         assert "type=\"file\"" in result
 
     def test_file_input_with_accept(self):
@@ -434,7 +432,7 @@ class TestFileInput:
             name="document",
             accept=".pdf,.doc"
         )
-        
+
         assert "accept=" in result
 
     def test_file_input_with_multiple(self):
@@ -444,7 +442,7 @@ class TestFileInput:
             name="files",
             multiple=True
         )
-        
+
         assert "multiple" in result
 
 
@@ -455,7 +453,7 @@ class TestColorInput:
         """Test basic color input rendering."""
         color_input = ColorInput()
         result = color_input.render(name="color_field", id="color_field")
-        
+
         assert "type=\"color\"" in result
 
     def test_color_input_with_value(self):
@@ -465,7 +463,7 @@ class TestColorInput:
             name="favorite_color",
             value="#FF0000"
         )
-        
+
         assert "#FF0000" in result or "FF0000" in result
 
     def test_color_input_default_value(self):
@@ -475,5 +473,5 @@ class TestColorInput:
             name="theme_color",
             value="#000000"
         )
-        
+
         assert "000000" in result

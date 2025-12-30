@@ -3,11 +3,11 @@ Comprehensive tests for validation.py - targeting coverage gaps.
 """
 
 import json
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 
 import pytest
-from pydantic import Field, ValidationError
+from pydantic import Field
 
 from pydantic_forms.schema_form import FormModel
 from pydantic_forms.validation import (
@@ -482,7 +482,7 @@ class TestValidateFormData:
                 "age": 25,
             },
         )
-        
+
         assert result.is_valid is True
         assert result.data is not None
         assert result.data["username"] == "johndoe"
@@ -501,7 +501,7 @@ class TestValidateFormData:
                 "age": 15,  # Too young
             },
         )
-        
+
         assert result.is_valid is False
         assert len(result.errors) > 0
 
@@ -516,7 +516,7 @@ class TestValidateFormData:
             RequiredForm,
             {"name": "John"},  # Missing email
         )
-        
+
         assert result.is_valid is False
         assert "email" in str(result.errors)
 
@@ -531,7 +531,7 @@ class TestValidateFormData:
             OptionalForm,
             {"name": "John"},  # nickname is optional
         )
-        
+
         assert result.is_valid is True
         assert result.data["name"] == "John"
         assert result.data.get("nickname") is None

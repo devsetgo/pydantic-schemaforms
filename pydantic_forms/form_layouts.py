@@ -604,7 +604,6 @@ class ListLayout(FormLayoutBase):
         from .validation import ValidationResult
 
         all_errors = {}
-        all_warnings = {}
         valid_items = []
 
         # Group form data by item index
@@ -642,7 +641,6 @@ class ListLayout(FormLayoutBase):
         return ValidationResult(
             is_valid=len(all_errors) == 0,
             errors=all_errors,
-            warnings=all_warnings,
             data={"valid_items": valid_items, "item_count": item_count},
         )
 

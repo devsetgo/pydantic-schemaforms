@@ -1,6 +1,5 @@
 """Comprehensive tests for specialized_inputs module."""
 
-import pytest
 from pydantic_forms.inputs.specialized_inputs import (
     FileInput,
     ColorInput,
@@ -11,7 +10,6 @@ from pydantic_forms.inputs.specialized_inputs import (
     ImageInput,
     CSRFInput,
 )
-from unittest.mock import Mock, patch
 
 
 class TestFileInputSpecialized:
@@ -21,7 +19,7 @@ class TestFileInputSpecialized:
         """Test file input with single accept type."""
         file_input = FileInput()
         result = file_input.render(name="file", accept=".pdf")
-        
+
         assert "accept=" in result
         assert ".pdf" in result
 
@@ -32,7 +30,7 @@ class TestFileInputSpecialized:
             name="document",
             accept=".pdf,.doc,.docx"
         )
-        
+
         assert "accept=" in result
 
     def test_file_input_accept_mime_type(self):
@@ -42,7 +40,7 @@ class TestFileInputSpecialized:
             name="image",
             accept="image/*"
         )
-        
+
         assert "image/*" in result
 
     def test_file_input_capture_attribute(self):
@@ -52,7 +50,7 @@ class TestFileInputSpecialized:
             name="photo",
             capture="environment"
         )
-        
+
         assert "capture=" in result
 
     def test_file_input_disabled(self):
@@ -62,7 +60,7 @@ class TestFileInputSpecialized:
             name="file",
             disabled=True
         )
-        
+
         assert "disabled" in result
 
     def test_file_input_readonly(self):
@@ -72,7 +70,7 @@ class TestFileInputSpecialized:
             name="file",
             readonly=True
         )
-        
+
         assert isinstance(result, str)
 
 
@@ -86,7 +84,7 @@ class TestColorInputSpecialized:
             name="color",
             value="#FF5733"
         )
-        
+
         assert "FF5733" in result or "ff5733" in result.lower()
 
     def test_color_input_short_hex(self):
@@ -96,7 +94,7 @@ class TestColorInputSpecialized:
             name="color",
             value="#FFF"
         )
-        
+
         assert "#" in result
 
     def test_color_input_disabled(self):
@@ -106,7 +104,7 @@ class TestColorInputSpecialized:
             name="color",
             disabled=True
         )
-        
+
         assert "disabled" in result
 
     def test_color_input_with_list(self):
@@ -116,7 +114,7 @@ class TestColorInputSpecialized:
             name="color",
             list="colors"
         )
-        
+
         assert "list=" in result or "colors" in result
 
 
@@ -136,7 +134,7 @@ class TestHiddenInputSpecialized:
         """Test basic hidden input."""
         hidden = HiddenInput()
         result = hidden.render(name="csrf_token")
-        
+
         assert "type=\"hidden\"" in result
         assert "name=\"csrf_token\"" in result
 
@@ -147,16 +145,16 @@ class TestHiddenInputSpecialized:
             name="token",
             value="abc123xyz"
         )
-        
+
         assert "abc123xyz" in result
 
     def test_hidden_input_multiple_values(self):
         """Test rendering multiple hidden inputs."""
         hidden = HiddenInput()
-        
+
         result1 = hidden.render(name="field1", value="value1")
         result2 = hidden.render(name="field2", value="value2")
-        
+
         assert "field1" in result1
         assert "field2" in result2
         assert "value1" in result1
@@ -170,7 +168,7 @@ class TestSubmitButton:
         """Test basic submit button."""
         submit = SubmitInput()
         result = submit.render(value="Submit")
-        
+
         assert "type=\"submit\"" in result
         assert "Submit" in result
 
@@ -181,7 +179,7 @@ class TestSubmitButton:
             name="action",
             value="Submit Form"
         )
-        
+
         assert "name=\"action\"" in result
 
     def test_submit_button_with_class(self):
@@ -191,7 +189,7 @@ class TestSubmitButton:
             value="Submit",
             class_="btn btn-primary"
         )
-        
+
         assert "class=" in result or "btn" in result
 
     def test_submit_button_disabled(self):
@@ -201,7 +199,7 @@ class TestSubmitButton:
             value="Submit",
             disabled=True
         )
-        
+
         assert "disabled" in result
 
 
@@ -212,7 +210,7 @@ class TestResetButton:
         """Test basic reset button."""
         reset = ResetInput()
         result = reset.render(value="Reset")
-        
+
         assert "type=\"reset\"" in result
         assert "Reset" in result
 
@@ -223,7 +221,7 @@ class TestResetButton:
             name="reset_action",
             value="Clear Form"
         )
-        
+
         assert "name=\"reset_action\"" in result
 
     def test_reset_button_with_style(self):
@@ -233,7 +231,7 @@ class TestResetButton:
             value="Reset",
             style="color: red;"
         )
-        
+
         assert "style=" in result or "red" in result
 
 
@@ -244,7 +242,7 @@ class TestButtonInput:
         """Test basic button input."""
         button = ButtonInput()
         result = button.render(value="Click Me")
-        
+
         assert "type=\"button\"" in result
         assert "Click Me" in result
 
@@ -255,7 +253,7 @@ class TestButtonInput:
             value="Action",
             onclick="performAction()"
         )
-        
+
         assert "onclick=" in result or "performAction" in result
 
     def test_button_input_with_form(self):
@@ -265,7 +263,7 @@ class TestButtonInput:
             value="Submit",
             form="myform"
         )
-        
+
         assert "form=" in result or "myform" in result
 
 
@@ -276,7 +274,7 @@ class TestDatalistInput:
         """Test basic image input."""
         image_input = ImageInput()
         result = image_input.render(name="image_btn", src="/btn.png", alt="Submit")
-        
+
         assert "type=\"image\"" in result
 
     def test_image_input_with_src(self):
@@ -287,7 +285,7 @@ class TestDatalistInput:
             src="/images/submit.png",
             alt="Submit"
         )
-        
+
         assert "/images/submit.png" in result or "src=" in result
 
 
@@ -298,10 +296,10 @@ class TestSpecializedInputsIntegration:
         """Test file and color inputs together."""
         file_input = FileInput()
         color_input = ColorInput()
-        
+
         file_result = file_input.render(name="attachment")
         color_result = color_input.render(name="theme_color")
-        
+
         assert "file" in file_result.lower()
         assert "color" in color_result.lower()
 
@@ -309,10 +307,10 @@ class TestSpecializedInputsIntegration:
         """Test CSRF and hidden inputs together."""
         csrf_input = CSRFInput()
         hidden_input = HiddenInput()
-        
-        csrf_result = csrf_input.render(token="token123")
+
+        csrf_input.render(token="token123")
         hidden_result = hidden_input.render(name="session_id", value="sess123")
-        
+
         assert isinstance(hidden_result, str)
         assert "hidden" in hidden_result.lower()
 
@@ -321,7 +319,7 @@ class TestSpecializedInputsIntegration:
         submit = SubmitInput().render(value="Submit")
         reset = ResetInput().render(value="Reset")
         button = ButtonInput().render(value="Button")
-        
+
         assert "submit" in submit.lower()
         assert "reset" in reset.lower()
         assert "button" in button.lower()
@@ -337,7 +335,7 @@ class TestSpecializedInputsAttributes:
             name="file",
             form="upload_form"
         )
-        
+
         assert isinstance(result, str)
 
     def test_color_input_required(self):
@@ -347,14 +345,14 @@ class TestSpecializedInputsAttributes:
             name="color",
             required=True
         )
-        
+
         assert "required" in result or isinstance(result, str)
 
     def test_tel_input_autocomplete(self):
         """Test CSRF input rendering."""
         csrf_input = CSRFInput()
         result = csrf_input.render(token="token123")
-        
+
         assert isinstance(result, str)
 
     def test_hidden_input_immutability(self):
@@ -365,7 +363,7 @@ class TestSpecializedInputsAttributes:
             value="fixed_value",
             disabled=True
         )
-        
+
         assert "fixed_value" in result
 
 
@@ -376,7 +374,7 @@ class TestSpecializedInputsEdgeCases:
         """Test file input with empty accept."""
         file_input = FileInput()
         result = file_input.render(name="file", accept="")
-        
+
         assert isinstance(result, str)
 
     def test_color_input_invalid_hex(self):
@@ -386,26 +384,26 @@ class TestSpecializedInputsEdgeCases:
             name="color",
             value="not-a-color"
         )
-        
+
         assert isinstance(result, str)
 
     def test_telephone_input_no_pattern(self):
         """Test CSRF input rendering."""
         csrf_input = CSRFInput()
         result = csrf_input.render(token="abc123")
-        
+
         assert isinstance(result, str)
 
     def test_submit_button_no_value(self):
         """Test submit button without explicit value."""
         submit = SubmitInput()
         result = submit.render()
-        
+
         assert isinstance(result, str)
 
     def test_datalist_empty_options(self):
         """Test image input without src."""
         image_input = ImageInput()
         result = image_input.render(name="img_btn", src="/img.png", alt="Img")
-        
+
         assert isinstance(result, str)

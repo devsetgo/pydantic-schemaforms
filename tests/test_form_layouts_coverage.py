@@ -295,7 +295,7 @@ class TestVerticalLayout:
     def test_vertical_layout_deprecation_warning(self):
         """Test that vertical layout triggers deprecation warning."""
         with pytest.warns(DeprecationWarning, match="form_layouts will be removed"):
-            layout = VerticalLayout()
+            VerticalLayout()
 
     def test_vertical_layout_with_section_config(self):
         """Test vertical layout with section configuration."""
@@ -361,7 +361,7 @@ class TestHorizontalLayout:
     def test_horizontal_layout_deprecation_warning(self):
         """Test that horizontal layout triggers deprecation warning."""
         with pytest.warns(DeprecationWarning, match="form_layouts will be removed"):
-            layout = HorizontalLayout()
+            HorizontalLayout()
 
     def test_horizontal_layout_with_section_config(self):
         """Test horizontal layout with section configuration."""
@@ -534,7 +534,6 @@ class TestListLayout:
             models = layout.get_form_models()
             assert BasicFormModel in models
 
-    @pytest.mark.skip(reason="ListLayout.validate() has bug - calls ValidationResult with invalid 'warnings' param")
     def test_list_layout_validate_empty(self):
         """Test validating empty list layout."""
         from pydantic_forms.form_layouts import ListLayout
@@ -547,7 +546,6 @@ class TestListLayout:
             # Should be valid since min_items is 0
             assert result.is_valid or not result.is_valid
 
-    @pytest.mark.skip(reason="ListLayout.validate() has bug - calls ValidationResult with invalid 'warnings' param")
     def test_list_layout_validate_with_items(self):
         """Test validating list layout with items."""
         from pydantic_forms.form_layouts import ListLayout
@@ -564,7 +562,6 @@ class TestListLayout:
             assert result is not None
             assert hasattr(result, "is_valid")
 
-    @pytest.mark.skip(reason="ListLayout.validate() has bug - calls ValidationResult with invalid 'warnings' param")
     def test_list_layout_validate_min_items_constraint(self):
         """Test validation with minimum items constraint."""
         from pydantic_forms.form_layouts import ListLayout
@@ -577,7 +574,6 @@ class TestListLayout:
             # Should have constraint error or be invalid
             assert "list_constraint" in result.errors or not result.is_valid
 
-    @pytest.mark.skip(reason="ListLayout.validate() has bug - calls ValidationResult with invalid 'warnings' param")
     def test_list_layout_validate_max_items_constraint(self):
         """Test validation with maximum items constraint."""
         from pydantic_forms.form_layouts import ListLayout

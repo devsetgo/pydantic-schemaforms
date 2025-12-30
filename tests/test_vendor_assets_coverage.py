@@ -3,13 +3,11 @@ Tests for vendor_assets.py to improve coverage.
 Tests utility functions but not the actual vendoring functions that make network calls.
 """
 
-import json
 import hashlib
 import io
 import tarfile
-import zipfile
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import patch
 import pytest
 
 from pydantic_forms.vendor_assets import (
@@ -341,7 +339,7 @@ class TestWriteVendoredFile:
     def test_write_vendored_file(self, mock_write_bytes, mock_ensure_dir, mock_project_root):
         """Test writing a vendored file."""
         mock_project_root.return_value = Path("/project")
-        
+
         data = b"file content"
         rel_path = Path("assets/vendor/lib.js")
         source_url = "https://example.com/lib.js"
@@ -369,7 +367,7 @@ class TestWriteVendoredFile:
     def test_write_vendored_file_creates_correct_path(self, mock_write_bytes, mock_ensure_dir, mock_project_root):
         """Test that correct absolute path is created."""
         mock_project_root.return_value = Path("/root")
-        
+
         rel_path = Path("sub/file.txt")
         _write_vendored_file(
             rel_path=rel_path,
