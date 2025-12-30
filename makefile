@@ -93,12 +93,14 @@ test: ## Run the project's tests (linting + pytest + coverage badges)
 	@echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."
 	$(PYTHON) -m pre_commit run -a
 	@echo "✅ Pre-commit passed. Running pytest..."
-	pytest
+	$(PYTHON) -m pytest
 	@echo "📊 Generating coverage and test badges..."
 	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml
 	genbadge tests -i /workspaces/$(REPONAME)/report.xml
 	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$(shell pwd)</source>|" coverage.xml
 	@echo "✨ Tests complete. Badges updated."
+
+tests: test ## Alias for 'test' - Run the project's tests
 
 vendor-update-htmx: ## Vendor the latest HTMX into package assets (or set HTMX_VERSION=2.x.y)
 	$(PYTHON) scripts/vendor_assets.py update-htmx $(if $(HTMX_VERSION),--version $(HTMX_VERSION),)
@@ -115,7 +117,6 @@ vendor-update-materialize: ## Vendor the latest Materialize into package assets 
 vendor-verify: ## Verify vendored assets match manifest checksums
 	$(PYTHON) scripts/vendor_assets.py verify --require-nonempty
 
-tests: test ## Alias for 'test' - Run the project's tests
 
 build: ## Build the project
 	python -m build
