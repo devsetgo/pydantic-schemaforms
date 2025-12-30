@@ -469,7 +469,7 @@ class EnhancedFormRenderer:
                 if (pane) { pane.classList.add('pf-active'); }
             });
         });
-        
+
         // Live payload updater
         var form = document.querySelector('form');
         var liveOutput = panel.querySelector('.pf-debug-live-output');
@@ -478,19 +478,19 @@ class EnhancedFormRenderer:
                 var formData = new FormData(form);
                 var data = {};
                 var seen = {};
-                
+
                 // Parse form data including arrays (pets[0].name, etc.)
                 for (var pair of formData.entries()) {
                     var key = pair[0];
                     var value = pair[1];
-                    
+
                     // Handle array notation like pets[0].name
                     var arrayMatch = key.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
                     if (arrayMatch) {
                         var arrayName = arrayMatch[1];
                         var index = parseInt(arrayMatch[2]);
                         var fieldName = arrayMatch[3];
-                        
+
                         if (!data[arrayName]) {
                             data[arrayName] = [];
                         }
@@ -510,7 +510,7 @@ class EnhancedFormRenderer:
                         seen[key] = true;
                     }
                 }
-                
+
                 // Handle checkboxes (unchecked = not in FormData)
                 var checkboxes = form.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(function(cb) {
@@ -521,15 +521,15 @@ class EnhancedFormRenderer:
                         data[cb.name] = true;
                     }
                 });
-                
+
                 var payload = { data: data, errors: {} };
                 liveOutput.textContent = JSON.stringify(payload, null, 2);
             }
-            
+
             // Update on any input change
             form.addEventListener('input', updateLivePayload);
             form.addEventListener('change', updateLivePayload);
-            
+
             // Initial update after a brief delay to catch dynamic content
             setTimeout(updateLivePayload, 100);
         }
