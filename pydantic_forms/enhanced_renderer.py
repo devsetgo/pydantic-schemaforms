@@ -7,6 +7,9 @@ Supports UI element specifications similar to React JSON Schema Forms
 from __future__ import annotations
 
 import asyncio
+import html
+import inspect
+import json
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
@@ -68,6 +71,7 @@ class EnhancedFormRenderer:
         include_csrf: bool = False,
         include_submit_button: bool = True,
         layout: str = "vertical",
+        debug: bool = False,
         **kwargs,
     ) -> str:
         """Render a complete HTML form from a FormModel definition."""
@@ -153,7 +157,18 @@ class EnhancedFormRenderer:
             list_renderer = ModelListRenderer(framework=self._model_list_framework())
             output_parts.append(list_renderer.get_model_list_javascript())
 
-        return "\n".join(output_parts)
+        combined_output = "\n".join(output_parts)
+
+        if not debug:
+            return combined_output
+
+        return combined_output + self._build_debug_panel(
+            form_html=combined_output,
+            model_cls=model_cls,
+            data=data,
+            errors=errors,
+            metadata=metadata,
+        )
 
     def render_form_fields_only(
         self,
@@ -357,6 +372,115 @@ class EnhancedFormRenderer:
 
         return self.framework
 
+    def _build_debug_panel(
+        self,
+        *,
+        form_html: str,
+        model_cls: Type[FormModel],
+        data: Optional[Dict[str, Any]],
+        errors: Optional[Dict[str, Any]],
+        metadata: SchemaMetadata,
+    ) -> str:
+        """Return a collapsed debug panel with tabs for rendered output, source, schema, and errors."""
+
+        safe_data = data or {}
+        safe_errors = errors or {}
+
+        try:
+            model_source = inspect.getsource(model_cls)
+        except Exception as exc:  # pragma: no cover - defensive
+            model_source = f"Source not available for {model_cls.__name__}: {exc}"
+
+        try:
+            schema_json = json.dumps(model_cls.model_json_schema(), indent=2, default=str)
+        except Exception as exc:  # pragma: no cover - defensive
+            schema_json = f"Schema generation failed: {exc}"
+
+        try:
+            schema = model_cls.model_json_schema()
+            required = set(schema.get("required", []) or [])
+            properties = schema.get("properties", {}) or {}
+            validation_rules: Dict[str, Any] = {}
+            for name, prop in properties.items():
+                rule: Dict[str, Any] = {"required": name in required}
+                for key in (
+                    "type",
+                    "format",
+                    "pattern",
+                    "minimum",
+                    "maximum",
+                    "minLength",
+                    "maxLength",
+                    "enum",
+                ):
+                    if key in prop:
+                        rule[key] = prop[key]
+                validation_rules[name] = rule
+        except Exception as exc:  # pragma: no cover - defensive
+            validation_rules = {"__error__": f"Could not derive constraints: {exc}"}
+
+        rendered_tab = html.escape(form_html)
+        source_tab = html.escape(model_source)
+        schema_tab = html.escape(schema_json)
+        validation_tab = html.escape(json.dumps(validation_rules, indent=2, default=str))
+        live_tab = html.escape(json.dumps({"errors": safe_errors, "data": safe_data}, indent=2, default=str))
+
+        panel = """
+<div class="pf-debug-panel">
+    <details>
+        <summary class="pf-debug-summary">Debug panel (development only)</summary>
+        <div class="pf-debug-tabs">
+            <div class="pf-debug-tablist" role="tablist">
+                <button type="button" class="pf-debug-tab-btn pf-active" data-pf-tab="rendered">Rendered HTML</button>
+                <button type="button" class="pf-debug-tab-btn" data-pf-tab="source">Form/model source</button>
+                <button type="button" class="pf-debug-tab-btn" data-pf-tab="schema">Schema / validation</button>
+                <button type="button" class="pf-debug-tab-btn" data-pf-tab="live">Live payload</button>
+            </div>
+            <div class="pf-debug-tab pf-active" data-pf-pane="rendered"><pre>{rendered}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="source"><pre>{source}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="schema"><pre>{schema}</pre><pre>{rules}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="live"><pre>{live}</pre></div>
+        </div>
+    </details>
+</div>
+<style>
+.pf-debug-panel { margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+.pf-debug-summary { cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+.pf-debug-tabs { padding: 0.35rem 0.85rem 0.75rem; }
+.pf-debug-tablist { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+.pf-debug-tab-btn { border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+.pf-debug-tab-btn.pf-active { background: #0d6efd; color: #ffffff; border-color: #0d6efd; }
+.pf-debug-tab { display: none; }
+.pf-debug-tab.pf-active { display: block; }
+.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
+</style>
+<script>
+(function() {
+    document.querySelectorAll('.pf-debug-panel').forEach(function(panel) {
+        var buttons = panel.querySelectorAll('[data-pf-tab]');
+        var panes = panel.querySelectorAll('[data-pf-pane]');
+        buttons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var target = btn.getAttribute('data-pf-tab');
+                buttons.forEach(function(b) { b.classList.remove('pf-active'); });
+                panes.forEach(function(p) { p.classList.remove('pf-active'); });
+                btn.classList.add('pf-active');
+                var pane = panel.querySelector('[data-pf-pane="' + target + '"]');
+                if (pane) { pane.classList.add('pf-active'); }
+            });
+        });
+    });
+})();
+</script>
+"""
+
+        panel = panel.replace("{rendered}", rendered_tab)
+        panel = panel.replace("{source}", source_tab)
+        panel = panel.replace("{schema}", schema_tab)
+        panel = panel.replace("{rules}", validation_tab)
+        panel = panel.replace("{live}", live_tab)
+        return panel
+
 
 def render_form_html(
     form_model_cls: Type[FormModel],
@@ -364,6 +488,7 @@ def render_form_html(
     errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
     framework: str = "bootstrap",
     layout: str = "vertical",
+    debug: bool = False,
     **kwargs,
 ) -> str:
     """Convenience wrapper mirroring the legacy helper."""
@@ -381,6 +506,7 @@ def render_form_html(
             data=form_data,
             errors=errors,
             layout=layout,
+            debug=debug,
             **kwargs,
         )
 
@@ -390,6 +516,7 @@ def render_form_html(
         data=form_data,
         errors=errors,
         layout=layout,
+        debug=debug,
         **kwargs,
     )
 
@@ -400,6 +527,7 @@ async def render_form_html_async(
     errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
     framework: str = "bootstrap",
     layout: str = "vertical",
+    debug: bool = False,
     **kwargs,
 ) -> str:
     """Async counterpart to render_form_html."""
@@ -411,6 +539,7 @@ async def render_form_html_async(
         errors=errors,
         framework=framework,
         layout=layout,
+        debug=debug,
         **kwargs,
     )
 

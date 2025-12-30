@@ -103,7 +103,13 @@ async def home(request: Request):
 # ================================
 
 @app.get("/login", response_class=HTMLResponse)
-async def login_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = True):
+async def login_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+):
     """Simple form example - Login form (GET)."""
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -121,7 +127,12 @@ async def login_get(request: Request, style: str = "bootstrap", data: str = None
             "remember_me": True
         }
 
-    form_html = render_form_html(MinimalLoginForm, framework=style, form_data=form_data)
+    form_html = render_form_html(
+        MinimalLoginForm,
+        framework=style,
+        form_data=form_data,
+        debug=debug,
+    )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -134,7 +145,7 @@ async def login_get(request: Request, style: str = "bootstrap", data: str = None
     })
 
 @app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request, style: str = "bootstrap"):
+async def login_post(request: Request, style: str = "bootstrap", debug: bool = False):
     """Simple form example - Login form submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -156,10 +167,13 @@ async def login_post(request: Request, style: str = "bootstrap"):
     else:
         # Preserve user input data on validation errors
         # Re-render form with errors AND user data
-        form_html = render_form_html(MinimalLoginForm,
-                                   framework=style,
-                                   form_data=form_dict,
-                                   errors=result['errors'])
+        form_html = render_form_html(
+            MinimalLoginForm,
+            framework=style,
+            form_data=form_dict,
+            errors=result['errors'],
+            debug=debug,
+        )
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -178,7 +192,13 @@ async def login_post(request: Request, style: str = "bootstrap"):
 # ================================
 
 @app.get("/register", response_class=HTMLResponse)
-async def register_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = True):
+async def register_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+):
     """Medium complexity form - User registration (GET)."""
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -201,7 +221,12 @@ async def register_get(request: Request, style: str = "bootstrap", data: str = N
             "newsletter": True
         }
 
-    form_html = render_form_html(UserRegistrationForm, framework=style, form_data=form_data)
+    form_html = render_form_html(
+        UserRegistrationForm,
+        framework=style,
+        form_data=form_data,
+        debug=debug,
+    )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -215,12 +240,18 @@ async def register_get(request: Request, style: str = "bootstrap", data: str = N
 
 # Alias for /user route (used in templates)
 @app.get("/user", response_class=HTMLResponse)
-async def user_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = True):
+async def user_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+):
     """Alias for user registration form."""
-    return await register_get(request, style, data, demo)
+    return await register_get(request, style, data, demo, debug)
 
 @app.post("/register", response_class=HTMLResponse)
-async def register_post(request: Request, style: str = "bootstrap"):
+async def register_post(request: Request, style: str = "bootstrap", debug: bool = False):
     """Medium complexity form - User registration submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -242,10 +273,13 @@ async def register_post(request: Request, style: str = "bootstrap"):
     else:
         # Preserve user input data on validation errors
         # Re-render form with errors AND user data
-        form_html = render_form_html(UserRegistrationForm,
-                                   framework=style,
-                                   form_data=form_dict,
-                                   errors=result['errors'])
+        form_html = render_form_html(
+            UserRegistrationForm,
+            framework=style,
+            form_data=form_dict,
+            errors=result['errors'],
+            debug=debug,
+        )
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -263,7 +297,13 @@ async def register_post(request: Request, style: str = "bootstrap"):
 # ================================
 
 @app.get("/showcase", response_class=HTMLResponse)
-async def showcase_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = True):
+async def showcase_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+):
     """Complex form example - All features and field types (GET)."""
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -293,7 +333,12 @@ async def showcase_get(request: Request, style: str = "bootstrap", data: str = N
             "account_type": "premium"
         }
 
-    form_html = render_form_html(CompleteShowcaseForm, framework=style, form_data=form_data)
+    form_html = render_form_html(
+        CompleteShowcaseForm,
+        framework=style,
+        form_data=form_data,
+        debug=debug,
+    )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -306,7 +351,7 @@ async def showcase_get(request: Request, style: str = "bootstrap", data: str = N
     })
 
 @app.post("/showcase", response_class=HTMLResponse)
-async def showcase_post(request: Request, style: str = "bootstrap"):
+async def showcase_post(request: Request, style: str = "bootstrap", debug: bool = False):
     """Complex form example - All features submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -326,9 +371,12 @@ async def showcase_post(request: Request, style: str = "bootstrap"):
         })
     else:
         # Re-render form with errors
-        form_html = render_form_html(CompleteShowcaseForm,
-                                   framework=style,
-                                   errors=result['errors'])
+        form_html = render_form_html(
+            CompleteShowcaseForm,
+            framework=style,
+            errors=result['errors'],
+            debug=debug,
+        )
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -346,7 +394,7 @@ async def showcase_post(request: Request, style: str = "bootstrap"):
 # ================================
 
 @app.get("/edit/login", response_class=HTMLResponse)
-async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool = True):
+async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False):
     """Edit login form with sample data."""
     # Sample existing data for editing
     existing_data = {}
@@ -356,7 +404,12 @@ async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool 
             "remember_me": True
         }
 
-    form_html = render_form_html(MinimalLoginForm, framework=style, form_data=existing_data)
+    form_html = render_form_html(
+        MinimalLoginForm,
+        framework=style,
+        form_data=existing_data,
+        debug=debug,
+    )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -369,7 +422,7 @@ async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool 
     })
 
 @app.get("/edit/register", response_class=HTMLResponse)
-async def edit_register_get(request: Request, style: str = "bootstrap", demo: bool = True):
+async def edit_register_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False):
     """Edit registration form with sample data."""
     # Sample existing data for editing
     existing_data = {}
@@ -383,7 +436,12 @@ async def edit_register_get(request: Request, style: str = "bootstrap", demo: bo
             "newsletter": False
         }
 
-    form_html = render_form_html(UserRegistrationForm, framework=style, form_data=existing_data)
+    form_html = render_form_html(
+        UserRegistrationForm,
+        framework=style,
+        form_data=existing_data,
+        debug=debug,
+    )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -396,7 +454,7 @@ async def edit_register_get(request: Request, style: str = "bootstrap", demo: bo
     })
 
 @app.get("/edit/dynamic", response_class=HTMLResponse)
-async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: bool = True):
+async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False):
     """Edit layout form with sample data."""
     # Sample existing data for editing the layout form
     existing_data = {}
@@ -441,7 +499,8 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             data=existing_data,
             errors={},
             submit_url="/edit/dynamic",
-            include_submit_button=True
+            include_submit_button=True,
+            debug=debug,
         )
     else:
         from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
@@ -451,9 +510,9 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             data=existing_data,
             errors={},
             submit_url="/edit/dynamic",
-            include_submit_button=True
+            include_submit_button=True,
+            debug=debug,
         )
-
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Edit Layout Demo - Pre-filled Example",
@@ -470,7 +529,13 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
 
 # Alias routes for template compatibility
 @app.get("/pets", response_class=HTMLResponse)
-async def pets_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = True):
+async def pets_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+):
     """Pet registration form - demonstrates dynamic lists and complex models."""
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -572,7 +637,13 @@ async def pets_get(request: Request, style: str = "bootstrap", data: str = None,
             ]
         }
 
-    form_html = render_form_html(PetRegistrationForm, framework=style, form_data=form_data, submit_url="/pets")
+    form_html = render_form_html(
+        PetRegistrationForm,
+        framework=style,
+        form_data=form_data,
+        submit_url="/pets",
+        debug=debug,
+    )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -585,7 +656,7 @@ async def pets_get(request: Request, style: str = "bootstrap", data: str = None,
     })
 
 @app.post("/pets", response_class=HTMLResponse)
-async def pets_post(request: Request, style: str = "bootstrap"):
+async def pets_post(request: Request, style: str = "bootstrap", debug: bool = False):
     """Pet registration form submission."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -614,11 +685,14 @@ async def pets_post(request: Request, style: str = "bootstrap"):
             parsed_form_data = form_dict
 
         # Re-render form with errors AND preserve user data
-        form_html = render_form_html(PetRegistrationForm,
-                                   framework=style,
-                                   form_data=parsed_form_data,
-                                   errors=result['errors'],
-                                   submit_url="/pets")
+        form_html = render_form_html(
+            PetRegistrationForm,
+            framework=style,
+            form_data=parsed_form_data,
+            errors=result['errors'],
+            submit_url="/pets",
+            debug=debug,
+        )
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -637,7 +711,13 @@ async def pets_post(request: Request, style: str = "bootstrap"):
 # Use: /pets?style=bootstrap, /login?style=material, etc.
 
 @app.get("/layouts", response_class=HTMLResponse)
-async def layouts_get(request: Request, style: str = "bootstrap", data: str = None, demo: bool = True):
+async def layouts_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+):
     """Comprehensive layout demonstration - single form showcasing all layout types."""
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -694,7 +774,8 @@ async def layouts_get(request: Request, style: str = "bootstrap", data: str = No
             data=form_data,
             errors={},
             submit_url=f"/layouts?style={style}",
-            include_submit_button=True
+            include_submit_button=True,
+            debug=debug,
         )
     else:
         from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
@@ -704,9 +785,9 @@ async def layouts_get(request: Request, style: str = "bootstrap", data: str = No
             data=form_data,
             errors={},
             submit_url=f"/layouts?style={style}",
-            include_submit_button=True
+            include_submit_button=True,
+            debug=debug,
         )
-
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Layout Demonstration - All Types",
@@ -718,7 +799,7 @@ async def layouts_get(request: Request, style: str = "bootstrap", data: str = No
     })
 
 @app.post("/layouts", response_class=HTMLResponse)
-async def layouts_post(request: Request, style: str = "bootstrap"):
+async def layouts_post(request: Request, style: str = "bootstrap", debug: bool = False):
     """Handle comprehensive layout demonstration form submission."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -788,7 +869,8 @@ async def layouts_post(request: Request, style: str = "bootstrap"):
                 data={},
                 errors={"form": str(e)},
                 submit_url=f"/layouts?style={style}",
-                include_submit_button=True
+                include_submit_button=True,
+                debug=debug,
             )
         else:
             from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
@@ -798,7 +880,8 @@ async def layouts_post(request: Request, style: str = "bootstrap"):
                 data={},
                 errors={"form": str(e)},
                 submit_url=f"/layouts?style={style}",
-                include_submit_button=True
+                include_submit_button=True,
+                debug=debug,
             )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -969,7 +1052,7 @@ async def api_submit_form(form_type: str, request: Request):
     }
 
 @app.get("/api/forms/{form_type}/render")
-async def api_render_form(form_type: str, style: str = "bootstrap"):
+async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool = False):
     """API endpoint to render form HTML."""
     form_mapping = {
         "login": MinimalLoginForm,
@@ -983,7 +1066,7 @@ async def api_render_form(form_type: str, style: str = "bootstrap"):
         raise HTTPException(status_code=404, detail="Form type not found")
 
     form_class = form_mapping[form_type]
-    form_html = render_form_html(form_class, framework=style)
+    form_html = render_form_html(form_class, framework=style, debug=debug)
 
     return {
         "form_type": form_type,
@@ -1032,6 +1115,7 @@ if __name__ == "__main__":
     print("🎨 Style Variants (add ?style= to any form):")
     print("   • Bootstrap:       ?style=bootstrap")
     print("   • Material Design: ?style=material")
+    print("   • Debug Panel:     add ?debug=1")
     print("")
     print("🎯 Special Demos:")
     print("   • Self-Contained: http://localhost:8000/self-contained")

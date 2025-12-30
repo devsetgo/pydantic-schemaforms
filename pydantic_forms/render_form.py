@@ -20,6 +20,7 @@ def render_form_html(
     *,
     asset_mode: str = "vendored",
     include_imask: bool = False,
+    debug: bool = False,
     **kwargs,
 ) -> str:
     """
@@ -65,6 +66,7 @@ def render_form_html(
         form_data=form_data,
         errors=errors,
         framework=framework,
+        debug=debug,
         **render_kwargs,
     )
 
