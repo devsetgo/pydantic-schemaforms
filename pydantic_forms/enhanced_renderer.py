@@ -425,7 +425,7 @@ class EnhancedFormRenderer:
         validation_tab = html.escape(json.dumps(validation_rules, indent=2, default=str))
         live_tab = html.escape(json.dumps({"errors": safe_errors, "data": safe_data}, indent=2, default=str))
 
-        panel = """
+        panel = r"""
 <div class="pf-debug-panel">
     <details>
         <summary class="pf-debug-summary">Debug panel (development only)</summary>
@@ -439,7 +439,7 @@ class EnhancedFormRenderer:
             <div class="pf-debug-tab pf-active" data-pf-pane="rendered"><pre>{rendered}</pre></div>
             <div class="pf-debug-tab" data-pf-pane="source"><pre>{source}</pre></div>
             <div class="pf-debug-tab" data-pf-pane="schema"><pre>{schema}</pre><pre>{rules}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="live"><pre>{live}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="live"><pre class="pf-debug-live-output">{live}</pre></div>
         </div>
     </details>
 </div>
@@ -469,6 +469,70 @@ class EnhancedFormRenderer:
                 if (pane) { pane.classList.add('pf-active'); }
             });
         });
+        
+        // Live payload updater
+        var form = document.querySelector('form');
+        var liveOutput = panel.querySelector('.pf-debug-live-output');
+        if (form && liveOutput) {
+            function updateLivePayload() {
+                var formData = new FormData(form);
+                var data = {};
+                var seen = {};
+                
+                // Parse form data including arrays (pets[0].name, etc.)
+                for (var pair of formData.entries()) {
+                    var key = pair[0];
+                    var value = pair[1];
+                    
+                    // Handle array notation like pets[0].name
+                    var arrayMatch = key.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
+                    if (arrayMatch) {
+                        var arrayName = arrayMatch[1];
+                        var index = parseInt(arrayMatch[2]);
+                        var fieldName = arrayMatch[3];
+                        
+                        if (!data[arrayName]) {
+                            data[arrayName] = [];
+                        }
+                        if (!data[arrayName][index]) {
+                            data[arrayName][index] = {};
+                        }
+                        data[arrayName][index][fieldName] = value;
+                        seen[key] = true;
+                    } else if (key in seen) {
+                        // Multiple values for same key - convert to array
+                        if (!Array.isArray(data[key])) {
+                            data[key] = [data[key]];
+                        }
+                        data[key].push(value);
+                    } else {
+                        data[key] = value;
+                        seen[key] = true;
+                    }
+                }
+                
+                // Handle checkboxes (unchecked = not in FormData)
+                var checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(function(cb) {
+                    if (!cb.name) return;
+                    if (!(cb.name in data)) {
+                        data[cb.name] = false;
+                    } else if (data[cb.name] === 'on') {
+                        data[cb.name] = true;
+                    }
+                });
+                
+                var payload = { data: data, errors: {} };
+                liveOutput.textContent = JSON.stringify(payload, null, 2);
+            }
+            
+            // Update on any input change
+            form.addEventListener('input', updateLivePayload);
+            form.addEventListener('change', updateLivePayload);
+            
+            // Initial update after a brief delay to catch dynamic content
+            setTimeout(updateLivePayload, 100);
+        }
     });
 })();
 </script>

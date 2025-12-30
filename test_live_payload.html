@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Panel Live Payload Test</title>
+</head>
+<body>
+    <h1>Debug Panel - Live Payload Test</h1>
+    <p>Open the debug panel below and switch to the "Live payload" tab.</p>
+    <p>As you type in the form fields, the payload should update in real-time.</p>
+    
+    <div style="max-width: 600px; margin: 20px auto;">
+        <script>
+        // Generate a test form with debug panel
+        async function loadForm() {
+            const response = await fetch('/api/forms/register/render?debug=true');
+            const data = await response.json();
+            document.getElementById('form-container').innerHTML = data.html;
+        }
+        loadForm();
+        </script>
+        <div id="form-container">Loading...</div>
+    </div>
+    
+    <div style="max-width: 800px; margin: 40px auto; padding: 20px; background: #f0f0f0; border-radius: 8px;">
+        <h2>Testing Instructions</h2>
+        <ol>
+            <li>Open the debug panel (click the "Debug panel" summary)</li>
+            <li>Click the "Live payload" tab</li>
+            <li>Type in any form field (username, email, password, etc.)</li>
+            <li>Watch the JSON in the Live payload tab update automatically</li>
+            <li>Change checkboxes, select dropdowns, or any other input</li>
+            <li>All changes should be reflected immediately in the payload</li>
+        </ol>
+        
+        <h3>Expected Behavior</h3>
+        <ul>
+            <li>✅ Payload updates on every keystroke</li>
+            <li>✅ Checkboxes show true/false values</li>
+            <li>✅ Select dropdowns show selected value</li>
+            <li>✅ All form fields appear in the data object</li>
+        </ul>
+    </div>
+</body>
+</html>
