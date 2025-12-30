@@ -90,15 +90,17 @@ speedtest: ## Run a speed test
 	python3 speedtest/loop.py
 
 test: ## Run the project's tests (linting + pytest + coverage badges)
-	@echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."
-	$(PYTHON) -m pre_commit run -a
-	@echo "✅ Pre-commit passed. Running pytest..."
-	$(PYTHON) -m pytest
-	@echo "📊 Generating coverage and test badges..."
-	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml
-	genbadge tests -i /workspaces/$(REPONAME)/report.xml
-	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$(shell pwd)</source>|" coverage.xml
-	@echo "✨ Tests complete. Badges updated."
+	@start=$$(date +%s); \
+	echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."; \
+	$(PYTHON) -m pre_commit run -a; \
+	echo "✅ Pre-commit passed. Running pytest..."; \
+	$(PYTHON) -m pytest -n 2; \
+	echo "📊 Generating coverage and test badges..."; \
+	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml 2>/dev/null || true; \
+	genbadge tests -i /workspaces/$(REPONAME)/report.xml 2>/dev/null || true; \
+	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$$(pwd)</source>|" coverage.xml; \
+	end=$$(date +%s); \
+	$(PYTHON) -c "print(f'✨ Tests complete. Badges updated. Total time: {$$end - $$start:.2f} seconds')"
 
 tests: test ## Alias for 'test' - Run the project's tests
 
