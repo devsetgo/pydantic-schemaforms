@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "25.11.3.beta"
+version = "25.12.1.beta"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
@@ -110,11 +110,7 @@ norecursedirs = [ "/tests",]
 testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
-filterwarnings = [
-    "ignore:pydantic_schemaforms.form_layouts will be removed in a future release",
-    "ignore:Default value .* is not JSON serializable",
-    "ignore:Using extra keyword arguments on.*Field.*is deprecated",
-]
+filterwarnings = [ "ignore:pydantic_schemaforms.form_layouts will be removed in a future release", "ignore:Default value .* is not JSON serializable", "ignore:Using extra keyword arguments on.*Field.*is deprecated",]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = [ "F401", "F403",]
