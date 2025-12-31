@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e  # Exit on error
 
 # Pydantic Forms Flask Examples Launcher
 # This script sets up the environment and runs the Flask demo
@@ -12,14 +13,24 @@ if [ ! -f "pyproject.toml" ]; then
     exit 1
 fi
 
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python 3 is not installed or not in PATH"
+    exit 1
+fi
+
 # Install the package in development mode
 echo "📦 Installing pydantic-forms in development mode..."
-pip install -e . > /dev/null 2>&1
-
-if [ $? -eq 0 ]; then
+if pip install -e . > /dev/null 2>&1; then
     echo "✅ Package installed successfully"
 else
     echo "❌ Failed to install package"
+    exit 1
+fi
+
+# Check if Flask example file exists
+if [ ! -f "examples/flask_examples.py" ]; then
+    echo "❌ Flask examples file not found at examples/flask_examples.py"
     exit 1
 fi
 
@@ -30,4 +41,4 @@ echo "🔧 Press Ctrl+C to stop the server"
 echo "================================================"
 
 export PYTHONPATH=$(pwd)
-python examples/flask_examples.py
+python3 examples/flask_examples.py

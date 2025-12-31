@@ -139,3 +139,10 @@ ex-test: ## Test that both examples can be imported successfully
 	cd examples && $(PYTHON) -c "import flask_example; print('✅ Flask example imports correctly')"
 	cd examples && $(PYTHON) -c "import fastapi_example; print('✅ FastAPI example imports correctly')"
 	@echo "🎉 Both examples are ready to run!"
+
+kill:  # Kill any process running on the app port
+	@echo "Stopping any process running on port ${PORT}..."
+	@lsof -ti:${PORT} | xargs -r kill -9 || echo "No process found running on port ${PORT}"
+	@echo "Port ${PORT} is now free"
+
+
