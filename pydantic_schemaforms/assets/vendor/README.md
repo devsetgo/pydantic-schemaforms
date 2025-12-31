@@ -1,6 +1,6 @@
 # Vendored assets
 
-This directory is reserved for third-party assets that are shipped with `pydantic-forms`.
+This directory is reserved for third-party assets that are shipped with `pydantic-schemaforms`.
 
 ## Policy (summary)
 

@@ -185,13 +185,13 @@ __all__ = [
 
 # Quick start documentation
 __doc__ = """
-Pydantic Forms - Modern Python 3.14 Form Generation
+Pydantic SchemaForms - Modern Python 3.14 Form Generation
 
 Quick Start Examples:
 
 1. Simple form builder:
 ```python
-from pydantic_forms import FormBuilder
+from pydantic_schemaforms import FormBuilder
 
 form = (FormBuilder()
         .text_input("name", "Full Name")
@@ -206,7 +206,7 @@ html = form.render()
 2. Auto-generate from Pydantic model:
 ```python
 from pydantic import BaseModel
-from pydantic_forms import create_form_from_model
+from pydantic_schemaforms import create_form_from_model
 
 class User(BaseModel):
     name: str
@@ -219,7 +219,7 @@ html = form.render()
 
 3. Pre-built forms:
 ```python
-from pydantic_forms import create_login_form, render_form_page
+from pydantic_schemaforms import create_login_form, render_form_page
 
 login_form = create_login_form()
 page_html = render_form_page(login_form, "Login")
@@ -227,7 +227,7 @@ page_html = render_form_page(login_form, "Login")
 
 4. Advanced layouts:
 ```python
-from pydantic_forms import FormBuilder, Layout
+from pydantic_schemaforms import FormBuilder, Layout
 
 form = FormBuilder()
 # ... add fields ...
@@ -243,7 +243,7 @@ tabs_html = Layout.tabs([
 5. Framework integration:
 ```python
 # Flask
-from pydantic_forms import FormIntegration
+from pydantic_schemaforms import FormIntegration
 result = FormIntegration.flask_integration(form)
 
 # FastAPI
@@ -256,11 +256,13 @@ def __getattr__(name: str):
     """Expose input components lazily at the package root."""
 
     if name in _INPUT_EXPORTS: # pragma: no cover - improves import time
-        inputs_module = import_module("pydantic_forms.inputs")
+        inputs_module = import_module("pydantic_schemaforms.inputs")
         attr = getattr(inputs_module, name)
         globals()[name] = attr
         return attr
-    raise AttributeError(f"module 'pydantic_forms' has no attribute '{name}'") # pragma: no cover - improves import time
+    raise AttributeError(
+        f"module 'pydantic_schemaforms' has no attribute '{name}'"
+    )  # pragma: no cover - improves import time
 
 
 def __dir__():  # pragma: no cover - improves interactive discovery

@@ -46,7 +46,7 @@ Templates expect these variables from the backend:
 - `framework_name` - Display name for the framework
 - `framework_type` - "bootstrap" or "material" for styling
 - `renderer_info` - Information about the form renderer
-- `form_html` - Generated form HTML from pydantic-forms
+- `form_html` - Generated form HTML from pydantic-schemaforms
 - `success` - Boolean for success state
 - `errors` - Validation errors
 - Form data variables for success display

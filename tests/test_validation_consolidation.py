@@ -6,8 +6,8 @@ synchronous validation and live HTMX validation using a single rule set.
 """
 
 
-from pydantic_forms.live_validation import LiveValidator, ValidationResponse
-from pydantic_forms.validation import (
+from pydantic_schemaforms.live_validation import LiveValidator, ValidationResponse
+from pydantic_schemaforms.validation import (
     FieldValidator,
     ValidationSchema,
     create_email_validator,
@@ -20,7 +20,7 @@ class TestConsolidatedValidationEngine:
 
     def test_validation_response_in_validation_module(self):
         """ValidationResponse should be exported from validation.py."""
-        from pydantic_forms.validation import ValidationResponse as VR
+        from pydantic_schemaforms.validation import ValidationResponse as VR
 
         response = VR(field_name="test", is_valid=True)
         assert response.field_name == "test"
@@ -57,7 +57,7 @@ class TestConsolidatedValidationEngine:
 
     def test_email_validator_from_live_validation_module(self):
         """Email validator should be accessible from live_validation.py."""
-        from pydantic_forms.live_validation import create_email_validator as live_create_email
+        from pydantic_schemaforms.live_validation import create_email_validator as live_create_email
 
         validator = live_create_email()
         valid = validator("user@example.com")

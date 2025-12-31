@@ -1,16 +1,16 @@
 # Unified Validation Engine Guide
 
-_Complete guide to validation in pydantic-forms: server-side, real-time HTMX, and cross-field patterns._
+_Complete guide to validation in pydantic-schemaforms: server-side, real-time HTMX, and cross-field patterns._
 
 ## Overview
 
-The pydantic-forms validation system is consolidated into a single, unified engine that works seamlessly across:
+The pydantic-schemaforms validation system is consolidated into a single, unified engine that works seamlessly across:
 - **Server-side validation** via `validate_form_data()` and `FormValidator`
 - **Real-time HTMX validation** via `LiveValidator` and field-level validators
 - **Cross-field validation** via form-level rules
 - **Convenience validators** for common patterns (email, password strength)
 
-All validation rules live in `pydantic_forms/validation.py`, re-exported from `pydantic_forms/live_validation.py` for convenience, eliminating code duplication and ensuring consistency across all validation flows.
+All validation rules live in `pydantic_schemaforms/validation.py`, re-exported from `pydantic_schemaforms/live_validation.py` for convenience, eliminating code duplication and ensuring consistency across all validation flows.
 
 ---
 
@@ -21,7 +21,7 @@ All validation rules live in `pydantic_forms/validation.py`, re-exported from `p
 The canonical response object for all validation operations (server-side or HTMX):
 
 ```python
-from pydantic_forms import ValidationResponse
+from pydantic_schemaforms import ValidationResponse
 
 response = ValidationResponse(
     field_name="email",
@@ -43,7 +43,7 @@ dict_response = response.to_dict()
 Build reusable validation schemas from individual field validators:
 
 ```python
-from pydantic_forms.validation import ValidationSchema, FieldValidator
+from pydantic_schemaforms.validation import ValidationSchema, FieldValidator
 
 # Create a schema with multiple fields
 schema = ValidationSchema()
@@ -68,7 +68,7 @@ live_validator = schema.build_live_validator()
 Validate entire forms with both field-level and cross-field rules:
 
 ```python
-from pydantic_forms.validation import FormValidator
+from pydantic_schemaforms.validation import FormValidator
 
 form_validator = FormValidator()
 
@@ -106,7 +106,7 @@ is_valid, errors = form_validator.validate({
 For simple synchronous validation against a Pydantic `FormModel`:
 
 ```python
-from pydantic_forms import FormModel, FormField, validate_form_data
+from pydantic_schemaforms import FormModel, FormField, validate_form_data
 
 class RegistrationForm(FormModel):
     username: str = FormField(
@@ -143,7 +143,7 @@ else:
 For validation with additional custom rules:
 
 ```python
-from pydantic_forms.validation import FormValidator
+from pydantic_schemaforms.validation import FormValidator
 
 form_validator = FormValidator()
 form_validator.field("username").add_rule(LengthRule(min=3, max=20))
@@ -173,8 +173,8 @@ is_valid, errors = form_validator.validate_pydantic_model(
 Use `LiveValidator` for server-side validation triggered via HTMX on blur/change events:
 
 ```python
-from pydantic_forms.live_validation import LiveValidator, HTMXValidationConfig
-from pydantic_forms.validation import FieldValidator, EmailRule
+from pydantic_schemaforms.live_validation import LiveValidator, HTMXValidationConfig
+from pydantic_schemaforms.validation import FieldValidator, EmailRule
 
 # Configure HTMX behavior
 config = HTMXValidationConfig(
@@ -230,8 +230,8 @@ In your template, set up HTMX triggers for real-time validation:
 ```python
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from pydantic_forms.live_validation import LiveValidator
-from pydantic_forms.validation import FieldValidator, EmailRule
+from pydantic_schemaforms.live_validation import LiveValidator
+from pydantic_schemaforms.validation import FieldValidator, EmailRule
 
 app = FastAPI()
 live_validator = LiveValidator()
@@ -271,7 +271,7 @@ async def validate_email(request: Request):
 Automatically convert a schema to HTMX-ready validators:
 
 ```python
-from pydantic_forms.validation import ValidationSchema, FieldValidator, EmailRule
+from pydantic_schemaforms.validation import ValidationSchema, FieldValidator, EmailRule
 
 schema = ValidationSchema()
 
@@ -294,7 +294,7 @@ live_validator = schema.build_live_validator()
 Validate fields that depend on other fields:
 
 ```python
-from pydantic_forms.validation import FormValidator
+from pydantic_schemaforms.validation import FormValidator
 
 form_validator = FormValidator()
 
@@ -372,7 +372,7 @@ form_validator.add_cross_field_rule(validate_passwords_match)
 ### Email Validator
 
 ```python
-from pydantic_forms.validation import create_email_validator
+from pydantic_schemaforms.validation import create_email_validator
 
 email_validator = create_email_validator()
 
@@ -392,7 +392,7 @@ response = email_validator("invalid-email")
 ### Password Strength Validator
 
 ```python
-from pydantic_forms.validation import create_password_strength_validator
+from pydantic_schemaforms.validation import create_password_strength_validator
 
 password_validator = create_password_strength_validator(min_length=8)
 
@@ -438,7 +438,7 @@ The validation system includes pre-built rules for common patterns:
 ### Example: Complete Field Validation
 
 ```python
-from pydantic_forms.validation import (
+from pydantic_schemaforms.validation import (
     FieldValidator,
     EmailRule,
     LengthRule,
@@ -477,7 +477,7 @@ Here's a complete registration form with both server validation and real-time HT
 #### 1. Define Form Model
 
 ```python
-from pydantic_forms import FormModel, FormField
+from pydantic_schemaforms import FormModel, FormField
 
 class RegistrationForm(FormModel):
     username: str = FormField(
@@ -519,7 +519,7 @@ class RegistrationForm(FormModel):
 #### 2. Set Up Validation
 
 ```python
-from pydantic_forms.validation import (
+from pydantic_schemaforms.validation import (
     FormValidator,
     FieldValidator,
     EmailRule,
@@ -559,7 +559,7 @@ live_validator = form_validator.build_live_validator()
 ```python
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic_forms import render_form, validate_form_data
+from pydantic_schemaforms import render_form, validate_form_data
 
 app = FastAPI()
 
@@ -681,7 +681,7 @@ The test suite includes comprehensive coverage. Use these patterns in your tests
 
 ```python
 import pytest
-from pydantic_forms.validation import (
+from pydantic_schemaforms.validation import (
     FormValidator,
     FieldValidator,
     EmailRule,

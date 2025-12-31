@@ -1,6 +1,6 @@
 """Comprehensive tests for specialized_inputs module."""
 
-from pydantic_forms.inputs.specialized_inputs import (
+from pydantic_schemaforms.inputs.specialized_inputs import (
     FileInput,
     ColorInput,
     HiddenInput,

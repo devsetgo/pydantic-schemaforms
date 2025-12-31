@@ -1,13 +1,13 @@
 """Tests for form_layouts.py to improve coverage."""
 
 
-from pydantic_forms.form_layouts import (
+from pydantic_schemaforms.form_layouts import (
     VerticalLayout,
     HorizontalLayout,
     TabbedLayout,
     ListLayout,
 )
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 
 class TestFormLayoutBase:

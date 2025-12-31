@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e  # Exit on error
 
-# Pydantic Forms Flask Examples Launcher
+# Pydantic SchemaForms Flask Examples Launcher
 # This script sets up the environment and runs the Flask demo
 
-echo "🚀 Starting Pydantic Forms Flask Demo"
+echo "🚀 Starting Pydantic SchemaForms Flask Demo"
 echo "================================================"
 
 # Check if we're in the right directory
 if [ ! -f "pyproject.toml" ]; then
-    echo "❌ Please run this script from the pydantic-forms root directory"
+    echo "❌ Please run this script from the pydantic-schemaforms root directory"
     exit 1
 fi
 
@@ -20,7 +20,7 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # Install the package in development mode
-echo "📦 Installing pydantic-forms in development mode..."
+echo "📦 Installing pydantic-schemaforms in development mode..."
 if pip install -e . > /dev/null 2>&1; then
     echo "✅ Package installed successfully"
 else

@@ -1,7 +1,7 @@
 """Extended tests for form_layouts.py to cover rendering methods and edge cases."""
 
 from pydantic import BaseModel, Field
-from pydantic_forms.form_layouts import (
+from pydantic_schemaforms.form_layouts import (
     VerticalLayout,
     HorizontalLayout,
     TabbedLayout,
@@ -35,7 +35,7 @@ class TestFormLayoutBasePrivateMethods:
 
     def test_render_form_instances_with_data(self):
         """Test _render_form_instances with data."""
-        from pydantic_forms.schema_form import FormModel
+        from pydantic_schemaforms.schema_form import FormModel
 
         # Define forms first
         class TestPersonForm(FormModel):
@@ -70,7 +70,7 @@ class TestFormLayoutBasePrivateMethods:
 
     def test_render_form_instances_material_framework(self):
         """Test _render_form_instances with material framework."""
-        from pydantic_forms.schema_form import FormModel
+        from pydantic_schemaforms.schema_form import FormModel
 
         class TestPersonForm(FormModel):
             name: str = ""
@@ -109,7 +109,7 @@ class TestFormLayoutBasePrivateMethods:
 
     def test_get_forms_returns_form_classes(self):
         """Test _get_forms returns FormModel subclasses."""
-        from pydantic_forms.schema_form import FormModel
+        from pydantic_schemaforms.schema_form import FormModel
 
         class TestPersonForm(FormModel):
             name: str = ""
@@ -155,7 +155,7 @@ class TestVerticalLayoutValidation:
 
     def test_validate_with_validation_errors(self):
         """Test validate with pydantic validation errors."""
-        from pydantic_forms.schema_form import FormModel
+        from pydantic_schemaforms.schema_form import FormModel
         from pydantic import Field
 
         class TestStrictFormModel(FormModel):
@@ -182,7 +182,7 @@ class TestHorizontalLayoutValidation:
 
     def test_validate_extracts_field_errors_correctly(self):
         """Test validate correctly extracts field-level errors."""
-        from pydantic_forms.schema_form import FormModel
+        from pydantic_schemaforms.schema_form import FormModel
         from pydantic import Field
 
         class TestValidatedFormModel(FormModel):
@@ -198,7 +198,7 @@ class TestTabbedLayoutValidation:
 
     def test_validate_aggregates_errors_from_tabs(self):
         """Test validate aggregates errors from multiple tabs."""
-        from pydantic_forms.schema_form import FormModel
+        from pydantic_schemaforms.schema_form import FormModel
         from pydantic import Field
 
         class TestTab1FormModel(FormModel):

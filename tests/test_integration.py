@@ -5,7 +5,7 @@ Tests for integration module - framework integrations and external system connec
 
 import pytest
 
-from pydantic_forms.integration import (
+from pydantic_schemaforms.integration import (
     FormBuilder,
     FormIntegration,
     JSONSchemaGenerator,
@@ -17,7 +17,7 @@ from pydantic_forms.integration import (
     handle_form_async,
     handle_sync_form,
 )
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
 def _build_form_builder(form_model):
@@ -372,7 +372,7 @@ class TestIntegrationUtilities:
 
     def test_field_type_mapping(self):
         """Test field type mapping between Pydantic and external systems."""
-        from pydantic_forms.integration import map_pydantic_to_json_schema_type
+        from pydantic_schemaforms.integration import map_pydantic_to_json_schema_type
 
         # Test basic type mappings
         assert map_pydantic_to_json_schema_type(str) == "string"
@@ -384,7 +384,7 @@ class TestIntegrationUtilities:
 
     def test_ui_element_mapping(self):
         """Test UI element mapping for different frameworks."""
-        from pydantic_forms.integration import map_ui_element_to_framework
+        from pydantic_schemaforms.integration import map_ui_element_to_framework
 
         # Test email field mapping
         react_email = map_ui_element_to_framework("email", "react")
@@ -399,7 +399,7 @@ class TestIntegrationUtilities:
 
     def test_validation_rule_conversion(self):
         """Test conversion of Pydantic validation to framework rules."""
-        from pydantic_forms.integration import convert_validation_rules
+        from pydantic_schemaforms.integration import convert_validation_rules
 
         field = Field(..., min_length=3, max_length=50, ge=1, le=100)
 
@@ -429,7 +429,7 @@ class TestIntegrationErrorHandling:
 
     def test_missing_framework_handling(self):
         """Test handling of missing framework dependencies."""
-        from pydantic_forms.integration import check_framework_availability
+        from pydantic_schemaforms.integration import check_framework_availability
 
         # Test checking for framework availability
         flask_available = check_framework_availability("flask")

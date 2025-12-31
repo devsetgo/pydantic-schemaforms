@@ -1,12 +1,12 @@
 # Variables
-REPONAME = pydantic-forms
+REPONAME = pydantic-schemaforms
 APP_VERSION = 25.11.3.beta
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
 
 EXAMPLE_PATH = examples
-SERVICE_PATH = pydantic_forms
+SERVICE_PATH = pydantic_schemaforms
 
 TESTS_PATH = tests
 SQLITE_PATH = _sqlite_db
@@ -33,8 +33,8 @@ black: ## Reformat Python code to follow the Black code style
 	# black $(TESTS_PATH)
 	# black $(EXAMPLE_PATH)
 
-bump: ## Bump the version of the project
-	bumpcalver --build
+# bump: ## Bump the version of the project
+# 	bumpcalver --build
 
 bump-beta: ## Bump the version of the project
 	bumpcalver --build --beta
@@ -144,5 +144,3 @@ kill:  # Kill any process running on the app port
 	@echo "Stopping any process running on port ${PORT}..."
 	@lsof -ti:${PORT} | xargs -r kill -9 || echo "No process found running on port ${PORT}"
 	@echo "Port ${PORT} is now free"
-
-

@@ -4,16 +4,16 @@ Tests for input components - text, numeric, selection, datetime, and specialized
 
 from datetime import date
 
-from pydantic_forms.inputs.datetime_inputs import DateInput, DatetimeInput, TimeInput
-from pydantic_forms.inputs.numeric_inputs import IntegerInput, NumberInput, RangeInput
-from pydantic_forms.inputs.selection_inputs import (
+from pydantic_schemaforms.inputs.datetime_inputs import DateInput, DatetimeInput, TimeInput
+from pydantic_schemaforms.inputs.numeric_inputs import IntegerInput, NumberInput, RangeInput
+from pydantic_schemaforms.inputs.selection_inputs import (
     CheckboxInput,
     MultiSelectInput,
     RadioInput,
     SelectInput,
 )
-from pydantic_forms.inputs.specialized_inputs import ColorInput, FileInput, HiddenInput
-from pydantic_forms.inputs.text_inputs import (
+from pydantic_schemaforms.inputs.specialized_inputs import ColorInput, FileInput, HiddenInput
+from pydantic_schemaforms.inputs.text_inputs import (
     EmailInput,
     PasswordInput,
     TelInput,
@@ -360,7 +360,7 @@ class TestInputIntegration:
 
     def test_input_from_form_field(self, sample_form_data):
         """Test creating inputs from FormModel fields."""
-        from pydantic_forms.schema_form import Field, FormModel
+        from pydantic_schemaforms.schema_form import Field, FormModel
 
         class TestForm(FormModel):
             name: str = Field(..., ui_element="text")

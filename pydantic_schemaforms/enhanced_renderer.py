@@ -562,7 +562,7 @@ def render_form_html(
         errors = error_dict
 
     if framework == "material":
-        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
         renderer = SimpleMaterialRenderer()
         return renderer.render_form_from_model(

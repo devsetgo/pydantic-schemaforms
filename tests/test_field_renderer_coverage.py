@@ -1,8 +1,8 @@
 """Comprehensive tests for field_renderer.py to increase coverage."""
 
 import pytest
-from pydantic_forms.rendering.field_renderer import FieldRenderer
-from pydantic_forms.rendering.context import RenderContext
+from pydantic_schemaforms.rendering.field_renderer import FieldRenderer
+from pydantic_schemaforms.rendering.context import RenderContext
 from unittest.mock import Mock, patch
 
 

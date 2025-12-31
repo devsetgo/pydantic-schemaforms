@@ -9,7 +9,7 @@ import sys
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
 # Test error extraction
 renderer = EnhancedFormRenderer(framework="bootstrap")

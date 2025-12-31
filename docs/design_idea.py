@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Any, Dict
 
-from pydantic_forms.schema_form import (
+from pydantic_schemaforms.schema_form import (
     FormDesign,
     FormModel,
     HorizontalLayout,

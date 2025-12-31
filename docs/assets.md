@@ -1,13 +1,13 @@
 # Assets & `asset_mode`
 
-`pydantic-forms` is **offline-by-default**: by default, rendered HTML ships all required JS/CSS from this library (vendored assets are embedded/packaged).
+`pydantic-schemaforms` is **offline-by-default**: by default, rendered HTML ships all required JS/CSS from this library (vendored assets are embedded/packaged).
 
 This page documents the standard knobs used across entry points to control asset injection.
 
 ## Terminology
 
-- **Vendored assets**: Third-party JS/CSS copied into this repo under `pydantic_forms/assets/vendor/**`.
-- **Pinned**: Versions are recorded in `pydantic_forms/assets/vendor/vendor_manifest.json` along with `sha256` checksums and source URLs.
+- **Vendored assets**: Third-party JS/CSS copied into this repo under `pydantic_schemaforms/assets/vendor/**`.
+- **Pinned**: Versions are recorded in `pydantic_schemaforms/assets/vendor/vendor_manifest.json` along with `sha256` checksums and source URLs.
 - **`asset_mode`**: How a renderer should include assets.
 
 ## `asset_mode` values
@@ -30,7 +30,7 @@ Most APIs accept `asset_mode` with these values:
 
 ### Legacy wrapper: `render_form_html()`
 
-File: `pydantic_forms/render_form.py`
+File: `pydantic_schemaforms/render_form.py`
 
 - `asset_mode="vendored" | "cdn" | "none"`
 - HTMX is included by default (vendored inline) because this wrapper historically assumed HTMX.
@@ -39,7 +39,7 @@ File: `pydantic_forms/render_form.py`
 Example:
 
 ```python
-from pydantic_forms.render_form import render_form_html
+from pydantic_schemaforms.render_form import render_form_html
 
 html = render_form_html(
     MyForm,
@@ -51,7 +51,7 @@ html = render_form_html(
 
 ### Enhanced renderer: `EnhancedFormRenderer`
 
-File: `pydantic_forms/enhanced_renderer.py`
+File: `pydantic_schemaforms/enhanced_renderer.py`
 
 - `include_framework_assets`: whether the renderer should include framework CSS/JS.
 - `asset_mode`: controls whether those assets are vendored inline or pinned CDN URLs.
@@ -59,7 +59,7 @@ File: `pydantic_forms/enhanced_renderer.py`
 Example:
 
 ```python
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
 renderer = EnhancedFormRenderer(
     framework="bootstrap",
@@ -71,7 +71,7 @@ html = renderer.render_form_from_model(MyForm)
 
 ### Modern/builder path: `FormBuilder` + `render_form_page()`
 
-File: `pydantic_forms/integration/builder.py`
+File: `pydantic_schemaforms/integration/builder.py`
 
 - `FormBuilder(..., include_framework_assets=..., asset_mode=...)` controls how the builder’s form HTML is rendered.
 - `render_form_page(..., include_framework_assets=..., asset_mode=...)` controls the full-page wrapper’s CSS/JS emission.
@@ -79,7 +79,7 @@ File: `pydantic_forms/integration/builder.py`
 Example:
 
 ```python
-from pydantic_forms.integration.builder import FormBuilder, render_form_page
+from pydantic_schemaforms.integration.builder import FormBuilder, render_form_page
 
 builder = FormBuilder(
     framework="bootstrap",
@@ -102,7 +102,7 @@ page = render_form_page(
 - Bootstrap (CSS + bundle JS)
 - Materialize (CSS + JS)
 
-See `pydantic_forms/assets/vendor/vendor_manifest.json` for exact versions and file paths.
+See `pydantic_schemaforms/assets/vendor/vendor_manifest.json` for exact versions and file paths.
 
 ## Updating vendored assets
 

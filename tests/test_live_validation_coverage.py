@@ -1,6 +1,6 @@
 """Comprehensive tests for live_validation module."""
 
-from pydantic_forms.live_validation import (
+from pydantic_schemaforms.live_validation import (
     HTMXValidationConfig,
     LiveValidator,
 )
@@ -320,7 +320,7 @@ class TestLiveValidatorMocking:
         assert validator.validators["email"](form_data["email"]) is True
         assert validator.validators["age"](form_data["age"]) is True
 
-    @patch('pydantic_forms.live_validation.json.dumps')
+    @patch('pydantic_schemaforms.live_validation.json.dumps')
     def test_validator_json_serialization(self, mock_json):
         """Test validator config serialization."""
         config = HTMXValidationConfig()
@@ -339,7 +339,7 @@ class TestLiveValidatorHTMLGeneration:
 
         assert validator.validation_template is not None
         assert hasattr(validator.validation_template, 'template_str')
-        from pydantic_forms.templates import TemplateString
+        from pydantic_schemaforms.templates import TemplateString
         assert isinstance(validator.validation_template, TemplateString)
 
     def test_field_template_contains_elements(self):
@@ -348,7 +348,7 @@ class TestLiveValidatorHTMLGeneration:
 
         assert validator.field_template is not None
         assert hasattr(validator.field_template, 'template_str')
-        from pydantic_forms.templates import TemplateString
+        from pydantic_schemaforms.templates import TemplateString
         assert isinstance(validator.field_template, TemplateString)
 
 

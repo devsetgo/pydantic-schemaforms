@@ -58,12 +58,15 @@ __all__ = [
 ]
 
 _LAZY_EXPORTS = {
-    "FormIntegration": ("pydantic_forms.integration.frameworks", "FormIntegration"),
-    "handle_form": ("pydantic_forms.integration.frameworks", "handle_form"),
-    "handle_form_async": ("pydantic_forms.integration.frameworks", "handle_form_async"),
-    "handle_sync_form": ("pydantic_forms.integration.frameworks", "handle_sync_form"),
-    "handle_async_form": ("pydantic_forms.integration.frameworks", "handle_async_form"),
-    "normalize_form_data": ("pydantic_forms.integration.frameworks", "normalize_form_data"),
+    "FormIntegration": ("pydantic_schemaforms.integration.frameworks", "FormIntegration"),
+    "handle_form": ("pydantic_schemaforms.integration.frameworks", "handle_form"),
+    "handle_form_async": ("pydantic_schemaforms.integration.frameworks", "handle_form_async"),
+    "handle_sync_form": ("pydantic_schemaforms.integration.frameworks", "handle_sync_form"),
+    "handle_async_form": ("pydantic_schemaforms.integration.frameworks", "handle_async_form"),
+    "normalize_form_data": (
+        "pydantic_schemaforms.integration.frameworks",
+        "normalize_form_data",
+    ),
 }
 
 

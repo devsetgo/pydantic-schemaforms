@@ -28,7 +28,7 @@ def project_root() -> Path:
 
 
 def manifest_path() -> Path:
-    return project_root() / 'pydantic_forms' / VENDOR_MANIFEST_RELATIVE_PATH
+    return project_root() / 'pydantic_schemaforms' / VENDOR_MANIFEST_RELATIVE_PATH
 
 
 def load_manifest() -> dict[str, Any]:
@@ -49,7 +49,7 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
-def http_get_bytes(url: str, *, user_agent: str = 'pydantic-forms-vendor-script') -> bytes:
+def http_get_bytes(url: str, *, user_agent: str = 'pydantic-schemaforms-vendor-script') -> bytes:
     req = Request(url, headers={'User-Agent': user_agent})
     with urlopen(req, timeout=60) as resp:
         return resp.read()
@@ -161,11 +161,11 @@ def vendor_htmx(*, version: str | None = None) -> VendoredFile:
     license_url = 'https://raw.githubusercontent.com/bigskysoftware/htmx/master/LICENSE'
 
     js_bytes = http_get_bytes(download_url)
-    js_rel_path = Path('pydantic_forms/assets/vendor/htmx/htmx.min.js')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/htmx/htmx.min.js')
     js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=download_url)
 
     license_bytes = http_get_bytes(license_url)
-    license_rel_path = Path('pydantic_forms/assets/vendor/htmx/LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/htmx/LICENSE')
     license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=license_url)
 
     manifest = load_manifest()
@@ -196,7 +196,7 @@ def vendor_imask(*, version: str | None = None) -> VendoredFile:
 
     # Common dist paths for the imask package
     js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/imask.min.js')
-    js_rel_path = Path('pydantic_forms/assets/vendor/imask/imask.min.js')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/imask/imask.min.js')
     js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
 
     license_bytes: bytes
@@ -204,7 +204,7 @@ def vendor_imask(*, version: str | None = None) -> VendoredFile:
         license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
     except FileNotFoundError:
         license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
-    license_rel_path = Path('pydantic_forms/assets/vendor/imask/LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/imask/LICENSE')
     license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
 
     manifest = load_manifest()
@@ -233,11 +233,11 @@ def vendor_materialize(*, version: str = '1.0.0') -> VendoredFile:
     tgz = http_get_bytes(tarball_url)
 
     css_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/css/materialize.min.css')
-    css_rel_path = Path('pydantic_forms/assets/vendor/materialize/materialize.min.css')
+    css_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/materialize.min.css')
     css_entry = _write_vendored_file(rel_path=css_rel_path, data=css_bytes, source_url=tarball_url)
 
     js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/js/materialize.min.js')
-    js_rel_path = Path('pydantic_forms/assets/vendor/materialize/materialize.min.js')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/materialize.min.js')
     js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
 
     license_bytes: bytes
@@ -245,7 +245,7 @@ def vendor_materialize(*, version: str = '1.0.0') -> VendoredFile:
         license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
     except FileNotFoundError:
         license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
-    license_rel_path = Path('pydantic_forms/assets/vendor/materialize/LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/LICENSE')
     license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
 
     manifest = load_manifest()
@@ -290,13 +290,13 @@ def vendor_bootstrap(*, version: str = '5.3.0') -> VendoredFile:
     # The dist ZIP does not reliably include the license; fetch from upstream tag.
     license_bytes = http_get_bytes(license_url)
 
-    css_rel_path = Path('pydantic_forms/assets/vendor/bootstrap/bootstrap.min.css')
+    css_rel_path = Path('pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.min.css')
     css_entry = _write_vendored_file(rel_path=css_rel_path, data=css_bytes, source_url=zip_url)
 
-    js_rel_path = Path('pydantic_forms/assets/vendor/bootstrap/bootstrap.bundle.min.js')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.bundle.min.js')
     js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=zip_url)
 
-    license_rel_path = Path('pydantic_forms/assets/vendor/bootstrap/LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/bootstrap/LICENSE')
     license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=license_url)
 
     manifest = load_manifest()

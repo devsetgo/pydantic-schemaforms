@@ -7,11 +7,11 @@ from importlib import resources
 
 @lru_cache(maxsize=32)
 def read_asset_text(relative_path: str) -> str:
-    """Read packaged asset text by path relative to the pydantic_forms package.
+    """Read packaged asset text by path relative to the pydantic_schemaforms package.
 
     Example: "assets/vendor/htmx/htmx.min.js"
     """
-    package_root = resources.files('pydantic_forms')
+    package_root = resources.files('pydantic_schemaforms')
     return (package_root / relative_path).read_text(encoding='utf-8')
 
 
@@ -33,7 +33,7 @@ def style_tag_href(href: str) -> str:
 
 @lru_cache(maxsize=8)
 def _vendor_manifest() -> dict:
-    package_root = resources.files('pydantic_forms')
+    package_root = resources.files('pydantic_schemaforms')
     text = (package_root / 'assets/vendor/vendor_manifest.json').read_text(encoding='utf-8')
     return json.loads(text)
 

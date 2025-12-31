@@ -51,7 +51,7 @@ class RendererTheme:
 
     def after_form(self) -> str:
         """Markup appended after the closing form tag."""
-        
+
         # JavaScript to prevent Enter key from submitting forms
         prevent_enter_script = """
 <script>
@@ -64,22 +64,22 @@ class RendererTheme:
                 // Check if Enter key is pressed
                 if (e.key === 'Enter' || e.keyCode === 13) {
                     const target = e.target;
-                    
+
                     // Allow Enter in textareas (for multi-line input)
                     if (target.tagName === 'TEXTAREA') {
                         return;
                     }
-                    
+
                     // Allow Enter on submit buttons
                     if (target.tagName === 'BUTTON' && target.type === 'submit') {
                         return;
                     }
-                    
+
                     // Allow Enter on input type="submit"
                     if (target.tagName === 'INPUT' && target.type === 'submit') {
                         return;
                     }
-                    
+
                     // Prevent form submission for all other cases
                     e.preventDefault();
                     return false;
@@ -90,7 +90,7 @@ class RendererTheme:
 })();
 </script>
 """
-        
+
         after_form_assets = self.form_style.assets.after_form
         if after_form_assets:
             return prevent_enter_script + "\n" + after_form_assets
@@ -391,22 +391,22 @@ class MaterialEmbeddedTheme(RendererTheme):
                 // Check if Enter key is pressed
                 if (e.key === 'Enter' || e.keyCode === 13) {
                     const target = e.target;
-                    
+
                     // Allow Enter in textareas (for multi-line input)
                     if (target.tagName === 'TEXTAREA') {
                         return;
                     }
-                    
+
                     // Allow Enter on submit buttons
                     if (target.tagName === 'BUTTON' && target.type === 'submit') {
                         return;
                     }
-                    
+
                     // Allow Enter on input type="submit"
                     if (target.tagName === 'INPUT' && target.type === 'submit') {
                         return;
                     }
-                    
+
                     // Prevent form submission for all other cases
                     e.preventDefault();
                     return false;
@@ -672,9 +672,6 @@ function toggleAccordion(sectionId, buttonElement) {
     @staticmethod
     def _build_css() -> str:
         return """<style>
-/* Material Icons Font */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-
 /* Material Design 3 Self-Contained Styles - Using !important to override any conflicting styles */
 .md-form-container {
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;

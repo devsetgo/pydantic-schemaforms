@@ -5,7 +5,7 @@ Tests for schema_form module - FormModel and Field functionality.
 import pytest
 from pydantic import ValidationError
 
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
 class TestField:
@@ -181,7 +181,7 @@ class TestFormModel:
 
     def test_form_model_field_extraction(self, simple_form_model):
         """Test that FormModel can extract field information."""
-        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
         renderer = EnhancedFormRenderer()
         html = renderer.render_form_from_model(simple_form_model)
@@ -201,7 +201,7 @@ class TestFormModel:
             bio: str = Field(..., ui_element="textarea", ui_options={"rows": 4})
             color: str = Field("#000000", ui_element="color")
 
-        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
         renderer = EnhancedFormRenderer()
         html = renderer.render_form_from_model(TestForm)

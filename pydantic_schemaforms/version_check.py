@@ -1,5 +1,5 @@
 """
-Python version validation for pydantic-forms.
+Python version validation for pydantic-schemaforms.
 
 This library requires Python 3.14+ for native template string support.
 No backward compatibility is provided for older Python versions.
@@ -17,10 +17,10 @@ def check_python_version() -> None:
     """
     if sys.version_info < (3, 14):
         raise RuntimeError(
-            f"pydantic-forms requires Python 3.14 or higher. "
+            f"pydantic-schemaforms requires Python 3.14 or higher. "
             f"Current version: {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\n"
             f"This library uses native Python 3.14 template strings and provides no backward compatibility.\n"
-            f"Please upgrade to Python 3.14+ to use pydantic-forms."
+            f"Please upgrade to Python 3.14+ to use pydantic-schemaforms."
         )
 
 
@@ -43,7 +43,7 @@ def verify_template_strings() -> None:
         raise ImportError(
             f"string.templatelib is not available. "
             f"This suggests you're not using Python 3.14+ or the installation is incomplete.\n"
-            f"pydantic-forms requires Python 3.14+ with native template string support.\n"
+            f"pydantic-schemaforms requires Python 3.14+ with native template string support.\n"
             f"Original error: {e}"
         ) from e
 

@@ -9,8 +9,8 @@ from typing import Optional
 import pytest
 from pydantic import Field
 
-from pydantic_forms.schema_form import FormModel
-from pydantic_forms.validation import (
+from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms.validation import (
     DateRangeRule,
     EmailRule,
     MaxLengthRule,

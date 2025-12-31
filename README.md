@@ -1,35 +1,34 @@
-# Pydantic Forms
+# Pydantic SchemaForms
 
-[![PyPI version](https://badge.fury.io/py/pydantic-forms.svg)](https://pypi.python.org/pypi/pydantic-forms/)
-[![Downloads](https://static.pepy.tech/badge/pydantic-forms)](https://pepy.tech/project/pydantic-forms)
-[![Downloads](https://static.pepy.tech/badge/pydantic-forms/month)](https://pepy.tech/project/pydantic-forms)
-[![Downloads](https://static.pepy.tech/badge/pydantic-forms/week)](https://pepy.tech/project/pydantic-forms)
+[![PyPI version](https://badge.fury.io/py/pydantic-schemaforms.svg)](https://pypi.python.org/pypi/pydantic-schemaforms/)
+[![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms)](https://pepy.tech/project/pydantic-schemaforms)
+[![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms/month)](https://pepy.tech/project/pydantic-schemaforms)
+[![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms/week)](https://pepy.tech/project/pydantic-schemaforms)
 
 **Support Python Versions**
 
 ![Static Badge](https://img.shields.io/badge/Python-3.14-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-forms/refs/heads/main/coverage-badge.svg)](./reports/coverage/index.html)
-[![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-forms/refs/heads/main/tests-badge.svg)](./reports/coverage/index.html)
+[![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/coverage-badge.svg)](./reports/coverage/index.html)
+[![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/tests-badge.svg)](./reports/coverage/index.html)
 
 **CI/CD Pipeline:**
-
-[![Testing - Main](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml/badge.svg?branch=main)](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml)
-[![Testing - Dev](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml/badge.svg?branch=dev)](https://github.com/devsetgo/pydantic-forms/actions/workflows/testing.yml)
+[![Testing - Main](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml/badge.svg?branch=main)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
+[![Testing - Dev](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml/badge.svg?branch=dev)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
 
 **SonarCloud:**
 
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=coverage)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=alert_status)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-forms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-forms)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=coverage)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=alert_status)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
 
 > **Note**: This project should be considered in beta as it is actively under development and may have breaking changes.
 
 ## Overview
 
-**pydantic-forms** is a modern Python library that generates dynamic HTML forms using Pydantic 2.x+ models with React JSON Schema Forms compatibility. Create beautiful, validated forms with minimal code - just define your Pydantic model and get a complete HTML form with CSS framework integration.
+**pydantic-schemaforms** is a modern Python library that generates dynamic HTML forms using Pydantic 2.x+ models with React JSON Schema Forms compatibility. Create beautiful, validated forms with minimal code - just define your Pydantic model and get a complete HTML form with CSS framework integration.
 
 **Key Features:**
 - 🚀 **Zero-Configuration Forms**: Generate complete HTML forms directly from Pydantic models
@@ -46,13 +45,13 @@
 ### Installation
 
 ```bash
-pip install pydantic-forms
+pip install pydantic-schemaforms
 ```
 
 ### Basic Example
 
 ```python
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 from flask import Flask
 
 app = Flask(__name__)
@@ -115,7 +114,7 @@ That's it! You now have a fully functional, validated, accessible form with Boot
 Pydantic Forms uses the same UI element specifications as React JSON Schema Forms for familiarity:
 
 ```python
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 class ContactForm(FormModel):
     name: str = Field(
@@ -291,7 +290,7 @@ Complete Flask application example:
 ```python
 from flask import Flask, request, render_template_string
 from pydantic import ValidationError
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 app = Flask(__name__)
 
@@ -420,7 +419,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 class MyForm(FormModel):
     field_name: str = Field(..., ui_element="email")
@@ -459,8 +458,8 @@ Contributions are welcome! Please check out the [Contributing Guide](contribute.
 
 **Development Setup:**
 ```bash
-git clone https://github.com/devsetgo/pydantic-forms.git
-cd pydantic-forms
+git clone https://github.com/devsetgo/pydantic-schemaforms.git
+cd pydantic-schemaforms
 pip install -e .
 ```
 
@@ -473,10 +472,10 @@ python -m pytest tests/
 
 ## Links
 
-- **Documentation**: [pydantic-forms Docs](https://devsetgo.github.io/pydantic-forms/)
-- **Repository**: [GitHub](https://github.com/devsetgo/pydantic-forms)
-- **PyPI**: [pydantic-forms](https://pypi.org/project/pydantic-forms/)
-- **Issues**: [Bug Reports & Feature Requests](https://github.com/devsetgo/pydantic-forms/issues)
+- **Documentation**: [pydantic-schemaforms Docs](https://devsetgo.github.io/pydantic-schemaforms/)
+- **Repository**: [GitHub](https://github.com/devsetgo/pydantic-schemaforms)
+- **PyPI**: [pydantic-schemaforms](https://pypi.org/project/pydantic-schemaforms/)
+- **Issues**: [Bug Reports & Feature Requests](https://github.com/devsetgo/pydantic-schemaforms/issues)
 
 ---
 

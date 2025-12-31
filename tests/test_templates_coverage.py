@@ -5,7 +5,7 @@ Specifically targeting uncovered utility functions.
 
 import pytest
 
-from pydantic_forms.templates import (
+from pydantic_schemaforms.templates import (
     TemplateString,
     create_custom_template,
     validate_template_variables,

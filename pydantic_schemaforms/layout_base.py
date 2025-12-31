@@ -21,8 +21,8 @@ class BaseLayout:
     """Minimal building block for layout components.
 
     The class focuses on content orchestration and attribute merging so that both the
-    lightweight layout DSL (``pydantic_forms.layouts``) and the form-composition
-    helpers (``pydantic_forms.form_layouts``) can share a single abstraction.
+    lightweight layout DSL (``pydantic_schemaforms.layouts``) and the form-composition
+    helpers (``pydantic_schemaforms.form_layouts``) can share a single abstraction.
     """
 
     template: str = '<div class="${class_}" style="${style}">${content}</div>'

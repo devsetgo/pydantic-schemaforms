@@ -2,7 +2,7 @@
 Legacy form layout composition helpers.
 
 This module is deprecated in favor of composing ``BaseLayout`` instances directly via
-``pydantic_forms.rendering.layout_engine.LayoutComposer`` and rendering them through the
+``pydantic_schemaforms.rendering.layout_engine.LayoutComposer`` and rendering them through the
 shared ``LayoutEngine``.
 """
 
@@ -152,7 +152,7 @@ class FormDesign:
 
 
 _DEPRECATION_MESSAGE = (
-    "pydantic_forms.form_layouts will be removed in a future release. Compose layouts "
+    "pydantic_schemaforms.form_layouts will be removed in a future release. Compose layouts "
     "using LayoutComposer + LayoutEngine instead."
 )
 

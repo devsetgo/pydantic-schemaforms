@@ -1,5 +1,5 @@
 """
-Native Python 3.14 template string system for pydantic-forms.
+Native Python 3.14 template string system for pydantic-schemaforms.
 
 This module provides a high-performance template engine using Python 3.14's
 native string.templatelib. No backward compatibility is provided.

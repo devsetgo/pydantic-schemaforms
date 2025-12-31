@@ -1,5 +1,5 @@
 """
-Icon mapping utility for pydantic-forms.
+Icon mapping utility for pydantic-schemaforms.
 
 This module provides a system to switch between different icon frameworks
 (Bootstrap Icons vs Material Design Icons) based on the UI framework being used.

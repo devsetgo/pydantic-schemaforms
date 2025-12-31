@@ -2,8 +2,8 @@
 Tests for enhanced_renderer module - form rendering with multiple CSS frameworks.
 """
 
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
 class TestEnhancedFormRenderer:

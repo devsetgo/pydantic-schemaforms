@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 
 class TestFormRenderingIntegration:

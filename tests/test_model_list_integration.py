@@ -4,8 +4,8 @@ import pytest
 from pydantic import ValidationError
 
 from examples.shared_models import TaskItem, TaskListForm
-from pydantic_forms.model_list import ModelListRenderer
-from pydantic_forms.schema_form import FormModel
+from pydantic_schemaforms.model_list import ModelListRenderer
+from pydantic_schemaforms.schema_form import FormModel
 
 
 class _PetModel(FormModel):

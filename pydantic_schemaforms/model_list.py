@@ -16,9 +16,9 @@ Features:
 
 from typing import Any, Dict, List, Optional, Type
 
-from pydantic_forms.rendering.context import RenderContext
-from pydantic_forms.rendering.themes import RendererTheme, get_theme_for_framework
-from pydantic_forms.schema_form import FormModel
+from pydantic_schemaforms.rendering.context import RenderContext
+from pydantic_schemaforms.rendering.themes import RendererTheme, get_theme_for_framework
+from pydantic_schemaforms.schema_form import FormModel
 
 
 class ModelListRenderer:
@@ -209,7 +209,7 @@ class ModelListRenderer:
     ) -> str:
         """Render a single Bootstrap list item."""
 
-        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
         renderer = EnhancedFormRenderer(framework="bootstrap")
 
@@ -265,7 +265,7 @@ class ModelListRenderer:
     ) -> str:
         """Render a single Material Design list item."""
 
-        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
         renderer = SimpleMaterialRenderer()
 

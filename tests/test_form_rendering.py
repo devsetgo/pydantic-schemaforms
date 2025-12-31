@@ -15,7 +15,7 @@ from examples.shared_models import (
     parse_nested_form_data,
 )
 
-from pydantic_forms.enhanced_renderer import render_form_html
+from pydantic_schemaforms.enhanced_renderer import render_form_html
 
 # Test the problematic form data you provided
 form_data = {
@@ -80,9 +80,11 @@ if not result['success']:
             print("  ❌ Invalid weight value NOT preserved")
 
         # Save the rendered HTML for inspection
-        with open("/workspaces/pydantic-forms/debug_form.html", "w") as f:
-            f.write(form_html)
-        print("  📄 Form HTML saved to debug_form.html")
+        from pathlib import Path
+
+        out_path = Path(__file__).resolve().parents[1] / "debug_form.html"
+        out_path.write_text(form_html, encoding="utf-8")
+        print(f"  📄 Form HTML saved to {out_path}")
 
     except Exception as e:
         print(f"  ❌ Form rendering failed: {e}")

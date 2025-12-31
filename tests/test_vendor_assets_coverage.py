@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 import pytest
 
-from pydantic_forms.vendor_assets import (
+from pydantic_schemaforms.vendor_assets import (
     VendoredFile,
     project_root,
     manifest_path,
@@ -58,11 +58,11 @@ class TestProjectRoot:
         assert isinstance(root, Path)
         assert root.exists()
 
-    def test_project_root_contains_pydantic_forms(self):
-        """Test that project root contains pydantic_forms directory."""
+    def test_project_root_contains_pydantic_schemaforms(self):
+        """Test that project root contains pydantic_schemaforms directory."""
         root = project_root()
-        pydantic_forms_dir = root / "pydantic_forms"
-        assert pydantic_forms_dir.exists()
+        pydantic_schemaforms_dir = root / "pydantic_schemaforms"
+        assert pydantic_schemaforms_dir.exists()
 
 
 class TestManifestPath:
@@ -104,7 +104,7 @@ class TestSha256Functions:
         # Should be all hex characters
         assert all(c in "0123456789abcdef" for c in result)
 
-    @patch("pydantic_forms.vendor_assets.Path.read_bytes")
+    @patch("pydantic_schemaforms.vendor_assets.Path.read_bytes")
     def test_sha256_file(self, mock_read_bytes):
         """Test sha256_file function."""
         mock_read_bytes.return_value = b"file content"
@@ -120,7 +120,7 @@ class TestSha256Functions:
 class TestEnsureParentDir:
     """Test ensure_parent_dir function."""
 
-    @patch("pydantic_forms.vendor_assets.Path.mkdir")
+    @patch("pydantic_schemaforms.vendor_assets.Path.mkdir")
     def test_ensure_parent_dir_creates_parents(self, mock_mkdir):
         """Test that ensure_parent_dir creates parent directories."""
         path = Path("/fake/nested/directory/file.txt")
@@ -129,7 +129,7 @@ class TestEnsureParentDir:
         # Should call mkdir on the parent with parents=True, exist_ok=True
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
-    @patch("pydantic_forms.vendor_assets.Path.mkdir")
+    @patch("pydantic_schemaforms.vendor_assets.Path.mkdir")
     def test_ensure_parent_dir_with_existing_dir(self, mock_mkdir):
         """Test ensure_parent_dir with existing directory."""
         path = Path("/existing/file.txt")
@@ -333,9 +333,9 @@ class TestSafeMemberBytesFromTgz:
 class TestWriteVendoredFile:
     """Test _write_vendored_file function."""
 
-    @patch("pydantic_forms.vendor_assets.project_root")
-    @patch("pydantic_forms.vendor_assets.ensure_parent_dir")
-    @patch("pydantic_forms.vendor_assets.Path.write_bytes")
+    @patch("pydantic_schemaforms.vendor_assets.project_root")
+    @patch("pydantic_schemaforms.vendor_assets.ensure_parent_dir")
+    @patch("pydantic_schemaforms.vendor_assets.Path.write_bytes")
     def test_write_vendored_file(self, mock_write_bytes, mock_ensure_dir, mock_project_root):
         """Test writing a vendored file."""
         mock_project_root.return_value = Path("/project")
@@ -361,9 +361,9 @@ class TestWriteVendoredFile:
         assert result["sha256"] == hashlib.sha256(data).hexdigest()
         assert result["source_url"] == source_url
 
-    @patch("pydantic_forms.vendor_assets.project_root")
-    @patch("pydantic_forms.vendor_assets.ensure_parent_dir")
-    @patch("pydantic_forms.vendor_assets.Path.write_bytes")
+    @patch("pydantic_schemaforms.vendor_assets.project_root")
+    @patch("pydantic_schemaforms.vendor_assets.ensure_parent_dir")
+    @patch("pydantic_schemaforms.vendor_assets.Path.write_bytes")
     def test_write_vendored_file_creates_correct_path(self, mock_write_bytes, mock_ensure_dir, mock_project_root):
         """Test that correct absolute path is created."""
         mock_project_root.return_value = Path("/root")

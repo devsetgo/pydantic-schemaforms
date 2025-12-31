@@ -14,7 +14,7 @@ from ..validation import create_validator
 
 
 class FormBuilder:
-    """Enhanced form builder that integrates all pydantic-forms components."""
+    """Enhanced form builder that integrates all pydantic-schemaforms components."""
 
     def __init__(
         self,

@@ -1,11 +1,11 @@
 
-# Codebase Review – pydantic-forms
+# Codebase Review – pydantic-schemaforms
 
 _Date: 2025-12-21 (Updated)_
 
 ## Executive Summary
 
-`pydantic-forms` is in a solid place architecturally: there is now a single schema→field→layout rendering pipeline, theme/style are first-class and overrideable, and the test suite exercises both sync and async rendering across layout primitives. The remaining work is less about “more features” and more about locking the product to its original promise:
+`pydantic-schemaforms` is in a solid place architecturally: there is now a single schema→field→layout rendering pipeline, theme/style are first-class and overrideable, and the test suite exercises both sync and async rendering across layout primitives. The remaining work is less about “more features” and more about locking the product to its original promise:
 
 - **Python 3.14+ only:** this library targets Python 3.14 and higher, and does not support earlier Python versions.
 
@@ -75,11 +75,11 @@ These rules are intended to prevent “helpful” drift away from the original c
   - External CDN URLs still exist as an explicit opt-in (`asset_mode="cdn"`) and are pinned to the vendored manifest versions.
 
   _Files:_
-  - `pydantic_forms/render_form.py` (legacy wrapper)
-  - `pydantic_forms/assets/runtime.py` (vendored HTMX + pinned CDN mode)
-  - `pydantic_forms/rendering/themes.py` / `pydantic_forms/enhanced_renderer.py` (asset-mode gating)
-  - `pydantic_forms/modern_renderer.py`, `pydantic_forms/integration/builder.py` (builder/modern entry points)
-  - `pydantic_forms/form_layouts.py` (deprecated legacy layouts; now gated)
+  - `pydantic_schemaforms/render_form.py` (legacy wrapper)
+  - `pydantic_schemaforms/assets/runtime.py` (vendored HTMX + pinned CDN mode)
+  - `pydantic_schemaforms/rendering/themes.py` / `pydantic_schemaforms/enhanced_renderer.py` (asset-mode gating)
+  - `pydantic_schemaforms/modern_renderer.py`, `pydantic_schemaforms/integration/builder.py` (builder/modern entry points)
+  - `pydantic_schemaforms/form_layouts.py` (deprecated legacy layouts; now gated)
 
   **Vendored dependency policy (implemented for HTMX; extendable for others)**
   - **Default is offline:** the default renderer output must not reference external CDNs.
@@ -92,50 +92,50 @@ These rules are intended to prevent “helpful” drift away from the original c
   - One command updates the pinned version, downloads the asset(s), writes/updates the manifest checksums, and runs a verification check.
   - A CI/test check fails if any default render output contains external asset URLs.
   - The update process is deterministic and reviewable (diff shows only asset bytes + manifest/version bump).
-  - Formatting/lint tooling must not modify vendored bytes (otherwise checksum verification breaks). Pre-commit should exclude `pydantic_forms/assets/vendor/` from whitespace/EOF normalization hooks.
+  - Formatting/lint tooling must not modify vendored bytes (otherwise checksum verification breaks). Pre-commit should exclude `pydantic_schemaforms/assets/vendor/` from whitespace/EOF normalization hooks.
 
 - **Multiple layout stacks compete for ownership (Resolved)**
-  Layout definitions now live exclusively in `layout_base.BaseLayout` + `rendering/layout_engine`. The new `LayoutComposer` API exposes the canonical Horizontal/Vertical/Tabbed primitives, while `pydantic_forms.layouts`/`pydantic_forms.form_layouts` only re-export the engine with `DeprecationWarning`s. Enhanced and Material renderers both call into `LayoutEngine`, so markup is consistent across frameworks, and the tutorial documents LayoutComposer as the single supported API.
-  _Files:_ `pydantic_forms/rendering/layout_engine.py`, `pydantic_forms/layouts.py`, `pydantic_forms/form_layouts.py`, `pydantic_forms/simple_material_renderer.py`
+  Layout definitions now live exclusively in `layout_base.BaseLayout` + `rendering/layout_engine`. The new `LayoutComposer` API exposes the canonical Horizontal/Vertical/Tabbed primitives, while `pydantic_schemaforms.layouts`/`pydantic_schemaforms.form_layouts` only re-export the engine with `DeprecationWarning`s. Enhanced and Material renderers both call into `LayoutEngine`, so markup is consistent across frameworks, and the tutorial documents LayoutComposer as the single supported API.
+  _Files:_ `pydantic_schemaforms/rendering/layout_engine.py`, `pydantic_schemaforms/layouts.py`, `pydantic_schemaforms/form_layouts.py`, `pydantic_schemaforms/simple_material_renderer.py`
 
 - **Renderer logic duplicated across frameworks (Resolved)**
   Enhanced and Simple Material share the same orchestration pipeline via the new `RendererTheme` abstraction and `MaterialEmbeddedTheme`, eliminating the duplicated CSS/JS scaffolding that previously lived in `simple_material_renderer.py`. The Modern renderer now builds a temporary `FormModel` and hands off to `EnhancedFormRenderer`, and the redundant `Py314Renderer` alias has been removed entirely. Framework-specific assets live in `RendererTheme` strategies, so there is a single schema walk/layout path regardless of entry point.
-  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/simple_material_renderer.py`, `pydantic_forms/modern_renderer.py`
+  _Files:_ `pydantic_schemaforms/enhanced_renderer.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/simple_material_renderer.py`, `pydantic_schemaforms/modern_renderer.py`
 
 - **Integration helpers mix unrelated responsibilities (Addressed)**
-  The synchronous/async adapters now live in `pydantic_forms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_forms.integration` no longer drags in optional framework glue unless those helpers are actually accessed.
-  _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/frameworks/`, `pydantic_forms/integration/builder.py`
+  The synchronous/async adapters now live in `pydantic_schemaforms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_schemaforms.integration` no longer drags in optional framework glue unless those helpers are actually accessed.
+  _Files:_ `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/integration/frameworks/`, `pydantic_schemaforms/integration/builder.py`
 
 ## Medium Priority Refactors & Opportunities
 
 - **Input component metadata duplicated (Resolved)**
   Input classes now declare their `ui_element` (plus optional aliases) and a lightweight registry walks the class hierarchy to expose a mapping. `rendering/frameworks.py` imports that registry instead of maintaining its own list, so adding a new component only requires updating the input module where it already lives.
-  _Files:_ `pydantic_forms/inputs/base.py`, `pydantic_forms/inputs/*`, `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/frameworks.py`
+  _Files:_ `pydantic_schemaforms/inputs/base.py`, `pydantic_schemaforms/inputs/*`, `pydantic_schemaforms/inputs/registry.py`, `pydantic_schemaforms/rendering/frameworks.py`
 
 - **Model list renderer mixes logic with theme markup (Resolved)**
   `ModelListRenderer` now delegates both containers and per-item chrome through `RendererTheme` hooks: `render_model_list_container()` and the new `render_model_list_item()` (with Material/embedded overrides) wrap the renderer-supplied field grid so frameworks own every byte of markup. Bootstrap/Material share the same plumbing, labels/help/errors/add buttons stay in the theme, and tests cover that custom themes can inject their own classes when rendering lists.
-  _Files:_ `pydantic_forms/model_list.py`, `pydantic_forms/rendering/themes.py`
+  _Files:_ `pydantic_schemaforms/model_list.py`, `pydantic_schemaforms/rendering/themes.py`
 
 - **Template engine under-used (Resolved)**
   The new `FormStyle` contract (in `rendering/form_style.py`) extracts all framework-specific markup into `FormStyleTemplates` dataclass with 13 template slots: `form_wrapper`, `tab_layout`, `tab_button`, `tab_panel`, `accordion_layout`, `accordion_section`, `layout_section`, `layout_help`, `model_list_container`, `model_list_item`, `model_list_help`, `model_list_error`, and `submit_button`. Framework-specific bundles (Bootstrap, Material, Plain, Default) are registered in a centralized registry via `register_form_style()` and queried at render time with `get_form_style(framework, variant)`. `RendererTheme.render_submit_button()`, `render_model_list_*()` methods and `LayoutEngine` tab/accordion layouts all delegate to `FormStyle.templates` with graceful fallback to defaults, eliminating inline markup strings and enabling runtime overrides. Tests in `test_theme_hooks.py` (7 tests) verify custom FormStyle templates drive rendering. FastAPI example paths hardened to use `Path(__file__).resolve().parent` for templates and static dirs, working correctly from any working directory.
-  _Files:_ `pydantic_forms/rendering/form_style.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/layout_engine.py`, `examples/fastapi_example.py`, `tests/test_theme_hooks.py`, `tests/test_fastapi_example_smoke.py`
+  _Files:_ `pydantic_schemaforms/rendering/form_style.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/rendering/layout_engine.py`, `examples/fastapi_example.py`, `tests/test_theme_hooks.py`, `tests/test_fastapi_example_smoke.py`
 
 - **Runtime field registration surfaced (New)**
   Dynamically extending a `FormModel` is now supported via `FormModel.register_field()`, which wires the new `FieldInfo` into the schema cache and the validation stack by synthesizing a runtime subclass when necessary. Legacy `setattr(MyForm, name, Field(...))` still works for rendering, but the helper ensures `validate_form_data()` and HTMX live validation enforce the same constraints without manual plumbing.
-  _Files:_ `pydantic_forms/schema_form.py`, `pydantic_forms/validation.py`, `tests/test_integration_workflow.py`
+  _Files:_ `pydantic_schemaforms/schema_form.py`, `pydantic_schemaforms/validation.py`, `tests/test_integration_workflow.py`
   _TODO:_ The temporary `DynamicFormRuntime` created by `pydantic.create_model()` emits a `UserWarning` about shadowing parent attributes. If this becomes noisy, add a local `model_config = {"ignored_types": ...}` or suppress the warning via the helper before rebuilding the runtime model.
 
 - **Validation rule duplication (Resolved)**
   Validation is now canonical in `validation.py` (rules, `ValidationResponse`, convenience validators). `live_validation.py` consumes/re-exports without duplicating code. Added consolidation coverage (10 tests) for schema → live validator flow, convenience validators, and serialization.
-  _Files:_ `pydantic_forms/validation.py`, `pydantic_forms/live_validation.py`, `pydantic_forms/__init__.py`, `tests/test_validation_consolidation.py`
+  _Files:_ `pydantic_schemaforms/validation.py`, `pydantic_schemaforms/live_validation.py`, `pydantic_schemaforms/__init__.py`, `tests/test_validation_consolidation.py`
 
 - **Input namespace still re-exports everything (Resolved)**
-  The root package now exposes inputs via module-level `__getattr__`, delegating to a lazy-loading facade in `pydantic_forms.inputs`. No wildcard imports remain, so importing `pydantic_forms` does not instantiate every widget or template; consumers still get `from pydantic_forms import TextInput` via the cached attribute. Future work can build on the same facade to document a plugin hook for third-party inputs.
-  _Files:_ `pydantic_forms/__init__.py`, `pydantic_forms/inputs/__init__.py`
+  The root package now exposes inputs via module-level `__getattr__`, delegating to a lazy-loading facade in `pydantic_schemaforms.inputs`. No wildcard imports remain, so importing `pydantic_schemaforms` does not instantiate every widget or template; consumers still get `from pydantic_schemaforms import TextInput` via the cached attribute. Future work can build on the same facade to document a plugin hook for third-party inputs.
+  _Files:_ `pydantic_schemaforms/__init__.py`, `pydantic_schemaforms/inputs/__init__.py`
 
 - **Integration facade duplicated across namespaces (Resolved)**
   The canonical sync/async helpers now live only in `integration/adapters.py`, `integration/sync.py`, and `integration/async_support.py`. The `integration.frameworks` package re-exports those implementations for legacy imports, and `FormIntegration.async_integration` was converted to a `@staticmethod` so the API is identical in both namespaces. Optional dependencies remain isolated via lazy imports, but there is now exactly one code path for validation + rendering logic.
-  _Files:_ `pydantic_forms/integration/__init__.py`, `pydantic_forms/integration/adapters.py`, `pydantic_forms/integration/frameworks/*`
+  _Files:_ `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/integration/adapters.py`, `pydantic_schemaforms/integration/frameworks/*`
 
 - **Public sync/async “one obvious way” (Resolved)**
   Canonical entry points now exist and are exported from the root package:
@@ -143,15 +143,15 @@ These rules are intended to prevent “helpful” drift away from the original c
   - Async: `handle_form_async()`
 
   Legacy helpers (`handle_sync_form`, `handle_async_form`, `FormIntegration.*`) remain as compatibility wrappers.
-  _Files:_ `pydantic_forms/integration/adapters.py`, `pydantic_forms/integration/__init__.py`, `pydantic_forms/__init__.py`, `docs/quickstart.md`, `tests/test_integration.py`
+  _Files:_ `pydantic_schemaforms/integration/adapters.py`, `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/__init__.py`, `docs/quickstart.md`, `tests/test_integration.py`
 
 - **Theme/style contract centralized**
   `RendererTheme` now includes concrete `FrameworkTheme` subclasses for Bootstrap/Material/plain plus `get_theme_for_framework`, and both enhanced + field renderers request classes/assets from the active theme before falling back to legacy configs. `FormStyle` registry now handles framework-level templates (including field-level chrome) and supports version-aware descriptors (e.g., `bootstrap:5`, `material:3`) with fallbacks to base framework/default.
-  _Files:_ `pydantic_forms/enhanced_renderer.py`, `pydantic_forms/rendering/themes.py`, `pydantic_forms/rendering/field_renderer.py`, `pydantic_forms/rendering/frameworks.py`, `pydantic_forms/rendering/form_style.py`
+  _Files:_ `pydantic_schemaforms/enhanced_renderer.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/rendering/field_renderer.py`, `pydantic_schemaforms/rendering/frameworks.py`, `pydantic_schemaforms/rendering/form_style.py`
 
 - **Plugin hooks for inputs/layouts (NEW)**
   Input components can now be registered via `register_input_class()` and `register_inputs()` in `inputs/registry.py` with automatic cache invalidation. Layout renderers can be registered via `LayoutEngine.register_layout_renderer()` and referenced from form fields using `layout_handler` metadata. Both APIs support resettable state for testing. Docs page `docs/plugin_hooks.md` explains usage and packaging patterns.
-  _Files:_ `pydantic_forms/inputs/registry.py`, `pydantic_forms/rendering/layout_engine.py`, `docs/plugin_hooks.md`, `tests/test_plugin_hooks.py`
+  _Files:_ `pydantic_schemaforms/inputs/registry.py`, `pydantic_schemaforms/rendering/layout_engine.py`, `docs/plugin_hooks.md`, `tests/test_plugin_hooks.py`
 
 ## Testing & Tooling Gaps
 
@@ -198,8 +198,8 @@ These rules are intended to prevent “helpful” drift away from the original c
   - Sync: `handle_form()`
   - Async: `handle_form_async()`
 
-  Both are exported from `pydantic_forms` and covered by integration tests.
-  _Files:_ `pydantic_forms/integration/adapters.py`, `pydantic_forms/__init__.py`, `docs/quickstart.md`, `tests/test_integration.py`
+  Both are exported from `pydantic_schemaforms` and covered by integration tests.
+  _Files:_ `pydantic_schemaforms/integration/adapters.py`, `pydantic_schemaforms/__init__.py`, `docs/quickstart.md`, `tests/test_integration.py`
 
 10. ✅ **Add a first-class debug rendering mode (COMPLETED)** — Implemented a `debug=True` option that wraps the form in a collapsed debug panel with tabs:
    - **Rendered output**: raw HTML (including the CSS/JS assets block)
@@ -216,112 +216,112 @@ These rules are intended to prevent “helpful” drift away from the original c
    - Tests verify debug panel presence when enabled and absence by default
    - FastAPI example updated to expose `?debug=1` query parameter on all form routes
 
-   _Files:_ `pydantic_forms/enhanced_renderer.py` (debug panel builder), `pydantic_forms/render_form.py` (debug flag forwarding), `tests/test_debug_mode.py` (2 tests), `examples/fastapi_example.py` (debug parameter on all routes)
+   _Files:_ `pydantic_schemaforms/enhanced_renderer.py` (debug panel builder), `pydantic_schemaforms/render_form.py` (debug flag forwarding), `tests/test_debug_mode.py` (2 tests), `examples/fastapi_example.py` (debug parameter on all routes)
 
   ---
 
   ## Codebase Layout (Package Map)
 
-  This section documents the **git-tracked** layout of the `pydantic_forms/` package.
+  This section documents the **git-tracked** layout of the `pydantic_schemaforms/` package.
 
   Notes:
 
   - Runtime-generated `__pycache__/` folders and `*.pyc` files are intentionally omitted here (they are not part of the source tree and should not be committed).
 
-  ### `pydantic_forms/` (root package)
+  ### `pydantic_schemaforms/` (root package)
 
-  - `pydantic_forms/__init__.py` — Public package entry point (lazy exports) and top-level API surface.
-  - `pydantic_forms/enhanced_renderer.py` — Enhanced renderer pipeline (schema → fields → layout) with sync/async HTML entry points.
-  - `pydantic_forms/form_field.py` — `FormField` abstraction and higher-level field helpers aligned with the design vision.
-  - `pydantic_forms/form_layouts.py` — Legacy layout composition helpers (kept for compatibility; deprecated).
-  - `pydantic_forms/icon_mapping.py` — Framework icon mapping helpers (bootstrap/material icon name/class resolution).
-  - `pydantic_forms/input_types.py` — Input type constants, default mappings, and validation utilities for selecting HTML input types.
-  - `pydantic_forms/layout_base.py` — Shared base layout primitives used by the layout engine and renderer(s).
-  - `pydantic_forms/layouts.py` — Deprecated layout wrapper module (compatibility surface).
-  - `pydantic_forms/live_validation.py` — HTMX-oriented “live validation” plumbing and configuration.
-  - `pydantic_forms/model_list.py` — Rendering helpers for repeating/nested model lists.
-  - `pydantic_forms/modern_renderer.py` — “Modern” renderer facade backed by the shared enhanced pipeline.
-  - `pydantic_forms/render_form.py` — Backwards-compatible rendering wrapper(s) for legacy entry points.
-  - `pydantic_forms/schema_form.py` — Pydantic-driven form model primitives (`FormModel`, `Field`, validator helpers, validation result types).
-  - `pydantic_forms/simple_material_renderer.py` — Minimal Material Design renderer implementation.
-  - `pydantic_forms/templates.py` — Python 3.14 template-string based templating helpers used throughout rendering.
-  - `pydantic_forms/validation.py` — Canonical validation rules/engine and serializable validation responses.
-  - `pydantic_forms/vendor_assets.py` — Vendoring/manifest helper utilities used to manage and verify shipped third-party assets.
-  - `pydantic_forms/version_check.py` — Python version checks (enforces Python 3.14+ assumptions like template strings).
+  - `pydantic_schemaforms/__init__.py` — Public package entry point (lazy exports) and top-level API surface.
+  - `pydantic_schemaforms/enhanced_renderer.py` — Enhanced renderer pipeline (schema → fields → layout) with sync/async HTML entry points.
+  - `pydantic_schemaforms/form_field.py` — `FormField` abstraction and higher-level field helpers aligned with the design vision.
+  - `pydantic_schemaforms/form_layouts.py` — Legacy layout composition helpers (kept for compatibility; deprecated).
+  - `pydantic_schemaforms/icon_mapping.py` — Framework icon mapping helpers (bootstrap/material icon name/class resolution).
+  - `pydantic_schemaforms/input_types.py` — Input type constants, default mappings, and validation utilities for selecting HTML input types.
+  - `pydantic_schemaforms/layout_base.py` — Shared base layout primitives used by the layout engine and renderer(s).
+  - `pydantic_schemaforms/layouts.py` — Deprecated layout wrapper module (compatibility surface).
+  - `pydantic_schemaforms/live_validation.py` — HTMX-oriented “live validation” plumbing and configuration.
+  - `pydantic_schemaforms/model_list.py` — Rendering helpers for repeating/nested model lists.
+  - `pydantic_schemaforms/modern_renderer.py` — “Modern” renderer facade backed by the shared enhanced pipeline.
+  - `pydantic_schemaforms/render_form.py` — Backwards-compatible rendering wrapper(s) for legacy entry points.
+  - `pydantic_schemaforms/schema_form.py` — Pydantic-driven form model primitives (`FormModel`, `Field`, validator helpers, validation result types).
+  - `pydantic_schemaforms/simple_material_renderer.py` — Minimal Material Design renderer implementation.
+  - `pydantic_schemaforms/templates.py` — Python 3.14 template-string based templating helpers used throughout rendering.
+  - `pydantic_schemaforms/validation.py` — Canonical validation rules/engine and serializable validation responses.
+  - `pydantic_schemaforms/vendor_assets.py` — Vendoring/manifest helper utilities used to manage and verify shipped third-party assets.
+  - `pydantic_schemaforms/version_check.py` — Python version checks (enforces Python 3.14+ assumptions like template strings).
 
-  ### `pydantic_forms/assets/` (packaged assets)
+  ### `pydantic_schemaforms/assets/` (packaged assets)
 
-  - `pydantic_forms/assets/__init__.py` — Asset package marker.
-  - `pydantic_forms/assets/runtime.py` — Runtime helpers to load/inline assets and emit tags (vendored vs pinned CDN modes).
+  - `pydantic_schemaforms/assets/__init__.py` — Asset package marker.
+  - `pydantic_schemaforms/assets/runtime.py` — Runtime helpers to load/inline assets and emit tags (vendored vs pinned CDN modes).
 
-  #### `pydantic_forms/assets/vendor/` (vendored third‑party assets)
+  #### `pydantic_schemaforms/assets/vendor/` (vendored third‑party assets)
 
-  - `pydantic_forms/assets/vendor/README.md` — Vendored asset policy and update workflow overview.
-  - `pydantic_forms/assets/vendor/vendor_manifest.json` — Pin list and SHA256 checksums for vendored assets (audit + verification).
+  - `pydantic_schemaforms/assets/vendor/README.md` — Vendored asset policy and update workflow overview.
+  - `pydantic_schemaforms/assets/vendor/vendor_manifest.json` — Pin list and SHA256 checksums for vendored assets (audit + verification).
 
-  ##### `pydantic_forms/assets/vendor/bootstrap/`
+  ##### `pydantic_schemaforms/assets/vendor/bootstrap/`
 
-  - `pydantic_forms/assets/vendor/bootstrap/bootstrap.min.css` — Vendored, minified Bootstrap CSS.
-  - `pydantic_forms/assets/vendor/bootstrap/bootstrap.bundle.min.js` — Vendored, minified Bootstrap JS bundle.
-  - `pydantic_forms/assets/vendor/bootstrap/LICENSE` — Upstream Bootstrap license text.
+  - `pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.min.css` — Vendored, minified Bootstrap CSS.
+  - `pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.bundle.min.js` — Vendored, minified Bootstrap JS bundle.
+  - `pydantic_schemaforms/assets/vendor/bootstrap/LICENSE` — Upstream Bootstrap license text.
 
-  ##### `pydantic_forms/assets/vendor/htmx/`
+  ##### `pydantic_schemaforms/assets/vendor/htmx/`
 
-  - `pydantic_forms/assets/vendor/htmx/htmx.min.js` — Vendored, minified HTMX library.
-  - `pydantic_forms/assets/vendor/htmx/LICENSE` — Upstream HTMX license text.
+  - `pydantic_schemaforms/assets/vendor/htmx/htmx.min.js` — Vendored, minified HTMX library.
+  - `pydantic_schemaforms/assets/vendor/htmx/LICENSE` — Upstream HTMX license text.
 
-  ##### `pydantic_forms/assets/vendor/imask/`
+  ##### `pydantic_schemaforms/assets/vendor/imask/`
 
-  - `pydantic_forms/assets/vendor/imask/imask.min.js` — Vendored, minified IMask library (used for masked inputs).
-  - `pydantic_forms/assets/vendor/imask/LICENSE` — Upstream IMask license text.
+  - `pydantic_schemaforms/assets/vendor/imask/imask.min.js` — Vendored, minified IMask library (used for masked inputs).
+  - `pydantic_schemaforms/assets/vendor/imask/LICENSE` — Upstream IMask license text.
 
-  ##### `pydantic_forms/assets/vendor/materialize/`
+  ##### `pydantic_schemaforms/assets/vendor/materialize/`
 
-  - `pydantic_forms/assets/vendor/materialize/materialize.min.css` — Vendored, minified Materialize CSS.
-  - `pydantic_forms/assets/vendor/materialize/materialize.min.js` — Vendored, minified Materialize JS.
-  - `pydantic_forms/assets/vendor/materialize/LICENSE` — Upstream Materialize license text.
+  - `pydantic_schemaforms/assets/vendor/materialize/materialize.min.css` — Vendored, minified Materialize CSS.
+  - `pydantic_schemaforms/assets/vendor/materialize/materialize.min.js` — Vendored, minified Materialize JS.
+  - `pydantic_schemaforms/assets/vendor/materialize/LICENSE` — Upstream Materialize license text.
 
-  ### `pydantic_forms/inputs/` (input components)
+  ### `pydantic_schemaforms/inputs/` (input components)
 
-  - `pydantic_forms/inputs/__init__.py` — Lazy-loading facade for input classes (keeps import cost low).
-  - `pydantic_forms/inputs/base.py` — Base input types, rendering utilities, and shared label/help/error builders.
-  - `pydantic_forms/inputs/datetime_inputs.py` — Date/time-related input components.
-  - `pydantic_forms/inputs/numeric_inputs.py` — Numeric/slider/range-related input components.
-  - `pydantic_forms/inputs/registry.py` — Runtime registry and discovery helpers for input components.
-  - `pydantic_forms/inputs/selection_inputs.py` — Select/checkbox/radio/toggle-related input components.
-  - `pydantic_forms/inputs/specialized_inputs.py` — Specialized inputs (file upload, color, hidden, csrf/honeypot, tags, etc.).
-  - `pydantic_forms/inputs/text_inputs.py` — Text-ish inputs (text, password, email, URL, phone, credit card, etc.).
+  - `pydantic_schemaforms/inputs/__init__.py` — Lazy-loading facade for input classes (keeps import cost low).
+  - `pydantic_schemaforms/inputs/base.py` — Base input types, rendering utilities, and shared label/help/error builders.
+  - `pydantic_schemaforms/inputs/datetime_inputs.py` — Date/time-related input components.
+  - `pydantic_schemaforms/inputs/numeric_inputs.py` — Numeric/slider/range-related input components.
+  - `pydantic_schemaforms/inputs/registry.py` — Runtime registry and discovery helpers for input components.
+  - `pydantic_schemaforms/inputs/selection_inputs.py` — Select/checkbox/radio/toggle-related input components.
+  - `pydantic_schemaforms/inputs/specialized_inputs.py` — Specialized inputs (file upload, color, hidden, csrf/honeypot, tags, etc.).
+  - `pydantic_schemaforms/inputs/text_inputs.py` — Text-ish inputs (text, password, email, URL, phone, credit card, etc.).
 
-  ### `pydantic_forms/integration/` (framework/application integration)
+  ### `pydantic_schemaforms/integration/` (framework/application integration)
 
-  - `pydantic_forms/integration/__init__.py` — Integration facade with lazy exports of framework glue.
-  - `pydantic_forms/integration/adapters.py` — High-level sync/async integration entry points (`handle_form`, `handle_form_async`).
-  - `pydantic_forms/integration/async_support.py` — Framework-agnostic async request/validation helpers.
-  - `pydantic_forms/integration/builder.py` — Form builder utilities (prebuilt forms, page wrapper helpers, asset tag helpers).
-  - `pydantic_forms/integration/react.py` — React JSON schema form-oriented integration helpers.
-  - `pydantic_forms/integration/schema.py` — JSON/OpenAPI schema generation utilities.
-  - `pydantic_forms/integration/sync.py` — Framework-agnostic sync request/validation helpers.
-  - `pydantic_forms/integration/utils.py` — Shared utilities for integrations (type mapping, framework selection, validation conversion).
-  - `pydantic_forms/integration/vue.py` — Vue integration helpers.
+  - `pydantic_schemaforms/integration/__init__.py` — Integration facade with lazy exports of framework glue.
+  - `pydantic_schemaforms/integration/adapters.py` — High-level sync/async integration entry points (`handle_form`, `handle_form_async`).
+  - `pydantic_schemaforms/integration/async_support.py` — Framework-agnostic async request/validation helpers.
+  - `pydantic_schemaforms/integration/builder.py` — Form builder utilities (prebuilt forms, page wrapper helpers, asset tag helpers).
+  - `pydantic_schemaforms/integration/react.py` — React JSON schema form-oriented integration helpers.
+  - `pydantic_schemaforms/integration/schema.py` — JSON/OpenAPI schema generation utilities.
+  - `pydantic_schemaforms/integration/sync.py` — Framework-agnostic sync request/validation helpers.
+  - `pydantic_schemaforms/integration/utils.py` — Shared utilities for integrations (type mapping, framework selection, validation conversion).
+  - `pydantic_schemaforms/integration/vue.py` — Vue integration helpers.
 
-  #### `pydantic_forms/integration/frameworks/` (compat + legacy namespace)
+  #### `pydantic_schemaforms/integration/frameworks/` (compat + legacy namespace)
 
-  - `pydantic_forms/integration/frameworks/__init__.py` — Namespace package for framework adapters.
-  - `pydantic_forms/integration/frameworks/adapters.py` — Compatibility shim re-exporting the canonical adapter API.
-  - `pydantic_forms/integration/frameworks/async_support.py` — Compatibility shim re-exporting async helpers.
-  - `pydantic_forms/integration/frameworks/sync.py` — Compatibility shim re-exporting sync helpers.
+  - `pydantic_schemaforms/integration/frameworks/__init__.py` — Namespace package for framework adapters.
+  - `pydantic_schemaforms/integration/frameworks/adapters.py` — Compatibility shim re-exporting the canonical adapter API.
+  - `pydantic_schemaforms/integration/frameworks/async_support.py` — Compatibility shim re-exporting async helpers.
+  - `pydantic_schemaforms/integration/frameworks/sync.py` — Compatibility shim re-exporting sync helpers.
 
-  ### `pydantic_forms/rendering/` (shared rendering engine)
+  ### `pydantic_schemaforms/rendering/` (shared rendering engine)
 
-  - `pydantic_forms/rendering/__init__.py` — Shared rendering module namespace.
-  - `pydantic_forms/rendering/context.py` — Render context objects passed through renderers/layouts.
-  - `pydantic_forms/rendering/field_renderer.py` — Field-level rendering logic used by multiple renderers.
-  - `pydantic_forms/rendering/form_style.py` — `FormStyle` contract/registry that centralizes framework templates.
-  - `pydantic_forms/rendering/frameworks.py` — Framework configuration and input component mapping lookup.
-  - `pydantic_forms/rendering/layout_engine.py` — Layout primitives and the engine that renders composed layouts.
-  - `pydantic_forms/rendering/schema_parser.py` — Schema parsing/metadata extraction (pydantic model → render plan).
-  - `pydantic_forms/rendering/theme_assets.py` — Default CSS/JS snippets for layout-oriented components.
-  - `pydantic_forms/rendering/themes.py` — Theme strategies and framework themes (bootstrap/material/plain + embedded variants).
+  - `pydantic_schemaforms/rendering/__init__.py` — Shared rendering module namespace.
+  - `pydantic_schemaforms/rendering/context.py` — Render context objects passed through renderers/layouts.
+  - `pydantic_schemaforms/rendering/field_renderer.py` — Field-level rendering logic used by multiple renderers.
+  - `pydantic_schemaforms/rendering/form_style.py` — `FormStyle` contract/registry that centralizes framework templates.
+  - `pydantic_schemaforms/rendering/frameworks.py` — Framework configuration and input component mapping lookup.
+  - `pydantic_schemaforms/rendering/layout_engine.py` — Layout primitives and the engine that renders composed layouts.
+  - `pydantic_schemaforms/rendering/schema_parser.py` — Schema parsing/metadata extraction (pydantic model → render plan).
+  - `pydantic_schemaforms/rendering/theme_assets.py` — Default CSS/JS snippets for layout-oriented components.
+  - `pydantic_schemaforms/rendering/themes.py` — Theme strategies and framework themes (bootstrap/material/plain + embedded variants).
 
   ---
 
@@ -423,7 +423,7 @@ These rules are intended to prevent “helpful” drift away from the original c
 
   ### 🎯 Recommendation
 
-  **pydantic-forms is ready for beta release** with the following considerations:
+  **pydantic-schemaforms is ready for beta release** with the following considerations:
 
   1. **Update CHANGELOG.md** to document all changes, new features, and breaking changes since the last release
   2. **Prepare release notes** highlighting:

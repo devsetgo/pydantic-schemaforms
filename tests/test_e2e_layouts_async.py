@@ -8,8 +8,8 @@ import pytest
 
 from pydantic import ValidationError
 
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-from pydantic_forms.rendering.layout_engine import (
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.rendering.layout_engine import (
     AccordionLayout,
     TabLayout,
 )
@@ -117,7 +117,7 @@ class TestTabLayoutBootstrapMaterial:
 
     def test_tab_layout_material_theme(self):
         """Verify TabLayout respects Material theme."""
-        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
         renderer = SimpleMaterialRenderer()
         tabs = [

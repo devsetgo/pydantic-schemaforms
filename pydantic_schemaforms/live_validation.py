@@ -1,5 +1,5 @@
 """
-Live server-side validation system using HTMX for pydantic-forms.
+Live server-side validation system using HTMX for pydantic-schemaforms.
 
 This module provides real-time server-side validation capabilities using HTMX,
 allowing complex validation rules that can't be handled client-side.
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
         template = TemplateString(
             """
 from flask import request, jsonify
-from pydantic_forms.live_validation import ValidationResponse
+from pydantic_schemaforms.live_validation import ValidationResponse
 
 @app.route('/validate/<field_name>', methods=['POST'])
 def validate_field(field_name):
@@ -365,7 +365,7 @@ def validate_field(field_name):
             """
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from pydantic_forms.live_validation import ValidationResponse
+from pydantic_schemaforms.live_validation import ValidationResponse
 
 class ValidationRequest(BaseModel):
     value: Any

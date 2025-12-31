@@ -2,12 +2,12 @@
 
 from typing import Dict, Optional, Type
 
-from pydantic_forms.model_list import ModelListRenderer
-from pydantic_forms.rendering.form_style import FormStyle, FormStyleTemplates, register_form_style
-from pydantic_forms.rendering.layout_engine import AccordionLayout, TabLayout
-from pydantic_forms.rendering.themes import RendererTheme
-from pydantic_forms.schema_form import FormModel
-from pydantic_forms.templates import TemplateString
+from pydantic_schemaforms.model_list import ModelListRenderer
+from pydantic_schemaforms.rendering.form_style import FormStyle, FormStyleTemplates, register_form_style
+from pydantic_schemaforms.rendering.layout_engine import AccordionLayout, TabLayout
+from pydantic_schemaforms.rendering.themes import RendererTheme
+from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms.templates import TemplateString
 
 
 class _StubTheme(RendererTheme):

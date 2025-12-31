@@ -1,14 +1,14 @@
 """Tests for rendering/layout_engine.py to improve coverage."""
 
 
-from pydantic_forms.rendering.layout_engine import (
+from pydantic_schemaforms.rendering.layout_engine import (
     HorizontalLayout,
     VerticalLayout,
     TabLayout,
     LayoutEngine,
 )
-from pydantic_forms.rendering.context import RenderContext
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.rendering.context import RenderContext
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
 
 class TestHorizontalLayout:

@@ -1,6 +1,6 @@
 # Quick Start
 
-This page shows the **one recommended way** to integrate pydantic-forms into an app:
+This page shows the **one recommended way** to integrate pydantic-schemaforms into an app:
 
 - Build a `FormBuilder` (often via `create_form_from_model()`)
 - Use exactly one handler per runtime:
@@ -12,7 +12,7 @@ This page shows the **one recommended way** to integrate pydantic-forms into an 
 ```python
 from pydantic import BaseModel, EmailStr
 
-from pydantic_forms import create_form_from_model
+from pydantic_schemaforms import create_form_from_model
 
 
 class User(BaseModel):
@@ -28,7 +28,7 @@ builder = create_form_from_model(User, framework="bootstrap")
 ```python
 from flask import Flask, request
 
-from pydantic_forms import create_form_from_model, handle_form
+from pydantic_schemaforms import create_form_from_model, handle_form
 
 app = Flask(__name__)
 
@@ -51,7 +51,7 @@ def user_form():
 ```python
 from fastapi import FastAPI, Request
 
-from pydantic_forms import create_form_from_model, handle_form_async
+from pydantic_schemaforms import create_form_from_model, handle_form_async
 
 app = FastAPI()
 

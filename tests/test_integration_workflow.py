@@ -4,11 +4,11 @@ Integration tests - testing complete workflows and component interactions.
 
 from datetime import date, datetime
 
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-# from pydantic_forms.layouts import HorizontalLayout, VerticalLayout, GridLayout, CardLayout, TabLayout
-from pydantic_forms.integration import ReactJSONSchemaIntegration
-from pydantic_forms.schema_form import Field, FormModel
-from pydantic_forms.validation import validate_form_data
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+# from pydantic_schemaforms.layouts import HorizontalLayout, VerticalLayout, GridLayout, CardLayout, TabLayout
+from pydantic_schemaforms.integration import ReactJSONSchemaIntegration
+from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms.validation import validate_form_data
 
 
 class TestCompleteFormWorkflow:

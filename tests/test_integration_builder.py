@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic_forms.integration.builder import (
+from pydantic_schemaforms.integration.builder import (
     FormBuilder,
     AutoFormBuilder,
     create_login_form,

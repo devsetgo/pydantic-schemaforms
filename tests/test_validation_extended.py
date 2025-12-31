@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from pydantic_forms.validation import (
+from pydantic_schemaforms.validation import (
     PhoneRule,
     DateRangeRule,
     CustomRule,
@@ -249,7 +249,7 @@ class TestNumericRangeRuleAdvanced:
 
     def test_numeric_range_with_float_values(self):
         """Test NumericRangeRule with float values."""
-        from pydantic_forms.validation import NumericRangeRule
+        from pydantic_schemaforms.validation import NumericRangeRule
 
         rule = NumericRangeRule(min_value=0.5, max_value=99.99)
 
@@ -259,7 +259,7 @@ class TestNumericRangeRuleAdvanced:
 
     def test_numeric_range_string_conversion(self):
         """Test NumericRangeRule converts string numbers."""
-        from pydantic_forms.validation import NumericRangeRule
+        from pydantic_schemaforms.validation import NumericRangeRule
 
         rule = NumericRangeRule(min_value=0, max_value=100)
 
@@ -268,7 +268,7 @@ class TestNumericRangeRuleAdvanced:
 
     def test_numeric_range_negative_values(self):
         """Test NumericRangeRule with negative values."""
-        from pydantic_forms.validation import NumericRangeRule
+        from pydantic_schemaforms.validation import NumericRangeRule
 
         rule = NumericRangeRule(min_value=-100, max_value=-10)
 

@@ -1,6 +1,6 @@
 # """Deprecated layout wrappers.
 
-# The canonical layout primitives now live in ``pydantic_forms.rendering.layout_engine``.
+# The canonical layout primitives now live in ``pydantic_schemaforms.rendering.layout_engine``.
 # """
 
 # from __future__ import annotations
@@ -21,8 +21,8 @@
 # )
 
 # warnings.warn(
-#     "pydantic_forms.layouts is deprecated. Import layout primitives from "
-#     "pydantic_forms.rendering.layout_engine instead.",
+#     "pydantic_schemaforms.layouts is deprecated. Import layout primitives from "
+#     "pydantic_schemaforms.rendering.layout_engine instead.",
 #     DeprecationWarning,
 #     stacklevel=2,
 # )

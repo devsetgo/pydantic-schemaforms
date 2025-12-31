@@ -6,9 +6,9 @@ Targets uncovered lines in selection_inputs.py, datetime_inputs.py, and speciali
 import pytest
 from datetime import date, datetime
 
-from pydantic_forms.inputs.selection_inputs import CheckboxGroup, RadioGroup
-from pydantic_forms.inputs.datetime_inputs import DatetimeInput, MonthInput, WeekInput
-from pydantic_forms.inputs.specialized_inputs import ColorInput, ImageInput
+from pydantic_schemaforms.inputs.selection_inputs import CheckboxGroup, RadioGroup
+from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput, MonthInput, WeekInput
+from pydantic_schemaforms.inputs.specialized_inputs import ColorInput, ImageInput
 
 
 class TestCheckboxGroup:

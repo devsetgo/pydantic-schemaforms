@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional
 import pytest
 from pydantic import EmailStr, ValidationError
 
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-from pydantic_forms.inputs import (
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.inputs import (
     CheckboxInput,
     ColorInput,
     DateInput,
@@ -27,9 +27,9 @@ from pydantic_forms.inputs import (
     TextInput,
     URLInput,
 )
-from pydantic_forms.rendering.layout_engine import GridLayout, HorizontalLayout, VerticalLayout
+from pydantic_schemaforms.rendering.layout_engine import GridLayout, HorizontalLayout, VerticalLayout
 # Import pydantic-forms components
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 # ==================== TEST FIXTURES ====================
 

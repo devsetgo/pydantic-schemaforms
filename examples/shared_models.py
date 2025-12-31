@@ -18,10 +18,10 @@ from collections import defaultdict
 
 from pydantic import EmailStr, field_validator
 
-from pydantic_forms.form_field import FormField
-from pydantic_forms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
-from pydantic_forms.schema_form import FormModel
-from pydantic_forms.validation import validate_form_data
+from pydantic_schemaforms.form_field import FormField
+from pydantic_schemaforms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
+from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms.validation import validate_form_data
 
 # ============================================================================
 # ENUMS AND CONSTANTS

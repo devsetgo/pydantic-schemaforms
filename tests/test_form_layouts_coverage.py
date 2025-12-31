@@ -6,14 +6,14 @@ This module is deprecated but we're testing it for coverage completeness.
 import pytest
 import warnings
 
-from pydantic_forms.form_layouts import (
+from pydantic_schemaforms.form_layouts import (
     SectionDesign,
     FormDesign,
     VerticalLayout,
     HorizontalLayout,
     BaseLayout,
 )
-from pydantic_forms.schema_form import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 
 # Define form models at module level to avoid unhashable type errors
@@ -406,7 +406,7 @@ class TestBaseLayout:
 
     def test_base_layout_is_alias(self):
         """Test that BaseLayout is an alias."""
-        from pydantic_forms.form_layouts import FormLayoutBase
+        from pydantic_schemaforms.form_layouts import FormLayoutBase
 
         assert BaseLayout is FormLayoutBase
 
@@ -416,7 +416,7 @@ class TestTabbedLayout:
 
     def test_tabbed_layout_creation(self):
         """Test creating a tabbed layout."""
-        from pydantic_forms.form_layouts import TabbedLayout
+        from pydantic_schemaforms.form_layouts import TabbedLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -425,7 +425,7 @@ class TestTabbedLayout:
 
     def test_tabbed_layout_with_form_design(self):
         """Test tabbed layout with form design."""
-        from pydantic_forms.form_layouts import TabbedLayout
+        from pydantic_schemaforms.form_layouts import TabbedLayout
 
         design = FormDesign(form_name="Tabbed Form")
         with warnings.catch_warnings():
@@ -435,7 +435,7 @@ class TestTabbedLayout:
 
     def test_tabbed_layout_render_empty(self):
         """Test rendering empty tabbed layout."""
-        from pydantic_forms.form_layouts import TabbedLayout
+        from pydantic_schemaforms.form_layouts import TabbedLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -445,7 +445,7 @@ class TestTabbedLayout:
 
     def test_tabbed_layout_render_with_tabs(self):
         """Test rendering tabbed layout with tabs."""
-        from pydantic_forms.form_layouts import TabbedLayout
+        from pydantic_schemaforms.form_layouts import TabbedLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -458,7 +458,7 @@ class TestTabbedLayout:
 
     def test_tabbed_layout_validate(self):
         """Test tabbed layout validation."""
-        from pydantic_forms.form_layouts import TabbedLayout
+        from pydantic_schemaforms.form_layouts import TabbedLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -469,7 +469,7 @@ class TestTabbedLayout:
 
     def test_tabbed_layout_render_complete_page(self):
         """Test rendering complete page with form design."""
-        from pydantic_forms.form_layouts import TabbedLayout
+        from pydantic_schemaforms.form_layouts import TabbedLayout
 
         design = FormDesign(
             form_name="Complete Form",
@@ -489,7 +489,7 @@ class TestListLayout:
 
     def test_list_layout_creation(self):
         """Test creating a list layout."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -502,7 +502,7 @@ class TestListLayout:
 
     def test_list_layout_with_options(self):
         """Test list layout with custom options."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         section = SectionDesign(section_title="Items")
         with warnings.catch_warnings():
@@ -526,7 +526,7 @@ class TestListLayout:
 
     def test_list_layout_get_form_models(self):
         """Test getting form models from list layout."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -536,7 +536,7 @@ class TestListLayout:
 
     def test_list_layout_validate_empty(self):
         """Test validating empty list layout."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -548,7 +548,7 @@ class TestListLayout:
 
     def test_list_layout_validate_with_items(self):
         """Test validating list layout with items."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -564,7 +564,7 @@ class TestListLayout:
 
     def test_list_layout_validate_min_items_constraint(self):
         """Test validation with minimum items constraint."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -576,7 +576,7 @@ class TestListLayout:
 
     def test_list_layout_validate_max_items_constraint(self):
         """Test validation with maximum items constraint."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -594,7 +594,7 @@ class TestListLayout:
 
     def test_list_layout_render_bootstrap(self):
         """Test rendering list layout with Bootstrap."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
@@ -605,7 +605,7 @@ class TestListLayout:
 
     def test_list_layout_render_material(self):
         """Test rendering list layout with Material Design."""
-        from pydantic_forms.form_layouts import ListLayout
+        from pydantic_schemaforms.form_layouts import ListLayout
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)

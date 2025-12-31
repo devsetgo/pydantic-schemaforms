@@ -3,11 +3,11 @@ requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
 [project]
-name = "pydantic-forms"
+name = "pydantic-schemaforms"
 version = "25.11.3.beta"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
-keywords = [ "pydantic", "forms", "ui", "htmx",]
+keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
 readme = "README.md"
 classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 4 - Beta", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
 dependencies = [ "pydantic>=2.7", "pydantic-extra-types[all]>=2.10.6",]
@@ -21,9 +21,9 @@ name = "Mike Ryan"
 file = "LICENSE"
 
 [project.urls]
-Homepage = "https://github.com/devsetgo/pydantic-forms"
-Documentation = "https://devsetgo.github.io/pydantic-forms/"
-Repository = "https://github.com/devsetgo/pydantic-forms"
+Homepage = "https://github.com/devsetgo/pydantic-schemaforms"
+Documentation = "https://devsetgo.github.io/pydantic-schemaforms/"
+Repository = "https://github.com/devsetgo/pydantic-schemaforms"
 
 [project.optional-dependencies]
 fastapi = [ "fastapi>=0.110", "uvicorn>=0.30",]
@@ -37,8 +37,8 @@ line-length = 100
 indent-width = 4
 unsafe-fixes = true
 target-version = "py314"
-src = [ "pydantic_forms", "tests",]
-exclude = [ "unreleased/*", "scripts/*", "coverage.xml", "coverage-badge.svg", "pydantic_forms/static/node_modules",]
+src = [ "pydantic_schemaforms", "tests",]
+exclude = [ "unreleased/*", "scripts/*", "coverage.xml", "coverage-badge.svg", "pydantic_schemaforms/assets/vendor/node_modules",]
 
 [tool.flake8]
 max-line-length = 100
@@ -47,7 +47,7 @@ ignore = [ "E302", "E501", "E303",]
 exclude = [ ".git", "__pycache__", "docs", "build", "tests", "_venv", "htmlcov", "scripts", ".pytest_cache", ".vscode", "dist", "*.egg-info",]
 
 [tool.isort]
-src_paths = [ "pydantic_forms", "tests",]
+src_paths = [ "pydantic_schemaforms", "tests",]
 force_single_line = false
 multi_line_output = 3
 include_trailing_comma = true
@@ -75,7 +75,7 @@ variable = "project.version"
 version_standard = "python"
 
 [[tool.bumpcalver.file]]
-path = "pydantic_forms/__init__.py"
+path = "pydantic_schemaforms/__init__.py"
 file_type = "python"
 variable = "__version__"
 version_standard = "python"
@@ -88,7 +88,7 @@ variable = "sonar.projectVersion"
 [tool.black]
 line-length = 100
 target-version = [ "py314",]
-exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n      | \\.tox\n      | \\.venv\n      | _venv\n      | build\n      | dist\n      | pydantic_forms/static/node_modules\n    )/\n)\n"
+exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n      | \\.tox\n      | \\.venv\n      | _venv\n      | build\n      | dist\n      | pydantic_schemaforms/assets/vendor/node_modules\n    )/\n)\n"
 
 [tool.ruff.lint]
 select = [ "C", "F", "E", "W", "B",]
@@ -99,7 +99,7 @@ indent-style = "space"
 quote-style = "single"
 
 [tool.coverage.run]
-source = [ "pydantic_forms",]
+source = [ "pydantic_schemaforms",]
 omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
 
 [tool.coverage.report]
@@ -111,7 +111,7 @@ testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
 filterwarnings = [
-    "ignore:pydantic_forms.form_layouts will be removed in a future release",
+    "ignore:pydantic_schemaforms.form_layouts will be removed in a future release",
     "ignore:Default value .* is not JSON serializable",
     "ignore:Using extra keyword arguments on.*Field.*is deprecated",
 ]
@@ -121,9 +121,9 @@ filterwarnings = [
 "**/inputs/specialized_inputs.py" = [ "F821",]
 
 [tool.hatch.build.targets.sdist]
-include = [ "/pydantic_forms",]
+include = [ "/pydantic_schemaforms",]
 exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]
-packages = [ "pydantic_forms",]
-include = [ "pydantic_forms/assets/**",]
+packages = [ "pydantic_schemaforms",]
+include = [ "pydantic_schemaforms/assets/**",]

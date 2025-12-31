@@ -9,7 +9,7 @@ import sys
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from pydantic_forms.vendor_assets import (
+from pydantic_schemaforms.vendor_assets import (
     load_manifest,
     vendor_bootstrap,
     vendor_htmx,

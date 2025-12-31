@@ -53,7 +53,7 @@ Copy this code into your `my_first_form.py` file. We'll explain every single lin
 ```python
 # Import the tools we need
 from flask import Flask, render_template_string, request
-from pydantic_forms import FormBuilder
+from pydantic_schemaforms import FormBuilder
 
 # Create a Flask web application
 app = Flask(__name__)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 ### Line 1-2: Import Statements
 ```python
 from flask import Flask, render_template_string, request
-from pydantic_forms import FormBuilder
+from pydantic_schemaforms import FormBuilder
 ```
 **What this does:** Brings in the tools we need
 - `Flask`: Creates our web application
@@ -250,8 +250,8 @@ if request.method == "POST":
 Once you are comfortable rendering a single form, you can arrange multiple snippets with the **LayoutComposer** API. This is the single public entry point for layout primitives and it lives next to the renderer internals.
 
 ```python
-from pydantic_forms import FormBuilder
-from pydantic_forms.rendering.layout_engine import LayoutComposer
+from pydantic_schemaforms import FormBuilder
+from pydantic_schemaforms.rendering.layout_engine import LayoutComposer
 
 contact_form = (FormBuilder()
                 .text_input("name", "What's your name?")
@@ -271,7 +271,7 @@ two_column_layout = LayoutComposer.horizontal(
 html = two_column_layout.render()
 ```
 
-Every helper inside `LayoutComposer` returns a `BaseLayout` subclass, so you can freely nest them (e.g., a vertical stack of cards that contain grids). The legacy `pydantic_forms.layouts` and `pydantic_forms.form_layouts` modules now emit `DeprecationWarning`s and simply re-export this API for backward compatibility.
+Every helper inside `LayoutComposer` returns a `BaseLayout` subclass, so you can freely nest them (e.g., a vertical stack of cards that contain grids). The legacy `pydantic_schemaforms.layouts` and `pydantic_schemaforms.form_layouts` modules now emit `DeprecationWarning`s and simply re-export this API for backward compatibility.
 
 ## Theme Hooks for Tabs, Accordions, and Model Lists
 
@@ -285,8 +285,8 @@ The renderers no longer embed framework-specific HTML in random places. Instead,
 Creating a custom theme is straightforward:
 
 ```python
-from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-from pydantic_forms.rendering.themes import RendererTheme
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.rendering.themes import RendererTheme
 
 
 class ShadcnTheme(RendererTheme):
@@ -340,7 +340,7 @@ Because both `FieldRenderer` and `ModelListRenderer` read from the active theme 
 Need to add fields after a form model is defined? Call `FormModel.register_field()` to describe the type and UI metadata at runtime. The helper keeps the renderer, the validation stack, and the live schema in sync:
 
 ```python
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 class ProfileForm(FormModel):
     pass

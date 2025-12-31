@@ -1,16 +1,16 @@
 """Comprehensive tests for datetime and other input modules."""
 
 from datetime import date, datetime, time
-from pydantic_forms.inputs.datetime_inputs import (
+from pydantic_schemaforms.inputs.datetime_inputs import (
     DateInput,
     TimeInput,
     DatetimeInput,
     MonthInput,
     WeekInput,
 )
-from pydantic_forms.inputs.numeric_inputs import NumberInput, RangeInput
-from pydantic_forms.inputs.text_inputs import EmailInput, URLInput, SearchInput
-from pydantic_forms.inputs.specialized_inputs import FileInput, ColorInput
+from pydantic_schemaforms.inputs.numeric_inputs import NumberInput, RangeInput
+from pydantic_schemaforms.inputs.text_inputs import EmailInput, URLInput, SearchInput
+from pydantic_schemaforms.inputs.specialized_inputs import FileInput, ColorInput
 
 
 class TestDateInput:

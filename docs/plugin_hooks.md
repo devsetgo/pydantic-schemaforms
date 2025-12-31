@@ -4,11 +4,11 @@ This project now exposes lightweight extension points so third-party packages (o
 
 ## Registering Custom Inputs
 
-Use `pydantic_forms.inputs.registry.register_input_class` to bind a `BaseInput` subclass to one or more `ui_element` aliases. The registry augments the built-in discovery of subclasses so you can register at import time or inside your framework startup.
+Use `pydantic_schemaforms.inputs.registry.register_input_class` to bind a `BaseInput` subclass to one or more `ui_element` aliases. The registry augments the built-in discovery of subclasses so you can register at import time or inside your framework startup.
 
 ```python
-from pydantic_forms.inputs.base import BaseInput
-from pydantic_forms.inputs.registry import register_input_class
+from pydantic_schemaforms.inputs.base import BaseInput
+from pydantic_schemaforms.inputs.registry import register_input_class
 
 class ColorSwatchInput(BaseInput):
     ui_element = "color_swatch"
@@ -29,7 +29,7 @@ Once registered, any field with `input_type="color_swatch"` (or alias) will reso
 `LayoutEngine` can now dispatch layout fields to custom renderers before falling back to built-in demos. Provide a callable and reference it from a field via `layout_handler` (or `layout_renderer`) in `json_schema_extra` / `FormField` kwargs.
 
 ```python
-from pydantic_forms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 
 # signature: (field_name, field_schema, value, ui_info, context, engine) -> str
 def render_steps(field_name, field_schema, value, ui_info, context, engine):

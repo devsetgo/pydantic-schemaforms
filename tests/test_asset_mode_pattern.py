@@ -1,6 +1,6 @@
 def test_enhanced_renderer_include_assets_requires_cdn_mode() -> None:
-    from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
-    from pydantic_forms.schema_form import FormModel, Field
+    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+    from pydantic_schemaforms.schema_form import FormModel, Field
 
     class Demo(FormModel):
         name: str = Field(title="Name")
@@ -23,7 +23,7 @@ def test_enhanced_renderer_include_assets_requires_cdn_mode() -> None:
 
 
 def test_form_builder_include_assets_requires_cdn_mode() -> None:
-    from pydantic_forms.integration.builder import FormBuilder
+    from pydantic_schemaforms.integration.builder import FormBuilder
 
     builder = FormBuilder(
         framework="bootstrap",

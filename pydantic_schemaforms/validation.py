@@ -1,5 +1,5 @@
 """
-Advanced validation system for pydantic-forms using Python 3.14 template strings.
+Advanced validation system for pydantic-schemaforms using Python 3.14 template strings.
 Provides both client-side JavaScript validation and server-side Python validation.
 
 Requires: Python 3.14+ (no backward compatibility)

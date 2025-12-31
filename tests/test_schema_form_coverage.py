@@ -4,7 +4,7 @@ import pytest
 from pydantic import Field as PydanticField
 from typing import Dict, Any
 
-from pydantic_forms.schema_form import (
+from pydantic_schemaforms.schema_form import (
     form_validator,
     Field,
     FormModel,

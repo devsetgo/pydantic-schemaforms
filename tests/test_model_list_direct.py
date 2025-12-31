@@ -48,7 +48,7 @@ if not result['success']:
     # Import the model list renderer directly
     from examples.shared_models import PetModel
 
-    from pydantic_forms.model_list import ModelListRenderer
+    from pydantic_schemaforms.model_list import ModelListRenderer
 
     list_renderer = ModelListRenderer(framework="bootstrap")
 
@@ -57,7 +57,7 @@ if not result['success']:
     print(f"Pets data: {pets_data}")
 
     # Simulate the nested error extraction
-    from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
     renderer = EnhancedFormRenderer(framework="bootstrap")
 
     nested_errors = renderer._extract_nested_errors_for_field('pets', result['errors'])
@@ -88,9 +88,11 @@ if not result['success']:
             print("❌ Error message NOT found in model list HTML")
 
         # Save just the model list HTML for inspection
-        with open("/workspaces/pydantic-forms/debug_model_list.html", "w") as f:
-            f.write(model_list_html)
-        print("📄 Model list HTML saved to debug_model_list.html")
+        from pathlib import Path
+
+        out_path = Path(__file__).resolve().parents[1] / "debug_model_list.html"
+        out_path.write_text(model_list_html, encoding="utf-8")
+        print(f"📄 Model list HTML saved to {out_path}")
 
     except Exception as e:
         print(f"❌ Model list rendering failed: {e}")

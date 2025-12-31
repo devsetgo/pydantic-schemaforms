@@ -1,5 +1,5 @@
 """
-Input type constants and mappings for pydantic-forms.
+Input type constants and mappings for pydantic-schemaforms.
 Provides organized collections of input types and validation mappings.
 """
 

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from pydantic_forms.vendor_assets import manifest_path
-from pydantic_forms.vendor_assets import verify_manifest_files
+from pydantic_schemaforms.vendor_assets import manifest_path
+from pydantic_schemaforms.vendor_assets import verify_manifest_files
 
 
 def test_vendor_manifest_exists_and_has_expected_shape() -> None:

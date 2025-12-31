@@ -1,13 +1,13 @@
 import pytest
 
-from pydantic_forms.inputs.base import BaseInput
-from pydantic_forms.inputs.registry import (
+from pydantic_schemaforms.inputs.base import BaseInput
+from pydantic_schemaforms.inputs.registry import (
     get_input_component_map,
     register_input_class,
     reset_input_registry,
 )
-from pydantic_forms.rendering.context import RenderContext
-from pydantic_forms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms.rendering.context import RenderContext
+from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 
 
 class _FancyInput(BaseInput):

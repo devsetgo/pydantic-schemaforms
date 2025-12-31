@@ -1,6 +1,6 @@
 # Testing & Contribution Workflow
 
-This document describes the authoritative workflow for running tests, linting, and contributing to pydantic-forms.
+This document describes the authoritative workflow for running tests, linting, and contributing to pydantic-schemaforms.
 
 ## Single Entry Point: `make tests`
 

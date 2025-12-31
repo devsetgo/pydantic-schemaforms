@@ -1,5 +1,5 @@
-from pydantic_forms.live_validation import LiveValidator
-from pydantic_forms.validation import FieldValidator, ValidationSchema
+from pydantic_schemaforms.live_validation import LiveValidator
+from pydantic_schemaforms.validation import FieldValidator, ValidationSchema
 
 
 def test_field_validator_schema_descriptors():

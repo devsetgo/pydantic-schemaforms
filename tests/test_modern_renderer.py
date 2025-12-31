@@ -2,11 +2,11 @@
 Tests for modern_renderer module - advanced form rendering with modern web features.
 """
 
-from pydantic_forms.modern_renderer import ModernFormRenderer
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.modern_renderer import ModernFormRenderer
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 # Layout imports commented out due to template system issues
-# from pydantic_forms.layouts import HorizontalLayout, VerticalLayout, GridLayout, CardLayout
+# from pydantic_schemaforms.layouts import HorizontalLayout, VerticalLayout, GridLayout, CardLayout
 
 
 class TestModernFormRenderer:
@@ -47,7 +47,7 @@ class TestModernFormRenderer:
 
     def test_form_field_configuration(self):
         """Test FormField configuration and validation."""
-        from pydantic_forms.modern_renderer import FormField
+        from pydantic_schemaforms.modern_renderer import FormField
 
         # Test basic field creation
         field = FormField("username", field_type="text", required=True)
@@ -58,7 +58,7 @@ class TestModernFormRenderer:
 
     def test_form_field_with_options(self):
         """Test FormField with options for select fields."""
-        from pydantic_forms.modern_renderer import FormField
+        from pydantic_schemaforms.modern_renderer import FormField
 
         options = [
             {"value": "small", "label": "Small"},
@@ -75,7 +75,7 @@ class TestModernFormRenderer:
 
     def test_form_field_validation(self):
         """Test FormField validation functionality."""
-        from pydantic_forms.modern_renderer import FormField
+        from pydantic_schemaforms.modern_renderer import FormField
 
         # Create field with validators
         def min_length_validator(value):
@@ -201,7 +201,7 @@ class TestModernFormRenderer:
 
         for input_type in input_types:
             try:
-                from pydantic_forms.modern_renderer import FormField
+                from pydantic_schemaforms.modern_renderer import FormField
 
                 field = FormField(f"test_{input_type}", field_type=input_type)
                 assert field.field_type == input_type
@@ -270,7 +270,7 @@ class TestModernFormRenderer:
 
     def test_html_output_safety(self):
         """Test HTML output safety and escaping."""
-        from pydantic_forms.modern_renderer import FormField
+        from pydantic_schemaforms.modern_renderer import FormField
 
         # Test with potentially dangerous input
         dangerous_input = "<script>alert('xss')</script>"

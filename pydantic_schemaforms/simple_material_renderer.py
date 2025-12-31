@@ -2,7 +2,7 @@
 Simple Material Design 3 Form Renderer
 =====================================
 
-A clean, working Material Design 3 renderer for pydantic-forms.
+A clean, working Material Design 3 renderer for pydantic-schemaforms.
 This renderer creates self-contained forms with embedded Material Design styling.
 """
 

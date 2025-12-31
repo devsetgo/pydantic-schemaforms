@@ -1,7 +1,7 @@
 
 
 def test_render_form_page_offline_by_default() -> None:
-    from pydantic_forms.integration.builder import create_login_form, render_form_page
+    from pydantic_schemaforms.integration.builder import create_login_form, render_form_page
 
     html = render_form_page(create_login_form(), title="Login")
     assert "cdn.jsdelivr.net" not in html
@@ -9,7 +9,7 @@ def test_render_form_page_offline_by_default() -> None:
 
 
 def test_render_form_page_cdn_opt_in_includes_bootstrap() -> None:
-    from pydantic_forms.integration.builder import create_login_form, render_form_page
+    from pydantic_schemaforms.integration.builder import create_login_form, render_form_page
 
     html = render_form_page(
         create_login_form(),
@@ -21,7 +21,7 @@ def test_render_form_page_cdn_opt_in_includes_bootstrap() -> None:
 
 
 def test_form_design_framework_urls_offline_by_default() -> None:
-    from pydantic_forms.form_layouts import FormDesign
+    from pydantic_schemaforms.form_layouts import FormDesign
 
     design = FormDesign(ui_theme="bootstrap")
     assert design.get_framework_css_url() == ""
@@ -29,7 +29,7 @@ def test_form_design_framework_urls_offline_by_default() -> None:
 
 
 def test_material_theme_css_has_no_google_fonts_imports() -> None:
-    from pydantic_forms.rendering.themes import MaterialEmbeddedTheme
+    from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme
 
     css = MaterialEmbeddedTheme._build_css()
     assert "fonts.googleapis.com" not in css

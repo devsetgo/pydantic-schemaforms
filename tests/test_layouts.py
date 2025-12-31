@@ -4,9 +4,9 @@ Tests for layouts module - form layout and organization components.
 
 from types import SimpleNamespace
 
-from pydantic_forms.layout_base import BaseLayout
-from pydantic_forms.rendering.form_style import FormStyle, FormStyleTemplates
-from pydantic_forms.rendering.layout_engine import (
+from pydantic_schemaforms.layout_base import BaseLayout
+from pydantic_schemaforms.rendering.form_style import FormStyle, FormStyleTemplates
+from pydantic_schemaforms.rendering.layout_engine import (
     AccordionLayout,
     CardLayout,
     GridLayout,
@@ -19,7 +19,7 @@ from pydantic_forms.rendering.layout_engine import (
     TabLayout,
     VerticalLayout,
 )
-from pydantic_forms.templates import TemplateString
+from pydantic_schemaforms.templates import TemplateString
 
 
 class TestBaseLayout:

@@ -3,7 +3,7 @@
 import pytest
 import json
 
-from pydantic_forms.validation import (
+from pydantic_schemaforms.validation import (
     ValidationResponse,
     ValidationRule,
     RequiredRule,

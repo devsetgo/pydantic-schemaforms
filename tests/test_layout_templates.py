@@ -1,6 +1,6 @@
 """Regression tests for tab/accordion layouts using shared templates."""
 
-from pydantic_forms.rendering.layout_engine import AccordionLayout, TabLayout
+from pydantic_schemaforms.rendering.layout_engine import AccordionLayout, TabLayout
 
 
 def test_tab_layout_uses_template_markup() -> None:

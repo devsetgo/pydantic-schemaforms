@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from pydantic_forms.render_form import render_form_html
-from pydantic_forms.schema_form import FormModel
-from pydantic_forms.assets.runtime import vendored_asset_version
+from pydantic_schemaforms.render_form import render_form_html
+from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms.assets.runtime import vendored_asset_version
 
 
 class _CdnCheckForm(FormModel):

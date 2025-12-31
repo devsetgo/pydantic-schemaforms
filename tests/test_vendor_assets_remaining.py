@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 import pytest
 
-from pydantic_forms.vendor_assets import (
+from pydantic_schemaforms.vendor_assets import (
     vendor_materialize,
     vendor_bootstrap,
     verify_manifest_files,
@@ -16,13 +16,13 @@ from pydantic_forms.vendor_assets import (
 class TestVendorMaterialize:
     """Test vendor_materialize function with mocking."""
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets._safe_member_bytes_from_tgz')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
-    @patch('pydantic_forms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
     def test_vendor_materialize_with_license(
         self, mock_tarball_url, mock_http, mock_extract,
         mock_write, mock_load, mock_upsert, mock_save
@@ -48,13 +48,13 @@ class TestVendorMaterialize:
         mock_upsert.assert_called_once()
         mock_save.assert_called_once()
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets._safe_member_bytes_from_tgz')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
-    @patch('pydantic_forms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
     def test_vendor_materialize_tries_license_md_fallback(
         self, mock_tarball_url, mock_http, mock_extract,
         mock_write, mock_load, mock_upsert, mock_save
@@ -81,13 +81,13 @@ class TestVendorMaterialize:
         assert mock_extract.call_count == 4
         assert mock_write.call_count == 3
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets._safe_member_bytes_from_tgz')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
-    @patch('pydantic_forms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
     def test_vendor_materialize_sets_schema_version(
         self, mock_tarball_url, mock_http, mock_extract,
         mock_write, mock_load, mock_upsert, mock_save
@@ -112,11 +112,11 @@ class TestVendorMaterialize:
 class TestVendorBootstrap:
     """Test vendor_bootstrap function with mocking."""
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
     def test_vendor_bootstrap_extracts_from_zip(
         self, mock_http, mock_write, mock_load, mock_upsert, mock_save
     ):
@@ -146,11 +146,11 @@ class TestVendorBootstrap:
         mock_upsert.assert_called_once()
         mock_save.assert_called_once()
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
     def test_vendor_bootstrap_missing_css_raises(
         self, mock_http, mock_write, mock_load, mock_upsert, mock_save
     ):
@@ -166,11 +166,11 @@ class TestVendorBootstrap:
         with pytest.raises(FileNotFoundError, match='missing bootstrap.min.css'):
             vendor_bootstrap(version='5.3.0')
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
     def test_vendor_bootstrap_missing_js_raises(
         self, mock_http, mock_write, mock_load, mock_upsert, mock_save
     ):
@@ -186,11 +186,11 @@ class TestVendorBootstrap:
         with pytest.raises(FileNotFoundError, match='missing bootstrap.bundle.min.js'):
             vendor_bootstrap(version='5.3.0')
 
-    @patch('pydantic_forms.vendor_assets.write_manifest')
-    @patch('pydantic_forms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
-    @patch('pydantic_forms.vendor_assets._write_vendored_file')
-    @patch('pydantic_forms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
     def test_vendor_bootstrap_sets_schema_version(
         self, mock_http, mock_write, mock_load, mock_upsert, mock_save
     ):
@@ -219,9 +219,9 @@ class TestVendorBootstrap:
 class TestVerifyManifestFiles:
     """Test verify_manifest_files function."""
 
-    @patch('pydantic_forms.vendor_assets.sha256_file')
-    @patch('pydantic_forms.vendor_assets.project_root')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.sha256_file')
+    @patch('pydantic_schemaforms.vendor_assets.project_root')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_valid(self, mock_load, mock_root, mock_sha256):
         """Test verify_manifest_files with valid manifest."""
         mock_load.return_value = {
@@ -230,7 +230,7 @@ class TestVerifyManifestFiles:
                 {
                     'name': 'htmx',
                     'files': [
-                        {'path': 'pydantic_forms/assets/vendor/htmx/htmx.min.js', 'sha256': 'a' * 64}
+                        {'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js', 'sha256': 'a' * 64}
                     ]
                 }
             ]
@@ -247,7 +247,7 @@ class TestVerifyManifestFiles:
 
         verify_manifest_files()  # Should not raise
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_missing_schema_version_raises(self, mock_load):
         """Test verify_manifest_files raises if schema_version missing."""
         mock_load.return_value = {'assets': []}
@@ -255,7 +255,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing integer schema_version'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_schema_version_not_int_raises(self, mock_load):
         """Test verify_manifest_files raises if schema_version not int."""
         mock_load.return_value = {'schema_version': '1', 'assets': []}
@@ -263,7 +263,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing integer schema_version'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_missing_assets_raises(self, mock_load):
         """Test verify_manifest_files raises if assets missing."""
         mock_load.return_value = {'schema_version': 1}
@@ -271,7 +271,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='assets must be a list'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_assets_not_list_raises(self, mock_load):
         """Test verify_manifest_files raises if assets not list."""
         mock_load.return_value = {'schema_version': 1, 'assets': 'string'}
@@ -279,7 +279,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='assets must be a list'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_require_nonempty_empty_raises(self, mock_load):
         """Test verify_manifest_files raises if require_nonempty and assets empty."""
         mock_load.return_value = {'schema_version': 1, 'assets': []}
@@ -287,7 +287,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='has no assets'):
             verify_manifest_files(require_nonempty=True)
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_asset_not_dict_raises(self, mock_load):
         """Test verify_manifest_files raises if asset entry not dict."""
         mock_load.return_value = {
@@ -298,7 +298,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='asset entries must be objects'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_missing_files_list_raises(self, mock_load):
         """Test verify_manifest_files raises if files list missing."""
         mock_load.return_value = {
@@ -309,7 +309,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing files list'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_files_not_list_raises(self, mock_load):
         """Test verify_manifest_files raises if files not list."""
         mock_load.return_value = {
@@ -320,7 +320,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing files list'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_file_entry_not_dict_raises(self, mock_load):
         """Test verify_manifest_files raises if file entry not dict."""
         mock_load.return_value = {
@@ -331,7 +331,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='file entries must be objects'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_missing_path_raises(self, mock_load):
         """Test verify_manifest_files raises if file missing path."""
         mock_load.return_value = {
@@ -342,7 +342,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing path'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_empty_path_raises(self, mock_load):
         """Test verify_manifest_files raises if path empty."""
         mock_load.return_value = {
@@ -353,7 +353,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing path'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_missing_sha256_raises(self, mock_load):
         """Test verify_manifest_files raises if sha256 missing."""
         mock_load.return_value = {
@@ -364,7 +364,7 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing sha256'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_sha256_wrong_length_raises(self, mock_load):
         """Test verify_manifest_files raises if sha256 wrong length."""
         mock_load.return_value = {
@@ -375,8 +375,8 @@ class TestVerifyManifestFiles:
         with pytest.raises(ValueError, match='missing sha256'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.project_root')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.project_root')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_file_not_exists_raises(self, mock_load, mock_root):
         """Test verify_manifest_files raises if file doesn't exist."""
         mock_load.return_value = {
@@ -398,9 +398,9 @@ class TestVerifyManifestFiles:
         with pytest.raises(FileNotFoundError, match='vendored file missing'):
             verify_manifest_files()
 
-    @patch('pydantic_forms.vendor_assets.sha256_file')
-    @patch('pydantic_forms.vendor_assets.project_root')
-    @patch('pydantic_forms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.sha256_file')
+    @patch('pydantic_schemaforms.vendor_assets.project_root')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
     def test_verify_manifest_files_sha256_mismatch_raises(self, mock_load, mock_root, mock_sha256):
         """Test verify_manifest_files raises if sha256 mismatch."""
         mock_load.return_value = {

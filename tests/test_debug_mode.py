@@ -1,5 +1,5 @@
-from pydantic_forms.enhanced_renderer import render_form_html
-from pydantic_forms.schema_form import Field, FormModel
+from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
 class _DebugForm(FormModel):

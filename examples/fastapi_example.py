@@ -42,7 +42,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     handle_form_submission,
 )
 
-from pydantic_forms.enhanced_renderer import render_form_html
+from pydantic_schemaforms.enhanced_renderer import render_form_html
 
 app = FastAPI(
     title="Pydantic Forms - FastAPI Example",
@@ -492,7 +492,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
 
     # Use Enhanced Renderer directly like the main dynamic endpoint
     if style == "material":
-        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -503,7 +503,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             debug=debug,
         )
     else:
-        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
         renderer = EnhancedFormRenderer(framework=style)
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -767,7 +767,7 @@ async def layouts_get(
 
     # Use Enhanced Renderer directly to avoid render_form_html wrapper issues
     if style == "material":
-        from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -778,7 +778,7 @@ async def layouts_get(
             debug=debug,
         )
     else:
-        from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
         renderer = EnhancedFormRenderer(framework=style)
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -862,7 +862,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
     except Exception as e:
         # Re-render form with errors
         if style == "material":
-            from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+            from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
             renderer = SimpleMaterialRenderer()
             form_html = renderer.render_form_from_model(
                 LayoutDemonstrationForm,
@@ -873,7 +873,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
                 debug=debug,
             )
         else:
-            from pydantic_forms.enhanced_renderer import EnhancedFormRenderer
+            from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
             renderer = EnhancedFormRenderer(framework=style)
             form_html = renderer.render_form_from_model(
                 LayoutDemonstrationForm,
@@ -898,7 +898,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
 @app.get("/self-contained", response_class=HTMLResponse)
 async def self_contained(demo: bool = True, debug: bool = True):
     """Self-contained form demo - zero external dependencies."""
-    from pydantic_forms.simple_material_renderer import SimpleMaterialRenderer
+    from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
     # Add demo data if requested
     form_data = {}
