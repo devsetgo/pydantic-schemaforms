@@ -1,6 +1,4 @@
-"""
-PyTest configuration and fixtures for pydantic-forms tests.
-"""
+"""PyTest configuration and fixtures for Pydantic SchemaForms tests."""
 
 from datetime import date
 from typing import Any, Dict, List, Optional
@@ -28,7 +26,7 @@ from pydantic_schemaforms.inputs import (
     URLInput,
 )
 from pydantic_schemaforms.rendering.layout_engine import GridLayout, HorizontalLayout, VerticalLayout
-# Import pydantic-forms components
+# Import Pydantic SchemaForms components
 from pydantic_schemaforms.schema_form import Field, FormModel
 
 # ==================== TEST FIXTURES ====================

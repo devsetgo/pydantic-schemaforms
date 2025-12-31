@@ -3,7 +3,7 @@
 FastAPI Example - Async Implementation
 =====================================
 
-This example demonstrates ALL pydantic-forms capabilities in an asynchronous FastAPI application.
+This example demonstrates ALL Pydantic SchemaForms capabilities in an asynchronous FastAPI application.
 It showcases simple, medium, and complex forms with various layouts.
 
 Forms demonstrated:
@@ -45,8 +45,8 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
 from pydantic_schemaforms.enhanced_renderer import render_form_html
 
 app = FastAPI(
-    title="Pydantic Forms - FastAPI Example",
-    description="Comprehensive showcase of pydantic-forms capabilities in async FastAPI",
+    title="Pydantic SchemaForms - FastAPI Example",
+    description="Comprehensive showcase of pydantic-schemaforms capabilities in async FastAPI",
     version="25.4.1b1"
 )
 

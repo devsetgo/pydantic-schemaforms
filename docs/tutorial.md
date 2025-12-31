@@ -1,11 +1,11 @@
-# PySchemaForms Tutorial: Your First Dynamic Web Form
+# Pydantic SchemaForms Tutorial: Your First Dynamic Web Form
 
-Welcome to PySchemaForms! This tutorial will guide you through creating your first dynamic web form from scratch. We'll explain every step in detail, so don't worry if you're new to web forms or Python web development.
+Welcome to Pydantic SchemaForms! This tutorial will guide you through creating your first dynamic web form from scratch. We'll explain every step in detail, so don't worry if you're new to web forms or Python web development.
 
 ## What You'll Learn
 
 By the end of this tutorial, you'll understand:
-- How to create a basic web form using PySchemaForms
+- How to create a basic web form using Pydantic SchemaForms
 - What each line of code does and why it's important
 - How forms work in web applications
 - How to handle user input safely
@@ -30,17 +30,17 @@ Before we write code, let's understand what we're building. A web form is like a
 
 Think of it like a restaurant order form - customers fill it out, and the kitchen receives the order details.
 
-## Step 2: Install PySchemaForms
+## Step 2: Install Pydantic SchemaForms
 
 First, we need to install the required packages. Open your terminal or command prompt and run:
 
 ```bash
-pip install Flask PySchemaForms
+pip install Flask pydantic-schemaforms
 ```
 
 **What this does:**
 - **Flask**: A web framework that handles web requests and responses
-- **PySchemaForms**: Our library that makes creating forms super easy
+- **pydantic-schemaforms**: Our library that makes creating forms super easy
 
 ## Step 3: Create Your First File
 
@@ -222,7 +222,7 @@ form = FormBuilder().text_input("name", "What's your name?").render()
 </form>
 ```
 
-But you don't have to write all that HTML yourself - PySchemaForms does it for you!
+But you don't have to write all that HTML yourself - Pydantic SchemaForms does it for you!
 
 ## Step 8: Add More Fields (Optional Challenge)
 
@@ -371,7 +371,7 @@ These map directly to the corresponding input components, so you can reference t
 
 🎯 **You now know how to:**
 - Create a web application with Flask
-- Build forms using PySchemaForms' FormBuilder
+- Build forms using Pydantic SchemaForms' FormBuilder
 - Handle form submissions in Python
 - Display dynamic content based on user input
 
@@ -398,10 +398,10 @@ Ready to dive deeper? Check out our [Advanced Tutorial](advanced.md) or [API Ref
 - Check that you're visiting the right URL (http://127.0.0.1:5000)
 
 **Errors when running?**
-- Make sure you installed Flask and PySchemaForms
+- Make sure you installed Flask and pydantic-schemaforms
 - Check that your Python indentation is correct
 
 **Form submits but no greeting?**
 - Make sure the field name in `request.form['name']` matches the field name in your FormBuilder
 
-Great job completing your first PySchemaForms tutorial! 🚀
+Great job completing your first Pydantic SchemaForms tutorial!

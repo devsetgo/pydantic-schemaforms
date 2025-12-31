@@ -1,8 +1,8 @@
 """
-Shared form models for pydantic-forms examples.
+Shared form models for Pydantic SchemaForms examples.
 
 This module contains all the form models used across different framework examples
-(Flask, FastAPI, etc.) to demonstrate pydantic-forms capabilities.
+(Flask, FastAPI, etc.) to demonstrate Pydantic SchemaForms capabilities.
 """
 
 import os
@@ -525,7 +525,7 @@ class EmergencyContactModel(FormModel):
 
 class CompleteShowcaseForm(FormModel):
     """
-    Complete showcase form demonstrating all pydantic-forms capabilities:
+    Complete showcase form demonstrating all Pydantic SchemaForms capabilities:
     - All input types (text, email, number, select, checkbox, date, color, etc.)
     - Collapsible list layouts with cards
     - Dynamic titles and field validation
