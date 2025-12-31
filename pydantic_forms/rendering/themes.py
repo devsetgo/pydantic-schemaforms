@@ -51,8 +51,50 @@ class RendererTheme:
 
     def after_form(self) -> str:
         """Markup appended after the closing form tag."""
-
-        return self.form_style.assets.after_form
+        
+        # JavaScript to prevent Enter key from submitting forms
+        prevent_enter_script = """
+<script>
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prevent Enter key from submitting forms unless on submit button
+        const forms = document.querySelectorAll('form.pydantic-form');
+        forms.forEach(function(form) {
+            form.addEventListener('keydown', function(e) {
+                // Check if Enter key is pressed
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    const target = e.target;
+                    
+                    // Allow Enter in textareas (for multi-line input)
+                    if (target.tagName === 'TEXTAREA') {
+                        return;
+                    }
+                    
+                    // Allow Enter on submit buttons
+                    if (target.tagName === 'BUTTON' && target.type === 'submit') {
+                        return;
+                    }
+                    
+                    // Allow Enter on input type="submit"
+                    if (target.tagName === 'INPUT' && target.type === 'submit') {
+                        return;
+                    }
+                    
+                    // Prevent form submission for all other cases
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    });
+})();
+</script>
+"""
+        
+        after_form_assets = self.form_style.assets.after_form
+        if after_form_assets:
+            return prevent_enter_script + "\n" + after_form_assets
+        return prevent_enter_script
 
     def render_form_wrapper(
         self,
@@ -337,10 +379,49 @@ class MaterialEmbeddedTheme(RendererTheme):
         return attrs
 
     def after_form(self) -> str:
+        # JavaScript to prevent Enter key from submitting forms
+        prevent_enter_script = """
+<script>
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prevent Enter key from submitting forms unless on submit button
+        const forms = document.querySelectorAll('form.md-form, form.pydantic-form');
+        forms.forEach(function(form) {
+            form.addEventListener('keydown', function(e) {
+                // Check if Enter key is pressed
+                if (e.key === 'Enter' || e.keyCode === 13) {
+                    const target = e.target;
+                    
+                    // Allow Enter in textareas (for multi-line input)
+                    if (target.tagName === 'TEXTAREA') {
+                        return;
+                    }
+                    
+                    // Allow Enter on submit buttons
+                    if (target.tagName === 'BUTTON' && target.type === 'submit') {
+                        return;
+                    }
+                    
+                    // Allow Enter on input type="submit"
+                    if (target.tagName === 'INPUT' && target.type === 'submit') {
+                        return;
+                    }
+                    
+                    // Prevent form submission for all other cases
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    });
+})();
+</script>
+"""
         return "\n".join(
             [
                 "</div>",
                 self._js,
+                prevent_enter_script,
             ]
         )
 
