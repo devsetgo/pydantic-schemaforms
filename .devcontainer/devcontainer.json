@@ -13,6 +13,9 @@
 	// Install Python and JS dependencies, then build JS bundle after container creation
 	// "postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt && cd pydantic-schemaforms && npm install && npx vite build",
 	"postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt",
+	"remoteEnv": {
+		"PATH": "${containerEnv:PATH}:/home/mike/.local/bin"
+	},
 
 	// "postStartCommand": "pip install -r requirements.txt", // Add this line to install requirements.txt after container start
 	// Configure tool-specific properties.

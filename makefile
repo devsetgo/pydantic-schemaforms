@@ -5,6 +5,9 @@ PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
 
+# Some devcontainers install CLI tools into ~/.local/bin which may not be on PATH.
+BUMPCALVER = $(if $(wildcard $(HOME)/.local/bin/bumpcalver),$(HOME)/.local/bin/bumpcalver,bumpcalver)
+
 EXAMPLE_PATH = examples
 SERVICE_PATH = pydantic_schemaforms
 
@@ -37,7 +40,7 @@ black: ## Reformat Python code to follow the Black code style
 # 	bumpcalver --build
 
 bump-beta: ## Bump the version of the project
-	bumpcalver --build --beta
+	$(BUMPCALVER) --build --beta
 
 
 cleanup: isort ruff autoflake ## Run isort, ruff, autoflake
