@@ -72,8 +72,12 @@ jobs:
       - name: Get release version
         id: get_version
         run: |
-          # Get version from GitHub release tag
-          RAW_VERSION=${GITHUB_REF#refs/tags/}
+          # Prefer release payload tag name, fall back to GITHUB_REF
+          RAW_VERSION="${{ github.event.release.tag_name }}"
+          if [ -z "$RAW_VERSION" ]; then
+            RAW_VERSION=${GITHUB_REF#refs/tags/}
+          fi
+
           # Remove 'v' prefix if present
           VERSION=${RAW_VERSION#v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -114,28 +118,12 @@ jobs:
             exit 1
           fi
 
-          # Try to deploy with push first
-          echo "Attempting to deploy and push documentation..."
-          if python3 scripts/deploy_docs.py deploy \
+          python3 scripts/deploy_docs.py deploy \
             --version "$VERSION" \
             --aliases latest stable \
             --title "Release $VERSION" \
-            --push; then
-            echo "Documentation deployed and pushed successfully for version $VERSION"
-          else
-            echo "Failed to deploy with push, trying local deployment only..."
-            # Fallback: deploy locally without pushing
-            python3 scripts/deploy_docs.py deploy \
-              --version "$VERSION" \
-              --aliases latest stable \
-              --title "Release $VERSION"
+            --push \
+            --ignore-remote-status
 
-            echo "Local deployment successful, attempting manual push..."
-            # Manual push attempt
-            if git push origin gh-pages; then
-              echo "Manual push successful"
-            else
-              echo "Manual push failed, but local deployment completed"
-              exit 1
-            fi
-          fi
+          # Make the root URL resolve to the stable alias
+          mike set-default stable --push
