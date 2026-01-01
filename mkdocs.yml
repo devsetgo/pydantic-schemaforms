@@ -11,10 +11,17 @@ copyright: 'Copyright &copy; 2024 - 2025 Mike Ryan'
 
 nav:
   - Introduction: 'index.md'
-  - Tutorial: 'tutorial.md'
+  - Quick Start: 'quickstart.md'
+  - Tutorials:
+      - FastAPI Project: 'tutorial_fastapi.md'
+      - Legacy Tutorial: 'tutorial.md'
   - Plugin Hooks: 'plugin_hooks.md'
   - Assets: 'assets.md'
+  - Validation Guide: 'validation_guide.md'
   - Testing Workflow: 'testing_workflow.md'
+  - About: 'about.md'
+  - Contributing: 'contribute.md'
+  - Review: 'review.md'
     # - QuickStart: 'quickstart.md'
     # - Modules: 'models.md'
     # - Examples:
@@ -104,6 +111,9 @@ markdown_extensions:
   - footnotes
   - pymdownx.highlight:
       use_pygments: true
+  - pymdownx.snippets:
+      check_paths: true
+      base_path: .
   - pymdownx.superfences
   - toc:
       permalink: true

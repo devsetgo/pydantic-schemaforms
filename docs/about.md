@@ -1,7 +1,18 @@
 # About
-BumpCalver Library is a library to help manage "calendar version" (CalVer) strings. You can update the version string in TOML, YAML, XML, JSON, Makefile, Dockerfile, and Python files. It follows PEP440 for Python packages, but is not intended to only be for Python pacakges. It supports git tags like beta, release, release-candidate, and custom tags of your own choosing. It has support for Timezones and build counts. It is a simple library that can be used in any project that needs to manage versioning.
 
- The library is written in Python and is available on PyPi. It is open source and available on GitHub. Feel free to use it in your projects and contribute to the library.
+`pydantic-schemaforms` is a Python library for generating **server-rendered HTML forms** from **Pydantic** models.
+
+It focuses on:
+
+- A simple model → schema → HTML pipeline
+- First-class sync (WSGI) and async (ASGI) integration helpers
+- Offline-by-default asset delivery (vendored/inlined assets), with explicit opt-in for CDNs
+
+Project links:
+
+- Docs: https://devsetgo.github.io/pydantic-schemaforms/
+- GitHub: https://github.com/devsetgo/pydantic-schemaforms
+- PyPI: https://pypi.org/project/pydantic-schemaforms/
 
 
 ## About Me
