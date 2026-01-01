@@ -91,15 +91,37 @@ jobs:
           if [ -n "$MANUAL_VERSION" ]; then
             RAW_VERSION="$MANUAL_VERSION"
           else
-          # Prefer release payload tag name, fall back to GITHUB_REF
+          # Prefer release payload tag name.
           RAW_VERSION="${{ github.event.release.tag_name }}"
-          if [ -z "$RAW_VERSION" ]; then
+
+          # For workflow_dispatch, GITHUB_REF is usually refs/heads/<branch> (not a tag).
+          # Only use GITHUB_REF if it is a tag ref.
+          if [ -z "$RAW_VERSION" ] && echo "$GITHUB_REF" | grep -q '^refs/tags/'; then
             RAW_VERSION=${GITHUB_REF#refs/tags/}
           fi
           fi
 
           # Remove 'v' prefix if present
           VERSION=${RAW_VERSION#v}
+
+          # If we still don't have a version (common for workflow_dispatch), auto-detect
+          # from pyproject.toml.
+          if [ -z "$VERSION" ] || echo "$VERSION" | grep -q '^refs/'; then
+            VERSION=$(python - <<'PY'
+from pathlib import Path
+import sys
+
+try:
+    import tomllib  # py>=3.11
+except Exception:  # pragma: no cover
+    tomllib = None
+
+data = tomllib.loads(Path('pyproject.toml').read_text('utf-8'))
+print(data['project']['version'])
+PY
+)
+          fi
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Raw version from tag: $RAW_VERSION"
           echo "Cleaned version: $VERSION"
@@ -137,7 +159,7 @@ jobs:
           echo "Push enabled: $DOCS_PUSH"
 
           # Check if version is valid
-          if [ -z "$VERSION" ] || [ "$VERSION" = "refs/tags/" ]; then
+          if [ -z "$VERSION" ] || echo "$VERSION" | grep -q '^refs/'; then
             echo "Error: Invalid version detected: '$VERSION'"
             echo "GITHUB_REF was: $GITHUB_REF"
             exit 1
