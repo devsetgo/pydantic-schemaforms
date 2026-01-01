@@ -33,28 +33,28 @@ jobs:
           # - filenames like "pydantic_schemaforms/foo.py" resolve via "."
           # - filenames like "__init__.py" resolve via "pydantic_schemaforms"
           python - <<'PY'
-from __future__ import annotations
+            from __future__ import annotations
 
-import re
-from pathlib import Path
+            import re
+            from pathlib import Path
 
-path = Path('coverage.xml')
-text = path.read_text('utf-8')
+            path = Path('coverage.xml')
+            text = path.read_text('utf-8')
 
-sources_block = (
-    '<sources>\n'
-    '  <source>.</source>\n'
-    '  <source>pydantic_schemaforms</source>\n'
-    '</sources>'
-)
+            sources_block = (
+              '<sources>\n'
+              '  <source>.</source>\n'
+              '  <source>pydantic_schemaforms</source>\n'
+              '</sources>'
+            )
 
-new_text, count = re.subn(r'<sources>.*?</sources>', sources_block, text, flags=re.DOTALL)
-if count != 1:
-    raise SystemExit(f'Expected to replace 1 <sources> block, replaced {count}')
+            new_text, count = re.subn(r'<sources>.*?</sources>', sources_block, text, flags=re.DOTALL)
+            if count != 1:
+              raise SystemExit(f'Expected to replace 1 <sources> block, replaced {count}')
 
-path.write_text(new_text, 'utf-8')
-print('Normalized coverage.xml <sources>')
-PY
+            path.write_text(new_text, 'utf-8')
+            print('Normalized coverage.xml <sources>')
+            PY
 
       - name: Verify coverage report exists
         run: |
