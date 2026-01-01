@@ -14,11 +14,16 @@ jobs:
   openai-pr-description:
     runs-on: ubuntu-22.04
 
+    permissions:
+      pull-requests: write
+      issues: write
+
     steps:
       - uses: platisd/openai-pr-description@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ github.token }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           max_tokens: 4096
-          openai_model: gpt-4o-mini
+          openai_model: gpt-4.1-2025-04-14
           overwrite_description: true
+          temperature: 0.6
