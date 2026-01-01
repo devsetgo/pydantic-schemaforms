@@ -23,7 +23,7 @@ jobs:
         with:
           github_token: ${{ github.token }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          # max_tokens: 4096
-          openai_model: gpt-5-nano-2025-08-07
+          max_tokens: 4096
+          openai_model: gpt-4o-mini
           overwrite_description: true
           temperature: 0.6
