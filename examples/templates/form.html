@@ -1,0 +1,99 @@
+{% extends "shared_base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="demo-card">
+            <!-- Header -->
+            <div class="form-header">
+                <h2 class="mb-3">
+                    {% if framework_type == "material" %}
+                        <span class="material-icons me-2" style="font-size: 2rem; vertical-align: middle;">description</span>
+                    {% else %}
+                        <i class="bi bi-file-earmark-text-fill me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h2>
+                <p class="mb-0">
+                    {{ description }}
+                    {% if framework == "fastapi" %}
+                        <span class="badge bg-info ms-2">Async</span>
+                    {% else %}
+                        <span class="badge bg-success ms-2">Sync</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+                {% if errors %}
+                    <div class="alert alert-danger mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Please correct the errors below.
+                        <ul class="mb-0 mt-2">
+                            {% for field, error_data in errors.items() %}
+                                {% if error_data is string %}
+                                    <li>{{ field }}: {{ error_data }}</li>
+                                {% else %}
+                                    {% for error in error_data %}
+                                        <li>{{ field }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Form -->
+                {{ form_html|safe }}
+
+                <!-- Navigation -->
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Back to Examples
+                    </a>
+                </div>
+
+                <!-- Style Variants -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-palette-fill me-2"></i>
+                        Try Different Styles
+                    </h6>
+                    <div class="btn-group" role="group">
+                        <a href="?style=bootstrap&demo=true" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-bootstrap me-1"></i>
+                            Bootstrap
+                        </a>
+                        <a href="?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-palette me-1"></i>
+                            Material Design
+                        </a>
+                    </div>
+                </div>
+
+                {% if framework == "fastapi" %}
+                <!-- API Info -->
+                <div class="mt-4 p-3 bg-info bg-opacity-10 rounded">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-code-slash me-2"></i>
+                        API Endpoints Available
+                    </h6>
+                    <div class="row g-2 small">
+                        <div class="col-md-6">
+                            <div><strong>Schema:</strong> GET /api/forms/{{ request.path.split('/')[-1] }}/schema</div>
+                            <div><strong>Render:</strong> GET /api/forms/{{ request.path.split('/')[-1] }}/render</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div><strong>Submit:</strong> POST /api/forms/{{ request.path.split('/')[-1] }}/submit</div>
+                            <div><strong>Docs:</strong> <a href="/docs" class="text-decoration-none">Interactive API Docs</a></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

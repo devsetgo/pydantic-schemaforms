@@ -1,0 +1,160 @@
+{% extends "shared_base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="demo-card">
+            <!-- Header -->
+            <div class="form-header">
+                <h2 class="mb-3">
+                    {% if framework == "material" %}
+                        <span class="material-icons me-2" style="font-size: 2rem; vertical-align: middle;">pets</span>
+                    {% else %}
+                        <i class="bi bi-heart-fill me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h2>
+                {% if not success %}
+                <p class="mb-0">
+                    {% if framework == "fastapi" %}
+                        FastAPI async pet registration with {{ 'Material Design' if framework_type == 'material' else 'Bootstrap' }} design
+                    {% else %}
+                        Register your pets with our veterinary clinic
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+                {% if success %}
+                    <!-- Success Message -->
+                    <div class="text-center">
+                        {% if framework_type == "material" %}
+                            <span class="material-icons success-icon">check_circle</span>
+                        {% else %}
+                            <i class="bi bi-check-circle-fill success-icon"></i>
+                        {% endif %}
+                        <h3 class="text-success mb-4">Registration Successful!</h3>
+
+                        <!-- Form Data Display -->
+                        {% if form_data %}
+                        <div class="{% if framework_type == 'material' %}card border{% else %}card{% endif %} mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Registration Information</h5>
+                                <div class="mb-3">
+                                    <h6>Owner Information</h6>
+                                    <p><strong>Name:</strong> {{ form_data.owner_name }}</p>
+                                    <p><strong>Email:</strong> {{ form_data.email }}</p>
+                                    <p><strong>Address:</strong> {{ form_data.address }}</p>
+                                    <p><strong>Emergency Contact:</strong> {{ form_data.emergency_contact }}</p>
+                                </div>
+
+                                {% if form_data.pets %}
+                                <div class="mt-3">
+                                    <h6>Registered Pets</h6>
+                                    {% for pet in form_data.pets %}
+                                    <div class="border rounded p-3 mb-3">
+                                        <p><strong>Name:</strong> {{ pet.name }}</p>
+                                        <p><strong>Species:</strong> {{ pet.species }}</p>
+                                        <p><strong>Age:</strong> {{ pet.age or 'Not specified' }}</p>
+                                        <p><strong>Vaccinated:</strong> {{ 'Yes' if pet.is_vaccinated else 'No' }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-4">
+                            <a href="/" class="btn btn-demo me-2">
+                                <i class="bi bi-house-fill me-2"></i>
+                                Back Home
+                            </a>
+                            <a href="{{ request.path }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Register Another
+                            </a>
+                        </div>
+
+                        {% if framework == "fastapi" %}
+                        <!-- API Links -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-code-slash me-2"></i>
+                                API Documentation
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <a href="/docs" class="btn btn-sm btn-outline-primary w-100">
+                                        <i class="bi bi-book me-1"></i>
+                                        Swagger UI
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="/redoc" class="btn btn-sm btn-outline-info w-100">
+                                        <i class="bi bi-file-text me-1"></i>
+                                        ReDoc
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <!-- Form -->
+                    {% if errors %}
+                        <div class="alert alert-danger mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Please correct the errors below.
+                        </div>
+                    {% endif %}
+
+                    <form method="POST">
+                        <!-- Unified Form -->
+                        {{ form_html|safe }}
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Home
+                        </a>
+                    </div>
+
+                    {% if framework == "fastapi" %}
+                    <!-- API Info -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-info-circle me-2"></i>
+                            FastAPI Features
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <a href="/docs" class="btn btn-sm btn-outline-primary w-100">
+                                    <i class="bi bi-book me-1"></i>
+                                    Docs
+                                </a>
+                            </div>
+                            <div class="col-4">
+                                <a href="/api/health" class="btn btn-sm btn-outline-success w-100">
+                                    <i class="bi bi-heart-pulse me-1"></i>
+                                    Health
+                                </a>
+                            </div>
+                            <div class="col-4">
+                                <a href="/api/models/pet" class="btn btn-sm btn-outline-info w-100">
+                                    <i class="bi bi-file-code me-1"></i>
+                                    Schema
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

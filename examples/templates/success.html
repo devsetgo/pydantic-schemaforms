@@ -1,0 +1,91 @@
+{% extends "shared_base.html" %}
+
+{% block content %}
+<style>
+    /* Override the gradient background for better readability */
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
+        color: white;
+    }
+
+    .demo-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 2rem;
+        margin: -1rem -1rem 0 -1rem;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="demo-card">
+            <!-- Header -->
+            <div class="form-header">
+                <h2 class="mb-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    {{ title }}
+                </h2>
+                <p class="mb-0">
+                    {{ message }}
+                </p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+                <!-- Success Display -->
+                <div class="text-center">
+                    <div class="alert alert-success mb-4">
+                        <h5 class="alert-heading mb-3">✅ Form Processed Successfully!</h5>
+
+                        {% if data %}
+                        <div class="text-start">
+                            <h6 class="mb-3">📋 Submitted JSON Data:</h6>
+                            <div class="bg-dark text-light p-3 rounded">
+                                <pre class="mb-0"><code>{{ data | safe_json }}</code></pre>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="/" class="btn btn-demo me-2">
+                            <i class="bi bi-house-fill me-2"></i>
+                            Back to Examples
+                        </a>
+                        <a href="{{ try_again_url | default(request.url.path) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Try Again
+                        </a>
+                    </div>
+
+                    {% if framework == "fastapi" %}
+                    <!-- API Info -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-info-circle me-2"></i>
+                            FastAPI Features Demonstrated
+                        </h6>
+                        <div class="row g-2 small text-muted">
+                            <div class="col-6">
+                                <div>✅ Async form processing</div>
+                                <div>✅ Automatic validation</div>
+                            </div>
+                            <div class="col-6">
+                                <div>✅ JSON API responses</div>
+                                <div>✅ OpenAPI documentation</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

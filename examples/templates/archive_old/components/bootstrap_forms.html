@@ -1,0 +1,252 @@
+{# Bootstrap Form Field Component #}
+{% macro render_field(field, form_data=None, errors=None) %}
+    {% set field_value = form_data.get(field.name) if form_data else (field.value if field.get('value') else '') %}
+    {% set field_error = errors.get(field.name) if errors else None %}
+    {% set has_error = field_error is not none %}
+
+    <div class="mb-3">
+        {% if field.type == 'checkbox' %}
+            <div class="form-check">
+                <input
+                    class="form-check-input{% if has_error %} is-invalid{% endif %}"
+                    type="checkbox"
+                    id="{{ field.name }}"
+                    name="{{ field.name }}"
+                    value="true"
+                    {% if field.get('checked') or (field_value and field_value != 'false') %}checked{% endif %}
+                    {% if field.get('required') %}required{% endif %}
+                >
+                <label class="form-check-label" for="{{ field.name }}">
+                    {{ field.label }}
+                    {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {% if field.get('help') %}
+                    <div class="form-text">{{ field.help }}</div>
+                {% endif %}
+                {% if has_error %}
+                    <div class="invalid-feedback">{{ field_error }}</div>
+                {% endif %}
+            </div>
+
+        {% elif field.type == 'radio' %}
+            <label class="form-label">
+                {{ field.label }}
+                {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            {% for option in field.options %}
+                <div class="form-check">
+                    <input
+                        class="form-check-input{% if has_error %} is-invalid{% endif %}"
+                        type="radio"
+                        id="{{ field.name }}_{{ option.value }}"
+                        name="{{ field.name }}"
+                        value="{{ option.value }}"
+                        {% if option.get('selected') or option.value == field_value %}checked{% endif %}
+                        {% if field.get('required') %}required{% endif %}
+                    >
+                    <label class="form-check-label" for="{{ field.name }}_{{ option.value }}">
+                        {{ option.label }}
+                    </label>
+                </div>
+            {% endfor %}
+            {% if field.get('help') %}
+                <div class="form-text">{{ field.help }}</div>
+            {% endif %}
+            {% if has_error %}
+                <div class="invalid-feedback d-block">{{ field_error }}</div>
+            {% endif %}
+
+        {% elif field.type == 'select' %}
+            <label for="{{ field.name }}" class="form-label">
+                {{ field.label }}
+                {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <select
+                class="form-select{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
+                name="{{ field.name }}"
+                {% if field.get('required') %}required{% endif %}
+            >
+                {% for option in field.options %}
+                    <option
+                        value="{{ option.value }}"
+                        {% if option.get('selected') or option.value == field_value %}selected{% endif %}
+                    >
+                        {{ option.label }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if field.get('help') %}
+                <div class="form-text">{{ field.help }}</div>
+            {% endif %}
+            {% if has_error %}
+                <div class="invalid-feedback">{{ field_error }}</div>
+            {% endif %}
+
+        {% elif field.type == 'multiselect' %}
+            <label for="{{ field.name }}" class="form-label">
+                {{ field.label }}
+                {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <select
+                class="form-select{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
+                name="{{ field.name }}"
+                multiple
+                size="4"
+                {% if field.get('required') %}required{% endif %}
+            >
+                {% for option in field.options %}
+                    <option
+                        value="{{ option.value }}"
+                        {% if option.value in (field_value or []) %}selected{% endif %}
+                    >
+                        {{ option.label }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple options</div>
+            {% if field.get('help') %}
+                <div class="form-text">{{ field.help }}</div>
+            {% endif %}
+            {% if has_error %}
+                <div class="invalid-feedback">{{ field_error }}</div>
+            {% endif %}
+
+        {% elif field.type == 'textarea' %}
+            <label for="{{ field.name }}" class="form-label">
+                {{ field.label }}
+                {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <textarea
+                class="form-control{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
+                name="{{ field.name }}"
+                rows="{{ field.get('rows', 3) }}"
+                {% if field.get('placeholder') %}placeholder="{{ field.placeholder }}"{% endif %}
+                {% if field.get('required') %}required{% endif %}
+                {% if field.get('maxlength') %}maxlength="{{ field.maxlength }}"{% endif %}
+            >{{ field_value }}</textarea>
+            {% if field.get('help') %}
+                <div class="form-text">{{ field.help }}</div>
+            {% endif %}
+            {% if has_error %}
+                <div class="invalid-feedback">{{ field_error }}</div>
+            {% endif %}
+
+        {% elif field.type == 'range' %}
+            <label for="{{ field.name }}" class="form-label">
+                {{ field.label }}
+                {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <input
+                type="range"
+                class="form-range{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
+                name="{{ field.name }}"
+                min="{{ field.get('min', 0) }}"
+                max="{{ field.get('max', 100) }}"
+                value="{{ field_value or field.get('value', 50) }}"
+                step="{{ field.get('step', 1) }}"
+                {% if field.get('required') %}required{% endif %}
+                oninput="document.getElementById('{{ field.name }}_value').textContent = this.value"
+            >
+            <div class="d-flex justify-content-between">
+                <small class="text-muted">{{ field.get('min', 0) }}</small>
+                <small class="text-muted">Value: <span id="{{ field.name }}_value">{{ field_value or field.get('value', 50) }}</span></small>
+                <small class="text-muted">{{ field.get('max', 100) }}</small>
+            </div>
+            {% if field.get('help') %}
+                <div class="form-text">{{ field.help }}</div>
+            {% endif %}
+            {% if has_error %}
+                <div class="invalid-feedback d-block">{{ field_error }}</div>
+            {% endif %}
+
+        {% else %}
+            {# Standard input types: text, email, password, url, tel, number, date, time, datetime-local, color, file #}
+            <label for="{{ field.name }}" class="form-label">
+                {{ field.label }}
+                {% if field.get('required') %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <input
+                type="{{ field.type }}"
+                class="form-control{% if has_error %} is-invalid{% endif %}"
+                id="{{ field.name }}"
+                name="{{ field.name }}"
+                value="{{ field_value }}"
+                {% if field.get('placeholder') %}placeholder="{{ field.placeholder }}"{% endif %}
+                {% if field.get('required') %}required{% endif %}
+                {% if field.get('min') %}min="{{ field.min }}"{% endif %}
+                {% if field.get('max') %}max="{{ field.max }}"{% endif %}
+                {% if field.get('step') %}step="{{ field.step }}"{% endif %}
+                {% if field.get('accept') %}accept="{{ field.accept }}"{% endif %}
+                {% if field.get('pattern') %}pattern="{{ field.pattern }}"{% endif %}
+                {% if field.get('maxlength') %}maxlength="{{ field.maxlength }}"{% endif %}
+                {% if field.get('minlength') %}minlength="{{ field.minlength }}"{% endif %}
+            >
+            {% if field.get('help') %}
+                <div class="form-text">{{ field.help }}</div>
+            {% endif %}
+            {% if has_error %}
+                <div class="invalid-feedback">{{ field_error }}</div>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{# Result Display Component #}
+{% macro render_result(result, result_type='info') %}
+    {% if result %}
+        {% if result.success %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill"></i>
+                <strong>Success!</strong> {{ result.message }}
+                {% if result.data %}
+                    <details class="mt-2">
+                        <summary class="text-muted small">View submitted data</summary>
+                        <pre class="mt-2 mb-0 small bg-light p-2 rounded">{{ result.data | tojson(indent=2) }}</pre>
+                    </details>
+                {% endif %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% else %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Error!</strong> {{ result.message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+{# Form Container Component #}
+{% macro form_container(title, description=None, icon=None) %}
+    <div class="card border-0 shadow-sm mb-4">
+        {% if title %}
+            <div class="card-header bg-white border-bottom">
+                <h3 class="card-title mb-0">
+                    {% if icon %}<i class="bi bi-{{ icon }}"></i> {% endif %}{{ title }}
+                </h3>
+                {% if description %}
+                    <p class="text-muted mb-0 mt-1">{{ description }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="card-body">
+            {{ caller() }}
+        </div>
+    </div>
+{% endmacro %}
+
+{# Code Example Component #}
+{% macro code_example(title, code, language='python') %}
+    <div class="card bg-light border-0 mt-4">
+        <div class="card-header bg-transparent border-bottom-0 pb-2">
+            <h6 class="mb-0"><i class="bi bi-code-slash"></i> {{ title }}</h6>
+        </div>
+        <div class="card-body pt-0">
+            <pre class="mb-0"><code class="language-{{ language }}">{{ code }}</code></pre>
+        </div>
+    </div>
+{% endmacro %}

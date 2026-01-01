@@ -1,0 +1,285 @@
+{% extends "shared_base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="demo-card">
+            <!-- Header -->
+            <div class="form-header">
+                <h2 class="mb-3">
+                    {% if framework == "material" %}
+                        <span class="material-icons me-2" style="font-size: 2rem; vertical-align: middle;">auto_awesome</span>
+                    {% else %}
+                        <i class="bi bi-star-fill me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h2>
+                {% if not success %}
+                <p class="mb-0">
+                    Comprehensive demonstration of pydantic-forms capabilities including:
+                    <strong>collapsible cards</strong>, <strong>dynamic list items</strong>,
+                    <strong>all input types</strong>, and <strong>{{ 'Material Design' if framework_type == 'material' else 'Bootstrap' }} styling</strong>
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+                {% if success %}
+                    <!-- Success Message -->
+                    <div class="text-center">
+                        {% if framework_type == "material" %}
+                            <span class="material-icons success-icon">check_circle</span>
+                        {% else %}
+                            <i class="bi bi-check-circle-fill success-icon"></i>
+                        {% endif %}
+                        <h3 class="text-success mb-4">Showcase Form Submitted Successfully!</h3>
+
+                        <!-- Success Data Display -->
+                        {% if form_data %}
+                        <div class="{% if framework_type == 'material' %}card border{% else %}card{% endif %} mb-4 text-start">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-person-check me-2"></i>
+                                    Registration Summary
+                                </h5>
+
+                                <!-- Personal Information -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Name:</strong> {{ form_data.first_name }} {{ form_data.last_name }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Email:</strong> {{ form_data.email }}
+                                    </div>
+                                </div>
+
+                                {% if form_data.phone %}
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Phone:</strong> {{ form_data.phone }}
+                                    </div>
+                                    {% if form_data.age %}
+                                    <div class="col-md-6">
+                                        <strong>Age:</strong> {{ form_data.age }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Preferences -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Experience Level:</strong> {{ form_data.experience_level|title }}
+                                    </div>
+                                    {% if form_data.favorite_color %}
+                                    <div class="col-md-6">
+                                        <strong>Favorite Color:</strong>
+                                        <span class="badge" style="background-color: {{ form_data.favorite_color }}; color: white;">
+                                            {{ form_data.favorite_color }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Pets Information -->
+                                {% if form_data.pets %}
+                                <div class="mt-4">
+                                    <h6>
+                                        <i class="bi bi-heart-fill me-2"></i>
+                                        Registered Pets ({{ form_data.pets|length }})
+                                    </h6>
+                                    <div class="row">
+                                        {% for pet in form_data.pets %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="border rounded p-3">
+                                                <h6 class="text-primary">
+                                                    🐾 {{ pet.name }} the {{ pet.species }}
+                                                </h6>
+                                                {% if pet.age %}
+                                                <p class="mb-1"><strong>Age:</strong> {{ pet.age }} years</p>
+                                                {% endif %}
+                                                {% if pet.breed %}
+                                                <p class="mb-1"><strong>Breed:</strong> {{ pet.breed }}</p>
+                                                {% endif %}
+                                                <p class="mb-1">
+                                                    <strong>Vaccinated:</strong>
+                                                    <span class="badge {{ 'bg-success' if pet.is_vaccinated else 'bg-warning' }}">
+                                                        {{ 'Yes' if pet.is_vaccinated else 'No' }}
+                                                    </span>
+                                                </p>
+                                                {% if pet.microchipped %}
+                                                <p class="mb-1">
+                                                    <strong>Microchipped:</strong>
+                                                    <span class="badge bg-info">Yes</span>
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Emergency Contacts -->
+                                {% if form_data.emergency_contacts %}
+                                <div class="mt-4">
+                                    <h6>
+                                        <i class="bi bi-person-exclamation me-2"></i>
+                                        Emergency Contacts ({{ form_data.emergency_contacts|length }})
+                                    </h6>
+                                    <div class="row">
+                                        {% for contact in form_data.emergency_contacts %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="border rounded p-3">
+                                                <h6 class="text-info">
+                                                    📞 {{ contact.name }}
+                                                </h6>
+                                                <p class="mb-1"><strong>Relationship:</strong> {{ contact.relationship|title }}</p>
+                                                <p class="mb-1"><strong>Phone:</strong> {{ contact.phone }}</p>
+                                                {% if contact.email %}
+                                                <p class="mb-1"><strong>Email:</strong> {{ contact.email }}</p>
+                                                {% endif %}
+                                                {% if contact.available_24_7 %}
+                                                <span class="badge bg-success">Available 24/7</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-4">
+                            <a href="/" class="btn btn-demo me-2">
+                                <i class="bi bi-house-fill me-2"></i>
+                                Back Home
+                            </a>
+                            <a href="{{ request.path }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Try Again
+                            </a>
+                        </div>
+
+                        {% if framework == "fastapi" %}
+                        <!-- API Links -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-code-slash me-2"></i>
+                                API Documentation
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <a href="/docs" class="btn btn-sm btn-outline-primary w-100">
+                                        <i class="bi bi-book me-1"></i>
+                                        Swagger UI
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="/redoc" class="btn btn-sm btn-outline-info w-100">
+                                        <i class="bi bi-file-text me-1"></i>
+                                        ReDoc
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <!-- Form -->
+                    {% if errors %}
+                        <div class="alert alert-danger mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Please correct the errors below and try again.
+                        </div>
+                    {% endif %}
+
+                    <!-- Feature Showcase Info -->
+                    <div class="alert alert-info mb-4">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            Features Demonstrated
+                        </h6>
+                        <div class="row small">
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li><strong>Collapsible Cards:</strong> Pet forms start collapsed</li>
+                                    <li><strong>Dynamic Titles:</strong> Pet names update card titles</li>
+                                    <li><strong>All Input Types:</strong> Text, email, number, select, date, color, etc.</li>
+                                    <li><strong>Validation:</strong> Client and server-side validation</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li><strong>List Management:</strong> Add/remove pets and contacts</li>
+                                    <li><strong>Bootstrap Icons:</strong> Enhanced visual design</li>
+                                    <li><strong>Framework Styling:</strong> {{ 'Material Design' if framework_type == 'material' else 'Bootstrap' }} components</li>
+                                    <li><strong>Responsive Design:</strong> Works on all screen sizes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        <!-- Unified Form Generated by Library -->
+                        {{ form_html|safe }}
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Home
+                        </a>
+                    </div>
+
+                    {% if framework == "fastapi" %}
+                    <!-- API Info -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-info-circle me-2"></i>
+                            FastAPI Features
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <a href="/docs" class="btn btn-sm btn-outline-primary w-100">
+                                    <i class="bi bi-book me-1"></i>
+                                    Docs
+                                </a>
+                            </div>
+                            <div class="col-3">
+                                <a href="/api/health" class="btn btn-sm btn-outline-success w-100">
+                                    <i class="bi bi-heart-pulse me-1"></i>
+                                    Health
+                                </a>
+                            </div>
+                            <div class="col-3">
+                                <a href="/api/models/pet" class="btn btn-sm btn-outline-info w-100">
+                                    <i class="bi bi-file-code me-1"></i>
+                                    Schema
+                                </a>
+                            </div>
+                            <div class="col-3">
+                                {% if framework_type == "material" %}
+                                <a href="/bootstrap/showcase" class="btn btn-sm btn-outline-warning w-100">
+                                    <i class="bi bi-bootstrap me-1"></i>
+                                    Bootstrap
+                                </a>
+                                {% else %}
+                                <a href="/material/showcase" class="btn btn-sm btn-outline-warning w-100">
+                                    <i class="bi bi-palette me-1"></i>
+                                    Material
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+
+    {% if framework == "material" %}
+        <!-- Material Design 3 -->
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+        <style>
+            :root {
+                --mdc-theme-primary: #6750a4;
+                --mdc-theme-secondary: #625b71;
+                --mdc-theme-surface: #ffffff;
+                --mdc-theme-background: #f8f9ff;
+            }
+            body {
+                font-family: 'Roboto', sans-serif;
+                background: var(--mdc-theme-background);
+                margin: 0;
+                padding: 20px;
+            }
+            .demo-container {
+                max-width: 1000px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                overflow: hidden;
+            }
+            .form-header {
+                background: linear-gradient(135deg, #6750a4, #7c4dff);
+                color: white;
+                padding: 2rem;
+                text-align: center;
+            }
+            .success-icon {
+                font-size: 4rem;
+                color: #4caf50;
+                margin-bottom: 1rem;
+            }
+            .mdc-button--raised {
+                background: var(--mdc-theme-primary) !important;
+            }
+        </style>
+    {% else %}
+        <!-- Bootstrap 5 -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+        <style>
+            body {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px 0;
+            }
+            .demo-container {
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                border: none;
+                overflow: hidden;
+            }
+            .form-header {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white;
+                text-align: center;
+                padding: 2rem;
+            }
+            .btn-demo {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                border: none;
+                color: white;
+                border-radius: 25px;
+                padding: 12px 30px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+            .btn-demo:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+                color: white;
+            }
+            .success-icon {
+                font-size: 4rem;
+                color: #28a745;
+                margin-bottom: 1rem;
+            }
+        </style>
+    {% endif %}
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="demo-container">
+                    <!-- Header -->
+                    <div class="form-header">
+                        <h2 class="mb-3">
+                            {% if framework == "material" %}
+                                <span class="material-icons me-2" style="font-size: 2rem; vertical-align: middle;">pets</span>
+                            {% else %}
+                                <i class="bi bi-heart-fill me-2"></i>
+                            {% endif %}
+                            {{ title }}
+                        </h2>
+                        {% if not success %}
+                        <p class="mb-0">Register your pets with our veterinary clinic</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content -->
+                    <div class="p-4">
+                        {% if success %}
+                            <!-- Success Message -->
+                            <div class="text-center">
+                                {% if framework == "material" %}
+                                    <span class="material-icons success-icon">check_circle</span>
+                                {% else %}
+                                    <i class="bi bi-check-circle-fill success-icon"></i>
+                                {% endif %}
+                                <h3 class="text-success mb-4">Registration Successful!</h3>
+
+                                <!-- Owner Information -->
+                                <div class="{% if framework == 'material' %}mdc-card mdc-card--outlined{% else %}card{% endif %} mb-4">
+                                    <div class="{% if framework == 'material' %}mdc-card__content{% else %}card-body{% endif %}">
+                                        <h5 class="{% if framework == 'material' %}mdc-typography--headline6{% else %}card-title{% endif %}">Owner Information</h5>
+                                        <p><strong>Name:</strong> {{ owner_data.owner_name }}</p>
+                                        <p><strong>Email:</strong> {{ owner_data.email }}</p>
+                                        <p><strong>Address:</strong> {{ owner_data.address }}</p>
+                                        <p><strong>Emergency Contact:</strong> {{ owner_data.emergency_contact }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Pets Information -->
+                                {% if pets_data %}
+                                <div class="{% if framework == 'material' %}mdc-card mdc-card--outlined{% else %}card{% endif %} mb-4">
+                                    <div class="{% if framework == 'material' %}mdc-card__content{% else %}card-body{% endif %}">
+                                        <h5 class="{% if framework == 'material' %}mdc-typography--headline6{% else %}card-title{% endif %}">Registered Pets</h5>
+                                        {% for pet in pets_data %}
+                                        <div class="{% if framework == 'material' %}mdc-card mdc-card--outlined mb-3{% else %}border rounded p-3 mb-3{% endif %}">
+                                            <p><strong>Name:</strong> {{ pet.name }}</p>
+                                            <p><strong>Species:</strong> {{ pet.species }}</p>
+                                            <p><strong>Age:</strong> {{ pet.age or 'Not specified' }}</p>
+                                            <p><strong>Vaccinated:</strong> {{ 'Yes' if pet.is_vaccinated else 'No' }}</p>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <div class="mt-4">
+                                    {% if framework == "material" %}
+                                        <a href="{{ url_for('index') }}" class="mdc-button mdc-button--raised me-2">
+                                            <span class="mdc-button__label">Back Home</span>
+                                        </a>
+                                        <a href="{{ url_for(request.endpoint) }}" class="mdc-button mdc-button--outlined">
+                                            <span class="mdc-button__label">Register Another</span>
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ url_for('index') }}" class="btn btn-demo me-2">
+                                            <i class="bi bi-house-fill me-2"></i>
+                                            Back Home
+                                        </a>
+                                        <a href="{{ url_for(request.endpoint) }}" class="btn btn-outline-secondary">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            Register Another
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Form -->
+                            {% if errors %}
+                                <div class="{% if framework == 'material' %}mdc-banner{% else %}alert alert-danger{% endif %} mb-4">
+                                    {% if framework == "material" %}
+                                        <div class="mdc-banner__content" role="banner">
+                                            <div class="mdc-banner__graphic-text-wrapper">
+                                                <div class="mdc-banner__text">Please correct the errors below.</div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        Please correct the errors below.
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <form method="POST">
+                                <!-- Owner Information Section -->
+                                <div class="{% if framework == 'material' %}mdc-card mdc-card--outlined mb-4{% else %}card mb-4{% endif %}">
+                                    <div class="{% if framework == 'material' %}mdc-card__content{% else %}card-body{% endif %}">
+                                        <h5 class="{% if framework == 'material' %}mdc-typography--headline6 mb-3{% else %}card-title mb-3{% endif %}">
+                                            {% if framework == "material" %}
+                                                <span class="material-icons me-2" style="vertical-align: middle;">person</span>
+                                            {% else %}
+                                                <i class="bi bi-person-fill me-2"></i>
+                                            {% endif %}
+                                            Owner Information
+                                        </h5>
+                                        {{ owner_form_html|safe }}
+                                    </div>
+                                </div>
+
+                                <!-- Pets Section -->
+                                {{ pets_html|safe }}
+
+                                <!-- Submit Button -->
+                                <div class="{% if framework == 'material' %}text-center{% else %}d-grid gap-2{% endif %} mt-4">
+                                    {% if framework == "material" %}
+                                        <button type="submit" class="mdc-button mdc-button--raised">
+                                            <span class="mdc-button__label">Register Pets</span>
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-demo">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            Register Pets
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </form>
+
+                            <div class="text-center mt-4">
+                                {% if framework == "material" %}
+                                    <a href="{{ url_for('index') }}" class="mdc-button mdc-button--outlined">
+                                        <span class="mdc-button__label">Back to Home</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-2"></i>
+                                        Back to Home
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if framework == "material" %}
+        <!-- Material Design 3 JS -->
+        <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+        <script>
+            // Initialize Material Design components
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize all MDC components
+                mdc.autoInit();
+
+                // Specifically initialize text fields
+                const textFields = document.querySelectorAll('.mdc-text-field');
+                textFields.forEach(textField => {
+                    mdc.textField.MDCTextField.attachTo(textField);
+                });
+
+                // Initialize select fields
+                const selectFields = document.querySelectorAll('.mdc-select');
+                selectFields.forEach(selectField => {
+                    mdc.select.MDCSelect.attachTo(selectField);
+                });
+
+                // Initialize checkboxes
+                const checkboxes = document.querySelectorAll('.mdc-checkbox');
+                checkboxes.forEach(checkbox => {
+                    mdc.checkbox.MDCCheckbox.attachTo(checkbox);
+                });
+
+                // Initialize buttons
+                const buttons = document.querySelectorAll('.mdc-button');
+                buttons.forEach(button => {
+                    mdc.ripple.MDCRipple.attachTo(button);
+                });
+            });
+        </script>
+    {% else %}
+        <!-- Bootstrap 5 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% endif %}
+</body>
+</html>

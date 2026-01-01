@@ -1,0 +1,204 @@
+{% extends "bootstrap/base.html" %}
+{% from "components/bootstrap_forms.html" import render_field, render_result, form_container, code_example %}
+
+{% block title %}Minimal Forms - Bootstrap{% endblock %}
+
+{% block content %}
+<div class="pt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                    <i class="bi bi-lightning-charge fs-3 text-success"></i>
+                </div>
+                <div>
+                    <h1 class="mb-1">Minimal Forms</h1>
+                    <p class="text-muted mb-0">Simple, essential forms that get the job done quickly and efficiently.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Login Form -->
+        <div class="col-lg-6">
+            {% call form_container("User Login", "Essential authentication form with Bootstrap styling", "person-lock") %}
+
+                {{ render_result(login_result) }}
+
+                <form method="POST" class="needs-validation" novalidate>
+                    {% for field in login_fields %}
+                        {{ render_field(field) }}
+                    {% endfor %}
+
+                    <input type="hidden" name="login_submit" value="1">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i> Sign In
+                        </button>
+                    </div>
+                </form>
+
+                {{ code_example("Login Form Code", "# Define login form fields
+login_fields = [
+    {'name': 'username', 'label': 'Username or Email', 'type': 'text', 'required': True},
+    {'name': 'password', 'label': 'Password', 'type': 'password', 'required': True},
+    {'name': 'remember_me', 'label': 'Remember Me', 'type': 'checkbox'}
+]
+
+# Pydantic model for validation
+class LoginModel(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6)
+    remember_me: bool = Field(default=False)") }}
+
+            {% endcall %}
+        </div>
+
+        <!-- Contact Form -->
+        <div class="col-lg-6">
+            {% call form_container("Contact Form", "Standard contact form with validation and Bootstrap components", "envelope") %}
+
+                {{ render_result(contact_result) }}
+
+                <form method="POST" class="needs-validation" novalidate>
+                    {% for field in contact_fields %}
+                        {{ render_field(field) }}
+                    {% endfor %}
+
+                    <input type="hidden" name="contact_submit" value="1">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-send"></i> Send Message
+                        </button>
+                    </div>
+                </form>
+
+                {{ code_example("Contact Form Code", "# Contact form with validation
+class ContactModel(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    email: EmailStr = Field(...)
+    phone: Optional[str] = Field(None)
+    subject: str = Field(..., min_length=5, max_length=200)
+    message: str = Field(..., min_length=10, max_length=2000)
+    priority: Priority = Field(default=Priority.MEDIUM)
+    subscribe: bool = Field(default=False)
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v):
+        if v and len(v.replace(' ', '').replace('-', '')) < 10:
+            raise ValueError('Phone must be at least 10 digits')
+        return v") }}
+
+            {% endcall %}
+        </div>
+    </div>
+
+    <!-- Features Overview -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Minimal Form Features</h2>
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-check-circle fs-3 text-success"></i>
+                            </div>
+                            <h5>Clean Design</h5>
+                            <p class="text-muted small">Simple, focused forms without clutter using Bootstrap's clean form controls</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-shield-check fs-3 text-primary"></i>
+                            </div>
+                            <h5>Built-in Validation</h5>
+                            <p class="text-muted small">Automatic client and server-side validation with Bootstrap validation states</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-speedometer fs-3 text-warning"></i>
+                            </div>
+                            <h5>Fast Setup</h5>
+                            <p class="text-muted small">Create beautiful forms with just a few lines of code and Bootstrap classes</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-phone fs-3 text-info"></i>
+                            </div>
+                            <h5>Responsive</h5>
+                            <p class="text-muted small">Works perfectly on all device sizes with Bootstrap's responsive grid</p>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Bootstrap Specific Features -->
+                    <div class="row g-3 text-center">
+                        <div class="col-md-4">
+                            <h6 class="text-primary">Bootstrap Controls</h6>
+                            <div class="small text-muted">
+                                Form controls, input groups, floating labels, custom checkboxes
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-success">Validation States</h6>
+                            <div class="small text-muted">
+                                Built-in valid/invalid states, custom feedback messages
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-info">Grid System</h6>
+                            <div class="small text-muted">
+                                Responsive layouts, column sizing, spacing utilities
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Examples -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">Quick Implementation Guide</h3>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h6><i class="bi bi-1-circle text-primary"></i> Define Your Pydantic Model</h6>
+                            <pre class="bg-white p-3 rounded border"><code>from pydantic import BaseModel, Field, EmailStr
+
+class LoginModel(BaseModel):
+    username: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=6)
+    remember_me: bool = Field(default=False)</code></pre>
+                        </div>
+                        <div class="col-lg-6">
+                            <h6><i class="bi bi-2-circle text-success"></i> Configure Form Fields</h6>
+                            <pre class="bg-white p-3 rounded border"><code>login_fields = [
+    {'name': 'username', 'label': 'Username', 'type': 'text', 'required': True},
+    {'name': 'password', 'label': 'Password', 'type': 'password', 'required': True},
+    {'name': 'remember_me', 'label': 'Remember Me', 'type': 'checkbox'}
+]</code></pre>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('bootstrap_medium') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-right"></i> Try Medium Complexity
+                            </a>
+                            <a href="{{ url_for('bootstrap_kitchen') }}" class="btn btn-outline-warning">
+                                <i class="bi bi-stars"></i> View Kitchen Sink
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

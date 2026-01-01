@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/postgres
 {
-	"name": "Pydantic Forms - aka FormGuru",
+	"name": "Pydantic-SchemaForms",
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
@@ -11,8 +11,11 @@
 	// "forwardPorts": [5000, 5432, 32080],
 
 	// Install Python and JS dependencies, then build JS bundle after container creation
-	// "postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt && cd PySchemaForms && npm install && npx vite build",
+	// "postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt && cd pydantic-schemaforms && npm install && npx vite build",
 	"postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt",
+	"remoteEnv": {
+		"PATH": "${containerEnv:PATH}:/home/mike/.local/bin"
+	},
 
 	// "postStartCommand": "pip install -r requirements.txt", // Add this line to install requirements.txt after container start
 	// Configure tool-specific properties.
@@ -40,6 +43,7 @@
 				"mikestead.dotenv",
 				"oderwat.indent-rainbow",
 				"wayou.vscode-todo-highlight",
+				"peakchen90.open-html-in-browser"
 			]
 		}
 	},

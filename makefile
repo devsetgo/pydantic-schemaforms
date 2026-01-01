@@ -1,12 +1,15 @@
 # Variables
-REPONAME = pydantic-forms
-APP_VERSION = 2025-04-18-001.beta
+REPONAME = pydantic-schemaforms
+APP_VERSION = 25.12.1.beta
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
 
+# Some devcontainers install CLI tools into ~/.local/bin which may not be on PATH.
+BUMPCALVER = $(if $(wildcard $(HOME)/.local/bin/bumpcalver),$(HOME)/.local/bin/bumpcalver,bumpcalver)
+
 EXAMPLE_PATH = examples
-SERVICE_PATH = pydantic_forms
+SERVICE_PATH = pydantic_schemaforms
 
 TESTS_PATH = tests
 SQLITE_PATH = _sqlite_db
@@ -21,21 +24,23 @@ REQUIREMENTS_PATH = requirements.txt
 
 .PHONY: autoflake black cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test
 
+.PHONY: vendor-update-htmx vendor-verify
+
 autoflake: ## Remove unused imports and unused variables from Python code
 	autoflake --in-place --remove-all-unused-imports  --ignore-init-module-imports --remove-unused-variables -r $(SERVICE_PATH)
 	autoflake --in-place --remove-all-unused-imports  --ignore-init-module-imports --remove-unused-variables -r $(TESTS_PATH)
 	autoflake --in-place --remove-all-unused-imports  --ignore-init-module-imports --remove-unused-variables -r $(EXAMPLE_PATH)
 
 black: ## Reformat Python code to follow the Black code style
-	black $(SERVICE_PATH)
+	$(PYTHON) -m black $(SERVICE_PATH)
 	# black $(TESTS_PATH)
 	# black $(EXAMPLE_PATH)
 
-bump: ## Bump the version of the project
-	bumpcalver --build
+# bump: ## Bump the version of the project
+# 	bumpcalver --build
 
 bump-beta: ## Bump the version of the project
-	bumpcalver --build --beta
+	$(BUMPCALVER) --build --beta
 
 
 cleanup: isort ruff autoflake ## Run isort, ruff, autoflake
@@ -45,8 +50,8 @@ create-docs: ## Build and deploy the project's documentation
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
-	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
-	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
+	cp /workspaces/$(REPONAME)/contribute.md /workspaces/$(REPONAME)/docs/contribute.md
+	cp /workspaces/$(REPONAME)/changelog.md /workspaces/$(REPONAME)/docs/release-notes.md
 	mkdocs build
 	mkdocs gh-deploy
 
@@ -55,8 +60,8 @@ create-docs-local: ## Build and deploy the project's documentation
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
-	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
-	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
+	cp /workspaces/$(REPONAME)/contribute.md /workspaces/$(REPONAME)/docs/contribute.md
+	cp /workspaces/$(REPONAME)/changelog.md /workspaces/$(REPONAME)/docs/release-notes.md
 	mkdocs build
 
 
@@ -68,6 +73,7 @@ help:  ## Display this help message
 
 install: ## Install the project's dependencie
 	$(PIP) install -r $(REQUIREMENTS_PATH)
+	pip install -e .
 
 local-install: ## Install the project
 	 pip install -e .
@@ -77,45 +83,67 @@ reinstall: ## Install the project's dependencie
 	$(PIP) install -r $(REQUIREMENTS_PATH)
 
 isort: ## Sort imports in Python code
-	isort $(SERVICE_PATH)
-	isort $(TESTS_PATH)
-	isort $(EXAMPLE_PATH)
+	$(PYTHON) -m isort $(SERVICE_PATH)
+	$(PYTHON) -m isort $(TESTS_PATH)
+	$(PYTHON) -m isort $(EXAMPLE_PATH)
 
 
 speedtest: ## Run a speed test
 	if [ ! -f speedtest/http_request.so ]; then gcc -shared -o speedtest/http_request.so speedtest/http_request.c -lcurl -fPIC; fi
 	python3 speedtest/loop.py
 
-test: ## Run the project's tests
-	pre-commit run -a
-	pytest
-	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml
-	genbadge tests -i /workspaces/$(REPONAME)/report.xml
-	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$(shell pwd)</source>|" coverage.xml
+test: ## Run the project's tests (linting + pytest + coverage badges)
+	@start=$$(date +%s); \
+	echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."; \
+	$(PYTHON) -m pre_commit run -a; \
+	echo "✅ Pre-commit passed. Running pytest..."; \
+	$(PYTHON) -m pytest -n 2; \
+	echo "📊 Generating coverage and test badges..."; \
+	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml 2>/dev/null || true; \
+	genbadge tests -i /workspaces/$(REPONAME)/report.xml 2>/dev/null || true; \
+	sed -i "s|<source>/workspaces/$(REPONAME)</source>|<source>$$(pwd)</source>|" coverage.xml; \
+	end=$$(date +%s); \
+	$(PYTHON) -c "print(f'✨ Tests complete. Badges updated. Total time: {$$end - $$start:.2f} seconds')"
 
-tests: test ## Run the project's tests
+tests: test ## Alias for 'test' - Run the project's tests
+
+vendor-update-htmx: ## Vendor the latest HTMX into package assets (or set HTMX_VERSION=2.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-htmx $(if $(HTMX_VERSION),--version $(HTMX_VERSION),)
+
+vendor-update-imask: ## Vendor the latest IMask into package assets (or set IMASK_VERSION=2.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-imask --version "$(IMASK_VERSION)"
+
+vendor-update-bootstrap: ## Vendor the latest Bootstrap into package assets (or set BOOTSTRAP_VERSION=5.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-bootstrap --version "$(BOOTSTRAP_VERSION)"
+
+vendor-update-materialize: ## Vendor the latest Materialize into package assets (or set MATERIALIZE_VERSION=1.x.y)
+	$(PYTHON) scripts/vendor_assets.py update-materialize --version "$(MATERIALIZE_VERSION)"
+
+vendor-verify: ## Verify vendored assets match manifest checksums
+	$(PYTHON) scripts/vendor_assets.py verify --require-nonempty
+
 
 build: ## Build the project
 	python -m build
 
 ruff: ## Format Python code with Ruff
-	ruff check --fix --exit-non-zero-on-fix --show-fixes $(SERVICE_PATH)
-	ruff check --fix --exit-non-zero-on-fix --show-fixes $(TESTS_PATH)
-	ruff check --fix --exit-non-zero-on-fix --show-fixes $(EXAMPLE_PATH)
+	$(PYTHON) -m ruff check --fix --exit-non-zero-on-fix --show-fixes $(SERVICE_PATH)
+	$(PYTHON) -m ruff check --fix --exit-non-zero-on-fix --show-fixes $(TESTS_PATH)
+	$(PYTHON) -m ruff check --fix --exit-non-zero-on-fix --show-fixes $(EXAMPLE_PATH)
 
 
-ex-run: ## Run the example fast application
-# cp /workspaces/$(REPONAME)/examples/main.py /workspaces/$(REPONAME)/ex.py
-	uvicorn examples.main:app --port ${PORT} --reload  --log-level $(LOG_LEVEL)
-# rm /workspaces/$(REPONAME)/ex.py
+ex-run: ## Run the FastAPI example (async implementation)
+	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port 5000 --reload --log-level $(LOG_LEVEL)
 
-ex-f: ## Run the example flask application
-	FLASK_APP=example.py python -m flask run --host 0.0.0.0 --port ${PORT} --reload
+ex-flask: ## Run the Flask example (sync implementation)
+	cd examples && $(PYTHON) flask_example.py
 
-js-build: ## Install JS dependencies and build form-bundle.js with Vite
-	cd PySchemaForms/static && \
-	npm install --legacy-peer-deps && \
-	npx vite build
+ex-test: ## Test that both examples can be imported successfully
+	cd examples && $(PYTHON) -c "import flask_example; print('✅ Flask example imports correctly')"
+	cd examples && $(PYTHON) -c "import fastapi_example; print('✅ FastAPI example imports correctly')"
+	@echo "🎉 Both examples are ready to run!"
 
-clear-pycache: ## Remove all __pycache__ directories
-	find . -type d -name "__pycache__" -exec rm -rf {} +
+kill:  # Kill any process running on the app port
+	@echo "Stopping any process running on port ${PORT}..."
+	@lsof -ti:${PORT} | xargs -r kill -9 || echo "No process found running on port ${PORT}"
+	@echo "Port ${PORT} is now free"

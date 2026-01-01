@@ -1,0 +1,254 @@
+{% extends "bootstrap/base.html" %}
+{% from "components/bootstrap_forms.html" import render_field, render_result, form_container, code_example %}
+
+{% block title %}Medium Complexity - Bootstrap{% endblock %}
+
+{% block content %}
+<div class="pt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                    <i class="bi bi-gear fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <h1 class="mb-1">Medium Complexity Forms</h1>
+                    <p class="text-muted mb-0">User registration and profile forms with advanced validation and multiple sections.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Form -->
+    <div class="row">
+        <div class="col-12">
+            {% call form_container("User Profile", "Complete user profile form with multiple sections and advanced Bootstrap layouts", "person-badge") %}
+
+                {{ render_result(profile_result) }}
+
+                <form method="POST" class="needs-validation" novalidate>
+                    <!-- Personal Information Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-person"></i> Personal Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[0]) }} {# first_name #}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[1]) }} {# last_name #}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[2]) }} {# email #}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[3]) }} {# phone #}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[7]) }} {# birth_date #}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[8]) }} {# country #}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Settings Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-gear"></i> Account Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[4]) }} {# username #}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[5]) }} {# role #}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ render_field(profile_fields[9]) }} {# timezone #}
+                                </div>
+                                <div class="col-md-6 d-flex flex-column justify-content-end">
+                                    <div class="mb-3">
+                                        {{ render_field(profile_fields[10]) }} {# newsletter #}
+                                    </div>
+                                    <div class="mb-3">
+                                        {{ render_field(profile_fields[11]) }} {# notifications #}
+                                    </div>
+                                </div>
+                            </div>
+                            {{ render_field(profile_fields[6]) }} {# bio #}
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="profile_submit" value="1">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary me-md-2">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+
+                {{ code_example("User Profile Model", "class UserProfileModel(BaseModel):
+    # Personal Information
+    first_name: str = Field(..., min_length=1, max_length=50)
+    last_name: str = Field(..., min_length=1, max_length=50)
+    email: EmailStr = Field(...)
+    phone: Optional[str] = Field(None, pattern=r'^\\+?[\\d\\s\\-\\(\\)]+$')
+
+    # Account Settings
+    username: str = Field(..., min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_]+$')
+    role: UserRole = Field(default=UserRole.USER)
+    bio: Optional[str] = Field(None, max_length=500)
+
+    # Preferences
+    birth_date: Optional[date] = Field(None)
+    newsletter: bool = Field(default=False)
+    notifications: bool = Field(default=True)
+
+    # Location
+    country: str = Field(..., description='Country')
+    timezone: str = Field(default='UTC', description='Timezone')") }}
+
+            {% endcall %}
+        </div>
+    </div>
+
+    <!-- Features Overview -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Medium Complexity Features</h2>
+                    <div class="row g-4">
+                        <div class="col-lg-3 col-md-6 text-center">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-grid-3x3 fs-3 text-primary"></i>
+                            </div>
+                            <h5>Multi-Section Layout</h5>
+                            <p class="text-muted small">Organized form sections with Bootstrap cards and responsive grid system</p>
+                        </div>
+                        <div class="col-lg-3 col-md-6 text-center">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-shield-check fs-3 text-success"></i>
+                            </div>
+                            <h5>Advanced Validation</h5>
+                            <p class="text-muted small">Custom validators, pattern matching, and complex field relationships</p>
+                        </div>
+                        <div class="col-lg-3 col-md-6 text-center">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-person-gear fs-3 text-info"></i>
+                            </div>
+                            <h5>User Experience</h5>
+                            <p class="text-muted small">Intuitive field grouping, helpful hints, and progressive disclosure</p>
+                        </div>
+                        <div class="col-lg-3 col-md-6 text-center">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-circle d-inline-flex mb-3">
+                                <i class="bi bi-phone fs-3 text-warning"></i>
+                            </div>
+                            <h5>Responsive Design</h5>
+                            <p class="text-muted small">Mobile-first design that adapts beautifully to all screen sizes</p>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Bootstrap Specific Features -->
+                    <div class="row g-3 text-center">
+                        <div class="col-md-4">
+                            <h6 class="text-primary">Bootstrap Cards</h6>
+                            <div class="small text-muted">
+                                Sectioned layout with cards, headers, and organized content areas
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-success">Grid System</h6>
+                            <div class="small text-muted">
+                                Responsive columns, flexible layouts, and proper spacing
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-info">Form Controls</h6>
+                            <div class="small text-muted">
+                                Advanced inputs, selects, checkboxes, and validation states
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Implementation Guide -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">Building Medium Complexity Forms</h3>
+
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="card bg-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-1-circle fs-1 text-primary mb-3"></i>
+                                    <h5>Structure Your Model</h5>
+                                    <p class="text-muted small">
+                                        Organize fields into logical groups with proper validation
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card bg-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-2-circle fs-1 text-success mb-3"></i>
+                                    <h5>Design the Layout</h5>
+                                    <p class="text-muted small">
+                                        Use Bootstrap cards and grid system for organized sections
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card bg-white h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-3-circle fs-1 text-warning mb-3"></i>
+                                    <h5>Add Interactivity</h5>
+                                    <p class="text-muted small">
+                                        Enhance with validation, progressive disclosure, and feedback
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('bootstrap_minimal') }}" class="btn btn-outline-success">
+                                <i class="bi bi-arrow-left"></i> Back to Minimal
+                            </a>
+                            <a href="{{ url_for('bootstrap_kitchen') }}" class="btn btn-outline-warning">
+                                <i class="bi bi-stars"></i> Try Kitchen Sink
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

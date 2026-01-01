@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "name": "htmx",
+      "version": "2.0.7",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/htmx/htmx.min.js",
+          "sha256": "60231ae6ba9db3825eb15a261122d5f55921c4d53b66bf637dc18b4ee27c79f9",
+          "source_url": "https://github.com/bigskysoftware/htmx/releases/download/v2.0.7/htmx.min.js"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/htmx/LICENSE",
+          "sha256": "d3d2456f76414f2456104660ebd65aff1c04cd7966b942bdabd63f3cdb316a38",
+          "source_url": "https://raw.githubusercontent.com/bigskysoftware/htmx/master/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "bootstrap",
+      "version": "5.3.0",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.min.css",
+          "sha256": "7f1d37f0d90b6385354c2ac10e2bb91563c46bd7a266ed351222ebcac8496c2a",
+          "source_url": "https://github.com/twbs/bootstrap/releases/download/v5.3.0/bootstrap-5.3.0-dist.zip"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.bundle.min.js",
+          "sha256": "aa53d582f97eb594c2a5cc5824574707f9ba9837bce3046bfa5f3556860f4e04",
+          "source_url": "https://github.com/twbs/bootstrap/releases/download/v5.3.0/bootstrap-5.3.0-dist.zip"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/bootstrap/LICENSE",
+          "sha256": "3d0b0c88216e4752b9afd3d24e36faaf27873b5a45a61458bb3c83e794c26832",
+          "source_url": "https://raw.githubusercontent.com/twbs/bootstrap/v5.3.0/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "materialize",
+      "version": "1.0.0",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/materialize/materialize.min.css",
+          "sha256": "3b079a3ff21ceabb15fa5cac7f24b887e2cceac470b8eddeb9361fafa335db88",
+          "source_url": "https://registry.npmjs.org/@materializecss/materialize/-/materialize-1.0.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/materialize/materialize.min.js",
+          "sha256": "53f7070cc4c81c278c72f7a106fd71434e766cf49b26d6ee8b0e1003d7132b3d",
+          "source_url": "https://registry.npmjs.org/@materializecss/materialize/-/materialize-1.0.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/materialize/LICENSE",
+          "sha256": "e503e53d929397f69cb80fa1ef050a3d84fbee7c09e6b622c72c4c2c9216d8c7",
+          "source_url": "https://registry.npmjs.org/@materializecss/materialize/-/materialize-1.0.0.tgz"
+        }
+      ]
+    },
+    {
+      "name": "imask",
+      "version": "7.6.1",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/imask/imask.min.js",
+          "sha256": "7fcd7b0428e446cb8fc10a9acde63838a2af5a1cf5e1d90596e326431e489610",
+          "source_url": "https://registry.npmjs.org/imask/-/imask-7.6.1.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/imask/LICENSE",
+          "sha256": "8b4d4b2664470db8d22cd1c867956fa78635fb84924141731c08035af291f800",
+          "source_url": "https://registry.npmjs.org/imask/-/imask-7.6.1.tgz"
+        }
+      ]
+    }
+  ]
+}

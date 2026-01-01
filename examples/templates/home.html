@@ -1,0 +1,353 @@
+{% extends "shared_base.html" %}
+
+{% block title %}Pydantic Forms Demo{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hero-section {
+        padding: 4rem 0;
+        text-align: center;
+        color: white;
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--demo-primary-color);
+    }
+    .framework-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <h1 class="display-4 fw-bold mb-4">🚀 Pydantic Forms Demo</h1>
+    <p class="lead mb-5">
+        Experience the power of automatic form generation from Pydantic models<br>
+        Built with modern web frameworks and beautiful UI components
+    </p>
+</div>
+
+<!-- Main Demo Grid -->
+<div class="row g-4">
+    <!-- User Registration -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Core Forms</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <h5 class="card-title">User Registration</h5>
+                <p class="card-text flex-grow-1">
+                    Simple user registration form with validation,
+                    role selection, and responsive design.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/user?style=bootstrap&demo=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Default Style
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/user?style=bootstrap&demo=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/user?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Authentication form</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pet Registration -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Dynamic Lists</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-heart-fill"></i>
+                </div>
+                <h5 class="card-title">Pet Registration</h5>
+                <p class="card-text flex-grow-1">
+                    Complex nested forms with dynamic pet lists,
+                    owner information, and conditional fields.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/pets" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Default Style
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/pets?style=bootstrap&demo=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/pets?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">List management</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Showcase -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Kitchen Sink</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <h5 class="card-title">Complete Showcase</h5>
+                <p class="card-text flex-grow-1">
+                    Comprehensive form demonstrating all available
+                    input types, validations, and features.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/showcase?style=bootstrap&demo=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Default Style
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/showcase?style=bootstrap&demo=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/showcase?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">All components</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Forms -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Advanced</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-layout-three-columns"></i>
+                </div>
+                <h5 class="card-title">Layout Forms</h5>
+                <p class="card-text flex-grow-1">
+                    Complex form layouts demonstrating
+                    Tab layouts, List Layouts, and more.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/layouts?style=bootstrap&demo=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Demo
+                        </a>
+                         <div class="btn-group" role="group">
+                            <a href="/layouts?style=bootstrap&demo=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/layouts?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                        </div>
+                    </div>
+
+                    <small class="text-muted mt-2">Conditional logic</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Simple Form</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                </div>
+                <h5 class="card-title">Login Form</h5>
+                <p class="card-text flex-grow-1">
+                    Minimal login form demonstrating basic
+                    authentication with form validation.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/login?style=bootstrap&demo=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Login Demo
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/login?style=bootstrap&demo=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/login?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Authentication</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Self-Contained Test -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Library Test</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h5 class="card-title">Self-Contained Test</h5>
+                <p class="card-text flex-grow-1">
+                    Test the library's self-contained form generation
+                    without external dependencies.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/self-contained?style=material&demo=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Run Test
+                        </a>
+                    </div>
+                    <small class="text-muted mt-2">Library validation</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">{% if framework == "fastapi" %}API Docs{% else %}Not Available{% endif %}</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-code-slash"></i>
+                </div>
+                <h5 class="card-title">API Documentation</h5>
+                <p class="card-text flex-grow-1">
+                    Interactive API documentation with Swagger UI
+                    and ReDoc for testing endpoints.
+                </p>
+                <div class="mt-auto">
+                    {% if framework == "fastapi" %}
+                    <div class="d-grid gap-2">
+                        <a href="/docs" class="btn btn-demo btn-sm">
+                            <i class="bi bi-book me-2"></i>
+                            Swagger UI
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/redoc" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-file-text me-1"></i>
+                                ReDoc
+                            </a>
+                            <a href="/api/health" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-heart-pulse me-1"></i>
+                                Health
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <span class="btn btn-outline-secondary w-100 disabled">
+                        <i class="bi bi-info-circle me-2"></i>
+                        FastAPI Only
+                    </span>
+                    {% endif %}
+                    <small class="text-muted mt-2">Interactive docs</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Framework Info -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="demo-card p-4 text-center">
+            <h4 class="mb-3">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Framework Detection
+            </h4>
+            <p class="text-muted mb-3">
+                Current Framework: <strong>{{ framework_name }}</strong> |
+                Renderer: <strong>{{ renderer_info }}</strong>
+            </p>
+            {% if framework == "fastapi" %}
+            <div class="row g-3 justify-content-center">
+                <div class="col-auto">
+                    <a href="/docs" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-book me-1"></i>
+                        API Documentation
+                    </a>
+                </div>
+                <div class="col-auto">
+                    <a href="/redoc" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-file-text me-1"></i>
+                        ReDoc
+                    </a>
+                </div>
+                <div class="col-auto">
+                    <a href="/api/health" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-heart-pulse me-1"></i>
+                        Health Check
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">
+                <i class="bi bi-flask me-2"></i>
+                Running in Flask mode - API documentation available in FastAPI mode
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add interactive animations -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.demo-card');
+
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

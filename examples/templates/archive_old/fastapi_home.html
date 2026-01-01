@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: none;
+            overflow: hidden;
+        }
+        .hero-section {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 10px;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .btn-demo {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-demo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+            color: white;
+        }
+        .tech-badge {
+            background: rgba(79, 70, 229, 0.1);
+            color: #4f46e5;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin: 2px;
+            display: inline-block;
+        }
+        .api-badge {
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="demo-card">
+                    <!-- Hero Section -->
+                    <div class="hero-section">
+                        <h1 class="display-4 fw-bold mb-3">
+                            <i class="bi bi-rocket-takeoff-fill me-3"></i>
+                            FastAPI Pydantic Forms
+                        </h1>
+                        <p class="lead mb-4">
+                            Modern async web forms with auto-generated API documentation and advanced validation
+                        </p>
+                        <div class="mb-4">
+                            <span class="tech-badge">FastAPI</span>
+                            <span class="tech-badge">Pydantic</span>
+                            <span class="tech-badge">Bootstrap 5</span>
+                            <span class="tech-badge">Material Design 3</span>
+                            <span class="tech-badge">ListLayout</span>
+                            <span class="api-badge">Auto API Docs</span>
+                        </div>
+                    </div>
+
+                    <!-- Content Section -->
+                    <div class="container py-5">
+                        <div class="row g-4">
+                            <!-- Login Demo -->
+                            <div class="col-md-6">
+                                <div class="card feature-card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="mb-3">
+                                            <i class="bi bi-person-check text-primary" style="font-size: 3rem;"></i>
+                                        </div>
+                                        <h4 class="card-title mb-3">Async Login Form</h4>
+                                        <p class="card-text text-muted mb-4">
+                                            Clean Bootstrap-styled login with FastAPI async validation
+                                        </p>
+                                        <a href="/bootstrap/login" class="btn btn-demo">
+                                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                                            Try Login Form
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bootstrap Pets Demo -->
+                            <div class="col-md-6">
+                                <div class="card feature-card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="mb-3">
+                                            <i class="bi bi-bootstrap text-primary" style="font-size: 3rem;"></i>
+                                        </div>
+                                        <h4 class="card-title mb-3">Bootstrap ListLayout</h4>
+                                        <p class="card-text text-muted mb-4">
+                                            Dynamic pet registration with Bootstrap styling and async processing
+                                        </p>
+                                        <a href="/bootstrap/pets" class="btn btn-demo">
+                                            <i class="bi bi-card-list me-2"></i>
+                                            Bootstrap Demo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Material Design Demo -->
+                            <div class="col-md-6">
+                                <div class="card feature-card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="mb-3">
+                                            <i class="bi bi-palette text-primary" style="font-size: 3rem;"></i>
+                                        </div>
+                                        <h4 class="card-title mb-3">Material Design 3</h4>
+                                        <p class="card-text text-muted mb-4">
+                                            Same dynamic pet registration with Google's Material Design 3
+                                        </p>
+                                        <a href="/material/pets" class="btn btn-demo">
+                                            <i class="bi bi-palette-fill me-2"></i>
+                                            Material Design Demo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- API Documentation -->
+                            <div class="col-md-6">
+                                <div class="card feature-card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <div class="mb-3">
+                                            <i class="bi bi-file-earmark-code text-primary" style="font-size: 3rem;"></i>
+                                        </div>
+                                        <h4 class="card-title mb-3">Auto API Docs</h4>
+                                        <p class="card-text text-muted mb-4">
+                                            Interactive Swagger UI and ReDoc documentation generated automatically
+                                        </p>
+                                        <div class="d-grid gap-2">
+                                            <a href="/docs" class="btn btn-demo">
+                                                <i class="bi bi-book me-2"></i>
+                                                Swagger UI
+                                            </a>
+                                            <a href="/redoc" class="btn btn-outline-primary">
+                                                <i class="bi bi-file-text me-2"></i>
+                                                ReDoc
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Endpoints Section -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <h3 class="text-center mb-4 text-primary">API Endpoints</h3>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <div class="mb-2">
+                                                    <span class="badge bg-success">GET</span>
+                                                </div>
+                                                <h6>/api/health</h6>
+                                                <small class="text-muted">Health check endpoint</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <div class="mb-2">
+                                                    <span class="badge bg-info">GET</span>
+                                                </div>
+                                                <h6>/api/models/pet</h6>
+                                                <small class="text-muted">Pet model schema</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <div class="mb-2">
+                                                    <span class="badge bg-info">GET</span>
+                                                </div>
+                                                <h6>/api/models/owner</h6>
+                                                <small class="text-muted">Owner model schema</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Features Section -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <h3 class="text-center mb-4 text-primary">FastAPI Features</h3>
+                                <div class="row g-3">
+                                    <div class="col-md-3 text-center">
+                                        <i class="bi bi-lightning-charge text-primary mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Async Support</h6>
+                                        <small class="text-muted">High-performance async processing</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <i class="bi bi-file-earmark-code text-primary mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Auto Docs</h6>
+                                        <small class="text-muted">Generated API documentation</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <i class="bi bi-shield-check text-primary mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Type Safety</h6>
+                                        <small class="text-muted">Pydantic model validation</small>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        <i class="bi bi-graph-up text-primary mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Performance</h6>
+                                        <small class="text-muted">One of the fastest Python frameworks</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

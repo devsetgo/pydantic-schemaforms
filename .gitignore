@@ -1,3 +1,7 @@
+# BumpCalver
+.bumpcalver/
+bumpcalver-history.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -45,17 +49,23 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+report.xml
 *.cover
 *.py,cover
 .hypothesis/
 .pytest_cache/
 cover/
+*-badge.svg
+
+# Debug HTML files
+debug_*.html
+test_*.html
 
 # Translations
 *.mo
 *.pot
 
-# Django stuff:
+# Local framework artifacts:
 *.log
 local_settings.py
 db.sqlite3

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Pydantic Forms Unified Demo</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Material Design CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- HTMX for live validation -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0891b2;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem 0;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .demo-card-header {
+            background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .demo-card-body {
+            padding: 2rem;
+        }
+
+        .form-container {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 2rem;
+            border: 1px solid #dee2e6;
+            border-top: none;
+        }
+
+        /* Material Design specific styles */
+        .material-theme {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .material-theme .form-control {
+            border-radius: 4px;
+            border: none;
+            border-bottom: 2px solid #e0e0e0;
+            background: transparent;
+            padding: 0.5rem 0;
+        }
+
+        .material-theme .form-control:focus {
+            border-bottom-color: #1976d2;
+            box-shadow: none;
+        }
+
+        .material-theme .btn {
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .result-display {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .error-display {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .demo-card-body {
+                padding: 1rem;
+            }
+            .main-content {
+                margin-top: 70px;
+                padding: 1rem 0;
+            }
+        }
+
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body class="{% if theme == 'material' %}material-theme{% endif %}">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+                <i class="bi bi-magic"></i> Pydantic Forms Demo
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="bootstrapDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-bootstrap"></i> Bootstrap
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('bootstrap_minimal') }}">Minimal Form</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('bootstrap_medium') }}">Medium Form</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('bootstrap_complex') }}">Complex Form</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="materialDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-palette"></i> Material
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('material_minimal') }}">Minimal Form</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('material_medium') }}">Medium Form</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('material_complex') }}">Complex Form</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="layoutsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-layout-three-columns"></i> Layouts
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('layouts_demo') }}">Bootstrap Layouts</a></li>
+                            <li><a class="dropdown-item" href="/material/layouts">Material Design Layouts</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Form validation enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('.needs-validation');
+
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            });
+        });
+
+        // Live validation with HTMX
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            console.log('HTMX Error:', evt.detail);
+        });
+
+        {% block extra_scripts %}{% endblock %}
+    </script>
+</body>
+</html>
