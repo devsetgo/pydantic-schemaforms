@@ -73,6 +73,7 @@ def deploy_documentation(
     title: str | None = None,
     dev: bool = False,
     ignore_remote_status: bool = False,
+    branch: str | None = None,
 ) -> None:
     if not version.strip():
         raise ValueError("Version cannot be empty")
@@ -80,7 +81,12 @@ def deploy_documentation(
     project_root = Path(__file__).resolve().parent.parent
     os.chdir(project_root)
 
-    cmd: list[str] = ["mike", "deploy", version]
+    cmd: list[str] = ["mike", "deploy"]
+
+    if branch:
+        cmd.extend(["--branch", branch])
+
+    cmd.append(version)
 
     if aliases:
         cmd.extend(aliases)
@@ -124,6 +130,10 @@ def main() -> None:
     parser.add_argument("--title", help="Custom title for the version")
     parser.add_argument("--dev", action="store_true", help="Deploy as development version")
     parser.add_argument(
+        "--branch",
+        help="Target branch for documentation (defaults to mike configuration, usually gh-pages)",
+    )
+    parser.add_argument(
         "--ignore-remote-status",
         action="store_true",
         help="Ignore remote git status conflicts",
@@ -145,6 +155,7 @@ def main() -> None:
                 push=args.push,
                 title=args.title,
                 dev=args.dev,
+                branch=args.branch,
                 ignore_remote_status=args.ignore_remote_status,
             )
         elif args.action == "list":

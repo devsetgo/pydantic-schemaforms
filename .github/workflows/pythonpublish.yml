@@ -2,6 +2,19 @@ name: Upload Python Package
 
 on:
   workflow_dispatch:
+    inputs:
+      docs_version:
+        description: 'Docs version to deploy (e.g. 25.12.1.beta). If omitted, auto-detects.'
+        required: false
+      docs_branch:
+        description: 'Branch to deploy docs to (e.g. gh-pages or gh-pages-test)'
+        required: false
+        default: 'gh-pages'
+      docs_push:
+        description: 'Push docs deployment to remote'
+        required: false
+        type: boolean
+        default: true
   release:
     types: [published]
 
@@ -28,6 +41,7 @@ jobs:
       run: python -m build
 
     - name: Publish to PyPI
+      if: github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
@@ -72,10 +86,16 @@ jobs:
       - name: Get release version
         id: get_version
         run: |
+          # Allow manual version injection for workflow_dispatch
+          MANUAL_VERSION="${{ github.event.inputs.docs_version }}"
+          if [ -n "$MANUAL_VERSION" ]; then
+            RAW_VERSION="$MANUAL_VERSION"
+          else
           # Prefer release payload tag name, fall back to GITHUB_REF
           RAW_VERSION="${{ github.event.release.tag_name }}"
           if [ -z "$RAW_VERSION" ]; then
             RAW_VERSION=${GITHUB_REF#refs/tags/}
+          fi
           fi
 
           # Remove 'v' prefix if present
@@ -109,7 +129,12 @@ jobs:
       - name: Deploy documentation with mike
         run: |
           VERSION="${{ steps.get_version.outputs.version }}"
+          DOCS_BRANCH="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.docs_branch || 'gh-pages' }}"
+          DOCS_PUSH="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.docs_push || 'true' }}"
+
           echo "Deploying documentation for version: $VERSION"
+          echo "Docs branch: $DOCS_BRANCH"
+          echo "Push enabled: $DOCS_PUSH"
 
           # Check if version is valid
           if [ -z "$VERSION" ] || [ "$VERSION" = "refs/tags/" ]; then
@@ -118,12 +143,18 @@ jobs:
             exit 1
           fi
 
+          PUSH_FLAG=""
+          if [ "$DOCS_PUSH" = "true" ]; then
+            PUSH_FLAG="--push"
+          fi
+
           python3 scripts/deploy_docs.py deploy \
             --version "$VERSION" \
             --aliases latest stable \
             --title "Release $VERSION" \
-            --push \
-            --ignore-remote-status
+            --branch "$DOCS_BRANCH" \
+            --ignore-remote-status \
+            $PUSH_FLAG
 
           # Make the root URL resolve to the stable alias
-          mike set-default stable --push
+          mike set-default stable --branch "$DOCS_BRANCH" $PUSH_FLAG
