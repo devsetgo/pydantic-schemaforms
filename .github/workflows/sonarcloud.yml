@@ -26,12 +26,47 @@ jobs:
 
       - name: Run tests and generate coverage.xml
         run: |
-          python -m pytest --cov=pydantic_schemaforms --cov-report=xml:coverage.xml
-          # Make coverage paths stable for SonarCloud mapping
-          sed -i 's|<source>.*</source>|<source>.</source>|' coverage.xml
+          # Override pytest addopts from pyproject.toml so we don't get duplicate --cov/--cov-report flags.
+          python -m pytest -o addopts= --cov=pydantic_schemaforms --cov-report=xml:coverage.xml
+
+          # Normalize Cobertura <sources> so Sonar can resolve both styles of filenames:
+          # - filenames like "pydantic_schemaforms/foo.py" resolve via "."
+          # - filenames like "__init__.py" resolve via "pydantic_schemaforms"
+          python - <<'PY'
+          from __future__ import annotations
+
+          import re
+          from pathlib import Path
+
+          path = Path('coverage.xml')
+          text = path.read_text('utf-8')
+
+          sources_block = (
+            '<sources>\n'
+            '  <source>.</source>\n'
+            '  <source>pydantic_schemaforms</source>\n'
+            '</sources>'
+          )
+
+          new_text, count = re.subn(r'<sources>.*?</sources>', sources_block, text, flags=re.DOTALL)
+          if count != 1:
+            raise SystemExit(f'Expected to replace 1 <sources> block, replaced {count}')
+
+          path.write_text(new_text, 'utf-8')
+          print('Normalized coverage.xml <sources>')
+          PY
+
+      - name: Verify coverage report exists
+        run: |
+          ls -la coverage.xml
+          python -c "from pathlib import Path; print('coverage.xml bytes:', Path('coverage.xml').stat().st_size)"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6.0.0
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.python.coverage.reportPaths=coverage.xml
         env:
           GITHUB_TOKEN: ${{ github.token }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
