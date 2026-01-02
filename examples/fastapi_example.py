@@ -938,7 +938,7 @@ async def self_contained(demo: bool = True, debug: bool = True):
         <ul>
             <li>✅ Complete Material Design 3 CSS</li>
             <li>✅ JavaScript for interactions</li>
-            <li>✅ Material Icons font</li>
+            <li>✅ Icons (inline SVG)</li>
             <li>✅ Form validation and styling</li>
             <li>✅ No external CDN dependencies</li>
         </ul>

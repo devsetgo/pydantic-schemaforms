@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from .enhanced_renderer import EnhancedFormRenderer
 from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
+from .rendering.material_icons import render_material_icon
 from .rendering.themes import MaterialEmbeddedTheme
 from .templates import FormTemplates, render_template
 
@@ -70,7 +71,10 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         if not icon:
             return input_wrapper
 
-        icon_markup = render_template(FormTemplates.MATERIAL_ICON, icon_name=escape(icon))
+        # Self-contained Material output must not depend on external icon fonts.
+        # Render a small set of icons as inline SVG (falling back to ligatures
+        # if the icon name is not recognized).
+        icon_markup = render_material_icon(icon, classes="md-icon")
         return render_template(
             FormTemplates.MATERIAL_FIELD_WITH_ICON,
             icon_markup=icon_markup,
