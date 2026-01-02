@@ -1,0 +1,35 @@
+# Configuration for release-drafter/release-drafter
+# This file must live in the default branch at: .github/release-drafter.yml
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+  - title: "Breaking Changes"
+    labels:
+      - "breaking"
+  - title: "Features"
+    labels:
+      - "feature"
+      - "enhancement"
+  - title: "Bug Fixes"
+    labels:
+      - "bug"
+      - "fix"
+  - title: "Documentation"
+    labels:
+      - "docs"
+  - title: "Maintenance"
+    labels:
+      - "chore"
+      - "dependencies"
+
+change-template: "- $TITLE (#$NUMBER) (@$AUTHOR)"
+change-title-escapes: "<*_&"
+
+template: |
+  ## Changes
+  $CHANGES
+
+  ## Contributors
+  $CONTRIBUTORS
