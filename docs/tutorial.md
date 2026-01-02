@@ -389,7 +389,11 @@ Now that you understand the basics, you can:
 - **Style your forms** with different CSS frameworks
 - **Connect to databases** to save form data permanently
 
-Ready to dive deeper? Check out our [Advanced Tutorial](advanced.md) or [API Reference](api.md)!
+Ready to dive deeper? Check out:
+
+- [Quick Start](quickstart.md)
+- [Validation Guide](validation_guide.md)
+- [Plugin Hooks](plugin_hooks.md)
 
 ## Troubleshooting
 

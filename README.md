@@ -9,8 +9,8 @@
 
 ![Static Badge](https://img.shields.io/badge/Python-3.14-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/coverage-badge.svg)](./reports/coverage/index.html)
-[![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/tests-badge.svg)](./reports/coverage/index.html)
+[![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/coverage-badge.svg)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
+[![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/tests-badge.svg)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
 
 **CI/CD Pipeline:**
 [![Testing - Main](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml/badge.svg?branch=main)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
@@ -18,17 +18,19 @@
 
 **SonarCloud:**
 
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=coverage)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=alert_status)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic_schemaforms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic_schemaforms)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=coverage)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=alert_status)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 
 > **Note**: This project should be considered in beta as it is actively under development and may have breaking changes.
 
 ## Overview
 
-**pydantic-schemaforms** is a modern Python library that generates dynamic HTML forms using Pydantic 2.x+ models with React JSON Schema Forms compatibility. Create beautiful, validated forms with minimal code - just define your Pydantic model and get a complete HTML form with CSS framework integration.
+**pydantic-schemaforms** is a modern Python library that generates dynamic HTML forms from **Pydantic 2.x+** models.
+
+It is designed for server-rendered apps: you define a model (and optional UI hints) and get back ready-to-embed HTML with validation and framework styling.
 
 **Key Features:**
 - 🚀 **Zero-Configuration Forms**: Generate complete HTML forms directly from Pydantic models
@@ -40,141 +42,106 @@
 
 ---
 
+## Documentation
+
+- Docs site: https://devsetgo.github.io/pydantic-schemaforms/
+- Source: https://github.com/devsetgo/pydantic-schemaforms
+
+## Requirements
+
+- Python **3.14+**
+- Pydantic **2.7+**
+
 ## Quick Start
 
-### Installation
+### Install
 
 ```bash
 pip install pydantic-schemaforms
 ```
 
-### Basic Example
+### FastAPI (async / ASGI)
+
+This is the recommended pattern for FastAPI: build a form once per request and use `handle_form_async()`.
 
 ```python
-from pydantic_schemaforms.schema_form import FormModel, Field
-from flask import Flask
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, EmailStr
+
+from pydantic_schemaforms import create_form_from_model, handle_form_async
+
+
+class User(BaseModel):
+    name: str
+    email: EmailStr
+
+
+app = FastAPI()
+
+
+@app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
+async def user_form(request: Request):
+    builder = create_form_from_model(User, framework="bootstrap")
+
+    if request.method == "POST":
+        form = await request.form()
+        result = await handle_form_async(builder, submitted_data=dict(form))
+        if result.get("success"):
+            return f"Saved: {result['data']}"
+        return result["form_html"]
+
+    result = await handle_form_async(builder)
+    return result["form_html"]
+```
+
+Run it:
+
+```bash
+pip install "pydantic-schemaforms[fastapi]" uvicorn
+uvicorn main:app --reload
+```
+
+### Flask (sync / WSGI)
+
+In synchronous apps (Flask), use `handle_form()`.
+
+```python
+from flask import Flask, request
+from pydantic import BaseModel, EmailStr
+
+from pydantic_schemaforms import create_form_from_model, handle_form
+
+
+class User(BaseModel):
+    name: str
+    email: EmailStr
+
 
 app = Flask(__name__)
 
-# Define your form using Pydantic model + UI elements
-class UserForm(FormModel):
-    username: str = Field(
-        ...,
-        min_length=3,
-        description="Choose a username",
-        ui_autofocus=True
-    )
-    email: str = Field(
-        ...,
-        description="Your email address",
-        ui_element="email"
-    )
-    age: int = Field(
-        ...,
-        ge=18,
-        le=120,
-        description="Your age",
-        ui_element="number"
-    )
-    newsletter: bool = Field(
-        False,
-        description="Subscribe to newsletter",
-        ui_element="checkbox"
-    )
 
-@app.route("/")
+@app.route("/user", methods=["GET", "POST"])
 def user_form():
-    # Generate complete HTML form with Bootstrap styling
-    form_html = UserForm.render_form(framework="bootstrap", submit_url="/submit")
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>User Form</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body>
-        <div class="container my-5">
-            {form_html}
-        </div>
-    </body>
-    </html>
-    """
+    builder = create_form_from_model(User, framework="bootstrap")
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    if request.method == "POST":
+        result = handle_form(builder, submitted_data=request.form.to_dict())
+        if result.get("success"):
+            return f"Saved: {result['data']}"
+        return result["form_html"]
+
+    return handle_form(builder)["form_html"]
 ```
-
-That's it! You now have a fully functional, validated, accessible form with Bootstrap styling.
 
 ---
 
 ## React JSON Schema Forms Compatibility
 
-Pydantic Forms uses the same UI element specifications as React JSON Schema Forms for familiarity:
+The library supports a React JSON Schema Forms-style vocabulary (UI hints like input types and options),
+but you can also stay “pure Pydantic” and let the defaults drive everything.
 
-```python
-from pydantic_schemaforms.schema_form import FormModel, Field
-
-class ContactForm(FormModel):
-    name: str = Field(
-        ...,
-        description="Your name",
-        ui_autofocus=True  # Auto-focus this field
-    )
-
-    email: str = Field(
-        ...,
-        description="Email address",
-        ui_element="email"  # Use email input type
-    )
-
-    phone: str = Field(
-        None,
-        description="Phone number",
-        ui_element="tel"  # Use tel input type
-    )
-
-    website: str = Field(
-        None,
-        description="Your website",
-        ui_element="url"  # Use URL input type
-    )
-
-    birth_date: str = Field(
-        None,
-        description="Birth date",
-        ui_element="date"  # Use date picker
-    )
-
-    message: str = Field(
-        ...,
-        min_length=10,
-        description="Your message",
-        ui_element="textarea",
-        ui_options={"rows": 4}  # Textarea with 4 rows
-    )
-
-    color_preference: str = Field(
-        "#3498db",
-        description="Preferred color",
-        ui_element="color"  # Color picker
-    )
-
-# Generate form with Material Design
-form_html = ContactForm.render_form(framework="material", submit_url="/contact")
-```
-
-**Supported UI Elements:**
-- `text` (default), `email`, `password`, `tel`, `url`
-- `number`, `date`, `time`, `datetime-local`, `color`
-- `textarea`, `checkbox`, `radio`, `select`
-- `file`, `hidden`, `range`
-
-**UI Options:**
-- `ui_autofocus`: Auto-focus the field
-- `ui_options`: Additional options (e.g., `{"rows": 4}` for textarea)
-- Standard Pydantic Field options: `description`, `min_length`, `max_length`, `ge`, `le`, etc.
+See the docs site for the current, supported UI hint patterns.
 
 ---
 
@@ -481,4 +448,5 @@ python -m pytest tests/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details:
+https://github.com/devsetgo/pydantic-schemaforms/blob/main/LICENSE
