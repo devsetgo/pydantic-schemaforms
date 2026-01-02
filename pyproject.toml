@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "25.12.2.beta"
+version = "26.1.1.beta"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
@@ -117,12 +117,7 @@ filterwarnings = [ "ignore:pydantic_schemaforms.form_layouts will be removed in 
 "**/inputs/specialized_inputs.py" = [ "F821",]
 
 [tool.hatch.build.targets.sdist]
-include = [
-	"/pydantic_schemaforms",
-	"/README.md",
-	"/LICENSE",
-	"/CHANGELOG.md",
-]
+include = [ "/pydantic_schemaforms", "/README.md", "/LICENSE", "/CHANGELOG.md",]
 exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]
