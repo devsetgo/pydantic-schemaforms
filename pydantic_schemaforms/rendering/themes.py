@@ -9,6 +9,7 @@ from ..templates import TemplateString
 from ..assets.runtime import framework_css_tag, framework_js_tag
 from .form_style import FormStyle, get_form_style
 from .frameworks import get_framework_config
+from .material_icons import render_material_icon
 
 __all__ = [
     "RendererTheme",
@@ -620,7 +621,7 @@ function toggleAccordion(sectionId, buttonElement) {
                 '    <div class="md-model-list-actions">',
                 f'      <button type="button" class="md-button md-button-tonal add-item-btn" '
                 f'              data-target="{field_name}">',
-                '        <span class="material-icons md-button__icon">add</span>',
+                f'        {render_material_icon("add", classes="md-button__icon")}',
                 f'        <span class="md-button__label">{escape(add_button_label)}</span>',
                 '      </button>',
                 '    </div>',
@@ -659,7 +660,7 @@ function toggleAccordion(sectionId, buttonElement) {
                 '    </h6>',
                 '    <button type="button" class="md-icon-button remove-item-btn"',
                 f'            data-index="{index}" aria-label="{safe_remove_label}">',
-                '      <span class="material-icons">delete</span>',
+                f'      {render_material_icon("delete", classes="md-icon")}',
                 '    </button>',
                 '  </header>',
                 '  <div class="md-model-card__body">',
@@ -810,7 +811,13 @@ function toggleAccordion(sectionId, buttonElement) {
 
 .md-button__icon {
     margin-right: 8px !important;
-    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 20px !important;
+    fill: currentColor !important;
 }
 
 .md-button__label {
@@ -923,12 +930,9 @@ function toggleAccordion(sectionId, buttonElement) {
     height: 24px !important;
     margin-top: 16px !important; /* Align with input padding */
     color: #49454f !important;
-    font-size: 20px !important;
     flex-shrink: 0 !important;
     transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    font-family: 'Material Icons' !important;
-    font-weight: normal !important;
-    font-style: normal !important;
+    fill: currentColor !important;
 }
 
 .md-field-with-icon:focus-within .md-icon {
