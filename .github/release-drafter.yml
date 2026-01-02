@@ -1,8 +1,13 @@
 # Configuration for release-drafter/release-drafter
 # This file must live in the default branch at: .github/release-drafter.yml
 
-name-template: "v$RESOLVED_VERSION"
-tag-template: "v$RESOLVED_VERSION"
+# This repo uses CalVer-style tags (e.g. 25.12.2.beta).
+# Release Drafter's $RESOLVED_VERSION is SemVer-oriented and will fall back to v0.1.0
+# when it can't infer a SemVer version from tags.
+#
+# We keep the draft title/tag generic; the actual release tag should be chosen when
+# publishing the GitHub Release.
+name-template: "Release Notes (Draft)"
 
 categories:
   - title: "Breaking Changes"
