@@ -117,7 +117,12 @@ filterwarnings = [ "ignore:pydantic_schemaforms.form_layouts will be removed in 
 "**/inputs/specialized_inputs.py" = [ "F821",]
 
 [tool.hatch.build.targets.sdist]
-include = [ "/pydantic_schemaforms",]
+include = [
+	"/pydantic_schemaforms",
+	"/README.md",
+	"/LICENSE",
+	"/CHANGELOG.md",
+]
 exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]
