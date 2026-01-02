@@ -59,4 +59,3 @@ def render_material_icon(
 		f'<svg class="{safe_class}" viewBox="0 0 24 24" focusable="false"{aria}>'
 		f"{title_tag}<path d=\"{escape(path_d, quote=True)}\" /></svg>"
 	)
-
