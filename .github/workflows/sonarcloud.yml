@@ -62,7 +62,7 @@ jobs:
           python -c "from pathlib import Path; print('coverage.xml bytes:', Path('coverage.xml').stat().st_size)"
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         with:
           projectBaseDir: .
           args: >
