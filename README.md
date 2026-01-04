@@ -45,6 +45,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 ## Documentation
 
 - Docs site: https://devsetgo.github.io/pydantic-schemaforms/
+- Live Demo: https://pydantic-schemaforms.devsetgo.com
 - Source: https://github.com/devsetgo/pydantic-schemaforms
 
 ## Requirements
