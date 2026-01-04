@@ -40,6 +40,10 @@ jobs:
       pages: write     # Required for GitHub Pages
       id-token: write  # Required for GitHub Pages
 
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -139,3 +143,24 @@ jobs:
 
           # Make the root URL resolve to the stable alias
           mike set-default stable --branch "$DOCS_BRANCH" $PUSH_FLAG
+
+      # If the repository's GitHub Pages setting is configured for
+      # "GitHub Actions" (instead of "Deploy from a branch"), pushing
+      # gh-pages alone won't publish a site. The steps below deploy the
+      # already-generated gh-pages content via the official Pages workflow.
+      - name: Checkout gh-pages branch content
+        run: |
+          git fetch origin gh-pages
+          git checkout -B gh-pages origin/gh-pages
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
