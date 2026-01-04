@@ -4,10 +4,10 @@ site_description: 'Server-rendered form components and layout helpers for Pydant
 site_author: 'Mike Ryan'
 repo_name: 'devsetgo/pydantic-schemaforms'
 repo_url: 'https://github.com/devsetgo/pydantic-schemaforms'
-site_url: 'https://devsetgo.github.io/pydantic-schemaforms/'
+# site_url: 'https://devsetgo.github.io/pydantic-schemaforms'
 
 # Copyright
-copyright: 'Copyright &copy; 2024 - 2025 Mike Ryan'
+copyright: 'Copyright &copy; 2025 - 2026 Mike Ryan'
 
 nav:
   - Introduction: 'index.md'
