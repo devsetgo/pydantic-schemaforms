@@ -159,11 +159,13 @@ class ModelListRenderer:
             body_html=template_body,
             remove_button_aria_label="Remove this item",
         )
+        # Note: do not set data-field-name here; JS looks up the list container by
+        # [data-field-name="..."] and we don't want the template to be returned.
         template_html = (
-            '<template class="model-list-item-template" data-field-name="{field_name}">'  # noqa: E501
+            '<template class="model-list-item-template">'
             "{template_item}"
             "</template>"
-        ).format(field_name=field_name, template_item=template_item)
+        ).format(template_item=template_item)
 
         items_html = "\n".join([template_html, *html_parts])
 
@@ -384,7 +386,9 @@ class ModelListRenderer:
                 e.stopPropagation();
 
                 const fieldName = this.dataset.target;
-                const container = document.querySelector(`[data-field-name="${fieldName}"]`);
+                const container = document.querySelector(
+                    `.model-list-container[data-field-name="${fieldName}"], .model-list-block[data-field-name="${fieldName}"]`
+                );
                 if (!container) return;
 
                 const itemsContainer = container.querySelector('.model-list-items');
@@ -463,7 +467,9 @@ class ModelListRenderer:
         })();
 
         function addNewListItem(fieldName, index) {
-            const container = document.querySelector(`[data-field-name="${fieldName}"]`);
+            const container = document.querySelector(
+                `.model-list-container[data-field-name="${fieldName}"], .model-list-block[data-field-name="${fieldName}"]`
+            );
             const itemsContainer = container.querySelector('.model-list-items');
 
             // Prefer cloning an existing item (preserves any per-item chrome).
