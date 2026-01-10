@@ -896,9 +896,19 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         })
 
 @app.get("/self-contained", response_class=HTMLResponse)
-async def self_contained(demo: bool = True, debug: bool = True):
-    """Self-contained form demo - zero external dependencies."""
-    from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+async def self_contained(
+    style: str = "material",
+    demo: bool = True,
+    debug: bool = True,
+):
+    """Self-contained form demo - zero external dependencies.
+
+    Supports both Bootstrap and Material (Material Design 3) renderers.
+    """
+
+    style = (style or "").strip().lower()
+    if style not in {"bootstrap", "material"}:
+        raise HTTPException(status_code=400, detail="style must be 'bootstrap' or 'material'")
 
     # Add demo data if requested
     form_data = {}
@@ -914,19 +924,34 @@ async def self_contained(demo: bool = True, debug: bool = True):
             "newsletter": False
         }
 
-    renderer = SimpleMaterialRenderer()
-    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug)
+    # Render with vendored (inlined) assets for a truly self-contained page.
+    # - Bootstrap: inlines vendored bootstrap CSS/JS when include_framework_assets=True.
+    # - Material: renderer already embeds its required assets.
+    form_html = render_form_html(
+        UserRegistrationForm,
+        framework=style,
+        form_data=form_data,
+        debug=debug,
+        include_framework_assets=True,
+        asset_mode="vendored",
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Contained Form Demo</title>
+    <title>Self-Contained Form Demo ({style.title()})</title>
 </head>
 <body style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui;">
     <h1>🎯 Self-Contained Form Demo (FastAPI)</h1>
     <p><strong>This form includes ZERO external dependencies!</strong></p>
+    <p>
+        Style:
+        <a href="/self-contained?style=bootstrap" style="color: #0066cc; text-decoration: none;">Bootstrap</a>
+        |
+        <a href="/self-contained?style=material" style="color: #0066cc; text-decoration: none;">Material</a>
+    </p>
     <p>Everything needed is embedded in the form HTML below:</p>
 
     <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa;">
