@@ -49,6 +49,35 @@ def test_material_model_list_renders_theme_wrappers() -> None:
     assert 'mdc-icon-button remove-item-btn' in html
 
 
+def test_model_list_renders_hidden_template_item_for_optional_lists() -> None:
+    """Optional (min_items=0) lists must support adding after becoming empty.
+
+    This is done by rendering a hidden <template> list-item that JS can clone
+    even after the last visible item is deleted.
+    """
+
+    bootstrap = ModelListRenderer(framework="bootstrap").render_model_list(
+        field_name="pets",
+        label="Pets",
+        model_class=_PetModel,
+        values=[],
+        min_items=0,
+        max_items=3,
+    )
+    assert "model-list-item-template" in bootstrap
+
+    material = ModelListRenderer(framework="material").render_model_list(
+        field_name="pets",
+        label="Pets",
+        model_class=_PetModel,
+        values=[],
+        min_items=0,
+        max_items=3,
+    )
+    assert "model-list-item-template" in material
+    assert "model-list-item" in material
+
+
 def _task(name: str, priority: str = "medium", due: str = "2024-12-01") -> dict:
     return {
         "task_name": name,

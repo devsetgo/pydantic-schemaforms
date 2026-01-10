@@ -143,7 +143,29 @@ class ModelListRenderer:
                     )
                 )
 
-        items_html = "\n".join(html_parts)
+        # Always include a hidden template item so lists can be emptied (min_items=0)
+        # and still support adding new items afterwards.
+        template_body = self._render_item_body(
+            field_name,
+            model_class,
+            0,
+            {},
+            nested_errors,
+        )
+        template_item = theme.render_model_list_item(
+            field_name=field_name,
+            model_label=model_label,
+            index=0,
+            body_html=template_body,
+            remove_button_aria_label="Remove this item",
+        )
+        template_html = (
+            '<template class="model-list-item-template" data-field-name="{field_name}">'  # noqa: E501
+            "{template_item}"
+            "</template>"
+        ).format(field_name=field_name, template_item=template_item)
+
+        items_html = "\n".join([template_html, *html_parts])
 
         themed_container = theme.render_model_list_container(
             field_name=field_name,
@@ -444,10 +466,18 @@ class ModelListRenderer:
             const container = document.querySelector(`[data-field-name="${fieldName}"]`);
             const itemsContainer = container.querySelector('.model-list-items');
 
-            // Get the first item as a template if it exists
-            const firstItem = itemsContainer.querySelector('.model-list-item');
-            if (firstItem) {
-                const newItem = firstItem.cloneNode(true);
+            // Prefer cloning an existing item (preserves any per-item chrome).
+            // If the list is currently empty, fall back to a hidden <template>.
+            let templateNode = itemsContainer.querySelector('.model-list-item');
+            if (!templateNode) {
+                const template = itemsContainer.querySelector('template.model-list-item-template');
+                if (template && template.content && template.content.firstElementChild) {
+                    templateNode = template.content.firstElementChild;
+                }
+            }
+
+            if (templateNode) {
+                const newItem = templateNode.cloneNode(true);
 
                 // Clear all input values
                 newItem.querySelectorAll('input, select, textarea').forEach(input => {
