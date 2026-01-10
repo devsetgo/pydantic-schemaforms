@@ -458,7 +458,19 @@ class FieldRenderer:
                 )
             )
 
-        items_html = "".join(items_parts)
+        # Always include a hidden template item so lists can be emptied (minItems=0)
+        # and still support adding new items afterwards.
+        template_item_html = self._render_schema_list_item(
+            field_name,
+            schema_def,
+            0,
+            {},
+            context,
+            ui_info,
+        )
+        template_html = f'<template class="model-list-item-template">{template_item_html}</template>'
+
+        items_html = template_html + "".join(items_parts)
         max_items = field_schema.get("maxItems", 10)
         help_text = ui_info.get("help_text") or field_schema.get("description")
         label = field_schema.get("title", field_name.replace("_", " ").title())

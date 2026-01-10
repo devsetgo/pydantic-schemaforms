@@ -143,7 +143,31 @@ class ModelListRenderer:
                     )
                 )
 
-        items_html = "\n".join(html_parts)
+        # Always include a hidden template item so lists can be emptied (min_items=0)
+        # and still support adding new items afterwards.
+        template_body = self._render_item_body(
+            field_name,
+            model_class,
+            0,
+            {},
+            nested_errors,
+        )
+        template_item = theme.render_model_list_item(
+            field_name=field_name,
+            model_label=model_label,
+            index=0,
+            body_html=template_body,
+            remove_button_aria_label="Remove this item",
+        )
+        # Note: do not set data-field-name here; JS looks up the list container by
+        # [data-field-name="..."] and we don't want the template to be returned.
+        template_html = (
+            '<template class="model-list-item-template">'
+            "{template_item}"
+            "</template>"
+        ).format(template_item=template_item)
+
+        items_html = "\n".join([template_html, *html_parts])
 
         themed_container = theme.render_model_list_container(
             field_name=field_name,
@@ -347,11 +371,13 @@ class ModelListRenderer:
 
                 // Also set up delegation for dynamically added buttons
                 document.addEventListener('click', function(e) {
-                    if (e.target.closest('.remove-item-btn') && !e.target.closest('.remove-item-btn').hasAttribute('data-initialized')) {
-                        const button = e.target.closest('.remove-item-btn');
-                        button.setAttribute('data-initialized', 'true');
-                        handleRemoveItem.call(button, e);
-                    }
+                    const button = e.target.closest && e.target.closest('.remove-item-btn');
+                    if (!button) return;
+
+                    // Always handle delegated remove clicks.
+                    // Newly-added items are cloned and may inherit `data-initialized`,
+                    // which would otherwise prevent the fallback from running.
+                    handleRemoveItem.call(button, e);
                 });
             }
 
@@ -360,7 +386,9 @@ class ModelListRenderer:
                 e.stopPropagation();
 
                 const fieldName = this.dataset.target;
-                const container = document.querySelector(`[data-field-name="${fieldName}"]`);
+                const container = document.querySelector(
+                    `.model-list-container[data-field-name="${fieldName}"], .model-list-block[data-field-name="${fieldName}"]`
+                );
                 if (!container) return;
 
                 const itemsContainer = container.querySelector('.model-list-items');
@@ -380,7 +408,9 @@ class ModelListRenderer:
                 e.preventDefault();
                 e.stopPropagation();
 
-                const button = e.currentTarget || this;
+                // When called via event delegation, e.currentTarget is the document.
+                // Always resolve the actual remove button from the click target.
+                const button = (e.target && e.target.closest && e.target.closest('.remove-item-btn')) || e.currentTarget || this;
                 const item = button.closest('.model-list-item');
                 if (!item) return;
 
@@ -437,13 +467,23 @@ class ModelListRenderer:
         })();
 
         function addNewListItem(fieldName, index) {
-            const container = document.querySelector(`[data-field-name="${fieldName}"]`);
+            const container = document.querySelector(
+                `.model-list-container[data-field-name="${fieldName}"], .model-list-block[data-field-name="${fieldName}"]`
+            );
             const itemsContainer = container.querySelector('.model-list-items');
 
-            // Get the first item as a template if it exists
-            const firstItem = itemsContainer.querySelector('.model-list-item');
-            if (firstItem) {
-                const newItem = firstItem.cloneNode(true);
+            // Prefer cloning an existing item (preserves any per-item chrome).
+            // If the list is currently empty, fall back to a hidden <template>.
+            let templateNode = itemsContainer.querySelector('.model-list-item');
+            if (!templateNode) {
+                const template = itemsContainer.querySelector('template.model-list-item-template');
+                if (template && template.content && template.content.firstElementChild) {
+                    templateNode = template.content.firstElementChild;
+                }
+            }
+
+            if (templateNode) {
+                const newItem = templateNode.cloneNode(true);
 
                 // Clear all input values
                 newItem.querySelectorAll('input, select, textarea').forEach(input => {

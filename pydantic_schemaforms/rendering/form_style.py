@@ -345,7 +345,7 @@ MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
 
 MATERIAL_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
         """
-<section class="md-model-card mdc-card mdc-card--outlined" data-index="${index}" data-field-name="${field_name}">
+<section class="model-list-item md-model-card mdc-card mdc-card--outlined" data-index="${index}" data-field-name="${field_name}">
     <div class="mdc-card__primary-action">
         <header class="md-model-card__header">
             <h6 class="mdc-typography--subtitle2 mb-0">${model_label} #${display_index}</h6>

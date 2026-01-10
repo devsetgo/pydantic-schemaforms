@@ -133,7 +133,7 @@ ruff: ## Format Python code with Ruff
 
 
 ex-run: ## Run the FastAPI example (async implementation)
-	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port 5000 --reload --log-level $(LOG_LEVEL)
+	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port 5000 --reload --reload-dir .. --log-level $(LOG_LEVEL)
 
 ex-flask: ## Run the Flask example (sync implementation)
 	cd examples && $(PYTHON) flask_example.py
@@ -145,5 +145,6 @@ ex-test: ## Test that both examples can be imported successfully
 
 kill:  # Kill any process running on the app port
 	@echo "Stopping any process running on port ${PORT}..."
-	@lsof -ti:${PORT} | xargs -r kill -9 || echo "No process found running on port ${PORT}"
+	@pids=$$(pgrep -f "uvicor[n] fastapi_example:app.*--port ${PORT}" || true); \
+	if [ -n "$$pids" ]; then echo "$$pids" | xargs kill -9; else echo "No process found running on port ${PORT}"; fi
 	@echo "Port ${PORT} is now free"

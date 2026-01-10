@@ -5,6 +5,8 @@ from pydantic import ValidationError
 
 from examples.shared_models import TaskItem, TaskListForm
 from pydantic_schemaforms.model_list import ModelListRenderer
+from pydantic_schemaforms.rendering.context import RenderContext
+from pydantic_schemaforms.rendering.field_renderer import FieldRenderer
 from pydantic_schemaforms.schema_form import FormModel
 
 
@@ -47,6 +49,67 @@ def test_material_model_list_renders_theme_wrappers() -> None:
     assert 'mdc-card__primary-action' in html  # material item wrapper
     assert 'Add Pets' in html
     assert 'mdc-icon-button remove-item-btn' in html
+
+
+def test_model_list_renders_hidden_template_item_for_optional_lists() -> None:
+    """Optional (min_items=0) lists must support adding after becoming empty.
+
+    This is done by rendering a hidden <template> list-item that JS can clone
+    even after the last visible item is deleted.
+    """
+
+    bootstrap = ModelListRenderer(framework="bootstrap").render_model_list(
+        field_name="pets",
+        label="Pets",
+        model_class=_PetModel,
+        values=[],
+        min_items=0,
+        max_items=3,
+    )
+    assert "model-list-item-template" in bootstrap
+
+    material = ModelListRenderer(framework="material").render_model_list(
+        field_name="pets",
+        label="Pets",
+        model_class=_PetModel,
+        values=[],
+        min_items=0,
+        max_items=3,
+    )
+    assert "model-list-item-template" in material
+    assert "model-list-item" in material
+
+
+def test_schema_model_list_renders_hidden_template_item_for_optional_lists() -> None:
+    """Schema-based model_list rendering must include the hidden template too."""
+
+    class _DummyRenderer:
+        framework = "bootstrap"
+        config = {}
+        theme = None
+
+    renderer = FieldRenderer(_DummyRenderer())
+    context = RenderContext(form_data={}, schema_defs={})
+
+    schema_def = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string", "title": "Name"},
+        },
+    }
+
+    html = renderer.render_model_list_from_schema(
+        field_name="pets",
+        field_schema={"type": "array", "title": "Pets", "minItems": 0, "maxItems": 5},
+        schema_def=schema_def,
+        values=[],
+        error=None,
+        ui_info={"item_title_template": "🐾 {name}"},
+        required_fields=[],
+        context=context,
+    )
+
+    assert "model-list-item-template" in html
 
 
 def _task(name: str, priority: str = "medium", due: str = "2024-12-01") -> dict:
