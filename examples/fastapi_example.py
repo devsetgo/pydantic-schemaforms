@@ -1052,7 +1052,13 @@ async def api_submit_form(form_type: str, request: Request):
     }
 
 @app.get("/api/forms/{form_type}/render")
-async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool = False):
+async def api_render_form(
+    form_type: str,
+    style: str = "bootstrap",
+    debug: bool = False,
+    include_assets: bool = True,
+    asset_mode: str = "vendored",
+):
     """API endpoint to render form HTML."""
     form_mapping = {
         "login": MinimalLoginForm,
@@ -1066,7 +1072,13 @@ async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool 
         raise HTTPException(status_code=404, detail="Form type not found")
 
     form_class = form_mapping[form_type]
-    form_html = render_form_html(form_class, framework=style, debug=debug)
+    form_html = render_form_html(
+        form_class,
+        framework=style,
+        debug=debug,
+        include_framework_assets=include_assets,
+        asset_mode=asset_mode,
+    )
 
     return {
         "form_type": form_type,

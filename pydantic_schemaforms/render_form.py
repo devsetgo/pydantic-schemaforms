@@ -19,6 +19,7 @@ def render_form_html(
     framework: str = "bootstrap",
     *,
     asset_mode: str = "vendored",
+    include_framework_assets: bool = False,
     include_imask: bool = False,
     debug: bool = False,
     **kwargs,
@@ -67,6 +68,8 @@ def render_form_html(
         errors=errors,
         framework=framework,
         debug=debug,
+        include_framework_assets=include_framework_assets,
+        asset_mode=asset_mode,
         **render_kwargs,
     )
 
