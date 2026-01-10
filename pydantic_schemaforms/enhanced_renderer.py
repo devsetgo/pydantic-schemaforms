@@ -148,10 +148,20 @@ class EnhancedFormRenderer:
 
         output_parts = [form_markup]
 
+        # Include model-list JavaScript when any model-list markup is present.
+        # Layout fields can render nested models (via render_form_fields_only), so scanning
+        # only the top-level schema fields would miss model-list widgets inside layouts.
         has_model_list_fields = any(
             resolve_ui_element(field_schema) == "model_list" for _name, field_schema in fields
         )
-        if has_model_list_fields:
+        has_model_list_markup = (
+            "model-list-container" in form_markup
+            or "add-item-btn" in form_markup
+            or "remove-item-btn" in form_markup
+        )
+        has_model_list_script = "function initializeModelLists" in form_markup
+
+        if (has_model_list_fields or has_model_list_markup) and not has_model_list_script:
             from .model_list import ModelListRenderer
 
             list_renderer = ModelListRenderer(framework=self._model_list_framework())
