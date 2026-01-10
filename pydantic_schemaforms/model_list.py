@@ -347,11 +347,13 @@ class ModelListRenderer:
 
                 // Also set up delegation for dynamically added buttons
                 document.addEventListener('click', function(e) {
-                    if (e.target.closest('.remove-item-btn') && !e.target.closest('.remove-item-btn').hasAttribute('data-initialized')) {
-                        const button = e.target.closest('.remove-item-btn');
-                        button.setAttribute('data-initialized', 'true');
-                        handleRemoveItem.call(button, e);
-                    }
+                    const button = e.target.closest && e.target.closest('.remove-item-btn');
+                    if (!button) return;
+
+                    // Always handle delegated remove clicks.
+                    // Newly-added items are cloned and may inherit `data-initialized`,
+                    // which would otherwise prevent the fallback from running.
+                    handleRemoveItem.call(button, e);
                 });
             }
 
@@ -380,7 +382,9 @@ class ModelListRenderer:
                 e.preventDefault();
                 e.stopPropagation();
 
-                const button = e.currentTarget || this;
+                // When called via event delegation, e.currentTarget is the document.
+                // Always resolve the actual remove button from the click target.
+                const button = (e.target && e.target.closest && e.target.closest('.remove-item-btn')) || e.currentTarget || this;
                 const item = button.closest('.model-list-item');
                 if (!item) return;
 

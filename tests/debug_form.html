@@ -227,11 +227,12 @@
 
                 // Also set up delegation for dynamically added buttons
                 document.addEventListener('click', function(e) {
-                    if (e.target.closest('.remove-item-btn') && !e.target.closest('.remove-item-btn').hasAttribute('data-initialized')) {
-                        const button = e.target.closest('.remove-item-btn');
-                        button.setAttribute('data-initialized', 'true');
-                        handleRemoveItem.call(button, e);
-                    }
+                    const button = e.target.closest && e.target.closest('.remove-item-btn');
+                    if (!button) return;
+
+                    // Always handle delegated remove clicks.
+                    // Newly-added items are cloned and may inherit `data-initialized`.
+                    handleRemoveItem.call(button, e);
                 });
             }
 
@@ -260,7 +261,8 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                const button = e.currentTarget || this;
+                // When invoked via event delegation, e.currentTarget is the document.
+                const button = (e.target && e.target.closest && e.target.closest('.remove-item-btn')) || e.currentTarget || this;
                 const item = button.closest('.model-list-item');
                 if (!item) return;
 
