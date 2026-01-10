@@ -145,5 +145,6 @@ ex-test: ## Test that both examples can be imported successfully
 
 kill:  # Kill any process running on the app port
 	@echo "Stopping any process running on port ${PORT}..."
-	@lsof -ti:${PORT} | xargs -r kill -9 || echo "No process found running on port ${PORT}"
+	@pids=$$(pgrep -f "uvicor[n] fastapi_example:app.*--port ${PORT}" || true); \
+	if [ -n "$$pids" ]; then echo "$$pids" | xargs kill -9; else echo "No process found running on port ${PORT}"; fi
 	@echo "Port ${PORT} is now free"
