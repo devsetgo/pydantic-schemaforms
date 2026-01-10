@@ -563,6 +563,9 @@ def render_form_html(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    *,
+    include_framework_assets: bool = False,
+    asset_mode: str = "vendored",
     **kwargs,
 ) -> str:
     """Convenience wrapper mirroring the legacy helper."""
@@ -585,6 +588,12 @@ def render_form_html(
         )
 
     renderer = EnhancedFormRenderer(framework=framework)
+    if include_framework_assets or asset_mode != "vendored":
+        renderer = EnhancedFormRenderer(
+            framework=framework,
+            include_framework_assets=include_framework_assets,
+            asset_mode=asset_mode,
+        )
     return renderer.render_form_from_model(
         form_model_cls,
         data=form_data,

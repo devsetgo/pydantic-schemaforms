@@ -27,6 +27,11 @@ This directory contains **two comprehensive examples** that demonstrate **every 
 - **API Endpoints**: Full REST API with OpenAPI documentation
 - **Documentation**: `/docs` - Interactive Swagger UI
 
+**Self-contained HTML from the API:** `GET /api/forms/{form_type}/render` supports:
+
+- `include_assets` (default: `true`) — when enabled, the returned HTML includes the framework assets inline.
+- `asset_mode` (`vendored|cdn|none`, default: `vendored`) — controls whether those assets are inlined or emitted as pinned CDN tags.
+
 **Run:** `python fastapi_example.py` → http://localhost:8000
 
 ## 📋 Complete Coverage Matrix
@@ -53,7 +58,11 @@ from shared_models import UserRegistrationForm, handle_form_submission
 
 # Step 2: Render forms
 from pydantic_schemaforms.enhanced_renderer import render_form_html
-form_html = render_form_html(UserRegistrationForm, framework="bootstrap")
+form_html = render_form_html(
+    UserRegistrationForm,
+    framework="bootstrap",
+    include_framework_assets=True,  # inline Bootstrap CSS/JS for self-contained HTML
+)
 
 # Step 3: Validate forms
 result = handle_form_submission(UserRegistrationForm, form_data)
@@ -165,9 +174,13 @@ def register():
             return redirect('/success')
         else:
             # Re-render with errors
-            form_html = render_form_html(UserRegistrationForm, errors=result['errors'])
+            form_html = render_form_html(
+                UserRegistrationForm,
+                errors=result['errors'],
+                include_framework_assets=True,
+            )
     else:
-        form_html = render_form_html(UserRegistrationForm)
+        form_html = render_form_html(UserRegistrationForm, include_framework_assets=True)
 
     return render_template('form.html', form_html=form_html)
 ```
@@ -185,7 +198,11 @@ async def register_post(request: Request):
     if result['success']:
         return templates.TemplateResponse('success.html', {...})
     else:
-        form_html = render_form_html(UserRegistrationForm, errors=result['errors'])
+        form_html = render_form_html(
+            UserRegistrationForm,
+            errors=result['errors'],
+            include_framework_assets=True,
+        )
         return templates.TemplateResponse('form.html', {...})
 ```
 
