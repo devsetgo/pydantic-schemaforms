@@ -53,6 +53,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Fetch gh-pages branch (avoid non-fast-forward)
+        run: |
+          git fetch origin gh-pages:gh-pages || true
+
       - name: Prepare documentation files
         run: |
           python3 scripts/update_docs.py
