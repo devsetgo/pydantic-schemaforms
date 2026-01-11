@@ -88,6 +88,11 @@ jobs:
 
           mike set-default stable --branch "$DOCS_BRANCH" --push
 
+      - name: Clean working tree before gh-pages checkout
+        run: |
+          git reset --hard
+          git clean -fd
+
       - name: Checkout gh-pages branch content
         run: |
           git fetch origin gh-pages
