@@ -1,10 +1,15 @@
 [
   {
-    "version": "26.1.1.beta",
-    "title": "Release 26.1.1.beta",
+    "version": "26.1.2.beta",
+    "title": "Release 26.1.2.beta",
     "aliases": [
       "latest",
       "stable"
     ]
+  },
+  {
+    "version": "26.1.1.beta",
+    "title": "Release 26.1.1.beta",
+    "aliases": []
   }
 ]
