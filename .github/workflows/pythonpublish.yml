@@ -40,7 +40,7 @@ jobs:
       contents: read
     steps:
       - name: Dispatch docs workflow on main
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const rawTag = context.payload.release?.tag_name;
