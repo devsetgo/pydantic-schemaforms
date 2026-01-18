@@ -1,6 +1,6 @@
 # Variables
 REPONAME = pydantic-schemaforms
-APP_VERSION = 26.1.2.beta
+APP_VERSION = 26.1.3.beta
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
