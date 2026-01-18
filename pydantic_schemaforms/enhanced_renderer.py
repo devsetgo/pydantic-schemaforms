@@ -564,6 +564,7 @@ def render_form_html(
     layout: str = "vertical",
     debug: bool = False,
     *,
+    self_contained: bool = False,
     include_framework_assets: bool = False,
     asset_mode: str = "vendored",
     **kwargs,
@@ -573,6 +574,12 @@ def render_form_html(
     if isinstance(errors, SchemaFormValidationError):
         error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
         errors = error_dict
+
+    # "Self-contained" means: no host template dependencies for framework CSS/JS.
+    # For Bootstrap/Materialize we inline vendored framework assets.
+    if self_contained:
+        include_framework_assets = True
+        asset_mode = "vendored"
 
     if framework == "material":
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
@@ -587,13 +594,11 @@ def render_form_html(
             **kwargs,
         )
 
-    renderer = EnhancedFormRenderer(framework=framework)
-    if include_framework_assets or asset_mode != "vendored":
-        renderer = EnhancedFormRenderer(
-            framework=framework,
-            include_framework_assets=include_framework_assets,
-            asset_mode=asset_mode,
-        )
+    renderer = EnhancedFormRenderer(
+        framework=framework,
+        include_framework_assets=include_framework_assets,
+        asset_mode=asset_mode,
+    )
     return renderer.render_form_from_model(
         form_model_cls,
         data=form_data,

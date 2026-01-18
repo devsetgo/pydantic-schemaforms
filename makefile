@@ -15,7 +15,7 @@ TESTS_PATH = tests
 SQLITE_PATH = _sqlite_db
 LOG_PATH = log
 
-PORT = 5000
+PORT = 8000
 WORKER = 8
 LOG_LEVEL = debug
 
@@ -133,7 +133,7 @@ ruff: ## Format Python code with Ruff
 
 
 ex-run: ## Run the FastAPI example (async implementation)
-	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port 5000 --reload --reload-dir .. --log-level $(LOG_LEVEL)
+	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port $(PORT) --reload --reload-dir .. --log-level debug
 
 ex-flask: ## Run the Flask example (sync implementation)
 	cd examples && $(PYTHON) flask_example.py
