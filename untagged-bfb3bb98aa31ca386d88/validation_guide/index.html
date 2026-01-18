@@ -1,0 +1,2299 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Server-rendered form components and layout helpers for Pydantic models">
+      
+      
+        <meta name="author" content="Mike Ryan">
+      
+      
+      
+        <link rel="prev" href="../assets/">
+      
+      
+        <link rel="next" href="../plugin_hooks/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Validation Guide - Pydantic SchemaForms</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/print-site.css">
+    
+      <link rel="stylesheet" href="../css/print-site-material.css">
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#unified-validation-engine-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Pydantic SchemaForms" class="md-header__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pydantic SchemaForms
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Validation Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorial_fastapi/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../testing_workflow/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../print_page/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Print Site
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Pydantic SchemaForms" class="md-nav__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Pydantic SchemaForms
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial_fastapi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FastAPI Project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs (UI Elements)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Concepts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validationresponse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ValidationResponse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validationschema-fieldvalidator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ValidationSchema &amp; FieldValidator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formvalidator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FormValidator
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#server-side-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server-Side Validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Server-Side Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-validate_form_data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using validate_form_data()
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-formvalidator-with-pydantic-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using FormValidator with Pydantic Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-time-htmx-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-Time HTMX Validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-Time HTMX Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#livevalidator-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiveValidator Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#html-integration-with-htmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTML Integration with HTMX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastapi-endpoint-for-htmx-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FastAPI Endpoint for HTMX Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#building-livevalidator-from-validationschema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building LiveValidator from ValidationSchema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-field-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Field Validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cross-Field Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#form-level-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Form-Level Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-field-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Field Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#password-matching-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password Matching Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#convenience-validators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convenience Validators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Convenience Validators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#email-validator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Email Validator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#password-strength-validator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password Strength Validator
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-validation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Validation Rules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Validation Rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-complete-field-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Complete Field Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sync-htmx-validation-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync + HTMX Validation Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sync + HTMX Validation Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#end-to-end-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-End Example
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="End-to-End Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-define-form-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Define Form Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-set-up-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Set Up Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-fastapi-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. FastAPI Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-html-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. HTML Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-your-validators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Your Validators
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layout-demo-tab-rendering-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout Demo &amp; Tab Rendering Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pydantic-v2-deprecation-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pydantic v2 Deprecation Resolution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugin_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../print_page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Print Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="unified-validation-engine-guide">Unified Validation Engine Guide<a class="headerlink" href="#unified-validation-engine-guide" title="Permanent link">&para;</a></h1>
+<p><em>Complete guide to validation in pydantic-schemaforms: server-side, real-time HTMX, and cross-field patterns.</em></p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The pydantic-schemaforms validation system is consolidated into a single, unified engine that works seamlessly across:
+- <strong>Server-side validation</strong> via <code>validate_form_data()</code> and <code>FormValidator</code>
+- <strong>Real-time HTMX validation</strong> via <code>LiveValidator</code> and field-level validators
+- <strong>Cross-field validation</strong> via form-level rules
+- <strong>Convenience validators</strong> for common patterns (email, password strength)</p>
+<p>All validation rules live in <code>pydantic_schemaforms/validation.py</code>, re-exported from <code>pydantic_schemaforms/live_validation.py</code> for convenience, eliminating code duplication and ensuring consistency across all validation flows.</p>
+<hr />
+<h2 id="core-concepts">Core Concepts<a class="headerlink" href="#core-concepts" title="Permanent link">&para;</a></h2>
+<h3 id="validationresponse">ValidationResponse<a class="headerlink" href="#validationresponse" title="Permanent link">&para;</a></h3>
+<p>The canonical response object for all validation operations (server-side or HTMX):</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationResponse</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">ValidationResponse</span><span class="p">(</span>
+    <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;email&quot;</span><span class="p">,</span>
+    <span class="n">is_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">errors</span><span class="o">=</span><span class="p">[],</span>                          <span class="c1"># List of error messages</span>
+    <span class="n">warnings</span><span class="o">=</span><span class="p">[],</span>                        <span class="c1"># List of warnings (non-blocking)</span>
+    <span class="n">suggestions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Example: user@example.com&quot;</span><span class="p">],</span>  <span class="c1"># Helpful hints</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>           <span class="c1"># The validated value</span>
+    <span class="n">formatted_value</span><span class="o">=</span><span class="s2">&quot;user@example.com&quot;</span>  <span class="c1"># Optionally formatted (e.g., lowercase)</span>
+<span class="p">)</span>
+
+<span class="c1"># Serialize for HTMX responses</span>
+<span class="n">json_str</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+<span class="n">dict_response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="validationschema-fieldvalidator">ValidationSchema &amp; FieldValidator<a class="headerlink" href="#validationschema-fieldvalidator" title="Permanent link">&para;</a></h3>
+<p>Build reusable validation schemas from individual field validators:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationSchema</span><span class="p">,</span> <span class="n">FieldValidator</span>
+
+<span class="c1"># Create a schema with multiple fields</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">ValidationSchema</span><span class="p">()</span>
+
+<span class="c1"># Add field validators</span>
+<span class="n">email_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+<span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">schema</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="n">email_validator</span><span class="p">)</span>
+
+<span class="n">password_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span>
+<span class="n">password_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span>
+    <span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Minimum 8 characters required&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">schema</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="n">password_validator</span><span class="p">)</span>
+
+<span class="c1"># Build HTMX live validator from schema</span>
+<span class="n">live_validator</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">build_live_validator</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="formvalidator">FormValidator<a class="headerlink" href="#formvalidator" title="Permanent link">&para;</a></h3>
+<p>Validate entire forms with both field-level and cross-field rules:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormValidator</span>
+
+<span class="n">form_validator</span> <span class="o">=</span> <span class="n">FormValidator</span><span class="p">()</span>
+
+<span class="c1"># Add field validators</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">NumericRangeRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">150</span><span class="p">))</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+
+<span class="c1"># Add cross-field validation</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_age_and_consent</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+    <span class="n">consent</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parental_consent&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">age</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">age</span> <span class="o">&lt;</span> <span class="mi">18</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">consent</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;parental_consent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Parental consent required for users under 18&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">{}</span>
+
+<span class="n">form_validator</span><span class="o">.</span><span class="n">add_cross_field_rule</span><span class="p">(</span><span class="n">validate_age_and_consent</span><span class="p">)</span>
+
+<span class="c1"># Validate form data</span>
+<span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">({</span>
+    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+    <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;teen@example.com&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;parental_consent&quot;</span><span class="p">:</span> <span class="kc">False</span>
+<span class="p">})</span>
+</code></pre></div>
+<hr />
+<h2 id="server-side-validation">Server-Side Validation<a class="headerlink" href="#server-side-validation" title="Permanent link">&para;</a></h2>
+<h3 id="using-validate_form_data">Using validate_form_data()<a class="headerlink" href="#using-validate_form_data" title="Permanent link">&para;</a></h3>
+<p>For simple synchronous validation against a Pydantic <code>FormModel</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormModel</span><span class="p">,</span> <span class="n">FormField</span><span class="p">,</span> <span class="n">validate_form_data</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RegistrationForm</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Username&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">20</span>
+    <span class="p">)</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Email Address&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;email&quot;</span>
+    <span class="p">)</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Password&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">8</span>
+    <span class="p">)</span>
+
+<span class="c1"># Validate incoming form data</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">validate_form_data</span><span class="p">(</span><span class="n">RegistrationForm</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;alice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;alice@example.com&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;SecurePass123!&quot;</span>
+<span class="p">})</span>
+
+<span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valid! Data: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid! Errors: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Result has: result.is_valid, result.data, result.errors</span>
+</code></pre></div>
+<h3 id="using-formvalidator-with-pydantic-models">Using FormValidator with Pydantic Models<a class="headerlink" href="#using-formvalidator-with-pydantic-models" title="Permanent link">&para;</a></h3>
+<p>For validation with additional custom rules:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormValidator</span>
+
+<span class="n">form_validator</span> <span class="o">=</span> <span class="n">FormValidator</span><span class="p">()</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>
+
+<span class="c1"># Validate and get results</span>
+<span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">({</span>
+    <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;alice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="s2">&quot;alice@example.com&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;SecurePass123!&quot;</span>
+<span class="p">})</span>
+
+<span class="c1"># Also validate against Pydantic model</span>
+<span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">validate_pydantic_model</span><span class="p">(</span>
+    <span class="n">RegistrationForm</span><span class="p">,</span>
+    <span class="n">request_data</span>
+<span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="real-time-htmx-validation">Real-Time HTMX Validation<a class="headerlink" href="#real-time-htmx-validation" title="Permanent link">&para;</a></h2>
+<h3 id="livevalidator-setup">LiveValidator Setup<a class="headerlink" href="#livevalidator-setup" title="Permanent link">&para;</a></h3>
+<p>Use <code>LiveValidator</code> for server-side validation triggered via HTMX on blur/change events:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.live_validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiveValidator</span><span class="p">,</span> <span class="n">HTMXValidationConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValidator</span><span class="p">,</span> <span class="n">EmailRule</span>
+
+<span class="c1"># Configure HTMX behavior</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">HTMXValidationConfig</span><span class="p">(</span>
+    <span class="n">validate_on_blur</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>           <span class="c1"># Validate when field loses focus</span>
+    <span class="n">validate_on_input</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>         <span class="c1"># Don&#39;t validate on every keystroke</span>
+    <span class="n">validate_on_change</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>         <span class="c1"># Validate when value changes</span>
+    <span class="n">debounce_ms</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>                 <span class="c1"># Wait 300ms before validation request</span>
+    <span class="n">show_success_indicators</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>    <span class="c1"># Visual feedback on valid input</span>
+    <span class="n">show_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>              <span class="c1"># Display warnings</span>
+    <span class="n">show_suggestions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>           <span class="c1"># Show helpful hints</span>
+    <span class="n">success_class</span><span class="o">=</span><span class="s2">&quot;is-valid&quot;</span><span class="p">,</span>        <span class="c1"># Bootstrap/custom CSS classes</span>
+    <span class="n">error_class</span><span class="o">=</span><span class="s2">&quot;is-invalid&quot;</span><span class="p">,</span>
+    <span class="n">warning_class</span><span class="o">=</span><span class="s2">&quot;has-warning&quot;</span><span class="p">,</span>
+    <span class="n">loading_class</span><span class="o">=</span><span class="s2">&quot;is-validating&quot;</span>
+<span class="p">)</span>
+
+<span class="n">live_validator</span> <span class="o">=</span> <span class="n">LiveValidator</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<span class="c1"># Register field validators</span>
+<span class="n">email_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+<span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">live_validator</span><span class="o">.</span><span class="n">register_field_validator</span><span class="p">(</span><span class="n">email_validator</span><span class="p">)</span>
+
+<span class="n">password_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span>
+<span class="n">password_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>
+<span class="n">live_validator</span><span class="o">.</span><span class="n">register_field_validator</span><span class="p">(</span><span class="n">password_validator</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="html-integration-with-htmx">HTML Integration with HTMX<a class="headerlink" href="#html-integration-with-htmx" title="Permanent link">&para;</a></h3>
+<p>In your template, set up HTMX triggers for real-time validation:</p>
+<div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- Form field with HTMX validation --&gt;</span>
+<span class="p">&lt;</span><span class="nt">input</span>
+    <span class="na">type</span><span class="o">=</span><span class="s">&quot;email&quot;</span>
+    <span class="na">name</span><span class="o">=</span><span class="s">&quot;email&quot;</span>
+    <span class="na">id</span><span class="o">=</span><span class="s">&quot;email&quot;</span>
+    <span class="na">class</span><span class="o">=</span><span class="s">&quot;form-control&quot;</span>
+    <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;you@example.com&quot;</span>
+    <span class="na">hx-post</span><span class="o">=</span><span class="s">&quot;/validate/email&quot;</span>
+    <span class="na">hx-trigger</span><span class="o">=</span><span class="s">&quot;blur, change delay:300ms&quot;</span>
+    <span class="na">hx-target</span><span class="o">=</span><span class="s">&quot;#email-feedback&quot;</span>
+    <span class="na">hx-swap</span><span class="o">=</span><span class="s">&quot;outerHTML&quot;</span>
+<span class="p">/&gt;</span>
+
+<span class="cm">&lt;!-- Validation feedback container --&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;email-feedback&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre></div>
+<h3 id="fastapi-endpoint-for-htmx-validation">FastAPI Endpoint for HTMX Validation<a class="headerlink" href="#fastapi-endpoint-for-htmx-validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.live_validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiveValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldValidator</span><span class="p">,</span> <span class="n">EmailRule</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+<span class="n">live_validator</span> <span class="o">=</span> <span class="n">LiveValidator</span><span class="p">()</span>
+
+<span class="c1"># Register validators</span>
+<span class="n">email_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+<span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">live_validator</span><span class="o">.</span><span class="n">register_field_validator</span><span class="p">(</span><span class="n">email_validator</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/validate/email&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_email</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Get validator for this field</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">live_validator</span><span class="o">.</span><span class="n">get_field_validator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="c1"># Render feedback HTML</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div id=&quot;email-feedback&quot; class=&quot;valid-feedback&quot;&gt;</span>
+<span class="s2">            ✓ Email looks good</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">errors_html</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;&lt;li&gt;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&lt;/li&gt;&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">errors</span><span class="p">])</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;div id=&quot;email-feedback&quot; class=&quot;invalid-feedback&quot;&gt;</span>
+<span class="s2">            &lt;ul&gt;</span><span class="si">{</span><span class="n">errors_html</span><span class="si">}</span><span class="s2">&lt;/ul&gt;</span>
+<span class="s2">        &lt;/div&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+</code></pre></div>
+<h3 id="building-livevalidator-from-validationschema">Building LiveValidator from ValidationSchema<a class="headerlink" href="#building-livevalidator-from-validationschema" title="Permanent link">&para;</a></h3>
+<p>Automatically convert a schema to HTMX-ready validators:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationSchema</span><span class="p">,</span> <span class="n">FieldValidator</span><span class="p">,</span> <span class="n">EmailRule</span>
+
+<span class="n">schema</span> <span class="o">=</span> <span class="n">ValidationSchema</span><span class="p">()</span>
+
+<span class="n">email_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+<span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">schema</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="n">email_validator</span><span class="p">)</span>
+
+<span class="c1"># Create HTMX live validator from schema</span>
+<span class="n">live_validator</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">build_live_validator</span><span class="p">()</span>
+
+<span class="c1"># Now use live_validator in HTMX endpoints</span>
+</code></pre></div>
+<hr />
+<h2 id="cross-field-validation">Cross-Field Validation<a class="headerlink" href="#cross-field-validation" title="Permanent link">&para;</a></h2>
+<h3 id="form-level-rules">Form-Level Rules<a class="headerlink" href="#form-level-rules" title="Permanent link">&para;</a></h3>
+<p>Validate fields that depend on other fields:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormValidator</span>
+
+<span class="n">form_validator</span> <span class="o">=</span> <span class="n">FormValidator</span><span class="p">()</span>
+
+<span class="c1"># Individual field rules</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">NumericRangeRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">150</span><span class="p">))</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;parental_consent&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">RequiredRule</span><span class="p">())</span>
+
+<span class="c1"># Cross-field validation</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_minor_consent</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minors must have parental consent.&quot;&quot;&quot;</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+    <span class="n">consent</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parental_consent&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">age</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">age</span> <span class="o">&lt;</span> <span class="mi">18</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">consent</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;parental_consent&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Parental consent is required for users under 18 years old&quot;</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">{}</span>
+
+<span class="n">form_validator</span><span class="o">.</span><span class="n">add_cross_field_rule</span><span class="p">(</span><span class="n">validate_minor_consent</span><span class="p">)</span>
+
+<span class="c1"># Validate returns both field and cross-field errors</span>
+<span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">({</span>
+    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+    <span class="s2">&quot;parental_consent&quot;</span><span class="p">:</span> <span class="kc">False</span>
+<span class="p">})</span>
+
+<span class="c1"># errors = {&quot;parental_consent&quot;: [&quot;Parental consent is required...&quot;]}</span>
+</code></pre></div>
+<h3 id="conditional-field-validation">Conditional Field Validation<a class="headerlink" href="#conditional-field-validation" title="Permanent link">&para;</a></h3>
+<p>Validate a field only if another field has a certain value:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_emergency_contact</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emergency contact required if no direct phone provided.&quot;&quot;&quot;</span>
+    <span class="n">has_phone</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;phone&quot;</span><span class="p">))</span>
+    <span class="n">has_emergency_contact</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;emergency_contact&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_phone</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_emergency_contact</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;emergency_contact&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;Either a phone number or emergency contact is required&quot;</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">{}</span>
+
+<span class="n">form_validator</span><span class="o">.</span><span class="n">add_cross_field_rule</span><span class="p">(</span><span class="n">validate_emergency_contact</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="password-matching-validation">Password Matching Validation<a class="headerlink" href="#password-matching-validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_passwords_match</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ensure password and confirm_password match.&quot;&quot;&quot;</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">confirm</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confirm_password&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">password</span> <span class="ow">and</span> <span class="n">confirm</span> <span class="ow">and</span> <span class="n">password</span> <span class="o">!=</span> <span class="n">confirm</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;confirm_password&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Passwords do not match&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">{}</span>
+
+<span class="n">form_validator</span><span class="o">.</span><span class="n">add_cross_field_rule</span><span class="p">(</span><span class="n">validate_passwords_match</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="convenience-validators">Convenience Validators<a class="headerlink" href="#convenience-validators" title="Permanent link">&para;</a></h2>
+<h3 id="email-validator">Email Validator<a class="headerlink" href="#email-validator" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_email_validator</span>
+
+<span class="n">email_validator</span> <span class="o">=</span> <span class="n">create_email_validator</span><span class="p">()</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">email_validator</span><span class="p">(</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">)</span>
+<span class="c1"># ValidationResponse(field_name=&quot;email&quot;, is_valid=True, ...)</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">email_validator</span><span class="p">(</span><span class="s2">&quot;invalid-email&quot;</span><span class="p">)</span>
+<span class="c1"># ValidationResponse(</span>
+<span class="c1">#     field_name=&quot;email&quot;,</span>
+<span class="c1">#     is_valid=False,</span>
+<span class="c1">#     errors=[&quot;Please enter a valid email address&quot;],</span>
+<span class="c1">#     suggestions=[&quot;Example: user@example.com&quot;],</span>
+<span class="c1">#     value=&quot;invalid-email&quot;</span>
+<span class="c1"># )</span>
+</code></pre></div>
+<h3 id="password-strength-validator">Password Strength Validator<a class="headerlink" href="#password-strength-validator" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_password_strength_validator</span>
+
+<span class="n">password_validator</span> <span class="o">=</span> <span class="n">create_password_strength_validator</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">password_validator</span><span class="p">(</span><span class="s2">&quot;WeakPass&quot;</span><span class="p">)</span>
+<span class="c1"># ValidationResponse(</span>
+<span class="c1">#     field_name=&quot;password&quot;,</span>
+<span class="c1">#     is_valid=False,</span>
+<span class="c1">#     errors=[&quot;Password must be at least 8 characters long&quot;],</span>
+<span class="c1">#     warnings=[</span>
+<span class="c1">#         &quot;Password should contain at least one uppercase letter&quot;,</span>
+<span class="c1">#         &quot;Password should contain at least one number&quot;</span>
+<span class="c1">#     ],</span>
+<span class="c1">#     suggestions=[</span>
+<span class="c1">#         &quot;Add an uppercase letter (A-Z)&quot;,</span>
+<span class="c1">#         &quot;Add a number (0-9)&quot;</span>
+<span class="c1">#     ],</span>
+<span class="c1">#     value=&quot;WeakPass&quot;</span>
+<span class="c1"># )</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">password_validator</span><span class="p">(</span><span class="s2">&quot;SecurePass123!&quot;</span><span class="p">)</span>
+<span class="c1"># ValidationResponse(field_name=&quot;password&quot;, is_valid=True, ...)</span>
+</code></pre></div>
+<hr />
+<h2 id="common-validation-rules">Common Validation Rules<a class="headerlink" href="#common-validation-rules" title="Permanent link">&para;</a></h2>
+<h3 id="built-in-rules">Built-in Rules<a class="headerlink" href="#built-in-rules" title="Permanent link">&para;</a></h3>
+<p>The validation system includes pre-built rules for common patterns:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Purpose</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RequiredRule()</code></td>
+<td>Field must have a value</td>
+<td>Required name field</td>
+</tr>
+<tr>
+<td><code>LengthRule(min, max)</code></td>
+<td>String length constraints</td>
+<td>3–20 char username</td>
+</tr>
+<tr>
+<td><code>EmailRule()</code></td>
+<td>Valid email format</td>
+<td>Email field</td>
+</tr>
+<tr>
+<td><code>PhoneRule()</code></td>
+<td>Valid phone number</td>
+<td>Phone field</td>
+</tr>
+<tr>
+<td><code>NumericRangeRule(min, max)</code></td>
+<td>Numeric value range</td>
+<td>Age 0–150</td>
+</tr>
+<tr>
+<td><code>DateRangeRule(min_date, max_date)</code></td>
+<td>Date within range</td>
+<td>Future date only</td>
+</tr>
+<tr>
+<td><code>RegexRule(pattern)</code></td>
+<td>Custom regex pattern</td>
+<td>Custom format validation</td>
+</tr>
+<tr>
+<td><code>CustomRule(func)</code></td>
+<td>Custom validation function</td>
+<td>Complex logic</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-complete-field-validation">Example: Complete Field Validation<a class="headerlink" href="#example-complete-field-validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldValidator</span><span class="p">,</span>
+    <span class="n">EmailRule</span><span class="p">,</span>
+    <span class="n">LengthRule</span><span class="p">,</span>
+    <span class="n">NumericRangeRule</span>
+<span class="p">)</span>
+
+<span class="c1"># Email field validator</span>
+<span class="n">email_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+<span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">RequiredRule</span><span class="p">(</span><span class="s2">&quot;Email is required&quot;</span><span class="p">))</span>
+<span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+
+<span class="c1"># Username field validator</span>
+<span class="n">username_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span>
+<span class="n">username_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">RequiredRule</span><span class="p">(</span><span class="s2">&quot;Username is required&quot;</span><span class="p">))</span>
+<span class="n">username_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;3–20 characters&quot;</span><span class="p">))</span>
+
+<span class="c1"># Age field validator</span>
+<span class="n">age_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+<span class="n">age_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">NumericRangeRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Must be 13+&quot;</span><span class="p">))</span>
+
+<span class="c1"># Use in form validator</span>
+<span class="n">form_validator</span> <span class="o">=</span> <span class="n">FormValidator</span><span class="p">()</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">NumericRangeRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">150</span><span class="p">))</span>
+</code></pre></div>
+<hr />
+<h2 id="sync-htmx-validation-flow">Sync + HTMX Validation Flow<a class="headerlink" href="#sync-htmx-validation-flow" title="Permanent link">&para;</a></h2>
+<h3 id="end-to-end-example">End-to-End Example<a class="headerlink" href="#end-to-end-example" title="Permanent link">&para;</a></h3>
+<p>Here's a complete registration form with both server validation and real-time HTMX feedback:</p>
+<h4 id="1-define-form-model">1. Define Form Model<a class="headerlink" href="#1-define-form-model" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormModel</span><span class="p">,</span> <span class="n">FormField</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RegistrationForm</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Username&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;3–20 alphanumeric characters&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Email Address&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;email&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;We&#39;ll send a confirmation link&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Password&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Must be at least 8 characters&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">confirm_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Confirm Password&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Re-enter your password&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">age</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">FormField</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Age&quot;</span><span class="p">,</span>
+        <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;number&quot;</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Must be 13 or older&quot;</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="2-set-up-validation">2. Set Up Validation<a class="headerlink" href="#2-set-up-validation" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FormValidator</span><span class="p">,</span>
+    <span class="n">FieldValidator</span><span class="p">,</span>
+    <span class="n">EmailRule</span><span class="p">,</span>
+    <span class="n">LengthRule</span><span class="p">,</span>
+    <span class="n">NumericRangeRule</span>
+<span class="p">)</span>
+
+<span class="c1"># Create form validator with all rules</span>
+<span class="n">form_validator</span> <span class="o">=</span> <span class="n">FormValidator</span><span class="p">()</span>
+
+<span class="c1"># Field validators</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span>
+    <span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;3–20 characters&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span>
+    <span class="n">LengthRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Minimum 8 characters&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span>
+    <span class="n">NumericRangeRule</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Must be 13+&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Cross-field rules</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_passwords_match</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confirm_password&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;confirm_password&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Passwords do not match&quot;</span><span class="p">]}</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">{}</span>
+
+<span class="n">form_validator</span><span class="o">.</span><span class="n">add_cross_field_rule</span><span class="p">(</span><span class="n">validate_passwords_match</span><span class="p">)</span>
+
+<span class="c1"># Live validator for HTMX</span>
+<span class="n">live_validator</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">build_live_validator</span><span class="p">()</span>
+</code></pre></div>
+<h4 id="3-fastapi-endpoints">3. FastAPI Endpoints<a class="headerlink" href="#3-fastapi-endpoints" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Form</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">JSONResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_form</span><span class="p">,</span> <span class="n">validate_form_data</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/register&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">show_registration</span><span class="p">():</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">RegistrationForm</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render_form</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">framework</span><span class="o">=</span><span class="s2">&quot;bootstrap&quot;</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/register&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_registration</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="c1"># Get form data</span>
+    <span class="n">form_data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+
+    <span class="c1"># Server-side validation</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_form_data</span><span class="p">(</span><span class="n">RegistrationForm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">form_data</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="c1"># Process registration</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span>
+            <span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Registration successful!&quot;</span>
+        <span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Return form with errors</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">RegistrationForm</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">render_form</span><span class="p">(</span>
+            <span class="n">form</span><span class="p">,</span>
+            <span class="n">framework</span><span class="o">=</span><span class="s2">&quot;bootstrap&quot;</span><span class="p">,</span>
+            <span class="n">errors</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">errors</span>
+        <span class="p">)</span>
+
+<span class="c1"># HTMX validation endpoints</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/validate/username&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_username</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;username&quot;</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HTMLResponse</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;&lt;div class=&quot;valid-feedback&quot;&gt;✓ Available&lt;/div&gt;&#39;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;&lt;li&gt;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&lt;/li&gt;&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">errors</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">HTMLResponse</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;&lt;div class=&quot;invalid-feedback&quot;&gt;&lt;ul&gt;</span><span class="si">{</span><span class="n">errors</span><span class="si">}</span><span class="s1">&lt;/ul&gt;&lt;/div&gt;&#39;</span>
+        <span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/validate/email&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_email</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">()</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HTMLResponse</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;&lt;div class=&quot;valid-feedback&quot;&gt;✓ Valid email&lt;/div&gt;&#39;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;&lt;li&gt;</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&lt;/li&gt;&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">errors</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">HTMLResponse</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;&lt;div class=&quot;invalid-feedback&quot;&gt;&lt;ul&gt;</span><span class="si">{</span><span class="n">errors</span><span class="si">}</span><span class="s1">&lt;/ul&gt;&lt;/div&gt;&#39;</span>
+        <span class="p">)</span>
+</code></pre></div>
+<h4 id="4-html-template">4. HTML Template<a class="headerlink" href="#4-html-template" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">form</span> <span class="na">hx-post</span><span class="o">=</span><span class="s">&quot;/register&quot;</span> <span class="na">hx-target</span><span class="o">=</span><span class="s">&quot;#form-result&quot;</span><span class="p">&gt;</span>
+    <span class="cm">&lt;!-- Username field with HTMX validation --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;form-group&quot;</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;username&quot;</span><span class="p">&gt;</span>Username<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">input</span>
+            <span class="na">type</span><span class="o">=</span><span class="s">&quot;text&quot;</span>
+            <span class="na">id</span><span class="o">=</span><span class="s">&quot;username&quot;</span>
+            <span class="na">name</span><span class="o">=</span><span class="s">&quot;username&quot;</span>
+            <span class="na">class</span><span class="o">=</span><span class="s">&quot;form-control&quot;</span>
+            <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;3–20 characters&quot;</span>
+            <span class="na">hx-post</span><span class="o">=</span><span class="s">&quot;/validate/username&quot;</span>
+            <span class="na">hx-trigger</span><span class="o">=</span><span class="s">&quot;blur, change delay:300ms&quot;</span>
+            <span class="na">hx-target</span><span class="o">=</span><span class="s">&quot;#username-feedback&quot;</span>
+            <span class="na">hx-swap</span><span class="o">=</span><span class="s">&quot;outerHTML&quot;</span>
+        <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;username-feedback&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="cm">&lt;!-- Email field with HTMX validation --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;form-group&quot;</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">label</span> <span class="na">for</span><span class="o">=</span><span class="s">&quot;email&quot;</span><span class="p">&gt;</span>Email Address<span class="p">&lt;/</span><span class="nt">label</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">input</span>
+            <span class="na">type</span><span class="o">=</span><span class="s">&quot;email&quot;</span>
+            <span class="na">id</span><span class="o">=</span><span class="s">&quot;email&quot;</span>
+            <span class="na">name</span><span class="o">=</span><span class="s">&quot;email&quot;</span>
+            <span class="na">class</span><span class="o">=</span><span class="s">&quot;form-control&quot;</span>
+            <span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;you@example.com&quot;</span>
+            <span class="na">hx-post</span><span class="o">=</span><span class="s">&quot;/validate/email&quot;</span>
+            <span class="na">hx-trigger</span><span class="o">=</span><span class="s">&quot;blur, change delay:300ms&quot;</span>
+            <span class="na">hx-target</span><span class="o">=</span><span class="s">&quot;#email-feedback&quot;</span>
+            <span class="na">hx-swap</span><span class="o">=</span><span class="s">&quot;outerHTML&quot;</span>
+        <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;email-feedback&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="cm">&lt;!-- Other fields... --&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">button</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;submit&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;btn btn-primary&quot;</span><span class="p">&gt;</span>Register<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;form-result&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre></div>
+<hr />
+<h2 id="testing-your-validators">Testing Your Validators<a class="headerlink" href="#testing-your-validators" title="Permanent link">&para;</a></h2>
+<p>The test suite includes comprehensive coverage. Use these patterns in your tests:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FormValidator</span><span class="p">,</span>
+    <span class="n">FieldValidator</span><span class="p">,</span>
+    <span class="n">EmailRule</span><span class="p">,</span>
+    <span class="n">ValidationResponse</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_email_validation</span><span class="p">():</span>
+    <span class="n">email_validator</span> <span class="o">=</span> <span class="n">FieldValidator</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+    <span class="n">email_validator</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="n">EmailRule</span><span class="p">())</span>
+
+    <span class="c1"># Valid email</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">email_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">is_valid</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">errors</span> <span class="o">==</span> <span class="p">[]</span>
+
+    <span class="c1"># Invalid email</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">email_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="s2">&quot;not-an-email&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">is_valid</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_cross_field_validation</span><span class="p">():</span>
+    <span class="n">form_validator</span> <span class="o">=</span> <span class="n">FormValidator</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_passwords</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;password&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confirm&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;confirm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Passwords don&#39;t match&quot;</span><span class="p">]}</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">{}</span>
+
+    <span class="n">form_validator</span><span class="o">.</span><span class="n">add_cross_field_rule</span><span class="p">(</span><span class="n">validate_passwords</span><span class="p">)</span>
+
+    <span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">form_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">({</span>
+        <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;secret&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;confirm&quot;</span><span class="p">:</span> <span class="s2">&quot;different&quot;</span>
+    <span class="p">})</span>
+
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">is_valid</span>
+    <span class="k">assert</span> <span class="s2">&quot;confirm&quot;</span> <span class="ow">in</span> <span class="n">errors</span>
+</code></pre></div>
+<hr />
+<h2 id="layout-demo-tab-rendering-verification">Layout Demo &amp; Tab Rendering Verification<a class="headerlink" href="#layout-demo-tab-rendering-verification" title="Permanent link">&para;</a></h2>
+<p>The <code>tests/test_layout_demo_smoke.py</code> smoke test verifies that initial tab content renders correctly for both Bootstrap and Material frameworks:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_layout_demo_bootstrap_initial_tab_renders</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify Bootstrap tabs show initial tab content.&quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/layouts&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+    <span class="k">assert</span> <span class="s2">&quot;Tab 1 Content&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+    <span class="c1"># Assert tab buttons exist</span>
+    <span class="k">assert</span> <span class="s1">&#39;class=&quot;nav-link active&quot;&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_layout_demo_material_initial_tab_renders</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify Material tabs show initial tab content.&quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/layouts?style=material&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+    <span class="c1"># Assert initial content and Material tab classes</span>
+    <span class="k">assert</span> <span class="s2">&quot;Initial Tab Content&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+    <span class="k">assert</span> <span class="s1">&#39;data-toggle=&quot;tab&quot;&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+</code></pre></div>
+<p>This coverage ensures that tab layouts work correctly across frameworks.</p>
+<hr />
+<h2 id="pydantic-v2-deprecation-resolution">Pydantic v2 Deprecation Resolution<a class="headerlink" href="#pydantic-v2-deprecation-resolution" title="Permanent link">&para;</a></h2>
+<p>As of this release, all Pydantic v2 deprecation warnings have been resolved:</p>
+<p>✅ <strong>Resolved Deprecations:</strong>
+- <code>min_items</code>/<code>max_items</code> → <code>min_length</code>/<code>max_length</code> in all FormField calls
+- Extra kwargs on <code>Field()</code> → properly use <code>json_schema_extra</code>
+- Starlette <code>TemplateResponse</code> signature updated to new parameter order</p>
+<p><strong>Result:</strong> Deprecation warnings reduced from 23 → 8 (removed 15 Pydantic deprecations). The remaining 8 warnings are intentional migration guides (<code>form_layouts</code> deprecation notice) and informational (JSON schema hints).</p>
+<p>Run validation tests:
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_validation_consolidation.py<span class="w"> </span>-v
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/test_layout_demo_smoke.py<span class="w"> </span>-v
+</code></pre></div></p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>The unified validation engine provides:</p>
+<ol>
+<li><strong>Canonical ValidationResponse</strong> for all validation flows</li>
+<li><strong>Single code path</strong> via <code>validation.py</code> with re-exports from <code>live_validation.py</code></li>
+<li><strong>Flexible rule composition</strong> via <code>FieldValidator</code> and <code>FormValidator</code></li>
+<li><strong>HTMX integration</strong> via <code>LiveValidator</code> with configurable behavior</li>
+<li><strong>Cross-field validation</strong> for dependent fields and complex rules</li>
+<li><strong>Convenience validators</strong> for common patterns (email, password strength)</li>
+<li><strong>Full async support</strong> for FastAPI and async frameworks</li>
+<li><strong>Pydantic v2 compatibility</strong> with zero deprecation warnings in critical paths</li>
+</ol>
+<p>For questions or examples, see:
+- <code>tests/test_validation_consolidation.py</code> — Consolidated validation tests (10 tests)
+- <code>tests/test_layout_demo_smoke.py</code> — Layout/tab rendering verification
+- <code>examples/fastapi_example.py</code> — Real-world FastAPI integration</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 - 2026 Mike Ryan
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/devsetgo" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/_devsetgo" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.instant", "navigation.tabs.sticky", "toc.integrate", "toc.follow", "navigation.top"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../js/print-site.js"></script>
+      
+    
+  </body>
+</html>
