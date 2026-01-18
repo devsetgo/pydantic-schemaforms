@@ -59,6 +59,19 @@ File: `pydantic_schemaforms/enhanced_renderer.py`
 
 - `include_framework_assets`: include framework CSS/JS in the returned HTML (default: `False`).
 - `asset_mode`: controls how those assets are emitted.
+- `self_contained=True`: convenience flag equivalent to `include_framework_assets=True` and `asset_mode="vendored"`.
+
+Example (simple “just give me a fully styled Bootstrap form”):
+
+```python
+from pydantic_schemaforms.enhanced_renderer import render_form_html
+
+html = render_form_html(
+  MyForm,
+  framework="bootstrap",
+  self_contained=True,
+)
+```
 
 Unlike the legacy wrapper, this helper does **not** append HTMX/IMask tags; it’s a thin convenience wrapper around `EnhancedFormRenderer`.
 

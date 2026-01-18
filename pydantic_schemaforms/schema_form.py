@@ -241,6 +241,10 @@ class FormModel(BaseModel):
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
+        *,
+        self_contained: bool = False,
+        include_framework_assets: bool = False,
+        asset_mode: str = "vendored",
         **kwargs,
     ) -> str:
         """
@@ -255,10 +259,18 @@ class FormModel(BaseModel):
         Returns:
             Complete HTML form as string
         """
-        from .enhanced_renderer import EnhancedFormRenderer
+        from .enhanced_renderer import render_form_html
 
-        renderer = EnhancedFormRenderer(framework=framework)
-        return renderer.render_form_from_model(cls, data=data, errors=errors, **kwargs)
+        return render_form_html(
+            cls,
+            form_data=data,
+            errors=errors,
+            framework=framework,
+            self_contained=self_contained,
+            include_framework_assets=include_framework_assets,
+            asset_mode=asset_mode,
+            **kwargs,
+        )
 
     @classmethod
     def register_field(
