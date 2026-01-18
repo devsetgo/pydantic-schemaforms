@@ -113,8 +113,10 @@ from .version_check import check_python_version, verify_template_strings
 # - form_renderer.py -> use enhanced_renderer.py or modern_renderer.py instead
 # - ui_elements.py -> use inputs/ directory structure instead
 # - template_compat.py -> empty/unused
+# App Name and version
 
 __version__ = "26.1.1.beta"
+__package_name__ = "pydantic-schemaforms"
 __author__ = "Pydantic Forms Team"
 __description__ = "Modern form generation library for Python 3.14+"
 
@@ -181,6 +183,7 @@ __all__ = [
     "FormIntegration",
     "handle_form",
     "handle_form_async",
+    "__package_name__",
 ] + list(_INPUT_EXPORTS)
 
 # Quick start documentation

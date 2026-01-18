@@ -493,6 +493,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
     # Use Enhanced Renderer directly like the main dynamic endpoint
     if style == "material":
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -502,8 +503,10 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     else:
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = EnhancedFormRenderer(framework=style)
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -513,6 +516,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Edit Layout Demo - Pre-filled Example",
@@ -768,6 +772,7 @@ async def layouts_get(
     # Use Enhanced Renderer directly to avoid render_form_html wrapper issues
     if style == "material":
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -777,8 +782,10 @@ async def layouts_get(
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     else:
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = EnhancedFormRenderer(framework=style)
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -788,6 +795,7 @@ async def layouts_get(
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Layout Demonstration - All Types",
@@ -863,6 +871,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         # Re-render form with errors
         if style == "material":
             from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+            from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
             renderer = SimpleMaterialRenderer()
             form_html = renderer.render_form_from_model(
                 LayoutDemonstrationForm,
@@ -872,8 +881,10 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
                 include_submit_button=True,
                 debug=debug,
             )
+            form_html = wrap_with_schemaforms_markers(form_html)
         else:
             from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+            from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
             renderer = EnhancedFormRenderer(framework=style)
             form_html = renderer.render_form_from_model(
                 LayoutDemonstrationForm,
@@ -883,6 +894,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
                 include_submit_button=True,
                 debug=debug,
             )
+            form_html = wrap_with_schemaforms_markers(form_html)
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -899,6 +911,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
 async def self_contained(demo: bool = True, debug: bool = True):
     """Self-contained form demo - zero external dependencies."""
     from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
     # Add demo data if requested
     form_data = {}
@@ -916,6 +929,7 @@ async def self_contained(demo: bool = True, debug: bool = True):
 
     renderer = SimpleMaterialRenderer()
     form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug)
+    form_html = wrap_with_schemaforms_markers(form_html)
 
     return f"""<!DOCTYPE html>
 <html lang="en">

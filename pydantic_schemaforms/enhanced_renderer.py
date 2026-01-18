@@ -13,6 +13,7 @@ import json
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
+from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
@@ -553,6 +554,8 @@ def render_form_html(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    *,
+    include_html_markers: bool = True,
     **kwargs,
 ) -> str:
     """Convenience wrapper mirroring the legacy helper."""
@@ -565,7 +568,7 @@ def render_form_html(
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
         renderer = SimpleMaterialRenderer()
-        return renderer.render_form_from_model(
+        html = renderer.render_form_from_model(
             form_model_cls,
             data=form_data,
             errors=errors,
@@ -573,9 +576,10 @@ def render_form_html(
             debug=debug,
             **kwargs,
         )
+        return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
     renderer = EnhancedFormRenderer(framework=framework)
-    return renderer.render_form_from_model(
+    html = renderer.render_form_from_model(
         form_model_cls,
         data=form_data,
         errors=errors,
@@ -583,6 +587,7 @@ def render_form_html(
         debug=debug,
         **kwargs,
     )
+    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
 
 async def render_form_html_async(
@@ -592,6 +597,8 @@ async def render_form_html_async(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    *,
+    include_html_markers: bool = True,
     **kwargs,
 ) -> str:
     """Async counterpart to render_form_html."""
@@ -612,4 +619,5 @@ async def render_form_html_async(
     except RuntimeError:
         loop = asyncio.get_event_loop()
 
-    return await loop.run_in_executor(None, render_callable)
+    html = await loop.run_in_executor(None, render_callable)
+    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
