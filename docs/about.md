@@ -8,6 +8,14 @@ It focuses on:
 - First-class sync (WSGI) and async (ASGI) integration helpers
 - Offline-by-default asset delivery (vendored/inlined assets), with explicit opt-in for CDNs
 
+If you’re new, start here:
+
+- [Quick Start](quickstart.md)
+- [Configuration](configuration.md)
+- [Inputs (UI Elements)](inputs.md)
+- [Layouts](layouts.md)
+- [Assets](assets.md)
+
 Project links:
 
 - Docs: https://devsetgo.github.io/pydantic-schemaforms/

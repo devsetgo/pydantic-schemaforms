@@ -298,7 +298,7 @@ These rules are intended to prevent “helpful” drift away from the original c
   - `pydantic_schemaforms/integration/adapters.py` — High-level sync/async integration entry points (`handle_form`, `handle_form_async`).
   - `pydantic_schemaforms/integration/async_support.py` — Framework-agnostic async request/validation helpers.
   - `pydantic_schemaforms/integration/builder.py` — Form builder utilities (prebuilt forms, page wrapper helpers, asset tag helpers).
-  - `pydantic_schemaforms/integration/react.py` — React JSON schema form-oriented integration helpers.
+  - `pydantic_schemaforms/integration/react.py` — JSON-schema-form-oriented integration helpers.
   - `pydantic_schemaforms/integration/schema.py` — JSON/OpenAPI schema generation utilities.
   - `pydantic_schemaforms/integration/sync.py` — Framework-agnostic sync request/validation helpers.
   - `pydantic_schemaforms/integration/utils.py` — Shared utilities for integrations (type mapping, framework selection, validation conversion).
