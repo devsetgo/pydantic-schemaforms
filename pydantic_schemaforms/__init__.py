@@ -1,7 +1,7 @@
 """
 Pydantic Forms - Modern form generation library using Python 3.14 template strings
 
-A production-ready competitor to WTForms with React JSON Schema Forms capabilities.
+A production-ready competitor to WTForms with a JSON-schema-form style UI vocabulary.
 Features:
 - Python 3.14 native template strings (REQUIRED)
 - Comprehensive HTML5 input types

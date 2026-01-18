@@ -1,4 +1,4 @@
-"""React JSON Schema form helpers."""
+"""JSON-schema-form integration helpers."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from .schema import JSONSchemaGenerator
 
 
 class ReactJSONSchemaIntegration:
-    """Generate JSON schema artifacts for React JSON Schema Forms."""
+    """Generate JSON schema artifacts for JSON-schema-form style consumers."""
 
     def __init__(self) -> None:
         self._schema_generator = JSONSchemaGenerator()

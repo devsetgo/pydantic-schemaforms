@@ -1,7 +1,7 @@
 
-"""
-Enhanced Form Renderer for Pydantic Models with UI Elements
-Supports UI element specifications similar to React JSON Schema Forms
+"""Enhanced Form Renderer for Pydantic Models with UI Elements.
+
+Supports a JSON-schema-form style UI vocabulary via field metadata.
 """
 
 from __future__ import annotations

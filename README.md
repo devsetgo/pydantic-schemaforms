@@ -11,6 +11,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/coverage-badge.svg)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 [![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/tests-badge.svg)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
+[![Versioning: Year-Quarter-Build](https://img.shields.io/badge/Versioning-Year--Quarter--Build-informational)](#ui-vocabulary-compatibility)
 
 **CI/CD Pipeline:**
 [![Testing - Main](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml/badge.svg?branch=main)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
@@ -36,7 +37,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🚀 **Zero-Configuration Forms**: Generate complete HTML forms directly from Pydantic models
 - 🎨 **Multi-Framework Support**: Bootstrap, Material Design, Tailwind CSS, and custom frameworks
 - ✅ **Built-in Validation**: Client-side HTML5 + server-side Pydantic validation
-- 🔧 **React JSON Schema Forms Compatible**: Uses familiar `ui_element`, `ui_autofocus`, `ui_options` syntax
+- 🔧 **JSON-Schema-form style UI hints**: Uses a familiar `ui_element`, `ui_autofocus`, `ui_options` vocabulary
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
 
@@ -51,7 +52,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 ## Requirements
 
 - Python **3.14+**
-- Pydantic **2.7+**
+- Pydantic **2.7+** (included in library)
 
 ## Quick Start
 
@@ -248,9 +249,9 @@ def register():
 
 ---
 
-## React JSON Schema Forms Compatibility
+## UI vocabulary compatibility
 
-The library supports a React JSON Schema Forms-style vocabulary (UI hints like input types and options),
+The library supports a JSON-Schema-form style vocabulary (UI hints like input types and options),
 but you can also stay “pure Pydantic” and let the defaults drive everything.
 
 See the docs site for the current, supported UI hint patterns.

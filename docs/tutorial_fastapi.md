@@ -8,6 +8,17 @@ It also explains when to use the **sync** handler (`handle_form`) vs the **async
 
 - Python 3.14+
 
+## Note: model-first rendering
+
+This tutorial uses the builder + handler flow because it’s easy to drop into a single file demo.
+
+If you prefer a model-first API (and want direct control of assets/layout), use:
+
+- `pydantic_schemaforms.enhanced_renderer.render_form_html()`
+- or `FormModel.render_form()`
+
+See [docs/configuration.md](configuration.md).
+
 ## 1) Create a project
 
 ```bash

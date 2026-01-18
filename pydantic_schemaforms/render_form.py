@@ -28,7 +28,7 @@ def render_form_html(
     Render an HTML form for the given FormModel class with UI element support.
 
     This function maintains backward compatibility while using the enhanced renderer
-    that supports UI elements like React JSON Schema Forms.
+    that supports a JSON-schema-form style UI vocabulary.
 
     Args:
         form_model_cls: Pydantic FormModel class with UI element specifications

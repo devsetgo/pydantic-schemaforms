@@ -149,7 +149,7 @@ class FormModel(BaseModel):
     """
     Enhanced base class for form models with UI element support.
     Supports UI element specifications through field annotations and generates
-    rich schemas for form rendering similar to React JSON Schema Forms.
+    rich schemas for form rendering using a JSON-schema-form style UI vocabulary.
     """
 
     __runtime_fields__: Dict[str, Tuple[Any, FieldInfo]] = {}
