@@ -560,6 +560,16 @@ def render_form_html(
 ) -> str:
     """Convenience wrapper mirroring the legacy helper."""
 
+    # Backwards-compatible knobs (historically accepted via kwargs).
+    # - self_contained: inline framework assets (CSS/JS) for the selected framework.
+    # - include_framework_assets: explicit opt-in for framework assets.
+    # - asset_mode: 'vendored' (inline) or 'cdn' (external).
+    self_contained = bool(kwargs.pop("self_contained", False))
+    include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
+    asset_mode = str(kwargs.pop("asset_mode", "vendored"))
+    if self_contained:
+        include_framework_assets = True
+
     if isinstance(errors, SchemaFormValidationError):
         error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
         errors = error_dict
@@ -578,7 +588,11 @@ def render_form_html(
         )
         return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
-    renderer = EnhancedFormRenderer(framework=framework)
+    renderer = EnhancedFormRenderer(
+        framework=framework,
+        include_framework_assets=include_framework_assets,
+        asset_mode=asset_mode,
+    )
     html = renderer.render_form_from_model(
         form_model_cls,
         data=form_data,
@@ -603,6 +617,13 @@ async def render_form_html_async(
 ) -> str:
     """Async counterpart to render_form_html."""
 
+    # Ensure these knobs work consistently in async mode too.
+    self_contained = bool(kwargs.pop("self_contained", False))
+    include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
+    asset_mode = str(kwargs.pop("asset_mode", "vendored"))
+    if self_contained:
+        include_framework_assets = True
+
     render_callable = partial(
         render_form_html,
         form_model_cls,
@@ -611,6 +632,8 @@ async def render_form_html_async(
         framework=framework,
         layout=layout,
         debug=debug,
+        include_framework_assets=include_framework_assets,
+        asset_mode=asset_mode,
         **kwargs,
     )
 
@@ -621,4 +644,3 @@ async def render_form_html_async(
 
     html = await loop.run_in_executor(None, render_callable)
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
-
