@@ -437,7 +437,7 @@ ${component_assets}
 
     # Complete Page Templates
     FORM_PAGE = TemplateString(
-        """
+        """<!--- Start Pydantic-SchemaForms -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -457,7 +457,7 @@ ${component_assets}
     ${custom_scripts}
 </body>
 </html>
-"""
+<!--- End Pydantic-SchemaForms -->"""
     )
 
     # Material Templates

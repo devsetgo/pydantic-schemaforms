@@ -493,6 +493,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
     # Use Enhanced Renderer directly like the main dynamic endpoint
     if style == "material":
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -502,8 +503,10 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     else:
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = EnhancedFormRenderer(framework=style)
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -513,6 +516,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Edit Layout Demo - Pre-filled Example",
@@ -768,6 +772,7 @@ async def layouts_get(
     # Use Enhanced Renderer directly to avoid render_form_html wrapper issues
     if style == "material":
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = SimpleMaterialRenderer()
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -777,8 +782,10 @@ async def layouts_get(
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     else:
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = EnhancedFormRenderer(framework=style)
         form_html = renderer.render_form_from_model(
             LayoutDemonstrationForm,
@@ -788,6 +795,7 @@ async def layouts_get(
             include_submit_button=True,
             debug=debug,
         )
+        form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Layout Demonstration - All Types",
@@ -863,6 +871,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         # Re-render form with errors
         if style == "material":
             from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+            from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
             renderer = SimpleMaterialRenderer()
             form_html = renderer.render_form_from_model(
                 LayoutDemonstrationForm,
@@ -872,8 +881,10 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
                 include_submit_button=True,
                 debug=debug,
             )
+            form_html = wrap_with_schemaforms_markers(form_html)
         else:
             from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+            from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
             renderer = EnhancedFormRenderer(framework=style)
             form_html = renderer.render_form_from_model(
                 LayoutDemonstrationForm,
@@ -883,6 +894,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
                 include_submit_button=True,
                 debug=debug,
             )
+            form_html = wrap_with_schemaforms_markers(form_html)
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -896,19 +908,10 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         })
 
 @app.get("/self-contained", response_class=HTMLResponse)
-async def self_contained(
-    style: str = "material",
-    demo: bool = True,
-    debug: bool = True,
-):
-    """Self-contained form demo - zero external dependencies.
-
-    Supports both Bootstrap and Material (Material Design 3) renderers.
-    """
-
-    style = (style or "").strip().lower()
-    if style not in {"bootstrap", "material"}:
-        raise HTTPException(status_code=400, detail="style must be 'bootstrap' or 'material'")
+async def self_contained(demo: bool = True, debug: bool = True):
+    """Self-contained form demo - zero external dependencies."""
+    from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
     # Add demo data if requested
     form_data = {}
@@ -924,51 +927,20 @@ async def self_contained(
             "newsletter": False
         }
 
-    # Render with vendored (inlined) assets for a truly self-contained page.
-    # - Bootstrap: inlines vendored Bootstrap CSS/JS.
-    # - Material: renderer already embeds its required assets.
-    form_html = render_form_html(
-        UserRegistrationForm,
-        framework=style,
-        form_data=form_data,
-        debug=debug,
-        self_contained=True,
-    )
-
-    if style == "bootstrap":
-        included_items = """
-            <li>✅ Vendored Bootstrap 5 CSS</li>
-            <li>✅ Vendored Bootstrap JS bundle</li>
-            <li>✅ Form validation and styling</li>
-            <li>✅ No external CDN dependencies</li>
-        """.strip()
-        renderer_name = "EnhancedFormRenderer"
-    else:
-        included_items = """
-            <li>✅ Complete Material Design 3 CSS</li>
-            <li>✅ JavaScript for interactions</li>
-            <li>✅ Icons (inline SVG)</li>
-            <li>✅ Form validation and styling</li>
-            <li>✅ No external CDN dependencies</li>
-        """.strip()
-        renderer_name = "SimpleMaterialRenderer"
+    renderer = SimpleMaterialRenderer()
+    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug)
+    form_html = wrap_with_schemaforms_markers(form_html)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Contained Form Demo ({style.title()})</title>
+    <title>Self-Contained Form Demo</title>
 </head>
 <body style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui;">
     <h1>🎯 Self-Contained Form Demo (FastAPI)</h1>
     <p><strong>This form includes ZERO external dependencies!</strong></p>
-    <p>
-        Style:
-        <a href="/self-contained?style=bootstrap" style="color: #0066cc; text-decoration: none;">Bootstrap</a>
-        |
-        <a href="/self-contained?style=material" style="color: #0066cc; text-decoration: none;">Material</a>
-    </p>
     <p>Everything needed is embedded in the form HTML below:</p>
 
     <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa;">
@@ -978,14 +950,18 @@ async def self_contained(
     <div style="margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
         <h3>🔧 What's Included:</h3>
         <ul>
-            {included_items}
+            <li>✅ Complete Material Design 3 CSS</li>
+            <li>✅ JavaScript for interactions</li>
+            <li>✅ Icons (inline SVG)</li>
+            <li>✅ Form validation and styling</li>
+            <li>✅ No external CDN dependencies</li>
         </ul>
         <p><strong>Template Usage:</strong> <code>&lt;div&gt;{{{{ form_html | safe }}}}&lt;/div&gt;</code></p>
     </div>
 
     <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
         <h3>📝 Raw HTML Source:</h3>
-        <p>This is the complete HTML generated by the <code>{renderer_name}</code> pipeline:</p>
+        <p>This is the complete HTML generated by the <code>SimpleMaterialRenderer</code>:</p>
         <details style="margin-top: 15px;">
             <summary style="cursor: pointer; font-weight: bold; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
                 Click to view raw HTML source
@@ -1090,13 +1066,7 @@ async def api_submit_form(form_type: str, request: Request):
     }
 
 @app.get("/api/forms/{form_type}/render")
-async def api_render_form(
-    form_type: str,
-    style: str = "bootstrap",
-    debug: bool = False,
-    include_assets: bool = True,
-    asset_mode: str = "vendored",
-):
+async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool = False):
     """API endpoint to render form HTML."""
     form_mapping = {
         "login": MinimalLoginForm,
@@ -1110,13 +1080,7 @@ async def api_render_form(
         raise HTTPException(status_code=404, detail="Form type not found")
 
     form_class = form_mapping[form_type]
-    form_html = render_form_html(
-        form_class,
-        framework=style,
-        debug=debug,
-        include_framework_assets=include_assets,
-        asset_mode=asset_mode,
-    )
+    form_html = render_form_html(form_class, framework=style, debug=debug)
 
     return {
         "form_type": form_type,

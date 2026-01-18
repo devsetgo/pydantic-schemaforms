@@ -19,16 +19,16 @@ def render_form_html(
     framework: str = "bootstrap",
     *,
     asset_mode: str = "vendored",
-    include_framework_assets: bool = False,
     include_imask: bool = False,
     debug: bool = False,
+    include_html_markers: bool = True,
     **kwargs,
 ) -> str:
     """
     Render an HTML form for the given FormModel class with UI element support.
 
     This function maintains backward compatibility while using the enhanced renderer
-    that supports a JSON-schema-form style UI vocabulary.
+    that supports UI elements like React JSON Schema Forms.
 
     Args:
         form_model_cls: Pydantic FormModel class with UI element specifications
@@ -68,8 +68,7 @@ def render_form_html(
         errors=errors,
         framework=framework,
         debug=debug,
-        include_framework_assets=include_framework_assets,
-        asset_mode=asset_mode,
+        include_html_markers=False,
         **render_kwargs,
     )
 
@@ -85,4 +84,6 @@ def render_form_html(
         if imask_tag:
             form_html += f"\n{imask_tag}"
 
-    return form_html
+    from .html_markers import wrap_with_schemaforms_markers
+
+    return wrap_with_schemaforms_markers(form_html, enabled=include_html_markers)

@@ -335,7 +335,7 @@ def create_form_from_model(model: Type[BaseModel], **kwargs: Any) -> AutoFormBui
 
 
 FORM_PAGE_TEMPLATE = string.Template(
-    """
+    """<!--- Start Pydantic-SchemaForms -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -372,7 +372,7 @@ FORM_PAGE_TEMPLATE = string.Template(
     ${validation_script}
 </body>
 </html>
-"""
+<!--- End Pydantic-SchemaForms -->"""
 )
 
 
@@ -393,6 +393,7 @@ def render_form_page(
     *,
     include_framework_assets: bool = False,
     asset_mode: str = "vendored",
+    include_html_markers: bool = True,
 ) -> str:
     form_html = form_builder.render(data or {}, errors or {})
     validation_script = form_builder.get_validation_script()
@@ -408,7 +409,10 @@ def render_form_page(
             asset_mode=asset_mode,
         )
     )
-    return FORM_PAGE_TEMPLATE.substitute(**template_data)
+    from ..html_markers import wrap_with_schemaforms_markers
+
+    html = FORM_PAGE_TEMPLATE.substitute(**template_data)
+    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
 
 __all__ = [

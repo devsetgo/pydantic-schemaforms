@@ -1,7 +1,7 @@
 
-"""Enhanced Form Renderer for Pydantic Models with UI Elements.
-
-Supports a JSON-schema-form style UI vocabulary via field metadata.
+"""
+Enhanced Form Renderer for Pydantic Models with UI Elements
+Supports UI element specifications similar to React JSON Schema Forms
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import json
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
+from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
@@ -148,20 +149,10 @@ class EnhancedFormRenderer:
 
         output_parts = [form_markup]
 
-        # Include model-list JavaScript when any model-list markup is present.
-        # Layout fields can render nested models (via render_form_fields_only), so scanning
-        # only the top-level schema fields would miss model-list widgets inside layouts.
         has_model_list_fields = any(
             resolve_ui_element(field_schema) == "model_list" for _name, field_schema in fields
         )
-        has_model_list_markup = (
-            "model-list-container" in form_markup
-            or "add-item-btn" in form_markup
-            or "remove-item-btn" in form_markup
-        )
-        has_model_list_script = "function initializeModelLists" in form_markup
-
-        if (has_model_list_fields or has_model_list_markup) and not has_model_list_script:
+        if has_model_list_fields:
             from .model_list import ModelListRenderer
 
             list_renderer = ModelListRenderer(framework=self._model_list_framework())
@@ -564,28 +555,30 @@ def render_form_html(
     layout: str = "vertical",
     debug: bool = False,
     *,
-    self_contained: bool = False,
-    include_framework_assets: bool = False,
-    asset_mode: str = "vendored",
+    include_html_markers: bool = True,
     **kwargs,
 ) -> str:
     """Convenience wrapper mirroring the legacy helper."""
+
+    # Backwards-compatible knobs (historically accepted via kwargs).
+    # - self_contained: inline framework assets (CSS/JS) for the selected framework.
+    # - include_framework_assets: explicit opt-in for framework assets.
+    # - asset_mode: 'vendored' (inline) or 'cdn' (external).
+    self_contained = bool(kwargs.pop("self_contained", False))
+    include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
+    asset_mode = str(kwargs.pop("asset_mode", "vendored"))
+    if self_contained:
+        include_framework_assets = True
 
     if isinstance(errors, SchemaFormValidationError):
         error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
         errors = error_dict
 
-    # "Self-contained" means: no host template dependencies for framework CSS/JS.
-    # For Bootstrap/Materialize we inline vendored framework assets.
-    if self_contained:
-        include_framework_assets = True
-        asset_mode = "vendored"
-
     if framework == "material":
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
         renderer = SimpleMaterialRenderer()
-        return renderer.render_form_from_model(
+        html = renderer.render_form_from_model(
             form_model_cls,
             data=form_data,
             errors=errors,
@@ -593,13 +586,14 @@ def render_form_html(
             debug=debug,
             **kwargs,
         )
+        return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
     renderer = EnhancedFormRenderer(
         framework=framework,
         include_framework_assets=include_framework_assets,
         asset_mode=asset_mode,
     )
-    return renderer.render_form_from_model(
+    html = renderer.render_form_from_model(
         form_model_cls,
         data=form_data,
         errors=errors,
@@ -607,6 +601,7 @@ def render_form_html(
         debug=debug,
         **kwargs,
     )
+    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
 
 async def render_form_html_async(
@@ -616,9 +611,18 @@ async def render_form_html_async(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    *,
+    include_html_markers: bool = True,
     **kwargs,
 ) -> str:
     """Async counterpart to render_form_html."""
+
+    # Ensure these knobs work consistently in async mode too.
+    self_contained = bool(kwargs.pop("self_contained", False))
+    include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
+    asset_mode = str(kwargs.pop("asset_mode", "vendored"))
+    if self_contained:
+        include_framework_assets = True
 
     render_callable = partial(
         render_form_html,
@@ -628,6 +632,8 @@ async def render_form_html_async(
         framework=framework,
         layout=layout,
         debug=debug,
+        include_framework_assets=include_framework_assets,
+        asset_mode=asset_mode,
         **kwargs,
     )
 
@@ -636,4 +642,5 @@ async def render_form_html_async(
     except RuntimeError:
         loop = asyncio.get_event_loop()
 
-    return await loop.run_in_executor(None, render_callable)
+    html = await loop.run_in_executor(None, render_callable)
+    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
