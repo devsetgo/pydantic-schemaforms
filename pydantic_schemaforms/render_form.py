@@ -87,3 +87,4 @@ def render_form_html(
     from .html_markers import wrap_with_schemaforms_markers
 
     return wrap_with_schemaforms_markers(form_html, enabled=include_html_markers)
+

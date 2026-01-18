@@ -81,6 +81,15 @@ def deploy_documentation(
     project_root = Path(__file__).resolve().parent.parent
     os.chdir(project_root)
 
+    # Ensure the local repo has the latest docs branch so mike can fast-forward push.
+    # This avoids failures like: "gh-pages (non-fast-forward)" in CI re-runs.
+    if push and branch:
+        try:
+            run_command(["git", "fetch", "origin", f"{branch}:{branch}"])
+        except subprocess.CalledProcessError:
+            # If the branch doesn't exist yet (first deploy), mike will create it.
+            pass
+
     cmd: list[str] = ["mike", "deploy"]
 
     if branch:

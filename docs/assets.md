@@ -33,6 +33,7 @@ Most APIs accept `asset_mode` with these values:
 File: `pydantic_schemaforms/render_form.py`
 
 - `asset_mode="vendored" | "cdn" | "none"`
+- `include_framework_assets`: whether to include framework CSS/JS (Bootstrap/Materialize) in the returned HTML.
 - HTMX is included by default (vendored inline) because this wrapper historically assumed HTMX.
 - IMask is available but **not injected unless requested**.
 
@@ -45,9 +46,34 @@ html = render_form_html(
     MyForm,
     framework="bootstrap",
     asset_mode="vendored",
+    include_framework_assets=True,  # inline Bootstrap CSS/JS for self-contained HTML
     include_imask=True,  # enable when you use masked inputs
 )
 ```
+
+If you already provide Bootstrap/Materialize in your host app (a global layout, bundler, etc.), keep `include_framework_assets=False` and use `asset_mode="none"` or `"vendored"` depending on whether you still want the helper to inject HTMX.
+
+### Enhanced convenience helper: `enhanced_renderer.render_form_html()`
+
+File: `pydantic_schemaforms/enhanced_renderer.py`
+
+- `include_framework_assets`: include framework CSS/JS in the returned HTML (default: `False`).
+- `asset_mode`: controls how those assets are emitted.
+- `self_contained=True`: convenience flag equivalent to `include_framework_assets=True` and `asset_mode="vendored"`.
+
+Example (simple “just give me a fully styled Bootstrap form”):
+
+```python
+from pydantic_schemaforms.enhanced_renderer import render_form_html
+
+html = render_form_html(
+  MyForm,
+  framework="bootstrap",
+  self_contained=True,
+)
+```
+
+Unlike the legacy wrapper, this helper does **not** append HTMX/IMask tags; it’s a thin convenience wrapper around `EnhancedFormRenderer`.
 
 ### Enhanced renderer: `EnhancedFormRenderer`
 

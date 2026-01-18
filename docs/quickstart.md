@@ -1,11 +1,32 @@
 # Quick Start
 
-This page shows the **one recommended way** to integrate pydantic-schemaforms into an app:
+This page shows two common ways to integrate pydantic-schemaforms into an app:
 
-- Build a `FormBuilder` (often via `create_form_from_model()`)
-- Use exactly one handler per runtime:
-  - Sync: `handle_form()`
-  - Async: `handle_form_async()`
+- Model-first rendering (`FormModel` + `render_form_html()`)
+- Builder + handlers (legacy):
+    - Build a `FormBuilder` (often via `create_form_from_model()`)
+    - Use exactly one handler per runtime:
+        - Sync: `handle_form()`
+        - Async: `handle_form_async()`
+
+## Option A: Model-first rendering (recommended)
+
+```python
+from pydantic_schemaforms import Field, FormModel
+from pydantic_schemaforms.enhanced_renderer import render_form_html
+
+
+class User(FormModel):
+    name: str = Field(...)
+    email: str = Field(..., ui_element="email")
+
+
+html = render_form_html(User, submit_url="/user")
+```
+
+If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`.
+
+See: `docs/configuration.md` and `docs/assets.md`.
 
 ## 1) Build a form from a Pydantic model
 
