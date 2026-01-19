@@ -64,37 +64,73 @@ pip install pydantic-schemaforms
 
 ### FastAPI (async / ASGI)
 
-This is the recommended pattern for FastAPI: build a form once per request and use `handle_form_async()`.
+This is the recommended “drop-in HTML” pattern for FastAPI: define a `FormModel` and call `render_form_html()`.
 
 ```python
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import ValidationError
 
-from pydantic_schemaforms import create_form_from_model, handle_form_async
+from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
-class User(BaseModel):
-    name: str
-    email: EmailStr
+class MinimalLoginForm(FormModel):
+    username: str = Field(
+        title="Username",
+        ui_autofocus=True,
+        ui_placeholder="demo_user",
+    )
+    password: str = Field(
+        title="Password",
+        ui_element="password",
+    )
+    remember_me: bool = Field(
+        default=False,
+        title="Remember me",
+        ui_element="checkbox",
+    )
 
 
 app = FastAPI()
 
 
-@app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
-async def user_form(request: Request):
-    builder = create_form_from_model(User, framework="bootstrap")
+@app.api_route("/login", methods=["GET", "POST"], response_class=HTMLResponse)
+async def login(request: Request, style: str = "bootstrap"):
+    form_data = {}
+    errors = {}
 
     if request.method == "POST":
-        form = await request.form()
-        result = await handle_form_async(builder, submitted_data=dict(form))
-        if result.get("success"):
-            return f"Saved: {result['data']}"
-        return result["form_html"]
+        submitted = dict(await request.form())
+        form_data = submitted
+        try:
+            MinimalLoginForm(**submitted)
+        except ValidationError as e:
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
+    else:
+        # optional demo data
+        form_data = {"username": "demo_user", "remember_me": True}
 
-    result = await handle_form_async(builder)
-    return result["form_html"]
+    form_html = render_form_html(
+        MinimalLoginForm,
+        framework=style,
+        form_data=form_data,
+        errors=errors,
+    )
+
+    return f"""<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+  <title>Login</title>
+  <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">
+</head>
+<body class=\"container my-5\">
+  <h1 class=\"mb-4\">Login</h1>
+  {form_html}
+</body>
+</html>"""
 ```
 
 Run it:
@@ -163,34 +199,58 @@ async def register(request: Request):
 
 ### Flask (sync / WSGI)
 
-In synchronous apps (Flask), use `handle_form()`.
+In synchronous apps (Flask), the simplest pattern is the same: define a `FormModel` and call `render_form_html()`.
 
 ```python
 from flask import Flask, request
-from pydantic import BaseModel, EmailStr
+from pydantic import ValidationError
 
-from pydantic_schemaforms import create_form_from_model, handle_form
+from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
-class User(BaseModel):
-    name: str
-    email: EmailStr
+class MinimalLoginForm(FormModel):
+    username: str = Field(title="Username", ui_autofocus=True)
+    password: str = Field(title="Password", ui_element="password")
+    remember_me: bool = Field(default=False, title="Remember me", ui_element="checkbox")
 
 
 app = Flask(__name__)
 
 
-@app.route("/user", methods=["GET", "POST"])
-def user_form():
-    builder = create_form_from_model(User, framework="bootstrap")
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    form_data = {}
+    errors = {}
 
     if request.method == "POST":
-        result = handle_form(builder, submitted_data=request.form.to_dict())
-        if result.get("success"):
-            return f"Saved: {result['data']}"
-        return result["form_html"]
+        submitted = request.form.to_dict()
+        form_data = submitted
+        try:
+            MinimalLoginForm(**submitted)
+        except ValidationError as e:
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
 
-    return handle_form(builder)["form_html"]
+    form_html = render_form_html(
+        MinimalLoginForm,
+        framework="bootstrap",
+        form_data=form_data,
+        errors=errors,
+    )
+
+    return f"""<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+  <title>Login</title>
+  <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css\" rel=\"stylesheet\">
+</head>
+<body class=\"container my-5\">
+  <h1 class=\"mb-4\">Login</h1>
+  {form_html}
+</body>
+</html>"""
 ```
 
 #### Flask: simple registration page
