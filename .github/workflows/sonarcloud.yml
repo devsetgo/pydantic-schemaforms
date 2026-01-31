@@ -9,6 +9,8 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    # Skip SonarCloud for Dependabot PRs (secrets not available)
+    if: github.actor != 'dependabot[bot]'
     steps:
       - uses: actions/checkout@v5
         with:
