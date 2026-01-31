@@ -1,6 +1,6 @@
 autoflake==2.3.1 # Vulnerabilities: None
 autopep8==2.3.2 # Vulnerabilities: None
-black==25.12.0 # Vulnerabilities: None
+black==26.1.0 # Vulnerabilities: None
 bumpcalver==2025.12.30.1 # Vulnerabilities: None
 devsetgo-lib==2025.10.4.2 # Vulnerabilities: None
 fastapi[all]==0.128.0 # Vulnerabilities: None
