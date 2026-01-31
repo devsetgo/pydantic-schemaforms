@@ -3,12 +3,16 @@ Backwards compatible form rendering functions.
 This module maintains compatibility with existing code while using the enhanced renderer.
 """
 
+import logging
+import time
 from typing import Any, Dict, Optional, Type, Union
 
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
 from .assets.runtime import htmx_script_tag, imask_script_tag
 from .schema_form import FormModel
+
+logger = logging.getLogger(__name__)
 
 
 def render_form_html(
@@ -41,6 +45,9 @@ def render_form_html(
     Returns:
         Complete HTML form as string
     """
+    # Start timing
+    start_time = time.perf_counter()
+    
     # Normalize kwargs + HTMX defaults
     render_kwargs: Dict[str, Any] = dict(kwargs)
 
@@ -84,6 +91,10 @@ def render_form_html(
         if imask_tag:
             form_html += f"\n{imask_tag}"
 
+    # Calculate and log render time
+    render_time = time.perf_counter() - start_time
+    logger.info(f"Form rendered in {render_time:.3f} seconds (model: {form_model_cls.__name__})")
+    
     from .html_markers import wrap_with_schemaforms_markers
 
     return wrap_with_schemaforms_markers(form_html, enabled=include_html_markers)
