@@ -441,7 +441,7 @@ class EnhancedFormRenderer:
 
         # Format render time for display
         time_display = f" — {render_time:.3f}s render" if render_time > 0 else ""
-        
+
         panel = f"""
 <div class="pf-debug-panel">
     <details>

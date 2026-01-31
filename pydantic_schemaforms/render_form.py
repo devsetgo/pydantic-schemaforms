@@ -47,7 +47,7 @@ def render_form_html(
     """
     # Start timing
     start_time = time.perf_counter()
-    
+
     # Normalize kwargs + HTMX defaults
     render_kwargs: Dict[str, Any] = dict(kwargs)
 
@@ -94,7 +94,7 @@ def render_form_html(
     # Calculate and log render time
     render_time = time.perf_counter() - start_time
     logger.info(f"Form rendered in {render_time:.3f} seconds (model: {form_model_cls.__name__})")
-    
+
     from .html_markers import wrap_with_schemaforms_markers
 
     return wrap_with_schemaforms_markers(form_html, enabled=include_html_markers)
