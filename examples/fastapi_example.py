@@ -256,7 +256,7 @@ async def user_get(
     show_timing: bool = True,
 ):
     """Alias for user registration form."""
-    return await register_get(request, style, data, demo, debug)
+    return await register_get(request, style, data, demo, debug, show_timing)
 
 @app.post("/register", response_class=HTMLResponse)
 async def register_post(request: Request, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
