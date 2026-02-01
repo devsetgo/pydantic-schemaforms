@@ -10,6 +10,8 @@ import asyncio
 import html
 import inspect
 import json
+import logging
+import time
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
@@ -21,6 +23,9 @@ from .rendering.layout_engine import LayoutEngine, get_nested_form_data
 from .rendering.schema_parser import SchemaMetadata, build_schema_metadata, resolve_ui_element
 from .rendering.themes import RendererTheme, get_theme_for_framework
 from .schema_form import FormModel
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class SchemaFormValidationError(Exception):
@@ -73,9 +78,14 @@ class EnhancedFormRenderer:
         include_submit_button: bool = True,
         layout: str = "vertical",
         debug: bool = False,
+        show_timing: bool = False,
+        enable_logging: bool = False,
         **kwargs,
     ) -> str:
         """Render a complete HTML form from a FormModel definition."""
+
+        # Start timing
+        start_time = time.perf_counter()
 
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
         data = data or {}
@@ -140,11 +150,15 @@ class EnhancedFormRenderer:
 
         submit_markup = self._render_submit_button() if include_submit_button else ""
 
+        # Calculate render time before form_wrapper (we'll add timing display inside form)
+        render_time = time.perf_counter() - start_time
+
         form_markup = self._theme.render_form_wrapper(
             form_attrs=form_attrs,
             csrf_token=csrf_markup,
             form_content="\n".join(form_body_parts),
             submit_markup=submit_markup,
+            render_time=render_time if show_timing else None,
         )
 
         output_parts = [form_markup]
@@ -160,6 +174,9 @@ class EnhancedFormRenderer:
 
         combined_output = "\n".join(output_parts)
 
+        if enable_logging:
+            logger.debug(f"Form rendered in {render_time:.3f} seconds (model: {model_cls.__name__})")
+
         if not debug:
             return combined_output
 
@@ -169,6 +186,7 @@ class EnhancedFormRenderer:
             data=data,
             errors=errors,
             metadata=metadata,
+            render_time=render_time,
         )
 
     def render_form_fields_only(
@@ -381,6 +399,7 @@ class EnhancedFormRenderer:
         data: Optional[Dict[str, Any]],
         errors: Optional[Dict[str, Any]],
         metadata: SchemaMetadata,
+        render_time: float = 0.0,
     ) -> str:
         """Return a collapsed debug panel with tabs for rendered output, source, schema, and errors."""
 
@@ -426,10 +445,13 @@ class EnhancedFormRenderer:
         validation_tab = html.escape(json.dumps(validation_rules, indent=2, default=str))
         live_tab = html.escape(json.dumps({"errors": safe_errors, "data": safe_data}, indent=2, default=str))
 
-        panel = r"""
+        # Format render time for display
+        time_display = f" — {render_time:.3f}s render" if render_time > 0 else ""
+
+        panel = f"""
 <div class="pf-debug-panel">
     <details>
-        <summary class="pf-debug-summary">Debug panel (development only)</summary>
+        <summary class="pf-debug-summary">Debug panel (development only){time_display}</summary>
         <div class="pf-debug-tabs">
             <div class="pf-debug-tablist" role="tablist">
                 <button type="button" class="pf-debug-tab-btn pf-active" data-pf-tab="rendered">Rendered HTML</button>
@@ -437,95 +459,95 @@ class EnhancedFormRenderer:
                 <button type="button" class="pf-debug-tab-btn" data-pf-tab="schema">Schema / validation</button>
                 <button type="button" class="pf-debug-tab-btn" data-pf-tab="live">Live payload</button>
             </div>
-            <div class="pf-debug-tab pf-active" data-pf-pane="rendered"><pre>{rendered}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="source"><pre>{source}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="schema"><pre>{schema}</pre><pre>{rules}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="live"><pre class="pf-debug-live-output">{live}</pre></div>
+            <div class="pf-debug-tab pf-active" data-pf-pane="rendered"><pre>{rendered_tab}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="source"><pre>{source_tab}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="schema"><pre>{schema_tab}</pre><pre>{validation_tab}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="live"><pre class="pf-debug-live-output">{live_tab}</pre></div>
         </div>
     </details>
 </div>
 <style>
-.pf-debug-panel { margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
-.pf-debug-summary { cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
-.pf-debug-tabs { padding: 0.35rem 0.85rem 0.75rem; }
-.pf-debug-tablist { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
-.pf-debug-tab-btn { border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
-.pf-debug-tab-btn.pf-active { background: #0d6efd; color: #ffffff; border-color: #0d6efd; }
-.pf-debug-tab { display: none; }
-.pf-debug-tab.pf-active { display: block; }
-.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
+.pf-debug-panel {{ margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }}
+.pf-debug-summary {{ cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }}
+.pf-debug-tabs {{ padding: 0.35rem 0.85rem 0.75rem; }}
+.pf-debug-tablist {{ display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }}
+.pf-debug-tab-btn {{ border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }}
+.pf-debug-tab-btn.pf-active {{ background: #0d6efd; color: #ffffff; border-color: #0d6efd; }}
+.pf-debug-tab {{ display: none; }}
+.pf-debug-tab.pf-active {{ display: block; }}
+.pf-debug-tab pre {{ white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }}
 </style>
 <script>
-(function() {
-    document.querySelectorAll('.pf-debug-panel').forEach(function(panel) {
+(function() {{
+    document.querySelectorAll('.pf-debug-panel').forEach(function(panel) {{
         var buttons = panel.querySelectorAll('[data-pf-tab]');
         var panes = panel.querySelectorAll('[data-pf-pane]');
-        buttons.forEach(function(btn) {
-            btn.addEventListener('click', function() {
+        buttons.forEach(function(btn) {{
+            btn.addEventListener('click', function() {{
                 var target = btn.getAttribute('data-pf-tab');
-                buttons.forEach(function(b) { b.classList.remove('pf-active'); });
-                panes.forEach(function(p) { p.classList.remove('pf-active'); });
+                buttons.forEach(function(b) {{ b.classList.remove('pf-active'); }});
+                panes.forEach(function(p) {{ p.classList.remove('pf-active'); }});
                 btn.classList.add('pf-active');
                 var pane = panel.querySelector('[data-pf-pane="' + target + '"]');
-                if (pane) { pane.classList.add('pf-active'); }
-            });
-        });
+                if (pane) {{ pane.classList.add('pf-active'); }}
+            }});
+        }});
 
         // Live payload updater
         var form = document.querySelector('form');
         var liveOutput = panel.querySelector('.pf-debug-live-output');
-        if (form && liveOutput) {
-            function updateLivePayload() {
+        if (form && liveOutput) {{
+            function updateLivePayload() {{
                 var formData = new FormData(form);
-                var data = {};
-                var seen = {};
+                var data = {{}};
+                var seen = {{}};
 
                 // Parse form data including arrays (pets[0].name, etc.)
-                for (var pair of formData.entries()) {
+                for (var pair of formData.entries()) {{
                     var key = pair[0];
                     var value = pair[1];
 
                     // Handle array notation like pets[0].name
-                    var arrayMatch = key.match(/^(\w+)\[(\d+)\]\.(\w+)$/);
-                    if (arrayMatch) {
+                    var arrayMatch = key.match(/^(\\w+)\\[(\\d+)\\]\\.(\\w+)$/);
+                    if (arrayMatch) {{
                         var arrayName = arrayMatch[1];
                         var index = parseInt(arrayMatch[2]);
                         var fieldName = arrayMatch[3];
 
-                        if (!data[arrayName]) {
+                        if (!data[arrayName]) {{
                             data[arrayName] = [];
-                        }
-                        if (!data[arrayName][index]) {
-                            data[arrayName][index] = {};
-                        }
+                        }}
+                        if (!data[arrayName][index]) {{
+                            data[arrayName][index] = {{}};
+                        }}
                         data[arrayName][index][fieldName] = value;
                         seen[key] = true;
-                    } else if (key in seen) {
+                    }} else if (key in seen) {{
                         // Multiple values for same key - convert to array
-                        if (!Array.isArray(data[key])) {
+                        if (!Array.isArray(data[key])) {{
                             data[key] = [data[key]];
-                        }
+                        }}
                         data[key].push(value);
-                    } else {
+                    }} else {{
                         data[key] = value;
                         seen[key] = true;
-                    }
-                }
+                    }}
+                }}
 
                 // Handle checkboxes (unchecked = not in FormData)
-                var checkboxes = form.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(function(cb) {
+                var checkboxes = form.querySelectorAll('input[type=\"checkbox\"]');
+                checkboxes.forEach(function(cb) {{
                     if (!cb.name) return;
-                    if (!(cb.name in data)) {
+                    if (!(cb.name in data)) {{
                         data[cb.name] = false;
-                    } else if (data[cb.name] === 'on') {
+                    }} else if (data[cb.name] === 'on') {{
                         data[cb.name] = true;
-                    }
-                });
+                    }}
+                }});
 
-                var payload = { data: data, errors: {} };
+                var payload = {{ data: data, errors: {{}} }};
                 liveOutput.textContent = JSON.stringify(payload, null, 2);
-            }
+            }}
 
             // Update on any input change
             form.addEventListener('input', updateLivePayload);
@@ -533,17 +555,12 @@ class EnhancedFormRenderer:
 
             // Initial update after a brief delay to catch dynamic content
             setTimeout(updateLivePayload, 100);
-        }
-    });
-})();
+        }}
+    }});
+}})();
 </script>
 """
 
-        panel = panel.replace("{rendered}", rendered_tab)
-        panel = panel.replace("{source}", source_tab)
-        panel = panel.replace("{schema}", schema_tab)
-        panel = panel.replace("{rules}", validation_tab)
-        panel = panel.replace("{live}", live_tab)
         return panel
 
 
@@ -554,6 +571,8 @@ def render_form_html(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    show_timing: bool = False,
+    enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
     **kwargs,
@@ -584,6 +603,8 @@ def render_form_html(
             errors=errors,
             layout=layout,
             debug=debug,
+            show_timing=show_timing,
+            enable_logging=enable_logging,
             **kwargs,
         )
         return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
@@ -599,6 +620,8 @@ def render_form_html(
         errors=errors,
         layout=layout,
         debug=debug,
+        show_timing=show_timing,
+        enable_logging=enable_logging,
         **kwargs,
     )
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
@@ -611,6 +634,8 @@ async def render_form_html_async(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    show_timing: bool = False,
+    enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
     **kwargs,
@@ -632,6 +657,8 @@ async def render_form_html_async(
         framework=framework,
         layout=layout,
         debug=debug,
+        show_timing=show_timing,
+        enable_logging=enable_logging,
         include_framework_assets=include_framework_assets,
         asset_mode=asset_mode,
         **kwargs,
