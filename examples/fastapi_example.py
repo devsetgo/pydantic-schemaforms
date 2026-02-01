@@ -134,6 +134,7 @@ async def login_get(
         form_data=form_data,
         debug=debug,
         show_timing=show_timing,
+        enable_logging=False,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -176,6 +177,7 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
             errors=result['errors'],
             debug=debug,
             show_timing=show_timing,
+            enable_logging=True,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -231,7 +233,7 @@ async def register_get(
         form_data=form_data,
         debug=debug,
         show_timing=show_timing,
-    )
+        enable_logging=True,)
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -257,7 +259,7 @@ async def user_get(
     return await register_get(request, style, data, demo, debug)
 
 @app.post("/register", response_class=HTMLResponse)
-async def register_post(request: Request, style: str = "bootstrap", debug: bool = False):
+async def register_post(request: Request, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
     """Medium complexity form - User registration submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -286,6 +288,7 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
             errors=result['errors'],
             debug=debug,
             show_timing=show_timing,
+            enable_logging=False,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -347,7 +350,7 @@ async def showcase_get(
         form_data=form_data,
         debug=debug,
         show_timing=show_timing,
-    )
+        enable_logging=True,)
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -360,7 +363,7 @@ async def showcase_get(
     })
 
 @app.post("/showcase", response_class=HTMLResponse)
-async def showcase_post(request: Request, style: str = "bootstrap", debug: bool = False):
+async def showcase_post(request: Request, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
     """Complex form example - All features submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -386,7 +389,7 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
             errors=result['errors'],
             debug=debug,
             show_timing=show_timing,
-        )
+            enable_logging=True,)
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
@@ -420,7 +423,7 @@ async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool 
         form_data=existing_data,
         debug=debug,
         show_timing=show_timing,
-    )
+        enable_logging=True,)
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -453,7 +456,7 @@ async def edit_register_get(request: Request, style: str = "bootstrap", demo: bo
         form_data=existing_data,
         debug=debug,
         show_timing=show_timing,
-    )
+        enable_logging=True,)
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -662,7 +665,7 @@ async def pets_get(
         submit_url="/pets",
         debug=debug,
         show_timing=show_timing,
-    )
+        enable_logging=True,)
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -675,7 +678,7 @@ async def pets_get(
     })
 
 @app.post("/pets", response_class=HTMLResponse)
-async def pets_post(request: Request, style: str = "bootstrap", debug: bool = False):
+async def pets_post(request: Request, style: str = "bootstrap", debug: bool = False,show_timing: bool = True):
     """Pet registration form submission."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -712,6 +715,7 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
             submit_url="/pets",
             debug=debug,
             show_timing=show_timing,
+            enable_logging=True,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -1012,7 +1016,7 @@ async def general_submit_handler(request: Request):
         full_referer_path = create_refer_path(request)
 
         form_dict = dict(form_data)
-        print(form_dict)
+
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Form Submitted Successfully",
@@ -1086,7 +1090,7 @@ async def api_submit_form(form_type: str, request: Request):
     }
 
 @app.get("/api/forms/{form_type}/render")
-async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool = False):
+async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
     """API endpoint to render form HTML."""
     form_mapping = {
         "login": MinimalLoginForm,
@@ -1100,8 +1104,11 @@ async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool 
         raise HTTPException(status_code=404, detail="Form type not found")
 
     form_class = form_mapping[form_type]
-    form_html = render_form_html(form_class, framework=style, debug=debug,
-show_timing=show_timing)
+    form_html = render_form_html(form_class,
+                        framework=style,
+                        debug=debug,
+                        show_timing=show_timing,
+                        enable_logging=True,)
 
     return {
         "form_type": form_type,
