@@ -41,6 +41,11 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     UserRegistrationForm,
     handle_form_submission,
 )
+from examples.nested_forms_example import (
+    CompanyOrganizationForm,
+    create_sample_nested_data,
+    DepartmentInsightsTabbed,
+)
 
 from pydantic_schemaforms import render_form_html_async
 
@@ -596,6 +601,120 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
 # All framework-specific endpoints removed in favor of cleaner style parameter approach
 # Use: /pets?style=bootstrap, /login?style=material, etc.
 
+# ================================
+# STRESS TEST - DEEPLY NESTED FORMS
+# ================================
+
+@app.get("/organization", response_class=HTMLResponse)
+async def organization_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+    show_timing: bool = True,
+):
+    """
+    Deeply nested forms stress test - 5 levels deep!
+    
+    Demonstrates the library's ability to handle:
+    - Company → Departments → Teams → Members → Certifications
+    - Projects → Tasks → Subtasks
+    - Complex hierarchical data structures
+    """
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except Exception:
+            pass  # Ignore invalid JSON
+    elif demo:
+        # Use comprehensive sample data
+        form_data = create_sample_nested_data()
+    # Ensure layout demo renders even without demo data
+    if "layout_demo" not in form_data:
+        form_data["layout_demo"] = DepartmentInsightsTabbed()
+
+    form_html = await render_form_html_async(
+        CompanyOrganizationForm,
+        framework=style,
+        form_data=form_data,
+        submit_url="/organization",
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=False,
+    )
+
+    return templates.TemplateResponse(request, "form.html", {
+        "request": request,
+        "title": "Company Organization - 5 Levels Deep! 🚀",
+        "description": "Ultimate stress test: Company → Departments → Teams → Members → Certifications + Projects → Tasks → Subtasks",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+
+@app.post("/organization", response_class=HTMLResponse)
+async def organization_post(
+    request: Request,
+    style: str = "bootstrap",
+    debug: bool = False,
+    show_timing: bool = True
+):
+    """Handle organization form submission with 5 levels of nesting."""
+    # Get form data asynchronously
+    form_data = await request.form()
+    form_dict = dict(form_data)
+
+    # Handle form submission
+    result = handle_form_submission(CompanyOrganizationForm, form_dict)
+    full_referer_path = create_refer_path(request)
+    
+    if result['success']:
+        data = result['data']
+        dept_count = len(data.get('departments', []))
+        return templates.TemplateResponse(request, "success.html", {
+            "request": request,
+            "title": "Organization Data Submitted Successfully! 🎉",
+            "message": f"Company '{data['company_name']}' with {dept_count} department(s) has been successfully processed!",
+            "data": data,
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "try_again_url": full_referer_path
+        })
+    else:
+        # Re-render form with errors
+        render_data = dict(form_dict)
+        if "layout_demo" not in render_data:
+            render_data["layout_demo"] = DepartmentInsightsTabbed()
+
+        form_html = await render_form_html_async(
+            CompanyOrganizationForm,
+            framework=style,
+            form_data=render_data,
+            errors=result['errors'],
+            submit_url="/organization",
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=True,
+        )
+
+        return templates.TemplateResponse(request, "form.html", {
+            "request": request,
+            "title": "Company Organization - 5 Levels Deep",
+            "description": "Ultimate nested forms stress test",
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
+            "form_html": form_html,
+            "errors": result['errors']
+        })
+
+
 @app.get("/layouts", response_class=HTMLResponse)
 async def layouts_get(
     request: Request,
@@ -879,7 +998,8 @@ async def api_form_schema(form_type: str):
         "register": UserRegistrationForm,
         "pets": PetRegistrationForm,
         "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm
+        "layouts": LayoutDemonstrationForm,
+        "organization": CompanyOrganizationForm
     }
 
     if form_type not in form_mapping:
@@ -902,7 +1022,8 @@ async def api_submit_form(form_type: str, request: Request):
         "register": UserRegistrationForm,
         "pets": PetRegistrationForm,
         "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm
+        "layouts": LayoutDemonstrationForm,
+        "organization": CompanyOrganizationForm
     }
 
     if form_type not in form_mapping:
@@ -930,7 +1051,8 @@ async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool 
         "register": UserRegistrationForm,
         "pets": PetRegistrationForm,
         "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm
+        "layouts": LayoutDemonstrationForm,
+        "organization": CompanyOrganizationForm
     }
 
     if form_type not in form_mapping:
@@ -984,10 +1106,11 @@ if __name__ == "__main__":
     print("🚀 Starting FastAPI Example (Async)")
     print("=" * 60)
     print("📋 Available Examples:")
-    print("   • Simple:  http://localhost:8000/login")
-    print("   • Medium:  http://localhost:8000/register")
-    print("   • Complex: http://localhost:8000/showcase")
-    print("   • Layouts: http://localhost:8000/layouts")
+    print("   • Simple:    http://localhost:8000/login")
+    print("   • Medium:    http://localhost:8000/register")
+    print("   • Complex:   http://localhost:8000/showcase")
+    print("   • Layouts:   http://localhost:8000/layouts")
+    print("   • 🚀 STRESS TEST (5 levels deep!): http://localhost:8000/organization")
     print("")
     print("🎨 Style Variants (add ?style= to any form):")
     print("   • Bootstrap:       ?style=bootstrap")
@@ -1001,14 +1124,16 @@ if __name__ == "__main__":
     print("   • Home Page:      http://localhost:8000/")
     print("")
     print("🔧 API Endpoints:")
-    print("   • Schema:         http://localhost:8000/api/forms/register/schema")
-    print("   • Pet Schema:     http://localhost:8000/api/forms/pets/schema")
-    print("   • Layout Schema:  http://localhost:8000/api/forms/layouts/schema")
-    print("   • Render:         http://localhost:8000/api/forms/register/render")
-    print("   • Pet Render:     http://localhost:8000/api/forms/pets/render")
-    print("   • Layout Render:  http://localhost:8000/api/forms/layouts/render")
-    print("   • Submit:         POST http://localhost:8000/api/forms/register/submit")
-    print("   • Health:         http://localhost:8000/api/health")
+    print("   • Schema:              http://localhost:8000/api/forms/register/schema")
+    print("   • Pet Schema:          http://localhost:8000/api/forms/pets/schema")
+    print("   • Layout Schema:       http://localhost:8000/api/forms/layouts/schema")
+    print("   • Organization Schema: http://localhost:8000/api/forms/organization/schema")
+    print("   • Render:              http://localhost:8000/api/forms/register/render")
+    print("   • Pet Render:          http://localhost:8000/api/forms/pets/render")
+    print("   • Layout Render:       http://localhost:8000/api/forms/layouts/render")
+    print("   • Organization Render: http://localhost:8000/api/forms/organization/render")
+    print("   • Submit:              POST http://localhost:8000/api/forms/register/submit")
+    print("   • Health:              http://localhost:8000/api/health")
     print("=" * 60)
     print("💡 To run this example:")
     print("   make ex-run")

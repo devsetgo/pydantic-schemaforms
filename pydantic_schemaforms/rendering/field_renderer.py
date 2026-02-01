@@ -606,8 +606,12 @@ class FieldRenderer:
             field_value = item_data.get(field_key, "")
             input_name = f"{field_name}[{index}].{field_key}"
 
+            field_col_class = col_class
+            if nested_schema.get("input_type") == "model_list":
+                field_col_class = "col-12"
+
             html += f"""
-                <div class="{col_class}">
+                <div class="{field_col_class}">
                     {self.render_field(
                         input_name,
                         nested_schema,
