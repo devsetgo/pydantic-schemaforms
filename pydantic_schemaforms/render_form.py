@@ -25,6 +25,7 @@ def render_form_html(
     asset_mode: str = "vendored",
     include_imask: bool = False,
     debug: bool = False,
+    show_timing: bool = False,
     include_html_markers: bool = True,
     **kwargs,
 ) -> str:
@@ -75,6 +76,7 @@ def render_form_html(
         errors=errors,
         framework=framework,
         debug=debug,
+        show_timing=show_timing,
         include_html_markers=False,
         **render_kwargs,
     )

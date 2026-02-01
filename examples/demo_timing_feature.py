@@ -1,6 +1,6 @@
 """
 Demo script showing the render timing feature in action.
-This demonstrates both logging and debug panel display.
+This demonstrates logging, debug panel display, and inline timing.
 """
 
 import logging
@@ -29,15 +29,41 @@ def demo_basic_timing():
 
     from pydantic_schemaforms.enhanced_renderer import render_form_html
 
-    html = render_form_html(ContactForm, debug=False, )
+    html = render_form_html(ContactForm, debug=False)
 
     print("Form rendered (check logs above for timing)")
     print(f"HTML length: {len(html)} characters")
 
 
-def demo_debug_panel_timing():
-    """Demo 2: Timing displayed in debug panel"""
+def demo_show_timing():
+    """Demo 2: Inline timing display below submit button"""
     print("\n" + "="*60)
+    print("DEMO 2: Inline Timing Display (show_timing=True)")
+    print("="*60)
+
+    from pydantic_schemaforms.enhanced_renderer import render_form_html
+
+    html = render_form_html(ContactForm, show_timing=True)
+
+    # Extract timing from inline display
+    import re
+    match = re.search(r'Rendered in ([\d.]+)s</div>', html)
+
+    if match:
+        render_time = match.group(1)
+        print(f"✓ Inline timing display shows: {render_time} seconds")
+        print("✓ Timing appears below submit button in small text")
+    else:
+        print("✗ Could not find inline timing")
+
+    print(f"HTML length: {len(html)} characters")
+
+
+def demo_debug_panel_timing():
+    """Demo 3: Timing displayed in debug panel"""
+    print("\n" + "="*60)
+    print("DEMO 3: Debug Panel Timing")
+    print("="*60)
     print("DEMO 2: Timing in Debug Panel")
     print("="*60)
 
@@ -107,12 +133,14 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print(" "*10 + "PYDANTIC-SCHEMAFORMS RENDER TIMING DEMO")
     print("="*70)
-    print("\nThis demo shows the new timing feature that:")
+    print("\nThis demo shows the timing features:")
     print("  1. Logs render time automatically")
-    print("  2. Displays timing in debug panel when debug=True")
-    print("  3. Works with all rendering methods")
+    print("  2. show_timing=True: Displays timing below submit button")
+    print("  3. debug=True: Displays timing in debug panel header")
+    print("  4. Both can be used together")
 
     demo_basic_timing()
+    demo_show_timing()
     demo_debug_panel_timing()
     demo_multiple_renders()
     demo_form_builder_timing()

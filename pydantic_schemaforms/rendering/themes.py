@@ -104,6 +104,7 @@ class RendererTheme:
         csrf_token: str,
         form_content: str,
         submit_markup: str,
+        render_time: Optional[float] = None,
     ) -> str:
         template = self.form_wrapper_template()
         attrs = form_attrs.copy()
@@ -125,6 +126,11 @@ class RendererTheme:
             else:
                 extra_attrs.append(f'{key}="{escape(str(value))}"')
 
+        # Add timing display if requested
+        timing_display = ""
+        if render_time is not None:
+            timing_display = f'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #6c757d; text-align: right;">Rendered in {render_time:.3f}s</div>'
+
         wrapper = template.render(
             form_id=escape(str(form_id)) if form_id else "",
             form_class=escape(str(form_class)) if form_class else "",
@@ -134,7 +140,7 @@ class RendererTheme:
             form_attributes=" ".join(extra_attrs),
             csrf_token=csrf_token,
             form_content=form_content,
-            submit_buttons=submit_markup,
+            submit_buttons=submit_markup + timing_display,
         )
 
         blocks = [fragment for fragment in [self.before_form(), wrapper, self.after_form()] if fragment]

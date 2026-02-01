@@ -109,6 +109,7 @@ async def login_get(
     data: str = None,
     demo: bool = True,
     debug: bool = False,
+    show_timing: bool = True,
 ):
     """Simple form example - Login form (GET)."""
     # Parse optional pre-fill data or use demo data
@@ -132,6 +133,7 @@ async def login_get(
         framework=style,
         form_data=form_data,
         debug=debug,
+        show_timing=show_timing,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -145,7 +147,7 @@ async def login_get(
     })
 
 @app.post("/login", response_class=HTMLResponse)
-async def login_post(request: Request, style: str = "bootstrap", debug: bool = False):
+async def login_post(request: Request, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
     """Simple form example - Login form submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
@@ -173,6 +175,7 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
             form_data=form_dict,
             errors=result['errors'],
             debug=debug,
+            show_timing=show_timing,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -198,6 +201,7 @@ async def register_get(
     data: str = None,
     demo: bool = True,
     debug: bool = False,
+    show_timing: bool = True,
 ):
     """Medium complexity form - User registration (GET)."""
     # Parse optional pre-fill data or use demo data
@@ -226,6 +230,7 @@ async def register_get(
         framework=style,
         form_data=form_data,
         debug=debug,
+        show_timing=show_timing,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -246,6 +251,7 @@ async def user_get(
     data: str = None,
     demo: bool = True,
     debug: bool = False,
+    show_timing: bool = True,
 ):
     """Alias for user registration form."""
     return await register_get(request, style, data, demo, debug)
@@ -279,6 +285,7 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
             form_data=form_dict,
             errors=result['errors'],
             debug=debug,
+            show_timing=show_timing,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -303,6 +310,7 @@ async def showcase_get(
     data: str = None,
     demo: bool = True,
     debug: bool = False,
+    show_timing: bool = True,
 ):
     """Complex form example - All features and field types (GET)."""
     # Parse optional pre-fill data or use demo data
@@ -338,6 +346,7 @@ async def showcase_get(
         framework=style,
         form_data=form_data,
         debug=debug,
+        show_timing=show_timing,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -376,6 +385,7 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
             framework=style,
             errors=result['errors'],
             debug=debug,
+            show_timing=show_timing,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -394,7 +404,7 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
 # ================================
 
 @app.get("/edit/login", response_class=HTMLResponse)
-async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False):
+async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False, show_timing: bool = False):
     """Edit login form with sample data."""
     # Sample existing data for editing
     existing_data = {}
@@ -409,6 +419,7 @@ async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool 
         framework=style,
         form_data=existing_data,
         debug=debug,
+        show_timing=show_timing,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -422,8 +433,8 @@ async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool 
     })
 
 @app.get("/edit/register", response_class=HTMLResponse)
-async def edit_register_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False):
-    """Edit registration form with sample data."""
+async def edit_register_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False, show_timing: bool = False):
+    """Edit registration form with sample data.""
     # Sample existing data for editing
     existing_data = {}
     if demo:
@@ -441,6 +452,7 @@ async def edit_register_get(request: Request, style: str = "bootstrap", demo: bo
         framework=style,
         form_data=existing_data,
         debug=debug,
+        show_timing=show_timing,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -454,8 +466,8 @@ async def edit_register_get(request: Request, style: str = "bootstrap", demo: bo
     })
 
 @app.get("/edit/dynamic", response_class=HTMLResponse)
-async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False):
-    """Edit layout form with sample data."""
+async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False, show_timing: bool = False):
+    """Edit layout form with sample data.""
     # Sample existing data for editing the layout form
     existing_data = {}
     if demo:
@@ -515,6 +527,7 @@ async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: boo
             submit_url="/edit/dynamic",
             include_submit_button=True,
             debug=debug,
+            show_timing=show_timing,
         )
         form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
@@ -539,6 +552,7 @@ async def pets_get(
     data: str = None,
     demo: bool = True,
     debug: bool = False,
+    show_timing: bool = True,
 ):
     """Pet registration form - demonstrates dynamic lists and complex models."""
     # Parse optional pre-fill data or use demo data
@@ -647,6 +661,7 @@ async def pets_get(
         form_data=form_data,
         submit_url="/pets",
         debug=debug,
+        show_timing=show_timing,
     )
 
     return templates.TemplateResponse(request, "form.html", {
@@ -696,6 +711,7 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
             errors=result['errors'],
             submit_url="/pets",
             debug=debug,
+            show_timing=show_timing,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -721,6 +737,7 @@ async def layouts_get(
     data: str = None,
     demo: bool = True,
     debug: bool = False,
+    show_timing: bool = True,
 ):
     """Comprehensive layout demonstration - single form showcasing all layout types."""
     # Parse optional pre-fill data or use demo data
@@ -794,6 +811,7 @@ async def layouts_get(
             submit_url=f"/layouts?style={style}",
             include_submit_button=True,
             debug=debug,
+            show_timing=show_timing,
         )
         form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
@@ -893,6 +911,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
                 submit_url=f"/layouts?style={style}",
                 include_submit_button=True,
                 debug=debug,
+                show_timing=False,
             )
             form_html = wrap_with_schemaforms_markers(form_html)
 
@@ -908,8 +927,8 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         })
 
 @app.get("/self-contained", response_class=HTMLResponse)
-async def self_contained(demo: bool = True, debug: bool = True):
-    """Self-contained form demo - zero external dependencies."""
+async def self_contained(demo: bool = True, debug: bool = True, show_timing: bool = False):
+    """Self-contained form demo - zero external dependencies.""
     from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
     from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
@@ -928,7 +947,7 @@ async def self_contained(demo: bool = True, debug: bool = True):
         }
 
     renderer = SimpleMaterialRenderer()
-    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug)
+    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug, show_timing=show_timing)
     form_html = wrap_with_schemaforms_markers(form_html)
 
     return f"""<!DOCTYPE html>
@@ -1080,7 +1099,8 @@ async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool 
         raise HTTPException(status_code=404, detail="Form type not found")
 
     form_class = form_mapping[form_type]
-    form_html = render_form_html(form_class, framework=style, debug=debug)
+    form_html = render_form_html(form_class, framework=style, debug=debug,
+show_timing=show_timing)
 
     return {
         "form_type": form_type,
@@ -1130,6 +1150,7 @@ if __name__ == "__main__":
     print("   • Bootstrap:       ?style=bootstrap")
     print("   • Material Design: ?style=material")
     print("   • Debug Panel:     add ?debug=1")
+    print("   • Show Timing:     add ?show_timing=1")
     print("")
     print("🎯 Special Demos:")
     print("   • Self-Contained: http://localhost:8000/self-contained")

@@ -77,6 +77,7 @@ class EnhancedFormRenderer:
         include_submit_button: bool = True,
         layout: str = "vertical",
         debug: bool = False,
+        show_timing: bool = False,
         **kwargs,
     ) -> str:
         """Render a complete HTML form from a FormModel definition."""
@@ -147,11 +148,15 @@ class EnhancedFormRenderer:
 
         submit_markup = self._render_submit_button() if include_submit_button else ""
 
+        # Calculate render time before form_wrapper (we'll add timing display inside form)
+        render_time = time.perf_counter() - start_time
+
         form_markup = self._theme.render_form_wrapper(
             form_attrs=form_attrs,
             csrf_token=csrf_markup,
             form_content="\n".join(form_body_parts),
             submit_markup=submit_markup,
+            render_time=render_time if show_timing else None,
         )
 
         output_parts = [form_markup]
@@ -167,8 +172,6 @@ class EnhancedFormRenderer:
 
         combined_output = "\n".join(output_parts)
 
-        # Calculate render time
-        render_time = time.perf_counter() - start_time
         logger.info(f"Form rendered in {render_time:.3f} seconds (model: {model_cls.__name__})")
 
         if not debug:
@@ -565,6 +568,7 @@ def render_form_html(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    show_timing: bool = False,
     *,
     include_html_markers: bool = True,
     **kwargs,
@@ -595,6 +599,7 @@ def render_form_html(
             errors=errors,
             layout=layout,
             debug=debug,
+            show_timing=show_timing,
             **kwargs,
         )
         return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
@@ -610,6 +615,7 @@ def render_form_html(
         errors=errors,
         layout=layout,
         debug=debug,
+        show_timing=show_timing,
         **kwargs,
     )
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
@@ -622,6 +628,7 @@ async def render_form_html_async(
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
+    show_timing: bool = False,
     *,
     include_html_markers: bool = True,
     **kwargs,
@@ -643,6 +650,7 @@ async def render_form_html_async(
         framework=framework,
         layout=layout,
         debug=debug,
+        show_timing=show_timing,
         include_framework_assets=include_framework_assets,
         asset_mode=asset_mode,
         **kwargs,
