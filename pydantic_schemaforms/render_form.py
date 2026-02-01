@@ -3,6 +3,7 @@ Backwards compatible form rendering functions.
 This module maintains compatibility with existing code while using the enhanced renderer.
 """
 
+import asyncio
 import logging
 import time
 from typing import Any, Dict, Optional, Type, Union
@@ -104,3 +105,44 @@ def render_form_html(
     from .html_markers import wrap_with_schemaforms_markers
 
     return wrap_with_schemaforms_markers(form_html, enabled=include_html_markers)
+
+
+async def render_form_html_async(
+    form_model_cls: Type[FormModel],
+    form_data: Optional[Dict[str, Any]] = None,
+    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    htmx_post_url: str = "/submit",
+    framework: str = "bootstrap",
+    *,
+    asset_mode: str = "vendored",
+    include_imask: bool = False,
+    debug: bool = False,
+    show_timing: bool = False,
+    enable_logging: bool = False,
+    include_html_markers: bool = True,
+    **kwargs,
+) -> str:
+    """Async wrapper for render_form_html that avoids blocking the event loop."""
+
+    def render_callable():
+        return render_form_html(
+            form_model_cls,
+            form_data=form_data,
+            errors=errors,
+            htmx_post_url=htmx_post_url,
+            framework=framework,
+            asset_mode=asset_mode,
+            include_imask=include_imask,
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=enable_logging,
+            include_html_markers=include_html_markers,
+            **kwargs,
+        )
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.get_event_loop()
+
+    return await loop.run_in_executor(None, render_callable)

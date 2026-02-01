@@ -175,7 +175,7 @@ async def login_page(debug: bool = False):
         debug=debug,
         framework="bootstrap"
     )
-    
+
     return f"""
     <!doctype html>
     <html>
@@ -263,4 +263,3 @@ logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.DEBUG)
 html = render_form_html(MyForm, debug=True)
 ```
-
