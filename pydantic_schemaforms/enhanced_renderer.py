@@ -25,6 +25,7 @@ from .rendering.themes import RendererTheme, get_theme_for_framework
 from .schema_form import FormModel
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class SchemaFormValidationError(Exception):
@@ -78,6 +79,7 @@ class EnhancedFormRenderer:
         layout: str = "vertical",
         debug: bool = False,
         show_timing: bool = False,
+        enable_logging: bool = False,
         **kwargs,
     ) -> str:
         """Render a complete HTML form from a FormModel definition."""
@@ -172,7 +174,8 @@ class EnhancedFormRenderer:
 
         combined_output = "\n".join(output_parts)
 
-        logger.info(f"Form rendered in {render_time:.3f} seconds (model: {model_cls.__name__})")
+        if enable_logging:
+            logger.debug(f"Form rendered in {render_time:.3f} seconds (model: {model_cls.__name__})")
 
         if not debug:
             return combined_output
@@ -569,6 +572,7 @@ def render_form_html(
     layout: str = "vertical",
     debug: bool = False,
     show_timing: bool = False,
+    enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
     **kwargs,
@@ -600,6 +604,7 @@ def render_form_html(
             layout=layout,
             debug=debug,
             show_timing=show_timing,
+            enable_logging=enable_logging,
             **kwargs,
         )
         return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
@@ -616,6 +621,7 @@ def render_form_html(
         layout=layout,
         debug=debug,
         show_timing=show_timing,
+        enable_logging=enable_logging,
         **kwargs,
     )
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
@@ -629,6 +635,7 @@ async def render_form_html_async(
     layout: str = "vertical",
     debug: bool = False,
     show_timing: bool = False,
+    enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
     **kwargs,
@@ -651,6 +658,7 @@ async def render_form_html_async(
         layout=layout,
         debug=debug,
         show_timing=show_timing,
+        enable_logging=enable_logging,
         include_framework_assets=include_framework_assets,
         asset_mode=asset_mode,
         **kwargs,

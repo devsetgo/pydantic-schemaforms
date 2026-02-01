@@ -13,6 +13,7 @@ from .assets.runtime import htmx_script_tag, imask_script_tag
 from .schema_form import FormModel
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def render_form_html(
@@ -26,6 +27,7 @@ def render_form_html(
     include_imask: bool = False,
     debug: bool = False,
     show_timing: bool = False,
+    enable_logging: bool = False,
     include_html_markers: bool = True,
     **kwargs,
 ) -> str:
@@ -41,6 +43,7 @@ def render_form_html(
         errors: Validation errors (dict or SchemaFormValidationError)
         htmx_post_url: Form submission URL (for HTMX compatibility)
         framework: CSS framework to use (bootstrap, material, none)
+        enable_logging: Enable library logging (default: False, opt-in for debugging)
         **kwargs: Additional rendering options
 
     Returns:
@@ -95,7 +98,8 @@ def render_form_html(
 
     # Calculate and log render time
     render_time = time.perf_counter() - start_time
-    logger.info(f"Form rendered in {render_time:.3f} seconds (model: {form_model_cls.__name__})")
+    if enable_logging:
+        logger.debug(f"Form rendered in {render_time:.3f} seconds (model: {form_model_cls.__name__})")
 
     from .html_markers import wrap_with_schemaforms_markers
 
