@@ -132,6 +132,7 @@ async def login_get(
         MinimalLoginForm,
         framework=style,
         form_data=form_data,
+        submit_url="/login",
         debug=debug,
         show_timing=show_timing,
         enable_logging=False,
@@ -231,6 +232,7 @@ async def register_get(
         UserRegistrationForm,
         framework=style,
         form_data=form_data,
+        submit_url="/register",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -348,6 +350,7 @@ async def showcase_get(
         CompleteShowcaseForm,
         framework=style,
         form_data=form_data,
+        submit_url="/showcase",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
