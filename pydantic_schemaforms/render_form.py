@@ -21,9 +21,9 @@ def render_form_html(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
     errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
-    htmx_post_url: str = "/submit",
     framework: str = "bootstrap",
     *,
+    submit_url: str,
     asset_mode: str = "vendored",
     include_imask: bool = False,
     debug: bool = False,
@@ -42,7 +42,7 @@ def render_form_html(
         form_model_cls: Pydantic FormModel class with UI element specifications
         form_data: Form data to populate fields with
         errors: Validation errors (dict or SchemaFormValidationError)
-        htmx_post_url: Form submission URL (for HTMX compatibility)
+        submit_url: Required form submission URL endpoint
         framework: CSS framework to use (bootstrap, material, none)
         enable_logging: Enable library logging (default: False, opt-in for debugging)
         **kwargs: Additional rendering options
@@ -53,24 +53,11 @@ def render_form_html(
     # Start timing
     start_time = time.perf_counter()
 
-    # Normalize kwargs + HTMX defaults
+    # Normalize kwargs
     render_kwargs: Dict[str, Any] = dict(kwargs)
 
-    # Ensure submit_url is propagated to the shared implementation
-    render_kwargs.setdefault("submit_url", htmx_post_url)
-    submit_url = render_kwargs["submit_url"]
-
-    # Apply HTMX defaults for non-material frameworks (legacy behavior)
-    if framework != "material":
-        htmx_attrs = {
-            "hx-post": htmx_post_url,
-            "hx-target": "#form-response",
-            "hx-swap": "innerHTML",
-        }
-        for attr, value in htmx_attrs.items():
-            render_kwargs.setdefault(attr, value)
-
-    # Action/method fallbacks mirror the historical implementation
+    # Set submit_url and action
+    render_kwargs["submit_url"] = submit_url
     render_kwargs.setdefault("action", submit_url)
     render_kwargs.setdefault("method", "POST")
 
@@ -111,9 +98,9 @@ async def render_form_html_async(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
     errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
-    htmx_post_url: str = "/submit",
     framework: str = "bootstrap",
     *,
+    submit_url: str,
     asset_mode: str = "vendored",
     include_imask: bool = False,
     debug: bool = False,
@@ -129,7 +116,7 @@ async def render_form_html_async(
             form_model_cls,
             form_data=form_data,
             errors=errors,
-            htmx_post_url=htmx_post_url,
+            submit_url=submit_url,
             framework=framework,
             asset_mode=asset_mode,
             include_imask=include_imask,
