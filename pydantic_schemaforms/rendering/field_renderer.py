@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from html import escape
+import re
 from typing import Any, Dict, List, Optional
 
 from ..icon_mapping import map_icon_for_framework
@@ -540,7 +541,8 @@ class FieldRenderer:
             item_title = f"Item #{index + 1}"
 
         collapse_class = "" if expanded else "collapse"
-        collapse_id = f"{field_name}_item_{index}_content"
+        safe_field_name = re.sub(r"[^a-zA-Z0-9_-]", "_", field_name)
+        collapse_id = f"{safe_field_name}_item_{index}_content"
 
         html = f"""
         <div class="model-list-item card border mb-3"
