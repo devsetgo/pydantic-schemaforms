@@ -21,7 +21,6 @@ from importlib import import_module
 from .enhanced_renderer import (
     EnhancedFormRenderer,
     SchemaFormValidationError,
-    render_form_html_async,
 )
 # Enhanced FormField matching design_idea.py vision
 from .form_field import (
@@ -64,7 +63,7 @@ from .integration import (
 from .live_validation import HTMXValidationConfig, LiveValidator
 # Modern renderer with Python 3.14 template strings
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
-from .render_form import render_form_html
+from .render_form import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
 # Layout system
 from .rendering.layout_engine import (

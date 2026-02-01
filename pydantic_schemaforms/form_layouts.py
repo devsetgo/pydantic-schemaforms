@@ -212,6 +212,8 @@ class FormLayoutBase(SharedBaseLayout, ABC):
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
+        renderer: Optional[Any] = None,
+        **_kwargs: Any,
     ) -> str:
         raise NotImplementedError
 
@@ -291,6 +293,8 @@ class VerticalLayout(FormLayoutBase):
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
+        renderer: Optional[Any] = None,
+        **_kwargs: Any,
     ) -> str:
         content_parts: List[str] = []
         header = self._section_header(framework)
@@ -358,6 +362,8 @@ class HorizontalLayout(FormLayoutBase):
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
+        renderer: Optional[Any] = None,
+        **_kwargs: Any,
     ) -> str:
         header_html = self._section_header(framework)
 
@@ -431,6 +437,8 @@ class TabbedLayout(FormLayoutBase):
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
+        renderer: Optional[Any] = None,
+        **_kwargs: Any,
     ) -> str:
         """Render the tabbed layout with all tabs."""
         layouts = self._get_layouts()
@@ -649,6 +657,8 @@ class ListLayout(FormLayoutBase):
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
+        renderer: Optional[Any] = None,
+        **_kwargs: Any,
     ) -> str:
         """
         Render the list layout with dynamic add/remove functionality.

@@ -360,11 +360,48 @@
             }
         }
 
+        /* Ensure form sections and lists stretch to fill available width */
+        [data-schemaforms-section],
+        .schemaforms-section,
+        [role="region"],
+        .form-section {
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        /* Ensure model list containers expand */
+        [data-schemaforms-list],
+        .schemaforms-list,
+        .model-list-container,
+        .model-list-block,
+        .model-list-items,
+        .model-list-item {
+            width: 100% !important;
+            max-width: none !important;
+            flex: 1 1 auto !important;
+        }
+
+        /* Ensure fieldsets don't constrain width */
+        fieldset {
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        /* Ensure rows in nested forms stretch */
+        .row {
+            width: 100% !important;
+        }
+
+        /* Ensure columns in nested forms expand properly */
+        [class*="col-"] {
+            min-width: 0; /* Allow flex shrinking below content size */
+        }
+
         {% block extra_styles %}{% endblock %}
     </style>
 </head>
 <body class="{% if framework == 'fastapi' %}fastapi-theme{% else %}flask-theme{% endif %} {% if theme == 'material' %}material-theme{% endif %}">
-    <div class="container">
+    <div class="{% if request and 'organization' in request.path %}container-fluid{% else %}container{% endif %}">
         {% block content %}{% endblock %}
     </div>
 

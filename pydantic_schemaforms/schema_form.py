@@ -273,6 +273,32 @@ class FormModel(BaseModel):
         )
 
     @classmethod
+    async def render_form_async(
+        cls,
+        data: Optional[Dict[str, Any]] = None,
+        errors: Optional[Dict[str, Any]] = None,
+        framework: str = "bootstrap",
+        *,
+        self_contained: bool = False,
+        include_framework_assets: bool = False,
+        asset_mode: str = "vendored",
+        **kwargs,
+    ) -> str:
+        """Async render helper for FormModel."""
+        from .enhanced_renderer import render_form_html_async
+
+        return await render_form_html_async(
+            cls,
+            form_data=data,
+            errors=errors,
+            framework=framework,
+            self_contained=self_contained,
+            include_framework_assets=include_framework_assets,
+            asset_mode=asset_mode,
+            **kwargs,
+        )
+
+    @classmethod
     def register_field(
         cls,
         field_name: str,

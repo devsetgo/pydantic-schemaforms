@@ -538,6 +538,111 @@ if __name__ == "__main__":
 
 ---
 
+## Render Timing
+
+The library automatically measures form rendering time with multiple display options:
+
+### Display Timing Below Submit Button
+
+Add a small timing display to your form:
+
+```python
+html = render_form_html(MyForm, show_timing=True)
+```
+
+This shows: **Rendered in 0.0045s**
+
+### Display in Debug Panel
+
+Include comprehensive debugging information:
+
+```python
+html = render_form_html(MyForm, debug=True)
+```
+
+Shows timing in the debug panel header: **Debug panel (development only) — 0.0045s render**
+
+### Automatic INFO-Level Logging
+
+Timing is **always logged** at INFO level:
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
+
+html = render_form_html(MyForm)
+# Logs: INFO pydantic_schemaforms.enhanced_renderer: Form rendered in 0.0045s
+```
+
+**Use Cases:**
+- Development: Use `show_timing=True` to see performance quickly
+- Debugging: Use `debug=True` to see form structure and timing
+- Production: Timing is logged automatically at INFO level for monitoring
+
+See [Render Timing Docs](https://devsetgo.github.io/pydantic-schemaforms/timing/) for complete details.
+
+---
+
+## Application Logging
+
+The library provides optional DEBUG-level logging that respects your application's logging configuration:
+
+### Automatic Timing Logs
+
+Timing is always logged at INFO level (for production monitoring):
+
+```python
+import logging
+from pydantic_schemaforms import render_form_html
+
+logging.basicConfig(level=logging.INFO)
+html = render_form_html(MyForm)
+# Timing is logged automatically
+```
+
+### Optional Debug Logs
+
+Enable DEBUG logging to see detailed rendering steps:
+
+```python
+import logging
+from pydantic_schemaforms import render_form_html
+
+# Option 1: Application-level DEBUG
+logging.basicConfig(level=logging.DEBUG)
+html = render_form_html(MyForm)
+# ✅ Timing + debug logs appear
+
+# Option 2: Per-render control
+html = render_form_html(MyForm, enable_logging=True)
+# ✅ Debug logs appear for this render only
+```
+
+### Selective Logger Configuration
+
+Enable library debugging without affecting your app's logging:
+
+```python
+import logging
+
+# Application at INFO level
+logging.basicConfig(level=logging.INFO)
+
+# Library DEBUG logs
+library_logger = logging.getLogger('pydantic_schemaforms')
+library_logger.setLevel(logging.DEBUG)
+
+html = render_form_html(MyForm)
+# ✅ Library debug logs visible
+# ✅ App remains at INFO level
+```
+
+**Best Practice**: Use Approach 1 (application-level configuration) in most cases. The library respects your app's logging setup.
+
+See [Application Logging Docs](https://devsetgo.github.io/pydantic-schemaforms/logging/) for complete details and integration examples.
+
+---
+
 ## Examples in This Repository
 
 The main runnable demo in this repo is the FastAPI example:
@@ -547,6 +652,12 @@ The main runnable demo in this repo is the FastAPI example:
 - Self-contained demo: http://localhost:8000/self-contained
 
 See `examples/fastapi_example.py` and `examples/shared_models.py` for the complete implementation.
+
+Logging and timing examples:
+- [Timing Options Example](examples/timing_options_example.py) - Display options for render timing
+- [Timing Demo](examples/demo_timing_feature.py) - Complete timing feature demonstration
+- [Logging Example](examples/logging_example.py) - Logging configuration patterns
+- [Logging Control Example](examples/logging_control_example.py) - Fine-grained logging control
 
 ---
 

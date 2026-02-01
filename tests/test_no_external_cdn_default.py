@@ -12,12 +12,12 @@ class _CdnCheckForm(FormModel):
 
 
 def test_render_form_default_has_no_unpkg() -> None:
-    html = render_form_html(_CdnCheckForm)
+    html = render_form_html(_CdnCheckForm, submit_url="/test")
     assert 'unpkg.com' not in html
 
 
 def test_render_form_cdn_mode_includes_unpkg() -> None:
-    html = render_form_html(_CdnCheckForm, asset_mode='cdn')
+    html = render_form_html(_CdnCheckForm, asset_mode='cdn', submit_url="/test")
     assert 'unpkg.com' in html
     v = vendored_asset_version('htmx')
     assert v is not None
