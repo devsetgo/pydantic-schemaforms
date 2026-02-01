@@ -82,6 +82,10 @@ reinstall: ## Install the project's dependencie
 	$(PIP) uninstall -r $(REQUIREMENTS_PATH) -y
 	$(PIP) install -r $(REQUIREMENTS_PATH)
 
+rebase: ## Rebase current branch from origin/main
+	git fetch origin
+	git rebase origin/main
+
 isort: ## Sort imports in Python code
 	$(PYTHON) -m isort $(SERVICE_PATH)
 	$(PYTHON) -m isort $(TESTS_PATH)
