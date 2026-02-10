@@ -3,7 +3,7 @@ autopep8==2.3.2 # Vulnerabilities: None
 black==26.1.0 # Vulnerabilities: None
 bumpcalver==2025.12.30.1 # Vulnerabilities: None
 devsetgo-lib==2025.10.4.2 # Vulnerabilities: None
-fastapi[all]==0.128.4 # Vulnerabilities: None
+fastapi[all]==0.128.6 # Vulnerabilities: None
 flake8==7.3.0 # Vulnerabilities: None
 Flask==3.1.2 # Vulnerabilities: None
 genbadge[all]==1.1.3 # Vulnerabilities: None
