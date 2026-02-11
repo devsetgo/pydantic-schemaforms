@@ -28,7 +28,7 @@ Repository = "https://github.com/devsetgo/pydantic-schemaforms"
 [project.optional-dependencies]
 fastapi = [ "fastapi>=0.110", "uvicorn>=0.30",]
 flask = [ "flask>=3.0",]
-dev = [ "fastapi[all]==0.128.4", "Flask==3.1.2", "pytest==9.0.1", "pytest-asyncio==1.3.0", "pytest-cov==7.0.0",]
+dev = [ "fastapi[all]==0.128.7", "Flask==3.1.2", "pytest==9.0.1", "pytest-asyncio==1.3.0", "pytest-cov==7.0.0",]
 
 [project.scripts]
 
