@@ -405,6 +405,7 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
             CompleteShowcaseForm,
             framework=style,
             errors=result['errors'],
+            submit_url=f"/showcase?style={style}",
             debug=debug,
             show_timing=show_timing,
             enable_logging=True,)
