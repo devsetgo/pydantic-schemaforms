@@ -204,7 +204,28 @@ class FormLayoutBase(SharedBaseLayout, ABC):
     ) -> core_schema.CoreSchema:
         """Allow layout classes to be used as field types within FormModel schemas."""
 
-        return core_schema.dict_schema()
+        def _serialize_layout(value: Any) -> Dict[str, Any]:
+            if isinstance(value, FormLayoutBase):
+                payload: Dict[str, Any] = {
+                    "type": value.__class__.__name__,
+                    "layout": True,
+                }
+                if hasattr(value, "_get_layouts"):
+                    try:
+                        payload["tabs"] = [name for name, _ in value._get_layouts()]
+                    except Exception:
+                        pass
+                return payload
+            if isinstance(value, dict):
+                return value
+            return {"value": str(value)}
+
+        return core_schema.any_schema(
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                _serialize_layout,
+                return_schema=core_schema.dict_schema(),
+            )
+        )
 
     @abstractmethod
     def render(
@@ -447,7 +468,10 @@ class TabbedLayout(FormLayoutBase):
 
         tabs_payload: List[Dict[str, str]] = []
         for tab_name, layout_instance in layouts:
-            layout_html = layout_instance.render(data=data, errors=errors, framework=framework)
+            tab_data = data
+            if isinstance(data, dict) and tab_name in data and isinstance(data[tab_name], dict):
+                tab_data = data[tab_name]
+            layout_html = layout_instance.render(data=tab_data, errors=errors, framework=framework)
             tabs_payload.append(
                 {
                     "title": tab_name.replace("_", " ").title(),
@@ -480,7 +504,10 @@ class TabbedLayout(FormLayoutBase):
 
         layouts = self._get_layouts()
         for _tab_name, layout_instance in layouts:
-            result = layout_instance.validate(form_data, files)
+            tab_data = form_data
+            if isinstance(form_data, dict) and _tab_name in form_data and isinstance(form_data[_tab_name], dict):
+                tab_data = form_data[_tab_name]
+            result = layout_instance.validate(tab_data, files)
             all_data.update(result.data)
             all_errors.update(result.errors)
             if not result.is_valid:

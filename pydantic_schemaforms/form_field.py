@@ -24,6 +24,7 @@ class FormField:
     def __new__(
         cls,
         default: Any = ...,
+        default_factory: Optional[Any] = None,
         *,
         # Core field parameters
         title: Optional[str] = None,
@@ -136,6 +137,7 @@ class FormField:
 
         return PydanticField(
             default=default,
+            default_factory=default_factory,
             alias=alias,
             title=title,
             description=description or help_text,

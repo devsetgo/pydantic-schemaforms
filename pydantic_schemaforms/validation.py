@@ -892,6 +892,33 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
         # Convert to dict for consistent return format
         validated_data = validated_instance.model_dump()
 
+        model_fields = getattr(runtime_model, "model_fields", {}) or {}
+        layout_field_names = []
+        for field_name, field_info in model_fields.items():
+            extra = getattr(field_info, "json_schema_extra", None) or {}
+            if not isinstance(extra, dict):
+                continue
+            ui_element = extra.get("ui_element") or extra.get("input_type")
+            if ui_element == "layout":
+                layout_field_names.append(field_name)
+
+        if layout_field_names:
+            from .rendering.layout_engine import get_nested_form_data
+
+            for layout_field_name in layout_field_names:
+                layout_value = getattr(validated_instance, layout_field_name, None)
+                nested_layout_data = get_nested_form_data(layout_field_name, data, layout_value)
+                if nested_layout_data:
+                    validated_data[layout_field_name] = nested_layout_data
+                    continue
+
+                layout_payload = validated_data.get(layout_field_name)
+                if (
+                    isinstance(layout_payload, dict)
+                    and layout_payload.get("layout") is True
+                ):
+                    validated_data.pop(layout_field_name, None)
+
         return ValidationResult(is_valid=True, data=validated_data)
 
     except ValidationError as e:

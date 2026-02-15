@@ -43,11 +43,11 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
 )
 from examples.nested_forms_example import (
     CompanyOrganizationForm,
-    create_sample_nested_data,
-    DepartmentInsightsTabbed,
+    create_comprehensive_sample_data,
 )
 
 from pydantic_schemaforms import render_form_html_async
+from pydantic_schemaforms.form_layouts import FormLayoutBase
 
 app = FastAPI(
     title="Pydantic SchemaForms - FastAPI Example",
@@ -69,12 +69,22 @@ def safe_json_filter(obj):
         """JSON serializer for objects not serializable by default json code"""
         if isinstance(o, (datetime, date)):
             return o.isoformat()
-        # Handle layout objects
-        elif hasattr(o, '__class__') and 'Layout' in o.__class__.__name__:
-            return {
-                "type": o.__class__.__name__,
-                "description": f"Layout object: {o.__class__.__name__}"
+        # Handle layout objects (TabbedLayout, VerticalLayout, etc.)
+        elif isinstance(o, FormLayoutBase):
+            layout_name = o.__class__.__name__
+            tab_names = []
+            if hasattr(o, "_get_layouts"):
+                try:
+                    tab_names = [name for name, _ in o._get_layouts()]
+                except Exception:
+                    tab_names = []
+            payload = {
+                "type": layout_name,
+                "description": f"Layout object: {layout_name}",
             }
+            if tab_names:
+                payload["tabs"] = tab_names
+            return payload
         # Handle other common non-serializable objects
         elif hasattr(o, '__dict__'):
             return str(o)
@@ -611,16 +621,19 @@ async def organization_get(
     style: str = "bootstrap",
     data: str = None,
     demo: bool = True,
-    debug: bool = False,
+    debug: bool = True,
     show_timing: bool = True,
 ):
     """
-    Deeply nested forms stress test - 5 levels deep!
-    
+    Comprehensive Tabbed Interface with 6 tabs!
+
     Demonstrates the library's ability to handle:
-    - Company → Departments → Teams → Members → Certifications
-    - Projects → Tasks → Subtasks
-    - Complex hierarchical data structures
+    1. Organization Tab - 5 levels deep nested structure
+    2. Kitchen Sink Tab - ALL input types in one place
+    3. Contact Management Tab - Advanced contact forms
+    4. Scheduling Tab - Date/time management with events
+    5. Media & Files Tab - Color themes and preferences
+    6. Settings Tab - Application settings and notifications
     """
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -631,26 +644,26 @@ async def organization_get(
         except Exception:
             pass  # Ignore invalid JSON
     elif demo:
-        # Use comprehensive sample data
-        form_data = create_sample_nested_data()
-    # Ensure layout demo renders even without demo data
-    if "layout_demo" not in form_data:
-        form_data["layout_demo"] = DepartmentInsightsTabbed()
+        # Use comprehensive sample data for all tabs
+        form_data = create_comprehensive_sample_data()
+
+    # Use render_form_html_async - the library provides everything
+    from examples.nested_forms_example import ComprehensiveTabbedForm
 
     form_html = await render_form_html_async(
-        CompanyOrganizationForm,
+        ComprehensiveTabbedForm,
         framework=style,
         form_data=form_data,
-        submit_url="/organization",
+        submit_url=f"/organization?style={style}",
         debug=debug,
         show_timing=show_timing,
-        enable_logging=False,
+        enable_logging=True,
     )
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
-        "title": "Company Organization - 5 Levels Deep! 🚀",
-        "description": "Ultimate stress test: Company → Departments → Teams → Members → Certifications + Projects → Tasks → Subtasks",
+        "title": "Comprehensive Tabbed Interface - 6 Tabs! 🚀",
+        "description": "Ultimate showcase: Organization (5 levels deep) + Kitchen Sink (ALL inputs) + Contacts + Scheduling + Media + Settings",
         "framework": "fastapi",
         "framework_name": "FastAPI (Async)",
         "framework_type": style,
@@ -665,48 +678,42 @@ async def organization_post(
     debug: bool = False,
     show_timing: bool = True
 ):
-    """Handle organization form submission with 5 levels of nesting."""
+    """Handle comprehensive tabbed form submission."""
     # Get form data asynchronously
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Handle form submission
-    result = handle_form_submission(CompanyOrganizationForm, form_dict)
+    # Validate the form submission
+    from examples.nested_forms_example import ComprehensiveTabbedForm
+    result = handle_form_submission(ComprehensiveTabbedForm, form_dict)
     full_referer_path = create_refer_path(request)
-    
+
     if result['success']:
-        data = result['data']
-        dept_count = len(data.get('departments', []))
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
-            "title": "Organization Data Submitted Successfully! 🎉",
-            "message": f"Company '{data['company_name']}' with {dept_count} department(s) has been successfully processed!",
-            "data": data,
+            "title": "Comprehensive Form Submitted Successfully! 🎉",
+            "message": "All 6 tabs of data have been successfully processed!",
+            "data": result['data'],
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
         })
     else:
-        # Re-render form with errors
-        render_data = dict(form_dict)
-        if "layout_demo" not in render_data:
-            render_data["layout_demo"] = DepartmentInsightsTabbed()
-
+        # Re-render form with validation errors
         form_html = await render_form_html_async(
-            CompanyOrganizationForm,
+            ComprehensiveTabbedForm,
             framework=style,
-            form_data=render_data,
+            form_data=form_dict,
             errors=result['errors'],
-            submit_url="/organization",
             debug=debug,
             show_timing=show_timing,
-            enable_logging=True,
+            enable_logging=False,
         )
 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
-            "title": "Company Organization - 5 Levels Deep",
-            "description": "Ultimate nested forms stress test",
+            "title": "Comprehensive Tabbed Interface - 6 Tabs! 🚀",
+            "description": "Ultimate showcase: Organization (5 levels deep) + Kitchen Sink (ALL inputs) + Contacts + Scheduling + Media + Settings",
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "framework_type": style,

@@ -790,7 +790,7 @@ class LayoutEngine:
                     return handler(field_name, field_schema, value, ui_info, context, self)
 
             if isinstance(value, BaseLayout):
-                nested_data = get_nested_form_data(field_name, context.form_data)
+                nested_data = get_nested_form_data(field_name, context.form_data, value)
                 return value.render(
                     data=nested_data,
                     errors=None,
@@ -938,10 +938,44 @@ class LayoutEngine:
         return tabs
 
 
-def get_nested_form_data(field_name: str, main_data: Dict[str, Any]) -> Dict[str, Any]:
+def get_nested_form_data(
+    field_name: str,
+    main_data: Dict[str, Any],
+    layout_value: Optional[Any] = None,
+) -> Dict[str, Any]:
     """Utility used across renderers to extract nested layout data."""
     if field_name in main_data and isinstance(main_data[field_name], dict):
         return main_data[field_name]
+
+    if isinstance(layout_value, BaseLayout) and hasattr(layout_value, "_get_layouts"):
+        nested_data: Dict[str, Any] = {}
+
+        try:
+            tab_layouts = layout_value._get_layouts()
+        except Exception:
+            tab_layouts = []
+
+        for tab_name, tab_layout in tab_layouts:
+            if tab_name in main_data and isinstance(main_data[tab_name], dict):
+                nested_data[tab_name] = main_data[tab_name]
+                continue
+
+            tab_payload: Dict[str, Any] = {}
+            if hasattr(tab_layout, "_get_forms"):
+                try:
+                    for form_cls in tab_layout._get_forms():
+                        model_fields = getattr(form_cls, "model_fields", {}) or {}
+                        for form_field_name in model_fields.keys():
+                            if form_field_name in main_data:
+                                tab_payload[form_field_name] = main_data[form_field_name]
+                except Exception:
+                    pass
+
+            if tab_payload:
+                nested_data[tab_name] = tab_payload
+
+        if nested_data:
+            return nested_data
 
     field_data_mapping = {
         "vertical_tab": ["first_name", "last_name", "email", "birth_date"],
