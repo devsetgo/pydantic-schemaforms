@@ -73,7 +73,7 @@ class EnhancedFormRenderer:
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
         *,
-        submit_url: str,
+        submit_url: str = "/submit",
         method: str = "POST",
         include_csrf: bool = False,
         include_submit_button: bool = True,
@@ -266,13 +266,13 @@ class EnhancedFormRenderer:
         render_callable = partial(
             self.render_form_from_model,
             model_cls,
-            data,
-            errors,
-            submit_url,
-            method,
-            include_csrf,
-            include_submit_button,
-            layout,
+            data=data,
+            errors=errors,
+            submit_url=submit_url,
+            method=method,
+            include_csrf=include_csrf,
+            include_submit_button=include_submit_button,
+            layout=layout,
             **kwargs,
         )
 
@@ -607,7 +607,7 @@ def render_form_html(
     self_contained = bool(kwargs.pop("self_contained", False))
     include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
     asset_mode = str(kwargs.pop("asset_mode", "vendored"))
-    submit_url = str(kwargs.pop("submit_url"))  # Required - must be explicitly provided
+    submit_url = str(kwargs.pop("submit_url", "/submit"))
     if self_contained:
         include_framework_assets = True
 
