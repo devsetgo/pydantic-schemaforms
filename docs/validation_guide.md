@@ -566,7 +566,7 @@ app = FastAPI()
 @app.get("/register")
 def show_registration():
     form = RegistrationForm()
-    return render_form(form, framework="bootstrap")
+    return render_form(form, framework="bootstrap", submit_url="/register")
 
 @app.post("/register")
 async def handle_registration(request: Request):
@@ -588,7 +588,8 @@ async def handle_registration(request: Request):
         return render_form(
             form,
             framework="bootstrap",
-            errors=result.errors
+            errors=result.errors,
+            submit_url="/register"
         )
 
 # HTMX validation endpoints

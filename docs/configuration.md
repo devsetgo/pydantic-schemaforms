@@ -4,6 +4,8 @@ This library is driven almost entirely by **render-time options** (which framewo
 
 ## Rendering entry points
 
+`submit_url` is required for render calls. This library does not default form submit targets.
+
 You can render forms in a few different ways. Pick one that matches your project style:
 
 ### 1) Model-first (recommended)
@@ -85,7 +87,7 @@ At the top level, pass `layout=` to the renderer:
 - `"side-by-side"`
 
 ```python
-html = render_form_html(RegistrationForm, layout="tabbed")
+html = render_form_html(RegistrationForm, layout="tabbed", submit_url="/register")
 ```
 
 For advanced composition (tabs/accordion/grid wrappers and schema-defined layout fields), see [docs/layouts.md](layouts.md).

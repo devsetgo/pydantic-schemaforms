@@ -41,6 +41,8 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
 
+> **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
+
 ---
 
 ## Documentation
@@ -116,6 +118,7 @@ async def login(request: Request, style: str = "bootstrap"):
         framework=style,
         form_data=form_data,
         errors=errors,
+        submit_url="/login",
     )
 
     return f"""<!doctype html>
@@ -180,6 +183,7 @@ async def register(request: Request):
         framework="bootstrap",
         form_data=form_data,
         errors=errors,
+        submit_url="/register",
     )
 
     return f"""<!doctype html>
@@ -192,7 +196,7 @@ async def register(request: Request):
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Register</h1>
-  {form_html}
+  {form_html |safe}
 </body>
 </html>"""
 ```
@@ -236,6 +240,7 @@ def login():
         framework="bootstrap",
         form_data=form_data,
         errors=errors,
+        submit_url="/login",
     )
 
     return f"""<!doctype html>
@@ -248,7 +253,7 @@ def login():
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Login</h1>
-  {form_html}
+  {form_html|safe}
 </body>
 </html>"""
 ```
@@ -290,6 +295,7 @@ def register():
         framework="bootstrap",
         form_data=form_data,
         errors=errors,
+        submit_url="/register",
     )
 
     return f"""<!doctype html>
@@ -302,7 +308,7 @@ def register():
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Register</h1>
-  {form_html}
+  {form_html|safe}
 </body>
 </html>"""
 ```
@@ -344,6 +350,7 @@ form_html = render_form_html(
     form_data=form_data,
     debug=debug,
     self_contained=True,
+    submit_url="/register",
 )
 ```
 
@@ -355,6 +362,7 @@ form_html = UserRegistrationForm.render_form(
     framework=style,
     debug=debug,
     self_contained=True,
+    submit_url="/register",
 )
 ```
 
@@ -547,7 +555,7 @@ The library automatically measures form rendering time with multiple display opt
 Add a small timing display to your form:
 
 ```python
-html = render_form_html(MyForm, show_timing=True)
+html = render_form_html(MyForm, show_timing=True, submit_url="/submit")
 ```
 
 This shows: **Rendered in 0.0045s**
@@ -557,7 +565,7 @@ This shows: **Rendered in 0.0045s**
 Include comprehensive debugging information:
 
 ```python
-html = render_form_html(MyForm, debug=True)
+html = render_form_html(MyForm, debug=True, submit_url="/submit")
 ```
 
 Shows timing in the debug panel header: **Debug panel (development only) — 0.0045s render**
@@ -570,7 +578,7 @@ Timing is **always logged** at INFO level:
 import logging
 logging.basicConfig(level=logging.INFO)
 
-html = render_form_html(MyForm)
+html = render_form_html(MyForm, submit_url="/submit")
 # Logs: INFO pydantic_schemaforms.enhanced_renderer: Form rendered in 0.0045s
 ```
 
@@ -596,7 +604,7 @@ import logging
 from pydantic_schemaforms import render_form_html
 
 logging.basicConfig(level=logging.INFO)
-html = render_form_html(MyForm)
+html = render_form_html(MyForm, submit_url="/submit")
 # Timing is logged automatically
 ```
 
@@ -610,11 +618,11 @@ from pydantic_schemaforms import render_form_html
 
 # Option 1: Application-level DEBUG
 logging.basicConfig(level=logging.DEBUG)
-html = render_form_html(MyForm)
+html = render_form_html(MyForm, submit_url="/submit")
 # ✅ Timing + debug logs appear
 
 # Option 2: Per-render control
-html = render_form_html(MyForm, enable_logging=True)
+html = render_form_html(MyForm, enable_logging=True, submit_url="/submit")
 # ✅ Debug logs appear for this render only
 ```
 
@@ -632,7 +640,7 @@ logging.basicConfig(level=logging.INFO)
 library_logger = logging.getLogger('pydantic_schemaforms')
 library_logger.setLevel(logging.DEBUG)
 
-html = render_form_html(MyForm)
+html = render_form_html(MyForm, submit_url="/submit")
 # ✅ Library debug logs visible
 # ✅ App remains at INFO level
 ```
@@ -654,10 +662,10 @@ The main runnable demo in this repo is the FastAPI example:
 See `examples/fastapi_example.py` and `examples/shared_models.py` for the complete implementation.
 
 Logging and timing examples:
-- [Timing Options Example](examples/timing_options_example.py) - Display options for render timing
-- [Timing Demo](examples/demo_timing_feature.py) - Complete timing feature demonstration
-- [Logging Example](examples/logging_example.py) - Logging configuration patterns
-- [Logging Control Example](examples/logging_control_example.py) - Fine-grained logging control
+- [Timing Options Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/timing_options_example.py) - Display options for render timing
+- [Timing Demo](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/demo_timing_feature.py) - Complete timing feature demonstration
+- [Logging Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/logging_example.py) - Logging configuration patterns
+- [Logging Control Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/logging_control_example.py) - Fine-grained logging control
 
 ---
 
