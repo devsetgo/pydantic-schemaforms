@@ -21,7 +21,7 @@ def handle_form(
     """Canonical synchronous entry point.
 
     - If `submitted_data` is provided, validates and returns `{success, data}` or `{success, errors, form_html}`.
-    - If not, returns `{{form_html | safe}}` for an initial render.
+    - If not, returns `{form_html}` for an initial render.
     """
 
     return handle_sync_form(

@@ -131,7 +131,7 @@ async def login(request: Request, style: str = "bootstrap"):
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Login</h1>
-  {form_html | safe}
+  {form_html}
 </body>
 </html>"""
 ```
