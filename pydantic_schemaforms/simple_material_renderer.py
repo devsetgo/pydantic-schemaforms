@@ -17,6 +17,9 @@ from .rendering.themes import MaterialEmbeddedTheme
 from .templates import FormTemplates, render_template
 
 
+REQUIRED_FIELD_ATTRIBUTES = 'required="required" aria-required="true"'
+
+
 class SimpleMaterialRenderer(EnhancedFormRenderer):
     """
     Simple Material Design 3 form renderer that actually works.
@@ -253,8 +256,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error_class = " error" if error else ""
         attrs = self._build_text_input_attributes(ui_info)
         if is_required:
-            required_attrs = 'required="required" aria-required="true"'
-            attrs = f"{attrs} {required_attrs}".strip()
+            attrs = f"{attrs} {REQUIRED_FIELD_ATTRIBUTES}".strip()
         value_attr = self._attr(value) if value is not None else ""
         return render_template(
             FormTemplates.MATERIAL_TEXT_INPUT,
@@ -278,7 +280,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error_class = " error" if error else ""
         attrs = ""
         if is_required:
-            attrs = 'required="required" aria-required="true"'
+            attrs = REQUIRED_FIELD_ATTRIBUTES
         value_content = escape(str(value)) if value is not None else ""
         return render_template(
             FormTemplates.MATERIAL_TEXTAREA,
@@ -302,7 +304,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error_class = " error" if error else ""
         attrs = ""
         if is_required:
-            attrs = 'required="required" aria-required="true"'
+            attrs = REQUIRED_FIELD_ATTRIBUTES
         options = self._build_select_options(ui_info, field_schema)
         rendered_options = [
             render_template(
@@ -368,7 +370,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             if value is True or str(value).lower() in {"true", "1", "on"}
             else ""
         )
-        required_attr = 'required="required" aria-required="true"' if is_required else ""
+        required_attr = REQUIRED_FIELD_ATTRIBUTES if is_required else ""
         return render_template(
             FormTemplates.MATERIAL_CHECKBOX_FIELD,
             name=self._attr(field_name),

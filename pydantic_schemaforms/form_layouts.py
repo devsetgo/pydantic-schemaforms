@@ -698,16 +698,17 @@ class ListLayout(FormLayoutBase):
         Returns:
             HTML string with the complete list layout
         """
-        # Extract renderer from the current context - this is a simplified approach
-        # In practice, the renderer would be passed differently
-        if framework == "material":
-            from .simple_material_renderer import MaterialDesign3Renderer
+        # Use provided renderer when available, otherwise create a framework default.
+        active_renderer = renderer
+        if active_renderer is None:
+            if framework == "material":
+                from .simple_material_renderer import MaterialDesign3Renderer
 
-            renderer = MaterialDesign3Renderer()
-        else:
-            from .enhanced_renderer import EnhancedFormRenderer
+                active_renderer = MaterialDesign3Renderer()
+            else:
+                from .enhanced_renderer import EnhancedFormRenderer
 
-            renderer = EnhancedFormRenderer()
+                active_renderer = EnhancedFormRenderer()
 
         # Extract list items from data
         list_data = []
@@ -729,7 +730,7 @@ class ListLayout(FormLayoutBase):
         # Render existing items
         items_html = ""
         for i, item_data in enumerate(list_data):
-            items_html += self._render_list_item(renderer, item_data, i, list_id, framework, errors)
+            items_html += self._render_list_item(active_renderer, item_data, i, list_id, framework, errors)
 
         # Render add button
         add_button_html = self._render_add_button(list_id, framework)
