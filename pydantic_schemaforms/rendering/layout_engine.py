@@ -938,45 +938,56 @@ class LayoutEngine:
         return tabs
 
 
-def get_nested_form_data(
-    field_name: str,
-    main_data: Dict[str, Any],
-    layout_value: Optional[Any] = None,
-) -> Dict[str, Any]:
-    """Utility used across renderers to extract nested layout data."""
-    if field_name in main_data and isinstance(main_data[field_name], dict):
-        return main_data[field_name]
+def _extract_existing_field_data(field_name: str, main_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    field_data = main_data.get(field_name)
+    if isinstance(field_data, dict):
+        return field_data
+    return None
 
-    if isinstance(layout_value, BaseLayout) and hasattr(layout_value, "_get_layouts"):
-        nested_data: Dict[str, Any] = {}
 
-        try:
-            tab_layouts = layout_value._get_layouts()
-        except Exception:
-            tab_layouts = []
+def _safe_layout_tabs(layout_value: Any) -> List[Tuple[str, Any]]:
+    if not isinstance(layout_value, BaseLayout) or not hasattr(layout_value, "_get_layouts"):
+        return []
+    try:
+        return list(layout_value._get_layouts())
+    except Exception:
+        return []
 
-        for tab_name, tab_layout in tab_layouts:
-            if tab_name in main_data and isinstance(main_data[tab_name], dict):
-                nested_data[tab_name] = main_data[tab_name]
-                continue
 
-            tab_payload: Dict[str, Any] = {}
-            if hasattr(tab_layout, "_get_forms"):
-                try:
-                    for form_cls in tab_layout._get_forms():
-                        model_fields = getattr(form_cls, "model_fields", {}) or {}
-                        for form_field_name in model_fields.keys():
-                            if form_field_name in main_data:
-                                tab_payload[form_field_name] = main_data[form_field_name]
-                except Exception:
-                    pass
+def _tab_payload_from_main_data(tab_layout: Any, main_data: Dict[str, Any]) -> Dict[str, Any]:
+    if not hasattr(tab_layout, "_get_forms"):
+        return {}
 
-            if tab_payload:
-                nested_data[tab_name] = tab_payload
+    tab_payload: Dict[str, Any] = {}
+    try:
+        for form_cls in tab_layout._get_forms():
+            model_fields = getattr(form_cls, "model_fields", {}) or {}
+            for form_field_name in model_fields.keys():
+                if form_field_name in main_data:
+                    tab_payload[form_field_name] = main_data[form_field_name]
+    except Exception:
+        return {}
 
-        if nested_data:
-            return nested_data
+    return tab_payload
 
+
+def _extract_layout_nested_data(layout_value: Any, main_data: Dict[str, Any]) -> Dict[str, Any]:
+    nested_data: Dict[str, Any] = {}
+
+    for tab_name, tab_layout in _safe_layout_tabs(layout_value):
+        tab_data = main_data.get(tab_name)
+        if isinstance(tab_data, dict):
+            nested_data[tab_name] = tab_data
+            continue
+
+        tab_payload = _tab_payload_from_main_data(tab_layout, main_data)
+        if tab_payload:
+            nested_data[tab_name] = tab_payload
+
+    return nested_data
+
+
+def _extract_fallback_mapped_data(field_name: str, main_data: Dict[str, Any]) -> Dict[str, Any]:
     field_data_mapping = {
         "vertical_tab": ["first_name", "last_name", "email", "birth_date"],
         "horizontal_tab": ["phone", "address", "city", "postal_code"],
@@ -988,5 +999,21 @@ def get_nested_form_data(
     for key in field_data_mapping.get(field_name, []):
         if key in main_data:
             nested_data[key] = main_data[key]
-
     return nested_data
+
+
+def get_nested_form_data(
+    field_name: str,
+    main_data: Dict[str, Any],
+    layout_value: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """Utility used across renderers to extract nested layout data."""
+    existing = _extract_existing_field_data(field_name, main_data)
+    if existing is not None:
+        return existing
+
+    layout_nested = _extract_layout_nested_data(layout_value, main_data)
+    if layout_nested:
+        return layout_nested
+
+    return _extract_fallback_mapped_data(field_name, main_data)
