@@ -194,7 +194,6 @@ class SliderInput(RangeInput):
         if show_labels:
             min_val = kwargs.get("min", "0")
             max_val = kwargs.get("max", "100")
-            kwargs.get("name", "")
 
             labels_html = f"""
             <div class="slider-labels" style="display: flex; justify-content: space-between; margin-top: 5px;">
