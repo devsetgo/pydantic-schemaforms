@@ -32,13 +32,13 @@ def approach_1_app_level_control():
     # INFO level - library logs won't appear (they use DEBUG)
     print("With INFO level (typical production):")
     logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s', force=True)
-    render_form_html(MinimalLoginForm)
+    render_form_html(MinimalLoginForm, submit_url="/login")
     print("✅ No library logs\n")
 
     # DEBUG level - library logs will appear
     print("With DEBUG level (development/troubleshooting):")
     logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s', force=True)
-    render_form_html(MinimalLoginForm)
+    render_form_html(MinimalLoginForm, submit_url="/login")
     print("✅ Library logs appear when you set DEBUG\n")
 
 
@@ -58,11 +58,11 @@ def approach_2_explicit_parameter():
     logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s', force=True)
 
     print("With enable_logging=True (default):")
-    render_form_html(MinimalLoginForm, enable_logging=True)
+    render_form_html(MinimalLoginForm, enable_logging=True, submit_url="/login")
     print("✅ Library logs respect logging config\n")
 
     print("With enable_logging=False (suppress library logs):")
-    render_form_html(MinimalLoginForm, enable_logging=False)
+    render_form_html(MinimalLoginForm, enable_logging=False, submit_url="/login")
     print("✅ Library logs suppressed even with DEBUG level\n")
 
 

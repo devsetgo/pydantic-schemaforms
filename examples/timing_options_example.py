@@ -17,7 +17,7 @@ class UserRegistration(FormModel):
 # Example 1: Default - no timing display (timing is still logged)
 print("Example 1: Default rendering (timing logged only)")
 print("-" * 60)
-html1 = render_form_html(UserRegistration)
+html1 = render_form_html(UserRegistration, submit_url="/register")
 print(f"HTML size: {len(html1)} bytes")
 print("✓ Timing logged to INFO level")
 print()
@@ -25,7 +25,7 @@ print()
 # Example 2: show_timing=True - small text below submit button
 print("Example 2: show_timing=True (inline display)")
 print("-" * 60)
-html2 = render_form_html(UserRegistration, show_timing=True)
+html2 = render_form_html(UserRegistration, show_timing=True, submit_url="/register")
 print(f"HTML size: {len(html2)} bytes")
 if "Rendered in" in html2:
     print("✓ Timing displayed below submit button")
@@ -34,7 +34,7 @@ print()
 # Example 3: debug=True - timing in debug panel header
 print("Example 3: debug=True (debug panel with timing)")
 print("-" * 60)
-html3 = render_form_html(UserRegistration, debug=True)
+html3 = render_form_html(UserRegistration, debug=True, submit_url="/register")
 print(f"HTML size: {len(html3)} bytes")
 if "Debug panel (development only)" in html3 and "s render" in html3:
     print("✓ Timing displayed in debug panel header")
@@ -43,7 +43,7 @@ print()
 # Example 4: Both show_timing and debug enabled
 print("Example 4: show_timing=True + debug=True (both displays)")
 print("-" * 60)
-html4 = render_form_html(UserRegistration, show_timing=True, debug=True)
+html4 = render_form_html(UserRegistration, show_timing=True, debug=True, submit_url="/register")
 print(f"HTML size: {len(html4)} bytes")
 has_inline = "Rendered in" in html4 and "s</div>" in html4
 has_debug = "Debug panel (development only)" in html4 and "s render" in html4

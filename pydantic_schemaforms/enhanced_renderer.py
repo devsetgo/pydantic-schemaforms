@@ -607,7 +607,12 @@ def render_form_html(
     self_contained = bool(kwargs.pop("self_contained", False))
     include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
     asset_mode = str(kwargs.pop("asset_mode", "vendored"))
-    submit_url = str(kwargs.pop("submit_url", "/submit"))
+    submit_url_raw = kwargs.pop("submit_url", None)
+    if submit_url_raw is None:
+        raise ValueError("submit_url is required; the library does not choose submission targets")
+    submit_url = str(submit_url_raw).strip()
+    if not submit_url:
+        raise ValueError("submit_url cannot be empty")
     if self_contained:
         include_framework_assets = True
 

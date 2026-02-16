@@ -37,6 +37,7 @@ def test_render_form_html_self_contained_bootstrap_inlines_assets() -> None:
         Demo,
         framework="bootstrap",
         self_contained=True,
+        submit_url="/demo",
     )
     assert "<style>" in html
     assert "cdn.jsdelivr.net" not in html

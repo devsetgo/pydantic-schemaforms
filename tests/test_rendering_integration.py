@@ -14,7 +14,7 @@ class TestFormRenderingIntegration:
             name: str = Field(default="")
             email: str = Field(default="")
 
-        html = SimpleForm.render_form()
+        html = SimpleForm.render_form(submit_url="/simple")
 
         assert isinstance(html, str)
         assert len(html) > 0
@@ -25,7 +25,7 @@ class TestFormRenderingIntegration:
             first_name: str = ""
             last_name: str = ""
 
-        html = PersonForm.render_form(data={'first_name': 'John', 'last_name': 'Doe'})
+        html = PersonForm.render_form(data={'first_name': 'John', 'last_name': 'Doe'}, submit_url="/person")
 
         assert isinstance(html, str)
 
@@ -36,7 +36,8 @@ class TestFormRenderingIntegration:
 
         html = EmailForm.render_form(
             data={'email': 'invalid'},
-            errors={'email': 'Invalid email format'}
+            errors={'email': 'Invalid email format'},
+            submit_url="/email",
         )
 
         assert isinstance(html, str)
@@ -47,11 +48,11 @@ class TestFormRenderingIntegration:
             field: str = ""
 
         # Bootstrap
-        html_bs = BasicForm.render_form(framework='bootstrap')
+        html_bs = BasicForm.render_form(framework='bootstrap', submit_url="/basic")
         assert isinstance(html_bs, str)
 
         # Material
-        html_mat = BasicForm.render_form(framework='material')
+        html_mat = BasicForm.render_form(framework='material', submit_url="/basic")
         assert isinstance(html_mat, str)
 
 

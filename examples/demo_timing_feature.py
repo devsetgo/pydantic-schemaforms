@@ -29,7 +29,7 @@ def demo_basic_timing():
 
     from pydantic_schemaforms.enhanced_renderer import render_form_html
 
-    html = render_form_html(ContactForm, debug=False)
+    html = render_form_html(ContactForm, debug=False, submit_url="/contact")
 
     print("Form rendered (check logs above for timing)")
     print(f"HTML length: {len(html)} characters")
@@ -43,7 +43,7 @@ def demo_show_timing():
 
     from pydantic_schemaforms.enhanced_renderer import render_form_html
 
-    html = render_form_html(ContactForm, show_timing=True)
+    html = render_form_html(ContactForm, show_timing=True, submit_url="/contact")
 
     # Extract timing from inline display
     import re
@@ -69,7 +69,7 @@ def demo_debug_panel_timing():
 
     from pydantic_schemaforms.enhanced_renderer import render_form_html
 
-    html = render_form_html(ContactForm, debug=True)
+    html = render_form_html(ContactForm, debug=True, submit_url="/contact")
 
     # Extract timing from debug panel
     import re
@@ -96,7 +96,7 @@ def demo_multiple_renders():
 
     times = []
     for _i in range(5):
-        html = render_form_html(ContactForm, debug=True)
+        html = render_form_html(ContactForm, debug=True, submit_url="/contact")
 
         match = re.search(r'— ([\d.]+)s render', html)
         if match:
@@ -119,7 +119,7 @@ def demo_form_builder_timing():
 
     from pydantic_schemaforms.render_form import render_form_html
 
-    html = render_form_html(ContactForm, debug=True, framework="bootstrap")
+    html = render_form_html(ContactForm, debug=True, framework="bootstrap", submit_url="/contact")
 
     import re
     match = re.search(r'— ([\d.]+)s render', html)

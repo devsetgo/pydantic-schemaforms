@@ -242,6 +242,7 @@ class FormModel(BaseModel):
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
         *,
+        submit_url: str,
         self_contained: bool = False,
         include_framework_assets: bool = False,
         asset_mode: str = "vendored",
@@ -266,6 +267,7 @@ class FormModel(BaseModel):
             form_data=data,
             errors=errors,
             framework=framework,
+            submit_url=submit_url,
             self_contained=self_contained,
             include_framework_assets=include_framework_assets,
             asset_mode=asset_mode,
@@ -279,6 +281,7 @@ class FormModel(BaseModel):
         errors: Optional[Dict[str, Any]] = None,
         framework: str = "bootstrap",
         *,
+        submit_url: str,
         self_contained: bool = False,
         include_framework_assets: bool = False,
         asset_mode: str = "vendored",
@@ -292,6 +295,7 @@ class FormModel(BaseModel):
             form_data=data,
             errors=errors,
             framework=framework,
+            submit_url=submit_url,
             self_contained=self_contained,
             include_framework_assets=include_framework_assets,
             asset_mode=asset_mode,
@@ -427,7 +431,7 @@ class ValidationResult:
         self.form_model_cls = form_model_cls
         self.original_data = original_data or {}
 
-    def render_with_errors(self, framework: str = "bootstrap", **kwargs) -> str:
+    def render_with_errors(self, framework: str = "bootstrap", *, submit_url: str, **kwargs) -> str:
         """
         Render the form with validation errors displayed.
 
@@ -442,7 +446,11 @@ class ValidationResult:
             raise ValueError("Cannot render form: form_model_cls not provided")
 
         return self.form_model_cls.render_form(
-            data=self.original_data, errors=self.errors, framework=framework, **kwargs
+            data=self.original_data,
+            errors=self.errors,
+            framework=framework,
+            submit_url=submit_url,
+            **kwargs,
         )
 
     def __str__(self) -> str:
