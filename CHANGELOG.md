@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased (since untagged-bfb3bb98aa31ca386d88)
+
+### Breaking Changes
+
+- `submit_url` is now explicit across public form render APIs and no longer defaults silently.
+- Calls that omit `submit_url` now raise a clear error, enforcing app-owned routing boundaries.
+
+### Added
+
+- Async-first rendering flow improvements and examples.
+- FastAPI form/style GET+POST matrix testing to validate route and style combinations.
+- Expanded coverage suites for renderer/input modules and validation pathways.
+
+### Changed
+
+- Layout rendering internals refactored for maintainability and reduced cognitive complexity.
+- Reliability and maintainability improvements to satisfy SonarCloud findings.
+- Improved nested/collapsible form behavior when multiple forms are rendered on a page.
+- Better timing/logging support in examples and diagnostics.
+
+### Fixed
+
+- Removed implicit default submit target behavior (`/submit`) and aligned all call sites/tests.
+- Fixed FastAPI showcase POST re-render path by passing explicit submit target in error flows.
+- Fixed datetime/month/week conversion edge cases (`datetime` vs `date` branch ordering).
+- Fixed model-list and nested rendering edge behavior across schema and runtime paths.
+
+### Dependencies
+
+- `fastapi[all]`: `0.121.2` → `0.128.4`
+- `ruff`: `0.14.14` → `0.15.0`
+- `tqdm`: `4.67.1` → `4.67.3`
+- `pytest-html`: `4.1.1` → `4.2.0`
+- `packaging`: `25.0` → `26.0`
+- `black`: `25.12.0` → `26.1.0`
+- `mkdocstrings[python]`: `1.0.0` → `1.0.1`
+- `pymdown-extensions`: `10.20` → `10.20.1`
+
 ## Latest Changes
 ### <span style='color:blue'>Additional Work for Self-Contained</span> ([untagged-bfb3bb98aa31ca386d88](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/untagged-bfb3bb98aa31ca386d88))
 
@@ -85,3 +123,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+
