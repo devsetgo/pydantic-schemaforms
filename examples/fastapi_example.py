@@ -965,7 +965,7 @@ async def self_contained(demo: bool = True, debug: bool = True, show_timing: boo
     <p>Everything needed is embedded in the form HTML below:</p>
 
     <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa;">
-        {{form_html | safe}}
+        {form_html}
     </div>
 
     <div style="margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">

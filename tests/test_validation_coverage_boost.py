@@ -56,7 +56,7 @@ def test_date_range_constructor_and_parse_errors_and_js_paths():
 
     try:
         DateRangeRule()._parse_date(123)
-        assert False, "Expected ValueError"
+        raise AssertionError("Expected ValueError")
     except ValueError as exc:
         assert "Invalid date format" in str(exc)
 

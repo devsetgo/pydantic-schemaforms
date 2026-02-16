@@ -364,7 +364,7 @@ FORM_PAGE_TEMPLATE = string.Template(
     <div class="container">
         <div class="form-container">
             <h1 class="form-title">${title}</h1>
-            ${{form_html | safe}}
+            ${form_html}
         </div>
     </div>
 
