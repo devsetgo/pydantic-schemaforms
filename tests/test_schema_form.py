@@ -121,7 +121,7 @@ class TestFormModel:
         assert hasattr(simple_form_model, "render_form")
 
         # Test basic rendering
-        html = simple_form_model.render_form()
+        html = simple_form_model.render_form(submit_url="/simple")
         assert isinstance(html, str)
         assert len(html) > 0
         assert "<form" in html
@@ -131,7 +131,7 @@ class TestFormModel:
         frameworks = ["bootstrap", "material", "none"]
 
         for framework in frameworks:
-            html = simple_form_model.render_form(framework=framework)
+            html = simple_form_model.render_form(framework=framework, submit_url="/simple")
             assert isinstance(html, str)
             assert "<form" in html
             # Each framework should produce different output
@@ -218,7 +218,7 @@ class TestFormModelIntegration:
 
     def test_form_model_with_bootstrap_framework(self, simple_form_model):
         """Test FormModel rendering with Bootstrap framework."""
-        html = simple_form_model.render_form(framework="bootstrap")
+        html = simple_form_model.render_form(framework="bootstrap", submit_url="/simple")
 
         # Should contain Bootstrap classes
         assert 'class="form-control"' in html or 'class="form-select"' in html
@@ -226,7 +226,7 @@ class TestFormModelIntegration:
 
     def test_form_model_with_material_framework(self, simple_form_model):
         """Test FormModel rendering with Material Design framework."""
-        html = simple_form_model.render_form(framework="material")
+        html = simple_form_model.render_form(framework="material", submit_url="/simple")
 
         # Should contain Material Design structure
         assert "<form" in html
@@ -237,7 +237,7 @@ class TestFormModelIntegration:
         """Test FormModel rendering with validation errors."""
         errors = {"name": "This field is required", "email": "Invalid email format"}
 
-        html = simple_form_model.render_form(errors=errors)
+        html = simple_form_model.render_form(errors=errors, submit_url="/simple")
 
         # Should contain error messages
         assert "This field is required" in html
@@ -247,7 +247,7 @@ class TestFormModelIntegration:
         """Test FormModel rendering with initial data."""
         data = {"name": "John Doe", "email": "john@example.com", "age": 25, "newsletter": True}
 
-        html = simple_form_model.render_form(data=data)
+        html = simple_form_model.render_form(data=data, submit_url="/simple")
 
         # Should contain the initial values
         assert 'value="John Doe"' in html

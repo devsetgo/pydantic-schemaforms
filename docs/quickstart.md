@@ -12,8 +12,7 @@ This page shows two common ways to integrate pydantic-schemaforms into an app:
 ## Option A: Model-first rendering (recommended)
 
 ```python
-from pydantic_schemaforms import Field, FormModel
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class User(FormModel):
@@ -23,6 +22,57 @@ class User(FormModel):
 
 html = render_form_html(User, submit_url="/user")
 ```
+
+### Async (FastAPI / ASGI)
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+
+from pydantic_schemaforms import Field, FormModel, render_form_html_async
+
+
+class User(FormModel):
+    name: str = Field(...)
+    email: str = Field(..., ui_element="email")
+
+
+app = FastAPI()
+
+
+@app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
+async def user_form(request: Request):
+    form_data = {}
+    errors = {}
+
+    if request.method == "POST":
+        submitted = dict(await request.form())
+        form_data = submitted
+        try:
+            User(**submitted)
+        except Exception as exc:
+            errors = {"form": str(exc)}
+
+    form_html = await render_form_html_async(
+        User,
+        form_data=form_data,
+        errors=errors,
+        submit_url="/user",
+    )
+
+    return f"""
+    <!doctype html>
+    <html>
+    <body>
+      <h1>User</h1>
+      {form_html}
+    </body>
+    </html>
+    """
+```
+
+You can also call `await User.render_form_async(...)` directly if you prefer a model method.
+```python
 
 If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`.
 
@@ -44,30 +94,7 @@ class User(BaseModel):
 builder = create_form_from_model(User, framework="bootstrap")
 ```
 
-## 2) Sync integration (Flask / WSGI)
-
-```python
-from flask import Flask, request
-
-from pydantic_schemaforms import create_form_from_model, handle_form
-
-app = Flask(__name__)
-
-
-@app.route("/user", methods=["GET", "POST"])
-def user_form():
-    builder = create_form_from_model(User, framework="bootstrap")
-
-    if request.method == "POST":
-        result = handle_form(builder, submitted_data=request.form.to_dict())
-        if result.get("success"):
-            return f"Saved: {result['data']}"
-        return result["form_html"]
-
-    return handle_form(builder)["form_html"]
-```
-
-## 3) Async integration (FastAPI / ASGI)
+## 2) Async integration (FastAPI / ASGI)
 
 ```python
 from fastapi import FastAPI, Request
@@ -90,6 +117,29 @@ async def user_form(request: Request):
 
     result = await handle_form_async(builder)
     return result["form_html"]
+```
+
+## 3) Sync integration (Flask / WSGI)
+
+```python
+from flask import Flask, request
+
+from pydantic_schemaforms import create_form_from_model, handle_form
+
+app = Flask(__name__)
+
+
+@app.route("/user", methods=["GET", "POST"])
+def user_form():
+    builder = create_form_from_model(User, framework="bootstrap")
+
+    if request.method == "POST":
+        result = handle_form(builder, submitted_data=request.form.to_dict())
+        if result.get("success"):
+            return f"Saved: {result['data']}"
+        return result["form_html"]
+
+    return handle_form(builder)["form_html"]
 ```
 
 ## Notes

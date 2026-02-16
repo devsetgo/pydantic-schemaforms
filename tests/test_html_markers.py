@@ -8,7 +8,7 @@ def test_render_form_html_wrapped_by_default() -> None:
     class _MarkerForm(FormModel):
         name: str = Field(default="", title="Name")
 
-    html = render_form_html(_MarkerForm)
+    html = render_form_html(_MarkerForm, submit_url="/test")
     assert html.splitlines()[0] == "<!--- Start Pydantic-SchemaForms -->"
     assert html.splitlines()[-1] == "<!--- End Pydantic-SchemaForms -->"
 
@@ -20,7 +20,7 @@ def test_legacy_render_form_html_wraps_after_appends() -> None:
     class _MarkerForm(FormModel):
         name: str = Field(default="", title="Name")
 
-    html = render_form_html(_MarkerForm)
+    html = render_form_html(_MarkerForm, submit_url="/test")
     assert html.splitlines()[0] == "<!--- Start Pydantic-SchemaForms -->"
     assert html.splitlines()[-1] == "<!--- End Pydantic-SchemaForms -->"
 

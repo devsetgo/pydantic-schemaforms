@@ -20,6 +20,8 @@ nav:
       - Inputs (UI Elements): 'inputs.md'
       - Layouts: 'layouts.md'
       - Assets: 'assets.md'
+      - Render Timing: 'timing.md'
+      - Application Logging: 'logging.md'
       - Validation Guide: 'validation_guide.md'
       - Plugin Hooks: 'plugin_hooks.md'
   - Development:

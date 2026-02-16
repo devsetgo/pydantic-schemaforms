@@ -382,7 +382,9 @@ class MaterialEmbeddedTheme(RendererTheme):
         existing_class = attrs.get("class", "").strip()
         combined = "md-form" if not existing_class else f"md-form {existing_class}"
         attrs["class"] = combined
-        attrs.setdefault("novalidate", "novalidate")
+        # Remove novalidate to enable browser validation for required fields
+        # Material inputs have required attributes that should be enforced by the browser
+        attrs.pop("novalidate", None)
         return attrs
 
     def after_form(self) -> str:

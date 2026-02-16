@@ -2,7 +2,7 @@
 
 This tutorial walks through creating a small FastAPI app that renders a form from a Pydantic model using `pydantic-schemaforms`.
 
-It also explains when to use the **sync** handler (`handle_form`) vs the **async** handler (`handle_form_async`).
+It uses the **async-first** render API so large forms won’t block the event loop.
 
 ## Prerequisites
 
@@ -10,12 +10,11 @@ It also explains when to use the **sync** handler (`handle_form`) vs the **async
 
 ## Note: model-first rendering
 
-This tutorial uses the builder + handler flow because it’s easy to drop into a single file demo.
+This tutorial uses the model-first API (recommended). You only need:
 
-If you prefer a model-first API (and want direct control of assets/layout), use:
-
-- `pydantic_schemaforms.enhanced_renderer.render_form_html()`
-- or `FormModel.render_form()`
+- Define a `FormModel`
+- Render it (async) with `render_form_html_async()` or `FormModel.render_form_async()`
+- Drop `{{ form_html | safe }}` into your template
 
 See [docs/configuration.md](configuration.md).
 
@@ -41,14 +40,13 @@ Create a file named `main.py`:
 ```python
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, EmailStr
 
-from pydantic_schemaforms import create_form_from_model, handle_form_async
+from pydantic_schemaforms import Field, FormModel, render_form_html_async
 
 
-class User(BaseModel):
-    name: str
-    email: EmailStr
+class User(FormModel):
+    name: str = Field(...)
+    email: str = Field(..., ui_element="email")
 
 
 app = FastAPI(title="SchemaForms Demo")
@@ -56,27 +54,35 @@ app = FastAPI(title="SchemaForms Demo")
 
 @app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
 async def user_form(request: Request):
-    # Build a builder from your model (choose a framework theme).
-    builder = create_form_from_model(User, framework="bootstrap")
+    form_data = {}
+    errors = {}
 
     if request.method == "POST":
-        # FastAPI form parsing is async.
-        form = await request.form()
+        submitted = dict(await request.form())
+        form_data = submitted
+        try:
+            User(**submitted)
+        except Exception as exc:
+            errors = {"form": str(exc)}
 
-        # Validate + render response.
-        result = await handle_form_async(builder, submitted_data=dict(form))
+    form_html = await render_form_html_async(
+        User,
+        form_data=form_data,
+        errors=errors,
+        submit_url="/user",
+    )
 
-        # On success, result contains parsed/validated data.
-        if result.get("success"):
-            return f"Saved: {result['data']}"
-
-        # On failure, you typically re-render the form (with errors).
-        return result["form_html"]
-
-    # Initial render.
-    result = await handle_form_async(builder)
-    return result["form_html"]
+    return f"""
+    <html>
+      <body>
+        <h1>User</h1>
+        {form_html}
+      </body>
+    </html>
+    """
 ```
+
+You can also use `await User.render_form_async(...)` if you prefer a model method.
 
 ## 4) Run the server
 
@@ -88,9 +94,9 @@ Open http://127.0.0.1:8000/user
 
 ## Sync vs Async (what’s the difference?)
 
-### `handle_form()` (sync)
+### `render_form_html()` (sync)
 
-Use `handle_form(builder, ...)` when your web framework is synchronous (WSGI) and you already have submitted data as a plain `dict`.
+Use `render_form_html()` when your web framework is synchronous (WSGI) and you already have submitted data as a plain `dict`.
 
 Typical environments:
 
@@ -101,14 +107,13 @@ Example (Flask):
 
 ```python
 from flask import Flask, request
-from pydantic import BaseModel, EmailStr
 
-from pydantic_schemaforms import create_form_from_model, handle_form
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
-class User(BaseModel):
-    name: str
-    email: EmailStr
+class User(FormModel):
+    name: str = Field(...)
+    email: str = Field(..., ui_element="email")
 
 
 app = Flask(__name__)
@@ -116,20 +121,22 @@ app = Flask(__name__)
 
 @app.route("/user", methods=["GET", "POST"])
 def user_form():
-    builder = create_form_from_model(User, framework="bootstrap")
-
     if request.method == "POST":
-        result = handle_form(builder, submitted_data=request.form.to_dict())
-        if result.get("success"):
-            return f"Saved: {result['data']}"
-        return result["form_html"]
+        form_data = request.form.to_dict()
+        errors = {}
+        try:
+            User(**form_data)
+        except Exception as exc:
+            errors = {"form": str(exc)}
 
-    return handle_form(builder)["form_html"]
+        return render_form_html(User, form_data=form_data, errors=errors, submit_url="/user")
+
+    return render_form_html(User, submit_url="/user")
 ```
 
-### `handle_form_async()` (async)
+### `render_form_html_async()` (async)
 
-Use `handle_form_async(builder, ...)` when you are in an async runtime (ASGI) and you are already `await`-ing things (like `request.form()` in FastAPI/Starlette).
+Use `render_form_html_async()` when you are in an async runtime (ASGI) and you are already `await`-ing things (like `request.form()` in FastAPI/Starlette).
 
 Typical environments:
 
@@ -138,9 +145,9 @@ Typical environments:
 
 ### Important FastAPI note
 
-FastAPI’s `Request.form()` is async, so the most natural implementation is an `async def` route and `handle_form_async()`.
+FastAPI’s `Request.form()` is async, so the most natural implementation is an `async def` route and `render_form_html_async()`.
 
-If you *already* have a `dict` of submitted data (for example from a different parsing path), you can still call `handle_form()` inside an `async def` route — but the moment you need to `await` request parsing, you’ll generally prefer the async handler for consistency.
+If you *already* have a `dict` of submitted data (for example from a different parsing path), you can still call the sync renderer inside an `async def` route — but for large forms, the async renderer avoids blocking the event loop.
 
 ## Next steps
 

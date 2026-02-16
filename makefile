@@ -50,7 +50,7 @@ create-docs: ## Build and deploy the project's documentation
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
-	cp /workspaces/$(REPONAME)/contribute.md /workspaces/$(REPONAME)/docs/contribute.md
+	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/changelog.md /workspaces/$(REPONAME)/docs/release-notes.md
 	mkdocs build
 	mkdocs gh-deploy
@@ -60,7 +60,7 @@ create-docs-local: ## Build and deploy the project's documentation
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
-	cp /workspaces/$(REPONAME)/contribute.md /workspaces/$(REPONAME)/docs/contribute.md
+	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/changelog.md /workspaces/$(REPONAME)/docs/release-notes.md
 	mkdocs build
 
@@ -81,6 +81,10 @@ local-install: ## Install the project
 reinstall: ## Install the project's dependencie
 	$(PIP) uninstall -r $(REQUIREMENTS_PATH) -y
 	$(PIP) install -r $(REQUIREMENTS_PATH)
+
+rebase: ## Rebase current branch from origin/main
+	git fetch origin
+	git rebase origin/main
 
 isort: ## Sort imports in Python code
 	$(PYTHON) -m isort $(SERVICE_PATH)

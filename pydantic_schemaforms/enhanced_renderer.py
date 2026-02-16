@@ -72,6 +72,7 @@ class EnhancedFormRenderer:
         model_cls: Type[FormModel],
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
+        *,
         submit_url: str = "/submit",
         method: str = "POST",
         include_csrf: bool = False,
@@ -88,7 +89,7 @@ class EnhancedFormRenderer:
         start_time = time.perf_counter()
 
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
-        data = data or {}
+        data = dict(data or {})
         errors = errors or {}
 
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
@@ -114,6 +115,25 @@ class EnhancedFormRenderer:
         required_fields = metadata.required_fields
         layout_fields = metadata.layout_fields
         non_layout_fields = metadata.non_layout_fields
+
+        if layout_fields:
+            model_fields = getattr(model_cls, "model_fields", {}) or {}
+            for field_name, _field_schema in layout_fields:
+                if field_name in data:
+                    continue
+                field_info = model_fields.get(field_name)
+                if not field_info:
+                    continue
+                default_factory = getattr(field_info, "default_factory", None)
+                if default_factory is not None:
+                    try:
+                        data[field_name] = default_factory()
+                    except Exception:  # pragma: no cover - defensive
+                        continue
+                elif not field_info.is_required():
+                    default_value = getattr(field_info, "default", None)
+                    if default_value is not None:
+                        data[field_name] = default_value
 
         if len(layout_fields) > 1 and len(non_layout_fields) == 0:
             form_body_parts.extend(
@@ -233,6 +253,7 @@ class EnhancedFormRenderer:
         model_cls: Type[FormModel],
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
+        *,
         submit_url: str = "/submit",
         method: str = "POST",
         include_csrf: bool = False,
@@ -245,13 +266,13 @@ class EnhancedFormRenderer:
         render_callable = partial(
             self.render_form_from_model,
             model_cls,
-            data,
-            errors,
-            submit_url,
-            method,
-            include_csrf,
-            include_submit_button,
-            layout,
+            data=data,
+            errors=errors,
+            submit_url=submit_url,
+            method=method,
+            include_csrf=include_csrf,
+            include_submit_button=include_submit_button,
+            layout=layout,
             **kwargs,
         )
 
@@ -586,6 +607,12 @@ def render_form_html(
     self_contained = bool(kwargs.pop("self_contained", False))
     include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
     asset_mode = str(kwargs.pop("asset_mode", "vendored"))
+    submit_url_raw = kwargs.pop("submit_url", None)
+    if submit_url_raw is None:
+        raise ValueError("submit_url is required; the library does not choose submission targets")
+    submit_url = str(submit_url_raw).strip()
+    if not submit_url:
+        raise ValueError("submit_url cannot be empty")
     if self_contained:
         include_framework_assets = True
 
@@ -601,6 +628,7 @@ def render_form_html(
             form_model_cls,
             data=form_data,
             errors=errors,
+            submit_url=submit_url,
             layout=layout,
             debug=debug,
             show_timing=show_timing,
@@ -618,6 +646,7 @@ def render_form_html(
         form_model_cls,
         data=form_data,
         errors=errors,
+        submit_url=submit_url,
         layout=layout,
         debug=debug,
         show_timing=show_timing,

@@ -128,6 +128,16 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             or self._infer_input_type(field_schema)
         )
 
+        if input_type == "layout":
+            return self._render_layout_field(
+                field_name,
+                field_schema,
+                value,
+                error,
+                ui_info,
+                context,
+            )
+
         if input_type == "model_list":
             return self._render_model_list_field(
                 field_name,
@@ -189,11 +199,31 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         has_icon = icon is not None
 
         if input_type == "textarea":
-            control_html = self._render_textarea_input(field_name, value, error, ui_info)
+            control_html = self._render_textarea_input(
+                field_name,
+                value,
+                error,
+                ui_info,
+                is_required,
+            )
         elif input_type == "select":
-            control_html = self._render_select_input(field_name, value, error, ui_info, field_schema)
+            control_html = self._render_select_input(
+                field_name,
+                value,
+                error,
+                ui_info,
+                field_schema,
+                is_required,
+            )
         else:
-            control_html = self._render_text_input(field_name, input_type, value, error, ui_info)
+            control_html = self._render_text_input(
+                field_name,
+                input_type,
+                value,
+                error,
+                ui_info,
+                is_required,
+            )
 
         input_wrapper = render_template(
             FormTemplates.MATERIAL_FIELD_INPUT_WRAPPER,
@@ -217,11 +247,15 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         value: Any,
         error: Optional[str],
         ui_info: Dict[str, Any],
+        is_required: bool,
     ) -> str:
         """Render a Material Design text input."""
         error_class = " error" if error else ""
         attrs = self._build_text_input_attributes(ui_info)
-        value_attr = self._attr(value) if value else ""
+        if is_required:
+            required_attrs = 'required="required" aria-required="true"'
+            attrs = f"{attrs} {required_attrs}".strip()
+        value_attr = self._attr(value) if value is not None else ""
         return render_template(
             FormTemplates.MATERIAL_TEXT_INPUT,
             input_type=input_type,
@@ -238,9 +272,13 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         value: Any,
         error: Optional[str],
         ui_info: Dict[str, Any],
+        is_required: bool,
     ) -> str:
         """Render a Material Design textarea."""
         error_class = " error" if error else ""
+        attrs = ""
+        if is_required:
+            attrs = 'required="required" aria-required="true"'
         value_content = escape(str(value)) if value is not None else ""
         return render_template(
             FormTemplates.MATERIAL_TEXTAREA,
@@ -248,6 +286,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             field_id=self._attr(field_name),
             error_class=error_class,
             value=value_content,
+            attributes=attrs,
         )
 
     def _render_select_input(
@@ -257,9 +296,13 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
         error: Optional[str],
         ui_info: Dict[str, Any],
         field_schema: Dict[str, Any],
+        is_required: bool,
     ) -> str:
         """Render a Material Design select field."""
         error_class = " error" if error else ""
+        attrs = ""
+        if is_required:
+            attrs = 'required="required" aria-required="true"'
         options = self._build_select_options(ui_info, field_schema)
         rendered_options = [
             render_template(
@@ -287,6 +330,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             field_id=self._attr(field_name),
             error_class=error_class,
             options="".join(rendered_options),
+            attributes=attrs,
         )
 
     def _build_select_options(self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]) -> List[List[str]]:
@@ -319,8 +363,12 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     ) -> str:
         """Render a Material Design checkbox field."""
         required_text = " *" if is_required else ""
-
-        checked_attr = 'checked="checked"' if value else ""
+        checked_attr = (
+            'checked="checked"'
+            if value is True or str(value).lower() in {"true", "1", "on"}
+            else ""
+        )
+        required_attr = 'required="required" aria-required="true"' if is_required else ""
         return render_template(
             FormTemplates.MATERIAL_CHECKBOX_FIELD,
             name=self._attr(field_name),
@@ -328,6 +376,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
             label=escape(label),
             required_indicator=required_text,
             checked=checked_attr,
+            required=required_attr,
             help_text=self._render_help_block(help_text),
             error_text=self._render_error_block(error),
         )

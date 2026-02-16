@@ -14,7 +14,6 @@ from typing import List, Optional
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import re
-from collections import defaultdict
 
 from pydantic import EmailStr, field_validator
 
@@ -983,29 +982,57 @@ def parse_nested_form_data(form_data):
 
 
     result = {}
-    array_data = defaultdict(lambda: defaultdict(dict))
+
+    def tokenize_path(path: str):
+        tokens = []
+        for name_token, index_token in re.findall(r'([^.\[\]]+)|\[(\d+)\]', path):
+            if name_token:
+                tokens.append(name_token)
+            elif index_token:
+                tokens.append(int(index_token))
+        return tokens
+
+    def assign_nested(container, tokens, value):
+        current = container
+        for idx, token in enumerate(tokens):
+            is_last = idx == len(tokens) - 1
+            next_token = tokens[idx + 1] if not is_last else None
+
+            if isinstance(token, str):
+                if is_last:
+                    current[token] = value
+                    return
+
+                if token not in current or current[token] is None:
+                    current[token] = [] if isinstance(next_token, int) else {}
+                current = current[token]
+                continue
+
+            # token is a list index
+            while len(current) <= token:
+                current.append(None)
+
+            if is_last:
+                current[token] = value
+                return
+
+            if current[token] is None:
+                current[token] = [] if isinstance(next_token, int) else {}
+            current = current[token]
 
     for key, value in form_data.items():
-        # Handle array notation like pets[0].name
-        array_match = re.match(r'^(\w+)\[(\d+)\]\.(\w+)$', key)
-        if array_match:
-            array_name, index, field_name = array_match.groups()
-            index = int(index)
+        converted_value = convert_form_value(value)
+        tokens = tokenize_path(key)
 
-            # Convert string values to appropriate types
-            converted_value = convert_form_value(value)
-            array_data[array_name][index][field_name] = converted_value
-        else:
-            # Regular field
-            result[key] = convert_form_value(value)
+        if not tokens:
+            result[key] = converted_value
+            continue
 
-    # Convert array data to proper list format
-    for array_name, indexed_items in array_data.items():
-        # Sort by index and create list
-        items_list = []
-        for i in sorted(indexed_items.keys()):
-            items_list.append(indexed_items[i])
-        result[array_name] = items_list
+        if len(tokens) == 1 and isinstance(tokens[0], str):
+            result[tokens[0]] = converted_value
+            continue
+
+        assign_nested(result, tokens, converted_value)
 
     return result
 
@@ -1333,28 +1360,28 @@ class LayoutDemonstrationForm(FormModel):
     Each field represents a different layout type that can be rendered as a tab.
     """
     vertical_tab: VerticalFormLayout = FormField(
-        VerticalFormLayout(),
+        default_factory=VerticalFormLayout,
         title="Personal Info",
         input_type="layout",
         help_text="Vertical layout demonstration"
     )
 
     horizontal_tab: HorizontalFormLayout = FormField(
-        HorizontalFormLayout(),
+        default_factory=HorizontalFormLayout,
         title="Contact Info",
         input_type="layout",
         help_text="Horizontal layout demonstration"
     )
 
     tabbed_tab: TabbedFormLayout = FormField(
-        TabbedFormLayout(),
+        default_factory=TabbedFormLayout,
         title="Preferences",
         input_type="layout",
         help_text="Tabbed layout demonstration"
     )
 
     list_tab: ListFormLayout = FormField(
-        ListFormLayout(),
+        default_factory=ListFormLayout,
         title="Task List",
         input_type="layout",
         help_text="List layout demonstration"

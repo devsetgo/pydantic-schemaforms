@@ -275,7 +275,7 @@ class TestValidationResult:
             original_data={'name': ''}
         )
 
-        html = result.render_with_errors(framework='bootstrap')
+        html = result.render_with_errors(framework='bootstrap', submit_url="/test")
 
         assert isinstance(html, str)
         # Should contain form HTML
@@ -289,7 +289,7 @@ class TestValidationResult:
         )
 
         with pytest.raises(ValueError, match="Cannot render form"):
-            result.render_with_errors()
+            result.render_with_errors(submit_url="/test")
 
 
 class TestFormModelRegisterField:
@@ -386,7 +386,7 @@ class TestFormModelRenderForm:
             name: str = Field(default="", ui_element="text")
             email: str = Field(default="", ui_element="email")
 
-        html = RenderForm.render_form()
+        html = RenderForm.render_form(submit_url="/render")
 
         assert isinstance(html, str)
         assert len(html) > 0
@@ -396,7 +396,7 @@ class TestFormModelRenderForm:
         class DataForm(FormModel):
             name: str = ""
 
-        html = DataForm.render_form(data={'name': 'John'})
+        html = DataForm.render_form(data={'name': 'John'}, submit_url="/data")
 
         assert isinstance(html, str)
 
@@ -407,7 +407,8 @@ class TestFormModelRenderForm:
 
         html = ErrorForm.render_form(
             data={'email': 'invalid'},
-            errors={'email': 'Invalid email'}
+            errors={'email': 'Invalid email'},
+            submit_url="/error",
         )
 
         assert isinstance(html, str)
@@ -417,6 +418,6 @@ class TestFormModelRenderForm:
         class FrameworkForm(FormModel):
             name: str = ""
 
-        html = FrameworkForm.render_form(framework='material')
+        html = FrameworkForm.render_form(framework='material', submit_url="/framework")
 
         assert isinstance(html, str)

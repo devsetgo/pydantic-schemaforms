@@ -41,8 +41,13 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     UserRegistrationForm,
     handle_form_submission,
 )
+from examples.nested_forms_example import (
+    CompanyOrganizationForm,
+    create_comprehensive_sample_data,
+)
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html_async
+from pydantic_schemaforms.form_layouts import FormLayoutBase
 
 app = FastAPI(
     title="Pydantic SchemaForms - FastAPI Example",
@@ -64,12 +69,22 @@ def safe_json_filter(obj):
         """JSON serializer for objects not serializable by default json code"""
         if isinstance(o, (datetime, date)):
             return o.isoformat()
-        # Handle layout objects
-        elif hasattr(o, '__class__') and 'Layout' in o.__class__.__name__:
-            return {
-                "type": o.__class__.__name__,
-                "description": f"Layout object: {o.__class__.__name__}"
+        # Handle layout objects (TabbedLayout, VerticalLayout, etc.)
+        elif isinstance(o, FormLayoutBase):
+            layout_name = o.__class__.__name__
+            tab_names = []
+            if hasattr(o, "_get_layouts"):
+                try:
+                    tab_names = [name for name, _ in o._get_layouts()]
+                except Exception:
+                    tab_names = []
+            payload = {
+                "type": layout_name,
+                "description": f"Layout object: {layout_name}",
             }
+            if tab_names:
+                payload["tabs"] = tab_names
+            return payload
         # Handle other common non-serializable objects
         elif hasattr(o, '__dict__'):
             return str(o)
@@ -128,10 +143,11 @@ async def login_get(
             "remember_me": True
         }
 
-    form_html = render_form_html(
+    form_html = await render_form_html_async(
         MinimalLoginForm,
         framework=style,
         form_data=form_data,
+        submit_url="/login",
         debug=debug,
         show_timing=show_timing,
         enable_logging=False,
@@ -170,11 +186,12 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
     else:
         # Preserve user input data on validation errors
         # Re-render form with errors AND user data
-        form_html = render_form_html(
+        form_html = await render_form_html_async(
             MinimalLoginForm,
             framework=style,
             form_data=form_dict,
             errors=result['errors'],
+            submit_url=f"/login?style={style}",
             debug=debug,
             show_timing=show_timing,
             enable_logging=True,
@@ -227,10 +244,11 @@ async def register_get(
             "newsletter": True
         }
 
-    form_html = render_form_html(
+    form_html = await render_form_html_async(
         UserRegistrationForm,
         framework=style,
         form_data=form_data,
+        submit_url="/register",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -256,7 +274,7 @@ async def user_get(
     show_timing: bool = True,
 ):
     """Alias for user registration form."""
-    return await register_get(request, style, data, demo, debug)
+    return await register_get(request, style, data, demo, debug, show_timing)
 
 @app.post("/register", response_class=HTMLResponse)
 async def register_post(request: Request, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
@@ -281,11 +299,12 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
     else:
         # Preserve user input data on validation errors
         # Re-render form with errors AND user data
-        form_html = render_form_html(
+        form_html = await render_form_html_async(
             UserRegistrationForm,
             framework=style,
             form_data=form_dict,
             errors=result['errors'],
+            submit_url=f"/register?style={style}",
             debug=debug,
             show_timing=show_timing,
             enable_logging=False,
@@ -344,10 +363,11 @@ async def showcase_get(
             "account_type": "premium"
         }
 
-    form_html = render_form_html(
+    form_html = await render_form_html_async(
         CompleteShowcaseForm,
         framework=style,
         form_data=form_data,
+        submit_url="/showcase",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -383,10 +403,11 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
         })
     else:
         # Re-render form with errors
-        form_html = render_form_html(
+        form_html = await render_form_html_async(
             CompleteShowcaseForm,
             framework=style,
             errors=result['errors'],
+            submit_url=f"/showcase?style={style}",
             debug=debug,
             show_timing=show_timing,
             enable_logging=True,)
@@ -401,147 +422,6 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
             "form_html": form_html,
             "errors": result['errors']
         })
-
-# ================================
-# EDIT/UPDATE ENDPOINTS
-# ================================
-
-@app.get("/edit/login", response_class=HTMLResponse)
-async def edit_login_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False, show_timing: bool = True):
-    """Edit login form with sample data."""
-    # Sample existing data for editing
-    existing_data = {}
-    if demo:
-        existing_data = {
-            "username": "john_doe",
-            "remember_me": True
-        }
-
-    form_html = render_form_html(
-        MinimalLoginForm,
-        framework=style,
-        form_data=existing_data,
-        debug=debug,
-        show_timing=show_timing,
-        enable_logging=True,)
-
-    return templates.TemplateResponse(request, "form.html", {
-        "request": request,
-        "title": "Edit Login - Pre-filled Example",
-        "description": "Example of editing existing data",
-        "framework": "fastapi",
-        "framework_name": "FastAPI (Async)",
-        "framework_type": style,
-        "form_html": form_html
-    })
-
-@app.get("/edit/register", response_class=HTMLResponse)
-async def edit_register_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False, show_timing: bool = True):
-    """Edit registration form with sample data."""
-    # Sample existing data for editing
-    existing_data = {}
-    if demo:
-        existing_data = {
-            "username": "jane_smith",
-            "email": "jane.smith@example.com",
-            "full_name": "Jane Smith",
-            "age": 28,
-            "agree_terms": True,
-            "newsletter": False
-        }
-
-    form_html = render_form_html(
-        UserRegistrationForm,
-        framework=style,
-        form_data=existing_data,
-        debug=debug,
-        show_timing=show_timing,
-        enable_logging=True,)
-
-    return templates.TemplateResponse(request, "form.html", {
-        "request": request,
-        "title": "Edit User Registration - Pre-filled Example",
-        "description": "Example of editing existing user data",
-        "framework": "fastapi",
-        "framework_name": "FastAPI (Async)",
-        "framework_type": style,
-        "form_html": form_html
-    })
-
-@app.get("/edit/dynamic", response_class=HTMLResponse)
-async def edit_dynamic_get(request: Request, style: str = "bootstrap", demo: bool = True, debug: bool = False, show_timing: bool = True):
-    """Edit layout form with sample data."""
-    # Sample existing data for editing the layout form
-    existing_data = {}
-    if demo:
-        existing_data = {
-            "vertical_tab": {
-                "first_name": "John",
-                "last_name": "Doe",
-                "email": "john.doe@example.com",
-                "birth_date": "1988-03-12"
-            },
-            "horizontal_tab": {
-                "phone": "+1 (555) 123-4567",
-                "address": "123 Main Street",
-                "city": "New York",
-                "postal_code": "10001"
-            },
-            "tabbed_tab": {
-                "notification_email": True,
-                "notification_sms": False,
-                "theme": "dark",
-                "language": "en"
-            },
-            "list_tab": {
-                "project_name": "My Awesome Project",
-                "tasks": [
-                    {
-                        "task_name": "Update documentation",
-                        "priority": "medium",
-                        "due_date": "2024-12-10"
-                    }
-                ]
-            }
-        }
-
-    # Use Enhanced Renderer directly like the main dynamic endpoint
-    if style == "material":
-        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
-        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-        renderer = SimpleMaterialRenderer()
-        form_html = renderer.render_form_from_model(
-            LayoutDemonstrationForm,
-            data=existing_data,
-            errors={},
-            submit_url="/edit/dynamic",
-            include_submit_button=True,
-            debug=debug,
-        )
-        form_html = wrap_with_schemaforms_markers(form_html)
-    else:
-        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
-        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-        renderer = EnhancedFormRenderer(framework=style)
-        form_html = renderer.render_form_from_model(
-            LayoutDemonstrationForm,
-            data=existing_data,
-            errors={},
-            submit_url="/edit/dynamic",
-            include_submit_button=True,
-            debug=debug,
-            show_timing=show_timing,
-        )
-        form_html = wrap_with_schemaforms_markers(form_html)
-    return templates.TemplateResponse(request, "form.html", {
-        "request": request,
-        "title": "Edit Layout Demo - Pre-filled Example",
-        "description": "Example of editing existing layout data",
-        "framework": "fastapi",
-        "framework_name": "FastAPI (Async)",
-        "framework_type": style,
-        "form_html": form_html
-    })
 
 # ================================
 # SPECIAL DEMOS
@@ -658,7 +538,7 @@ async def pets_get(
             ]
         }
 
-    form_html = render_form_html(
+    form_html = await render_form_html_async(
         PetRegistrationForm,
         framework=style,
         form_data=form_data,
@@ -707,7 +587,7 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
             parsed_form_data = form_dict
 
         # Re-render form with errors AND preserve user data
-        form_html = render_form_html(
+        form_html = await render_form_html_async(
             PetRegistrationForm,
             framework=style,
             form_data=parsed_form_data,
@@ -733,6 +613,118 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
 
 # All framework-specific endpoints removed in favor of cleaner style parameter approach
 # Use: /pets?style=bootstrap, /login?style=material, etc.
+
+# ================================
+# STRESS TEST - DEEPLY NESTED FORMS
+# ================================
+
+@app.get("/organization", response_class=HTMLResponse)
+async def organization_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = True,
+    show_timing: bool = True,
+):
+    """
+    Comprehensive Tabbed Interface with 6 tabs!
+
+    Demonstrates the library's ability to handle:
+    1. Organization Tab - 5 levels deep nested structure
+    2. Kitchen Sink Tab - ALL input types in one place
+    3. Contact Management Tab - Advanced contact forms
+    4. Scheduling Tab - Date/time management with events
+    5. Media & Files Tab - Color themes and preferences
+    6. Settings Tab - Application settings and notifications
+    """
+    # Parse optional pre-fill data or use demo data
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except Exception:
+            pass  # Ignore invalid JSON
+    elif demo:
+        # Use comprehensive sample data for all tabs
+        form_data = create_comprehensive_sample_data()
+
+    # Use render_form_html_async - the library provides everything
+    from examples.nested_forms_example import ComprehensiveTabbedForm
+
+    form_html = await render_form_html_async(
+        ComprehensiveTabbedForm,
+        framework=style,
+        form_data=form_data,
+        submit_url=f"/organization?style={style}",
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    return templates.TemplateResponse(request, "form.html", {
+        "request": request,
+        "title": "Comprehensive Tabbed Interface - 6 Tabs! 🚀",
+        "description": "Ultimate showcase: Organization (5 levels deep) + Kitchen Sink (ALL inputs) + Contacts + Scheduling + Media + Settings",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+
+@app.post("/organization", response_class=HTMLResponse)
+async def organization_post(
+    request: Request,
+    style: str = "bootstrap",
+    debug: bool = False,
+    show_timing: bool = True
+):
+    """Handle comprehensive tabbed form submission."""
+    # Get form data asynchronously
+    form_data = await request.form()
+    form_dict = dict(form_data)
+
+    # Validate the form submission
+    from examples.nested_forms_example import ComprehensiveTabbedForm
+    result = handle_form_submission(ComprehensiveTabbedForm, form_dict)
+    full_referer_path = create_refer_path(request)
+
+    if result['success']:
+        return templates.TemplateResponse(request, "success.html", {
+            "request": request,
+            "title": "Comprehensive Form Submitted Successfully! 🎉",
+            "message": "All 6 tabs of data have been successfully processed!",
+            "data": result['data'],
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "try_again_url": full_referer_path
+        })
+    else:
+        # Re-render form with validation errors
+        form_html = await render_form_html_async(
+            ComprehensiveTabbedForm,
+            framework=style,
+            form_data=form_dict,
+            errors=result['errors'],
+            submit_url=f"/organization?style={style}",
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=False,
+        )
+
+        return templates.TemplateResponse(request, "form.html", {
+            "request": request,
+            "title": "Comprehensive Tabbed Interface - 6 Tabs! 🚀",
+            "description": "Ultimate showcase: Organization (5 levels deep) + Kitchen Sink (ALL inputs) + Contacts + Scheduling + Media + Settings",
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
+            "form_html": form_html,
+            "errors": result['errors']
+        })
+
 
 @app.get("/layouts", response_class=HTMLResponse)
 async def layouts_get(
@@ -795,7 +787,7 @@ async def layouts_get(
         from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
         from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = SimpleMaterialRenderer()
-        form_html = renderer.render_form_from_model(
+        form_html = await renderer.render_form_from_model_async(
             LayoutDemonstrationForm,
             data=form_data,
             errors={},
@@ -809,7 +801,7 @@ async def layouts_get(
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
         from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
         renderer = EnhancedFormRenderer(framework=style)
-        form_html = renderer.render_form_from_model(
+        form_html = await renderer.render_form_from_model_async(
             LayoutDemonstrationForm,
             data=form_data,
             errors={},
@@ -896,7 +888,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
             from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
             from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
             renderer = SimpleMaterialRenderer()
-            form_html = renderer.render_form_from_model(
+            form_html = await renderer.render_form_from_model_async(
                 LayoutDemonstrationForm,
                 data={},
                 errors={"form": str(e)},
@@ -909,7 +901,7 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
             from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
             from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
             renderer = EnhancedFormRenderer(framework=style)
-            form_html = renderer.render_form_from_model(
+            form_html = await renderer.render_form_from_model_async(
                 LayoutDemonstrationForm,
                 data={},
                 errors={"form": str(e)},
@@ -952,7 +944,12 @@ async def self_contained(demo: bool = True, debug: bool = True, show_timing: boo
         }
 
     renderer = SimpleMaterialRenderer()
-    form_html = renderer.render_form_from_model(UserRegistrationForm, data=form_data, debug=debug, show_timing=show_timing)
+    form_html = await renderer.render_form_from_model_async(
+        UserRegistrationForm,
+        data=form_data,
+        debug=debug,
+        show_timing=show_timing,
+    )
     form_html = wrap_with_schemaforms_markers(form_html)
 
     return f"""<!DOCTYPE html>
@@ -1001,40 +998,6 @@ async def self_contained(demo: bool = True, debug: bool = True, show_timing: boo
 </html>"""
 
 # ================================
-# GENERAL FORM SUBMISSION HANDLER
-# ================================
-
-@app.post("/submit", response_class=HTMLResponse)
-async def general_submit_handler(request: Request):
-    """General form submission handler for forms that don't have specific handlers."""
-    try:
-        # Get form data
-        form_data = await request.form()
-
-        # Get the referring URL (where the form came from)
-        request.headers.get("referer", "")
-        full_referer_path = create_refer_path(request)
-
-        form_dict = dict(form_data)
-
-        return templates.TemplateResponse(request, "success.html", {
-            "request": request,
-            "title": "Form Submitted Successfully",
-            "message": "Your form has been submitted successfully!",
-            "data": form_dict,
-            "framework": "fastapi",
-            "framework_name": "FastAPI (Async)",
-            "try_again_url": full_referer_path
-        })
-
-    except Exception as e:
-        return templates.TemplateResponse(request, "500.html", {
-            "request": request,
-            "error": str(e),
-            "framework": "fastapi"
-        })
-
-# ================================
 # API ENDPOINTS (JSON RESPONSES)
 # ================================
 
@@ -1046,7 +1009,8 @@ async def api_form_schema(form_type: str):
         "register": UserRegistrationForm,
         "pets": PetRegistrationForm,
         "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm
+        "layouts": LayoutDemonstrationForm,
+        "organization": CompanyOrganizationForm
     }
 
     if form_type not in form_mapping:
@@ -1069,7 +1033,8 @@ async def api_submit_form(form_type: str, request: Request):
         "register": UserRegistrationForm,
         "pets": PetRegistrationForm,
         "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm
+        "layouts": LayoutDemonstrationForm,
+        "organization": CompanyOrganizationForm
     }
 
     if form_type not in form_mapping:
@@ -1097,18 +1062,22 @@ async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool 
         "register": UserRegistrationForm,
         "pets": PetRegistrationForm,
         "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm
+        "layouts": LayoutDemonstrationForm,
+        "organization": CompanyOrganizationForm
     }
 
     if form_type not in form_mapping:
         raise HTTPException(status_code=404, detail="Form type not found")
 
     form_class = form_mapping[form_type]
-    form_html = render_form_html(form_class,
-                        framework=style,
-                        debug=debug,
-                        show_timing=show_timing,
-                        enable_logging=True,)
+    form_html = await render_form_html_async(
+        form_class,
+        framework=style,
+        submit_url=f"/api/forms/{form_type}/submit",
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
 
     return {
         "form_type": form_type,
@@ -1149,10 +1118,11 @@ if __name__ == "__main__":
     print("🚀 Starting FastAPI Example (Async)")
     print("=" * 60)
     print("📋 Available Examples:")
-    print("   • Simple:  http://localhost:8000/login")
-    print("   • Medium:  http://localhost:8000/register")
-    print("   • Complex: http://localhost:8000/showcase")
-    print("   • Layouts: http://localhost:8000/layouts")
+    print("   • Simple:    http://localhost:8000/login")
+    print("   • Medium:    http://localhost:8000/register")
+    print("   • Complex:   http://localhost:8000/showcase")
+    print("   • Layouts:   http://localhost:8000/layouts")
+    print("   • 🚀 STRESS TEST (5 levels deep!): http://localhost:8000/organization")
     print("")
     print("🎨 Style Variants (add ?style= to any form):")
     print("   • Bootstrap:       ?style=bootstrap")
@@ -1166,14 +1136,16 @@ if __name__ == "__main__":
     print("   • Home Page:      http://localhost:8000/")
     print("")
     print("🔧 API Endpoints:")
-    print("   • Schema:         http://localhost:8000/api/forms/register/schema")
-    print("   • Pet Schema:     http://localhost:8000/api/forms/pets/schema")
-    print("   • Layout Schema:  http://localhost:8000/api/forms/layouts/schema")
-    print("   • Render:         http://localhost:8000/api/forms/register/render")
-    print("   • Pet Render:     http://localhost:8000/api/forms/pets/render")
-    print("   • Layout Render:  http://localhost:8000/api/forms/layouts/render")
-    print("   • Submit:         POST http://localhost:8000/api/forms/register/submit")
-    print("   • Health:         http://localhost:8000/api/health")
+    print("   • Schema:              http://localhost:8000/api/forms/register/schema")
+    print("   • Pet Schema:          http://localhost:8000/api/forms/pets/schema")
+    print("   • Layout Schema:       http://localhost:8000/api/forms/layouts/schema")
+    print("   • Organization Schema: http://localhost:8000/api/forms/organization/schema")
+    print("   • Render:              http://localhost:8000/api/forms/register/render")
+    print("   • Pet Render:          http://localhost:8000/api/forms/pets/render")
+    print("   • Layout Render:       http://localhost:8000/api/forms/layouts/render")
+    print("   • Organization Render: http://localhost:8000/api/forms/organization/render")
+    print("   • Submit:              POST http://localhost:8000/api/forms/register/submit")
+    print("   • Health:              http://localhost:8000/api/health")
     print("=" * 60)
     print("💡 To run this example:")
     print("   make ex-run")

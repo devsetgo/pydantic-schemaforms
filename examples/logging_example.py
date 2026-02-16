@@ -31,7 +31,7 @@ def example_1_no_logging():
     print("=" * 70)
     print()
 
-    html = render_form_html(MinimalLoginForm, show_timing=True)
+    html = render_form_html(MinimalLoginForm, show_timing=True, submit_url="/login")
 
     print("✅ Form rendered successfully")
     print("✅ No library logs appeared")
@@ -60,7 +60,7 @@ def example_2_with_info_logging():
 
     print("Application logging configured at INFO level\n")
 
-    render_form_html(UserRegistrationForm, show_timing=True)
+    render_form_html(UserRegistrationForm, show_timing=True, submit_url="/register")
 
     print("\n✅ Form rendered successfully")
     print("✅ Library logs didn't appear (they use DEBUG level)")
@@ -88,7 +88,7 @@ def example_3_with_debug_logging():
 
     print("Application logging configured at DEBUG level\n")
 
-    render_form_html(MinimalLoginForm, show_timing=True)
+    render_form_html(MinimalLoginForm, show_timing=True, submit_url="/login")
 
     print("\n✅ Form rendered successfully")
     print("✅ Library DEBUG logs appeared above (if logging was configured before import)")
@@ -120,7 +120,7 @@ def example_4_selective_logging():
 
     print("Enabled DEBUG logging only for pydantic_schemaforms\n")
 
-    render_form_html(UserRegistrationForm, show_timing=True)
+    render_form_html(UserRegistrationForm, show_timing=True, submit_url="/register")
 
     print("\n✅ Form rendered successfully")
     print("✅ Library logs visible, but application stays at INFO level")

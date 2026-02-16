@@ -502,7 +502,7 @@ ${component_assets}
        id="${field_id}"
        class="md-input${error_class}"
        value="${value}"
-        placeholder=" " ${attributes}>
+    placeholder=" " ${attributes}>
 """
     )
 
@@ -511,7 +511,7 @@ ${component_assets}
 <textarea name="${name}"
           id="${field_id}"
           class="md-textarea${error_class}"
-          placeholder=" ">${value}</textarea>
+          placeholder=" " ${attributes}>${value}</textarea>
 """
     )
 
@@ -519,7 +519,7 @@ ${component_assets}
         """
 <select name="${name}"
         id="${field_id}"
-        class="md-select${error_class}">
+        class="md-select${error_class}" ${attributes}>
     ${options}
 </select>
 """
@@ -552,7 +552,7 @@ ${component_assets}
                id="${field_id}"
                class="md-checkbox"
                value="true"
-               ${checked}>
+             ${checked} ${required}>
         <label for="${field_id}" class="md-checkbox-label">${label}${required_indicator}</label>
     </div>
     ${help_text}

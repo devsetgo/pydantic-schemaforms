@@ -357,15 +357,15 @@ class TestEnhancedRendererIntegration:
     def test_integration_with_form_model_render_method(self, simple_form_model):
         """Test that FormModel.render_form uses EnhancedFormRenderer."""
         # Test that the render_form method exists and works
-        html = simple_form_model.render_form()
+        html = simple_form_model.render_form(submit_url="/simple")
 
         assert isinstance(html, str)
         assert "<form" in html
         assert 'name="name"' in html
 
         # Test with different frameworks
-        bootstrap_html = simple_form_model.render_form(framework="bootstrap")
-        material_html = simple_form_model.render_form(framework="material")
+        bootstrap_html = simple_form_model.render_form(framework="bootstrap", submit_url="/simple")
+        material_html = simple_form_model.render_form(framework="material", submit_url="/simple")
 
         assert bootstrap_html != material_html
         assert "form-control" in bootstrap_html or "form-select" in bootstrap_html
