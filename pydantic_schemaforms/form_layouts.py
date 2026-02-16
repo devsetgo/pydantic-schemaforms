@@ -577,7 +577,7 @@ class TabbedLayout(FormLayoutBase):
     <div class="container">
         <div class="form-container">
             <form {form_attrs_str}>
-                {form_html}
+                {{form_html | safe}}
             </form>
         </div>
     </div>
@@ -828,7 +828,7 @@ class ListLayout(FormLayoutBase):
             <div class="{item_class}" data-item-index="{index}">
                 {error_html}
                 <div class="list-item-content">
-                    {form_html}
+                    {{form_html | safe}}
                 </div>
                 {remove_button_html}
             </div>
@@ -871,7 +871,7 @@ class ListLayout(FormLayoutBase):
                 </div>
                 <div class="collapsible-content collapse {expanded_class}" id="{collapse_id}">
                     <div class="list-item-content">
-                        {form_html}
+                        {{form_html | safe}}
                     </div>
                 </div>
             </div>
@@ -892,7 +892,7 @@ class ListLayout(FormLayoutBase):
                 </div>
                 <div class="collapse {expanded_class}" id="{collapse_id}">
                     <div class="list-item-content">
-                        {form_html}
+                        {{form_html | safe}}
                     </div>
                 </div>
             </div>

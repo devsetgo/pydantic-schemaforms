@@ -65,7 +65,7 @@ async def user_form(request: Request):
     <html>
     <body>
       <h1>User</h1>
-      {form_html}
+      {{form_html | safe}}
     </body>
     </html>
     """
@@ -144,5 +144,5 @@ def user_form():
 
 ## Notes
 
-- `handle_form*()` returns either `{form_html}` (initial render) or `{success: bool, ...}` (submission).
+- `handle_form*()` returns either `{{form_html | safe}}` (initial render) or `{success: bool, ...}` (submission).
 - Asset delivery (`asset_mode`) and full-page wrappers are documented in `docs/assets.md`.

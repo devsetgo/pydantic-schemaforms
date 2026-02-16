@@ -76,7 +76,7 @@ async def user_form(request: Request):
     <html>
       <body>
         <h1>User</h1>
-        {form_html}
+        {{form_html | safe}}
       </body>
     </html>
     """
