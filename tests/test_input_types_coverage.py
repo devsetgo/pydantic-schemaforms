@@ -250,6 +250,18 @@ class TestWeekInput:
 
         assert "2024-W01" in result
 
+    def test_week_input_with_datetime_value(self):
+        """Test week input with datetime object value."""
+        week_input = WeekInput()
+        week_dt = datetime(2024, 1, 15, 8, 30)
+
+        result = week_input.render(
+            name="week_field",
+            value=week_dt
+        )
+
+        assert "2024-W03" in result
+
     def test_week_input_get_input_type(self):
         """Test WeekInput.get_input_type()."""
         week_input = WeekInput()

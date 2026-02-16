@@ -153,21 +153,21 @@ class MonthInput(FormInput):
         """Render month input with proper formatting."""
         # Convert date objects to month format (YYYY-MM)
         if "value" in kwargs:
-            if isinstance(kwargs["value"], date):
+            if isinstance(kwargs["value"], datetime):
                 kwargs["value"] = kwargs["value"].strftime("%Y-%m")
-            elif isinstance(kwargs["value"], datetime):
+            elif isinstance(kwargs["value"], date):
                 kwargs["value"] = kwargs["value"].strftime("%Y-%m")
 
         if "min" in kwargs:
-            if isinstance(kwargs["min"], date):
+            if isinstance(kwargs["min"], datetime):
                 kwargs["min"] = kwargs["min"].strftime("%Y-%m")
-            elif isinstance(kwargs["min"], datetime):
+            elif isinstance(kwargs["min"], date):
                 kwargs["min"] = kwargs["min"].strftime("%Y-%m")
 
         if "max" in kwargs:
-            if isinstance(kwargs["max"], date):
+            if isinstance(kwargs["max"], datetime):
                 kwargs["max"] = kwargs["max"].strftime("%Y-%m")
-            elif isinstance(kwargs["max"], datetime):
+            elif isinstance(kwargs["max"], date):
                 kwargs["max"] = kwargs["max"].strftime("%Y-%m")
 
         # Validate and format attributes
@@ -194,11 +194,11 @@ class WeekInput(FormInput):
         """Render week input with proper formatting."""
         # Convert date objects to week format (YYYY-W##)
         if "value" in kwargs:
-            if isinstance(kwargs["value"], date):
-                year, week, _ = kwargs["value"].isocalendar()
-                kwargs["value"] = f"{year}-W{week:02d}"
-            elif isinstance(kwargs["value"], datetime):
+            if isinstance(kwargs["value"], datetime):
                 year, week, _ = kwargs["value"].date().isocalendar()
+                kwargs["value"] = f"{year}-W{week:02d}"
+            elif isinstance(kwargs["value"], date):
+                year, week, _ = kwargs["value"].isocalendar()
                 kwargs["value"] = f"{year}-W{week:02d}"
 
         # Validate and format attributes
