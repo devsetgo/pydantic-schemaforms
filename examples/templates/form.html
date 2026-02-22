@@ -1,41 +1,5 @@
 {% extends "shared_base.html" %}
 
-{% block extra_styles %}
-<style>
-    /* Organization form specific styles for better layout of nested lists */
-    {% if 'organization' in request.path %}
-    /* Ensure form content stretches to fill available width */
-    form {
-        width: 100%;
-        max-width: none;
-    }
-
-    /* Fix nested list stretching issues */
-    form > div,
-    form > fieldset,
-    form > [class*="row"] {
-        width: 100% !important;
-        max-width: none !important;
-    }
-
-    /* Ensure all nested containers expand */
-    form [class*="col-"] {
-        min-width: 0; /* Allows flex content to shrink below content size */
-        flex: 1 1 auto !important;
-    }
-
-    /* Ensure section containers don't limit width */
-    form [class*="section"],
-    form [data-schemaforms-section],
-    form fieldset {
-        width: 100% !important;
-        max-width: none !important;
-        box-sizing: border-box;
-    }
-    {% endif %}
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="row justify-content-center">
     <!-- Use full width for complex nested forms, standard width for others -->
@@ -63,23 +27,6 @@
 
             <!-- Content -->
             <div class="p-4">
-                {% if errors %}
-                    <div class="alert alert-danger mb-4">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Please correct the errors below.
-                        <ul class="mb-0 mt-2">
-                            {% for field, error_data in errors.items() %}
-                                {% if error_data is string %}
-                                    <li>{{ field }}: {{ error_data }}</li>
-                                {% else %}
-                                    {% for error in error_data %}
-                                        <li>{{ field }}: {{ error }}</li>
-                                    {% endfor %}
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
 
                 <!-- Form -->
                 {{ form_html|safe }}
