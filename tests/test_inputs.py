@@ -14,8 +14,12 @@ from pydantic_schemaforms.inputs.selection_inputs import (
 )
 from pydantic_schemaforms.inputs.specialized_inputs import ColorInput, FileInput, HiddenInput
 from pydantic_schemaforms.inputs.text_inputs import (
+    CreditCardInput,
+    CurrencyInput,
     EmailInput,
     PasswordInput,
+    PhoneInput,
+    SSNInput,
     TelInput,
     TextArea,
     TextInput,
@@ -353,6 +357,22 @@ class TestInputValidation:
         assert "readonly" in html
         assert 'name="readonly_field"' in html
         assert 'value="Read only"' in html
+
+
+class TestSpecializedTextInputAliases:
+    """Ensure specialized text inputs do not override default text mapping."""
+
+    def test_specialized_inputs_have_explicit_ui_element_names(self):
+        assert SSNInput.ui_element == "ssn"
+        assert PhoneInput.ui_element == "phone"
+        assert CreditCardInput.ui_element == "credit_card"
+        assert CurrencyInput.ui_element == "currency"
+
+    def test_specialized_inputs_have_aliases(self):
+        assert "social_security_number" in SSNInput.ui_element_aliases
+        assert "phone_number" in PhoneInput.ui_element_aliases
+        assert "cc_number" in CreditCardInput.ui_element_aliases
+        assert "money" in CurrencyInput.ui_element_aliases
 
 
 class TestInputIntegration:

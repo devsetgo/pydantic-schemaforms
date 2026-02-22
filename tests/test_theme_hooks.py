@@ -5,7 +5,7 @@ from typing import Dict, Optional, Type
 from pydantic_schemaforms.model_list import ModelListRenderer
 from pydantic_schemaforms.rendering.form_style import FormStyle, FormStyleTemplates, register_form_style
 from pydantic_schemaforms.rendering.layout_engine import AccordionLayout, TabLayout
-from pydantic_schemaforms.rendering.themes import RendererTheme
+from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme, RendererTheme
 from pydantic_schemaforms.schema_form import FormModel
 from pydantic_schemaforms.templates import TemplateString
 
@@ -242,3 +242,11 @@ def test_accordion_layout_uses_form_style_templates() -> None:
 
     assert "custom-accordion" in html
     assert "custom-acc-section" in html
+
+
+def test_material_embedded_theme_includes_error_summary_styles() -> None:
+    css = MaterialEmbeddedTheme._build_css()
+
+    assert ".md-error-summary" in css
+    assert ".md-error-summary__title" in css
+    assert ".md-error-summary__list" in css
