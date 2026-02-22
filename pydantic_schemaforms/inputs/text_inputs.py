@@ -205,6 +205,9 @@ class TelInput(FormInput):
 class SSNInput(TextInput):
     """Social Security Number input with formatting."""
 
+    ui_element = "ssn"
+    ui_element_aliases = ("social_security_number",)
+
     def render(self, **kwargs) -> str:
         """Render SSN input using Python 3.14 template strings."""
         # Add SSN-specific attributes
@@ -229,6 +232,9 @@ class SSNInput(TextInput):
 class PhoneInput(TelInput):
     """Phone number input with country code support."""
 
+    ui_element = "phone"
+    ui_element_aliases = ("phone_number",)
+
     def render(self, country_code: Optional[str] = None, **kwargs) -> str:
         """Render phone input using Python 3.14 template strings."""
         if country_code:
@@ -243,6 +249,9 @@ class PhoneInput(TelInput):
 
 class CreditCardInput(TextInput):
     """Credit card number input with formatting."""
+
+    ui_element = "credit_card"
+    ui_element_aliases = ("card", "cc_number")
 
     def render(self, **kwargs) -> str:
         """Render credit card input using Python 3.14 template strings."""
@@ -267,6 +276,9 @@ class CreditCardInput(TextInput):
 
 class CurrencyInput(TextInput):
     """Currency input with formatting."""
+
+    ui_element = "currency"
+    ui_element_aliases = ("money",)
 
     def render(self, currency_symbol: str = "$", **kwargs) -> str:
         """Render currency input using Python 3.14 template strings."""

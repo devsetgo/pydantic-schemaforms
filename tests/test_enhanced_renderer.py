@@ -412,3 +412,39 @@ class TestEnhancedRendererIntegration:
             assert f'value="{sample_form_data["email"]}"' in html
 
         assert 'class="form-control"' in html or 'class="form-select"' in html
+
+
+    class TestEnhancedRendererCoverageBoost:
+        """Targeted tests for recently added renderer behaviors."""
+
+        def test_layout_support_style_is_injected_once(self, simple_form_model):
+            renderer = EnhancedFormRenderer(framework="bootstrap")
+            html = renderer.render_form_from_model(simple_form_model)
+
+            assert 'data-schemaforms-layout-support' in html
+            assert html.count('data-schemaforms-layout-support') == 1
+
+        def test_error_summary_humanizes_indexed_paths_material(self, simple_form_model):
+            renderer = EnhancedFormRenderer(framework="material")
+            errors = {
+                "pets[7].name": "String should have at least 1 character",
+                "owner_name": "String should have at least 2 characters",
+            }
+
+            html = renderer.render_form_from_model(simple_form_model, errors=errors)
+
+            assert "Submission failed." in html
+            assert "Pet #8 — Name" in html
+            assert "Owner Name" in html
+            assert "pets[7].name" not in html
+
+        def test_error_summary_humanizes_form_level_key(self, simple_form_model):
+            renderer = EnhancedFormRenderer(framework="bootstrap")
+            errors = {
+                "form": "Unexpected validation error",
+            }
+
+            html = renderer.render_form_from_model(simple_form_model, errors=errors)
+
+            assert "Form" in html
+            assert "Unexpected validation error" in html

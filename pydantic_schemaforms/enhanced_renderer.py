@@ -11,6 +11,7 @@ import html
 import inspect
 import json
 import logging
+import re
 import time
 from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
@@ -97,6 +98,8 @@ class EnhancedFormRenderer:
         if isinstance(errors, dict) and "errors" in errors:
             errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
 
+        error_summary_markup = self._render_error_summary(errors)
+
         default_form_class = self._theme.form_class() or self.config.get("form_class", "")
         form_attrs = {
             "method": method,
@@ -168,6 +171,9 @@ class EnhancedFormRenderer:
                     )
                 )
 
+        if error_summary_markup:
+            form_body_parts.insert(0, error_summary_markup)
+
         submit_markup = self._render_submit_button() if include_submit_button else ""
 
         # Calculate render time before form_wrapper (we'll add timing display inside form)
@@ -181,7 +187,7 @@ class EnhancedFormRenderer:
             render_time=render_time if show_timing else None,
         )
 
-        output_parts = [form_markup]
+        output_parts = [self._render_layout_support_styles(), form_markup]
 
         has_model_list_fields = any(
             resolve_ui_element(field_schema) == "model_list" for _name, field_schema in fields
@@ -381,6 +387,140 @@ class EnhancedFormRenderer:
                     nested_errors[nested_part.replace("].", ".")] = error_message
 
         return nested_errors
+
+    def _render_layout_support_styles(self) -> str:
+        """Return shared form layout CSS so templates don't need framework-specific fixes."""
+
+        return """
+<style data-schemaforms-layout-support>
+.pydantic-form,
+.md-form {
+    width: 100%;
+    max-width: none;
+}
+
+.pydantic-form > div,
+.pydantic-form > fieldset,
+.pydantic-form > [class*="row"],
+.md-form > div,
+.md-form > fieldset,
+.md-form > [class*="row"] {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.pydantic-form [class*="col-"],
+.md-form [class*="col-"] {
+    min-width: 0;
+    flex: 1 1 auto !important;
+}
+
+.pydantic-form [class*="section"],
+.pydantic-form [data-schemaforms-section],
+.pydantic-form fieldset,
+.md-form [class*="section"],
+.md-form [data-schemaforms-section],
+.md-form fieldset {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box;
+}
+</style>
+"""
+
+    def _flatten_error_messages(self, errors: Any, prefix: str = "") -> List[Tuple[str, str]]:
+        """Flatten mixed error payloads into (field_path, message) tuples."""
+
+        flattened: List[Tuple[str, str]] = []
+
+        if isinstance(errors, dict):
+            for key, value in errors.items():
+                path = f"{prefix}.{key}" if prefix and key else str(key or prefix)
+                flattened.extend(self._flatten_error_messages(value, path))
+            return flattened
+
+        if isinstance(errors, list):
+            for item in errors:
+                flattened.extend(self._flatten_error_messages(item, prefix))
+            return flattened
+
+        field_path = prefix or "form"
+        message = "" if errors is None else str(errors)
+        if message:
+            flattened.append((field_path, message))
+        return flattened
+
+    def _singularize_label(self, label: str) -> str:
+        """Best-effort singularization for indexed collection labels."""
+
+        if label.endswith("ies") and len(label) > 3:
+            return f"{label[:-3]}y"
+        if label.endswith("s") and len(label) > 1:
+            return label[:-1]
+        return label
+
+    def _humanize_error_field(self, field_path: str) -> str:
+        """Convert internal field paths into user-friendly labels."""
+
+        if not field_path or field_path == "form":
+            return "Form"
+
+        tokens: List[Union[str, int]] = []
+        for name_token, index_token in re.findall(r"([^.\[\]]+)|\[(\d+)\]", field_path):
+            if name_token:
+                tokens.append(name_token)
+            elif index_token:
+                tokens.append(int(index_token))
+
+        if not tokens:
+            return field_path
+
+        parts: List[str] = []
+        for token in tokens:
+            if isinstance(token, str):
+                pretty = token.replace("_", " ").strip().title()
+                parts.append(pretty)
+                continue
+
+            if parts:
+                collection_label = self._singularize_label(parts[-1])
+                parts[-1] = f"{collection_label} #{token + 1}"
+            else:
+                parts.append(f"Item #{token + 1}")
+
+        return " — ".join(parts)
+
+    def _render_error_summary(self, errors: Dict[str, Any]) -> str:
+        """Render a framework-aware top-level summary for validation errors."""
+
+        if not isinstance(errors, dict) or not errors:
+            return ""
+
+        flattened = self._flatten_error_messages(errors)
+        if not flattened:
+            return ""
+
+        items_html = "\n".join(
+            f"<li><strong>{html.escape(self._humanize_error_field(field))}:</strong> {html.escape(message)}</li>"
+            for field, message in flattened
+        )
+
+        if self.framework == "material":
+            return (
+                '<section class="md-field">'
+                '<div class="md-error-summary" role="alert" aria-live="polite">'
+                '<div class="md-error-summary__title">Submission failed. Please correct the following:</div>'
+                f'<ul class="md-error-summary__list">{items_html}</ul>'
+                '</div>'
+                '</section>'
+            )
+
+        return (
+            '<div class="alert alert-danger schemaforms-error-summary" role="alert" aria-live="polite">'
+            '<strong>Submission failed.</strong> Please correct the following:'
+            f'<ul class="mb-0 mt-2">{items_html}</ul>'
+            '</div>'
+        )
 
     def _render_csrf_field(self) -> str:
         return '<input type="hidden" name="csrf_token" value="__CSRF_TOKEN__" />'

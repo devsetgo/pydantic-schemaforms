@@ -1158,6 +1158,15 @@ function toggleAccordion(sectionId, buttonElement) {
     padding-left: 16px;
 }
 
+/* Compatibility: model-list/material mixed markup may emit `.help-text` */
+.md-form .help-text {
+    display: block;
+    font-size: 12px;
+    color: #49454f;
+    margin-top: 4px;
+    line-height: 1.33;
+}
+
 /* Error Text */
 .md-error-text {
     font-size: 12px;
@@ -1166,6 +1175,28 @@ function toggleAccordion(sectionId, buttonElement) {
     line-height: 1.33;
     font-weight: 400;
     padding-left: 16px;
+}
+
+.md-error-summary {
+    border: 1px solid #f2b8b5;
+    background: #ffdad6;
+    color: #410e0b;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.md-error-summary__title {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.md-error-summary__list {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.md-error-summary__list li {
+    margin-bottom: 2px;
 }
 
 /* Number and Date Inputs */
@@ -1186,6 +1217,21 @@ function toggleAccordion(sectionId, buttonElement) {
 
 .md-input[type="range"] {
     padding: 16px 8px;
+}
+
+/* Compatibility: select controls rendered with Materialize-style class name */
+.md-form select.browser-default {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid #cac4d0;
+    border-radius: 6px;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.md-form .md-input-wrapper {
+    width: 100%;
 }
 
 /* Placeholder styling */
