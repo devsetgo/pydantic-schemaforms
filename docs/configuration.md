@@ -131,3 +131,24 @@ class ProfileForm(FormModel):
 ```
 
 Otherwise Jinja will escape the markup and you’ll see literal `<div>` tags in the browser.
+
+## Error rendering behavior
+
+When you pass `errors=` to `render_form_html()` / `render_form_html_async()`, the renderer now includes a built-in top-level summary block inside `form_html`.
+
+- Field paths are humanized for users (example: `pets[7].name` → `Pet #8 — Name`).
+- The same behavior works for Bootstrap and Material output.
+- No template-side error loop is required for standard usage.
+
+This means most templates only need:
+
+```jinja2
+{{ form_html | safe }}
+```
+
+## Layout support behavior
+
+The enhanced renderer injects a small internal style block to keep nested/layout-heavy forms (`layout`, `model_list`, tabbed/side-by-side structures) width-safe across host templates.
+
+- This reduces the need for route-specific template CSS hacks.
+- If your app provides strict custom CSS, you can still override these classes in your host stylesheet.
