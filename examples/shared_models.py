@@ -962,6 +962,774 @@ class CompleteShowcaseForm(FormModel):
             raise ValueError("Password must contain at least one lowercase letter")
         return v
 
+
+# ============================================================================
+# ORGANIZATION NESTED FORM MODELS (5 LEVELS)
+# ============================================================================
+
+class Certification(FormModel):
+    """Level 5: Individual certification credential."""
+
+    name: str = FormField(
+        title="Certification Name",
+        input_type="text",
+        placeholder="e.g., AWS Solutions Architect",
+        help_text="Name of the certification",
+        icon="award",
+        max_length=100
+    )
+
+    issuer: str = FormField(
+        title="Issuing Organization",
+        input_type="text",
+        placeholder="e.g., Amazon Web Services",
+        help_text="Organization that issued the certification",
+        icon="building",
+        max_length=100
+    )
+
+    issue_date: date = FormField(
+        title="Issue Date",
+        input_type="date",
+        help_text="When was this certification issued?"
+    )
+
+    expiry_date: Optional[date] = FormField(
+        None,
+        title="Expiry Date",
+        input_type="date",
+        help_text="When does this certification expire? (Leave empty if no expiry)"
+    )
+
+    credential_id: Optional[str] = FormField(
+        None,
+        title="Credential ID",
+        input_type="text",
+        placeholder="Optional credential identifier",
+        help_text="Unique ID for credential verification",
+        max_length=100
+    )
+
+    credential_url: Optional[str] = FormField(
+        None,
+        title="Credential URL",
+        input_type="text",
+        placeholder="https://...",
+        help_text="Link to verify the credential",
+        max_length=500
+    )
+
+
+class Subtask(FormModel):
+    """Level 5: Individual subtask within a task."""
+
+    title: str = FormField(
+        title="Subtask Title",
+        input_type="text",
+        placeholder="Brief description of the subtask",
+        help_text="What is this subtask about?",
+        icon="list-check",
+        max_length=200
+    )
+
+    description: Optional[str] = FormField(
+        None,
+        title="Description",
+        input_type="textarea",
+        placeholder="Detailed description of the subtask",
+        help_text="Additional details about this subtask",
+        max_length=1000
+    )
+
+    assigned_to: str = FormField(
+        title="Assigned To",
+        input_type="text",
+        placeholder="Team member name",
+        help_text="Who is responsible for this subtask?",
+        icon="person",
+        max_length=100
+    )
+
+    estimated_hours: float = FormField(
+        1.0,
+        title="Estimated Hours",
+        input_type="number",
+        help_text="Estimated time to complete",
+        icon="clock",
+        min_value=0.5,
+        max_value=100
+    )
+
+    status: str = FormField(
+        "pending",
+        title="Status",
+        input_type="select",
+        options=[
+            {"value": "pending", "label": "⏳ Pending"},
+            {"value": "in_progress", "label": "🔄 In Progress"},
+            {"value": "completed", "label": "✅ Completed"},
+            {"value": "blocked", "label": "🚫 Blocked"}
+        ],
+        help_text="Current status of the subtask"
+    )
+
+
+class TeamMember(FormModel):
+    """Level 4: Team member with certifications (Level 5)."""
+
+    name: str = FormField(
+        title="Member Name",
+        input_type="text",
+        placeholder="Enter full name",
+        help_text="Full name of the team member",
+        icon="person",
+        min_length=2,
+        max_length=100
+    )
+
+    email: EmailStr = FormField(
+        title="Email Address",
+        input_type="email",
+        placeholder="member@company.com",
+        help_text="Contact email address"
+    )
+
+    role: str = FormField(
+        title="Role",
+        input_type="text",
+        placeholder="e.g., Senior Developer",
+        help_text="Job title or role",
+        icon="briefcase",
+        max_length=100
+    )
+
+    hire_date: date = FormField(
+        title="Hire Date",
+        input_type="date",
+        help_text="When did this person join?"
+    )
+
+    experience_years: int = FormField(
+        0,
+        title="Years of Experience",
+        input_type="number",
+        help_text="Total professional experience in years",
+        icon="hourglass-split",
+        min_value=0,
+        max_value=70
+    )
+
+    manager: Optional[str] = FormField(
+        None,
+        title="Manager Name",
+        input_type="text",
+        placeholder="Direct manager name",
+        help_text="Who supervises this team member?",
+        max_length=100
+    )
+
+    certifications: List[Certification] = FormField(
+        default_factory=list,
+        title="Certifications",
+        input_type="model_list",
+        help_text="Professional certifications and credentials",
+        icon="award",
+        min_length=0,
+        max_length=20,
+        model_class=Certification,
+        add_button_text="➕ Add Certification",
+        remove_button_text="Remove",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="{name} - {issuer}",
+        section_design={
+            "section_title": "Professional Certifications",
+            "section_description": "Add credentials and certifications",
+            "icon": "bi bi-award",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+
+class Task(FormModel):
+    """Level 4: Project task with subtasks (Level 5)."""
+
+    title: str = FormField(
+        title="Task Title",
+        input_type="text",
+        placeholder="Brief task name",
+        help_text="What is this task?",
+        icon="bookmark",
+        min_length=3,
+        max_length=200
+    )
+
+    description: str = FormField(
+        title="Task Description",
+        input_type="textarea",
+        placeholder="Detailed description of the task",
+        help_text="Full description of what needs to be done",
+        max_length=2000
+    )
+
+    priority: str = FormField(
+        "medium",
+        title="Priority Level",
+        input_type="select",
+        options=[
+            {"value": "low", "label": "🟢 Low"},
+            {"value": "medium", "label": "🟡 Medium"},
+            {"value": "high", "label": "🔴 High"},
+            {"value": "critical", "label": "⛔ Critical"}
+        ],
+        help_text="Task priority level",
+        icon="exclamation-circle"
+    )
+
+    status: str = FormField(
+        "planning",
+        title="Task Status",
+        input_type="select",
+        options=[
+            {"value": "planning", "label": "📋 Planning"},
+            {"value": "in_progress", "label": "🔄 In Progress"},
+            {"value": "in_review", "label": "👀 In Review"},
+            {"value": "completed", "label": "✅ Completed"},
+            {"value": "cancelled", "label": "❌ Cancelled"}
+        ],
+        help_text="Current task status"
+    )
+
+    start_date: date = FormField(
+        title="Start Date",
+        input_type="date",
+        help_text="When should this task start?"
+    )
+
+    due_date: date = FormField(
+        title="Due Date",
+        input_type="date",
+        help_text="When is this task due?"
+    )
+
+    assigned_to: Optional[str] = FormField(
+        None,
+        title="Assigned To",
+        input_type="text",
+        placeholder="Team member name",
+        help_text="Who is responsible for this task?",
+        max_length=100
+    )
+
+    estimated_hours: float = FormField(
+        8.0,
+        title="Estimated Hours",
+        input_type="number",
+        help_text="Estimated time to complete (in hours)",
+        icon="clock",
+        min_value=0.5,
+        max_value=1000
+    )
+
+    subtasks: List[Subtask] = FormField(
+        default_factory=list,
+        title="Subtasks",
+        input_type="model_list",
+        help_text="Break down this task into smaller subtasks",
+        icon="list-check",
+        min_length=0,
+        max_length=50,
+        model_class=Subtask,
+        add_button_text="➕ Add Subtask",
+        remove_button_text="Remove Subtask",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="🔹 {title}",
+        section_design={
+            "section_title": "Task Breakdown",
+            "section_description": "Organize this task into smaller, manageable subtasks",
+            "icon": "bi bi-list-check",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+
+class Team(FormModel):
+    """Level 3: Team with members (Level 4) who have certifications (Level 5)."""
+
+    name: str = FormField(
+        title="Team Name",
+        input_type="text",
+        placeholder="e.g., Backend Team",
+        help_text="Name of the team",
+        icon="people",
+        min_length=2,
+        max_length=100
+    )
+
+    description: Optional[str] = FormField(
+        None,
+        title="Team Description",
+        input_type="textarea",
+        placeholder="What does this team do?",
+        help_text="Brief description of the team's responsibilities",
+        max_length=500
+    )
+
+    team_lead: str = FormField(
+        title="Team Lead Name",
+        input_type="text",
+        placeholder="Name of the team lead",
+        help_text="Who leads this team?",
+        icon="star",
+        max_length=100
+    )
+
+    formed_date: date = FormField(
+        title="Formation Date",
+        input_type="date",
+        help_text="When was this team formed?"
+    )
+
+    members: List[TeamMember] = FormField(
+        default_factory=list,
+        title="Team Members",
+        input_type="model_list",
+        help_text="Add team members and their certifications",
+        icon="people",
+        min_length=1,
+        max_length=100,
+        model_class=TeamMember,
+        add_button_text="👤 Add Team Member",
+        remove_button_text="Remove Member",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="👤 {name} - {role}",
+        section_design={
+            "section_title": "Team Members",
+            "section_description": "Members of this team with their certifications and experience",
+            "icon": "bi bi-people",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+
+class Project(FormModel):
+    """Level 3: Project with tasks (Level 4) that have subtasks (Level 5)."""
+
+    name: str = FormField(
+        title="Project Name",
+        input_type="text",
+        placeholder="e.g., Mobile App Redesign",
+        help_text="Name of the project",
+        icon="kanban",
+        min_length=3,
+        max_length=200
+    )
+
+    description: str = FormField(
+        title="Project Description",
+        input_type="textarea",
+        placeholder="Detailed description of the project",
+        help_text="What is this project about?",
+        max_length=2000
+    )
+
+    status: str = FormField(
+        "planning",
+        title="Project Status",
+        input_type="select",
+        options=[
+            {"value": "planning", "label": "📋 Planning"},
+            {"value": "in_progress", "label": "🚀 In Progress"},
+            {"value": "on_hold", "label": "⏸️ On Hold"},
+            {"value": "completed", "label": "✅ Completed"},
+            {"value": "archived", "label": "📦 Archived"}
+        ],
+        help_text="Current project status",
+        icon="flag"
+    )
+
+    start_date: date = FormField(
+        title="Project Start Date",
+        input_type="date",
+        help_text="When does this project start?"
+    )
+
+    target_end_date: date = FormField(
+        title="Target End Date",
+        input_type="date",
+        help_text="When should this project be completed?"
+    )
+
+    budget: float = FormField(
+        0.0,
+        title="Budget ($)",
+        input_type="number",
+        help_text="Project budget in USD",
+        icon="cash-coin",
+        min_value=0
+    )
+
+    project_manager: str = FormField(
+        title="Project Manager",
+        input_type="text",
+        placeholder="PM name",
+        help_text="Who is managing this project?",
+        icon="person-badge",
+        max_length=100
+    )
+
+    tasks: List[Task] = FormField(
+        default_factory=list,
+        title="Project Tasks",
+        input_type="model_list",
+        help_text="Add tasks with subtasks to organize project work",
+        icon="list-check",
+        min_length=1,
+        max_length=200,
+        model_class=Task,
+        add_button_text="📝 Add Task",
+        remove_button_text="Remove Task",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="📋 {title}",
+        section_design={
+            "section_title": "Project Tasks",
+            "section_description": "Organize project work into tasks and subtasks",
+            "icon": "bi bi-list-task",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+
+class Department(FormModel):
+    """Level 2: Department with teams (Level 3) and projects (Level 3)."""
+
+    name: str = FormField(
+        title="Department Name",
+        input_type="text",
+        placeholder="e.g., Engineering, Sales",
+        help_text="Name of the department",
+        icon="building",
+        min_length=2,
+        max_length=100
+    )
+
+    description: Optional[str] = FormField(
+        None,
+        title="Department Description",
+        input_type="textarea",
+        placeholder="What does this department do?",
+        help_text="Description of department responsibilities",
+        max_length=1000
+    )
+
+    department_head: str = FormField(
+        title="Department Head",
+        input_type="text",
+        placeholder="Head of department name",
+        help_text="Who leads this department?",
+        icon="crown",
+        max_length=100
+    )
+
+    head_email: EmailStr = FormField(
+        title="Department Head Email",
+        input_type="email",
+        placeholder="head@company.com",
+        help_text="Contact email for the department head"
+    )
+
+    established_date: date = FormField(
+        title="Established Date",
+        input_type="date",
+        help_text="When was this department established?"
+    )
+
+    budget: float = FormField(
+        0.0,
+        title="Annual Budget ($)",
+        input_type="number",
+        help_text="Department annual budget in USD",
+        icon="cash-coin",
+        min_value=0
+    )
+
+    teams: List[Team] = FormField(
+        default_factory=list,
+        title="Teams",
+        input_type="model_list",
+        help_text="Teams within this department and their members",
+        icon="people",
+        min_length=1,
+        max_length=50,
+        model_class=Team,
+        add_button_text="👥 Add Team",
+        remove_button_text="Remove Team",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="👥 {name} (Lead: {team_lead})",
+        section_design={
+            "section_title": "Department Teams",
+            "section_description": "Organize teams with members and their certifications",
+            "icon": "bi bi-diagram-2",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+    projects: List[Project] = FormField(
+        default_factory=list,
+        title="Active Projects",
+        input_type="model_list",
+        help_text="Projects managed by this department",
+        icon="kanban",
+        min_length=0,
+        max_length=100,
+        model_class=Project,
+        add_button_text="🚀 Add Project",
+        remove_button_text="Remove Project",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="🚀 {name}",
+        section_design={
+            "section_title": "Department Projects",
+            "section_description": "Projects in progress with tasks and subtasks",
+            "icon": "bi bi-kanban",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+
+class CompanyOrganizationForm(FormModel):
+    """
+    Root company structure with 5 levels of nesting.
+
+    This model demonstrates how SchemaForms can render deeply nested data by
+    composing `model_list` fields across multiple `FormModel` classes:
+
+    Company -> Department -> Team -> TeamMember -> Certification
+                        -> Project -> Task -> Subtask
+    """
+
+    company_name: str = FormField(
+        title="Company Name",
+        input_type="text",
+        placeholder="Enter company name",
+        help_text="Legal name of the company",
+        icon="building",
+        min_length=2,
+        max_length=200
+    )
+
+    company_code: str = FormField(
+        title="Company Code",
+        input_type="text",
+        placeholder="e.g., ACME-2024",
+        help_text="Unique identifier for this company",
+        icon="code",
+        min_length=2,
+        max_length=50
+    )
+
+    headquarters_address: str = FormField(
+        title="Headquarters Address",
+        input_type="textarea",
+        placeholder="Full address of headquarters",
+        help_text="Main office address",
+        icon="map-marker",
+        max_length=500
+    )
+
+    ceo_name: str = FormField(
+        title="CEO Name",
+        input_type="text",
+        placeholder="Name of the CEO",
+        help_text="Chief Executive Officer",
+        icon="star",
+        max_length=100
+    )
+
+    ceo_email: EmailStr = FormField(
+        title="CEO Email",
+        input_type="email",
+        placeholder="ceo@company.com",
+        help_text="Email address of the CEO"
+    )
+
+    founded_date: date = FormField(
+        title="Founded Date",
+        input_type="date",
+        help_text="When was the company founded?"
+    )
+
+    employee_count: int = FormField(
+        0,
+        title="Total Employees",
+        input_type="number",
+        help_text="Total number of employees",
+        icon="people",
+        min_value=1,
+        max_value=1000000
+    )
+
+    annual_revenue: float = FormField(
+        0.0,
+        title="Annual Revenue ($)",
+        input_type="number",
+        help_text="Company annual revenue in USD",
+        icon="cash-coin",
+        min_value=0
+    )
+
+    website: Optional[str] = FormField(
+        None,
+        title="Company Website",
+        input_type="text",
+        placeholder="https://www.example.com",
+        help_text="Company website URL",
+        icon="globe",
+        max_length=500
+    )
+
+    departments: List[Department] = FormField(
+        default_factory=list,
+        title="Company Departments",
+        input_type="model_list",
+        help_text="Organize departments with teams, members, and projects",
+        icon="diagram-2",
+        min_length=1,
+        max_length=500,
+        model_class=Department,
+        add_button_text="🏢 Add Department",
+        remove_button_text="Remove Department",
+        collapsible_items=True,
+        items_expanded=False,
+        item_title_template="🏢 {name} (Head: {department_head})",
+        section_design={
+            "section_title": "Organizational Structure",
+            "section_description": "Complete company hierarchy with departments, teams, members, and projects",
+            "icon": "bi bi-diagram-2",
+            "collapsible": True,
+            "collapsed": False
+        }
+    )
+
+    @field_validator('company_code')
+    @classmethod
+    def validate_code(cls, v):
+        """Normalize and validate company code input for demonstration purposes."""
+        if not v.replace('-', '').replace('_', '').isalnum():
+            raise ValueError("Company code can only contain letters, numbers, hyphens, and underscores")
+        return v.upper()
+
+
+def create_sample_nested_data() -> dict:
+    """
+    Create realistic seed data for the organization hierarchy example.
+
+    The returned payload mirrors the exact shape expected by
+    `CompanyOrganizationForm`, so it can be used to:
+    - pre-fill example pages,
+    - test nested rendering,
+    - validate nested parsing/serialization behavior.
+    """
+    return {
+        # Level 1: company root
+        "company_name": "TechCorp International",
+        "company_code": "TECH-2024",
+        "headquarters_address": "123 Innovation Drive, San Francisco, CA 94105",
+        "ceo_name": "Jane Smith",
+        "ceo_email": "jane.smith@techcorp.com",
+        "founded_date": "2010-01-15",
+        "employee_count": 5000,
+        "annual_revenue": 500000000.0,
+        "website": "https://www.techcorp.com",
+        "departments": [
+            {
+                # Level 2: departments
+                "name": "Engineering",
+                "description": "Software development and infrastructure",
+                "department_head": "John Doe",
+                "head_email": "john.doe@techcorp.com",
+                "established_date": "2010-06-01",
+                "budget": 50000000.0,
+                "teams": [
+                    {
+                        # Level 3: teams
+                        "name": "Backend Services",
+                        "description": "API and database services",
+                        "team_lead": "Alice Johnson",
+                        "formed_date": "2015-03-01",
+                        "members": [
+                            {
+                                # Level 4: team members
+                                "name": "Bob Wilson",
+                                "email": "bob.wilson@techcorp.com",
+                                "role": "Senior Backend Developer",
+                                "hire_date": "2016-01-15",
+                                "experience_years": 12,
+                                "manager": "Alice Johnson",
+                                "certifications": [
+                                    {
+                                        # Level 5: leaf credentials
+                                        "name": "AWS Solutions Architect Professional",
+                                        "issuer": "Amazon Web Services",
+                                        "issue_date": "2022-05-01",
+                                        "expiry_date": "2025-05-01",
+                                        "credential_id": "AWS-12345",
+                                        "credential_url": "https://aws.amazon.com/verification/12345"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "projects": [
+                    {
+                        # Level 3 (parallel branch): projects with tasks/subtasks
+                        "name": "Microservices Migration",
+                        "description": "Migrate monolithic application to microservices architecture",
+                        "status": "in_progress",
+                        "start_date": "2024-01-01",
+                        "target_end_date": "2024-12-31",
+                        "budget": 2000000.0,
+                        "project_manager": "Carol Lee",
+                        "tasks": [
+                            {
+                                # Level 4: tasks
+                                "title": "Refactor Auth Service",
+                                "description": "Extract authentication into standalone microservice",
+                                "priority": "high",
+                                "status": "in_progress",
+                                "start_date": "2024-02-01",
+                                "due_date": "2024-03-31",
+                                "assigned_to": "Bob Wilson",
+                                "estimated_hours": 120.0,
+                                "subtasks": [
+                                    {
+                                        # Level 5: subtasks
+                                        "title": "Create service skeleton",
+                                        "description": "Set up FastAPI project structure",
+                                        "assigned_to": "Bob Wilson",
+                                        "estimated_hours": 16.0,
+                                        "status": "completed"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
@@ -1104,13 +1872,14 @@ __all__ = [
     # Form Models
     'PetModel', 'EmergencyContactModel', 'MinimalLoginForm', 'UserRegistrationForm',
     'PetOwnerForm', 'PetRegistrationForm', 'MediumContactForm', 'CompleteShowcaseForm',
+    'Certification', 'Subtask', 'TeamMember', 'Task', 'Team', 'Project', 'Department', 'CompanyOrganizationForm',
     # Layout Demonstration Forms
     'TaskItem', 'PersonalInfoForm', 'ContactInfoForm', 'PreferencesForm', 'TaskListForm',
     'LayoutDemonstrationForm',
     # Layout Classes
     'VerticalFormLayout', 'HorizontalFormLayout', 'TabbedFormLayout', 'ListFormLayout',
     # Helper Functions
-    'handle_form_submission', 'parse_nested_form_data', 'convert_form_value'
+    'handle_form_submission', 'parse_nested_form_data', 'convert_form_value', 'create_sample_nested_data'
 ]
 
 

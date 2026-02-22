@@ -34,17 +34,16 @@ from fastapi.templating import Jinja2Templates
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; Pet Forms; Layout Demonstration; Utility functions
+    CompanyOrganizationForm,
     CompleteShowcaseForm,
     LayoutDemonstrationForm,
     MinimalLoginForm,
     PetRegistrationForm,
     UserRegistrationForm,
+    create_sample_nested_data,
     handle_form_submission,
 )
-from examples.nested_forms_example import (
-    CompanyOrganizationForm,
-    create_comprehensive_sample_data,
-)
+from examples.nested_forms_example import create_comprehensive_sample_data
 
 from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.form_layouts import FormLayoutBase
@@ -147,7 +146,7 @@ async def login_get(
         MinimalLoginForm,
         framework=style,
         form_data=form_data,
-        submit_url="/login",
+        submit_url=f"/login?style={style}",
         debug=debug,
         show_timing=show_timing,
         enable_logging=False,
@@ -248,7 +247,7 @@ async def register_get(
         UserRegistrationForm,
         framework=style,
         form_data=form_data,
-        submit_url="/register",
+        submit_url=f"/register?style={style}",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -367,7 +366,7 @@ async def showcase_get(
         CompleteShowcaseForm,
         framework=style,
         form_data=form_data,
-        submit_url="/showcase",
+        submit_url=f"/showcase?style={style}",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -542,7 +541,7 @@ async def pets_get(
         PetRegistrationForm,
         framework=style,
         form_data=form_data,
-        submit_url="/pets",
+        submit_url=f"/pets?style={style}",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -592,7 +591,7 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
             framework=style,
             form_data=parsed_form_data,
             errors=result['errors'],
-            submit_url="/pets",
+            submit_url=f"/pets?style={style}",
             debug=debug,
             show_timing=show_timing,
             enable_logging=True,
@@ -637,6 +636,12 @@ async def organization_get(
     4. Scheduling Tab - Date/time management with events
     5. Media & Files Tab - Color themes and preferences
     6. Settings Tab - Application settings and notifications
+
+        Educational note:
+        - This route intentionally uses the original `nested_forms_example` module,
+            so users can explore the full end-to-end stress-test form.
+        - A reusable organization-only variant is exposed at
+            `/organization-shared` using models from `shared_models.py`.
     """
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -650,7 +655,8 @@ async def organization_get(
         # Use comprehensive sample data for all tabs
         form_data = create_comprehensive_sample_data()
 
-    # Use render_form_html_async - the library provides everything
+    # Import locally to keep this route explicitly tied to the full nested demo.
+    # This makes it clear which module provides the comprehensive tabbed layout.
     from examples.nested_forms_example import ComprehensiveTabbedForm
 
     form_html = await render_form_html_async(
@@ -681,12 +687,17 @@ async def organization_post(
     debug: bool = False,
     show_timing: bool = True
 ):
-    """Handle comprehensive tabbed form submission."""
+    """
+    Handle submission for the full 6-tab comprehensive nested example.
+
+    The submission path demonstrates how raw HTML form payloads are validated
+    against the tabbed root model and then rendered in success/error templates.
+    """
     # Get form data asynchronously
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Validate the form submission
+    # Validate using the same comprehensive tabbed model used by GET.
     from examples.nested_forms_example import ComprehensiveTabbedForm
     result = handle_form_submission(ComprehensiveTabbedForm, form_dict)
     full_referer_path = create_refer_path(request)
@@ -724,6 +735,107 @@ async def organization_post(
             "form_html": form_html,
             "errors": result['errors']
         })
+
+
+@app.get("/organization-shared", response_class=HTMLResponse)
+async def organization_shared_get(
+    request: Request,
+    style: str = "bootstrap",
+    data: str = None,
+    demo: bool = True,
+    debug: bool = True,
+    show_timing: bool = True,
+):
+    """
+    Organization-only demo reusing shared models.
+
+    This route is the reusable counterpart to `/organization` and shows how to
+    render a deeply nested form directly from models in `shared_models.py`.
+    """
+    form_data = {}
+    if data:
+        try:
+            import json
+            form_data = json.loads(data)
+        except Exception:
+            pass
+    elif demo:
+        # Seed with realistic nested data so users can inspect structure quickly.
+        form_data = create_sample_nested_data()
+
+    form_html = await render_form_html_async(
+        CompanyOrganizationForm,
+        framework=style,
+        form_data=form_data,
+        submit_url=f"/organization-shared?style={style}",
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    return templates.TemplateResponse(request, "form.html", {
+        "request": request,
+        "title": "Organization (Shared Models) - 5 Levels Deep 🏢",
+        "description": "Reusable organization-only example powered by models in shared_models.py.",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html
+    })
+
+
+@app.post("/organization-shared", response_class=HTMLResponse)
+async def organization_shared_post(
+    request: Request,
+    style: str = "bootstrap",
+    debug: bool = False,
+    show_timing: bool = True,
+):
+    """
+    Handle organization-only shared form submission.
+
+    Uses the shared `CompanyOrganizationForm` to demonstrate that the same
+    model can power multiple framework routes and API endpoints.
+    """
+    form_data = await request.form()
+    form_dict = dict(form_data)
+
+    # Parse + validate nested values using the common submission helper.
+    result = handle_form_submission(CompanyOrganizationForm, form_dict)
+    full_referer_path = create_refer_path(request)
+
+    if result['success']:
+        return templates.TemplateResponse(request, "success.html", {
+            "request": request,
+            "title": "Organization Shared Form Submitted Successfully! 🎉",
+            "message": "Organization hierarchy data has been successfully processed!",
+            "data": result['data'],
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "try_again_url": full_referer_path
+        })
+
+    form_html = await render_form_html_async(
+        CompanyOrganizationForm,
+        framework=style,
+        form_data=form_dict,
+        errors=result['errors'],
+        submit_url=f"/organization-shared?style={style}",
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=False,
+    )
+
+    return templates.TemplateResponse(request, "form.html", {
+        "request": request,
+        "title": "Organization (Shared Models) - 5 Levels Deep 🏢",
+        "description": "Reusable organization-only example powered by models in shared_models.py.",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html,
+        "errors": result['errors']
+    })
 
 
 @app.get("/layouts", response_class=HTMLResponse)
@@ -924,8 +1036,20 @@ async def layouts_post(request: Request, style: str = "bootstrap", debug: bool =
         })
 
 @app.get("/self-contained", response_class=HTMLResponse)
-async def self_contained(demo: bool = True, debug: bool = True, show_timing: bool = True):
-    """Self-contained form demo - zero external dependencies."""
+async def self_contained(
+    style: str = "material",
+    demo: bool = True,
+    debug: bool = True,
+    show_timing: bool = True,
+):
+    """
+    Self-contained form demo with zero external dependencies.
+
+    Important behavior for this example:
+    - Uses `SimpleMaterialRenderer` intentionally (fully self-contained output).
+    - Posts back to `/self-contained` so submissions work without extra routes.
+    - Accepts `style` for URL consistency with other demos; renderer remains material.
+    """
     from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
     from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
@@ -947,6 +1071,7 @@ async def self_contained(demo: bool = True, debug: bool = True, show_timing: boo
     form_html = await renderer.render_form_from_model_async(
         UserRegistrationForm,
         data=form_data,
+        submit_url=f"/self-contained?style={style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}",
         debug=debug,
         show_timing=show_timing,
     )
@@ -997,26 +1122,129 @@ async def self_contained(demo: bool = True, debug: bool = True, show_timing: boo
 </body>
 </html>"""
 
+
+@app.post("/self-contained", response_class=HTMLResponse)
+async def self_contained_post(
+    request: Request,
+    style: str = "material",
+    debug: bool = True,
+    show_timing: bool = True,
+):
+    """
+    Handle self-contained form submission.
+
+    This mirrors the GET demo while ensuring form posts are validated against
+    `UserRegistrationForm` and errors are rendered back into the same
+    self-contained HTML output.
+    """
+    from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
+
+    form_data = await request.form()
+    form_dict = dict(form_data)
+    result = handle_form_submission(UserRegistrationForm, form_dict)
+
+    if result['success']:
+        full_referer_path = create_refer_path(request)
+        return templates.TemplateResponse(request, "success.html", {
+            "request": request,
+            "title": "Self-Contained Form Submitted Successfully",
+            "message": "Self-contained registration data processed successfully!",
+            "data": result['data'],
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "try_again_url": full_referer_path
+        })
+
+    renderer = SimpleMaterialRenderer()
+    form_html = await renderer.render_form_from_model_async(
+        UserRegistrationForm,
+        data=form_dict,
+        errors=result['errors'],
+        submit_url=f"/self-contained?style={style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}",
+        debug=debug,
+        show_timing=show_timing,
+    )
+    form_html = wrap_with_schemaforms_markers(form_html)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Contained Form Demo</title>
+</head>
+<body style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui;">
+    <h1>Self-Contained Form Demo (FastAPI)</h1>
+    <p><strong>This form includes ZERO external dependencies!</strong></p>
+    <p>Everything needed is embedded in the form HTML below:</p>
+
+    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa;">
+        {form_html}
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
+        <h3>What\'s Included:</h3>
+        <ul>
+            <li>Complete Material Design 3 CSS</li>
+            <li>JavaScript for interactions</li>
+            <li>Icons (inline SVG)</li>
+            <li>Form validation and styling</li>
+            <li>No external CDN dependencies</li>
+        </ul>
+        <p><strong>Template Usage:</strong> <code>&lt;div&gt;{{{{ form_html | safe }}}}&lt;/div&gt;</code></p>
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+        <h3>Raw HTML Source:</h3>
+        <p>This is the complete HTML generated by the <code>SimpleMaterialRenderer</code>:</p>
+        <details style="margin-top: 15px;">
+            <summary style="cursor: pointer; font-weight: bold; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+                Click to view raw HTML source
+            </summary>
+            <pre style="background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; overflow-x: auto; font-size: 12px; margin-top: 10px; white-space: pre-wrap; word-wrap: break-word;"><code>{form_html.replace('<', '&lt;').replace('>', '&gt;')}</code></pre>
+        </details>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="/" style="color: #0066cc; text-decoration: none;">← Back to FastAPI Examples</a>
+    </div>
+</body>
+</html>"""
+
 # ================================
 # API ENDPOINTS (JSON RESPONSES)
 # ================================
 
+# Central registry used by API endpoints below.
+#
+# Why keep this in one place?
+# - It makes it easy for readers to add a new form example in one edit.
+# - It guarantees schema/render/submit endpoints all expose the same form set.
+# - It demonstrates a clean API-first pattern for SchemaForms integrations.
+FORM_REGISTRY = {
+    "login": MinimalLoginForm,
+    "register": UserRegistrationForm,
+    "pets": PetRegistrationForm,
+    "showcase": CompleteShowcaseForm,
+    "layouts": LayoutDemonstrationForm,
+    "organization": CompanyOrganizationForm,
+    "organization-shared": CompanyOrganizationForm,
+}
+
 @app.get("/api/forms/{form_type}/schema")
 async def api_form_schema(form_type: str):
-    """API endpoint to get form schema as JSON."""
-    form_mapping = {
-        "login": MinimalLoginForm,
-        "register": UserRegistrationForm,
-        "pets": PetRegistrationForm,
-        "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm,
-        "organization": CompanyOrganizationForm
-    }
+    """
+    Return JSON Schema for a form model.
 
-    if form_type not in form_mapping:
+    This endpoint helps users understand how SchemaForms derives field
+    definitions directly from Pydantic models.
+    """
+
+    if form_type not in FORM_REGISTRY:
         raise HTTPException(status_code=404, detail="Form type not found")
 
-    form_class = form_mapping[form_type]
+    form_class = FORM_REGISTRY[form_type]
     schema = form_class.model_json_schema()
 
     return {
@@ -1027,20 +1255,17 @@ async def api_form_schema(form_type: str):
 
 @app.post("/api/forms/{form_type}/submit")
 async def api_submit_form(form_type: str, request: Request):
-    """API endpoint for form submission."""
-    form_mapping = {
-        "login": MinimalLoginForm,
-        "register": UserRegistrationForm,
-        "pets": PetRegistrationForm,
-        "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm,
-        "organization": CompanyOrganizationForm
-    }
+    """
+    Validate JSON form submissions against a selected Pydantic form model.
 
-    if form_type not in form_mapping:
+    This shows the API workflow behind the HTML examples:
+    request payload -> model validation -> normalized data/errors response.
+    """
+
+    if form_type not in FORM_REGISTRY:
         raise HTTPException(status_code=404, detail="Form type not found")
 
-    form_class = form_mapping[form_type]
+    form_class = FORM_REGISTRY[form_type]
 
     # Get JSON data asynchronously
     json_data = await request.json()
@@ -1056,20 +1281,17 @@ async def api_submit_form(form_type: str, request: Request):
 
 @app.get("/api/forms/{form_type}/render")
 async def api_render_form(form_type: str, style: str = "bootstrap", debug: bool = False, show_timing: bool = True):
-    """API endpoint to render form HTML."""
-    form_mapping = {
-        "login": MinimalLoginForm,
-        "register": UserRegistrationForm,
-        "pets": PetRegistrationForm,
-        "showcase": CompleteShowcaseForm,
-        "layouts": LayoutDemonstrationForm,
-        "organization": CompanyOrganizationForm
-    }
+    """
+    Render a form model as HTML and return the markup in JSON.
 
-    if form_type not in form_mapping:
+    Useful for embedding forms in non-templated clients or testing renderer
+    output through API calls.
+    """
+
+    if form_type not in FORM_REGISTRY:
         raise HTTPException(status_code=404, detail="Form type not found")
 
-    form_class = form_mapping[form_type]
+    form_class = FORM_REGISTRY[form_type]
     form_html = await render_form_html_async(
         form_class,
         framework=style,
@@ -1123,6 +1345,7 @@ if __name__ == "__main__":
     print("   • Complex:   http://localhost:8000/showcase")
     print("   • Layouts:   http://localhost:8000/layouts")
     print("   • 🚀 STRESS TEST (5 levels deep!): http://localhost:8000/organization")
+    print("   • 🏢 Reusable Organization:         http://localhost:8000/organization-shared")
     print("")
     print("🎨 Style Variants (add ?style= to any form):")
     print("   • Bootstrap:       ?style=bootstrap")
@@ -1140,10 +1363,12 @@ if __name__ == "__main__":
     print("   • Pet Schema:          http://localhost:8000/api/forms/pets/schema")
     print("   • Layout Schema:       http://localhost:8000/api/forms/layouts/schema")
     print("   • Organization Schema: http://localhost:8000/api/forms/organization/schema")
+    print("   • Org Shared Schema:   http://localhost:8000/api/forms/organization-shared/schema")
     print("   • Render:              http://localhost:8000/api/forms/register/render")
     print("   • Pet Render:          http://localhost:8000/api/forms/pets/render")
     print("   • Layout Render:       http://localhost:8000/api/forms/layouts/render")
     print("   • Organization Render: http://localhost:8000/api/forms/organization/render")
+    print("   • Org Shared Render:   http://localhost:8000/api/forms/organization-shared/render")
     print("   • Submit:              POST http://localhost:8000/api/forms/register/submit")
     print("   • Health:              http://localhost:8000/api/health")
     print("=" * 60)
