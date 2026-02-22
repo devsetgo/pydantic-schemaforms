@@ -381,6 +381,7 @@ UserForm.render_form(framework="none", submit_url="/submit")
 - Clean HTML5 forms
 - No framework dependencies
 - Easy to style with custom CSS
+- FastAPI example support: append `?style=none` (for example: `/login?style=none&demo=true`)
 
 ## Renderer Architecture
 

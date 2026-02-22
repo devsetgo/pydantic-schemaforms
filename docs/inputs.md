@@ -82,6 +82,13 @@ class Preferences(FormModel):
 - `file`
 - `color`
 - `hidden`
+- `ssn` (alias: `social_security_number`)
+- `phone` (alias: `phone_number`)
+- `credit_card` (aliases: `card`, `cc_number`)
+- `currency` (alias: `money`)
+
+These specialized elements are opt-in and will not override normal `text` fields.
+Use them explicitly when you want built-in formatting/pattern behavior.
 
 ## Pseudo elements
 
