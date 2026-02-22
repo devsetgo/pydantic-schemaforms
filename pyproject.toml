@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "26.2.2.beta"
+version = "26.1.6.beta"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
@@ -57,7 +57,7 @@ line_length = 100
 
 [tool.bumpcalver]
 version_format = "{current_date}.{build_count}"
-date_format = "%y.%-m"
+date_format = "%y.%q"
 timezone = "America/New_York"
 git_tag = true
 auto_commit = false
