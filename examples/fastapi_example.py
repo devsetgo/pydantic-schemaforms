@@ -934,106 +934,81 @@ async def layouts_get(
     })
 
 @app.post("/layouts", response_class=HTMLResponse)
-async def layouts_post(request: Request, style: str = "bootstrap", debug: bool = False):
+async def layouts_post(
+    request: Request,
+    style: str = "bootstrap",
+    debug: bool = False,
+    show_timing: bool = True,
+):
     """Handle comprehensive layout demonstration form submission."""
-    # Get form data asynchronously
     form_data = await request.form()
     form_dict = dict(form_data)
-
     full_referer_path = create_refer_path(request)
 
+    # Parse nested form data (handles pets[0].name -> pets: [{name: ...}])
+    from examples.shared_models import parse_nested_form_data
+
     try:
-        # Parse the flat form data into structured data
-        from shared_models import parse_nested_form_data
         parsed_data = parse_nested_form_data(form_dict)
+    except Exception:
+        parsed_data = form_dict
 
-        # Structure the data to match the tabbed layout
-        structured_data = {
-            "personal_info": {
-                "first_name": parsed_data.get("first_name"),
-                "last_name": parsed_data.get("last_name"),
-                "email": parsed_data.get("email"),
-                "birth_date": parsed_data.get("birth_date")
-            },
-            "contact_info": {
-                "phone": parsed_data.get("phone"),
-                "address": parsed_data.get("address"),
-                "city": parsed_data.get("city"),
-                "postal_code": parsed_data.get("postal_code")
-            },
-            "preferences": {
-                "notification_email": parsed_data.get("notification_email", False),
-                "notification_sms": parsed_data.get("notification_sms", False),
-                "theme": parsed_data.get("theme"),
-                "language": parsed_data.get("language")
-            },
-            "tasks": {
-                "project_name": parsed_data.get("project_name"),
-                "tasks": parsed_data.get("tasks", [])
-            }
-        }
+    # Validate using the standard submission helper so nested layout forms are enforced.
+    result = handle_form_submission(LayoutDemonstrationForm, parsed_data)
 
-        # Remove None values
-        def clean_dict(d):
-            if isinstance(d, dict):
-                return {k: clean_dict(v) for k, v in d.items() if v is not None}
-            elif isinstance(d, list):
-                return [clean_dict(item) for item in d if item is not None]
-            else:
-                return d
-
-        structured_data = clean_dict(structured_data)
-
+    if result["success"]:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Layout Demo Submitted Successfully",
             "message": "All layout types processed successfully!",
-            "data": structured_data,
+            "data": result["data"],
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
-            "try_again_url": full_referer_path
+            "try_again_url": full_referer_path,
         })
 
-    except Exception as e:
-        # Re-render form with errors
-        if style == "material":
-            from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
-            from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-            renderer = SimpleMaterialRenderer()
-            form_html = await renderer.render_form_from_model_async(
-                LayoutDemonstrationForm,
-                data={},
-                errors={"form": str(e)},
-                submit_url=f"/layouts?style={style}",
-                include_submit_button=True,
-                debug=debug,
-            )
-            form_html = wrap_with_schemaforms_markers(form_html)
-        else:
-            from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
-            from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-            renderer = EnhancedFormRenderer(framework=style)
-            form_html = await renderer.render_form_from_model_async(
-                LayoutDemonstrationForm,
-                data={},
-                errors={"form": str(e)},
-                submit_url=f"/layouts?style={style}",
-                include_submit_button=True,
-                debug=debug,
-                show_timing=False,
-            )
-            form_html = wrap_with_schemaforms_markers(form_html)
+    # Re-render the form with validation errors + user data.
+    if style == "material":
+        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
-        return templates.TemplateResponse(request, "form.html", {
-            "request": request,
-            "title": "Layout Demonstration - Error",
-            "description": "Form submission failed",
-            "framework": "fastapi",
-            "framework_name": "FastAPI (Async)",
-            "framework_type": style,
-            "form_html": form_html,
-            "errors": {"form": str(e)}
-        })
+        renderer = SimpleMaterialRenderer()
+        form_html = await renderer.render_form_from_model_async(
+            LayoutDemonstrationForm,
+            data=parsed_data,
+            errors=result["errors"],
+            submit_url=f"/layouts?style={style}",
+            include_submit_button=True,
+            debug=debug,
+            show_timing=show_timing,
+        )
+        form_html = wrap_with_schemaforms_markers(form_html)
+    else:
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
+
+        renderer = EnhancedFormRenderer(framework=style)
+        form_html = await renderer.render_form_from_model_async(
+            LayoutDemonstrationForm,
+            data=parsed_data,
+            errors=result["errors"],
+            submit_url=f"/layouts?style={style}",
+            include_submit_button=True,
+            debug=debug,
+            show_timing=show_timing,
+        )
+        form_html = wrap_with_schemaforms_markers(form_html)
+
+    return templates.TemplateResponse(request, "form.html", {
+        "request": request,
+        "title": "Layout Demonstration - Validation Errors",
+        "description": "Please fix the highlighted fields",
+        "framework": "fastapi",
+        "framework_name": "FastAPI (Async)",
+        "framework_type": style,
+        "form_html": form_html,
+        "errors": result["errors"],
+    })
 
 @app.get("/self-contained", response_class=HTMLResponse)
 async def self_contained(

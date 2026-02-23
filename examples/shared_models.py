@@ -2111,11 +2111,28 @@ class HorizontalFormLayout(HorizontalLayout):
     """Horizontal layout - side-by-side form arrangement."""
     form = ContactInfoForm
 
+
+class PreferencesTabLayout(VerticalLayout):
+    """Vertical layout wrapper used inside the preferences TabbedLayout."""
+
+    form = PreferencesForm
+
+
 class TabbedFormLayout(TabbedLayout):
     """Tabbed layout - preferences organized in tabs."""
-    # Split preferences form into logical tabs for demonstration
-    notifications = PreferencesForm
-    appearance = PreferencesForm
+
+    def __init__(self, form_config=None):
+        super().__init__(form_config=form_config)
+        # Each tab must be a layout instance (BaseLayout/FormLayoutBase), not a FormModel class.
+        self.notifications = PreferencesTabLayout()
+        self.appearance = PreferencesTabLayout()
+
+    def _get_layouts(self):
+        # Keep ordering stable (and avoid scanning dir(self)).
+        return [
+            ("notifications", self.notifications),
+            ("appearance", self.appearance),
+        ]
 
 class ListFormLayout(VerticalLayout):
     """List layout - form with dynamic task list."""
