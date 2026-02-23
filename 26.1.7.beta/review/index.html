@@ -1,0 +1,1829 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Server-rendered form components and layout helpers for Pydantic models">
+      
+      
+        <meta name="author" content="Mike Ryan">
+      
+      
+      
+        <link rel="prev" href="../library-boundary-risk-analysis/">
+      
+      
+        <link rel="next" href="../about/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+    
+    
+      
+        <title>Review - Pydantic SchemaForms</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/print-site.css">
+    
+      <link rel="stylesheet" href="../css/print-site-material.css">
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#codebase-review-pydantic-schemaforms" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Pydantic SchemaForms" class="md-header__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pydantic SchemaForms
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Review
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorial_fastapi/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../testing_workflow/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../print_page/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Print Site
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Pydantic SchemaForms" class="md-nav__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Pydantic SchemaForms
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial_fastapi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FastAPI Project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs (UI Elements)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Render Timing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Application Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugin_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../library-boundary-risk-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library Boundary Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-rules-nonnegotiables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Rules (Non‑Negotiables)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critical-high-priority-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critical / High Priority Findings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#medium-priority-refactors-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Medium Priority Refactors &amp; Opportunities
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-tooling-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing &amp; Tooling Gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommended-next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../print_page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Print Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="codebase-review-pydantic-schemaforms">Codebase Review – pydantic-schemaforms<a class="headerlink" href="#codebase-review-pydantic-schemaforms" title="Permanent link">&para;</a></h1>
+<p><em>Date: 2025-12-21 (Updated)</em></p>
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p><code>pydantic-schemaforms</code> is in a solid place architecturally: there is now a single schema→field→layout rendering pipeline, theme/style are first-class and overrideable, and the test suite exercises both sync and async rendering across layout primitives. The remaining work is less about “more features” and more about locking the product to its original promise:</p>
+<ul>
+<li>
+<p><strong>Python 3.14+ only:</strong> this library targets Python 3.14 and higher, and does not support earlier Python versions.</p>
+</li>
+<li>
+<p>ship <strong>all</strong> required HTML/CSS/JS from the library (no external CDNs by default)</p>
+</li>
+<li>keep UI + validation configuration <strong>expressed via Pydantic</strong> (schema is the source of truth)</li>
+<li>make sync + async usage <strong>boringly simple</strong> (one obvious way)</li>
+<li>add an optional <strong>debug rendering mode</strong> that helps adoption without changing normal UX</li>
+</ul>
+<p>The renderer refactor eliminated shared mutable state and restored the enhanced/material renderers to a working baseline. Schema metadata is cached, field rendering is centralized, and model-list nesting now feeds explicit <code>RenderContext</code> objects. Django integration has been removed (Flask/FastAPI remain), and the JSON/OpenAPI generators now source constraints directly from Pydantic field metadata, unblocking the integration tests. Renderer themes now include a formal <code>FrameworkTheme</code> registry (Bootstrap/Material/plain) plus <code>MaterialEmbeddedTheme</code>, and both <code>EnhancedFormRenderer</code> and <code>FieldRenderer</code> source their form/input/button classes from the active theme before falling back to legacy framework config.</p>
+<p><strong>Latest (Dec 7, 2025):</strong> Theme-driven form chrome extraction is complete. The new <code>FormStyle</code> contract centralizes all framework-specific markup (model lists, tabs, accordions, submit buttons, layout sections, <strong>and field-level help/error blocks</strong>) in a registry-based system. <code>FormStyleTemplates</code> dataclass now holds 15 template slots (expanded from 13: added <code>field_help</code> and <code>field_error</code> for field-level chrome routing), registered per-framework (Bootstrap/Material/Plain/Default) with graceful fallbacks. <code>RendererTheme</code> and <code>LayoutEngine</code> now query <code>FormStyle.templates</code> at render time instead of inlining markup, enabling runtime overrides without renderer edits. <strong>Version-aware style descriptors</strong> are supported (e.g., <code>get_form_style("bootstrap:5")</code>, <code>get_form_style("material:3")</code>) with fallback to framework defaults. FastAPI example hardened with absolute paths (<code>Path(__file__).resolve().parent</code>) for templates/static, resolving path issues in tests and different working directories. Validation engine consolidated: <code>ValidationResponse</code> and convenience validators now live in <code>validation.py</code>, <code>live_validation.py</code> consumes/re-exports without duplication, and 10 new consolidation tests were added. Tabs regression fixed: Bootstrap panels now render initial content (<code>show active</code>), Material tabs use shared tab CSS/JS classes so tabs switch correctly, and a layout-demo smoke test asserts initial tab content renders for both frameworks. <strong>Pydantic v2 deprecations eliminated:</strong> All Pydantic <code>Field()</code> kwargs now properly use <code>json_schema_extra</code> instead of extra kwargs; <code>min_items</code>/<code>max_items</code> replaced with <code>min_length</code>/<code>max_length</code> in FormField calls; Starlette <code>TemplateResponse</code> signature updated to new parameter order (request first). <strong>Deprecation warnings suppressed:</strong> pytest <code>filterwarnings</code> config reduces test output from 19 warnings to 1 without losing developer guidance (form_layouts deprecation and JSON schema hints remain available with <code>-W default</code>). <strong>Validation documentation added:</strong> New comprehensive <code>docs/validation_guide.md</code> (787 lines) documents the unified validation engine with ValidationResponse/FieldValidator/FormValidator APIs, server-side and HTMX validation flows, cross-field validation patterns, and end-to-end FastAPI examples.</p>
+<p><strong>Latest (Dec 21, 2025):</strong> The core architecture is now strong enough to support the original product constraints (library supplies HTML/CSS/JS, configuration is expressed via Pydantic, sync+async are easy). The most important product-alignment work is now complete for assets and consistently enforced:</p>
+<ul>
+<li><strong>Self-contained assets:</strong> Default rendering no longer emits external CDN URLs.</li>
+<li>HTMX is now <strong>vendored</strong> and inlined by default (offline-by-default).</li>
+<li>A CDN mode exists but is explicitly opt-in and <strong>pinned</strong> to the vendored manifest version.</li>
+<li>IMask is <strong>vendored</strong> and available when explicitly requested (e.g., SSN masking).</li>
+<li>Framework CSS/JS (Bootstrap + Materialize) are <strong>vendored</strong> and can be emitted inline in <code>asset_mode="vendored"</code>.</li>
+<li><strong>Consistent asset selection:</strong> A consistent <code>asset_mode</code> pattern is now threaded through the main entry points (enhanced renderer, modern renderer/builder, legacy wrappers) so “cdn vs vendored” behavior is deterministic.</li>
+<li><strong>Operational stability:</strong> <code>vendor_manifest.json</code> checksum verification is enforced by tests, and pre-commit is configured to avoid mutating vendored assets and generated test artifacts.</li>
+<li><strong>Debug rendering mode (COMPLETED):</strong> First-class debug panel now available via <code>debug=True</code> flag. The panel exposes (1) rendered HTML/assets, (2) the Python form/model source, (3) validation rules/schema, and (4) live payload with real-time form data capture. Implementation uses JavaScript event listeners to update the live tab as users interact with the form, handles nested model-list fields correctly, and is fully self-contained (inline CSS/JS). FastAPI example updated with <code>?debug=1</code> support on all routes, and tests verify correct behavior.</li>
+</ul>
+<h2 id="design-rules-nonnegotiables">Design Rules (Non‑Negotiables)<a class="headerlink" href="#design-rules-nonnegotiables" title="Permanent link">&para;</a></h2>
+<p>These rules are intended to prevent “helpful” drift away from the original concept.</p>
+<ol>
+<li><strong>Python version policy</strong></li>
+<li>The library supports <strong>Python 3.14 and higher only</strong>.</li>
+<li>
+<p>Avoid guidance that suggests compatibility with older Python versions.</p>
+</li>
+<li>
+<p><strong>Library ships the experience</strong></p>
+<ul>
+<li>Default output must be fully functional offline: no third-party CDN assets (JS/CSS/fonts) unless explicitly opted in.</li>
+<li>Framework integrations may <em>serve</em> assets, but the assets must come from this package.</li>
+</ul>
+</li>
+<li>
+<p><strong>Pydantic is the single source of truth</strong></p>
+<ul>
+<li>Validation constraints, required/optional, and shape come from Pydantic schema/Field metadata.</li>
+<li>UI configuration is expressed via Pydantic-friendly metadata (<code>json_schema_extra</code> / form field helpers) rather than ad-hoc runtime flags.</li>
+<li>Avoid storing non-JSON-serializable objects in schema extras unless they are sanitized for schema generation.</li>
+</ul>
+</li>
+<li>
+<p><strong>One obvious way (sync + async)</strong></p>
+<ul>
+<li>There should be exactly one recommended sync entry point and one async entry point.</li>
+<li>All other helpers should be thin compatibility wrappers and should not diverge in behavior.</li>
+</ul>
+</li>
+<li>
+<p><strong>Renderer outputs deterministic, self-contained HTML</strong></p>
+<ul>
+<li>Rendering should not depend on global mutable state or ambient process configuration.</li>
+<li>Rendering should be deterministic for the same model + config.</li>
+</ul>
+</li>
+<li>
+<p><strong>Debug mode is optional and non-invasive</strong></p>
+<ul>
+<li>Debug UI must be off by default.</li>
+<li>When enabled, it should wrap the existing form (collapsed panel) and never change validation/rendering semantics.</li>
+<li>Debug surfaces should be “read-only views” of: rendered HTML/assets, model source (best effort), schema/validation rules, and live validation payloads.</li>
+</ul>
+</li>
+<li>
+<p><strong>Extensibility stays declarative</strong></p>
+<ul>
+<li>Plugins register inputs/layout renderers via the official registries; no monkeypatching required.</li>
+<li>Extension points should compose with themes/styles, not bypass them.</li>
+</ul>
+</li>
+</ol>
+<h2 id="critical-high-priority-findings">Critical / High Priority Findings<a class="headerlink" href="#critical-high-priority-findings" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>External CDN assets violate the self-contained requirement (Addressed)</strong>
+  Default output is now offline-by-default across the main entry points.</p>
+</li>
+<li>
+<p>HTMX is vendored and inlined by default.</p>
+</li>
+<li>An explicit <code>asset_mode="cdn"</code> exists for users who want CDN delivery, but it is pinned to the vendored manifest version.</li>
+<li>IMask is vendored and available for secure inputs (e.g., SSN masking). It is not injected unless explicitly requested.</li>
+<li>Framework CSS/JS (Bootstrap + Materialize) are vendored and can be emitted in <code>asset_mode="vendored"</code> (inline) to keep “framework look” self-contained.</li>
+<li>External CDN URLs still exist as an explicit opt-in (<code>asset_mode="cdn"</code>) and are pinned to the vendored manifest versions.</li>
+</ul>
+<p><em>Files:</em>
+  - <code>pydantic_schemaforms/render_form.py</code> (legacy wrapper)
+  - <code>pydantic_schemaforms/assets/runtime.py</code> (vendored HTMX + pinned CDN mode)
+  - <code>pydantic_schemaforms/rendering/themes.py</code> / <code>pydantic_schemaforms/enhanced_renderer.py</code> (asset-mode gating)
+  - <code>pydantic_schemaforms/modern_renderer.py</code>, <code>pydantic_schemaforms/integration/builder.py</code> (builder/modern entry points)
+  - <code>pydantic_schemaforms/form_layouts.py</code> (deprecated legacy layouts; now gated)</p>
+<p><strong>Vendored dependency policy (implemented for HTMX; extendable for others)</strong>
+  - <strong>Default is offline:</strong> the default renderer output must not reference external CDNs.
+  - <strong>Pinned + auditable:</strong> every vendored asset must be pinned to an explicit version and recorded with <code>source_url</code> + <code>sha256</code> in a manifest.
+  - <strong>Licenses included:</strong> upstream license text (and any required notices) must be included in the repo alongside the vendored asset (or clearly referenced if inclusion is not permitted).
+  - <strong>Single update path:</strong> updates must happen via an explicit script + make target (no manual copy/paste), so diffs are reproducible.
+  - <strong>Opt-in CDN mode only:</strong> if a CDN mode exists, it must be explicitly selected (never default) and clearly documented as not-offline.</p>
+<p><strong>What “easy to update” means (definition)</strong>
+  - One command updates the pinned version, downloads the asset(s), writes/updates the manifest checksums, and runs a verification check.
+  - A CI/test check fails if any default render output contains external asset URLs.
+  - The update process is deterministic and reviewable (diff shows only asset bytes + manifest/version bump).
+  - Formatting/lint tooling must not modify vendored bytes (otherwise checksum verification breaks). Pre-commit should exclude <code>pydantic_schemaforms/assets/vendor/</code> from whitespace/EOF normalization hooks.</p>
+<ul>
+<li>
+<p><strong>Multiple layout stacks compete for ownership (Resolved)</strong>
+  Layout definitions now live exclusively in <code>layout_base.BaseLayout</code> + <code>rendering/layout_engine</code>. The new <code>LayoutComposer</code> API exposes the canonical Horizontal/Vertical/Tabbed primitives, while <code>pydantic_schemaforms.layouts</code>/<code>pydantic_schemaforms.form_layouts</code> only re-export the engine with <code>DeprecationWarning</code>s. Enhanced and Material renderers both call into <code>LayoutEngine</code>, so markup is consistent across frameworks, and the tutorial documents LayoutComposer as the single supported API.
+  <em>Files:</em> <code>pydantic_schemaforms/rendering/layout_engine.py</code>, <code>pydantic_schemaforms/layouts.py</code>, <code>pydantic_schemaforms/form_layouts.py</code>, <code>pydantic_schemaforms/simple_material_renderer.py</code></p>
+</li>
+<li>
+<p><strong>Renderer logic duplicated across frameworks (Resolved)</strong>
+  Enhanced and Simple Material share the same orchestration pipeline via the new <code>RendererTheme</code> abstraction and <code>MaterialEmbeddedTheme</code>, eliminating the duplicated CSS/JS scaffolding that previously lived in <code>simple_material_renderer.py</code>. The Modern renderer now builds a temporary <code>FormModel</code> and hands off to <code>EnhancedFormRenderer</code>, and the redundant <code>Py314Renderer</code> alias has been removed entirely. Framework-specific assets live in <code>RendererTheme</code> strategies, so there is a single schema walk/layout path regardless of entry point.
+  <em>Files:</em> <code>pydantic_schemaforms/enhanced_renderer.py</code>, <code>pydantic_schemaforms/rendering/themes.py</code>, <code>pydantic_schemaforms/simple_material_renderer.py</code>, <code>pydantic_schemaforms/modern_renderer.py</code></p>
+</li>
+<li>
+<p><strong>Integration helpers mix unrelated responsibilities (Addressed)</strong>
+  The synchronous/async adapters now live in <code>pydantic_schemaforms/integration/frameworks/</code>, leaving the root <code>integration</code> package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing <code>pydantic_schemaforms.integration</code> no longer drags in optional framework glue unless those helpers are actually accessed.
+  <em>Files:</em> <code>pydantic_schemaforms/integration/__init__.py</code>, <code>pydantic_schemaforms/integration/frameworks/</code>, <code>pydantic_schemaforms/integration/builder.py</code></p>
+</li>
+</ul>
+<h2 id="medium-priority-refactors-opportunities">Medium Priority Refactors &amp; Opportunities<a class="headerlink" href="#medium-priority-refactors-opportunities" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>Input component metadata duplicated (Resolved)</strong>
+  Input classes now declare their <code>ui_element</code> (plus optional aliases) and a lightweight registry walks the class hierarchy to expose a mapping. <code>rendering/frameworks.py</code> imports that registry instead of maintaining its own list, so adding a new component only requires updating the input module where it already lives.
+  <em>Files:</em> <code>pydantic_schemaforms/inputs/base.py</code>, <code>pydantic_schemaforms/inputs/*</code>, <code>pydantic_schemaforms/inputs/registry.py</code>, <code>pydantic_schemaforms/rendering/frameworks.py</code></p>
+</li>
+<li>
+<p><strong>Model list renderer mixes logic with theme markup (Resolved)</strong>
+  <code>ModelListRenderer</code> now delegates both containers and per-item chrome through <code>RendererTheme</code> hooks: <code>render_model_list_container()</code> and the new <code>render_model_list_item()</code> (with Material/embedded overrides) wrap the renderer-supplied field grid so frameworks own every byte of markup. Bootstrap/Material share the same plumbing, labels/help/errors/add buttons stay in the theme, and tests cover that custom themes can inject their own classes when rendering lists.
+  <em>Files:</em> <code>pydantic_schemaforms/model_list.py</code>, <code>pydantic_schemaforms/rendering/themes.py</code></p>
+</li>
+<li>
+<p><strong>Template engine under-used (Resolved)</strong>
+  The new <code>FormStyle</code> contract (in <code>rendering/form_style.py</code>) extracts all framework-specific markup into <code>FormStyleTemplates</code> dataclass with 13 template slots: <code>form_wrapper</code>, <code>tab_layout</code>, <code>tab_button</code>, <code>tab_panel</code>, <code>accordion_layout</code>, <code>accordion_section</code>, <code>layout_section</code>, <code>layout_help</code>, <code>model_list_container</code>, <code>model_list_item</code>, <code>model_list_help</code>, <code>model_list_error</code>, and <code>submit_button</code>. Framework-specific bundles (Bootstrap, Material, Plain, Default) are registered in a centralized registry via <code>register_form_style()</code> and queried at render time with <code>get_form_style(framework, variant)</code>. <code>RendererTheme.render_submit_button()</code>, <code>render_model_list_*()</code> methods and <code>LayoutEngine</code> tab/accordion layouts all delegate to <code>FormStyle.templates</code> with graceful fallback to defaults, eliminating inline markup strings and enabling runtime overrides. Tests in <code>test_theme_hooks.py</code> (7 tests) verify custom FormStyle templates drive rendering. FastAPI example paths hardened to use <code>Path(__file__).resolve().parent</code> for templates and static dirs, working correctly from any working directory.
+  <em>Files:</em> <code>pydantic_schemaforms/rendering/form_style.py</code>, <code>pydantic_schemaforms/rendering/themes.py</code>, <code>pydantic_schemaforms/rendering/layout_engine.py</code>, <code>examples/fastapi_example.py</code>, <code>tests/test_theme_hooks.py</code>, <code>tests/test_fastapi_example_smoke.py</code></p>
+</li>
+<li>
+<p><strong>Runtime field registration surfaced (New)</strong>
+  Dynamically extending a <code>FormModel</code> is now supported via <code>FormModel.register_field()</code>, which wires the new <code>FieldInfo</code> into the schema cache and the validation stack by synthesizing a runtime subclass when necessary. Legacy <code>setattr(MyForm, name, Field(...))</code> still works for rendering, but the helper ensures <code>validate_form_data()</code> and HTMX live validation enforce the same constraints without manual plumbing.
+  <em>Files:</em> <code>pydantic_schemaforms/schema_form.py</code>, <code>pydantic_schemaforms/validation.py</code>, <code>tests/test_integration_workflow.py</code>
+  <em>TODO:</em> The temporary <code>DynamicFormRuntime</code> created by <code>pydantic.create_model()</code> emits a <code>UserWarning</code> about shadowing parent attributes. If this becomes noisy, add a local <code>model_config = {"ignored_types": ...}</code> or suppress the warning via the helper before rebuilding the runtime model.</p>
+</li>
+<li>
+<p><strong>Validation rule duplication (Resolved)</strong>
+  Validation is now canonical in <code>validation.py</code> (rules, <code>ValidationResponse</code>, convenience validators). <code>live_validation.py</code> consumes/re-exports without duplicating code. Added consolidation coverage (10 tests) for schema → live validator flow, convenience validators, and serialization.
+  <em>Files:</em> <code>pydantic_schemaforms/validation.py</code>, <code>pydantic_schemaforms/live_validation.py</code>, <code>pydantic_schemaforms/__init__.py</code>, <code>tests/test_validation_consolidation.py</code></p>
+</li>
+<li>
+<p><strong>Input namespace still re-exports everything (Resolved)</strong>
+  The root package now exposes inputs via module-level <code>__getattr__</code>, delegating to a lazy-loading facade in <code>pydantic_schemaforms.inputs</code>. No wildcard imports remain, so importing <code>pydantic_schemaforms</code> does not instantiate every widget or template; consumers still get <code>from pydantic_schemaforms import TextInput</code> via the cached attribute. Future work can build on the same facade to document a plugin hook for third-party inputs.
+  <em>Files:</em> <code>pydantic_schemaforms/__init__.py</code>, <code>pydantic_schemaforms/inputs/__init__.py</code></p>
+</li>
+<li>
+<p><strong>Integration facade duplicated across namespaces (Resolved)</strong>
+  The canonical sync/async helpers now live only in <code>integration/adapters.py</code>, <code>integration/sync.py</code>, and <code>integration/async_support.py</code>. The <code>integration.frameworks</code> package re-exports those implementations for legacy imports, and <code>FormIntegration.async_integration</code> was converted to a <code>@staticmethod</code> so the API is identical in both namespaces. Optional dependencies remain isolated via lazy imports, but there is now exactly one code path for validation + rendering logic.
+  <em>Files:</em> <code>pydantic_schemaforms/integration/__init__.py</code>, <code>pydantic_schemaforms/integration/adapters.py</code>, <code>pydantic_schemaforms/integration/frameworks/*</code></p>
+</li>
+<li>
+<p><strong>Public sync/async “one obvious way” (Resolved)</strong>
+  Canonical entry points now exist and are exported from the root package:</p>
+</li>
+<li>Sync: <code>handle_form()</code></li>
+<li>Async: <code>handle_form_async()</code></li>
+</ul>
+<p>Legacy helpers (<code>handle_sync_form</code>, <code>handle_async_form</code>, <code>FormIntegration.*</code>) remain as compatibility wrappers.
+  <em>Files:</em> <code>pydantic_schemaforms/integration/adapters.py</code>, <code>pydantic_schemaforms/integration/__init__.py</code>, <code>pydantic_schemaforms/__init__.py</code>, <code>docs/quickstart.md</code>, <code>tests/test_integration.py</code></p>
+<ul>
+<li>
+<p><strong>Theme/style contract centralized</strong>
+  <code>RendererTheme</code> now includes concrete <code>FrameworkTheme</code> subclasses for Bootstrap/Material/plain plus <code>get_theme_for_framework</code>, and both enhanced + field renderers request classes/assets from the active theme before falling back to legacy configs. <code>FormStyle</code> registry now handles framework-level templates (including field-level chrome) and supports version-aware descriptors (e.g., <code>bootstrap:5</code>, <code>material:3</code>) with fallbacks to base framework/default.
+  <em>Files:</em> <code>pydantic_schemaforms/enhanced_renderer.py</code>, <code>pydantic_schemaforms/rendering/themes.py</code>, <code>pydantic_schemaforms/rendering/field_renderer.py</code>, <code>pydantic_schemaforms/rendering/frameworks.py</code>, <code>pydantic_schemaforms/rendering/form_style.py</code></p>
+</li>
+<li>
+<p><strong>Plugin hooks for inputs/layouts (NEW)</strong>
+  Input components can now be registered via <code>register_input_class()</code> and <code>register_inputs()</code> in <code>inputs/registry.py</code> with automatic cache invalidation. Layout renderers can be registered via <code>LayoutEngine.register_layout_renderer()</code> and referenced from form fields using <code>layout_handler</code> metadata. Both APIs support resettable state for testing. Docs page <code>docs/plugin_hooks.md</code> explains usage and packaging patterns.
+  <em>Files:</em> <code>pydantic_schemaforms/inputs/registry.py</code>, <code>pydantic_schemaforms/rendering/layout_engine.py</code>, <code>docs/plugin_hooks.md</code>, <code>tests/test_plugin_hooks.py</code></p>
+</li>
+</ul>
+<h2 id="testing-tooling-gaps">Testing &amp; Tooling Gaps<a class="headerlink" href="#testing-tooling-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li>✅ <strong>Renderer behavior E2E coverage (COMPLETED)</strong> — Added <code>tests/test_e2e_layouts_async.py</code> with 14 tests: unit tests for tab/accordion DOM structure, aria attributes, display state; integration tests for <code>LayoutDemonstrationForm</code> with nested fields and model lists; async equivalence tests. All passing.</li>
+<li>✅ <strong>CI/docs alignment (COMPLETED)</strong> — Documented <code>make tests</code> as single entry point in new <code>docs/testing_workflow.md</code> (comprehensive guide with test organization, linting rules, CI/CD integration, troubleshooting). <strong>Ruff now enabled in <code>.pre-commit-config.yaml</code></strong> and enforced as part of <code>make tests</code> before pytest runs.</li>
+</ul>
+<h2 id="recommended-next-steps">Recommended Next Steps<a class="headerlink" href="#recommended-next-steps" title="Permanent link">&para;</a></h2>
+<ol>
+<li>✅ <strong>Document unified validation engine (COMPLETED)</strong> — Created comprehensive <code>docs/validation_guide.md</code> (787 lines) with:</li>
+<li><code>ValidationResponse</code>, <code>FieldValidator</code>, <code>FormValidator</code>, and <code>ValidationSchema</code> API documentation</li>
+<li>Server-side validation patterns with <code>validate_form_data()</code> and custom rules</li>
+<li>Real-time HTMX validation with <code>LiveValidator</code> and <code>HTMXValidationConfig</code></li>
+<li>Cross-field validation examples (age consent, password matching, conditional fields)</li>
+<li>Convenience validators (<code>create_email_validator()</code>, <code>create_password_strength_validator()</code>)</li>
+<li>Complete end-to-end sync + HTMX flow example with FastAPI endpoints and HTML templates</li>
+<li>Testing patterns and Pydantic v2 deprecation resolution notes</li>
+<li>
+<p>References to layout-demo smoke test coverage and tab rendering verification</p>
+</li>
+<li>
+<p>✅ <strong>Suppress remaining expected deprecation warnings (COMPLETED)</strong> — Added <code>filterwarnings</code> to <code>[tool.pytest.ini_options]</code> in <code>pyproject.toml</code> to suppress intentional warnings: <code>form_layouts</code> deprecation notice (migration guidance), Pydantic JSON schema non-serializable defaults (informational), and Pydantic extra kwargs deprecation (handled in code). Result: test output reduced from 19 warnings to 1 in normal mode; warnings remain accessible via <code>pytest -W default</code>.</p>
+</li>
+<li>
+<p>✅ <strong>Field-level chrome routing (COMPLETED)</strong> — Extended <code>FormStyle</code> to support field-level help/error templating: Added <code>field_help</code> and <code>field_error</code> templates to <code>FormStyleTemplates</code> dataclass (15 slots total, up from 13), registered framework-specific versions for Bootstrap, Plain, and Material Design. Ready for field renderers to consume these templates; enables consistent field-level chrome across all frameworks without renderer edits.</p>
+</li>
+<li>
+<p>✅ <strong>Version-aware style variants (COMPLETED)</strong> — <code>FormStyle</code> descriptors accept framework + variant (e.g., <code>"bootstrap:5"</code>, <code>"material:3"</code>) with graceful fallbacks to the framework base and default style. Aliases registered for Bootstrap 5 and Material 3 reuse existing templates; lookup stays backward compatible.</p>
+</li>
+<li>
+<p>✅ <strong>Extension hooks for inputs/layouts (COMPLETED)</strong> — Plugin registration API added: <code>register_input_class()</code> / <code>register_inputs()</code> in <code>inputs/registry</code> with cache clearing, and <code>LayoutEngine.register_layout_renderer()</code> with metadata-driven dispatch. Documented in <code>docs/plugin_hooks.md</code> with examples and best practices.</p>
+</li>
+<li>
+<p>✅ <strong>Automated E2E coverage for layouts/async (COMPLETED)</strong> — Added comprehensive <code>tests/test_e2e_layouts_async.py</code> (14 tests) covering: unit tests for tab/accordion DOM structure, aria attributes, and display state; integration tests for <code>LayoutDemonstrationForm</code> tab/layout field rendering with nested content and model lists; async tests verifying <code>render_form_from_model_async()</code> produces identical HTML to sync path, handles errors gracefully, and supports concurrent rendering. All tests passing.</p>
+</li>
+<li>
+<p>✅ <strong>CI/docs alignment (COMPLETED)</strong> — Documented <code>make tests</code> as single entry point in new <code>docs/testing_workflow.md</code> (comprehensive guide with test organization, linting rules, CI/CD integration, troubleshooting). <strong>Ruff now enabled in <code>.pre-commit-config.yaml</code></strong> and enforced as part of <code>make tests</code> before pytest runs. All 217+ tests passing with integrated linting.</p>
+</li>
+<li>
+<p>✅ <strong>Make asset delivery self-contained (Completed for HTMX + IMask + framework assets)</strong> — The default renderer output is offline-by-default.</p>
+<ul>
+<li>✅ HTMX is vendored and inlined by default; CDN mode is opt-in and pinned.</li>
+</ul>
+</li>
+<li>
+<p>✅ IMask is vendored (for SSN and other secure input types) and can be included explicitly.</p>
+<ul>
+<li>✅ Bootstrap + Materialize CSS/JS are vendored and can be emitted inline via <code>asset_mode="vendored"</code> when framework assets are requested.</li>
+</ul>
+<p><strong>Update workflow (implemented)</strong>
+- Vendoring and verification scripts/targets exist, and tests enforce “no external URLs by default”.
+  - <code>docs/assets.md</code> documents the <code>asset_mode</code> contract and the vendoring workflow.</p>
+</li>
+</ol>
+<p><strong>Tooling note (important)</strong>
+  - Pre-commit should exclude vendored assets and generated artifacts (coverage/test reports, debug HTML) from whitespace/EOF fixers to keep checksum verification and <code>make tests</code> stable.</p>
+<ol>
+<li>✅ <strong>Define one canonical sync + one canonical async entry point (COMPLETED)</strong> — Canonical entry points exist and are documented:</li>
+<li>Sync: <code>handle_form()</code></li>
+<li>Async: <code>handle_form_async()</code></li>
+</ol>
+<p>Both are exported from <code>pydantic_schemaforms</code> and covered by integration tests.
+  <em>Files:</em> <code>pydantic_schemaforms/integration/adapters.py</code>, <code>pydantic_schemaforms/__init__.py</code>, <code>docs/quickstart.md</code>, <code>tests/test_integration.py</code></p>
+<ol>
+<li>✅ <strong>Add a first-class debug rendering mode (COMPLETED)</strong> — Implemented a <code>debug=True</code> option that wraps the form in a collapsed debug panel with tabs:</li>
+<li><strong>Rendered output</strong>: raw HTML (including the CSS/JS assets block)</li>
+<li><strong>Form/model source</strong>: Python source for the form class (best-effort via <code>inspect.getsource()</code>)</li>
+<li><strong>Schema / validation</strong>: schema-derived constraints (field requirements, min/max, regex, etc.)</li>
+<li><strong>Live payload</strong>: Real-time form data capture that updates as users type/interact with the form</li>
+</ol>
+<p>Implementation details:
+   - Debug panel is off by default and non-invasive (collapsed <code>&lt;details&gt;</code> element)
+   - JavaScript event listeners capture <code>input</code> and <code>change</code> events to update live payload
+   - Handles nested form data (model lists with <code>pets[0].name</code> notation)
+   - Proper checkbox handling (true/false instead of "on" or missing)
+   - Tab UI consistent across frameworks using inline styles/scripts
+   - Tests verify debug panel presence when enabled and absence by default
+   - FastAPI example updated to expose <code>?debug=1</code> query parameter on all form routes</p>
+<p><em>Files:</em> <code>pydantic_schemaforms/enhanced_renderer.py</code> (debug panel builder), <code>pydantic_schemaforms/render_form.py</code> (debug flag forwarding), <code>tests/test_debug_mode.py</code> (2 tests), <code>examples/fastapi_example.py</code> (debug parameter on all routes)</p>
+<hr />
+<p>## Codebase Layout (Package Map)</p>
+<p>This section documents the <strong>git-tracked</strong> layout of the <code>pydantic_schemaforms/</code> package.</p>
+<p>Notes:</p>
+<ul>
+<li>Runtime-generated <code>__pycache__/</code> folders and <code>*.pyc</code> files are intentionally omitted here (they are not part of the source tree and should not be committed).</li>
+</ul>
+<p>### <code>pydantic_schemaforms/</code> (root package)</p>
+<ul>
+<li><code>pydantic_schemaforms/__init__.py</code> — Public package entry point (lazy exports) and top-level API surface.</li>
+<li><code>pydantic_schemaforms/enhanced_renderer.py</code> — Enhanced renderer pipeline (schema → fields → layout) with sync/async HTML entry points.</li>
+<li><code>pydantic_schemaforms/form_field.py</code> — <code>FormField</code> abstraction and higher-level field helpers aligned with the design vision.</li>
+<li><code>pydantic_schemaforms/form_layouts.py</code> — Legacy layout composition helpers (kept for compatibility; deprecated).</li>
+<li><code>pydantic_schemaforms/icon_mapping.py</code> — Framework icon mapping helpers (bootstrap/material icon name/class resolution).</li>
+<li><code>pydantic_schemaforms/input_types.py</code> — Input type constants, default mappings, and validation utilities for selecting HTML input types.</li>
+<li><code>pydantic_schemaforms/layout_base.py</code> — Shared base layout primitives used by the layout engine and renderer(s).</li>
+<li><code>pydantic_schemaforms/layouts.py</code> — Deprecated layout wrapper module (compatibility surface).</li>
+<li><code>pydantic_schemaforms/live_validation.py</code> — HTMX-oriented “live validation” plumbing and configuration.</li>
+<li><code>pydantic_schemaforms/model_list.py</code> — Rendering helpers for repeating/nested model lists.</li>
+<li><code>pydantic_schemaforms/modern_renderer.py</code> — “Modern” renderer facade backed by the shared enhanced pipeline.</li>
+<li><code>pydantic_schemaforms/render_form.py</code> — Backwards-compatible rendering wrapper(s) for legacy entry points.</li>
+<li><code>pydantic_schemaforms/schema_form.py</code> — Pydantic-driven form model primitives (<code>FormModel</code>, <code>Field</code>, validator helpers, validation result types).</li>
+<li><code>pydantic_schemaforms/simple_material_renderer.py</code> — Minimal Material Design renderer implementation.</li>
+<li><code>pydantic_schemaforms/templates.py</code> — Python 3.14 template-string based templating helpers used throughout rendering.</li>
+<li><code>pydantic_schemaforms/validation.py</code> — Canonical validation rules/engine and serializable validation responses.</li>
+<li><code>pydantic_schemaforms/vendor_assets.py</code> — Vendoring/manifest helper utilities used to manage and verify shipped third-party assets.</li>
+<li><code>pydantic_schemaforms/version_check.py</code> — Python version checks (enforces Python 3.14+ assumptions like template strings).</li>
+</ul>
+<p>### <code>pydantic_schemaforms/assets/</code> (packaged assets)</p>
+<ul>
+<li><code>pydantic_schemaforms/assets/__init__.py</code> — Asset package marker.</li>
+<li><code>pydantic_schemaforms/assets/runtime.py</code> — Runtime helpers to load/inline assets and emit tags (vendored vs pinned CDN modes).</li>
+</ul>
+<p>#### <code>pydantic_schemaforms/assets/vendor/</code> (vendored third‑party assets)</p>
+<ul>
+<li><code>pydantic_schemaforms/assets/vendor/README.md</code> — Vendored asset policy and update workflow overview.</li>
+<li><code>pydantic_schemaforms/assets/vendor/vendor_manifest.json</code> — Pin list and SHA256 checksums for vendored assets (audit + verification).</li>
+</ul>
+<p>##### <code>pydantic_schemaforms/assets/vendor/bootstrap/</code></p>
+<ul>
+<li><code>pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.min.css</code> — Vendored, minified Bootstrap CSS.</li>
+<li><code>pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.bundle.min.js</code> — Vendored, minified Bootstrap JS bundle.</li>
+<li><code>pydantic_schemaforms/assets/vendor/bootstrap/LICENSE</code> — Upstream Bootstrap license text.</li>
+</ul>
+<p>##### <code>pydantic_schemaforms/assets/vendor/htmx/</code></p>
+<ul>
+<li><code>pydantic_schemaforms/assets/vendor/htmx/htmx.min.js</code> — Vendored, minified HTMX library.</li>
+<li><code>pydantic_schemaforms/assets/vendor/htmx/LICENSE</code> — Upstream HTMX license text.</li>
+</ul>
+<p>##### <code>pydantic_schemaforms/assets/vendor/imask/</code></p>
+<ul>
+<li><code>pydantic_schemaforms/assets/vendor/imask/imask.min.js</code> — Vendored, minified IMask library (used for masked inputs).</li>
+<li><code>pydantic_schemaforms/assets/vendor/imask/LICENSE</code> — Upstream IMask license text.</li>
+</ul>
+<p>##### <code>pydantic_schemaforms/assets/vendor/materialize/</code></p>
+<ul>
+<li><code>pydantic_schemaforms/assets/vendor/materialize/materialize.min.css</code> — Vendored, minified Materialize CSS.</li>
+<li><code>pydantic_schemaforms/assets/vendor/materialize/materialize.min.js</code> — Vendored, minified Materialize JS.</li>
+<li><code>pydantic_schemaforms/assets/vendor/materialize/LICENSE</code> — Upstream Materialize license text.</li>
+</ul>
+<p>### <code>pydantic_schemaforms/inputs/</code> (input components)</p>
+<ul>
+<li><code>pydantic_schemaforms/inputs/__init__.py</code> — Lazy-loading facade for input classes (keeps import cost low).</li>
+<li><code>pydantic_schemaforms/inputs/base.py</code> — Base input types, rendering utilities, and shared label/help/error builders.</li>
+<li><code>pydantic_schemaforms/inputs/datetime_inputs.py</code> — Date/time-related input components.</li>
+<li><code>pydantic_schemaforms/inputs/numeric_inputs.py</code> — Numeric/slider/range-related input components.</li>
+<li><code>pydantic_schemaforms/inputs/registry.py</code> — Runtime registry and discovery helpers for input components.</li>
+<li><code>pydantic_schemaforms/inputs/selection_inputs.py</code> — Select/checkbox/radio/toggle-related input components.</li>
+<li><code>pydantic_schemaforms/inputs/specialized_inputs.py</code> — Specialized inputs (file upload, color, hidden, csrf/honeypot, tags, etc.).</li>
+<li><code>pydantic_schemaforms/inputs/text_inputs.py</code> — Text-ish inputs (text, password, email, URL, phone, credit card, etc.).</li>
+</ul>
+<p>### <code>pydantic_schemaforms/integration/</code> (framework/application integration)</p>
+<ul>
+<li><code>pydantic_schemaforms/integration/__init__.py</code> — Integration facade with lazy exports of framework glue.</li>
+<li><code>pydantic_schemaforms/integration/adapters.py</code> — High-level sync/async integration entry points (<code>handle_form</code>, <code>handle_form_async</code>).</li>
+<li><code>pydantic_schemaforms/integration/async_support.py</code> — Framework-agnostic async request/validation helpers.</li>
+<li><code>pydantic_schemaforms/integration/builder.py</code> — Form builder utilities (prebuilt forms, page wrapper helpers, asset tag helpers).</li>
+<li><code>pydantic_schemaforms/integration/react.py</code> — JSON-schema-form-oriented integration helpers.</li>
+<li><code>pydantic_schemaforms/integration/schema.py</code> — JSON/OpenAPI schema generation utilities.</li>
+<li><code>pydantic_schemaforms/integration/sync.py</code> — Framework-agnostic sync request/validation helpers.</li>
+<li><code>pydantic_schemaforms/integration/utils.py</code> — Shared utilities for integrations (type mapping, framework selection, validation conversion).</li>
+<li><code>pydantic_schemaforms/integration/vue.py</code> — Vue integration helpers.</li>
+</ul>
+<p>#### <code>pydantic_schemaforms/integration/frameworks/</code> (compat + legacy namespace)</p>
+<ul>
+<li><code>pydantic_schemaforms/integration/frameworks/__init__.py</code> — Namespace package for framework adapters.</li>
+<li><code>pydantic_schemaforms/integration/frameworks/adapters.py</code> — Compatibility shim re-exporting the canonical adapter API.</li>
+<li><code>pydantic_schemaforms/integration/frameworks/async_support.py</code> — Compatibility shim re-exporting async helpers.</li>
+<li><code>pydantic_schemaforms/integration/frameworks/sync.py</code> — Compatibility shim re-exporting sync helpers.</li>
+</ul>
+<p>### <code>pydantic_schemaforms/rendering/</code> (shared rendering engine)</p>
+<ul>
+<li><code>pydantic_schemaforms/rendering/__init__.py</code> — Shared rendering module namespace.</li>
+<li><code>pydantic_schemaforms/rendering/context.py</code> — Render context objects passed through renderers/layouts.</li>
+<li><code>pydantic_schemaforms/rendering/field_renderer.py</code> — Field-level rendering logic used by multiple renderers.</li>
+<li><code>pydantic_schemaforms/rendering/form_style.py</code> — <code>FormStyle</code> contract/registry that centralizes framework templates.</li>
+<li><code>pydantic_schemaforms/rendering/frameworks.py</code> — Framework configuration and input component mapping lookup.</li>
+<li><code>pydantic_schemaforms/rendering/layout_engine.py</code> — Layout primitives and the engine that renders composed layouts.</li>
+<li><code>pydantic_schemaforms/rendering/schema_parser.py</code> — Schema parsing/metadata extraction (pydantic model → render plan).</li>
+<li><code>pydantic_schemaforms/rendering/theme_assets.py</code> — Default CSS/JS snippets for layout-oriented components.</li>
+<li><code>pydantic_schemaforms/rendering/themes.py</code> — Theme strategies and framework themes (bootstrap/material/plain + embedded variants).</li>
+</ul>
+<hr />
+<p>## Beta Release Readiness Assessment</p>
+<p>### ✅ Product Vision Alignment</p>
+<p>All six <strong>Design Rules (Non-Negotiables)</strong> are now fully satisfied:</p>
+<ol>
+<li>
+<p><strong>Library ships the experience</strong> ✅</p>
+<ul>
+<li>Default output is offline-by-default (vendored HTMX, IMask, Bootstrap, Materialize)</li>
+<li>CDN mode exists but is explicit opt-in and pinned to manifest versions</li>
+<li>All assets are checksummed and verified by tests</li>
+</ul>
+</li>
+<li>
+<p><strong>Pydantic is the single source of truth</strong> ✅</p>
+<ul>
+<li>Validation constraints, required/optional come from Pydantic schema/Field metadata</li>
+<li>UI configuration via <code>json_schema_extra</code> and form field helpers</li>
+<li>Schema generation sanitizes non-serializable objects</li>
+</ul>
+</li>
+<li>
+<p><strong>One obvious way (sync + async)</strong> ✅</p>
+<ul>
+<li>Canonical sync entry point: <code>handle_form()</code></li>
+<li>Canonical async entry point: <code>handle_form_async()</code></li>
+<li>Both exported from root package with integration test coverage</li>
+</ul>
+</li>
+<li>
+<p><strong>Renderer outputs deterministic, self-contained HTML</strong> ✅</p>
+<ul>
+<li>No global mutable state in renderer pipeline</li>
+<li>Deterministic output for same model + config</li>
+<li>Theme/style configuration is explicit</li>
+</ul>
+</li>
+<li>
+<p><strong>Debug mode is optional and non-invasive</strong> ✅</p>
+<ul>
+<li>Off by default (<code>debug=False</code>)</li>
+<li>Collapsed panel when enabled, never changes validation/rendering semantics</li>
+<li>Read-only views of: rendered HTML, model source, schema/validation, live payload</li>
+</ul>
+</li>
+<li>
+<p><strong>Extensibility stays declarative</strong> ✅</p>
+<ul>
+<li>Plugin registration via official registries (<code>register_input_class</code>, <code>register_layout_renderer</code>)</li>
+<li>Extension points compose with themes/styles</li>
+<li>Documented in <code>docs/plugin_hooks.md</code></li>
+</ul>
+</li>
+</ol>
+<p>### ✅ Core Features Complete</p>
+<p><strong>Rendering Pipeline:</strong>
+  - ✅ Enhanced renderer with schema → fields → layout orchestration
+  - ✅ Theme-driven styling (Bootstrap, Material Design, Plain, Default)
+  - ✅ Field-level rendering with help/error chrome
+  - ✅ Layout engine (Vertical, Horizontal, Tabbed, Accordion)
+  - ✅ Model list support with add/remove functionality
+  - ✅ Async rendering equivalence to sync path</p>
+<p><strong>Validation:</strong>
+  - ✅ Server-side validation via Pydantic
+  - ✅ HTMX live validation support
+  - ✅ Custom field validators
+  - ✅ Cross-field validation patterns
+  - ✅ Comprehensive validation guide documentation</p>
+<p><strong>Integration:</strong>
+  - ✅ Flask integration helpers
+  - ✅ FastAPI integration helpers (async-first)
+  - ✅ Framework-agnostic sync/async adapters
+  - ✅ Working examples for both frameworks</p>
+<p><strong>Developer Experience:</strong>
+  - ✅ Debug mode with live payload inspection
+  - ✅ Comprehensive test suite (250+ tests passing)
+  - ✅ Documentation (quickstart, tutorial, validation guide, assets guide, plugin hooks, testing workflow)
+  - ✅ Ruff linting + pre-commit hooks
+  - ✅ CI/CD pipeline with coverage reporting</p>
+<p>### ✅ Quality Metrics</p>
+<ul>
+<li><strong>Test Coverage:</strong> 250+ tests passing (see <code>htmlcov/</code> for detailed report)</li>
+<li><strong>Linting:</strong> Ruff enabled in pre-commit, zero linting errors</li>
+<li><strong>Python Version:</strong> 3.14+ only (clearly documented)</li>
+<li><strong>Dependencies:</strong> Minimal (pydantic&gt;=2.7, pydantic-extra-types[all]&gt;=2.10.6)</li>
+<li><strong>Optional Dependencies:</strong> FastAPI and Flask marked as optional</li>
+</ul>
+<p>### ⚠️ Known Limitations (Acceptable for Beta)</p>
+<ol>
+<li>
+<p><strong>Dynamic field validation warning:</strong> Pydantic emits a <code>UserWarning</code> when using <code>FormModel.register_field()</code> due to <code>create_model()</code> behavior. This is cosmetic and doesn't affect functionality. Can be suppressed or improved in future releases.</p>
+</li>
+<li>
+<p><strong>Material Design assets:</strong> Currently using Materialize CSS (older). Could be upgraded to Material Web Components or MUI in a future release, but current implementation is functional.</p>
+</li>
+<li>
+<p><strong>Documentation completeness:</strong> Core features are documented, but some advanced patterns (custom input components, complex layouts) could benefit from additional examples.</p>
+</li>
+</ol>
+<p>### 📋 Release Checklist</p>
+<ul>
+<li>✅ All design rules satisfied</li>
+<li>✅ Core features complete and tested</li>
+<li>✅ Debug mode implemented</li>
+<li>✅ Examples working (Flask + FastAPI)</li>
+<li>✅ Documentation covers essential workflows</li>
+<li>✅ Test suite passing (250+ tests)</li>
+<li>✅ Linting clean</li>
+<li>✅ Version marked as beta in <code>pyproject.toml</code> (25.11.3.beta)</li>
+<li>✅ README.md indicates beta status</li>
+<li>⏳ CHANGELOG.md updates (should document all changes since last release)</li>
+<li>⏳ Release notes prepared (features, breaking changes, migration guide)</li>
+</ul>
+<p>### 🎯 Recommendation</p>
+<p><strong>pydantic-schemaforms is ready for beta release</strong> with the following considerations:</p>
+<ol>
+<li><strong>Update CHANGELOG.md</strong> to document all changes, new features, and breaking changes since the last release</li>
+<li><strong>Prepare release notes</strong> highlighting:<ul>
+<li>Debug mode as a major new feature</li>
+<li>Offline-by-default asset strategy</li>
+<li>Theme-driven rendering system</li>
+<li>Plugin extensibility</li>
+<li>Python 3.14+ requirement (breaking change if upgrading from older versions)</li>
+</ul>
+</li>
+<li><strong>Tag the release</strong> as <code>v25.11.3-beta</code> (or use current version scheme)</li>
+<li><strong>Publish to PyPI</strong> with beta classifier</li>
+<li><strong>Announce the beta</strong> in relevant communities (Reddit r/Python, Python Discord, etc.) and request feedback</li>
+</ol>
+<p>The library has strong architectural foundations, clear design principles, comprehensive test coverage, and working examples. The beta period should focus on:
+  - Gathering user feedback on API ergonomics
+  - Identifying edge cases in real-world usage
+  - Polishing documentation based on user questions
+  - Building community examples/templates</p>
+<hr />
+<p><strong>Next Actions After Beta Release:</strong>
+  - Monitor issue tracker for bug reports and feature requests
+  - Gather feedback on debug mode usability
+  - Consider Material Web Components migration for v2.0
+  - Expand documentation with more advanced patterns
+  - Build gallery of community examples</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 - 2026 Mike Ryan
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/devsetgo" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/_devsetgo" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.instant", "navigation.tabs.sticky", "toc.integrate", "toc.follow", "navigation.top"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../js/print-site.js"></script>
+      
+    
+  </body>
+</html>
