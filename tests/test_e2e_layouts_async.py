@@ -222,6 +222,10 @@ class TestLayoutDemonstrationFormRendering:
         assert "456 Oak Ave" in html
         assert "Metropolis" in html
 
+        # Preferences tab should render nested fields (and not the empty-layout warning)
+        assert "Email Notifications" in html
+        assert "No layouts found in tabbed layout" not in html
+
     def test_layout_form_renders_model_list_in_task_field(self):
         """Verify model_list field renders correctly within layout."""
         renderer = EnhancedFormRenderer(framework="bootstrap")

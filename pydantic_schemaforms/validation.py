@@ -905,11 +905,65 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
         if layout_field_names:
             from .rendering.layout_engine import get_nested_form_data
 
+            layout_errors: Dict[str, str] = {}
+
             for layout_field_name in layout_field_names:
                 layout_value = getattr(validated_instance, layout_field_name, None)
                 nested_layout_data = get_nested_form_data(layout_field_name, data, layout_value)
                 if nested_layout_data:
-                    validated_data[layout_field_name] = nested_layout_data
+                    is_nested_payload = any(
+                        isinstance(value, dict) for value in nested_layout_data.values()
+                    )
+
+                    # Validate the nested payload against the layout's underlying FormModel(s)
+                    # so constraints like `min_length` and required fields are enforced.
+                    nested_result: Optional[ValidationResult] = None
+
+                    validate_method = getattr(layout_value, "validate", None)
+                    if callable(validate_method):
+                        try:
+                            nested_result = validate_method(nested_layout_data)
+                        except Exception:
+                            nested_result = None
+
+                    # Fallback: validate each nested form class if available.
+                    if nested_result is None and hasattr(layout_value, "_get_forms"):
+                        get_forms = getattr(layout_value, "_get_forms", None)
+                        if callable(get_forms):
+                            combined_data: Dict[str, Any] = {}
+                            combined_errors: Dict[str, str] = {}
+                            is_valid = True
+
+                            try:
+                                for form_cls in get_forms() or []:
+                                    child = validate_form_data(form_cls, nested_layout_data)
+                                    if not child.is_valid:
+                                        is_valid = False
+                                        combined_errors.update(child.errors)
+                                    combined_data.update(child.data)
+                            except Exception:
+                                # If introspection validation fails, fall back to accepting payload.
+                                combined_data = {}
+                                combined_errors = {}
+                                is_valid = True
+
+                            nested_result = ValidationResult(
+                                is_valid=is_valid,
+                                data=combined_data or nested_layout_data,
+                                errors=combined_errors,
+                            )
+
+                    if nested_result is not None:
+                        # Preserve the schema-derived nested payload shape (e.g. tabbed layouts)
+                        # while still preferring coerced values for flat layouts.
+                        validated_data[layout_field_name] = nested_layout_data
+                        if not is_nested_payload and nested_result.data:
+                            validated_data[layout_field_name] = nested_result.data
+                        if not nested_result.is_valid:
+                            layout_errors.update(nested_result.errors)
+                    else:
+                        validated_data[layout_field_name] = nested_layout_data
+
                     continue
 
                 layout_payload = validated_data.get(layout_field_name)
@@ -918,6 +972,9 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
                     and layout_payload.get("layout") is True
                 ):
                     validated_data.pop(layout_field_name, None)
+
+            if layout_errors:
+                return ValidationResult(is_valid=False, data=validated_data, errors=layout_errors)
 
         return ValidationResult(is_valid=True, data=validated_data)
 
