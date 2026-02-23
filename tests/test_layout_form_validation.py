@@ -1,4 +1,3 @@
-import pytest
 
 from examples.shared_models import LayoutDemonstrationForm
 from pydantic_schemaforms.validation import validate_form_data
