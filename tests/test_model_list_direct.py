@@ -9,11 +9,10 @@ import sys
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from examples.shared_models import (
-    PetRegistrationForm,
-    handle_form_submission,
-    parse_nested_form_data,
-)
+from examples.shared_models import PetRegistrationForm
+
+from pydantic_schemaforms.form_data import parse_nested_form_data
+from pydantic_schemaforms.validation import validate_form_data
 
 # Test the problematic form data you provided
 form_data = {
@@ -35,12 +34,13 @@ print("🔍 Detailed debugging of form rendering...")
 print("=" * 60)
 
 # First, validate and get errors
-result = handle_form_submission(PetRegistrationForm, form_data)
-print(f"Validation errors: {result.get('errors', {})}")
+parsed = parse_nested_form_data(form_data)
+validation = validate_form_data(PetRegistrationForm, parsed)
+print(f"Validation errors: {validation.errors}")
 
-if not result['success']:
+if not validation.is_valid:
     # Parse the form data like the Flask app would
-    parsed_form_data = parse_nested_form_data(form_data)
+    parsed_form_data = parsed
 
     print("\n" + "=" * 60)
     print("Testing model list rendering directly...")
@@ -60,7 +60,7 @@ if not result['success']:
     from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
     renderer = EnhancedFormRenderer(framework="bootstrap")
 
-    nested_errors = renderer._extract_nested_errors_for_field('pets', result['errors'])
+    nested_errors = renderer._extract_nested_errors_for_field('pets', validation.errors)
     print(f"Nested errors: {nested_errors}")
 
     # Try to render just the model list

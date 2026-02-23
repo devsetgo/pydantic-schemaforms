@@ -65,6 +65,7 @@ from .live_validation import HTMXValidationConfig, LiveValidator
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
 from .render_form import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
+from .form_data import coerce_form_value, parse_nested_form_data
 # Layout system
 from .rendering.layout_engine import (
     AccordionLayout,
@@ -182,6 +183,9 @@ __all__ = [
     "FormIntegration",
     "handle_form",
     "handle_form_async",
+    # Raw form-data helpers
+    "parse_nested_form_data",
+    "coerce_form_value",
     "__package_name__",
 ] + list(_INPUT_EXPORTS)
 

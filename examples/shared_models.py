@@ -13,14 +13,12 @@ from typing import List, Optional
 
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import re
 
 from pydantic import EmailStr, field_validator
 
 from pydantic_schemaforms.form_field import FormField
 from pydantic_schemaforms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
 from pydantic_schemaforms.schema_form import FormModel
-from pydantic_schemaforms.validation import validate_form_data
 
 # ============================================================================
 # ENUMS AND CONSTANTS
@@ -1730,141 +1728,6 @@ def create_sample_nested_data() -> dict:
         ]
     }
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
-
-def parse_nested_form_data(form_data):
-    """
-    Parse nested form data from flat keys to nested structure.
-
-    Converts keys like 'pets[0].name' to nested dict structure:
-    {'pets': [{'name': 'value'}]}
-
-    Args:
-        form_data: Dictionary with flat keys from HTML form submission
-
-    Returns:
-        Dictionary with proper nested structure
-    """
-
-
-    result = {}
-
-    def tokenize_path(path: str):
-        tokens = []
-        for name_token, index_token in re.findall(r'([^.\[\]]+)|\[(\d+)\]', path):
-            if name_token:
-                tokens.append(name_token)
-            elif index_token:
-                tokens.append(int(index_token))
-        return tokens
-
-    def assign_nested(container, tokens, value):
-        current = container
-        for idx, token in enumerate(tokens):
-            is_last = idx == len(tokens) - 1
-            next_token = tokens[idx + 1] if not is_last else None
-
-            if isinstance(token, str):
-                if is_last:
-                    current[token] = value
-                    return
-
-                if token not in current or current[token] is None:
-                    current[token] = [] if isinstance(next_token, int) else {}
-                current = current[token]
-                continue
-
-            # token is a list index
-            while len(current) <= token:
-                current.append(None)
-
-            if is_last:
-                current[token] = value
-                return
-
-            if current[token] is None:
-                current[token] = [] if isinstance(next_token, int) else {}
-            current = current[token]
-
-    for key, value in form_data.items():
-        converted_value = convert_form_value(value)
-        tokens = tokenize_path(key)
-
-        if not tokens:
-            result[key] = converted_value
-            continue
-
-        if len(tokens) == 1 and isinstance(tokens[0], str):
-            result[tokens[0]] = converted_value
-            continue
-
-        assign_nested(result, tokens, converted_value)
-
-    return result
-
-
-def convert_form_value(value):
-    """
-    Convert form string values to appropriate Python types.
-
-    Args:
-        value: String value from form
-
-    Returns:
-        Converted value (bool, int, float, or string)
-    """
-    if isinstance(value, str):
-        # Handle boolean values
-        if value.lower() == 'true':
-            return True
-        elif value.lower() == 'false':
-            return False
-        elif value.lower() in ('on', 'yes', '1'):
-            return True
-        elif value.lower() in ('off', 'no', '0'):
-            return False
-
-        # Don't convert numeric values automatically - let Pydantic handle type conversion
-        # This prevents issues with password fields that contain only digits
-        # and other string fields that should remain as strings
-
-    # Return as-is for strings, empty values, etc.
-    return value
-
-
-def handle_form_submission(form_class, form_data, success_message="Form submitted successfully!"):
-    """Handle form submission with validation and error handling."""
-    try:
-
-
-        # Parse nested form data (handles pets[0].name -> pets: [{name: ...}])
-        parsed_data = parse_nested_form_data(form_data)
-
-        # Validate the form data using Pydantic
-        result = validate_form_data(form_class, parsed_data)
-
-        if result.is_valid:
-            # Return success response
-            return {
-                'success': True,
-                'message': success_message,
-                'data': result.data
-            }
-        else:
-            # Return validation errors
-            return {
-                'success': False,
-                'errors': result.errors
-            }
-    except Exception as e:
-        # Return unexpected errors
-        return {
-            'success': False,
-            'errors': {'form': str(e)}
-        }
-
 # Export all the models
 __all__ = [
     # Enums
@@ -1879,7 +1742,7 @@ __all__ = [
     # Layout Classes
     'VerticalFormLayout', 'HorizontalFormLayout', 'TabbedFormLayout', 'ListFormLayout',
     # Helper Functions
-    'handle_form_submission', 'parse_nested_form_data', 'convert_form_value', 'create_sample_nested_data'
+    'create_sample_nested_data'
 ]
 
 

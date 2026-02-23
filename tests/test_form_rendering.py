@@ -9,11 +9,10 @@ import sys
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from examples.shared_models import (
-    PetRegistrationForm,
-    handle_form_submission,
-    parse_nested_form_data,
-)
+from examples.shared_models import PetRegistrationForm
+
+from pydantic_schemaforms.form_data import parse_nested_form_data
+from pydantic_schemaforms.validation import validate_form_data
 
 from pydantic_schemaforms.enhanced_renderer import render_form_html
 
@@ -37,17 +36,16 @@ print("🧪 Testing form rendering with validation errors...")
 print("=" * 60)
 
 # First, validate and get errors
-result = handle_form_submission(PetRegistrationForm, form_data)
+parsed_form_data = parse_nested_form_data(form_data)
+validation = validate_form_data(PetRegistrationForm, parsed_form_data)
 
-print(f"Validation failed as expected: {not result['success']}")
-print(f"Errors: {result.get('errors', {})}")
+print(f"Validation failed as expected: {not validation.is_valid}")
+print(f"Errors: {validation.errors}")
 
-if not result['success']:
+if not validation.is_valid:
     print("\n" + "=" * 60)
     print("Testing form re-rendering with errors and preserved data...")
 
-    # Parse the form data like the Flask app would
-    parsed_form_data = parse_nested_form_data(form_data)
     print("\nParsed form data:")
     for key, value in parsed_form_data.items():
         print(f"  {key}: {value}")
@@ -58,12 +56,12 @@ if not result['success']:
             PetRegistrationForm,
             framework="bootstrap",
             form_data=parsed_form_data,
-            errors=result['errors'],
+            errors=validation.errors,
             submit_url="/pets"
         )
 
         print("\n✅ Form rendered successfully with:")
-        print(f"  - {len(result['errors'])} validation error(s)")
+        print(f"  - {len(validation.errors)} validation error(s)")
         print(f"  - Preserved data for {len(parsed_form_data)} field(s)")
         print(f"  - Form HTML length: {len(form_html)} characters")
 

@@ -41,12 +41,13 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     PetRegistrationForm,
     UserRegistrationForm,
     create_sample_nested_data,
-    handle_form_submission,
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
 
 from pydantic_schemaforms import render_form_html_async
+from pydantic_schemaforms.form_data import parse_nested_form_data
 from pydantic_schemaforms.form_layouts import FormLayoutBase
+from pydantic_schemaforms.validation import validate_form_data
 
 app = FastAPI(
     title="Pydantic SchemaForms - FastAPI Example",
@@ -169,15 +170,16 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Handle form submission (async-compatible)
-    result = handle_form_submission(MinimalLoginForm, form_dict)
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(MinimalLoginForm, parsed_data)
+
     full_referer_path = create_refer_path(request)
-    if result['success']:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Login Successful",
-            "message": f"Welcome {result['data']['username']}!",
-            "data": result['data'],
+            "message": f"Welcome {validation.data['username']}!",
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
@@ -188,8 +190,8 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
         form_html = await render_form_html_async(
             MinimalLoginForm,
             framework=style,
-            form_data=form_dict,
-            errors=result['errors'],
+            form_data=parsed_data,
+            errors=validation.errors,
             submit_url=f"/login?style={style}",
             debug=debug,
             show_timing=show_timing,
@@ -204,7 +206,7 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
             "framework_name": "FastAPI (Async)",
             "framework_type": style,
             "form_html": form_html,
-            "errors": result['errors']
+            "errors": validation.errors
         })
 
 
@@ -282,15 +284,16 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Handle form submission (async-compatible)
-    result = handle_form_submission(UserRegistrationForm, form_dict)
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(UserRegistrationForm, parsed_data)
+
     full_referer_path = create_refer_path(request)
-    if result['success']:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Registration Successful",
-            "message": f"Welcome {result['data']['username']}! Your account has been created.",
-            "data": result['data'],
+            "message": f"Welcome {validation.data['username']}! Your account has been created.",
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
@@ -301,8 +304,8 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
         form_html = await render_form_html_async(
             UserRegistrationForm,
             framework=style,
-            form_data=form_dict,
-            errors=result['errors'],
+            form_data=parsed_data,
+            errors=validation.errors,
             submit_url=f"/register?style={style}",
             debug=debug,
             show_timing=show_timing,
@@ -317,7 +320,7 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
             "framework_name": "FastAPI (Async)",
             "framework_type": style,
             "form_html": form_html,
-            "errors": result['errors']
+            "errors": validation.errors
         })
 
 # ================================
@@ -386,16 +389,18 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
     """Complex form example - All features submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
+    form_dict = dict(form_data)
 
-    # Handle form submission (async-compatible)
-    result = handle_form_submission(CompleteShowcaseForm, dict(form_data))
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(CompleteShowcaseForm, parsed_data)
+
     full_referer_path = create_refer_path(request)
-    if result['success']:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Showcase Form Submitted Successfully",
             "message": "All form data processed successfully!",
-            "data": result['data'],
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
@@ -405,7 +410,8 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
         form_html = await render_form_html_async(
             CompleteShowcaseForm,
             framework=style,
-            errors=result['errors'],
+            form_data=parsed_data,
+            errors=validation.errors,
             submit_url=f"/showcase?style={style}",
             debug=debug,
             show_timing=show_timing,
@@ -419,7 +425,7 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
             "framework_name": "FastAPI (Async)",
             "framework_type": style,
             "form_html": form_html,
-            "errors": result['errors']
+            "errors": validation.errors
         })
 
 # ================================
@@ -563,34 +569,27 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Handle form submission (async-compatible)
-    result = handle_form_submission(PetRegistrationForm, form_dict)
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(PetRegistrationForm, parsed_data)
+
     full_referer_path = create_refer_path(request)
-    if result['success']:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Pet Registration Successful",
-            "message": f"Successfully registered pets for {result['data']['owner_name']}!",
-            "data": result['data'],
+            "message": f"Successfully registered pets for {validation.data['owner_name']}!",
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
         })
     else:
-        # Parse the form data to preserve user input
-        from examples.shared_models import parse_nested_form_data
-        try:
-            parsed_form_data = parse_nested_form_data(form_dict)
-        except Exception:
-            # Fallback to raw form data if parsing fails
-            parsed_form_data = form_dict
-
         # Re-render form with errors AND preserve user data
         form_html = await render_form_html_async(
             PetRegistrationForm,
             framework=style,
-            form_data=parsed_form_data,
-            errors=result['errors'],
+            form_data=parsed_data,
+            errors=validation.errors,
             submit_url=f"/pets?style={style}",
             debug=debug,
             show_timing=show_timing,
@@ -605,7 +604,7 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
             "framework_name": "FastAPI (Async)",
             "framework_type": style,
             "form_html": form_html,
-            "errors": result['errors']
+            "errors": validation.errors
         })
 
 
@@ -699,15 +698,16 @@ async def organization_post(
 
     # Validate using the same comprehensive tabbed model used by GET.
     from examples.nested_forms_example import ComprehensiveTabbedForm
-    result = handle_form_submission(ComprehensiveTabbedForm, form_dict)
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(ComprehensiveTabbedForm, parsed_data)
     full_referer_path = create_refer_path(request)
 
-    if result['success']:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Comprehensive Form Submitted Successfully! 🎉",
             "message": "All 6 tabs of data have been successfully processed!",
-            "data": result['data'],
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
@@ -717,8 +717,8 @@ async def organization_post(
         form_html = await render_form_html_async(
             ComprehensiveTabbedForm,
             framework=style,
-            form_data=form_dict,
-            errors=result['errors'],
+            form_data=parsed_data,
+            errors=validation.errors,
             submit_url=f"/organization?style={style}",
             debug=debug,
             show_timing=show_timing,
@@ -733,7 +733,7 @@ async def organization_post(
             "framework_name": "FastAPI (Async)",
             "framework_type": style,
             "form_html": form_html,
-            "errors": result['errors']
+            "errors": validation.errors
         })
 
 
@@ -800,16 +800,16 @@ async def organization_shared_post(
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Parse + validate nested values using the common submission helper.
-    result = handle_form_submission(CompanyOrganizationForm, form_dict)
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(CompanyOrganizationForm, parsed_data)
     full_referer_path = create_refer_path(request)
 
-    if result['success']:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Organization Shared Form Submitted Successfully! 🎉",
             "message": "Organization hierarchy data has been successfully processed!",
-            "data": result['data'],
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
@@ -818,8 +818,8 @@ async def organization_shared_post(
     form_html = await render_form_html_async(
         CompanyOrganizationForm,
         framework=style,
-        form_data=form_dict,
-        errors=result['errors'],
+        form_data=parsed_data,
+        errors=validation.errors,
         submit_url=f"/organization-shared?style={style}",
         debug=debug,
         show_timing=show_timing,
@@ -834,7 +834,7 @@ async def organization_shared_post(
         "framework_name": "FastAPI (Async)",
         "framework_type": style,
         "form_html": form_html,
-        "errors": result['errors']
+        "errors": validation.errors
     })
 
 
@@ -945,23 +945,15 @@ async def layouts_post(
     form_dict = dict(form_data)
     full_referer_path = create_refer_path(request)
 
-    # Parse nested form data (handles pets[0].name -> pets: [{name: ...}])
-    from examples.shared_models import parse_nested_form_data
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(LayoutDemonstrationForm, parsed_data)
 
-    try:
-        parsed_data = parse_nested_form_data(form_dict)
-    except Exception:
-        parsed_data = form_dict
-
-    # Validate using the standard submission helper so nested layout forms are enforced.
-    result = handle_form_submission(LayoutDemonstrationForm, parsed_data)
-
-    if result["success"]:
+    if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Layout Demo Submitted Successfully",
             "message": "All layout types processed successfully!",
-            "data": result["data"],
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path,
@@ -976,7 +968,7 @@ async def layouts_post(
         form_html = await renderer.render_form_from_model_async(
             LayoutDemonstrationForm,
             data=parsed_data,
-            errors=result["errors"],
+            errors=validation.errors,
             submit_url=f"/layouts?style={style}",
             include_submit_button=True,
             debug=debug,
@@ -991,7 +983,7 @@ async def layouts_post(
         form_html = await renderer.render_form_from_model_async(
             LayoutDemonstrationForm,
             data=parsed_data,
-            errors=result["errors"],
+            errors=validation.errors,
             submit_url=f"/layouts?style={style}",
             include_submit_button=True,
             debug=debug,
@@ -1007,7 +999,7 @@ async def layouts_post(
         "framework_name": "FastAPI (Async)",
         "framework_type": style,
         "form_html": form_html,
-        "errors": result["errors"],
+        "errors": validation.errors,
     })
 
 @app.get("/self-contained", response_class=HTMLResponse)
@@ -1125,15 +1117,16 @@ async def self_contained_post(
 
     form_data = await request.form()
     form_dict = dict(form_data)
-    result = handle_form_submission(UserRegistrationForm, form_dict)
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = validate_form_data(UserRegistrationForm, parsed_data)
 
-    if result['success']:
+    if validation.is_valid:
         full_referer_path = create_refer_path(request)
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Self-Contained Form Submitted Successfully",
             "message": "Self-contained registration data processed successfully!",
-            "data": result['data'],
+            "data": validation.data,
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "try_again_url": full_referer_path
@@ -1142,8 +1135,8 @@ async def self_contained_post(
     form_html = await render_form_html_async(
         UserRegistrationForm,
         framework=selected_style,
-        form_data=form_dict,
-        errors=result['errors'],
+        form_data=parsed_data,
+        errors=validation.errors,
         submit_url=f"/self-contained?style={selected_style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}",
         self_contained=True,
         debug=debug,
@@ -1255,12 +1248,12 @@ async def api_submit_form(form_type: str, request: Request):
     # Get JSON data asynchronously
     json_data = await request.json()
 
-    result = handle_form_submission(form_class, json_data)
+    validation = validate_form_data(form_class, json_data)
 
     return {
-        "success": result['success'],
-        "data": result['data'] if result['success'] else None,
-        "errors": result['errors'],
+        "success": validation.is_valid,
+        "data": validation.data if validation.is_valid else None,
+        "errors": validation.errors,
         "framework": "fastapi"
     }
 
