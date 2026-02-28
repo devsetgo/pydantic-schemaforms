@@ -115,7 +115,7 @@ from .version_check import check_python_version, verify_template_strings
 # - template_compat.py -> empty/unused
 # App Name and version
 
-__version__ = "26.1.7.beta"
+__version__ = "26.1.8.beta"
 __package_name__ = "pydantic-schemaforms"
 __author__ = "Pydantic Forms Team"
 __description__ = "Modern form generation library for Python 3.14+"
