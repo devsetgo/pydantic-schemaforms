@@ -100,7 +100,9 @@ test: ## Run the project's tests (linting + pytest + coverage badges)
 	@start=$$(date +%s); \
 	echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."; \
 	$(PYTHON) -m pre_commit run -a; \
-	echo "✅ Pre-commit passed. Running pytest..."; \
+	echo "✅ Pre-commit passed. Running form-data parser regression tests..."; \
+	$(PYTHON) -m pytest -q tests/test_form_data_parsing.py; \
+	echo "🧪 Regression passed. Running full pytest suite..."; \
 	$(PYTHON) -m pytest -n 2; \
 	echo "📊 Generating coverage and test badges..."; \
 	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml 2>/dev/null || true; \

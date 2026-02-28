@@ -9,7 +9,10 @@ import sys
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from examples.shared_models import PetRegistrationForm, handle_form_submission
+from examples.shared_models import PetRegistrationForm
+
+from pydantic_schemaforms.form_data import parse_nested_form_data
+from pydantic_schemaforms.validation import validate_form_data
 
 # Test the problematic form data you provided
 form_data = {
@@ -37,19 +40,19 @@ for key, value in form_data.items():
 print("\n" + "=" * 60)
 print("Testing validation...")
 
-# Test the form submission handler
-result = handle_form_submission(PetRegistrationForm, form_data)
+parsed = parse_nested_form_data(form_data)
+validation = validate_form_data(PetRegistrationForm, parsed)
 
 print("\nValidation result:")
-print(f"  Success: {result['success']}")
+print(f"  Success: {validation.is_valid}")
 
-if result['success']:
+if validation.is_valid:
     print("  ✅ Form validation passed")
-    print("  Data:", result.get('data', {}))
+    print("  Data:", validation.data)
 else:
     print("  ❌ Form validation failed")
     print("  Errors:")
-    for field, error in result.get('errors', {}).items():
+    for field, error in (validation.errors or {}).items():
         print(f"    {field}: {error}")
 
 print("\n" + "=" * 60)
