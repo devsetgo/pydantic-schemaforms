@@ -5,12 +5,17 @@
     "aliases": []
   },
   {
+    "version": "26.1.8.beta",
+    "title": "Release 26.1.8.beta",
+    "aliases": [
+      "latest",
+      "stable"
+    ]
+  },
+  {
     "version": "26.1.7.beta",
     "title": "Release 26.1.7.beta",
-    "aliases": [
-      "stable",
-      "latest"
-    ]
+    "aliases": []
   },
   {
     "version": "26.1.6.beta",
