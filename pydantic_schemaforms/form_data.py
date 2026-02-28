@@ -16,7 +16,7 @@ These helpers are intentionally framework-agnostic (FastAPI/Flask/etc.).
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, Mapping, MutableMapping, Union
+from typing import Any, Dict, Iterable, Mapping, MutableMapping
 
 
 _FORM_PATH_TOKEN_RE = re.compile(r"([^\.\[\]]+)|\[(\d+)\]")
@@ -41,8 +41,8 @@ def coerce_form_value(value: Any) -> Any:
     return value
 
 
-def _tokenize_form_path(path: str) -> list[Union[str, int]]:
-    tokens: list[Union[str, int]] = []
+def _tokenize_form_path(path: str) -> list[str | int]:
+    tokens: list[str | int] = []
     for name_token, index_token in _FORM_PATH_TOKEN_RE.findall(path):
         if name_token:
             tokens.append(name_token)
@@ -51,7 +51,7 @@ def _tokenize_form_path(path: str) -> list[Union[str, int]]:
     return tokens
 
 
-def _new_container(next_token: Union[str, int, None]) -> Union[dict[str, Any], list[Any]]:
+def _new_container(next_token: str | int | None) -> dict[str, Any] | list[Any]:
     return [] if isinstance(next_token, int) else {}
 
 
@@ -60,7 +60,7 @@ def _assign_mapping_token(
     token: str,
     *,
     is_last: bool,
-    next_token: Union[str, int, None],
+    next_token: str | int | None,
     value: Any,
 ) -> Any:
     if is_last:
@@ -74,7 +74,7 @@ def _assign_mapping_token(
 
 def _coerce_to_list(
     current: Any,
-    tokens: list[Union[str, int]],
+    tokens: list[str | int],
     idx: int,
 ) -> list[Any]:
     if isinstance(current, list):
@@ -98,10 +98,10 @@ def _assign_list_token(
     current: Any,
     token: int,
     *,
-    tokens: list[Union[str, int]],
+    tokens: list[str | int],
     idx: int,
     is_last: bool,
-    next_token: Union[str, int, None],
+    next_token: str | int | None,
     value: Any,
 ) -> Any:
     current_list = _coerce_to_list(current, tokens, idx)
@@ -116,7 +116,7 @@ def _assign_list_token(
     return current_list[token]
 
 
-def _assign_nested(container: MutableMapping[str, Any], tokens: list[Union[str, int]], value: Any) -> None:
+def _assign_nested(container: MutableMapping[str, Any], tokens: list[str | int], value: Any) -> None:
     current: Any = container
 
     for idx, token in enumerate(tokens):
@@ -149,7 +149,7 @@ def _assign_nested(container: MutableMapping[str, Any], tokens: list[Union[str, 
 
 
 def parse_nested_form_data(
-    form_data: Union[Mapping[str, Any], Iterable[tuple[str, Any]]],
+    form_data: Mapping[str, Any] | Iterable[tuple[str, Any]],
     *,
     coerce_values: bool = True,
 ) -> Dict[str, Any]:
