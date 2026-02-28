@@ -30,4 +30,5 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest
+          pytest -q tests/test_form_data_parsing.py
           pytest -n 2

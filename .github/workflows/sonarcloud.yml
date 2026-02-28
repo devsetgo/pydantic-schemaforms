@@ -28,6 +28,8 @@ jobs:
 
       - name: Run tests and generate coverage.xml
         run: |
+          python -m pytest -q tests/test_form_data_parsing.py
+
           # Override pytest addopts from pyproject.toml so we don't get duplicate --cov/--cov-report flags.
           python -m pytest -o addopts= --cov=pydantic_schemaforms --cov-report=xml:coverage.xml
 

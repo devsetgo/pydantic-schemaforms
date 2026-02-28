@@ -51,6 +51,71 @@ def _tokenize_form_path(path: str) -> list[Union[str, int]]:
     return tokens
 
 
+def _new_container(next_token: Union[str, int, None]) -> Union[dict[str, Any], list[Any]]:
+    return [] if isinstance(next_token, int) else {}
+
+
+def _assign_mapping_token(
+    current: MutableMapping[str, Any],
+    token: str,
+    *,
+    is_last: bool,
+    next_token: Union[str, int, None],
+    value: Any,
+) -> Any:
+    if is_last:
+        current[token] = value
+        return None
+
+    if token not in current or current[token] is None:
+        current[token] = _new_container(next_token)
+    return current[token]
+
+
+def _coerce_to_list(
+    current: Any,
+    tokens: list[Union[str, int]],
+    idx: int,
+) -> list[Any]:
+    if isinstance(current, list):
+        return current
+
+    # If the data shape is inconsistent (e.g. a key used as both dict
+    # and list), prefer overwriting with a list to match the path.
+    current_parent = current
+    list_value: list[Any] = []
+    if idx > 0 and isinstance(tokens[idx - 1], str):
+        current_parent[tokens[idx - 1]] = list_value
+    return list_value
+
+
+def _ensure_list_index(current: list[Any], index: int) -> None:
+    while len(current) <= index:
+        current.append(None)
+
+
+def _assign_list_token(
+    current: Any,
+    token: int,
+    *,
+    tokens: list[Union[str, int]],
+    idx: int,
+    is_last: bool,
+    next_token: Union[str, int, None],
+    value: Any,
+) -> Any:
+    current_list = _coerce_to_list(current, tokens, idx)
+    _ensure_list_index(current_list, token)
+
+    if is_last:
+        current_list[token] = value
+        return None
+
+    if current_list[token] is None:
+        current_list[token] = _new_container(next_token)
+    return current_list[token]
+
+
 def _assign_nested(container: MutableMapping[str, Any], tokens: list[Union[str, int]], value: Any) -> None:
     current: Any = container
 
@@ -59,34 +124,28 @@ def _assign_nested(container: MutableMapping[str, Any], tokens: list[Union[str, 
         next_token = tokens[idx + 1] if not is_last else None
 
         if isinstance(token, str):
-            if is_last:
-                current[token] = value
-                return
-
-            if token not in current or current[token] is None:
-                current[token] = [] if isinstance(next_token, int) else {}
-            current = current[token]
-            continue
-
-        # token is a list index
-        if not isinstance(current, list):
-            # If the data shape is inconsistent (e.g. a key used as both dict
-            # and list), prefer overwriting with a list to match the path.
-            current_parent = current
-            current = []
-            if isinstance(tokens[idx - 1], str):
-                current_parent[tokens[idx - 1]] = current
-
-        while len(current) <= token:
-            current.append(None)
+            next_current = _assign_mapping_token(
+                current,
+                token,
+                is_last=is_last,
+                next_token=next_token,
+                value=value,
+            )
+        else:
+            next_current = _assign_list_token(
+                current,
+                token,
+                tokens=tokens,
+                idx=idx,
+                is_last=is_last,
+                next_token=next_token,
+                value=value,
+            )
 
         if is_last:
-            current[token] = value
             return
 
-        if current[token] is None:
-            current[token] = [] if isinstance(next_token, int) else {}
-        current = current[token]
+        current = next_current
 
 
 def parse_nested_form_data(
