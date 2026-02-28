@@ -12,9 +12,9 @@ make tests
 
 This runs:
 1. **Pre-commit hooks** (Ruff linting + formatting, YAML/TOML checks, trailing whitespace)
-2. **Pytest** (217+ tests covering validation, rendering, async, layouts, integration)
-3. **Coverage badge generation** (summarizes test coverage)
-4. **Ruff linting** (import ordering, style, deprecated patterns) — **now enforced via pre-commit**
+2. **Parser regression suite** (`tests/test_form_data_parsing.py`)
+3. **Full pytest suite** (900+ tests covering validation, rendering, async, layouts, integration)
+4. **Coverage badge generation** (summarizes test coverage)
 
 ## What Changed
 
@@ -40,8 +40,9 @@ make cleanup       # Run all formatters (isort + ruff + autoflake)
 
 ```
 🔍 Running pre-commit (ruff, formatting, yaml/toml checks)...
-✅ Pre-commit passed. Running pytest...
-[217 tests run]
+✅ Pre-commit passed. Running form-data parser regression tests...
+🧪 Regression passed. Running full pytest suite...
+[900+ tests run]
 📊 Generating coverage and test badges...
 ✨ Tests complete. Badges updated.
 ```
@@ -58,7 +59,7 @@ Tests are organized in `tests/` directory:
 | `test_model_list_integration.py` | Model list rendering & validation | 4 |
 | `test_validation_consolidation.py` | Validation engine unification | 10 |
 | `test_layouts.py` | Layout classes (tabs, accordions, cards) | 35+ |
-| ... | Other units, integration, fixtures | 150+ |
+| ... | Other units, integration, fixtures | 800+ |
 
 ## Linting Rules (Ruff)
 
