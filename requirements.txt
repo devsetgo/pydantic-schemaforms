@@ -13,7 +13,7 @@ mike==2.2.0 # Vulnerabilities: None
 mkdocs-material==9.7.6 # From 9.7.5 | Vulnerabilities: None
 mkdocs-print-site-plugin==2.8 # Vulnerabilities: None
 mkdocstrings[python]==1.0.3 # Vulnerabilities: None
-packaging==26.0 # Vulnerabilities: None
+packaging==26.1 # Vulnerabilities: None
 pre-commit==4.5.1 # Vulnerabilities: None
 pydantic-extra-types[all]==2.11.2 # From 2.11.0 | Vulnerabilities: None
 pymdown-extensions==10.21.2 # From 10.21 | Vulnerabilities: None
