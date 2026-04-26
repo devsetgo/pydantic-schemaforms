@@ -1,8 +1,6 @@
 # Pydantic SchemaForms
 
-<div style="float: right; margin: 0 0 1rem 1rem;">
-    <img src="pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="420" />
-</div>
+<img align="right" src="pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="336" />
 
 [![PyPI version](https://badge.fury.io/py/pydantic-schemaforms.svg)](https://pypi.python.org/pypi/pydantic-schemaforms/)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms)](https://pepy.tech/project/pydantic-schemaforms)
@@ -28,6 +26,8 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=alert_status)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
+
+<br clear="right" />
 
 > **Note**: This project should be considered in beta as it is actively under development and may have breaking changes.
 
