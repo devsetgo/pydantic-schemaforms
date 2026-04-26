@@ -17,6 +17,7 @@ nav:
       # Legacy tutorial removed
   - Reference:
       - Configuration: 'configuration.md'
+      - CSRF Protection: 'csrf.md'
       - Inputs (UI Elements): 'inputs.md'
       - Layouts: 'layouts.md'
       - Assets: 'assets.md'

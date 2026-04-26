@@ -1,6 +1,6 @@
 import pytest
 
-from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms.enhanced_renderer import CSRFMode, EnhancedFormRenderer
 from pydantic_schemaforms.inputs.registry import get_input_component_map
 from pydantic_schemaforms.render_form import render_form_html
 from pydantic_schemaforms.schema_form import Field, FormModel
@@ -78,3 +78,16 @@ def test_render_form_html_exposes_csrf_options():
 
     assert 'name="csrf_token"' in html
     assert 'value="abc123"' in html
+
+
+def test_csrf_mode_enum_is_supported():
+    renderer = EnhancedFormRenderer()
+
+    html = renderer.render_form_from_model(
+        _CsrfDemoForm,
+        csrf_mode=CSRFMode.REQUIRED_PROVIDER,
+        csrf_token_provider=lambda: "enum-token",
+    )
+
+    assert 'name="csrf_token"' in html
+    assert 'value="enum-token"' in html

@@ -78,6 +78,28 @@ If your host page already loads Bootstrap/Material, keep defaults. If you want a
 
 See: `docs/configuration.md` and `docs/assets.md`.
 
+## CSRF setup
+
+For browser forms with cookie/session auth, enable CSRF and verify token on submission.
+
+Recommended rendering configuration:
+
+```python
+form_html = await render_form_html_async(
+    User,
+    form_data=form_data,
+    errors=errors,
+    submit_url="/user",
+    csrf_mode="required-provider",
+    csrf_token_provider=csrf_token,
+    csrf_field_name="csrf_token",
+)
+```
+
+Then, in your POST handler, read and validate the submitted token before model validation.
+
+See the full guide: `docs/csrf.md`.
+
 ## 1) Build a form from a Pydantic model
 
 ```python

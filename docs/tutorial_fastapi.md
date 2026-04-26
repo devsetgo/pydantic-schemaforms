@@ -153,3 +153,4 @@ If you *already* have a `dict` of submitted data (for example from a different p
 
 - Learn about asset delivery (`asset_mode`) in `docs/assets.md`
 - See the broader integration pattern in `docs/quickstart.md`
+- Configure CSRF for browser + session workflows in `docs/csrf.md`
