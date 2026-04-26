@@ -54,6 +54,9 @@ theme:
     - toc.follow
     - navigation.top
   name: 'material'
+  # Use compact icon in top nav; full hero logo remains on the intro page content.
+  logo: 'favicon.png'
+  favicon: 'favicon.png'
   palette:
     # Toggle dark mode
     - scheme: slate
@@ -96,6 +99,8 @@ plugins:
       version_selector: true
       css_dir: css
       javascript_dir: js
+  # mkdocstrings may auto-inject autorefs; define it explicitly so print-site stays last
+  - autorefs
   # this has to be last
   - print-site:
       add_to_navigation: true

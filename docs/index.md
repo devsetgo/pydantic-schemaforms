@@ -1,5 +1,7 @@
 # Pydantic SchemaForms
 
+<img align="right" src="pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="336" />
+
 [![PyPI version](https://badge.fury.io/py/pydantic-schemaforms.svg)](https://pypi.python.org/pypi/pydantic-schemaforms/)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms)](https://pepy.tech/project/pydantic-schemaforms)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms/month)](https://pepy.tech/project/pydantic-schemaforms)
@@ -25,6 +27,8 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=devsetgo_pydantic-schemaforms&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 
+<br clear="right" />
+
 > **Note**: This project should be considered in beta as it is actively under development and may have breaking changes.
 
 ## Overview
@@ -35,7 +39,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 
 **Key Features:**
 - 🚀 **Zero-Configuration Forms**: Generate complete HTML forms directly from Pydantic models
-- 🎨 **Multi-Framework Support**: Bootstrap, Material Design, Tailwind CSS, and custom frameworks
+- 🎨 **Multi-Framework Support**: Bootstrap, Material Design, and plain HTML (`framework="none"`)
 - ✅ **Built-in Validation**: Client-side HTML5 + server-side Pydantic validation
 - 🔧 **JSON-Schema-form style UI hints**: Uses a familiar `ui_element`, `ui_autofocus`, `ui_options` vocabulary
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
@@ -253,7 +257,7 @@ def login():
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Login</h1>
-  {form_html|safe}
+    {form_html}
 </body>
 </html>"""
 ```
@@ -308,10 +312,15 @@ def register():
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Register</h1>
-  {form_html|safe}
+    {form_html}
 </body>
 </html>"""
 ```
+
+Template note:
+
+- In Python f-string responses, use `{form_html}`.
+- In Jinja templates, use `{{ form_html | safe }}`.
 
 ---
 

@@ -5,7 +5,7 @@ A production-ready competitor to WTForms with React JSON Schema Forms capabiliti
 Features:
 - Python 3.14 native template strings (REQUIRED)
 - Comprehensive HTML5 input types
-- Multi-framework theming (Bootstrap, Material, Tailwind)
+- Multi-framework theming (Bootstrap, Material, none)
 - Advanced validation system
 - Async/sync rendering
 - Layout system with responsive grids

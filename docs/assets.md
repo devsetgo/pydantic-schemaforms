@@ -44,6 +44,7 @@ from pydantic_schemaforms.render_form import render_form_html
 
 html = render_form_html(
     MyForm,
+  submit_url="/submit",
     framework="bootstrap",
     asset_mode="vendored",
     include_framework_assets=True,  # inline Bootstrap CSS/JS for self-contained HTML
@@ -68,6 +69,7 @@ from pydantic_schemaforms.enhanced_renderer import render_form_html
 
 html = render_form_html(
   MyForm,
+  submit_url="/submit",
   framework="bootstrap",
   self_contained=True,
 )
@@ -115,6 +117,7 @@ builder = FormBuilder(
 
 page = render_form_page(
     builder,
+  submit_url="/submit",
     title="Signup",
     include_framework_assets=True,
     asset_mode="vendored",

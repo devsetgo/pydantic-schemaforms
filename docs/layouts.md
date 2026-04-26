@@ -18,7 +18,7 @@ Supported values:
 ```python
 from pydantic_schemaforms.enhanced_renderer import render_form_html
 
-html = render_form_html(MyFormModel, layout="side-by-side")
+html = render_form_html(MyFormModel, layout="side-by-side", submit_url="/submit")
 ```
 
 ## 2) Layout primitives (advanced)

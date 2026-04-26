@@ -14,9 +14,9 @@ This tutorial uses the model-first API (recommended). You only need:
 
 - Define a `FormModel`
 - Render it (async) with `render_form_html_async()` or `FormModel.render_form_async()`
-- Drop `{{ form_html | safe }}` into your template
+- If using Jinja templates, render `{{ form_html | safe }}`
 
-See [docs/configuration.md](configuration.md).
+See [configuration.md](configuration.md).
 
 ## 1) Create a project
 
@@ -151,6 +151,6 @@ If you *already* have a `dict` of submitted data (for example from a different p
 
 ## Next steps
 
-- Learn about asset delivery (`asset_mode`) in `docs/assets.md`
-- See the broader integration pattern in `docs/quickstart.md`
-- Configure CSRF for browser + session workflows in `docs/csrf.md`
+- Learn about asset delivery (`asset_mode`) in [assets.md](assets.md)
+- See the broader integration pattern in [quickstart.md](quickstart.md)
+- Configure CSRF for browser + session workflows in [csrf.md](csrf.md)

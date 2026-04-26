@@ -162,7 +162,7 @@ class UserProfileLayout(TabbedLayout):
     tab_two: LayoutTwo  # this would be the second tab
 
     form_config = FormDesign(
-        ui_theme="material",  # UI framework (bootstrap, material, shadcn, tailwind, semantic, custom)
+        ui_theme="material",  # UI framework (bootstrap, material, none, custom)
         ui_theme_custom_css="<url for custom css>",  # custom css styles if ui_theme is set to custom - ignored unless custom is selected
         form_name="User Profile",  # form name displayed at the top of the form
         form_enctype="application/x-www-form-urlencoded",  # form encoding type only for post method
