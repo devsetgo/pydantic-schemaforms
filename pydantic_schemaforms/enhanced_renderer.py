@@ -490,7 +490,7 @@ class EnhancedFormRenderer:
         if not field_path or field_path == "form":
             return "Form"
 
-        tokens: List[Union[str, int]] = []
+        tokens: List[str | int] = []
         for name_token, index_token in re.findall(r"([^.\[\]]+)|\[(\d+)\]", field_path):
             if name_token:
                 tokens.append(name_token)
@@ -814,7 +814,7 @@ class EnhancedFormRenderer:
 def render_form_html(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    errors: Dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
@@ -885,7 +885,7 @@ def render_form_html(
 async def render_form_html_async(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    errors: Dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,

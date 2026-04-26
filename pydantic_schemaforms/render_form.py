@@ -25,7 +25,6 @@ def render_form_html(
     *,
     submit_url: str,
     asset_mode: str = "vendored",
-    include_imask: bool = False,
     debug: bool = False,
     show_timing: bool = False,
     enable_logging: bool = False,
@@ -57,6 +56,7 @@ def render_form_html(
 
     # Normalize kwargs
     render_kwargs: Dict[str, Any] = dict(kwargs)
+    include_imask = bool(render_kwargs.pop("include_imask", False))
     csrf_field_name = render_kwargs.pop("csrf_field_name", "csrf_token") or "csrf_token"
 
     # Set submit_url and action
@@ -108,7 +108,6 @@ async def render_form_html_async(
     *,
     submit_url: str,
     asset_mode: str = "vendored",
-    include_imask: bool = False,
     debug: bool = False,
     show_timing: bool = False,
     enable_logging: bool = False,
@@ -127,7 +126,6 @@ async def render_form_html_async(
             submit_url=submit_url,
             framework=framework,
             asset_mode=asset_mode,
-            include_imask=include_imask,
             debug=debug,
             show_timing=show_timing,
             enable_logging=enable_logging,
