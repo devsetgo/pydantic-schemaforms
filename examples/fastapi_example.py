@@ -22,6 +22,8 @@ Layouts demonstrated:
 """
 
 import os
+import hmac
+import secrets
 import sys
 from pathlib import Path
 
@@ -29,6 +31,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,6 +57,46 @@ app = FastAPI(
     description="Comprehensive showcase of pydantic-schemaforms capabilities in async FastAPI",
     version="25.4.1b1"
 )
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SCHEMAFORMS_EXAMPLE_SESSION_SECRET", "dev-only-change-me"),
+    same_site="lax",
+    https_only=False,
+)
+
+LOGIN_CSRF_SESSION_KEY = "login_csrf_token"
+REGISTER_CSRF_SESSION_KEY = "register_csrf_token"
+
+
+def issue_login_csrf_token(request: Request) -> str:
+    """Issue and persist a CSRF token for the login demo flow."""
+    token = secrets.token_urlsafe(32)
+    request.session[LOGIN_CSRF_SESSION_KEY] = token
+    return token
+
+
+def verify_login_csrf_token(request: Request, submitted_token) -> bool:
+    """Verify a submitted token against the session token using constant-time compare."""
+    expected_token = request.session.get(LOGIN_CSRF_SESSION_KEY)
+    if not expected_token or not submitted_token:
+        return False
+    return hmac.compare_digest(str(expected_token), str(submitted_token))
+
+
+def issue_register_csrf_token(request: Request) -> str:
+    """Issue and persist a CSRF token for the registration demo flow."""
+    token = secrets.token_urlsafe(32)
+    request.session[REGISTER_CSRF_SESSION_KEY] = token
+    return token
+
+
+def verify_register_csrf_token(request: Request, submitted_token) -> bool:
+    """Verify a submitted registration token using constant-time compare."""
+    expected_token = request.session.get(REGISTER_CSRF_SESSION_KEY)
+    if not expected_token or not submitted_token:
+        return False
+    return hmac.compare_digest(str(expected_token), str(submitted_token))
 
 _base_dir = Path(__file__).resolve().parent
 
@@ -127,6 +170,8 @@ async def login_get(
     show_timing: bool = True,
 ):
     """Simple form example - Login form (GET)."""
+    csrf_token = issue_login_csrf_token(request)
+
     # Parse optional pre-fill data or use demo data
     form_data = {}
     if data:
@@ -148,6 +193,9 @@ async def login_get(
         framework=style,
         form_data=form_data,
         submit_url=f"/login?style={style}",
+        csrf_mode="required-provider",
+        csrf_token_provider=csrf_token,
+        csrf_field_name="csrf_token",
         debug=debug,
         show_timing=show_timing,
         enable_logging=False,
@@ -156,7 +204,8 @@ async def login_get(
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Login - Simple Form",
-        "description": "Demonstrates basic form fields and validation",
+        "description": "Demonstrates basic form fields, validation, and CSRF protection",
+        "security_highlight": "CSRF demo enabled: token is issued on GET and verified before validation on POST.",
         "framework": "fastapi",
         "framework_name": "FastAPI (Async)",
         "framework_type": style,
@@ -170,11 +219,44 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
     form_data = await request.form()
     form_dict = dict(form_data)
 
+    submitted_csrf_token = form_dict.pop("csrf_token", None)
+    csrf_error = "CSRF verification failed. Refresh the page and submit again."
+    if not verify_login_csrf_token(request, submitted_csrf_token):
+        csrf_token = issue_login_csrf_token(request)
+        parsed_data = parse_nested_form_data(form_dict)
+
+        form_html = await render_form_html_async(
+            MinimalLoginForm,
+            framework=style,
+            form_data=parsed_data,
+            errors={"form": csrf_error},
+            submit_url=f"/login?style={style}",
+            csrf_mode="required-provider",
+            csrf_token_provider=csrf_token,
+            csrf_field_name="csrf_token",
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=True,
+        )
+
+        return templates.TemplateResponse(request, "form.html", {
+            "request": request,
+            "title": "Login - Simple Form",
+            "description": "Demonstrates basic form fields, validation, and CSRF protection",
+            "security_highlight": "CSRF demo enabled: token is issued on GET and verified before validation on POST.",
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
+            "form_html": form_html,
+            "errors": {"form": csrf_error}
+        }, status_code=403)
+
     parsed_data = parse_nested_form_data(form_dict)
     validation = validate_form_data(MinimalLoginForm, parsed_data)
 
     full_referer_path = create_refer_path(request)
     if validation.is_valid:
+        request.session.pop(LOGIN_CSRF_SESSION_KEY, None)
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Login Successful",
@@ -185,6 +267,8 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
             "try_again_url": full_referer_path
         })
     else:
+        csrf_token = issue_login_csrf_token(request)
+
         # Preserve user input data on validation errors
         # Re-render form with errors AND user data
         form_html = await render_form_html_async(
@@ -193,6 +277,9 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
             form_data=parsed_data,
             errors=validation.errors,
             submit_url=f"/login?style={style}",
+            csrf_mode="required-provider",
+            csrf_token_provider=csrf_token,
+            csrf_field_name="csrf_token",
             debug=debug,
             show_timing=show_timing,
             enable_logging=True,
@@ -201,7 +288,8 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Login - Simple Form",
-            "description": "Demonstrates basic form fields and validation",
+            "description": "Demonstrates basic form fields, validation, and CSRF protection",
+            "security_highlight": "CSRF demo enabled: token is issued on GET and verified before validation on POST.",
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "framework_type": style,
@@ -224,6 +312,8 @@ async def register_get(
     show_timing: bool = True,
 ):
     """Medium complexity form - User registration (GET)."""
+    csrf_token = issue_register_csrf_token(request)
+
     # Parse optional pre-fill data or use demo data
     form_data = {}
     if data:
@@ -250,6 +340,9 @@ async def register_get(
         framework=style,
         form_data=form_data,
         submit_url=f"/register?style={style}",
+        csrf_mode="required-provider",
+        csrf_token_provider=csrf_token,
+        csrf_field_name="csrf_token",
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,)
@@ -257,7 +350,8 @@ async def register_get(
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "User Registration - Medium Form",
-        "description": "Demonstrates multiple field types, icons, and validation",
+        "description": "Demonstrates multiple field types, icons, validation, and CSRF protection",
+        "security_highlight": "CSRF demo enabled: token is issued on GET and verified before validation on POST.",
         "framework": "fastapi",
         "framework_name": "FastAPI (Async)",
         "framework_type": style,
@@ -284,11 +378,44 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
     form_data = await request.form()
     form_dict = dict(form_data)
 
+    submitted_csrf_token = form_dict.pop("csrf_token", None)
+    csrf_error = "CSRF verification failed. Refresh the page and submit again."
+    if not verify_register_csrf_token(request, submitted_csrf_token):
+        csrf_token = issue_register_csrf_token(request)
+        parsed_data = parse_nested_form_data(form_dict)
+
+        form_html = await render_form_html_async(
+            UserRegistrationForm,
+            framework=style,
+            form_data=parsed_data,
+            errors={"form": csrf_error},
+            submit_url=f"/register?style={style}",
+            csrf_mode="required-provider",
+            csrf_token_provider=csrf_token,
+            csrf_field_name="csrf_token",
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=True,
+        )
+
+        return templates.TemplateResponse(request, "form.html", {
+            "request": request,
+            "title": "User Registration - Medium Form",
+            "description": "Demonstrates multiple field types, icons, validation, and CSRF protection",
+            "security_highlight": "CSRF demo enabled: token is issued on GET and verified before validation on POST.",
+            "framework": "fastapi",
+            "framework_name": "FastAPI (Async)",
+            "framework_type": style,
+            "form_html": form_html,
+            "errors": {"form": csrf_error}
+        }, status_code=403)
+
     parsed_data = parse_nested_form_data(form_dict)
     validation = validate_form_data(UserRegistrationForm, parsed_data)
 
     full_referer_path = create_refer_path(request)
     if validation.is_valid:
+        request.session.pop(REGISTER_CSRF_SESSION_KEY, None)
         return templates.TemplateResponse(request, "success.html", {
             "request": request,
             "title": "Registration Successful",
@@ -299,6 +426,8 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
             "try_again_url": full_referer_path
         })
     else:
+        csrf_token = issue_register_csrf_token(request)
+
         # Preserve user input data on validation errors
         # Re-render form with errors AND user data
         form_html = await render_form_html_async(
@@ -307,6 +436,9 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
             form_data=parsed_data,
             errors=validation.errors,
             submit_url=f"/register?style={style}",
+            csrf_mode="required-provider",
+            csrf_token_provider=csrf_token,
+            csrf_field_name="csrf_token",
             debug=debug,
             show_timing=show_timing,
             enable_logging=False,
@@ -315,7 +447,8 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "User Registration - Medium Form",
-            "description": "Demonstrates multiple field types, icons, and validation",
+            "description": "Demonstrates multiple field types, icons, validation, and CSRF protection",
+            "security_highlight": "CSRF demo enabled: token is issued on GET and verified before validation on POST.",
             "framework": "fastapi",
             "framework_name": "FastAPI (Async)",
             "framework_type": style,

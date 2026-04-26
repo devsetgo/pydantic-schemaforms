@@ -96,6 +96,16 @@ def _inject_dynamic_fields(
 ) -> None:
     """Add FieldInfo attributes declared post-class-definition into the schema."""
 
+    # Registered runtime fields are tracked explicitly on FormModel and may
+    # not exist as class attributes.
+    runtime_fields = dict(getattr(model_cls, "__runtime_fields__", {}))
+    for field_name, (_annotation, field_info) in runtime_fields.items():
+        if field_name in properties:
+            continue
+        properties[field_name] = _field_info_to_schema(field_name, field_info)
+        if field_info.is_required() and field_name not in required_fields:
+            required_fields.append(field_name)
+
     for attr_name, attr_value in model_cls.__dict__.items():
         if not isinstance(attr_value, FieldInfo):
             continue
@@ -103,7 +113,7 @@ def _inject_dynamic_fields(
             continue
 
         properties[attr_name] = _field_info_to_schema(attr_name, attr_value)
-        if attr_value.is_required():
+        if attr_value.is_required() and attr_name not in required_fields:
             required_fields.append(attr_name)
 
 

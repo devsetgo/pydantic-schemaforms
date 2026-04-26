@@ -314,7 +314,6 @@ class FormModel(BaseModel):
 
         field_info = field or Field(...)
         field_info.annotation = annotation or Any
-        setattr(cls, field_name, field_info)
 
         runtime_fields = dict(getattr(cls, "__runtime_fields__", {}))
         runtime_fields[field_name] = (annotation or Any, field_info)
