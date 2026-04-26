@@ -4,10 +4,31 @@
 
 {% block extra_head %}
 <style>
-    .hero-section {
-        padding: 4rem 0;
-        text-align: center;
+    body .hero-section {
+        background: linear-gradient(135deg, #050505, #111827);
+        padding: 3.5rem 2.5rem;
         color: white;
+    }
+    .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 520px);
+        align-items: center;
+        gap: 2rem;
+    }
+    .hero-copy {
+        text-align: left;
+    }
+    .hero-logo {
+        display: block;
+        width: min(100%, 480px);
+        max-height: 320px;
+        object-fit: contain;
+        margin: 0 0 0 auto;
+        filter: drop-shadow(0 18px 38px rgba(79, 70, 229, 0.18));
+    }
+    .hero-note {
+        display: inline-block;
+        max-width: 42rem;
     }
     .feature-icon {
         font-size: 3rem;
@@ -25,18 +46,41 @@
         font-size: 0.75rem;
         font-weight: 600;
     }
+    @media (max-width: 991px) {
+        body .hero-section {
+            padding: 2.5rem 1.5rem;
+        }
+        .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        .hero-copy {
+            text-align: center;
+        }
+        .hero-logo {
+            margin: 0 auto;
+            width: min(100%, 420px);
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
 <div class="hero-section">
-    <h1 class="display-4 fw-bold mb-4">🚀 Pydantic Forms Demo</h1>
-    <p class="lead mb-5">
-        Experience the power of automatic form generation from Pydantic models<br>
-        Built with modern web frameworks and beautiful UI components<br>
-        <small>Plain HTML mode is available on all examples with <code>?style=none</code> (e.g. <a class="text-white" href="/login?style=none&demo=true&debug=true">/login?style=none</a>)</small>
-    </p>
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <h1 class="display-4 fw-bold mb-4">Pydantic Schema Forms</h1>
+            <p class="lead mb-5 hero-note">
+                Experience the power of automatic form generation from Pydantic models<br>
+                Built with modern web frameworks and beautiful UI components<br>
+                <small>Plain HTML mode is available on all examples with <code>?style=none</code> (e.g. <a class="text-white" href="/login?style=none&demo=true&debug=true">/login?style=none</a>)</small>
+            </p>
+        </div>
+        <div>
+            <img class="hero-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}" alt="Pydantic Schemaform logo">
+        </div>
+    </div>
 </div>
 
 <!-- Main Demo Grid -->
@@ -286,7 +330,7 @@
     <!--
         Teaching note:
         This card points to the original stress-test example from
-        `nested_forms_example.py` with all 6 tabs enabled.
+        `nested_forms_models.py` with all 6 tabs enabled.
     -->
     <div class="col-md-6 col-lg-4">
         <div class="card h-100 demo-card position-relative">
@@ -330,7 +374,7 @@
     <!--
         Teaching note:
         This card points to a reusable organization-only example powered by
-        shared models in `shared_models.py`.
+        models in `src/models.py`.
     -->
     <div class="col-md-6 col-lg-4">
         <div class="card h-100 demo-card position-relative">

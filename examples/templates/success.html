@@ -1,27 +1,6 @@
 {% extends "shared_base.html" %}
 
 {% block content %}
-<style>
-    /* Override the gradient background for better readability */
-    body {
-        background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
-        color: white;
-    }
-
-    .demo-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-    }
-
-    .form-header {
-        background: linear-gradient(135deg, #065f46 0%, #047857 100%);
-        color: white;
-        border-radius: 15px 15px 0 0;
-        padding: 2rem;
-        margin: -1rem -1rem 0 -1rem;
-    }
-</style>
-
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="demo-card">
@@ -46,7 +25,7 @@
                         {% if data %}
                         <div class="text-start">
                             <h6 class="mb-3">📋 Submitted JSON Data:</h6>
-                            <div class="bg-dark text-light p-3 rounded">
+                            <div class="bg-light p-3 rounded border">
                                 <pre class="mb-0"><code>{{ data | safe_json }}</code></pre>
                             </div>
                         </div>
