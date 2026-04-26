@@ -14,7 +14,7 @@ import logging
 import re
 import time
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
@@ -27,6 +27,11 @@ from .schema_form import FormModel
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+CSRF_MODE_OFF = "off"
+CSRF_MODE_FIELD_ONLY = "field-only"
+CSRF_MODE_REQUIRED_PROVIDER = "required-provider"
+CSRF_MODES = {CSRF_MODE_OFF, CSRF_MODE_FIELD_ONLY, CSRF_MODE_REQUIRED_PROVIDER}
 
 
 class SchemaFormValidationError(Exception):
@@ -71,12 +76,13 @@ class EnhancedFormRenderer:
     def render_form_from_model(
         self,
         model_cls: Type[FormModel],
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: Dict[str, Any] | None = None,
+        errors: Dict[str, Any] | None = None,
         *,
         submit_url: str = "/submit",
         method: str = "POST",
-        include_csrf: bool = False,
+        csrf_mode: str = CSRF_MODE_OFF,
+        csrf_token_provider: str | Callable[[], str] | None = None,
         include_submit_button: bool = True,
         layout: str = "vertical",
         debug: bool = False,
@@ -92,6 +98,10 @@ class EnhancedFormRenderer:
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
         data = dict(data or {})
         errors = errors or {}
+
+        # Keep backward compatibility for callers still passing these via kwargs.
+        include_csrf = bool(kwargs.pop("include_csrf", False))
+        csrf_field_name = kwargs.pop("csrf_field_name", "csrf_token") or "csrf_token"
 
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
@@ -111,7 +121,16 @@ class EnhancedFormRenderer:
         form_attrs["action"] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
 
-        csrf_markup = self._render_csrf_field() if include_csrf else ""
+        resolved_csrf_mode = self._resolve_csrf_mode(
+            include_csrf=include_csrf,
+            csrf_mode=csrf_mode,
+            debug=debug,
+        )
+        csrf_markup = self._render_csrf_field(
+            mode=resolved_csrf_mode,
+            csrf_token_provider=csrf_token_provider,
+            csrf_field_name=csrf_field_name,
+        )
         form_body_parts: List[str] = []
 
         fields = metadata.fields
@@ -257,12 +276,15 @@ class EnhancedFormRenderer:
     async def render_form_from_model_async(
         self,
         model_cls: Type[FormModel],
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: Dict[str, Any] | None = None,
+        errors: Dict[str, Any] | None = None,
         *,
         submit_url: str = "/submit",
         method: str = "POST",
         include_csrf: bool = False,
+        csrf_mode: str = CSRF_MODE_OFF,
+        csrf_token_provider: str | Callable[[], str] | None = None,
+        csrf_field_name: str = "csrf_token",
         include_submit_button: bool = True,
         layout: str = "vertical",
         **kwargs,
@@ -277,6 +299,9 @@ class EnhancedFormRenderer:
             submit_url=submit_url,
             method=method,
             include_csrf=include_csrf,
+            csrf_mode=csrf_mode,
+            csrf_token_provider=csrf_token_provider,
+            csrf_field_name=csrf_field_name,
             include_submit_button=include_submit_button,
             layout=layout,
             **kwargs,
@@ -465,7 +490,7 @@ class EnhancedFormRenderer:
         if not field_path or field_path == "form":
             return "Form"
 
-        tokens: List[Union[str, int]] = []
+        tokens: List[str | int] = []
         for name_token, index_token in re.findall(r"([^.\[\]]+)|\[(\d+)\]", field_path):
             if name_token:
                 tokens.append(name_token)
@@ -522,8 +547,69 @@ class EnhancedFormRenderer:
             '</div>'
         )
 
-    def _render_csrf_field(self) -> str:
-        return '<input type="hidden" name="csrf_token" value="__CSRF_TOKEN__" />'
+    def _resolve_csrf_mode(self, *, include_csrf: bool, csrf_mode: str, debug: bool) -> str:
+        normalized = str(csrf_mode or CSRF_MODE_OFF).strip().lower().replace("_", "-")
+        explicit_field_only = normalized == CSRF_MODE_FIELD_ONLY
+
+        # Backwards compatibility: include_csrf=True means at least field rendering.
+        if include_csrf and normalized == CSRF_MODE_OFF:
+            normalized = CSRF_MODE_FIELD_ONLY
+
+        if normalized not in CSRF_MODES:
+            raise ValueError(
+                "Invalid csrf_mode. Expected one of: off, field-only, required-provider"
+            )
+
+        # Guard explicit field-only usage in non-debug contexts, while preserving
+        # include_csrf backwards-compatibility flows that map off -> field-only.
+        if explicit_field_only and normalized == CSRF_MODE_FIELD_ONLY and not debug:
+            raise ValueError(
+                "CSRF mode 'field-only' is only allowed when debug=True. "
+                "Use 'required-provider' for production use."
+            )
+
+        return normalized
+
+    def _resolve_csrf_token(
+        self,
+        csrf_token_provider: str | Callable[[], str] | None,
+    ) -> str | None:
+        if csrf_token_provider is None:
+            return None
+
+        token_value: Any
+        if callable(csrf_token_provider):
+            token_value = csrf_token_provider()
+        else:
+            token_value = csrf_token_provider
+
+        if token_value is None:
+            return None
+
+        token = str(token_value)
+        return token if token else None
+
+    def _render_csrf_field(
+        self,
+        *,
+        mode: str,
+        csrf_token_provider: str | Callable[[], str] | None,
+        csrf_field_name: str,
+    ) -> str:
+        if mode == CSRF_MODE_OFF:
+            return ""
+
+        token = self._resolve_csrf_token(csrf_token_provider)
+        if mode == CSRF_MODE_REQUIRED_PROVIDER and token is None:
+            raise ValueError(
+                "CSRF mode 'required-provider' requires a csrf_token_provider that returns a token"
+            )
+
+        from .inputs.specialized_inputs import CSRFInput
+
+        csrf_input = CSRFInput()
+        safe_token = html.escape(token, quote=True) if token else ""
+        return csrf_input.render(token=safe_token, name=csrf_field_name)
 
     def _render_layout_field(
         self,
@@ -728,7 +814,7 @@ class EnhancedFormRenderer:
 def render_form_html(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    errors: Dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,
@@ -799,7 +885,7 @@ def render_form_html(
 async def render_form_html_async(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    errors: Dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = "bootstrap",
     layout: str = "vertical",
     debug: bool = False,

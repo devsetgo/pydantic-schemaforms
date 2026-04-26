@@ -283,6 +283,8 @@ class ResetInput(FormInput):
 class CSRFInput(HiddenInput):
     """CSRF token hidden input for security."""
 
+    ui_element = "csrf"
+
     def render(self, token: str, **kwargs) -> str:
         """Render CSRF input with token value."""
         kwargs["name"] = kwargs.get("name", "csrf_token")

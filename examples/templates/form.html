@@ -28,6 +28,19 @@
             <!-- Content -->
             <div class="p-4">
 
+                {% if security_highlight %}
+                <div class="alert alert-warning d-flex align-items-start" role="alert">
+                    {% if framework_type == "material" %}
+                        <span class="material-icons me-2" style="font-size: 1.2rem;">verified_user</span>
+                    {% else %}
+                        <i class="bi bi-shield-lock-fill me-2"></i>
+                    {% endif %}
+                    <div>
+                        <strong>Security Highlight:</strong> {{ security_highlight }}
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Form -->
                 {{ form_html|safe }}
 
