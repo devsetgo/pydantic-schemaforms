@@ -6,7 +6,7 @@ This module maintains compatibility with existing code while using the enhanced 
 import asyncio
 import logging
 import time
-from typing import Any, Callable, Dict, Optional, Type, Union
+from typing import Any, Callable, Dict, Type
 
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
@@ -19,8 +19,8 @@ logger.addHandler(logging.NullHandler())
 
 def render_form_html(
     form_model_cls: Type[FormModel],
-    form_data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    form_data: Dict[str, Any] | None = None,
+    errors: Dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = "bootstrap",
     *,
     submit_url: str,
@@ -30,8 +30,7 @@ def render_form_html(
     show_timing: bool = False,
     enable_logging: bool = False,
     csrf_mode: str = "off",
-    csrf_token_provider: Optional[Union[str, Callable[[], str]]] = None,
-    csrf_field_name: str = "csrf_token",
+    csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
     **kwargs,
 ) -> str:
@@ -58,6 +57,7 @@ def render_form_html(
 
     # Normalize kwargs
     render_kwargs: Dict[str, Any] = dict(kwargs)
+    csrf_field_name = render_kwargs.pop("csrf_field_name", "csrf_token") or "csrf_token"
 
     # Set submit_url and action
     render_kwargs["submit_url"] = submit_url
@@ -102,8 +102,8 @@ def render_form_html(
 
 async def render_form_html_async(
     form_model_cls: Type[FormModel],
-    form_data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Union[Dict[str, str], SchemaFormValidationError]] = None,
+    form_data: Dict[str, Any] | None = None,
+    errors: Dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = "bootstrap",
     *,
     submit_url: str,
@@ -113,8 +113,7 @@ async def render_form_html_async(
     show_timing: bool = False,
     enable_logging: bool = False,
     csrf_mode: str = "off",
-    csrf_token_provider: Optional[Union[str, Callable[[], str]]] = None,
-    csrf_field_name: str = "csrf_token",
+    csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
     **kwargs,
 ) -> str:
@@ -134,7 +133,6 @@ async def render_form_html_async(
             enable_logging=enable_logging,
             csrf_mode=csrf_mode,
             csrf_token_provider=csrf_token_provider,
-            csrf_field_name=csrf_field_name,
             include_html_markers=include_html_markers,
             **kwargs,
         )

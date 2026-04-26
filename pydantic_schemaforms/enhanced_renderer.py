@@ -14,7 +14,7 @@ import logging
 import re
 import time
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
@@ -76,15 +76,13 @@ class EnhancedFormRenderer:
     def render_form_from_model(
         self,
         model_cls: Type[FormModel],
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: Dict[str, Any] | None = None,
+        errors: Dict[str, Any] | None = None,
         *,
         submit_url: str = "/submit",
         method: str = "POST",
-        include_csrf: bool = False,
         csrf_mode: str = CSRF_MODE_OFF,
-        csrf_token_provider: Optional[Union[str, Callable[[], str]]] = None,
-        csrf_field_name: str = "csrf_token",
+        csrf_token_provider: str | Callable[[], str] | None = None,
         include_submit_button: bool = True,
         layout: str = "vertical",
         debug: bool = False,
@@ -100,6 +98,10 @@ class EnhancedFormRenderer:
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
         data = dict(data or {})
         errors = errors or {}
+
+        # Keep backward compatibility for callers still passing these via kwargs.
+        include_csrf = bool(kwargs.pop("include_csrf", False))
+        csrf_field_name = kwargs.pop("csrf_field_name", "csrf_token") or "csrf_token"
 
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
@@ -274,14 +276,14 @@ class EnhancedFormRenderer:
     async def render_form_from_model_async(
         self,
         model_cls: Type[FormModel],
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: Dict[str, Any] | None = None,
+        errors: Dict[str, Any] | None = None,
         *,
         submit_url: str = "/submit",
         method: str = "POST",
         include_csrf: bool = False,
         csrf_mode: str = CSRF_MODE_OFF,
-        csrf_token_provider: Optional[Union[str, Callable[[], str]]] = None,
+        csrf_token_provider: str | Callable[[], str] | None = None,
         csrf_field_name: str = "csrf_token",
         include_submit_button: bool = True,
         layout: str = "vertical",
@@ -570,8 +572,8 @@ class EnhancedFormRenderer:
 
     def _resolve_csrf_token(
         self,
-        csrf_token_provider: Optional[Union[str, Callable[[], str]]],
-    ) -> Optional[str]:
+        csrf_token_provider: str | Callable[[], str] | None,
+    ) -> str | None:
         if csrf_token_provider is None:
             return None
 
@@ -591,7 +593,7 @@ class EnhancedFormRenderer:
         self,
         *,
         mode: str,
-        csrf_token_provider: Optional[Union[str, Callable[[], str]]],
+        csrf_token_provider: str | Callable[[], str] | None,
         csrf_field_name: str,
     ) -> str:
         if mode == CSRF_MODE_OFF:
