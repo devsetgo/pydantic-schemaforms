@@ -13,6 +13,7 @@ import json
 import logging
 import re
 import time
+from enum import Enum
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
@@ -28,10 +29,16 @@ from .schema_form import FormModel
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-CSRF_MODE_OFF = "off"
-CSRF_MODE_FIELD_ONLY = "field-only"
-CSRF_MODE_REQUIRED_PROVIDER = "required-provider"
-CSRF_MODES = {CSRF_MODE_OFF, CSRF_MODE_FIELD_ONLY, CSRF_MODE_REQUIRED_PROVIDER}
+class CSRFMode(str, Enum):
+    OFF = "off"
+    FIELD_ONLY = "field-only"
+    REQUIRED_PROVIDER = "required-provider"
+
+
+CSRF_MODE_OFF = CSRFMode.OFF.value
+CSRF_MODE_FIELD_ONLY = CSRFMode.FIELD_ONLY.value
+CSRF_MODE_REQUIRED_PROVIDER = CSRFMode.REQUIRED_PROVIDER.value
+CSRF_MODES = {mode.value for mode in CSRFMode}
 
 
 class SchemaFormValidationError(Exception):
@@ -81,7 +88,7 @@ class EnhancedFormRenderer:
         *,
         submit_url: str = "/submit",
         method: str = "POST",
-        csrf_mode: str = CSRF_MODE_OFF,
+        csrf_mode: CSRFMode | str = CSRF_MODE_OFF,
         csrf_token_provider: str | Callable[[], str] | None = None,
         include_submit_button: bool = True,
         layout: str = "vertical",
@@ -282,7 +289,7 @@ class EnhancedFormRenderer:
         submit_url: str = "/submit",
         method: str = "POST",
         include_csrf: bool = False,
-        csrf_mode: str = CSRF_MODE_OFF,
+        csrf_mode: CSRFMode | str = CSRF_MODE_OFF,
         csrf_token_provider: str | Callable[[], str] | None = None,
         csrf_field_name: str = "csrf_token",
         include_submit_button: bool = True,
@@ -547,9 +554,14 @@ class EnhancedFormRenderer:
             '</div>'
         )
 
-    def _resolve_csrf_mode(self, *, include_csrf: bool, csrf_mode: str, debug: bool) -> str:
-        normalized = str(csrf_mode or CSRF_MODE_OFF).strip().lower().replace("_", "-")
-        explicit_field_only = normalized == CSRF_MODE_FIELD_ONLY
+    def _resolve_csrf_mode(
+        self, *, include_csrf: bool, csrf_mode: CSRFMode | str, debug: bool
+    ) -> str:
+        explicit_field_only = csrf_mode in {CSRFMode.FIELD_ONLY, CSRF_MODE_FIELD_ONLY}
+        if isinstance(csrf_mode, CSRFMode):
+            normalized = csrf_mode.value
+        else:
+            normalized = str(csrf_mode or CSRF_MODE_OFF).strip().lower().replace("_", "-")
 
         # Backwards compatibility: include_csrf=True means at least field rendering.
         if include_csrf and normalized == CSRF_MODE_OFF:
