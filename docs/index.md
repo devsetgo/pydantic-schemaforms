@@ -1,6 +1,6 @@
 # Pydantic SchemaForms
 
-<img align="right" src="pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="420" />
+<img align="right" src="pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="336" />
 
 [![PyPI version](https://badge.fury.io/py/pydantic-schemaforms.svg)](https://pypi.python.org/pypi/pydantic-schemaforms/)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms)](https://pepy.tech/project/pydantic-schemaforms)
