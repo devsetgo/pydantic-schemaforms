@@ -53,7 +53,7 @@ Templates expect these variables from the backend:
 
 ## CSS Framework Integration
 
-The unified system supports both Bootstrap 5 and Material Design 3:
+The unified system supports both Bootstrap and Material styles:
 
 ### Bootstrap Mode
 ```css

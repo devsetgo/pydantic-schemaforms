@@ -72,11 +72,15 @@ async def user_form(request: Request):
 ```
 
 You can also call `await User.render_form_async(...)` directly if you prefer a model method.
-```python
 
 If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`.
 
-See: `docs/configuration.md` and `docs/assets.md`.
+See: [configuration.md](configuration.md) and [assets.md](assets.md).
+
+Template note:
+
+- In Python f-string responses, embed `{form_html}` directly.
+- In Jinja templates, render with `{{ form_html | safe }}`.
 
 ## CSRF setup
 
@@ -85,20 +89,28 @@ For browser forms with cookie/session auth, enable CSRF and verify token on subm
 Recommended rendering configuration:
 
 ```python
+from pydantic_schemaforms import CSRFMode
+
 form_html = await render_form_html_async(
     User,
     form_data=form_data,
     errors=errors,
     submit_url="/user",
-    csrf_mode="required-provider",
+    csrf_mode=CSRFMode.REQUIRED_PROVIDER,
     csrf_token_provider=csrf_token,
     csrf_field_name="csrf_token",
 )
 ```
 
+Notes:
+
+- `csrf_mode` accepts either strings (`"off"`, `"field-only"`, `"required-provider"`) or `CSRFMode` enum values.
+- Explicit `field-only` mode is debug-only and requires `debug=True`.
+- Legacy `include_csrf=True` still works for backwards compatibility.
+
 Then, in your POST handler, read and validate the submitted token before model validation.
 
-See the full guide: `docs/csrf.md`.
+See the full guide: [csrf.md](csrf.md).
 
 ## 1) Build a form from a Pydantic model
 
@@ -167,4 +179,4 @@ def user_form():
 ## Notes
 
 - `handle_form*()` returns either `{form_html}` (initial render) or `{success: bool, ...}` (submission).
-- Asset delivery (`asset_mode`) and full-page wrappers are documented in `docs/assets.md`.
+- Asset delivery (`asset_mode`) and full-page wrappers are documented in [assets.md](assets.md).
