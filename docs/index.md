@@ -103,27 +103,21 @@ app = FastAPI()
 
 @app.api_route("/login", methods=["GET", "POST"], response_class=HTMLResponse)
 async def login(request: Request, style: str = "bootstrap"):
-    form_data = {}
-    errors = {}
-
     if request.method == "POST":
         submitted = dict(await request.form())
-        form_data = submitted
-        try:
-            MinimalLoginForm(**submitted)
-        except ValidationError as e:
-            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
+        result = MinimalLoginForm.validate(
+            submitted, submit_url="/login", framework=style
+        )
+        if result.is_valid:
+            return f"Welcome {result.data['username']}!"
+        form_html = await result.render_with_errors_async()
     else:
-        # optional demo data
-        form_data = {"username": "demo_user", "remember_me": True}
-
-    form_html = render_form_html(
-        MinimalLoginForm,
-        framework=style,
-        form_data=form_data,
-        errors=errors,
-        submit_url="/login",
-    )
+        form_html = render_form_html(
+            MinimalLoginForm,
+            framework=style,
+            form_data={"username": "demo_user", "remember_me": True},
+            submit_url="/login",
+        )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -171,24 +165,16 @@ app = FastAPI()
 
 @app.api_route("/register", methods=["GET", "POST"], response_class=HTMLResponse)
 async def register(request: Request):
-    form_data = {}
-    errors = {}
-
     if request.method == "POST":
         submitted = dict(await request.form())
-        form_data = submitted
-        try:
-            UserRegistrationForm(**submitted)
-        except ValidationError as e:
-            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
-
-    form_html = render_form_html(
-        UserRegistrationForm,
-        framework="bootstrap",
-        form_data=form_data,
-        errors=errors,
-        submit_url="/register",
-    )
+        result = UserRegistrationForm.validate(submitted, submit_url="/register")
+        if result.is_valid:
+            return f"Registered {result.data['username']}!"
+        form_html = await result.render_with_errors_async()
+    else:
+        form_html = render_form_html(
+            UserRegistrationForm, framework="bootstrap", submit_url="/register"
+        )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -200,7 +186,7 @@ async def register(request: Request):
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Register</h1>
-  {form_html |safe}
+  {form_html}
 </body>
 </html>"""
 ```
@@ -228,24 +214,17 @@ app = Flask(__name__)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    form_data = {}
-    errors = {}
-
     if request.method == "POST":
-        submitted = request.form.to_dict()
-        form_data = submitted
-        try:
-            MinimalLoginForm(**submitted)
-        except ValidationError as e:
-            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
-
-    form_html = render_form_html(
-        MinimalLoginForm,
-        framework="bootstrap",
-        form_data=form_data,
-        errors=errors,
-        submit_url="/login",
-    )
+        result = MinimalLoginForm.validate(
+            request.form.to_dict(), submit_url="/login"
+        )
+        if result.is_valid:
+            return f"Welcome {result.data['username']}!"
+        form_html = result.render_with_errors()
+    else:
+        form_html = render_form_html(
+            MinimalLoginForm, framework="bootstrap", submit_url="/login"
+        )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -283,24 +262,17 @@ app = Flask(__name__)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    form_data = {}
-    errors = {}
-
     if request.method == "POST":
-        submitted = request.form.to_dict()
-        form_data = submitted
-        try:
-            UserRegistrationForm(**submitted)
-        except ValidationError as e:
-            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
-
-    form_html = render_form_html(
-        UserRegistrationForm,
-        framework="bootstrap",
-        form_data=form_data,
-        errors=errors,
-        submit_url="/register",
-    )
+        result = UserRegistrationForm.validate(
+            request.form.to_dict(), submit_url="/register"
+        )
+        if result.is_valid:
+            return f"Registered {result.data['username']}!"
+        form_html = result.render_with_errors()
+    else:
+        form_html = render_form_html(
+            UserRegistrationForm, framework="bootstrap", submit_url="/register"
+        )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -450,22 +422,21 @@ class EventForm(FormModel):
 ```
 
 ### Form Validation
-```python
-from pydantic import ValidationError
 
+Use `FormModel.validate()` to validate submitted data. It stores the submit URL
+and framework so `render_with_errors()` can re-render the form without repeating them:
+
+```python
 @app.route("/submit", methods=["POST"])
 def handle_submit():
-    try:
-        # Validate form data using your Pydantic model
-        user_data = UserForm(**request.form)
+    data = request.form.to_dict()
+    result = UserForm.validate(data, submit_url="/submit")
 
-        # Process valid data
-        return f"Welcome {user_data.username}!"
+    if result.is_valid:
+        return f"Welcome {result.data['username']}!"
 
-    except ValidationError as e:
-        # Handle validation errors
-        errors = e.errors()
-        return f"Validation failed: {errors}", 400
+    # Re-renders with errors — no need to repeat submit_url or framework
+    return result.render_with_errors()
 ```
 
 ---
@@ -516,21 +487,15 @@ class UserRegistrationForm(FormModel):
 @app.route("/", methods=["GET", "POST"])
 def registration():
     if request.method == "POST":
-        try:
-            # Validate form data
-            user = UserRegistrationForm(**request.form)
-            return f"Registration successful for {user.username}!"
-        except ValidationError as e:
-            errors = e.errors()
-            # Re-render form with errors
-            form_html = UserRegistrationForm.render_form(
-                framework="bootstrap",
-                submit_url="/",
-                errors=errors
-            )
-            return render_template_string(BASE_TEMPLATE, form_html=form_html)
+        result = UserRegistrationForm.validate(
+            request.form.to_dict(), submit_url="/"
+        )
+        if result.is_valid:
+            return f"Registration successful for {result.data['username']}!"
+        return render_template_string(
+            BASE_TEMPLATE, form_html=result.render_with_errors()
+        )
 
-    # Render empty form
     form_html = UserRegistrationForm.render_form(framework="bootstrap", submit_url="/")
     return render_template_string(BASE_TEMPLATE, form_html=form_html)
 
@@ -708,7 +673,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 
 ### FormModel
 
-Extend your Pydantic models with `FormModel` to add form rendering capabilities:
+Extend your Pydantic models with `FormModel` to add form rendering and validation capabilities:
 
 ```python
 from pydantic_schemaforms.schema_form import FormModel, Field
@@ -721,6 +686,17 @@ html = MyForm.render_form(framework="bootstrap", submit_url="/submit")
 
 # Render fully self-contained Bootstrap HTML (inlines vendored Bootstrap CSS/JS)
 html = MyForm.render_form(framework="bootstrap", submit_url="/submit", self_contained=True)
+
+# Validate submitted data — returns a ValidationResult
+result = MyForm.validate(data, submit_url="/submit", framework="bootstrap")
+if result.is_valid:
+    process(result.data)
+else:
+    # Re-renders with errors; submit_url and framework already stored above
+    return result.render_with_errors()
+
+# Async variant for FastAPI / ASGI routes
+html = await result.render_with_errors_async()
 ```
 
 ### Field Function

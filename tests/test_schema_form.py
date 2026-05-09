@@ -213,6 +213,42 @@ class TestFormModel:
         assert 'type="color"' in html
 
 
+class TestFormModelValidate:
+    """Test FormModel.validate() classmethod."""
+
+    def test_validate_valid_data(self, simple_form_model, sample_form_data):
+        """validate() succeeds and returns clean data."""
+        result = simple_form_model.validate(sample_form_data, submit_url="/submit")
+
+        assert result.is_valid
+        assert result.data['name'] == sample_form_data['name']
+        assert result.errors == {}
+
+    def test_validate_invalid_data(self, simple_form_model):
+        """validate() returns errors on bad input."""
+        result = simple_form_model.validate({'name': 'Alice'}, submit_url="/submit")
+
+        assert not result.is_valid
+        assert result.errors
+
+    def test_validate_render_with_errors_no_args(self, simple_form_model):
+        """render_with_errors() works with no arguments after validate()."""
+        result = simple_form_model.validate({}, submit_url="/simple")
+
+        assert not result.is_valid
+        html = result.render_with_errors()
+        assert isinstance(html, str)
+        assert "<form" in html
+
+    def test_validate_without_submit_url_raises_on_render(self, simple_form_model):
+        """render_with_errors() raises when submit_url was never given."""
+        result = simple_form_model.validate({})
+
+        assert not result.is_valid
+        with pytest.raises(ValueError, match="submit_url is required"):
+            result.render_with_errors()
+
+
 class TestFormModelIntegration:
     """Test FormModel integration with the rendering system."""
 

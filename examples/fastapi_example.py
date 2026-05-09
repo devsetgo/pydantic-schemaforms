@@ -50,7 +50,6 @@ from examples.nested_forms_example import create_comprehensive_sample_data
 from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.form_data import parse_nested_form_data
 from pydantic_schemaforms.form_layouts import FormLayoutBase
-from pydantic_schemaforms.validation import validate_form_data
 
 app = FastAPI(
     title="Pydantic SchemaForms - FastAPI Example",
@@ -301,7 +300,15 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
         }, status_code=403)
 
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(MinimalLoginForm, parsed_data)
+    validation = MinimalLoginForm.validate(
+        parsed_data,
+        submit_url=f"/login?style={style}",
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        csrf_mode="required-provider",
+        csrf_field_name="csrf_token",
+    )
 
     full_referer_path = create_refer_path(request)
     if validation.is_valid:
@@ -317,20 +324,8 @@ async def login_post(request: Request, style: str = "bootstrap", debug: bool = F
         })
     else:
         csrf_token = issue_login_csrf_token(request)
-
-        # Preserve user input data on validation errors
-        # Re-render form with errors AND user data
-        form_html = await render_form_html_async(
-            MinimalLoginForm,
-            framework=style,
-            form_data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/login?style={style}",
-            csrf_mode="required-provider",
+        form_html = await validation.render_with_errors_async(
             csrf_token_provider=csrf_token,
-            csrf_field_name="csrf_token",
-            debug=debug,
-            show_timing=show_timing,
             enable_logging=True,
         )
 
@@ -460,7 +455,15 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
         }, status_code=403)
 
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(UserRegistrationForm, parsed_data)
+    validation = UserRegistrationForm.validate(
+        parsed_data,
+        submit_url=f"/register?style={style}",
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        csrf_mode="required-provider",
+        csrf_field_name="csrf_token",
+    )
 
     full_referer_path = create_refer_path(request)
     if validation.is_valid:
@@ -476,21 +479,8 @@ async def register_post(request: Request, style: str = "bootstrap", debug: bool 
         })
     else:
         csrf_token = issue_register_csrf_token(request)
-
-        # Preserve user input data on validation errors
-        # Re-render form with errors AND user data
-        form_html = await render_form_html_async(
-            UserRegistrationForm,
-            framework=style,
-            form_data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/register?style={style}",
-            csrf_mode="required-provider",
+        form_html = await validation.render_with_errors_async(
             csrf_token_provider=csrf_token,
-            csrf_field_name="csrf_token",
-            debug=debug,
-            show_timing=show_timing,
-            enable_logging=False,
         )
 
         return templates.TemplateResponse(request, "form.html", {
@@ -574,7 +564,14 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
     form_dict = dict(form_data)
 
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(CompleteShowcaseForm, parsed_data)
+    validation = CompleteShowcaseForm.validate(
+        parsed_data,
+        submit_url=f"/showcase?style={style}",
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
 
     full_referer_path = create_refer_path(request)
     if validation.is_valid:
@@ -588,17 +585,7 @@ async def showcase_post(request: Request, style: str = "bootstrap", debug: bool 
             "try_again_url": full_referer_path
         })
     else:
-        # Re-render form with errors
-        form_html = await render_form_html_async(
-            CompleteShowcaseForm,
-            framework=style,
-            form_data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/showcase?style={style}",
-            debug=debug,
-            show_timing=show_timing,
-            enable_logging=True,)
-
+        form_html = await validation.render_with_errors_async()
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Complete Showcase - Complex Form",
@@ -752,7 +739,14 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
     form_dict = dict(form_data)
 
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(PetRegistrationForm, parsed_data)
+    validation = PetRegistrationForm.validate(
+        parsed_data,
+        submit_url=f"/pets?style={style}",
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
 
     full_referer_path = create_refer_path(request)
     if validation.is_valid:
@@ -766,18 +760,7 @@ async def pets_post(request: Request, style: str = "bootstrap", debug: bool = Fa
             "try_again_url": full_referer_path
         })
     else:
-        # Re-render form with errors AND preserve user data
-        form_html = await render_form_html_async(
-            PetRegistrationForm,
-            framework=style,
-            form_data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/pets?style={style}",
-            debug=debug,
-            show_timing=show_timing,
-            enable_logging=True,
-        )
-
+        form_html = await validation.render_with_errors_async()
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Pet Registration - Dynamic Lists",
@@ -878,10 +861,15 @@ async def organization_post(
     form_data = await request.form()
     form_dict = dict(form_data)
 
-    # Validate using the same comprehensive tabbed model used by GET.
     from examples.nested_forms_example import ComprehensiveTabbedForm
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(ComprehensiveTabbedForm, parsed_data)
+    validation = ComprehensiveTabbedForm.validate(
+        parsed_data,
+        submit_url=f"/organization?style={style}",
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+    )
     full_referer_path = create_refer_path(request)
 
     if validation.is_valid:
@@ -895,18 +883,7 @@ async def organization_post(
             "try_again_url": full_referer_path
         })
     else:
-        # Re-render form with validation errors
-        form_html = await render_form_html_async(
-            ComprehensiveTabbedForm,
-            framework=style,
-            form_data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/organization?style={style}",
-            debug=debug,
-            show_timing=show_timing,
-            enable_logging=False,
-        )
-
+        form_html = await validation.render_with_errors_async()
         return templates.TemplateResponse(request, "form.html", {
             "request": request,
             "title": "Comprehensive Tabbed Interface - 6 Tabs! 🚀",
@@ -983,7 +960,13 @@ async def organization_shared_post(
     form_dict = dict(form_data)
 
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(CompanyOrganizationForm, parsed_data)
+    validation = CompanyOrganizationForm.validate(
+        parsed_data,
+        submit_url=f"/organization-shared?style={style}",
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+    )
     full_referer_path = create_refer_path(request)
 
     if validation.is_valid:
@@ -997,17 +980,7 @@ async def organization_shared_post(
             "try_again_url": full_referer_path
         })
 
-    form_html = await render_form_html_async(
-        CompanyOrganizationForm,
-        framework=style,
-        form_data=parsed_data,
-        errors=validation.errors,
-        submit_url=f"/organization-shared?style={style}",
-        debug=debug,
-        show_timing=show_timing,
-        enable_logging=False,
-    )
-
+    form_html = await validation.render_with_errors_async()
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Organization (Shared Models) - 5 Levels Deep 🏢",
@@ -1128,7 +1101,7 @@ async def layouts_post(
     full_referer_path = create_refer_path(request)
 
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(LayoutDemonstrationForm, parsed_data)
+    validation = LayoutDemonstrationForm.validate(parsed_data)
 
     if validation.is_valid:
         return templates.TemplateResponse(request, "success.html", {
@@ -1256,7 +1229,15 @@ async def self_contained_post(
     form_data = await request.form()
     form_dict = dict(form_data)
     parsed_data = parse_nested_form_data(form_dict)
-    validation = validate_form_data(UserRegistrationForm, parsed_data)
+    _submit_url = f"/self-contained?style={selected_style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}"
+    validation = UserRegistrationForm.validate(
+        parsed_data,
+        submit_url=_submit_url,
+        framework=selected_style,
+        self_contained=True,
+        debug=debug,
+        show_timing=show_timing,
+    )
 
     if validation.is_valid:
         full_referer_path = create_refer_path(request)
@@ -1270,16 +1251,7 @@ async def self_contained_post(
             "try_again_url": full_referer_path
         })
 
-    form_html = await render_form_html_async(
-        UserRegistrationForm,
-        framework=selected_style,
-        form_data=parsed_data,
-        errors=validation.errors,
-        submit_url=f"/self-contained?style={selected_style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}",
-        self_contained=True,
-        debug=debug,
-        show_timing=show_timing,
-    )
+    form_html = await validation.render_with_errors_async()
     form_html = wrap_with_schemaforms_markers(form_html)
     renderer_name = "SimpleMaterialRenderer" if selected_style == "material" else "EnhancedFormRenderer"
     return render_self_contained_demo_page(selected_style, form_html, renderer_name)
@@ -1339,10 +1311,9 @@ async def api_submit_form(form_type: str, request: Request):
 
     form_class = FORM_REGISTRY[form_type]
 
-    # Get JSON data asynchronously
     json_data = await request.json()
 
-    validation = validate_form_data(form_class, json_data)
+    validation = form_class.validate(json_data)
 
     return {
         "success": validation.is_valid,

@@ -101,12 +101,14 @@ is_valid, errors = form_validator.validate({
 
 ## Server-Side Validation
 
-### Using validate_form_data()
+### Using FormModel.validate()
 
-For simple synchronous validation against a Pydantic `FormModel`:
+The recommended way to validate submitted data is `FormModel.validate()`. Pass `submit_url`
+(and optionally `framework` plus any other render kwargs) once; on failure, call
+`render_with_errors()` with no arguments — the result re-renders itself:
 
 ```python
-from pydantic_schemaforms import FormModel, FormField, validate_form_data
+from pydantic_schemaforms import FormModel, FormField
 
 class RegistrationForm(FormModel):
     username: str = FormField(
@@ -124,18 +126,34 @@ class RegistrationForm(FormModel):
         min_length=8
     )
 
-# Validate incoming form data
-result = validate_form_data(RegistrationForm, {
-    "username": "alice",
-    "email": "alice@example.com",
-    "password": "SecurePass123!"
-})
+# Validate — stores submit_url so render_with_errors() needs no args
+result = RegistrationForm.validate(
+    {"username": "alice", "email": "alice@example.com", "password": "SecurePass123!"},
+    submit_url="/register",
+)
 
 if result.is_valid:
     print(f"Valid! Data: {result.data}")
 else:
     print(f"Invalid! Errors: {result.errors}")
-    # Result has: result.is_valid, result.data, result.errors
+    html = result.render_with_errors()          # sync (Flask / scripts)
+    # html = await result.render_with_errors_async()  # async (FastAPI)
+```
+
+`result` always exposes `.is_valid`, `.data`, and `.errors` regardless of the path.
+
+### Using validate_form_data() directly
+
+`validate_form_data()` is the lower-level function used by `FormModel.validate()`. It is
+still available for cases where you only need the validation result and do not intend to
+re-render the form from the result object:
+
+```python
+from pydantic_schemaforms import validate_form_data
+
+result = validate_form_data(RegistrationForm, submitted_data)
+if result.is_valid:
+    process(result.data)
 ```
 
 ### Using FormValidator with Pydantic Models
@@ -557,40 +575,32 @@ live_validator = form_validator.build_live_validator()
 #### 3. FastAPI Endpoints
 
 ```python
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic_schemaforms import render_form, validate_form_data
+from pydantic_schemaforms import render_form_html_async
 
 app = FastAPI()
 
-@app.get("/register")
-def show_registration():
-    form = RegistrationForm()
-    return render_form(form, framework="bootstrap", submit_url="/register")
+@app.get("/register", response_class=HTMLResponse)
+async def show_registration():
+    return await render_form_html_async(
+        RegistrationForm, framework="bootstrap", submit_url="/register"
+    )
 
-@app.post("/register")
+@app.post("/register", response_class=HTMLResponse)
 async def handle_registration(request: Request):
-    # Get form data
     form_data = await request.form()
-
-    # Server-side validation
-    result = validate_form_data(RegistrationForm, dict(form_data))
+    result = RegistrationForm.validate(
+        dict(form_data), submit_url="/register", framework="bootstrap"
+    )
 
     if result.is_valid:
-        # Process registration
         return JSONResponse({
             "success": True,
             "message": "Registration successful!"
         })
     else:
-        # Return form with errors
-        form = RegistrationForm()
-        return render_form(
-            form,
-            framework="bootstrap",
-            errors=result.errors,
-            submit_url="/register"
-        )
+        return await result.render_with_errors_async()
 
 # HTMX validation endpoints
 @app.post("/validate/username")

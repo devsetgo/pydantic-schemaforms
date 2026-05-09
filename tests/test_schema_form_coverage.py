@@ -262,8 +262,8 @@ class TestValidationResult:
         assert 'valid=False' in result_str
         assert 'errors' in result_str
 
-    def test_validation_result_render_with_errors(self):
-        """Test ValidationResult.render_with_errors method."""
+    def test_validation_result_render_with_errors_explicit_url(self):
+        """Test ValidationResult.render_with_errors with explicit submit_url."""
         class TestForm(FormModel):
             name: str = ""
 
@@ -278,7 +278,40 @@ class TestValidationResult:
         html = result.render_with_errors(framework='bootstrap', submit_url="/test")
 
         assert isinstance(html, str)
-        # Should contain form HTML
+        assert "<form" in html
+
+    def test_validation_result_render_with_errors_stored_url(self):
+        """render_with_errors() with no arguments uses url stored at construction."""
+        class TestForm(FormModel):
+            name: str = ""
+
+        result = ValidationResult(
+            is_valid=False,
+            errors={'name': 'Required'},
+            form_model_cls=TestForm,
+            original_data={'name': ''},
+            submit_url="/stored-url",
+        )
+
+        html = result.render_with_errors()
+
+        assert isinstance(html, str)
+        assert "<form" in html
+
+    def test_validation_result_render_with_errors_no_url_raises(self):
+        """render_with_errors() raises when no submit_url is available."""
+        class TestForm(FormModel):
+            name: str = ""
+
+        result = ValidationResult(
+            is_valid=False,
+            errors={'name': 'Required'},
+            form_model_cls=TestForm,
+            original_data={'name': ''},
+        )
+
+        with pytest.raises(ValueError, match="submit_url is required"):
+            result.render_with_errors()
 
     def test_validation_result_render_with_errors_no_model(self):
         """Test ValidationResult.render_with_errors raises without form_model_cls."""
@@ -421,3 +454,91 @@ class TestFormModelRenderForm:
         html = FrameworkForm.render_form(framework='material', submit_url="/framework")
 
         assert isinstance(html, str)
+
+
+class TestFormModelValidate:
+    """Test FormModel.validate() classmethod."""
+
+    def test_validate_valid_data(self):
+        """validate() returns is_valid=True with clean data."""
+        class SimpleForm(FormModel):
+            name: str
+            age: int
+
+        result = SimpleForm.validate({'name': 'Alice', 'age': 30}, submit_url="/submit")
+
+        assert result.is_valid
+        assert result.data['name'] == 'Alice'
+        assert result.data['age'] == 30
+        assert result.errors == {}
+
+    def test_validate_invalid_data(self):
+        """validate() returns is_valid=False with errors on bad data."""
+        class SimpleForm(FormModel):
+            name: str
+            age: int
+
+        result = SimpleForm.validate({'name': 'Alice'}, submit_url="/submit")
+
+        assert not result.is_valid
+        assert 'age' in result.errors
+
+    def test_validate_stores_submit_url(self):
+        """validate() stores submit_url so render_with_errors() needs no args."""
+        class SimpleForm(FormModel):
+            name: str
+
+        result = SimpleForm.validate({}, submit_url="/my-form")
+
+        assert not result.is_valid
+        html = result.render_with_errors()
+        assert isinstance(html, str)
+        assert "<form" in html
+
+    def test_validate_stores_framework(self):
+        """validate() stores the framework for re-render."""
+        class SimpleForm(FormModel):
+            name: str
+
+        result = SimpleForm.validate({}, submit_url="/my-form", framework="material")
+
+        assert not result.is_valid
+        assert result._framework == "material"
+
+    def test_validate_render_with_errors_no_args(self):
+        """The complete happy-path: validate then render_with_errors() with zero args."""
+        class ContactForm(FormModel):
+            email: str = Field(default="", ui_element="email")
+            message: str = Field(default="", ui_element="textarea")
+
+        result = ContactForm.validate(
+            {'email': 'bad-email', 'message': ''},
+            submit_url="/contact",
+        )
+
+        if not result.is_valid:
+            html = result.render_with_errors()
+            assert isinstance(html, str)
+            assert "<form" in html
+
+    def test_validate_without_submit_url(self):
+        """validate() without submit_url stores None; render_with_errors raises."""
+        class SimpleForm(FormModel):
+            name: str
+
+        result = SimpleForm.validate({})
+
+        assert not result.is_valid
+        with pytest.raises(ValueError, match="submit_url is required"):
+            result.render_with_errors()
+
+    def test_validate_explicit_url_overrides_stored(self):
+        """An explicit submit_url on render_with_errors overrides the stored one."""
+        class SimpleForm(FormModel):
+            name: str
+
+        result = SimpleForm.validate({}, submit_url="/original")
+        html = result.render_with_errors(submit_url="/override")
+
+        assert isinstance(html, str)
+        assert "<form" in html
