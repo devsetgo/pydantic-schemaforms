@@ -304,3 +304,33 @@ def test_package_logger_uses_null_handler() -> None:
     assert pkg_logger.propagate is True, (
         "Library logger must propagate to let the application handle records"
     )
+
+
+def test_integration_public_api_imports_directly_without_frameworks_shim() -> None:
+    """integration/__init__.py must export all symbols via direct imports, not frameworks/."""
+    import importlib
+    import pydantic_schemaforms.integration as integ
+
+    # All expected public symbols must be importable from the package
+    expected = [
+        "FormBuilder",
+        "AutoFormBuilder",
+        "FormIntegration",
+        "handle_form",
+        "handle_form_async",
+        "handle_async_form",
+        "handle_sync_form",
+        "normalize_form_data",
+        "JSONSchemaGenerator",
+        "OpenAPISchemaGenerator",
+        "ReactJSONSchemaIntegration",
+        "VueFormulateIntegration",
+    ]
+    for name in expected:
+        assert hasattr(integ, name), f"integration.{name} is missing"
+
+    # The frameworks/ shim subdirectory must no longer exist
+    spec = importlib.util.find_spec("pydantic_schemaforms.integration.frameworks")
+    assert spec is None, (
+        "integration.frameworks shim package still exists — it should have been deleted"
+    )
