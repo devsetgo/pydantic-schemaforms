@@ -14,7 +14,7 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
 from .layout_base import BaseLayout as SharedBaseLayout
-from .assets.runtime import framework_css_tag, framework_js_tag
+from .assets.runtime import bootstrap_icons_css_tag, framework_css_tag, framework_js_tag
 from .rendering.layout_engine import HorizontalLayout as FlexHorizontalLayout
 from .rendering.layout_engine import TabLayout as ComponentTabLayout
 from .rendering.layout_engine import VerticalLayout as FlexVerticalLayout
@@ -544,6 +544,11 @@ class TabbedLayout(FormLayoutBase):
         asset_mode = getattr(self.form_config, "asset_mode", "vendored")
         css_tag = framework_css_tag(framework=self.form_config.ui_theme, asset_mode=asset_mode)
         js_tag = framework_js_tag(framework=self.form_config.ui_theme, asset_mode=asset_mode)
+        icons_tag = (
+            bootstrap_icons_css_tag(asset_mode=asset_mode)
+            if (self.form_config.ui_theme or "").strip().lower() == "bootstrap"
+            else ""
+        )
 
         # Get form attributes
         form_attrs = self.form_config.get_form_attributes()
@@ -556,6 +561,7 @@ class TabbedLayout(FormLayoutBase):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{self.form_config.form_name}</title>
     {css_tag}
+    {icons_tag}
     <style>
         body {{ background-color: #f8f9fa; }}
         .form-container {{

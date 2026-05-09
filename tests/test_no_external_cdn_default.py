@@ -22,3 +22,19 @@ def test_render_form_cdn_mode_includes_unpkg() -> None:
     v = vendored_asset_version('htmx')
     assert v is not None
     assert f'htmx.org@{v}' in html
+
+
+def test_self_contained_form_has_no_cdn_urls() -> None:
+    from pydantic_schemaforms.enhanced_renderer import render_form_html as enhanced_render
+
+    html = enhanced_render(_CdnCheckForm, submit_url="/test", self_contained=True)
+    assert 'cdn.jsdelivr.net' not in html
+    assert 'unpkg.com' not in html
+    # Bootstrap Icons woff2 must be embedded, not fetched from network
+    assert 'data:font/woff2;base64,' in html
+
+
+def test_bootstrap_icons_vendored_version_is_recorded() -> None:
+    v = vendored_asset_version('bootstrap-icons')
+    assert v is not None
+    assert v.count('.') >= 1  # semver-ish

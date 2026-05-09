@@ -18,6 +18,20 @@ def test_render_form_page_cdn_opt_in_includes_bootstrap() -> None:
         asset_mode="cdn",
     )
     assert "cdn.jsdelivr.net/npm/bootstrap@5.3.0" in html
+    assert "cdn.jsdelivr.net/npm/bootstrap-icons@" in html
+
+
+def test_render_form_page_vendored_includes_bootstrap_icons() -> None:
+    from pydantic_schemaforms.integration.builder import create_login_form, render_form_page
+
+    html = render_form_page(
+        create_login_form(),
+        title="Login",
+        include_framework_assets=True,
+        asset_mode="vendored",
+    )
+    assert "cdn.jsdelivr.net" not in html
+    assert "data:font/woff2;base64," in html
 
 
 def test_form_design_framework_urls_offline_by_default() -> None:

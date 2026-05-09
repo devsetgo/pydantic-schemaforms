@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -48,6 +48,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
 from examples.nested_forms_example import create_comprehensive_sample_data
 
 from pydantic_schemaforms import render_form_html_async
+from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
 from pydantic_schemaforms.form_data import parse_nested_form_data
 from pydantic_schemaforms.form_layouts import FormLayoutBase
 
@@ -140,6 +141,13 @@ templates.env.filters['safe_json'] = safe_json_filter
 
 # Mount /static to serve images (for favicon, etc.)
 app.mount("/static", StaticFiles(directory=_base_dir / "img"), name="static")
+
+
+@app.get("/vendor/bootstrap-icons.css")
+async def vendor_bootstrap_icons_css():
+    """Serve the vendored Bootstrap Icons CSS with the woff2 font embedded as a data URI."""
+    css = bootstrap_icons_css_content()
+    return Response(content=css, media_type="text/css")
 
 
 def render_self_contained_demo_page(selected_style: str, form_html: str, renderer_name: str) -> str:

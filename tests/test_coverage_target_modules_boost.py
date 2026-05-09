@@ -73,6 +73,12 @@ def test_runtime_asset_helpers_cover_modes_and_fallbacks(monkeypatch: pytest.Mon
     assert runtime_assets.framework_css_tag(framework='unknown', asset_mode='vendored') == ''
     assert runtime_assets.framework_js_tag(framework='unknown', asset_mode='vendored') == ''
 
+    # bootstrap_icons_css_tag: none → empty; cdn → jsdelivr link
+    assert runtime_assets.bootstrap_icons_css_tag(asset_mode='none') == ''
+    cdn_icons = runtime_assets.bootstrap_icons_css_tag(asset_mode='cdn')
+    assert 'cdn.jsdelivr.net' in cdn_icons
+    assert 'bootstrap-icons' in cdn_icons
+
 
 def test_form_field_convenience_helpers_and_optional_validation() -> None:
     FormField.validate_input_type(Optional[str], 'text', 'title')

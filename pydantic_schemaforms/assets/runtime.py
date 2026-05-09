@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import json
+import re
 from functools import lru_cache
 from importlib import resources
 
@@ -13,6 +15,13 @@ def read_asset_text(relative_path: str) -> str:
     """
     package_root = resources.files('pydantic_schemaforms')
     return (package_root / relative_path).read_text(encoding='utf-8')
+
+
+@lru_cache(maxsize=8)
+def read_asset_bytes(relative_path: str) -> bytes:
+    """Read packaged asset bytes by path relative to the pydantic_schemaforms package."""
+    package_root = resources.files('pydantic_schemaforms')
+    return (package_root / relative_path).read_bytes()
 
 
 def script_tag_inline(js: str) -> str:
@@ -179,3 +188,50 @@ def framework_js_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
         return script_tag_inline(js) if js else ''
 
     return ''
+
+
+@lru_cache(maxsize=4)
+def _bootstrap_icons_css_inlined() -> str:
+    """Return Bootstrap Icons CSS with the woff2 font inlined as a data URI."""
+    css = _vendored_text_or_empty('assets/vendor/bootstrap-icons/bootstrap-icons.min.css')
+    if not css:
+        return ''
+    try:
+        font_bytes = read_asset_bytes('assets/vendor/bootstrap-icons/bootstrap-icons.woff2')
+        b64 = base64.b64encode(font_bytes).decode('ascii')
+        data_uri = f'data:font/woff2;base64,{b64}'
+        # Replace both the woff2 url (with or without cache-buster query string) and the
+        # woff fallback url so the @font-face block is fully self-contained.
+        css = re.sub(r'url\("[^"]*\.woff2[^"]*"\)\s*format\("woff2"\)', f'url("{data_uri}") format("woff2")', css)
+        css = re.sub(r',\s*url\("[^"]*\.woff[^"]*"\)\s*format\("woff"\)', '', css)
+    except FileNotFoundError:
+        pass
+    return css
+
+
+def bootstrap_icons_css_content() -> str:
+    """Return the Bootstrap Icons CSS with the woff2 font embedded as a data URI.
+
+    Use this when you want to serve the CSS yourself (e.g., from a static endpoint).
+    For embedding directly in HTML, use ``bootstrap_icons_css_tag()``.
+    """
+    return _bootstrap_icons_css_inlined()
+
+
+def bootstrap_icons_css_tag(*, asset_mode: str = 'vendored') -> str:
+    """Return the Bootstrap Icons <style> or <link> tag based on the requested asset mode.
+
+    Modes:
+    - vendored: inline the CSS with the woff2 font embedded as a data URI (default)
+    - cdn: reference the pinned jsDelivr URL
+    - none: return empty string
+    """
+    mode = _normalized_asset_mode(asset_mode)
+    if mode == 'none':
+        return ''
+    if mode == 'cdn':
+        return style_tag_href(
+            _pinned_jsdelivr_url('bootstrap-icons', 'bootstrap-icons', 'font/bootstrap-icons.min.css')
+        )
+    css = _bootstrap_icons_css_inlined()
+    return style_tag_inline(css) if css else ''

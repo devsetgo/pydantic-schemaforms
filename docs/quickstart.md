@@ -65,7 +65,7 @@ async def user_form(request: Request):
 `User.validate()` stores the submit URL so `render_with_errors_async()` needs no arguments.
 Use `render_with_errors_async()` in async routes to avoid blocking the event loop.
 
-If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`.
+If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`. For Bootstrap forms this inlines Bootstrap CSS/JS and Bootstrap Icons (woff2 embedded) — no CDN required.
 
 See: [configuration.md](configuration.md) and [assets.md](assets.md).
 
