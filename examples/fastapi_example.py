@@ -1057,35 +1057,19 @@ async def layouts_get(
             }
         }
 
-    # Use Enhanced Renderer directly to avoid render_form_html wrapper issues
-    if style == "material":
-        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
-        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-        renderer = SimpleMaterialRenderer()
-        form_html = await renderer.render_form_from_model_async(
-            LayoutDemonstrationForm,
-            data=form_data,
-            errors={},
-            submit_url=f"/layouts?style={style}",
-            include_submit_button=True,
-            debug=debug,
-            show_timing=show_timing,
-        )
-        form_html = wrap_with_schemaforms_markers(form_html)
-    else:
-        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
-        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-        renderer = EnhancedFormRenderer(framework=style)
-        form_html = await renderer.render_form_from_model_async(
-            LayoutDemonstrationForm,
-            data=form_data,
-            errors={},
-            submit_url=f"/layouts?style={style}",
-            include_submit_button=True,
-            debug=debug,
-            show_timing=show_timing,
-        )
-        form_html = wrap_with_schemaforms_markers(form_html)
+    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
+    renderer = EnhancedFormRenderer(framework=style)
+    form_html = await renderer.render_form_from_model_async(
+        LayoutDemonstrationForm,
+        data=form_data,
+        errors={},
+        submit_url=f"/layouts?style={style}",
+        include_submit_button=True,
+        debug=debug,
+        show_timing=show_timing,
+    )
+    form_html = wrap_with_schemaforms_markers(form_html)
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
         "title": "Layout Demonstration - All Types",
@@ -1123,36 +1107,20 @@ async def layouts_post(
         })
 
     # Re-render the form with validation errors + user data.
-    if style == "material":
-        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
-        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
+    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
-        renderer = SimpleMaterialRenderer()
-        form_html = await renderer.render_form_from_model_async(
-            LayoutDemonstrationForm,
-            data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/layouts?style={style}",
-            include_submit_button=True,
-            debug=debug,
-            show_timing=show_timing,
-        )
-        form_html = wrap_with_schemaforms_markers(form_html)
-    else:
-        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
-        from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-
-        renderer = EnhancedFormRenderer(framework=style)
-        form_html = await renderer.render_form_from_model_async(
-            LayoutDemonstrationForm,
-            data=parsed_data,
-            errors=validation.errors,
-            submit_url=f"/layouts?style={style}",
-            include_submit_button=True,
-            debug=debug,
-            show_timing=show_timing,
-        )
-        form_html = wrap_with_schemaforms_markers(form_html)
+    renderer = EnhancedFormRenderer(framework=style)
+    form_html = await renderer.render_form_from_model_async(
+        LayoutDemonstrationForm,
+        data=parsed_data,
+        errors=validation.errors,
+        submit_url=f"/layouts?style={style}",
+        include_submit_button=True,
+        debug=debug,
+        show_timing=show_timing,
+    )
+    form_html = wrap_with_schemaforms_markers(form_html)
 
     return templates.TemplateResponse(request, "form.html", {
         "request": request,
@@ -1210,7 +1178,7 @@ async def self_contained(
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    renderer_name = "SimpleMaterialRenderer" if selected_style == "material" else "EnhancedFormRenderer"
+    renderer_name = "EnhancedFormRenderer"
     return render_self_contained_demo_page(selected_style, form_html, renderer_name)
 
 
@@ -1261,7 +1229,7 @@ async def self_contained_post(
 
     form_html = await validation.render_with_errors_async()
     form_html = wrap_with_schemaforms_markers(form_html)
-    renderer_name = "SimpleMaterialRenderer" if selected_style == "material" else "EnhancedFormRenderer"
+    renderer_name = "EnhancedFormRenderer"
     return render_self_contained_demo_page(selected_style, form_html, renderer_name)
 
 # ================================

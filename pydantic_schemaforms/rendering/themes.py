@@ -376,6 +376,9 @@ class MaterialEmbeddedTheme(RendererTheme):
         self._css = self._build_css()
         self._js = self._build_js()
 
+    def button_class(self) -> str:
+        return ""
+
 
     def before_form(self) -> str:
         return "\n".join(

@@ -24,6 +24,7 @@ from pydantic_schemaforms.rendering.form_style import FormStyle, get_form_style,
 from pydantic_schemaforms.rendering.schema_parser import _extract_ui_info, _field_info_to_schema, _infer_field_type
 from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme, RendererTheme
 from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 
 
@@ -221,7 +222,7 @@ def test_renderer_theme_fallback_and_wrapper_timing(monkeypatch: pytest.MonkeyPa
     assert "Rendered in 0.500s" in wrapped
 
 
-def test_material_embedded_theme_and_simple_material_renderer_branches() -> None:
+def test_material_embedded_theme_and_renderer_branches() -> None:
     theme = MaterialEmbeddedTheme()
     transformed = theme.transform_form_attributes({"class": "x", "novalidate": True})
     assert transformed["class"].startswith("md-form")
@@ -242,18 +243,24 @@ def test_material_embedded_theme_and_simple_material_renderer_branches() -> None
     assert "md-model-list-wrapper" in container
     assert "md-help-text" not in container
 
-    renderer = SimpleMaterialRenderer()
+    # Material field helpers now live on EnhancedFormRenderer(framework="material")
+    renderer = EnhancedFormRenderer(framework="material")
     assert renderer._attr(None) == ""
-    assert renderer._render_help_block(None) == ""
-    assert renderer._render_error_block(None) == ""
+    assert renderer._render_material_help_block(None) == ""
+    assert renderer._render_material_error_block(None) == ""
     assert renderer._model_list_framework() == "bootstrap"
 
     # enum fallback for select options and scalar option normalization
-    options = renderer._build_select_options({}, {"enum": ["A", "B"]})
+    options = renderer._build_material_select_options({}, {"enum": ["A", "B"]})
     assert options == [["A", "A"], ["B", "B"]]
 
-    options2 = renderer._build_select_options({"options": ["X", {"value": "Y", "label": "Why"}]}, {})
+    options2 = renderer._build_material_select_options({"options": ["X", {"value": "Y", "label": "Why"}]}, {})
     assert options2 == [["X", "X"], ["Y", "Why"]]
+
+    # SimpleMaterialRenderer is a backward-compat alias — verify it still works
+    compat = SimpleMaterialRenderer()
+    assert isinstance(compat, EnhancedFormRenderer)
+    assert compat.framework == "material"
 
 
 def test_form_style_registry_keyerror_branch() -> None:

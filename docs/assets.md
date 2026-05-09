@@ -33,7 +33,7 @@ Most APIs accept `asset_mode` with these values:
 File: `pydantic_schemaforms/render_form.py`
 
 - `asset_mode="vendored" | "cdn" | "none"`
-- `include_framework_assets`: whether to include framework CSS/JS (Bootstrap/Materialize) in the returned HTML.
+- `include_framework_assets`: whether to include framework CSS/JS (Bootstrap or Material Design) in the returned HTML.
 - HTMX is included by default (vendored inline) because this wrapper historically assumed HTMX.
 - IMask is available but **not injected unless requested**.
 

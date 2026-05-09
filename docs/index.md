@@ -351,8 +351,8 @@ form_html = UserRegistrationForm.render_form(
 ```python
 UserForm.render_form(framework="material", submit_url="/submit")
 ```
-- Materialize CSS framework
-- Floating labels and animations
+- Self-contained Material Design 3 theme (no Materialize CSS dependency)
+- Floating labels and animations via `MaterialEmbeddedTheme`
 - Material icons integration
 
 ### Plain HTML
@@ -366,8 +366,10 @@ UserForm.render_form(framework="none", submit_url="/submit")
 
 ## Renderer Architecture
 
-- **EnhancedFormRenderer** is the canonical renderer. It walks the Pydantic `FormModel`, feeds the shared `LayoutEngine`, and delegates chrome/assets to a `RendererTheme`.
-- **ModernFormRenderer** now piggybacks on Enhanced by generating a throwaway `FormModel` from legacy `FormDefinition`/`FormField` helpers. It exists so existing builder/integration code keeps working while still benefiting from the shared pipeline. (The old `Py314Renderer` alias has been removed; import `ModernFormRenderer` directly when you need the builder DSL.)
+- **EnhancedFormRenderer** is the canonical renderer for all frameworks. It walks the Pydantic `FormModel`, feeds the shared `LayoutEngine`, and delegates chrome/assets to a `RendererTheme`. Pass `framework="bootstrap"` (default), `"material"`, or `"none"` — all routes go through the same engine.
+- **`render_form_html()` helper** is a thin wrapper around `EnhancedFormRenderer` for all frameworks. Pass `self_contained=True` to inline all assets; `asset_mode="vendored"` / `"cdn"` to control how framework CSS/JS are delivered.
+- **`SimpleMaterialRenderer`** is kept as a backward-compatible alias for `EnhancedFormRenderer(framework="material")`. New code should use `EnhancedFormRenderer` directly.
+- **ModernFormRenderer** piggybacks on Enhanced by generating a throwaway `FormModel` from legacy `FormDefinition`/`FormField` helpers. It exists so existing builder/integration code keeps working while still benefiting from the shared pipeline. (The old `Py314Renderer` alias has been removed; import `ModernFormRenderer` directly when you need the builder DSL.)
 
 Because everything flows through Enhanced, fixes to layout, validation, or framework themes immediately apply to every renderer (Bootstrap, Material, embedded/self-contained, etc.). Choose the renderer based on the API surface you prefer (Pydantic models for `FormModel` or the builder DSL for `ModernFormRenderer`); the generated HTML is orchestrated by the same core engine either way.
 
@@ -717,7 +719,7 @@ Field(
 ### Framework Options
 
 - `"bootstrap"` - Bootstrap 5 styling (recommended)
-- `"material"` - Material Design (Materialize CSS)
+- `"material"` - Material Design 3 (self-contained, no external CSS framework)
 - `"none"` - Plain HTML5 forms
 
 ---

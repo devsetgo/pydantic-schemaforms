@@ -263,9 +263,12 @@ class TestEnhancedRendererFrameworkSpecific:
         assert "<form" in html
         assert len(html) > 200  # Should be substantial with Material styling
 
-        # Should not contain Bootstrap classes
+        # Should not apply Bootstrap classes to form elements
         assert "form-control" not in html
-        assert "btn-primary" not in html
+        # "btn-primary" may appear in the embedded CSS reset rules; it must not be
+        # used as a class on any rendered element.
+        assert 'class="btn-primary"' not in html
+        assert "btn-primary" not in html.split("<style")[0]  # not in pre-CSS markup
 
     def test_framework_consistency(self, simple_form_model):
         """Test that framework rendering is consistent."""

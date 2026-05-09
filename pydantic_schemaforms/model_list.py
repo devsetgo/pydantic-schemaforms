@@ -289,9 +289,9 @@ class ModelListRenderer:
     ) -> str:
         """Render a single Material Design list item."""
 
-        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
-        renderer = SimpleMaterialRenderer()
+        renderer = EnhancedFormRenderer(framework="material")
 
         schema = model_class.model_json_schema()
         schema_defs = schema.get("$defs") or schema.get("definitions", {}) or {}
