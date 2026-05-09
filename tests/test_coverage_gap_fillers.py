@@ -277,3 +277,30 @@ def test_form_style_registry_keyerror_branch() -> None:
     finally:
         registry.clear()
         registry.update(backup)
+
+
+def test_package_logger_uses_null_handler() -> None:
+    import logging
+
+    pkg_logger = logging.getLogger("pydantic_schemaforms")
+
+    # Library must not install a StreamHandler (PEP 282)
+    handler_types = [type(h).__name__ for h in pkg_logger.handlers]
+    assert "StreamHandler" not in handler_types, (
+        f"Library installed a StreamHandler — breaks callers' logging config: {handler_types}"
+    )
+
+    # At least one NullHandler must be present so "No handlers" warnings are suppressed
+    assert any(isinstance(h, logging.NullHandler) for h in pkg_logger.handlers), (
+        "Library logger should have a NullHandler"
+    )
+
+    # Level must not be forced — leave it to the application (NOTSET == 0)
+    assert pkg_logger.level == logging.NOTSET, (
+        f"Library must not force a log level (got {pkg_logger.level})"
+    )
+
+    # propagate must be True so records reach the application's root handler
+    assert pkg_logger.propagate is True, (
+        "Library logger must propagate to let the application handle records"
+    )

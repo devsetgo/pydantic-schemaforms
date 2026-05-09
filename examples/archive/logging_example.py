@@ -5,8 +5,9 @@ Logging Configuration Example
 
 This example shows how to configure logging for pydantic-schemaforms.
 
-By default, the library uses DEBUG level logging which won't appear
-unless you explicitly configure your application to show DEBUG logs.
+The library attaches only a NullHandler to its logger (PEP 282), so it
+never produces output by default. Configure handlers and levels in your
+application to see library log records.
 """
 
 import logging
@@ -114,7 +115,9 @@ def example_4_selective_logging():
         force=True
     )
 
-    # Enable DEBUG only for pydantic_schemaforms
+    # Enable DEBUG only for pydantic_schemaforms.
+    # Records propagate to the root logger, so the root handler (configured
+    # above via basicConfig) will emit them.
     pydantic_logger = logging.getLogger('pydantic_schemaforms')
     pydantic_logger.setLevel(logging.DEBUG)
 
@@ -143,8 +146,8 @@ if __name__ == "__main__":
     print("SUMMARY")
     print("=" * 70)
     print()
-    print("✅ Library logs use DEBUG level - won't appear by default")
-    print("✅ Application controls logging - library doesn't interfere")
-    print("✅ Enable DEBUG level to see library internals when needed")
+    print("✅ Library uses NullHandler - no output unless app configures logging")
+    print("✅ Application controls all handlers and levels - library doesn't interfere")
+    print("✅ Enable DEBUG level (with a handler) to see library internals when needed")
     print("✅ show_timing parameter still works in HTML regardless of logging")
     print()

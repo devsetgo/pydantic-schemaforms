@@ -123,15 +123,10 @@ __description__ = "Modern form generation library for Python 3.14+"
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
-# Set up package-level logger
+# Library logger — callers configure handlers; we add NullHandler to suppress
+# "No handlers could be found" warnings (PEP 282 / logging best-practices).
 logger = logging.getLogger(__package__)
-if not logger.hasHandlers():
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
-logger.propagate = False
+logger.addHandler(logging.NullHandler())
 
 # Main exports for common usage
 __all__ = [

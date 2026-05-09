@@ -570,61 +570,44 @@ See [Render Timing Docs](https://devsetgo.github.io/pydantic-schemaforms/timing/
 
 ## Application Logging
 
-The library provides optional DEBUG-level logging that respects your application's logging configuration:
+`pydantic_schemaforms` follows the standard library logging convention (PEP 282): it attaches only a `NullHandler` to its logger and leaves all handler/level configuration to the application. This means importing the library never produces log output by default.
 
-### Automatic Timing Logs
-
-Timing is always logged at INFO level (for production monitoring):
+### Enable logging in your app
 
 ```python
 import logging
 from pydantic_schemaforms import render_form_html
 
-logging.basicConfig(level=logging.INFO)
-html = render_form_html(MyForm, submit_url="/submit")
-# Timing is logged automatically
-```
-
-### Optional Debug Logs
-
-Enable DEBUG logging to see detailed rendering steps:
-
-```python
-import logging
-from pydantic_schemaforms import render_form_html
-
-# Option 1: Application-level DEBUG
+# Route all logs (including library DEBUG) through the root logger
 logging.basicConfig(level=logging.DEBUG)
 html = render_form_html(MyForm, submit_url="/submit")
 # ✅ Timing + debug logs appear
-
-# Option 2: Per-render control
-html = render_form_html(MyForm, enable_logging=True, submit_url="/submit")
-# ✅ Debug logs appear for this render only
 ```
 
-### Selective Logger Configuration
+### Selective logger configuration
 
-Enable library debugging without affecting your app's logging:
+To see library debug output without raising the root logger level:
 
 ```python
 import logging
 
-# Application at INFO level
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)  # root stays at INFO
 
-# Library DEBUG logs
-library_logger = logging.getLogger('pydantic_schemaforms')
-library_logger.setLevel(logging.DEBUG)
+lib_logger = logging.getLogger('pydantic_schemaforms')
+lib_logger.setLevel(logging.DEBUG)
+# Records propagate to root, so the root handler will emit them.
+# Add a dedicated handler here if you want a separate destination.
 
 html = render_form_html(MyForm, submit_url="/submit")
-# ✅ Library debug logs visible
-# ✅ App remains at INFO level
+# ✅ Library debug logs visible, app remains at INFO
 ```
 
-**Best Practice**: Use Approach 1 (application-level configuration) in most cases. The library respects your app's logging setup.
+### Per-render debug flag
 
-See [Application Logging Docs](https://devsetgo.github.io/pydantic-schemaforms/logging/) for complete details and integration examples.
+```python
+html = render_form_html(MyForm, enable_logging=True, submit_url="/submit")
+# ✅ Debug logs emitted for this render only (honours the active logger config)
+```
 
 ---
 
