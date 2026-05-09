@@ -102,9 +102,9 @@ These rules are intended to prevent “helpful” drift away from the original c
   All framework rendering — Bootstrap, Material, and plain — goes through `EnhancedFormRenderer`. Material field rendering (`_render_material_field` and 13 helper methods) lives in `enhanced_renderer.py`; `MaterialEmbeddedTheme` handles CSS/JS chrome. `SimpleMaterialRenderer` is now a 28-line backward-compatible alias (`class SimpleMaterialRenderer(EnhancedFormRenderer)` with `__init__` calling `super().__init__(framework="material")`). The `render_form_html()` helper no longer has a hardcoded `if framework == "material"` branch — it instantiates `EnhancedFormRenderer(framework=framework)` for every framework, so `include_framework_assets`, `asset_mode`, and `self_contained` now work correctly for Material too.
   _Files:_ `pydantic_schemaforms/enhanced_renderer.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/simple_material_renderer.py`
 
-- **Integration helpers mix unrelated responsibilities (Addressed)**
-  The synchronous/async adapters now live in `pydantic_schemaforms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_schemaforms.integration` no longer drags in optional framework glue unless those helpers are actually accessed.
-  _Files:_ `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/integration/frameworks/`, `pydantic_schemaforms/integration/builder.py`
+- **Integration helpers mix unrelated responsibilities (Resolved)**
+  The `integration/frameworks/` compatibility shim layer has been deleted. The sync/async helpers (`handle_form`, `handle_form_async`, `handle_async_form`, `handle_sync_form`, `normalize_form_data`, `FormIntegration`) are now imported directly from their canonical modules (`adapters.py`, `async_support.py`, `sync.py`) in `integration/__init__.py`. The `_LAZY_EXPORTS`/`__getattr__` indirection is gone; all integration symbols are regular module-level imports.
+  _Files:_ `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/integration/adapters.py`, `pydantic_schemaforms/integration/sync.py`, `pydantic_schemaforms/integration/async_support.py`
 
 ## Medium Priority Refactors & Opportunities
 
@@ -134,8 +134,8 @@ These rules are intended to prevent “helpful” drift away from the original c
   _Files:_ `pydantic_schemaforms/__init__.py`, `pydantic_schemaforms/inputs/__init__.py`
 
 - **Integration facade duplicated across namespaces (Resolved)**
-  The canonical sync/async helpers now live only in `integration/adapters.py`, `integration/sync.py`, and `integration/async_support.py`. The `integration.frameworks` package re-exports those implementations for legacy imports, and `FormIntegration.async_integration` was converted to a `@staticmethod` so the API is identical in both namespaces. Optional dependencies remain isolated via lazy imports, but there is now exactly one code path for validation + rendering logic.
-  _Files:_ `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/integration/adapters.py`, `pydantic_schemaforms/integration/frameworks/*`
+  The canonical sync/async helpers live only in `integration/adapters.py`, `integration/sync.py`, and `integration/async_support.py`. The intermediate `integration/frameworks/` shim layer has been removed — `integration/__init__.py` imports from those canonical files directly. There is now exactly one code path for validation + rendering logic with no proxy indirection.
+  _Files:_ `pydantic_schemaforms/integration/__init__.py`, `pydantic_schemaforms/integration/adapters.py`, `pydantic_schemaforms/integration/sync.py`, `pydantic_schemaforms/integration/async_support.py`
 
 - **Public sync/async “one obvious way” (Resolved)**
   Canonical entry points now exist and are exported from the root package:
@@ -303,13 +303,6 @@ These rules are intended to prevent “helpful” drift away from the original c
   - `pydantic_schemaforms/integration/sync.py` — Framework-agnostic sync request/validation helpers.
   - `pydantic_schemaforms/integration/utils.py` — Shared utilities for integrations (type mapping, framework selection, validation conversion).
   - `pydantic_schemaforms/integration/vue.py` — Vue integration helpers.
-
-  #### `pydantic_schemaforms/integration/frameworks/` (compat + legacy namespace)
-
-  - `pydantic_schemaforms/integration/frameworks/__init__.py` — Namespace package for framework adapters.
-  - `pydantic_schemaforms/integration/frameworks/adapters.py` — Compatibility shim re-exporting the canonical adapter API.
-  - `pydantic_schemaforms/integration/frameworks/async_support.py` — Compatibility shim re-exporting async helpers.
-  - `pydantic_schemaforms/integration/frameworks/sync.py` — Compatibility shim re-exporting sync helpers.
 
   ### `pydantic_schemaforms/rendering/` (shared rendering engine)
 
