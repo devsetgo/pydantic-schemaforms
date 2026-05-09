@@ -281,7 +281,6 @@ def test_form_style_registry_keyerror_branch() -> None:
 
 def test_package_logger_uses_null_handler() -> None:
     import logging
-    import pydantic_schemaforms
 
     pkg_logger = logging.getLogger("pydantic_schemaforms")
 
