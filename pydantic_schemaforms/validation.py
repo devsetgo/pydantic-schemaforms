@@ -860,12 +860,89 @@ def create_password_strength_validator(min_length: int = 8) -> Callable[[str], V
 
 # Validation result class for integration
 class ValidationResult:
-    """Result of form validation."""
+    """Result of form validation, with optional render context for re-rendering on error."""
 
-    def __init__(self, is_valid: bool, data: Dict[str, Any] = None, errors: Dict[str, str] = None):
+    def __init__(
+        self,
+        is_valid: bool,
+        data: Optional[Dict[str, Any]] = None,
+        errors: Optional[Dict[str, Any]] = None,
+        form_model_cls: Optional[Any] = None,
+        original_data: Optional[Dict[str, Any]] = None,
+        submit_url: Optional[str] = None,
+        framework: str = "bootstrap",
+        render_kwargs: Optional[Dict[str, Any]] = None,
+    ):
         self.is_valid = is_valid
         self.data = data or {}
         self.errors = errors or {}
+        self.form_model_cls = form_model_cls
+        self.original_data = original_data or {}
+        self._submit_url = submit_url
+        self._framework = framework
+        self._render_kwargs = render_kwargs or {}
+
+    def render_with_errors(
+        self,
+        framework: Optional[str] = None,
+        *,
+        submit_url: Optional[str] = None,
+        **kwargs,
+    ) -> str:
+        """Render the form with validation errors displayed.
+
+        Uses the submit_url and framework stored at validate() time when not
+        supplied explicitly, so the common case needs no arguments at all.
+        """
+        if not self.form_model_cls:
+            raise ValueError("Cannot render form: form_model_cls not provided")
+
+        url = submit_url or self._submit_url
+        if not url:
+            raise ValueError(
+                "submit_url is required. Pass it here or via FormModel.validate(submit_url=...)."
+            )
+
+        return self.form_model_cls.render_form(
+            data=self.original_data,
+            errors=self.errors,
+            framework=framework or self._framework,
+            submit_url=url,
+            **{**self._render_kwargs, **kwargs},
+        )
+
+    async def render_with_errors_async(
+        self,
+        framework: Optional[str] = None,
+        *,
+        submit_url: Optional[str] = None,
+        **kwargs,
+    ) -> str:
+        """Async variant of render_with_errors — runs the sync renderer off the event loop.
+
+        Accepts the same arguments as render_with_errors. Prefer this in async
+        frameworks (FastAPI / Starlette) to avoid blocking the event loop.
+        """
+        import asyncio
+
+        def _render():
+            return self.render_with_errors(
+                framework,
+                submit_url=submit_url,
+                **kwargs,
+            )
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
+
+        return await loop.run_in_executor(None, _render)
+
+    def __str__(self) -> str:
+        if self.is_valid:
+            return f"ValidationResult(valid=True, data={self.data})"
+        return f"ValidationResult(valid=False, errors={self.errors})"
 
 
 def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> ValidationResult:
@@ -974,9 +1051,20 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
                     validated_data.pop(layout_field_name, None)
 
             if layout_errors:
-                return ValidationResult(is_valid=False, data=validated_data, errors=layout_errors)
+                return ValidationResult(
+                    is_valid=False,
+                    data=validated_data,
+                    errors=layout_errors,
+                    form_model_cls=form_model_class,
+                    original_data=data,
+                )
 
-        return ValidationResult(is_valid=True, data=validated_data)
+        return ValidationResult(
+            is_valid=True,
+            data=validated_data,
+            form_model_cls=form_model_class,
+            original_data=data,
+        )
 
     except ValidationError as e:
         errors = {}
@@ -1023,11 +1111,20 @@ def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> Validati
             else:
                 errors["general"] = error["msg"]
 
-        return ValidationResult(is_valid=False, errors=errors)
+        return ValidationResult(
+            is_valid=False,
+            errors=errors,
+            form_model_cls=form_model_class,
+            original_data=data,
+        )
 
     except Exception as e:
-        # Handle unexpected errors
-        return ValidationResult(is_valid=False, errors={"general": str(e)})
+        return ValidationResult(
+            is_valid=False,
+            errors={"general": str(e)},
+            form_model_cls=form_model_class,
+            original_data=data,
+        )
 
 
 # Export validation rules for easy access

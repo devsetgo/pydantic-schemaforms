@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from pydantic import BaseModel
 
 from ..modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
-from ..assets.runtime import framework_css_tag, framework_js_tag
+from ..assets.runtime import bootstrap_icons_css_tag, framework_css_tag, framework_js_tag
 from ..validation import create_validator
 
 
@@ -343,6 +343,7 @@ FORM_PAGE_TEMPLATE = string.Template(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
     ${framework_css_tag}
+    ${bootstrap_icons_css_tag}
     <style>
         body { background-color: #f8f9fa; }
         .form-container {
@@ -378,11 +379,16 @@ FORM_PAGE_TEMPLATE = string.Template(
 
 def _framework_asset_tags(*, framework: str, include_framework_assets: bool, asset_mode: str) -> Dict[str, str]:
     if not include_framework_assets:
-        return {"framework_css_tag": "", "framework_js_tag": ""}
+        return {"framework_css_tag": "", "framework_js_tag": "", "bootstrap_icons_css_tag": ""}
 
     css_tag = framework_css_tag(framework=framework, asset_mode=asset_mode)
     js_tag = framework_js_tag(framework=framework, asset_mode=asset_mode)
-    return {"framework_css_tag": css_tag, "framework_js_tag": js_tag}
+    icons_tag = (
+        bootstrap_icons_css_tag(asset_mode=asset_mode)
+        if (framework or "").strip().lower() == "bootstrap"
+        else ""
+    )
+    return {"framework_css_tag": css_tag, "framework_js_tag": js_tag, "bootstrap_icons_css_tag": icons_tag}
 
 
 def render_form_page(

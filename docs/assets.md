@@ -60,7 +60,7 @@ File: `pydantic_schemaforms/enhanced_renderer.py`
 
 - `include_framework_assets`: include framework CSS/JS in the returned HTML (default: `False`).
 - `asset_mode`: controls how those assets are emitted.
-- `self_contained=True`: convenience flag equivalent to `include_framework_assets=True` and `asset_mode="vendored"`.
+- `self_contained=True`: convenience flag equivalent to `include_framework_assets=True` and `asset_mode="vendored"`. For Bootstrap forms this inlines Bootstrap CSS/JS **and** Bootstrap Icons (woff2 embedded as a data URI) — truly zero external dependencies.
 
 Example (simple “just give me a fully styled Bootstrap form”):
 
@@ -126,12 +126,75 @@ page = render_form_page(
 
 ## What’s currently vendored
 
-- HTMX
-- IMask
-- Bootstrap (CSS + bundle JS)
-- Materialize (CSS + JS)
+| Asset | Files |
+|---|---|
+| HTMX | `htmx.min.js` |
+| IMask | `imask.min.js` |
+| Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` |
+| Bootstrap Icons | `bootstrap-icons.min.css`, `bootstrap-icons.woff2` |
+| Materialize | `materialize.min.css`, `materialize.min.js` |
 
-See `pydantic_schemaforms/assets/vendor/vendor_manifest.json` for exact versions and file paths.
+See `pydantic_schemaforms/assets/vendor/vendor_manifest.json` for exact versions, SHA256 checksums, and source URLs.
+
+## Bootstrap Icons
+
+Bootstrap Icons are included as part of the Bootstrap theme’s asset delivery.  The library
+emits `<i class="bi bi-*">` elements for icons (password-toggle, field icons, etc.), so the
+icon font must be present for those elements to render correctly.
+
+**When `include_framework_assets=True` (or `self_contained=True`):**
+
+The CSS is inlined as a `<style>` block with the `bootstrap-icons.woff2` font embedded as a
+`data:font/woff2;base64,…` URI.  No network request is made — the icon font is fully
+self-contained in the HTML.
+
+**When `include_framework_assets=False` (default):**
+
+Bootstrap Icons are not injected by the library.  Your host page is responsible for providing
+them.  Options:
+
+- **Use the library’s vendor endpoint** (recommended for apps built on this library):
+
+  ```python
+  # In your FastAPI/Flask app
+  from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
+
+  @app.get("/vendor/bootstrap-icons.css")
+  async def bootstrap_icons():
+      return Response(content=bootstrap_icons_css_content(), media_type="text/css")
+  ```
+
+  Then in your base template:
+
+  ```html
+  <link rel="stylesheet" href="/vendor/bootstrap-icons.css" />
+  ```
+
+- **CDN** (when `asset_mode="cdn"` and `include_framework_assets=True`): the library emits a
+  pinned `<link>` to jsDelivr.
+
+- **Your own asset pipeline**: import `bootstrap-icons` from npm and bundle it yourself.
+
+### Runtime API
+
+```python
+from pydantic_schemaforms.assets.runtime import (
+    bootstrap_icons_css_tag,     # returns <style>…</style> / <link …/> / ""
+    bootstrap_icons_css_content, # returns raw CSS string with woff2 embedded
+)
+
+# Inline vendored CSS (default)
+tag = bootstrap_icons_css_tag(asset_mode="vendored")
+
+# Pinned CDN link
+tag = bootstrap_icons_css_tag(asset_mode="cdn")
+
+# Nothing (you manage the asset yourself)
+tag = bootstrap_icons_css_tag(asset_mode="none")
+
+# Raw CSS for serving via your own HTTP endpoint
+css = bootstrap_icons_css_content()
+```
 
 ## Updating vendored assets
 
@@ -144,6 +207,7 @@ Vendored updates are scripted and checksum-verified.
   - `make vendor-update-htmx HTMX_VERSION=…`
   - `make vendor-update-imask IMASK_VERSION=…` (or omit to use npm latest)
   - `make vendor-update-bootstrap BOOTSTRAP_VERSION=…`
+  - `make vendor-update-bootstrap-icons BOOTSTRAP_ICONS_VERSION=…`
   - `make vendor-update-materialize MATERIALIZE_VERSION=…`
 
 After updating, run `make vendor-verify` and the test suite.

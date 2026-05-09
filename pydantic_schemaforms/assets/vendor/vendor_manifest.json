@@ -60,6 +60,27 @@
       ]
     },
     {
+      "name": "bootstrap-icons",
+      "version": "1.13.1",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/bootstrap-icons/bootstrap-icons.min.css",
+          "sha256": "a5d6387a32ca3baec4d02336b5b3edab50c9dd518355576a011ea3dd9c1d884e",
+          "source_url": "https://registry.npmjs.org/bootstrap-icons/-/bootstrap-icons-1.13.1.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/bootstrap-icons/bootstrap-icons.woff2",
+          "sha256": "6c75710364a1ca5604267716f6d28997b26319fdb078cf11e0b42ab66ff2ea61",
+          "source_url": "https://registry.npmjs.org/bootstrap-icons/-/bootstrap-icons-1.13.1.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/bootstrap-icons/LICENSE",
+          "sha256": "0fb3e11bd57e896c5a512afd64864d28a37de45d19835016c87ca1ad19ead969",
+          "source_url": "https://registry.npmjs.org/bootstrap-icons/-/bootstrap-icons-1.13.1.tgz"
+        }
+      ]
+    },
+    {
       "name": "imask",
       "version": "7.6.1",
       "files": [

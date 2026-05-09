@@ -42,23 +42,14 @@ app = FastAPI()
 
 @app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
 async def user_form(request: Request):
-    form_data = {}
-    errors = {}
-
     if request.method == "POST":
         submitted = dict(await request.form())
-        form_data = submitted
-        try:
-            User(**submitted)
-        except Exception as exc:
-            errors = {"form": str(exc)}
-
-    form_html = await render_form_html_async(
-        User,
-        form_data=form_data,
-        errors=errors,
-        submit_url="/user",
-    )
+        result = User.validate(submitted, submit_url="/user")
+        if result.is_valid:
+            return f"<p>Hello {result.data['name']}!</p>"
+        form_html = await result.render_with_errors_async()
+    else:
+        form_html = await render_form_html_async(User, submit_url="/user")
 
     return f"""
     <!doctype html>
@@ -71,9 +62,10 @@ async def user_form(request: Request):
     """
 ```
 
-You can also call `await User.render_form_async(...)` directly if you prefer a model method.
+`User.validate()` stores the submit URL so `render_with_errors_async()` needs no arguments.
+Use `render_with_errors_async()` in async routes to avoid blocking the event loop.
 
-If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`.
+If your host page already loads Bootstrap/Material, keep defaults. If you want a fully self-contained HTML chunk, pass `self_contained=True`. For Bootstrap forms this inlines Bootstrap CSS/JS and Bootstrap Icons (woff2 embedded) — no CDN required.
 
 See: [configuration.md](configuration.md) and [assets.md](assets.md).
 

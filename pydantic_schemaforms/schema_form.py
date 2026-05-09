@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pydantic import Field as PydanticField
 from pydantic.fields import FieldInfo
 
-# Import the new FormField
+from .validation import ValidationResult
 
 
 def form_validator(func: Callable) -> Callable:
@@ -303,6 +303,35 @@ class FormModel(BaseModel):
         )
 
     @classmethod
+    def validate(
+        cls,
+        data: Dict[str, Any],
+        *,
+        submit_url: Optional[str] = None,
+        framework: str = "bootstrap",
+        **render_kwargs: Any,
+    ) -> "ValidationResult":
+        """Validate form data and return a result that can re-render itself on failure.
+
+        The submit_url and framework are stored on the result so that
+        result.render_with_errors() requires no arguments in the common case.
+
+        Example::
+
+            result = MyForm.validate(parsed_data, submit_url="/submit")
+            if result.is_valid:
+                return success(result.data)
+            return result.render_with_errors()
+        """
+        from .validation import validate_form_data
+
+        result = validate_form_data(cls, data)
+        result._submit_url = submit_url
+        result._framework = framework
+        result._render_kwargs = render_kwargs
+        return result
+
+    @classmethod
     def register_field(
         cls,
         field_name: str,
@@ -406,54 +435,3 @@ class FormModel(BaseModel):
             else:
                 example[field_name] = ""
         return example
-
-
-class ValidationResult:
-    """
-    Validation result object that provides clean error handling for forms.
-
-    This matches the design_idea.py vision where validation returns an object
-    with .is_valid, .data, and .render_with_errors() methods.
-    """
-
-    def __init__(
-        self,
-        is_valid: bool,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
-        form_model_cls: Optional[Type[FormModel]] = None,
-        original_data: Optional[Dict[str, Any]] = None,
-    ):
-        self.is_valid = is_valid
-        self.data = data or {}
-        self.errors = errors or {}
-        self.form_model_cls = form_model_cls
-        self.original_data = original_data or {}
-
-    def render_with_errors(self, framework: str = "bootstrap", *, submit_url: str, **kwargs) -> str:
-        """
-        Render the form with validation errors displayed.
-
-        Args:
-            framework: CSS framework to use
-            **kwargs: Additional rendering options
-
-        Returns:
-            HTML form with errors displayed
-        """
-        if not self.form_model_cls:
-            raise ValueError("Cannot render form: form_model_cls not provided")
-
-        return self.form_model_cls.render_form(
-            data=self.original_data,
-            errors=self.errors,
-            framework=framework,
-            submit_url=submit_url,
-            **kwargs,
-        )
-
-    def __str__(self) -> str:
-        if self.is_valid:
-            return f"ValidationResult(valid=True, data={self.data})"
-        else:
-            return f"ValidationResult(valid=False, errors={self.errors})"

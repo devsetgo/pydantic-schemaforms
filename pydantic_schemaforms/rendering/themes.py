@@ -6,7 +6,7 @@ from html import escape
 from typing import Dict, Optional, Type
 
 from ..templates import TemplateString
-from ..assets.runtime import framework_css_tag, framework_js_tag
+from ..assets.runtime import bootstrap_icons_css_tag, framework_css_tag, framework_js_tag
 from .form_style import FormStyle, get_form_style
 from .frameworks import get_framework_config
 from .material_icons import render_material_icon
@@ -324,6 +324,15 @@ class BootstrapTheme(FrameworkTheme):
 
     def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
         super().__init__("bootstrap", include_assets=include_assets, asset_mode=asset_mode)
+
+    def before_form(self) -> str:
+        base = super().before_form()
+        if not self.include_assets:
+            return base
+        icons_tag = bootstrap_icons_css_tag(asset_mode=self.asset_mode)
+        if icons_tag:
+            return f"{base}\n{icons_tag}" if base else icons_tag
+        return base
 
 
 class MaterialTheme(FrameworkTheme):
