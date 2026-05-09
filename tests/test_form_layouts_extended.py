@@ -100,11 +100,15 @@ class TestFormLayoutBasePrivateMethods:
         assert hasattr(renderer, 'render_form_fields_only')
 
     def test_get_renderer_for_framework_material(self):
-        """Test _get_renderer_for_framework returns SimpleMaterialRenderer for material."""
+        """Test _get_renderer_for_framework returns an EnhancedFormRenderer for material."""
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+
         layout = VerticalLayout()
         renderer = layout._get_renderer_for_framework("material")
 
         assert renderer is not None
+        assert isinstance(renderer, EnhancedFormRenderer)
+        assert renderer.framework == "material"
         assert hasattr(renderer, 'render_form_fields_only')
 
     def test_get_forms_returns_form_classes(self):

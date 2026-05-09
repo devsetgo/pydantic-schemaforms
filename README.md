@@ -379,8 +379,8 @@ form_html = UserRegistrationForm.render_form(
 ```python
 UserForm.render_form(framework="material", submit_url="/submit")
 ```
-- Materialize CSS framework
-- Floating labels and animations
+- Self-contained Material Design 3 theme (no Materialize CSS dependency)
+- Floating labels and animations via `MaterialEmbeddedTheme`
 - Material icons integration
 
 ### Plain HTML
@@ -741,7 +741,7 @@ Field(
 ### Framework Options
 
 - `"bootstrap"` - Bootstrap 5 styling (recommended)
-- `"material"` - Material Design (Materialize CSS)
+- `"material"` - Material Design 3 (self-contained, no external CSS framework)
 - `"none"` - Plain HTML5 forms
 
 ---

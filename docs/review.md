@@ -99,8 +99,8 @@ These rules are intended to prevent “helpful” drift away from the original c
   _Files:_ `pydantic_schemaforms/rendering/layout_engine.py`, `pydantic_schemaforms/layouts.py`, `pydantic_schemaforms/form_layouts.py`, `pydantic_schemaforms/simple_material_renderer.py`
 
 - **Renderer logic duplicated across frameworks (Resolved)**
-  Enhanced and Simple Material share the same orchestration pipeline via the new `RendererTheme` abstraction and `MaterialEmbeddedTheme`, eliminating the duplicated CSS/JS scaffolding that previously lived in `simple_material_renderer.py`. The Modern renderer now builds a temporary `FormModel` and hands off to `EnhancedFormRenderer`, and the redundant `Py314Renderer` alias has been removed entirely. Framework-specific assets live in `RendererTheme` strategies, so there is a single schema walk/layout path regardless of entry point.
-  _Files:_ `pydantic_schemaforms/enhanced_renderer.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/simple_material_renderer.py`, `pydantic_schemaforms/modern_renderer.py`
+  All framework rendering — Bootstrap, Material, and plain — goes through `EnhancedFormRenderer`. Material field rendering (`_render_material_field` and 13 helper methods) lives in `enhanced_renderer.py`; `MaterialEmbeddedTheme` handles CSS/JS chrome. `SimpleMaterialRenderer` is now a 28-line backward-compatible alias (`class SimpleMaterialRenderer(EnhancedFormRenderer)` with `__init__` calling `super().__init__(framework="material")`). The `render_form_html()` helper no longer has a hardcoded `if framework == "material"` branch — it instantiates `EnhancedFormRenderer(framework=framework)` for every framework, so `include_framework_assets`, `asset_mode`, and `self_contained` now work correctly for Material too.
+  _Files:_ `pydantic_schemaforms/enhanced_renderer.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/simple_material_renderer.py`
 
 - **Integration helpers mix unrelated responsibilities (Addressed)**
   The synchronous/async adapters now live in `pydantic_schemaforms/integration/frameworks/`, leaving the root `integration` package to expose only builder/schema utilities by default. The module uses lazy exports so simply importing `pydantic_schemaforms.integration` no longer drags in optional framework glue unless those helpers are actually accessed.
@@ -243,7 +243,7 @@ These rules are intended to prevent “helpful” drift away from the original c
   - `pydantic_schemaforms/modern_renderer.py` — “Modern” renderer facade backed by the shared enhanced pipeline.
   - `pydantic_schemaforms/render_form.py` — Backwards-compatible rendering wrapper(s) for legacy entry points.
   - `pydantic_schemaforms/schema_form.py` — Pydantic-driven form model primitives (`FormModel`, `Field`, validator helpers, validation result types).
-  - `pydantic_schemaforms/simple_material_renderer.py` — Minimal Material Design renderer implementation.
+  - `pydantic_schemaforms/simple_material_renderer.py` — Backward-compatible alias: `SimpleMaterialRenderer` is a thin subclass of `EnhancedFormRenderer(framework="material")`. All material rendering logic lives in `enhanced_renderer.py`.
   - `pydantic_schemaforms/templates.py` — Python 3.14 template-string based templating helpers used throughout rendering.
   - `pydantic_schemaforms/validation.py` — Canonical validation rules/engine and serializable validation responses.
   - `pydantic_schemaforms/vendor_assets.py` — Vendoring/manifest helper utilities used to manage and verify shipped third-party assets.

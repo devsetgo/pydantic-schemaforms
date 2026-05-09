@@ -116,10 +116,10 @@ class TestTabLayoutBootstrapMaterial:
         assert "tab-layout" in html or "tabbed-layout" in html
 
     def test_tab_layout_material_theme(self):
-        """Verify TabLayout respects Material theme."""
-        from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
+        """Verify TabLayout respects Material theme via EnhancedFormRenderer(framework='material')."""
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
-        renderer = SimpleMaterialRenderer()
+        renderer = EnhancedFormRenderer(framework="material")
         tabs = [
             {"title": "Tab 1", "content": "Content 1"},
             {"title": "Tab 2", "content": "Content 2"},

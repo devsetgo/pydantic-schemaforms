@@ -281,11 +281,6 @@ class FormLayoutBase(SharedBaseLayout, ABC):
     def _get_renderer_for_framework(self, framework: str):
         """Return a renderer capable of rendering fields-only for nested layouts."""
 
-        if framework == "material":
-            from .simple_material_renderer import SimpleMaterialRenderer
-
-            return SimpleMaterialRenderer()
-
         from .enhanced_renderer import EnhancedFormRenderer
 
         return EnhancedFormRenderer(framework=framework)
@@ -707,14 +702,9 @@ class ListLayout(FormLayoutBase):
         # Use provided renderer when available, otherwise create a framework default.
         active_renderer = renderer
         if active_renderer is None:
-            if framework == "material":
-                from .simple_material_renderer import MaterialDesign3Renderer
+            from .enhanced_renderer import EnhancedFormRenderer
 
-                active_renderer = MaterialDesign3Renderer()
-            else:
-                from .enhanced_renderer import EnhancedFormRenderer
-
-                active_renderer = EnhancedFormRenderer()
+            active_renderer = EnhancedFormRenderer(framework=framework)
 
         # Extract list items from data
         list_data = []
