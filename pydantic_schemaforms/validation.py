@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from html import escape
 from string import Template
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from pydantic import ValidationError
 
@@ -118,7 +118,7 @@ class MinLengthRule(ValidationRule):
 
     rule_name = "min_length"
 
-    def __init__(self, min_length: int, message: str = None):
+    def __init__(self, min_length: int, message: Optional[str] = None):
         self.min_length = min_length
         message = message or f"Must be at least {min_length} characters long"
         super().__init__(message)
@@ -147,7 +147,7 @@ class MaxLengthRule(ValidationRule):
 
     rule_name = "max_length"
 
-    def __init__(self, max_length: int, message: str = None):
+    def __init__(self, max_length: int, message: Optional[str] = None):
         self.max_length = max_length
         message = message or f"Must be no more than {max_length} characters long"
         super().__init__(message)
@@ -232,7 +232,7 @@ class NumericRangeRule(ValidationRule):
         self,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
-        message: str = None,
+        message: Optional[str] = None,
     ):
         self.min_value = min_value
         self.max_value = max_value
@@ -300,7 +300,7 @@ class DateRangeRule(ValidationRule):
         self,
         min_date: Optional[Union[date, str]] = None,
         max_date: Optional[Union[date, str]] = None,
-        message: str = None,
+        message: Optional[str] = None,
     ):
         self.min_date = self._parse_date(min_date) if min_date else None
         self.max_date = self._parse_date(max_date) if max_date else None
@@ -945,7 +945,7 @@ class ValidationResult:
         return f"ValidationResult(valid=False, errors={self.errors})"
 
 
-def validate_form_data(form_model_class: type, data: Dict[str, Any]) -> ValidationResult:
+def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> ValidationResult:
     """
     Validate form data against a Pydantic model.
 

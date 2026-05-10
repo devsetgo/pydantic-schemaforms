@@ -3,6 +3,8 @@ Input type constants and mappings for pydantic-schemaforms.
 Provides organized collections of input types and validation mappings.
 """
 
+from __future__ import annotations
+
 from datetime import date, datetime, time
 from typing import Dict, Set, Type
 
