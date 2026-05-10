@@ -86,4 +86,4 @@ class FormIntegration:
         )
 
 
-__all__ = ["FormIntegration", "handle_form", "handle_form_async", "FormResult"]
+__all__ = ['FormIntegration', 'handle_form', 'handle_form_async', 'FormResult']

@@ -47,26 +47,26 @@ class SectionDesign:
         self.css_class = css_class
         self.extra_attrs = kwargs
 
-    def render_header(self, framework: str = "bootstrap") -> str:
+    def render_header(self, framework: str = 'bootstrap') -> str:
         """Render the section header HTML."""
-        icon_html = ""
+        icon_html = ''
         if self.icon:
-            if framework == "bootstrap":
+            if framework == 'bootstrap':
                 icon_html = f'<i class="bi bi-{self.icon}"></i> '
-            elif framework == "material":
+            elif framework == 'material':
                 icon_html = f'<i class="material-icons">{self.icon}</i> '
 
-        header_class = "section-header"
+        header_class = 'section-header'
         if self.collapsible:
-            header_class += " collapsible"
+            header_class += ' collapsible'
 
         header_html = f'<div class="{header_class}">'
-        header_html += f"<h3>{icon_html}{self.section_title}</h3>"
+        header_html += f'<h3>{icon_html}{self.section_title}</h3>'
 
         if self.section_description:
             header_html += f'<p class="section-description">{self.section_description}</p>'
 
-        header_html += "</div>"
+        header_html += '</div>'
 
         return header_html
 
@@ -81,16 +81,16 @@ class FormDesign:
 
     def __init__(
         self,
-        ui_theme: str = "bootstrap",
+        ui_theme: str = 'bootstrap',
         ui_theme_custom_css: Optional[str] = None,
-        form_name: str = "Form",
-        form_enctype: str = "application/x-www-form-urlencoded",
-        form_width: str = "600px",
-        target_url: str = "/submit",
-        form_method: str = "post",
-        error_notification_style: str = "inline",
+        form_name: str = 'Form',
+        form_enctype: str = 'application/x-www-form-urlencoded',
+        form_width: str = '600px',
+        target_url: str = '/submit',
+        form_method: str = 'post',
+        error_notification_style: str = 'inline',
         show_debug_info: bool = False,
-        asset_mode: str = "vendored",
+        asset_mode: str = 'vendored',
         **kwargs,
     ):
         self.ui_theme = ui_theme
@@ -108,52 +108,52 @@ class FormDesign:
     def get_form_attributes(self) -> Dict[str, str]:
         """Get HTML form attributes."""
         attrs = {
-            "action": self.target_url,
-            "method": self.form_method,
-            "style": f"max-width: {self.form_width}; margin: 0 auto;",
+            'action': self.target_url,
+            'method': self.form_method,
+            'style': f'max-width: {self.form_width}; margin: 0 auto;',
         }
 
-        if self.form_method == "post":
-            attrs["enctype"] = self.form_enctype
+        if self.form_method == 'post':
+            attrs['enctype'] = self.form_enctype
 
         return attrs
 
     def get_framework_css_url(self) -> str:
         """Get the CSS URL for the selected framework."""
-        if self.ui_theme == "custom":
-            return self.ui_theme_custom_css or ""
+        if self.ui_theme == 'custom':
+            return self.ui_theme_custom_css or ''
 
-        if self.asset_mode != "cdn":
-            return ""
+        if self.asset_mode != 'cdn':
+            return ''
 
         framework_css = {
-            "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
-            "material": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/css/materialize.min.css",
-            "shadcn": "",  # Would require custom implementation
-            "tailwind": "https://cdn.tailwindcss.com",
-            "semantic": "https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css",
-            "custom": self.ui_theme_custom_css or "",
+            'bootstrap': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+            'material': 'https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/css/materialize.min.css',
+            'shadcn': '',  # Would require custom implementation
+            'tailwind': 'https://cdn.tailwindcss.com',
+            'semantic': 'https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css',
+            'custom': self.ui_theme_custom_css or '',
         }
 
-        return framework_css.get(self.ui_theme, "")
+        return framework_css.get(self.ui_theme, '')
 
     def get_framework_js_url(self) -> str:
         """Get the JavaScript URL for the selected framework."""
-        if self.asset_mode != "cdn":
-            return ""
+        if self.asset_mode != 'cdn':
+            return ''
 
         framework_js = {
-            "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
-            "material": "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/js/materialize.min.js",
-            "semantic": "https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js",
+            'bootstrap': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+            'material': 'https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.0.0/dist/js/materialize.min.js',
+            'semantic': 'https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js',
         }
 
-        return framework_js.get(self.ui_theme, "")
+        return framework_js.get(self.ui_theme, '')
 
 
 _DEPRECATION_MESSAGE = (
-    "pydantic_schemaforms.form_layouts will be removed in a future release. Compose layouts "
-    "using LayoutComposer + LayoutEngine instead."
+    'pydantic_schemaforms.form_layouts will be removed in a future release. Compose layouts '
+    'using LayoutComposer + LayoutEngine instead.'
 )
 
 
@@ -165,7 +165,7 @@ class FormLayoutBase(SharedBaseLayout, ABC):
     """Base class for layout components that orchestrate FormModel instances."""
 
     def __init__(self, form_config: Optional[SectionDesign] = None):
-        super().__init__(content="")
+        super().__init__(content='')
         _warn_form_layouts_deprecated()
         self.form_config = form_config
         self._forms: List[FormModel] = []
@@ -175,28 +175,28 @@ class FormLayoutBase(SharedBaseLayout, ABC):
     # Shared helpers so concrete layouts can lean on BaseLayout subclasses
     # ------------------------------------------------------------------
     def _section_header(self, framework: str) -> str:
-        if self.form_config and hasattr(self.form_config, "render_header"):
+        if self.form_config and hasattr(self.form_config, 'render_header'):
             return self.form_config.render_header(framework)
-        return ""
+        return ''
 
     def _section_class(self, base_class: str) -> str:
         if not self.form_config:
             return base_class
 
         classes = [base_class]
-        collapsible = getattr(self.form_config, "collapsible", False)
-        collapsed = getattr(self.form_config, "collapsed", False)
-        css_class = getattr(self.form_config, "css_class", "")
+        collapsible = getattr(self.form_config, 'collapsible', False)
+        collapsed = getattr(self.form_config, 'collapsed', False)
+        css_class = getattr(self.form_config, 'css_class', '')
 
         if collapsible:
-            classes.append("collapsible")
+            classes.append('collapsible')
             if collapsed:
-                classes.append("collapsed")
+                classes.append('collapsed')
 
         if css_class:
             classes.append(css_class)
 
-        return " ".join(classes)
+        return ' '.join(classes)
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -207,18 +207,18 @@ class FormLayoutBase(SharedBaseLayout, ABC):
         def _serialize_layout(value: Any) -> Dict[str, Any]:
             if isinstance(value, FormLayoutBase):
                 payload: Dict[str, Any] = {
-                    "type": value.__class__.__name__,
-                    "layout": True,
+                    'type': value.__class__.__name__,
+                    'layout': True,
                 }
-                if hasattr(value, "_get_layouts"):
+                if hasattr(value, '_get_layouts'):
                     try:
-                        payload["tabs"] = [name for name, _ in value._get_layouts()]
+                        payload['tabs'] = [name for name, _ in value._get_layouts()]
                     except Exception:
                         pass
                 return payload
             if isinstance(value, dict):
                 return value
-            return {"value": str(value)}
+            return {'value': str(value)}
 
         return core_schema.any_schema(
             serialization=core_schema.plain_serializer_function_ser_schema(
@@ -232,7 +232,7 @@ class FormLayoutBase(SharedBaseLayout, ABC):
         self,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         renderer: Optional[Any] = None,
         **_kwargs: Any,
     ) -> str:
@@ -308,7 +308,7 @@ class VerticalLayout(FormLayoutBase):
         self,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         renderer: Optional[Any] = None,
         **_kwargs: Any,
     ) -> str:
@@ -323,7 +323,7 @@ class VerticalLayout(FormLayoutBase):
 
         layout = FlexVerticalLayout(
             content=content_parts,
-            class_=self._section_class("vertical-layout"),
+            class_=self._section_class('vertical-layout'),
         )
 
         return layout.render(
@@ -350,13 +350,13 @@ class VerticalLayout(FormLayoutBase):
             except Exception as e:
                 is_valid = False
                 # Extract field errors from validation error
-                if hasattr(e, "errors"):
+                if hasattr(e, 'errors'):
                     for error in e.errors():
-                        field_name = error.get("loc", [""])[0]
-                        error_msg = error.get("msg", str(e))
+                        field_name = error.get('loc', [''])[0]
+                        error_msg = error.get('msg', str(e))
                         all_errors[field_name] = error_msg
                 else:
-                    all_errors["_form"] = str(e)
+                    all_errors['_form'] = str(e)
 
         return ValidationResult(
             is_valid=is_valid,
@@ -377,7 +377,7 @@ class HorizontalLayout(FormLayoutBase):
         self,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         renderer: Optional[Any] = None,
         **_kwargs: Any,
     ) -> str:
@@ -390,8 +390,8 @@ class HorizontalLayout(FormLayoutBase):
 
         layout = FlexHorizontalLayout(
             content=column_content,
-            class_=self._section_class("horizontal-layout"),
-            justify_content="space-between",
+            class_=self._section_class('horizontal-layout'),
+            justify_content='space-between',
         )
 
         layout_html = layout.render(
@@ -401,7 +401,7 @@ class HorizontalLayout(FormLayoutBase):
         )
 
         if header_html:
-            return f"{header_html}{layout_html}"
+            return f'{header_html}{layout_html}'
         return layout_html
 
     def validate(
@@ -421,13 +421,13 @@ class HorizontalLayout(FormLayoutBase):
                 all_data.update(form_data_dict)
             except Exception as e:
                 is_valid = False
-                if hasattr(e, "errors"):
+                if hasattr(e, 'errors'):
                     for error in e.errors():
-                        field_name = error.get("loc", [""])[0]
-                        error_msg = error.get("msg", str(e))
+                        field_name = error.get('loc', [''])[0]
+                        error_msg = error.get('msg', str(e))
                         all_errors[field_name] = error_msg
                 else:
-                    all_errors["_form"] = str(e)
+                    all_errors['_form'] = str(e)
 
         return ValidationResult(
             is_valid=is_valid,
@@ -452,7 +452,7 @@ class TabbedLayout(FormLayoutBase):
         self,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         renderer: Optional[Any] = None,
         **_kwargs: Any,
     ) -> str:
@@ -469,21 +469,21 @@ class TabbedLayout(FormLayoutBase):
             layout_html = layout_instance.render(data=tab_data, errors=errors, framework=framework)
             tabs_payload.append(
                 {
-                    "title": tab_name.replace("_", " ").title(),
-                    "content": layout_html,
+                    'title': tab_name.replace('_', ' ').title(),
+                    'content': layout_html,
                 }
             )
 
         tab_component = ComponentTabLayout(
             tabs=tabs_payload,
-            class_="tabbed-layout",
+            class_='tabbed-layout',
         )
 
         tabs_html = tab_component.render(framework=framework)
 
         if self.form_config:
             form_title = f'<h2 class="form-title">{self.form_config.form_name}</h2>'
-            tabs_html = f"{form_title}{tabs_html}"
+            tabs_html = f'{form_title}{tabs_html}'
             return self._render_complete_page(tabs_html)
 
         return tabs_html
@@ -500,7 +500,11 @@ class TabbedLayout(FormLayoutBase):
         layouts = self._get_layouts()
         for _tab_name, layout_instance in layouts:
             tab_data = form_data
-            if isinstance(form_data, dict) and _tab_name in form_data and isinstance(form_data[_tab_name], dict):
+            if (
+                isinstance(form_data, dict)
+                and _tab_name in form_data
+                and isinstance(form_data[_tab_name], dict)
+            ):
                 tab_data = form_data[_tab_name]
             result = layout_instance.validate(tab_data, files)
             all_data.update(result.data)
@@ -522,7 +526,7 @@ class TabbedLayout(FormLayoutBase):
         """Get all layout attributes in declaration order."""
         layouts = []
         for attr_name in dir(self):
-            if not attr_name.startswith("_"):
+            if not attr_name.startswith('_'):
                 attr = getattr(self, attr_name)
                 if isinstance(attr, BaseLayout):
                     layouts.append((attr_name, attr))
@@ -536,18 +540,18 @@ class TabbedLayout(FormLayoutBase):
         if not self.form_config:
             return form_html
 
-        asset_mode = getattr(self.form_config, "asset_mode", "vendored")
+        asset_mode = getattr(self.form_config, 'asset_mode', 'vendored')
         css_tag = framework_css_tag(framework=self.form_config.ui_theme, asset_mode=asset_mode)
         js_tag = framework_js_tag(framework=self.form_config.ui_theme, asset_mode=asset_mode)
         icons_tag = (
             bootstrap_icons_css_tag(asset_mode=asset_mode)
-            if (self.form_config.ui_theme or "").strip().lower() == "bootstrap"
-            else ""
+            if (self.form_config.ui_theme or '').strip().lower() == 'bootstrap'
+            else ''
         )
 
         # Get form attributes
         form_attrs = self.form_config.get_form_attributes()
-        form_attrs_str = " ".join([f'{k}="{v}"' for k, v in form_attrs.items()])
+        form_attrs_str = ' '.join([f'{k}="{v}"' for k, v in form_attrs.items()])
 
         return f"""<!DOCTYPE html>
 <html lang="en">
@@ -599,8 +603,8 @@ class ListLayout(FormLayoutBase):
         form_model: Type[FormModel],
         min_items: int = 0,
         max_items: Optional[int] = None,
-        add_button_text: str = "Add Item",
-        remove_button_text: str = "Remove",
+        add_button_text: str = 'Add Item',
+        remove_button_text: str = 'Remove',
         section_design: Optional[SectionDesign] = None,
         collapsible_items: bool = False,
         items_expanded_by_default: bool = True,
@@ -615,8 +619,8 @@ class ListLayout(FormLayoutBase):
         self.collapsible_items = collapsible_items
         self.items_expanded_by_default = items_expanded_by_default
         self.section_design = section_design or SectionDesign(
-            section_title=f"{form_model.__name__} List",
-            section_description=f"List of {form_model.__name__} items",
+            section_title=f'{form_model.__name__} List',
+            section_description=f'List of {form_model.__name__} items',
         )
         self.form_config = self.section_design
 
@@ -645,9 +649,9 @@ class ListLayout(FormLayoutBase):
         # Group form data by item index
         item_data = {}
         for key, value in form_data.items():
-            if key.startswith("item_"):
+            if key.startswith('item_'):
                 # Extract item index and field name
-                parts = key.split("_", 2)
+                parts = key.split('_', 2)
                 if len(parts) >= 3:
                     item_index = int(parts[1])
                     field_name = parts[2]
@@ -664,27 +668,27 @@ class ListLayout(FormLayoutBase):
                 valid_items.append(form_instance)
             except Exception as e:
                 # Add validation errors for this item
-                item_key = f"item_{item_index}"
+                item_key = f'item_{item_index}'
                 all_errors[item_key] = str(e)
 
         # Check min/max constraints
         item_count = len(valid_items)
         if item_count < self.min_items:
-            all_errors["list_constraint"] = f"At least {self.min_items} items required"
+            all_errors['list_constraint'] = f'At least {self.min_items} items required'
         if self.max_items and item_count > self.max_items:
-            all_errors["list_constraint"] = f"Maximum {self.max_items} items allowed"
+            all_errors['list_constraint'] = f'Maximum {self.max_items} items allowed'
 
         return ValidationResult(
             is_valid=len(all_errors) == 0,
             errors=all_errors,
-            data={"valid_items": valid_items, "item_count": item_count},
+            data={'valid_items': valid_items, 'item_count': item_count},
         )
 
     def render(
         self,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         renderer: Optional[Any] = None,
         **_kwargs: Any,
     ) -> str:
@@ -708,8 +712,8 @@ class ListLayout(FormLayoutBase):
 
         # Extract list items from data
         list_data = []
-        if data and "items" in data:
-            list_data = data["items"]
+        if data and 'items' in data:
+            list_data = data['items']
         elif data and isinstance(data, list):
             list_data = data
 
@@ -718,23 +722,25 @@ class ListLayout(FormLayoutBase):
             list_data.append({})
 
         # Generate unique identifier for this list
-        list_id = f"list_{id(self)}"
+        list_id = f'list_{id(self)}'
 
         # Render header if section design is provided
         header_html = self._section_header(framework)
 
         # Render existing items
-        items_html = ""
+        items_html = ''
         for i, item_data in enumerate(list_data):
-            items_html += self._render_list_item(active_renderer, item_data, i, list_id, framework, errors)
+            items_html += self._render_list_item(
+                active_renderer, item_data, i, list_id, framework, errors
+            )
 
         # Render add button
         add_button_html = self._render_add_button(list_id, framework)
 
         # Container CSS class
-        container_class = self._section_class(f"list-layout {framework}-list-layout")
+        container_class = self._section_class(f'list-layout {framework}-list-layout')
         if self.section_design and self.section_design.css_class:
-            container_class += f" {self.section_design.css_class}"
+            container_class += f' {self.section_design.css_class}'
 
         # Render JavaScript for dynamic functionality
         js_html = self._render_javascript(list_id, framework)
@@ -755,7 +761,7 @@ class ListLayout(FormLayoutBase):
         layout = FlexVerticalLayout(
             content=layout_content,
             class_=container_class,
-            gap="1rem",
+            gap='1rem',
         )
 
         layout_html = layout.render(
@@ -795,16 +801,16 @@ class ListLayout(FormLayoutBase):
         form_html = self._add_name_prefixes(form_html, index)
 
         # Add error messages if any
-        error_html = ""
-        if errors and f"item_{index}" in errors:
+        error_html = ''
+        if errors and f'item_{index}' in errors:
             error_html = f'<div class="alert alert-danger">{errors[f"item_{index}"]}</div>'
 
         # Render remove button (only if we can remove items)
-        remove_button_html = ""
+        remove_button_html = ''
         if len(item_data) > self.min_items or not item_data:  # Can remove if above minimum or empty
             remove_button_html = self._render_remove_button(index, list_id, framework)
 
-        item_class = f"list-item {framework}-list-item"
+        item_class = f'list-item {framework}-list-item'
 
         if self.collapsible_items:
             # Render collapsible card
@@ -843,16 +849,16 @@ class ListLayout(FormLayoutBase):
     ) -> str:
         """Render a collapsible card for the list item."""
         # Generate unique IDs for the collapsible item
-        collapse_id = f"{list_id}_item_{index}"
+        collapse_id = f'{list_id}_item_{index}'
 
         # Determine if the item should be expanded by default
-        expanded_class = "show" if self.items_expanded_by_default else ""
-        expanded_attr = "true" if self.items_expanded_by_default else "false"
+        expanded_class = 'show' if self.items_expanded_by_default else ''
+        expanded_attr = 'true' if self.items_expanded_by_default else 'false'
 
         # Create a summary for the card header (first few non-empty field values)
         summary = self._create_item_summary(item_data, index)
 
-        if framework == "material":
+        if framework == 'material':
             return f"""
             <div class="{item_class} collapsible-item" data-item-index="{index}">
                 {error_html}
@@ -897,20 +903,20 @@ class ListLayout(FormLayoutBase):
     def _create_item_summary(self, item_data: Dict[str, Any], index: int) -> str:
         """Create a summary string for the collapsible item header."""
         if not item_data:
-            return f"{self.form_model.__name__} #{index + 1}"
+            return f'{self.form_model.__name__} #{index + 1}'
 
         # Get the first few non-empty values to create a summary
         summary_parts = []
         for _key, value in item_data.items():
             if value and len(summary_parts) < 2:  # Show up to 2 field values
                 if isinstance(value, str) and len(value) > 30:
-                    value = value[:27] + "..."
+                    value = value[:27] + '...'
                 summary_parts.append(str(value))
 
         if summary_parts:
-            return f"{self.form_model.__name__}: {' | '.join(summary_parts)}"
+            return f'{self.form_model.__name__}: {" | ".join(summary_parts)}'
         else:
-            return f"{self.form_model.__name__} #{index + 1}"
+            return f'{self.form_model.__name__} #{index + 1}'
 
     def _add_name_prefixes(self, form_html: str, index: int) -> str:
         """Add name prefixes to form inputs to make them unique."""
@@ -929,7 +935,7 @@ class ListLayout(FormLayoutBase):
 
     def _render_add_button(self, list_id: str, framework: str) -> str:
         """Render the add button for creating new list items."""
-        if framework == "material":
+        if framework == 'material':
             return f"""
             <button type="button" class="mdc-button mdc-button--raised list-add-btn"
                     data-list-id="{list_id}" onclick="addListItem('{list_id}')">
@@ -948,7 +954,7 @@ class ListLayout(FormLayoutBase):
 
     def _render_remove_button(self, index: int, list_id: str, framework: str) -> str:
         """Render the remove button for deleting list items."""
-        if framework == "material":
+        if framework == 'material':
             return f"""
             <button type="button" class="mdc-button mdc-button--outlined list-remove-btn"
                     data-item-index="{index}" data-list-id="{list_id}"
@@ -971,8 +977,8 @@ class ListLayout(FormLayoutBase):
         """Render JavaScript for dynamic add/remove functionality."""
 
         # Add collapsible toggle function for Material Design
-        collapsible_js = ""
-        if self.collapsible_items and framework == "material":
+        collapsible_js = ''
+        if self.collapsible_items and framework == 'material':
             collapsible_js = """
         function toggleCollapse(collapseId) {
             const content = document.getElementById(collapseId);
@@ -1180,11 +1186,11 @@ class ListLayout(FormLayoutBase):
 
 
 __all__ = [
-    "SectionDesign",
-    "FormDesign",
-    "BaseLayout",
-    "VerticalLayout",
-    "HorizontalLayout",
-    "TabbedLayout",
-    "ListLayout",
+    'SectionDesign',
+    'FormDesign',
+    'BaseLayout',
+    'VerticalLayout',
+    'HorizontalLayout',
+    'TabbedLayout',
+    'ListLayout',
 ]

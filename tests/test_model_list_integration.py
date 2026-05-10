@@ -16,13 +16,13 @@ class _PetModel(FormModel):
 
 
 def test_bootstrap_model_list_renders_theme_wrappers() -> None:
-    renderer = ModelListRenderer(framework="bootstrap")
+    renderer = ModelListRenderer(framework='bootstrap')
 
     html = renderer.render_model_list(
-        field_name="pets",
-        label="Pets",
+        field_name='pets',
+        label='Pets',
         model_class=_PetModel,
-        values=[{"name": "Rex", "age": 5}],
+        values=[{'name': 'Rex', 'age': 5}],
         min_items=0,
         max_items=3,
     )
@@ -34,13 +34,13 @@ def test_bootstrap_model_list_renders_theme_wrappers() -> None:
 
 
 def test_material_model_list_renders_theme_wrappers() -> None:
-    renderer = ModelListRenderer(framework="material")
+    renderer = ModelListRenderer(framework='material')
 
     html = renderer.render_model_list(
-        field_name="pets",
-        label="Pets",
+        field_name='pets',
+        label='Pets',
         model_class=_PetModel,
-        values=[{"name": "Miso", "age": 2}],
+        values=[{'name': 'Miso', 'age': 2}],
         min_items=0,
         max_items=3,
     )
@@ -58,33 +58,33 @@ def test_model_list_renders_hidden_template_item_for_optional_lists() -> None:
     even after the last visible item is deleted.
     """
 
-    bootstrap = ModelListRenderer(framework="bootstrap").render_model_list(
-        field_name="pets",
-        label="Pets",
+    bootstrap = ModelListRenderer(framework='bootstrap').render_model_list(
+        field_name='pets',
+        label='Pets',
         model_class=_PetModel,
         values=[],
         min_items=0,
         max_items=3,
     )
-    assert "model-list-item-template" in bootstrap
+    assert 'model-list-item-template' in bootstrap
 
-    material = ModelListRenderer(framework="material").render_model_list(
-        field_name="pets",
-        label="Pets",
+    material = ModelListRenderer(framework='material').render_model_list(
+        field_name='pets',
+        label='Pets',
         model_class=_PetModel,
         values=[],
         min_items=0,
         max_items=3,
     )
-    assert "model-list-item-template" in material
-    assert "model-list-item" in material
+    assert 'model-list-item-template' in material
+    assert 'model-list-item' in material
 
 
 def test_schema_model_list_renders_hidden_template_item_for_optional_lists() -> None:
     """Schema-based model_list rendering must include the hidden template too."""
 
     class _DummyRenderer:
-        framework = "bootstrap"
+        framework = 'bootstrap'
         config = {}
         theme = None
 
@@ -92,63 +92,63 @@ def test_schema_model_list_renders_hidden_template_item_for_optional_lists() -> 
     context = RenderContext(form_data={}, schema_defs={})
 
     schema_def = {
-        "type": "object",
-        "properties": {
-            "name": {"type": "string", "title": "Name"},
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string', 'title': 'Name'},
         },
     }
 
     html = renderer.render_model_list_from_schema(
-        field_name="pets",
-        field_schema={"type": "array", "title": "Pets", "minItems": 0, "maxItems": 5},
+        field_name='pets',
+        field_schema={'type': 'array', 'title': 'Pets', 'minItems': 0, 'maxItems': 5},
         schema_def=schema_def,
         values=[],
         error=None,
-        ui_info={"item_title_template": "🐾 {name}"},
+        ui_info={'item_title_template': '🐾 {name}'},
         required_fields=[],
         context=context,
     )
 
-    assert "model-list-item-template" in html
+    assert 'model-list-item-template' in html
 
 
-def _task(name: str, priority: str = "medium", due: str = "2024-12-01") -> dict:
+def _task(name: str, priority: str = 'medium', due: str = '2024-12-01') -> dict:
     return {
-        "task_name": name,
-        "priority": priority,
-        "due_date": due,
-        "completed": False,
+        'task_name': name,
+        'priority': priority,
+        'due_date': due,
+        'completed': False,
     }
 
 
 def test_task_list_renders_add_and_remove_controls() -> None:
-    renderer = ModelListRenderer(framework="bootstrap")
+    renderer = ModelListRenderer(framework='bootstrap')
     html = renderer.render_model_list(
-        field_name="tasks",
-        label="Task List",
+        field_name='tasks',
+        label='Task List',
         model_class=TaskItem,
-        values=[_task("One"), _task("Two")],
+        values=[_task('One'), _task('Two')],
         min_items=1,
         max_items=10,
     )
 
     # Ensure add and remove affordances exist for list items
-    assert "Add Task" in html
-    assert html.count("remove-item-btn") >= 2
+    assert 'Add Task' in html
+    assert html.count('remove-item-btn') >= 2
 
 
 def test_task_list_enforces_min_and_max_items() -> None:
     # Min length: empty task list should fail validation
     with pytest.raises(ValidationError) as excinfo_min:
-        TaskListForm.model_validate({"project_name": "Demo", "tasks": []})
+        TaskListForm.model_validate({'project_name': 'Demo', 'tasks': []})
 
     msg = str(excinfo_min.value)
-    assert "tasks" in msg and "1" in msg  # context hints about min length
+    assert 'tasks' in msg and '1' in msg  # context hints about min length
 
     # Max length: more than 10 items should fail validation
-    too_many_tasks = {"project_name": "Demo", "tasks": [_task(f"Task {i}") for i in range(12)]}
+    too_many_tasks = {'project_name': 'Demo', 'tasks': [_task(f'Task {i}') for i in range(12)]}
     with pytest.raises(ValidationError) as excinfo_max:
         TaskListForm.model_validate(too_many_tasks)
 
     msg = str(excinfo_max.value)
-    assert "tasks" in msg and "10" in msg  # context hints about max length
+    assert 'tasks' in msg and '10' in msg  # context hints about max length

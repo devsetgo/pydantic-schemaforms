@@ -13,8 +13,10 @@ except ImportError:  # pragma: no cover
 if TYPE_CHECKING:  # pragma: no cover
     from .enhanced_renderer import EnhancedFormRenderer
 
-RenderableContent = Union[str, "BaseLayout", Sequence[Union[str, "BaseLayout"]]]
-ContentCallable = Callable[[Dict[str, Any], Dict[str, Any], Optional["EnhancedFormRenderer"], str], str]
+RenderableContent = Union[str, 'BaseLayout', Sequence[Union[str, 'BaseLayout']]]
+ContentCallable = Callable[
+    [Dict[str, Any], Dict[str, Any], Optional['EnhancedFormRenderer'], str], str
+]
 
 
 class BaseLayout:
@@ -27,7 +29,9 @@ class BaseLayout:
 
     template: str = '<div class="${class_}" style="${style}">${content}</div>'
 
-    def __init__(self, content: Optional[Union[RenderableContent, ContentCallable]] = None, **attributes: Any) -> None:
+    def __init__(
+        self, content: Optional[Union[RenderableContent, ContentCallable]] = None, **attributes: Any
+    ) -> None:
         self.content = content
         self.attributes = attributes
         self.template_renderer = Template(self.template)
@@ -40,8 +44,8 @@ class BaseLayout:
         *,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        renderer: Optional["EnhancedFormRenderer"] = None,
-        framework: str = "bootstrap",
+        renderer: Optional['EnhancedFormRenderer'] = None,
+        framework: str = 'bootstrap',
         **kwargs: Any,
     ) -> str:
         """Render the layout by combining template attributes and content."""
@@ -51,14 +55,14 @@ class BaseLayout:
         style_attr = self._merge_styles(attrs)
 
         template_data: Dict[str, Any] = {
-            "content": self._render_content(
+            'content': self._render_content(
                 data=data or {},
                 errors=errors or {},
                 renderer=renderer,
                 framework=framework,
             ),
-            "class_": class_attr,
-            "style": style_attr,
+            'class_': class_attr,
+            'style': style_attr,
             **attrs,
         }
 
@@ -73,13 +77,13 @@ class BaseLayout:
         *,
         data: Dict[str, Any],
         errors: Dict[str, Any],
-        renderer: Optional["EnhancedFormRenderer"],
+        renderer: Optional['EnhancedFormRenderer'],
         framework: str,
     ) -> str:
         """Render nested content recursively."""
 
         if self.content is None:
-            return ""
+            return ''
 
         if callable(self.content):
             return self.content(data, errors, renderer, framework)
@@ -94,20 +98,22 @@ class BaseLayout:
 
         if isinstance(self.content, (list, tuple)):
             rendered_parts = [
-                self._render_nested(item, data=data, errors=errors, renderer=renderer, framework=framework)
+                self._render_nested(
+                    item, data=data, errors=errors, renderer=renderer, framework=framework
+                )
                 for item in self.content
             ]
-            return "".join(rendered_parts)
+            return ''.join(rendered_parts)
 
         return str(self.content)
 
     def _render_nested(
         self,
-        item: Union[str, "BaseLayout"],
+        item: Union[str, 'BaseLayout'],
         *,
         data: Dict[str, Any],
         errors: Dict[str, Any],
-        renderer: Optional["EnhancedFormRenderer"],
+        renderer: Optional['EnhancedFormRenderer'],
         framework: str,
     ) -> str:
         if isinstance(item, BaseLayout):
@@ -116,10 +122,10 @@ class BaseLayout:
 
     @staticmethod
     def _merge_classes(attrs: Dict[str, Any]) -> str:
-        classes: Iterable[str] = filter(None, [attrs.pop("class_", ""), attrs.pop("css_class", "")])
-        return " ".join(cls for cls in classes if cls)
+        classes: Iterable[str] = filter(None, [attrs.pop('class_', ''), attrs.pop('css_class', '')])
+        return ' '.join(cls for cls in classes if cls)
 
     @staticmethod
     def _merge_styles(attrs: Dict[str, Any]) -> str:
-        styles: Iterable[str] = filter(None, [attrs.pop("style", ""), attrs.pop("css_style", "")])
-        return "; ".join(s for s in styles if s)
+        styles: Iterable[str] = filter(None, [attrs.pop('style', ''), attrs.pop('css_style', '')])
+        return '; '.join(s for s in styles if s)

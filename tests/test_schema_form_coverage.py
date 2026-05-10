@@ -17,10 +17,11 @@ class TestFormValidator:
 
     def test_form_validator_decorator_basic(self):
         """Test form_validator wraps function correctly."""
+
         @form_validator
         def validate_age(cls, values: Dict[str, Any]) -> Dict[str, Any]:
             if values.get('age', 0) < 18:
-                raise ValueError("Must be 18 or older")
+                raise ValueError('Must be 18 or older')
             return values
 
         # The decorator returns a classmethod
@@ -32,7 +33,7 @@ class TestFieldFunction:
 
     def test_field_with_ui_element(self):
         """Test Field adds ui_element to json_schema_extra."""
-        field_info = Field(default="", ui_element="textarea")
+        field_info = Field(default='', ui_element='textarea')
 
         assert field_info.json_schema_extra is not None
         assert isinstance(field_info.json_schema_extra, dict)
@@ -40,41 +41,38 @@ class TestFieldFunction:
 
     def test_field_with_ui_section(self):
         """Test Field adds ui_section to json_schema_extra."""
-        field_info = Field(default="", ui_section="profile")
+        field_info = Field(default='', ui_section='profile')
 
         assert field_info.json_schema_extra['ui_section'] == 'profile'
 
     def test_field_with_order(self):
         """Test Field adds ui_order to json_schema_extra."""
-        field_info = Field(default="", ui_order=5)
+        field_info = Field(default='', ui_order=5)
 
         assert field_info.json_schema_extra['ui_order'] == 5
 
     def test_field_with_help_text(self):
         """Test Field adds ui_help_text to json_schema_extra."""
-        field_info = Field(default="", ui_help_text="Enter your name")
+        field_info = Field(default='', ui_help_text='Enter your name')
 
-        assert field_info.json_schema_extra['ui_help_text'] == "Enter your name"
+        assert field_info.json_schema_extra['ui_help_text'] == 'Enter your name'
 
     def test_field_combines_with_json_schema_extra(self):
         """Test Field merges with existing json_schema_extra."""
-        field_info = Field(
-            default="",
-            json_schema_extra={"custom": "value"},
-            ui_element="email"
-        )
+        field_info = Field(default='', json_schema_extra={'custom': 'value'}, ui_element='email')
 
         assert field_info.json_schema_extra['custom'] == 'value'
         assert field_info.json_schema_extra['ui_element'] == 'email'
 
     def test_field_with_callable_json_schema_extra(self):
         """Test Field doesn't support callable json_schema_extra with UI elements."""
+
         def custom_schema(schema, model_type):
             schema['custom_field'] = 'value'
 
         # When callable is passed with UI elements, Field expects dict
         # So we skip this combination
-        field_info = Field(default="", ui_element="text")
+        field_info = Field(default='', ui_element='text')
 
         assert field_info.json_schema_extra['ui_element'] == 'text'
 
@@ -84,9 +82,10 @@ class TestFormModelGetJsonSchema:
 
     def test_get_json_schema_basic(self):
         """Test get_json_schema returns schema with properties."""
+
         class SimpleForm(FormModel):
-            name: str = Field(default="", ui_element="text")
-            age: int = Field(default=0, ui_element="number")
+            name: str = Field(default='', ui_element='text')
+            age: int = Field(default=0, ui_element='number')
 
         schema = SimpleForm.get_json_schema()
 
@@ -97,6 +96,7 @@ class TestFormModelGetJsonSchema:
 
     def test_get_json_schema_string_constraints(self):
         """Test get_json_schema includes string validation constraints."""
+
         class StringForm(FormModel):
             username: str = PydanticField(min_length=3, max_length=20, pattern=r'^[a-z]+$')
 
@@ -109,6 +109,7 @@ class TestFormModelGetJsonSchema:
 
     def test_get_json_schema_number_constraints(self):
         """Test get_json_schema includes number validation constraints."""
+
         class NumberForm(FormModel):
             score: int = PydanticField(ge=0, le=100)
 
@@ -123,8 +124,8 @@ class TestFormModelGetJsonSchema:
         from enum import Enum
 
         class Status(str, Enum):
-            ACTIVE = "active"
-            INACTIVE = "inactive"
+            ACTIVE = 'active'
+            INACTIVE = 'inactive'
 
         class EnumForm(FormModel):
             status: Status
@@ -143,12 +144,8 @@ class TestFormModelExtractUiInfo:
     def test_extract_ui_info_with_dict_extra(self):
         """Test _extract_ui_info extracts UI info from dict json_schema_extra."""
         field_info = PydanticField(
-            default="",
-            json_schema_extra={
-                'ui_element': 'textarea',
-                'ui_rows': 4,
-                'non_ui_field': 'ignored'
-            }
+            default='',
+            json_schema_extra={'ui_element': 'textarea', 'ui_rows': 4, 'non_ui_field': 'ignored'},
         )
 
         ui_info = FormModel._extract_ui_info(field_info)
@@ -159,11 +156,12 @@ class TestFormModelExtractUiInfo:
 
     def test_extract_ui_info_with_callable_extra(self):
         """Test _extract_ui_info extracts UI info from callable json_schema_extra."""
+
         def schema_modifier(schema, model_type):
             schema['ui_placeholder'] = 'Enter value'
             schema['ui_class'] = 'form-control'
 
-        field_info = PydanticField(default="", json_schema_extra=schema_modifier)
+        field_info = PydanticField(default='', json_schema_extra=schema_modifier)
 
         # Create a dummy FormModel class for the callable
         class DummyForm(FormModel):
@@ -176,7 +174,7 @@ class TestFormModelExtractUiInfo:
 
     def test_extract_ui_info_no_extra(self):
         """Test _extract_ui_info returns empty dict when no json_schema_extra."""
-        field_info = PydanticField(default="")
+        field_info = PydanticField(default='')
 
         ui_info = FormModel._extract_ui_info(field_info)
 
@@ -188,6 +186,7 @@ class TestFormModelGetExampleFormData:
 
     def test_get_example_form_data_basic_types(self):
         """Test get_example_form_data generates example data."""
+
         class ExampleForm(FormModel):
             name: str
             age: int
@@ -219,11 +218,7 @@ class TestValidationResult:
 
     def test_validation_result_valid(self):
         """Test ValidationResult for valid data."""
-        result = ValidationResult(
-            is_valid=True,
-            data={'name': 'John'},
-            errors={}
-        )
+        result = ValidationResult(is_valid=True, data={'name': 'John'}, errors={})
 
         assert result.is_valid
         assert result.data == {'name': 'John'}
@@ -231,11 +226,7 @@ class TestValidationResult:
 
     def test_validation_result_invalid(self):
         """Test ValidationResult for invalid data."""
-        result = ValidationResult(
-            is_valid=False,
-            data={},
-            errors={'name': 'Required field'}
-        )
+        result = ValidationResult(is_valid=False, data={}, errors={'name': 'Required field'})
 
         assert not result.is_valid
         assert result.errors == {'name': 'Required field'}
@@ -251,11 +242,7 @@ class TestValidationResult:
 
     def test_validation_result_str_invalid(self):
         """Test ValidationResult.__str__ for invalid result."""
-        result = ValidationResult(
-            is_valid=False,
-            data={},
-            errors={'email': 'Invalid email'}
-        )
+        result = ValidationResult(is_valid=False, data={}, errors={'email': 'Invalid email'})
 
         result_str = str(result)
 
@@ -264,44 +251,47 @@ class TestValidationResult:
 
     def test_validation_result_render_with_errors_explicit_url(self):
         """Test ValidationResult.render_with_errors with explicit submit_url."""
+
         class TestForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         result = ValidationResult(
             is_valid=False,
             data={},
             errors={'name': 'Required'},
             form_model_cls=TestForm,
-            original_data={'name': ''}
+            original_data={'name': ''},
         )
 
-        html = result.render_with_errors(framework='bootstrap', submit_url="/test")
+        html = result.render_with_errors(framework='bootstrap', submit_url='/test')
 
         assert isinstance(html, str)
-        assert "<form" in html
+        assert '<form' in html
 
     def test_validation_result_render_with_errors_stored_url(self):
         """render_with_errors() with no arguments uses url stored at construction."""
+
         class TestForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         result = ValidationResult(
             is_valid=False,
             errors={'name': 'Required'},
             form_model_cls=TestForm,
             original_data={'name': ''},
-            submit_url="/stored-url",
+            submit_url='/stored-url',
         )
 
         html = result.render_with_errors()
 
         assert isinstance(html, str)
-        assert "<form" in html
+        assert '<form' in html
 
     def test_validation_result_render_with_errors_no_url_raises(self):
         """render_with_errors() raises when no submit_url is available."""
+
         class TestForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         result = ValidationResult(
             is_valid=False,
@@ -310,19 +300,15 @@ class TestValidationResult:
             original_data={'name': ''},
         )
 
-        with pytest.raises(ValueError, match="submit_url is required"):
+        with pytest.raises(ValueError, match='submit_url is required'):
             result.render_with_errors()
 
     def test_validation_result_render_with_errors_no_model(self):
         """Test ValidationResult.render_with_errors raises without form_model_cls."""
-        result = ValidationResult(
-            is_valid=False,
-            data={},
-            errors={'field': 'error'}
-        )
+        result = ValidationResult(is_valid=False, data={}, errors={'field': 'error'})
 
-        with pytest.raises(ValueError, match="Cannot render form"):
-            result.render_with_errors(submit_url="/test")
+        with pytest.raises(ValueError, match='Cannot render form'):
+            result.render_with_errors(submit_url='/test')
 
 
 class TestFormModelRegisterField:
@@ -330,11 +316,12 @@ class TestFormModelRegisterField:
 
     def test_register_field_basic(self):
         """Test registering a new field at runtime."""
+
         class DynamicForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         # Register a new field
-        field_info = DynamicForm.register_field('email', annotation=str, field=Field(default=""))
+        field_info = DynamicForm.register_field('email', annotation=str, field=Field(default=''))
 
         assert field_info is not None
         assert hasattr(DynamicForm, '__runtime_fields__')
@@ -342,6 +329,7 @@ class TestFormModelRegisterField:
 
     def test_register_field_without_field_info(self):
         """Test registering field with default FieldInfo."""
+
         class SimpleForm(FormModel):
             pass
 
@@ -352,11 +340,12 @@ class TestFormModelRegisterField:
 
     def test_ensure_dynamic_fields(self):
         """Test ensure_dynamic_fields detects FieldInfo attributes."""
+
         class ManualForm(FormModel):
             pass
 
         # Manually add a FieldInfo attribute
-        ManualForm.dynamic_field = PydanticField(default="test")
+        ManualForm.dynamic_field = PydanticField(default='test')
 
         # Should detect it
         result = ManualForm.ensure_dynamic_fields()
@@ -366,8 +355,9 @@ class TestFormModelRegisterField:
 
     def test_ensure_dynamic_fields_no_new_fields(self):
         """Test ensure_dynamic_fields returns False when no new fields."""
+
         class StaticForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         result = StaticForm.ensure_dynamic_fields()
 
@@ -375,8 +365,9 @@ class TestFormModelRegisterField:
 
     def test_get_runtime_model_no_runtime_fields(self):
         """Test get_runtime_model returns cls when no runtime fields."""
+
         class SimpleForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         runtime_model = SimpleForm.get_runtime_model()
 
@@ -384,11 +375,12 @@ class TestFormModelRegisterField:
 
     def test_get_runtime_model_with_runtime_fields(self):
         """Test get_runtime_model creates new model with runtime fields."""
+
         class BaseForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         # Register a runtime field
-        BaseForm.register_field('email', annotation=str, field=Field(default=""))
+        BaseForm.register_field('email', annotation=str, field=Field(default=''))
 
         runtime_model = BaseForm.get_runtime_model()
 
@@ -398,8 +390,9 @@ class TestFormModelRegisterField:
 
     def test_get_runtime_model_caches(self):
         """Test get_runtime_model caches the runtime model."""
+
         class CachedForm(FormModel):
-            name: str = ""
+            name: str = ''
 
         CachedForm.register_field('age', annotation=int, field=Field(default=0))
 
@@ -415,43 +408,47 @@ class TestFormModelRenderForm:
 
     def test_render_form_basic(self):
         """Test rendering a form with default settings."""
-        class RenderForm(FormModel):
-            name: str = Field(default="", ui_element="text")
-            email: str = Field(default="", ui_element="email")
 
-        html = RenderForm.render_form(submit_url="/render")
+        class RenderForm(FormModel):
+            name: str = Field(default='', ui_element='text')
+            email: str = Field(default='', ui_element='email')
+
+        html = RenderForm.render_form(submit_url='/render')
 
         assert isinstance(html, str)
         assert len(html) > 0
 
     def test_render_form_with_data(self):
         """Test rendering a form with initial data."""
-        class DataForm(FormModel):
-            name: str = ""
 
-        html = DataForm.render_form(data={'name': 'John'}, submit_url="/data")
+        class DataForm(FormModel):
+            name: str = ''
+
+        html = DataForm.render_form(data={'name': 'John'}, submit_url='/data')
 
         assert isinstance(html, str)
 
     def test_render_form_with_errors(self):
         """Test rendering a form with validation errors."""
+
         class ErrorForm(FormModel):
-            email: str = ""
+            email: str = ''
 
         html = ErrorForm.render_form(
             data={'email': 'invalid'},
             errors={'email': 'Invalid email'},
-            submit_url="/error",
+            submit_url='/error',
         )
 
         assert isinstance(html, str)
 
     def test_render_form_different_framework(self):
         """Test rendering with different CSS framework."""
-        class FrameworkForm(FormModel):
-            name: str = ""
 
-        html = FrameworkForm.render_form(framework='material', submit_url="/framework")
+        class FrameworkForm(FormModel):
+            name: str = ''
+
+        html = FrameworkForm.render_form(framework='material', submit_url='/framework')
 
         assert isinstance(html, str)
 
@@ -461,11 +458,12 @@ class TestFormModelValidate:
 
     def test_validate_valid_data(self):
         """validate() returns is_valid=True with clean data."""
+
         class SimpleForm(FormModel):
             name: str
             age: int
 
-        result = SimpleForm.validate({'name': 'Alice', 'age': 30}, submit_url="/submit")
+        result = SimpleForm.validate({'name': 'Alice', 'age': 30}, submit_url='/submit')
 
         assert result.is_valid
         assert result.data['name'] == 'Alice'
@@ -474,71 +472,77 @@ class TestFormModelValidate:
 
     def test_validate_invalid_data(self):
         """validate() returns is_valid=False with errors on bad data."""
+
         class SimpleForm(FormModel):
             name: str
             age: int
 
-        result = SimpleForm.validate({'name': 'Alice'}, submit_url="/submit")
+        result = SimpleForm.validate({'name': 'Alice'}, submit_url='/submit')
 
         assert not result.is_valid
         assert 'age' in result.errors
 
     def test_validate_stores_submit_url(self):
         """validate() stores submit_url so render_with_errors() needs no args."""
+
         class SimpleForm(FormModel):
             name: str
 
-        result = SimpleForm.validate({}, submit_url="/my-form")
+        result = SimpleForm.validate({}, submit_url='/my-form')
 
         assert not result.is_valid
         html = result.render_with_errors()
         assert isinstance(html, str)
-        assert "<form" in html
+        assert '<form' in html
 
     def test_validate_stores_framework(self):
         """validate() stores the framework for re-render."""
+
         class SimpleForm(FormModel):
             name: str
 
-        result = SimpleForm.validate({}, submit_url="/my-form", framework="material")
+        result = SimpleForm.validate({}, submit_url='/my-form', framework='material')
 
         assert not result.is_valid
-        assert result._framework == "material"
+        assert result._framework == 'material'
 
     def test_validate_render_with_errors_no_args(self):
         """The complete happy-path: validate then render_with_errors() with zero args."""
+
         class ContactForm(FormModel):
-            email: str = Field(default="", ui_element="email")
-            message: str = Field(default="", ui_element="textarea")
+            email: str = Field(default='', ui_element='email')
+            message: str = Field(default='', ui_element='textarea')
 
         result = ContactForm.validate(
             {'email': 'bad-email', 'message': ''},
-            submit_url="/contact",
+            submit_url='/contact',
         )
 
         if not result.is_valid:
             html = result.render_with_errors()
             assert isinstance(html, str)
-            assert "<form" in html
+            assert '<form' in html
 
     def test_validate_without_submit_url(self):
         """validate() without submit_url stores None; render_with_errors raises."""
+
         class SimpleForm(FormModel):
             name: str
 
         result = SimpleForm.validate({})
 
         assert not result.is_valid
-        with pytest.raises(ValueError, match="submit_url is required"):
+        with pytest.raises(ValueError, match='submit_url is required'):
             result.render_with_errors()
 
     def test_validate_explicit_url_overrides_stored(self):
         """An explicit submit_url on render_with_errors overrides the stored one."""
+
         class SimpleForm(FormModel):
             name: str
 
-        result = SimpleForm.validate({}, submit_url="/original")
-        html = result.render_with_errors(submit_url="/override")
+        result = SimpleForm.validate({}, submit_url='/original')
+        html = result.render_with_errors(submit_url='/override')
 
         assert isinstance(html, str)
-        assert "<form" in html
+        assert '<form' in html

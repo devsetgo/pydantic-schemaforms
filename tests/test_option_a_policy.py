@@ -32,8 +32,8 @@ class GenericTabbed(TabbedLayout):
 class WrapperForm(FormModel):
     tabs: GenericTabbed = FormField(
         default_factory=GenericTabbed,
-        title="Wrapper",
-        input_type="layout",
+        title='Wrapper',
+        input_type='layout',
     )
 
 
@@ -41,17 +41,17 @@ def test_get_nested_form_data_schema_driven_for_tabbed_layouts():
     """Layout extraction should be generic and derived from layout schema, not field names."""
 
     flat_data = {
-        "company_name": "Acme",
-        "username": "alice",
-        "theme": "dark",
-        "unrelated": "ignored",
+        'company_name': 'Acme',
+        'username': 'alice',
+        'theme': 'dark',
+        'unrelated': 'ignored',
     }
 
-    nested = get_nested_form_data("tabs", flat_data, GenericTabbed())
+    nested = get_nested_form_data('tabs', flat_data, GenericTabbed())
 
     assert nested == {
-        "org": {"company_name": "Acme"},
-        "settings": {"username": "alice", "theme": "dark"},
+        'org': {'company_name': 'Acme'},
+        'settings': {'username': 'alice', 'theme': 'dark'},
     }
 
 
@@ -61,11 +61,11 @@ def test_validate_form_data_returns_model_shape_only():
     class StrictForm(FormModel):
         name: str
 
-    result = validate_form_data(StrictForm, {"name": "john", "is_admin": True})
+    result = validate_form_data(StrictForm, {'name': 'john', 'is_admin': True})
 
     assert result.is_valid is True
-    assert result.data == {"name": "john"}
-    assert "is_admin" not in result.data
+    assert result.data == {'name': 'john'}
+    assert 'is_admin' not in result.data
 
 
 def test_validate_form_data_layout_wrapper_keeps_only_layout_model_shape():
@@ -74,16 +74,16 @@ def test_validate_form_data_layout_wrapper_keeps_only_layout_model_shape():
     result = validate_form_data(
         WrapperForm,
         {
-            "company_name": "Acme",
-            "username": "alice",
-            "theme": "dark",
-            "is_admin": "1",
+            'company_name': 'Acme',
+            'username': 'alice',
+            'theme': 'dark',
+            'is_admin': '1',
         },
     )
 
     assert result.is_valid is True
-    assert set(result.data.keys()) == {"tabs"}
-    assert result.data["tabs"] == {
-        "org": {"company_name": "Acme"},
-        "settings": {"username": "alice", "theme": "dark"},
+    assert set(result.data.keys()) == {'tabs'}
+    assert result.data['tabs'] == {
+        'org': {'company_name': 'Acme'},
+        'settings': {'username': 'alice', 'theme': 'dark'},
     }

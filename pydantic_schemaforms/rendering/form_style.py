@@ -325,7 +325,7 @@ MATERIAL_ACCORDION_SECTION_TEMPLATE = TemplateString(
 )
 
 MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
-        """
+    """
 <section class="md-model-list-wrapper" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
     <label class="md-field-label">${label}${required_indicator}</label>
     <div class="model-list-container md-model-list-container" data-field-name="${field_name}" data-min-items="${min_items}" data-max-items="${max_items}">
@@ -344,7 +344,7 @@ MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(
 )
 
 MATERIAL_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
-        """
+    """
 <section class="model-list-item md-model-card mdc-card mdc-card--outlined" data-index="${index}" data-field-name="${field_name}">
     <div class="mdc-card__primary-action">
         <header class="md-model-card__header">
@@ -360,31 +360,31 @@ MATERIAL_MODEL_LIST_ITEM_TEMPLATE = TemplateString(
 )
 
 MATERIAL_MODEL_LIST_HELP_TEMPLATE = TemplateString(
-        """
+    """
 <p class="md-help-text">${help_text}</p>
 """
 )
 
 MATERIAL_MODEL_LIST_ERROR_TEMPLATE = TemplateString(
-        """
+    """
 <p class="md-error-text">${error_text}</p>
 """
 )
 
 MATERIAL_FIELD_HELP_TEMPLATE = TemplateString(
-        """
+    """
 <p class="md-field-help-text">${help_text}</p>
 """
 )
 
 MATERIAL_FIELD_ERROR_TEMPLATE = TemplateString(
-        """
+    """
 <p class="md-field-error-text">${error_text}</p>
 """
 )
 
 MATERIAL_SUBMIT_BUTTON_TEMPLATE = TemplateString(
-        """
+    """
 <button type="submit" class="md-button md-button-filled">${submit_label}</button>
 """
 )
@@ -415,8 +415,8 @@ class FormStyleTemplates:
 class FormStyleAssets:
     """Declarative collection of renderer asset snippets."""
 
-    before_form: str = ""
-    after_form: str = ""
+    before_form: str = ''
+    after_form: str = ''
     tab_assets: str = TAB_COMPONENT_ASSETS
     accordion_assets: str = ACCORDION_COMPONENT_ASSETS
 
@@ -426,7 +426,7 @@ class FormStyle:
     """Descriptor that ties a framework + variant to templates/assets."""
 
     framework: str
-    variant: str = "default"
+    variant: str = 'default'
     name: str | None = None
     templates: FormStyleTemplates = FormStyleTemplates()
     assets: FormStyleAssets = FormStyleAssets()
@@ -450,11 +450,11 @@ def _parse_framework_variant(framework: str, variant: str | None = None) -> Tupl
     if variant:
         return framework, variant
 
-    if ":" in framework:
-        base, version = framework.split(":", 1)
+    if ':' in framework:
+        base, version = framework.split(':', 1)
         return base, version
 
-    return framework, "default"
+    return framework, 'default'
 
 
 def register_form_style(style: FormStyle) -> None:
@@ -473,28 +473,28 @@ def get_form_style(framework: str, variant: str | None = None) -> FormStyle:
 
     # Fallback to the base framework with default variant (e.g., "bootstrap" -> ("bootstrap", "default"))
     base_framework, _ = key
-    base_key = (base_framework, "default")
+    base_key = (base_framework, 'default')
     if base_key in _FORM_STYLE_REGISTRY:
         return _FORM_STYLE_REGISTRY[base_key]
 
     # Final fallback to the global default style
-    fallback = ("default", "default")
+    fallback = ('default', 'default')
     if fallback in _FORM_STYLE_REGISTRY:
         return _FORM_STYLE_REGISTRY[fallback]
 
-    raise KeyError(f"No form style registered for framework={framework!r} variant={variant!r}")
+    raise KeyError(f'No form style registered for framework={framework!r} variant={variant!r}')
 
 
 # Register the default (bootstrap/plain) style eagerly.
 _DEFAULT_STYLE = FormStyle(
-    framework="default",
-    variant="default",
+    framework='default',
+    variant='default',
 )
 
 register_form_style(_DEFAULT_STYLE)
 register_form_style(
     FormStyle(
-        framework="bootstrap",
+        framework='bootstrap',
         templates=FormStyleTemplates(
             tab_layout=BOOTSTRAP_TAB_LAYOUT_TEMPLATE,
             tab_button=BOOTSTRAP_TAB_BUTTON_TEMPLATE,
@@ -510,8 +510,8 @@ register_form_style(
 # Bootstrap v5 alias (descriptor access: "bootstrap:5")
 register_form_style(
     FormStyle(
-        framework="bootstrap",
-        variant="5",
+        framework='bootstrap',
+        variant='5',
         templates=FormStyleTemplates(
             tab_layout=BOOTSTRAP_TAB_LAYOUT_TEMPLATE,
             tab_button=BOOTSTRAP_TAB_BUTTON_TEMPLATE,
@@ -526,7 +526,7 @@ register_form_style(
 
 register_form_style(
     FormStyle(
-        framework="plain",
+        framework='plain',
         templates=FormStyleTemplates(
             layout_section=PLAIN_LAYOUT_SECTION_TEMPLATE,
             layout_help=PLAIN_LAYOUT_HELP_TEMPLATE,
@@ -565,7 +565,7 @@ _MATERIAL_TEMPLATES = FormStyleTemplates(
 
 register_form_style(
     FormStyle(
-        framework="material",
+        framework='material',
         templates=_MATERIAL_TEMPLATES,
     )
 )
@@ -573,14 +573,14 @@ register_form_style(
 # Material Design v3 alias (descriptor access: "material:3")
 register_form_style(
     FormStyle(
-        framework="material",
-        variant="3",
+        framework='material',
+        variant='3',
         templates=_MATERIAL_TEMPLATES,
     )
 )
 register_form_style(
     FormStyle(
-        framework="material-embedded",
+        framework='material-embedded',
         templates=_MATERIAL_TEMPLATES,
     )
 )

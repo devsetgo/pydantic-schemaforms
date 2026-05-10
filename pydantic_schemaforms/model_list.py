@@ -26,7 +26,7 @@ from pydantic_schemaforms.schema_form import FormModel
 class ModelListRenderer:
     """Renderer for dynamic model lists with add/remove functionality."""
 
-    def __init__(self, framework: str = "bootstrap"):
+    def __init__(self, framework: str = 'bootstrap'):
         """Initialize the model list renderer.
 
         Args:
@@ -103,8 +103,8 @@ class ModelListRenderer:
 
         values = values or []
         nested_errors = nested_errors or {}
-        model_label = model_class.__name__.replace("Model", "") or model_class.__name__
-        add_button_label = f"Add {label or model_label}" if label else f"Add {model_label}"
+        model_label = model_class.__name__.replace('Model', '') or model_class.__name__
+        add_button_label = f'Add {label or model_label}' if label else f'Add {model_label}'
 
         html_parts: List[str] = []
 
@@ -122,7 +122,7 @@ class ModelListRenderer:
                     model_label=model_label,
                     index=index,
                     body_html=item_body,
-                    remove_button_aria_label="Remove this item",
+                    remove_button_aria_label='Remove this item',
                 )
             )
 
@@ -141,7 +141,7 @@ class ModelListRenderer:
                         model_label=model_label,
                         index=index,
                         body_html=item_body,
-                        remove_button_aria_label="Remove this item",
+                        remove_button_aria_label='Remove this item',
                     )
                 )
 
@@ -159,17 +159,15 @@ class ModelListRenderer:
             model_label=model_label,
             index=0,
             body_html=template_body,
-            remove_button_aria_label="Remove this item",
+            remove_button_aria_label='Remove this item',
         )
         # Note: do not set data-field-name here; JS looks up the list container by
         # [data-field-name="..."] and we don't want the template to be returned.
         template_html = (
-            '<template class="model-list-item-template">'
-            "{template_item}"
-            "</template>"
+            '<template class="model-list-item-template">{template_item}</template>'
         ).format(template_item=template_item)
 
-        items_html = "\n".join([template_html, *html_parts])
+        items_html = '\n'.join([template_html, *html_parts])
 
         themed_container = theme.render_model_list_container(
             field_name=field_name,
@@ -209,7 +207,7 @@ class ModelListRenderer:
         item_data: Dict[str, Any],
         nested_errors: Optional[Dict[str, str]] = None,
     ) -> str:
-        if self.framework == "material":
+        if self.framework == 'material':
             return self._render_material_list_item(
                 field_name,
                 model_class,
@@ -237,49 +235,51 @@ class ModelListRenderer:
 
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
-        renderer = EnhancedFormRenderer(framework="bootstrap")
+        renderer = EnhancedFormRenderer(framework='bootstrap')
 
         schema = model_class.model_json_schema()
-        schema_defs = schema.get("$defs") or schema.get("definitions", {}) or {}
+        schema_defs = schema.get('$defs') or schema.get('definitions', {}) or {}
         nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
-        required_fields = schema.get("required", [])
+        required_fields = schema.get('required', [])
         nested_errors = nested_errors or {}
 
-        html = ["<div class=\"row\">"]
+        html = ['<div class="row">']
 
         # Render each field in the model
-        properties = schema.get("properties", {})
+        properties = schema.get('properties', {})
 
         for field_key, field_schema in properties.items():
-            if field_key.startswith("_"):
+            if field_key.startswith('_'):
                 continue
 
-            field_value = item_data.get(field_key, "")
-            input_name = f"{field_name}[{index}].{field_key}"
+            field_value = item_data.get(field_key, '')
+            input_name = f'{field_name}[{index}].{field_key}'
 
             # Get the error for this specific field from nested errors
             # e.g., if nested_errors contains '0.weight': 'error', and we're at index 0, field_key 'weight'
-            field_error = nested_errors.get(f"{index}.{field_key}")
+            field_error = nested_errors.get(f'{index}.{field_key}')
 
             html.append(
                 f"""
                 <div class=\"col-md-6\">
-                    {renderer._render_field(
+                    {
+                    renderer._render_field(
                         input_name,
                         field_schema,
                         field_value,
                         field_error,
                         required_fields=required_fields,
                         context=nested_context,
-                        layout="vertical",
+                        layout='vertical',
                         all_errors=nested_errors,
-                    )}
+                    )
+                }
                 </div>"""
             )
 
-        html.append("</div>")
+        html.append('</div>')
 
-        return "\n".join(html)
+        return '\n'.join(html)
 
     def _render_material_list_item(
         self,
@@ -293,50 +293,52 @@ class ModelListRenderer:
 
         from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
-        renderer = EnhancedFormRenderer(framework="material")
+        renderer = EnhancedFormRenderer(framework='material')
 
         schema = model_class.model_json_schema()
-        schema_defs = schema.get("$defs") or schema.get("definitions", {}) or {}
+        schema_defs = schema.get('$defs') or schema.get('definitions', {}) or {}
         nested_context = RenderContext(form_data=item_data or {}, schema_defs=schema_defs)
-        required_fields = schema.get("required", [])
+        required_fields = schema.get('required', [])
         nested_errors = nested_errors or {}
 
-        html = ["<div class=\"row\">"]
+        html = ['<div class="row">']
 
         # Render each field in the model
-        properties = schema.get("properties", {})
+        properties = schema.get('properties', {})
 
         for field_key, field_schema in properties.items():
-            if field_key.startswith("_"):
+            if field_key.startswith('_'):
                 continue
 
-            field_value = item_data.get(field_key, "")
-            input_name = f"{field_name}[{index}].{field_key}"
+            field_value = item_data.get(field_key, '')
+            input_name = f'{field_name}[{index}].{field_key}'
 
             # Get the error for this specific field from nested errors
-            field_error = nested_errors.get(f"{index}.{field_key}")
+            field_error = nested_errors.get(f'{index}.{field_key}')
 
             # Get field info from the model
-            getattr(model_class.model_fields.get(field_key), "json_schema_extra", {}) or {}
+            getattr(model_class.model_fields.get(field_key), 'json_schema_extra', {}) or {}
 
             html.append(
                 f"""
                         <div class=\"col-md-6\">
-                            {renderer._render_field(
-                                input_name,
-                                field_schema,
-                                field_value,
-                                field_error,
-                                required_fields,
-                                context=nested_context,
-                                all_errors=nested_errors,
-                            )}
+                            {
+                    renderer._render_field(
+                        input_name,
+                        field_schema,
+                        field_value,
+                        field_error,
+                        required_fields,
+                        context=nested_context,
+                        all_errors=nested_errors,
+                    )
+                }
                         </div>"""
             )
 
-        html.append("</div>")
+        html.append('</div>')
 
-        return "\n".join(html)
+        return '\n'.join(html)
 
     def get_model_list_javascript(self) -> str:
         """Return JavaScript for model list functionality with collapsible card support."""

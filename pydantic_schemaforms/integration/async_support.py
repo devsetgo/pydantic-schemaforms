@@ -22,15 +22,15 @@ async def handle_async_form(
         normalized = normalize_form_data(submitted_data)
         is_valid, errors = form_builder.validate_data(normalized)
         if is_valid:
-            return {"success": True, "data": normalized}
+            return {'success': True, 'data': normalized}
 
-        result: FormResult = {"success": False, "errors": errors}
+        result: FormResult = {'success': False, 'errors': errors}
         if render_on_error:
-            result["form_html"] = await form_builder.render_async(normalized, errors)
+            result['form_html'] = await form_builder.render_async(normalized, errors)
         return result
 
     form_html = await form_builder.render_async(initial_data or {})
-    return {"form_html": form_html}
+    return {'form_html': form_html}
 
 
-__all__ = ["handle_async_form"]
+__all__ = ['handle_async_form']

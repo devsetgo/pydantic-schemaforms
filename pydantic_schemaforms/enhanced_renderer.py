@@ -1,4 +1,3 @@
-
 """
 Enhanced Form Renderer for Pydantic Models with UI Elements
 Supports UI element specifications similar to React JSON Schema Forms
@@ -32,10 +31,11 @@ from .templates import FormTemplates, render_template
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 class CSRFMode(str, Enum):
-    OFF = "off"
-    FIELD_ONLY = "field-only"
-    REQUIRED_PROVIDER = "required-provider"
+    OFF = 'off'
+    FIELD_ONLY = 'field-only'
+    REQUIRED_PROVIDER = 'required-provider'
 
 
 CSRF_MODE_OFF = CSRFMode.OFF.value
@@ -49,7 +49,7 @@ class SchemaFormValidationError(Exception):
 
     def __init__(self, errors: List[Dict[str, Any]]):
         self.errors = errors
-        super().__init__("Schema form validation error")
+        super().__init__('Schema form validation error')
 
 
 class EnhancedFormRenderer:
@@ -57,15 +57,15 @@ class EnhancedFormRenderer:
 
     def __init__(
         self,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         theme: Optional[RendererTheme] = None,
         *,
         include_framework_assets: bool = False,
-        asset_mode: str = "vendored",
+        asset_mode: str = 'vendored',
     ):
         self.framework = framework
         self.include_framework_assets = include_framework_assets
-        if theme is None and framework == "material":
+        if theme is None and framework == 'material':
             theme = MaterialEmbeddedTheme()
         resolved_theme = theme or get_theme_for_framework(
             framework,
@@ -74,7 +74,7 @@ class EnhancedFormRenderer:
         )
         self._theme: RendererTheme = resolved_theme
         self.asset_mode = asset_mode
-        if hasattr(self._theme, "config"):
+        if hasattr(self._theme, 'config'):
             self.config = self._theme.config
         elif isinstance(self._theme, MaterialEmbeddedTheme):
             self.config = {}
@@ -93,12 +93,12 @@ class EnhancedFormRenderer:
         data: Dict[str, Any] | None = None,
         errors: Dict[str, Any] | None = None,
         *,
-        submit_url: str = "/submit",
-        method: str = "POST",
+        submit_url: str = '/submit',
+        method: str = 'POST',
         csrf_mode: CSRFMode | str = CSRF_MODE_OFF,
         csrf_token_provider: str | Callable[[], str] | None = None,
         include_submit_button: bool = True,
-        layout: str = "vertical",
+        layout: str = 'vertical',
         debug: bool = False,
         show_timing: bool = False,
         enable_logging: bool = False,
@@ -114,25 +114,25 @@ class EnhancedFormRenderer:
         errors = errors or {}
 
         # Keep backward compatibility for callers still passing these via kwargs.
-        include_csrf = bool(kwargs.pop("include_csrf", False))
-        csrf_field_name = kwargs.pop("csrf_field_name", "csrf_token") or "csrf_token"
+        include_csrf = bool(kwargs.pop('include_csrf', False))
+        csrf_field_name = kwargs.pop('csrf_field_name', 'csrf_token') or 'csrf_token'
 
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
-        if isinstance(errors, dict) and "errors" in errors:
-            errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
+        if isinstance(errors, dict) and 'errors' in errors:
+            errors = {err.get('name', ''): err.get('message', '') for err in errors['errors']}
 
         error_summary_markup = self._render_error_summary(errors)
 
-        default_form_class = self._theme.form_class() or self.config.get("form_class", "")
+        default_form_class = self._theme.form_class() or self.config.get('form_class', '')
         form_attrs = {
-            "method": method,
-            "action": submit_url,
-            "class": default_form_class,
-            "novalidate": True,
+            'method': method,
+            'action': submit_url,
+            'class': default_form_class,
+            'novalidate': True,
         }
         form_attrs.update(kwargs)
-        form_attrs["action"] = submit_url  # kwargs must not override action
+        form_attrs['action'] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
 
         resolved_csrf_mode = self._resolve_csrf_mode(
@@ -153,21 +153,21 @@ class EnhancedFormRenderer:
         non_layout_fields = metadata.non_layout_fields
 
         if layout_fields:
-            model_fields = getattr(model_cls, "model_fields", {}) or {}
+            model_fields = getattr(model_cls, 'model_fields', {}) or {}
             for field_name, _field_schema in layout_fields:
                 if field_name in data:
                     continue
                 field_info = model_fields.get(field_name)
                 if not field_info:
                     continue
-                default_factory = getattr(field_info, "default_factory", None)
+                default_factory = getattr(field_info, 'default_factory', None)
                 if default_factory is not None:
                     try:
                         data[field_name] = default_factory()
                     except Exception:  # pragma: no cover - defensive
                         continue
                 elif not field_info.is_required():
-                    default_value = getattr(field_info, "default", None)
+                    default_value = getattr(field_info, 'default', None)
                     if default_value is not None:
                         data[field_name] = default_value
 
@@ -181,11 +181,11 @@ class EnhancedFormRenderer:
                     context,
                 )
             )
-        elif layout == "tabbed":
+        elif layout == 'tabbed':
             form_body_parts.extend(
                 self._render_tabbed_layout(fields, data, errors, required_fields, context)
             )
-        elif layout == "side-by-side":
+        elif layout == 'side-by-side':
             form_body_parts.extend(
                 self._render_side_by_side_layout(fields, data, errors, required_fields, context)
             )
@@ -207,7 +207,7 @@ class EnhancedFormRenderer:
         if error_summary_markup:
             form_body_parts.insert(0, error_summary_markup)
 
-        submit_markup = self._render_submit_button() if include_submit_button else ""
+        submit_markup = self._render_submit_button() if include_submit_button else ''
 
         # Calculate render time before form_wrapper (we'll add timing display inside form)
         render_time = time.perf_counter() - start_time
@@ -215,7 +215,7 @@ class EnhancedFormRenderer:
         form_markup = self._theme.render_form_wrapper(
             form_attrs=form_attrs,
             csrf_token=csrf_markup,
-            form_content="\n".join(form_body_parts),
+            form_content='\n'.join(form_body_parts),
             submit_markup=submit_markup,
             render_time=render_time if show_timing else None,
         )
@@ -223,7 +223,7 @@ class EnhancedFormRenderer:
         output_parts = [self._render_layout_support_styles(), form_markup]
 
         has_model_list_fields = any(
-            resolve_ui_element(field_schema) == "model_list" for _name, field_schema in fields
+            resolve_ui_element(field_schema) == 'model_list' for _name, field_schema in fields
         )
         if has_model_list_fields:
             from .model_list import ModelListRenderer
@@ -231,10 +231,12 @@ class EnhancedFormRenderer:
             list_renderer = ModelListRenderer(framework=self._model_list_framework())
             output_parts.append(list_renderer.get_model_list_javascript())
 
-        combined_output = "\n".join(output_parts)
+        combined_output = '\n'.join(output_parts)
 
         if enable_logging:
-            logger.debug(f"Form rendered in {render_time:.3f} seconds (model: {model_cls.__name__})")
+            logger.debug(
+                f'Form rendered in {render_time:.3f} seconds (model: {model_cls.__name__})'
+            )
 
         if not debug:
             return combined_output
@@ -253,7 +255,7 @@ class EnhancedFormRenderer:
         model_cls: Type[FormModel],
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        layout: str = "vertical",
+        layout: str = 'vertical',
         **kwargs,
     ) -> str:
         """Render only the field markup for nested usage."""
@@ -264,8 +266,8 @@ class EnhancedFormRenderer:
 
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
-        if isinstance(errors, dict) and "errors" in errors:
-            errors = {err.get("name", ""): err.get("message", "") for err in errors["errors"]}
+        if isinstance(errors, dict) and 'errors' in errors:
+            errors = {err.get('name', ''): err.get('message', '') for err in errors['errors']}
 
         fields = metadata.fields
         required_fields = metadata.required_fields
@@ -285,7 +287,7 @@ class EnhancedFormRenderer:
                 )
             )
 
-        return "\n".join(form_parts)
+        return '\n'.join(form_parts)
 
     async def render_form_from_model_async(
         self,
@@ -293,14 +295,14 @@ class EnhancedFormRenderer:
         data: Dict[str, Any] | None = None,
         errors: Dict[str, Any] | None = None,
         *,
-        submit_url: str = "/submit",
-        method: str = "POST",
+        submit_url: str = '/submit',
+        method: str = 'POST',
         include_csrf: bool = False,
         csrf_mode: CSRFMode | str = CSRF_MODE_OFF,
         csrf_token_provider: str | Callable[[], str] | None = None,
-        csrf_field_name: str = "csrf_token",
+        csrf_field_name: str = 'csrf_token',
         include_submit_button: bool = True,
-        layout: str = "vertical",
+        layout: str = 'vertical',
         **kwargs,
     ) -> str:
         """Async wrapper for render_form_from_model."""
@@ -332,10 +334,10 @@ class EnhancedFormRenderer:
         error: Optional[str] = None,
         required_fields: Optional[List[str]] = None,
         context: Optional[RenderContext] = None,
-        layout: str = "vertical",
+        layout: str = 'vertical',
         all_errors: Optional[Dict[str, str]] = None,
     ) -> str:
-        if self.framework == "material":
+        if self.framework == 'material':
             return self._render_material_field(
                 field_name,
                 field_schema,
@@ -365,7 +367,9 @@ class EnhancedFormRenderer:
         required_fields: List[str],
         context: RenderContext,
     ) -> List[str]:
-        return self._layout_engine.render_tabbed_layout(fields, data, errors, required_fields, context)
+        return self._layout_engine.render_tabbed_layout(
+            fields, data, errors, required_fields, context
+        )
 
     def _render_layout_fields_as_tabs(
         self,
@@ -428,13 +432,13 @@ class EnhancedFormRenderer:
         self, field_name: str, all_errors: Dict[str, Any]
     ) -> Dict[str, str]:
         nested_errors: Dict[str, str] = {}
-        field_prefix = f"{field_name}["
+        field_prefix = f'{field_name}['
 
         for error_path, error_message in (all_errors or {}).items():
             if error_path.startswith(field_prefix):
                 nested_part = error_path[len(field_prefix) :]
-                if "]." in nested_part:
-                    nested_errors[nested_part.replace("].", ".")] = error_message
+                if '].' in nested_part:
+                    nested_errors[nested_part.replace('].', '.')] = error_message
 
         return nested_errors
 
@@ -478,14 +482,14 @@ class EnhancedFormRenderer:
 </style>
 """
 
-    def _flatten_error_messages(self, errors: Any, prefix: str = "") -> List[Tuple[str, str]]:
+    def _flatten_error_messages(self, errors: Any, prefix: str = '') -> List[Tuple[str, str]]:
         """Flatten mixed error payloads into (field_path, message) tuples."""
 
         flattened: List[Tuple[str, str]] = []
 
         if isinstance(errors, dict):
             for key, value in errors.items():
-                path = f"{prefix}.{key}" if prefix and key else str(key or prefix)
+                path = f'{prefix}.{key}' if prefix and key else str(key or prefix)
                 flattened.extend(self._flatten_error_messages(value, path))
             return flattened
 
@@ -494,8 +498,8 @@ class EnhancedFormRenderer:
                 flattened.extend(self._flatten_error_messages(item, prefix))
             return flattened
 
-        field_path = prefix or "form"
-        message = "" if errors is None else str(errors)
+        field_path = prefix or 'form'
+        message = '' if errors is None else str(errors)
         if message:
             flattened.append((field_path, message))
         return flattened
@@ -503,20 +507,20 @@ class EnhancedFormRenderer:
     def _singularize_label(self, label: str) -> str:
         """Best-effort singularization for indexed collection labels."""
 
-        if label.endswith("ies") and len(label) > 3:
-            return f"{label[:-3]}y"
-        if label.endswith("s") and len(label) > 1:
+        if label.endswith('ies') and len(label) > 3:
+            return f'{label[:-3]}y'
+        if label.endswith('s') and len(label) > 1:
             return label[:-1]
         return label
 
     def _humanize_error_field(self, field_path: str) -> str:
         """Convert internal field paths into user-friendly labels."""
 
-        if not field_path or field_path == "form":
-            return "Form"
+        if not field_path or field_path == 'form':
+            return 'Form'
 
         tokens: List[str | int] = []
-        for name_token, index_token in re.findall(r"([^.\[\]]+)|\[(\d+)\]", field_path):
+        for name_token, index_token in re.findall(r'([^.\[\]]+)|\[(\d+)\]', field_path):
             if name_token:
                 tokens.append(name_token)
             elif index_token:
@@ -528,34 +532,34 @@ class EnhancedFormRenderer:
         parts: List[str] = []
         for token in tokens:
             if isinstance(token, str):
-                pretty = token.replace("_", " ").strip().title()
+                pretty = token.replace('_', ' ').strip().title()
                 parts.append(pretty)
                 continue
 
             if parts:
                 collection_label = self._singularize_label(parts[-1])
-                parts[-1] = f"{collection_label} #{token + 1}"
+                parts[-1] = f'{collection_label} #{token + 1}'
             else:
-                parts.append(f"Item #{token + 1}")
+                parts.append(f'Item #{token + 1}')
 
-        return " — ".join(parts)
+        return ' — '.join(parts)
 
     def _render_error_summary(self, errors: Dict[str, Any]) -> str:
         """Render a framework-aware top-level summary for validation errors."""
 
         if not isinstance(errors, dict) or not errors:
-            return ""
+            return ''
 
         flattened = self._flatten_error_messages(errors)
         if not flattened:
-            return ""
+            return ''
 
-        items_html = "\n".join(
-            f"<li><strong>{html.escape(self._humanize_error_field(field))}:</strong> {html.escape(message)}</li>"
+        items_html = '\n'.join(
+            f'<li><strong>{html.escape(self._humanize_error_field(field))}:</strong> {html.escape(message)}</li>'
             for field, message in flattened
         )
 
-        if self.framework == "material":
+        if self.framework == 'material':
             return (
                 '<section class="md-field">'
                 '<div class="md-error-summary" role="alert" aria-live="polite">'
@@ -579,7 +583,7 @@ class EnhancedFormRenderer:
         if isinstance(csrf_mode, CSRFMode):
             normalized = csrf_mode.value
         else:
-            normalized = str(csrf_mode or CSRF_MODE_OFF).strip().lower().replace("_", "-")
+            normalized = str(csrf_mode or CSRF_MODE_OFF).strip().lower().replace('_', '-')
 
         # Backwards compatibility: include_csrf=True means at least field rendering.
         if include_csrf and normalized == CSRF_MODE_OFF:
@@ -587,7 +591,7 @@ class EnhancedFormRenderer:
 
         if normalized not in CSRF_MODES:
             raise ValueError(
-                "Invalid csrf_mode. Expected one of: off, field-only, required-provider"
+                'Invalid csrf_mode. Expected one of: off, field-only, required-provider'
             )
 
         # Guard explicit field-only usage in non-debug contexts, while preserving
@@ -627,7 +631,7 @@ class EnhancedFormRenderer:
         csrf_field_name: str,
     ) -> str:
         if mode == CSRF_MODE_OFF:
-            return ""
+            return ''
 
         token = self._resolve_csrf_token(csrf_token_provider)
         if mode == CSRF_MODE_REQUIRED_PROVIDER and token is None:
@@ -638,7 +642,7 @@ class EnhancedFormRenderer:
         from .inputs.specialized_inputs import CSRFInput
 
         csrf_input = CSRFInput()
-        safe_token = html.escape(token, quote=True) if token else ""
+        safe_token = html.escape(token, quote=True) if token else ''
         return csrf_input.render(token=safe_token, name=csrf_field_name)
 
     def _render_layout_field(
@@ -660,13 +664,13 @@ class EnhancedFormRenderer:
         )
 
     def _render_submit_button(self) -> str:
-        button_class = self._theme.button_class() or self.config.get("button_class", "")
+        button_class = self._theme.button_class() or self.config.get('button_class', '')
         return self._theme.render_submit_button(button_class)
 
     def _model_list_framework(self) -> str:
         """Allow subclasses to control which framework powers model list assets."""
-        if self.framework == "material":
-            return "bootstrap"
+        if self.framework == 'material':
+            return 'bootstrap'
         return self.framework
 
     # ------------------------------------------------------------------ #
@@ -680,19 +684,25 @@ class EnhancedFormRenderer:
 
     @staticmethod
     def _attr(value: Any) -> str:
-        return html.escape(str(value)) if value is not None else ""
+        return html.escape(str(value)) if value is not None else ''
 
     def _render_material_help_block(self, help_text: Optional[str]) -> str:
         if not help_text:
-            return ""
-        return render_template(FormTemplates.MATERIAL_HELP_TEXT, help_content=html.escape(str(help_text)))
+            return ''
+        return render_template(
+            FormTemplates.MATERIAL_HELP_TEXT, help_content=html.escape(str(help_text))
+        )
 
     def _render_material_error_block(self, error: Optional[str]) -> str:
         if not error:
-            return ""
-        return render_template(FormTemplates.MATERIAL_ERROR_TEXT, error_content=html.escape(str(error)))
+            return ''
+        return render_template(
+            FormTemplates.MATERIAL_ERROR_TEXT, error_content=html.escape(str(error))
+        )
 
-    def _wrap_material_field_body(self, *, field_body: str, help_text: Optional[str], error: Optional[str]) -> str:
+    def _wrap_material_field_body(
+        self, *, field_body: str, help_text: Optional[str], error: Optional[str]
+    ) -> str:
         return render_template(
             FormTemplates.MATERIAL_FIELD_CONTAINER,
             field_body=field_body,
@@ -703,96 +713,210 @@ class EnhancedFormRenderer:
     def _wrap_material_with_icon(self, icon: Optional[str], input_wrapper: str) -> str:
         if not icon:
             return input_wrapper
-        icon_markup = render_material_icon(icon, classes="md-icon")
-        return render_template(FormTemplates.MATERIAL_FIELD_WITH_ICON, icon_markup=icon_markup, input_wrapper=input_wrapper)
+        icon_markup = render_material_icon(icon, classes='md-icon')
+        return render_template(
+            FormTemplates.MATERIAL_FIELD_WITH_ICON,
+            icon_markup=icon_markup,
+            input_wrapper=input_wrapper,
+        )
 
     def _build_material_text_input_attributes(self, ui_info: Dict[str, Any]) -> str:
         attrs = []
-        for source, attr_name in (("min_value", "min"), ("max_value", "max"), ("min_length", "minlength"), ("max_length", "maxlength"), ("step", "step")):
+        for source, attr_name in (
+            ('min_value', 'min'),
+            ('max_value', 'max'),
+            ('min_length', 'minlength'),
+            ('max_length', 'maxlength'),
+            ('step', 'step'),
+        ):
             if ui_info.get(source) is not None:
                 attrs.append(f'{attr_name}="{html.escape(str(ui_info[source]))}"')
-        extra = ui_info.get("attributes")
+        extra = ui_info.get('attributes')
         if isinstance(extra, dict):
             for attr_name, attr_value in extra.items():
                 if attr_value is not None:
                     attrs.append(f'{attr_name}="{html.escape(str(attr_value))}"')
-        return " ".join(attrs)
+        return ' '.join(attrs)
 
-    def _build_material_select_options(self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]) -> List[List[str]]:
-        options = ui_info.get("options", [])
-        if not options and "enum" in field_schema:
-            options = [{"value": v, "label": v} for v in field_schema["enum"]]
+    def _build_material_select_options(
+        self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]
+    ) -> List[List[str]]:
+        options = ui_info.get('options', [])
+        if not options and 'enum' in field_schema:
+            options = [{'value': v, 'label': v} for v in field_schema['enum']]
         normalized: List[List[str]] = []
         for option in options:
             if isinstance(option, dict):
-                opt_value = option.get("value", "")
-                opt_label = option.get("label", opt_value)
+                opt_value = option.get('value', '')
+                opt_label = option.get('label', opt_value)
             else:
                 opt_value = opt_label = str(option)
             normalized.append([opt_value, opt_label])
         return normalized
 
     def _infer_material_input_type(self, field_schema: Dict[str, Any]) -> str:
-        field_type = field_schema.get("type", "string")
-        field_format = field_schema.get("format", "")
-        if field_format == "email":
-            return "email"
-        if field_format == "date":
-            return "date"
-        if field_type in ("integer", "number"):
-            return "number"
-        if field_type == "boolean":
-            return "checkbox"
-        if field_schema.get("enum"):
-            return "select"
-        return "text"
+        field_type = field_schema.get('type', 'string')
+        field_format = field_schema.get('format', '')
+        if field_format == 'email':
+            return 'email'
+        if field_format == 'date':
+            return 'date'
+        if field_type in ('integer', 'number'):
+            return 'number'
+        if field_type == 'boolean':
+            return 'checkbox'
+        if field_schema.get('enum'):
+            return 'select'
+        return 'text'
 
-    def _render_material_text_input(self, field_name: str, input_type: str, value: Any, error: Optional[str], ui_info: Dict[str, Any], is_required: bool) -> str:
-        error_class = " error" if error else ""
+    def _render_material_text_input(
+        self,
+        field_name: str,
+        input_type: str,
+        value: Any,
+        error: Optional[str],
+        ui_info: Dict[str, Any],
+        is_required: bool,
+    ) -> str:
+        error_class = ' error' if error else ''
         attrs = self._build_material_text_input_attributes(ui_info)
         if is_required:
-            attrs = f"{attrs} {self._MATERIAL_REQUIRED}".strip()
-        value_attr = self._attr(value) if value is not None else ""
-        return render_template(FormTemplates.MATERIAL_TEXT_INPUT, input_type=input_type, name=self._attr(field_name), field_id=self._attr(field_name), error_class=error_class, value=value_attr, attributes=attrs)
+            attrs = f'{attrs} {self._MATERIAL_REQUIRED}'.strip()
+        value_attr = self._attr(value) if value is not None else ''
+        return render_template(
+            FormTemplates.MATERIAL_TEXT_INPUT,
+            input_type=input_type,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            error_class=error_class,
+            value=value_attr,
+            attributes=attrs,
+        )
 
-    def _render_material_textarea_input(self, field_name: str, value: Any, error: Optional[str], ui_info: Dict[str, Any], is_required: bool) -> str:
-        error_class = " error" if error else ""
-        attrs = self._MATERIAL_REQUIRED if is_required else ""
-        value_content = html.escape(str(value)) if value is not None else ""
-        return render_template(FormTemplates.MATERIAL_TEXTAREA, name=self._attr(field_name), field_id=self._attr(field_name), error_class=error_class, value=value_content, attributes=attrs)
+    def _render_material_textarea_input(
+        self,
+        field_name: str,
+        value: Any,
+        error: Optional[str],
+        ui_info: Dict[str, Any],
+        is_required: bool,
+    ) -> str:
+        error_class = ' error' if error else ''
+        attrs = self._MATERIAL_REQUIRED if is_required else ''
+        value_content = html.escape(str(value)) if value is not None else ''
+        return render_template(
+            FormTemplates.MATERIAL_TEXTAREA,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            error_class=error_class,
+            value=value_content,
+            attributes=attrs,
+        )
 
-    def _render_material_select_input(self, field_name: str, value: Any, error: Optional[str], ui_info: Dict[str, Any], field_schema: Dict[str, Any], is_required: bool) -> str:
-        error_class = " error" if error else ""
-        attrs = self._MATERIAL_REQUIRED if is_required else ""
+    def _render_material_select_input(
+        self,
+        field_name: str,
+        value: Any,
+        error: Optional[str],
+        ui_info: Dict[str, Any],
+        field_schema: Dict[str, Any],
+        is_required: bool,
+    ) -> str:
+        error_class = ' error' if error else ''
+        attrs = self._MATERIAL_REQUIRED if is_required else ''
         options = self._build_material_select_options(ui_info, field_schema)
-        rendered_options = [render_template(FormTemplates.MATERIAL_SELECT_OPTION, value="", selected="", label="")]
+        rendered_options = [
+            render_template(FormTemplates.MATERIAL_SELECT_OPTION, value='', selected='', label='')
+        ]
         for opt_value, opt_label in options:
             is_selected = str(value) == str(opt_value)
-            rendered_options.append(render_template(FormTemplates.MATERIAL_SELECT_OPTION, value=self._attr(opt_value), selected=' selected="selected"' if is_selected else "", label=html.escape(str(opt_label))))
-        return render_template(FormTemplates.MATERIAL_SELECT, name=self._attr(field_name), field_id=self._attr(field_name), error_class=error_class, options="".join(rendered_options), attributes=attrs)
+            rendered_options.append(
+                render_template(
+                    FormTemplates.MATERIAL_SELECT_OPTION,
+                    value=self._attr(opt_value),
+                    selected=' selected="selected"' if is_selected else '',
+                    label=html.escape(str(opt_label)),
+                )
+            )
+        return render_template(
+            FormTemplates.MATERIAL_SELECT,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            error_class=error_class,
+            options=''.join(rendered_options),
+            attributes=attrs,
+        )
 
-    def _render_material_checkbox_field(self, field_name: str, label: str, value: Any, error: Optional[str], help_text: Optional[str], is_required: bool, ui_info: Dict[str, Any]) -> str:
-        required_text = " *" if is_required else ""
-        checked_attr = 'checked="checked"' if value is True or str(value).lower() in {"true", "1", "on"} else ""
-        required_attr = self._MATERIAL_REQUIRED if is_required else ""
-        return render_template(FormTemplates.MATERIAL_CHECKBOX_FIELD, name=self._attr(field_name), field_id=self._attr(field_name), label=html.escape(label), required_indicator=required_text, checked=checked_attr, required=required_attr, help_text=self._render_material_help_block(help_text), error_text=self._render_material_error_block(error))
+    def _render_material_checkbox_field(
+        self,
+        field_name: str,
+        label: str,
+        value: Any,
+        error: Optional[str],
+        help_text: Optional[str],
+        is_required: bool,
+        ui_info: Dict[str, Any],
+    ) -> str:
+        required_text = ' *' if is_required else ''
+        checked_attr = (
+            'checked="checked"'
+            if value is True or str(value).lower() in {'true', '1', 'on'}
+            else ''
+        )
+        required_attr = self._MATERIAL_REQUIRED if is_required else ''
+        return render_template(
+            FormTemplates.MATERIAL_CHECKBOX_FIELD,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            label=html.escape(label),
+            required_indicator=required_text,
+            checked=checked_attr,
+            required=required_attr,
+            help_text=self._render_material_help_block(help_text),
+            error_text=self._render_material_error_block(error),
+        )
 
-    def _render_material_outlined_field(self, field_name: str, input_type: str, label: str, value: Any, error: Optional[str], help_text: Optional[str], is_required: bool, ui_info: Dict[str, Any], field_schema: Dict[str, Any]) -> str:
-        required_text = " *" if is_required else ""
-        icon = ui_info.get("icon")
+    def _render_material_outlined_field(
+        self,
+        field_name: str,
+        input_type: str,
+        label: str,
+        value: Any,
+        error: Optional[str],
+        help_text: Optional[str],
+        is_required: bool,
+        ui_info: Dict[str, Any],
+        field_schema: Dict[str, Any],
+    ) -> str:
+        required_text = ' *' if is_required else ''
+        icon = ui_info.get('icon')
         if icon:
-            icon = map_icon_for_framework(icon, "material")
+            icon = map_icon_for_framework(icon, 'material')
 
-        if input_type == "textarea":
-            control_html = self._render_material_textarea_input(field_name, value, error, ui_info, is_required)
-        elif input_type == "select":
-            control_html = self._render_material_select_input(field_name, value, error, ui_info, field_schema, is_required)
+        if input_type == 'textarea':
+            control_html = self._render_material_textarea_input(
+                field_name, value, error, ui_info, is_required
+            )
+        elif input_type == 'select':
+            control_html = self._render_material_select_input(
+                field_name, value, error, ui_info, field_schema, is_required
+            )
         else:
-            control_html = self._render_material_text_input(field_name, input_type, value, error, ui_info, is_required)
+            control_html = self._render_material_text_input(
+                field_name, input_type, value, error, ui_info, is_required
+            )
 
-        input_wrapper = render_template(FormTemplates.MATERIAL_FIELD_INPUT_WRAPPER, input_control=control_html, field_id=self._attr(field_name), label=html.escape(label), required_indicator=required_text)
+        input_wrapper = render_template(
+            FormTemplates.MATERIAL_FIELD_INPUT_WRAPPER,
+            input_control=control_html,
+            field_id=self._attr(field_name),
+            label=html.escape(label),
+            required_indicator=required_text,
+        )
         field_body = self._wrap_material_with_icon(icon, input_wrapper)
-        return self._wrap_material_field_body(field_body=field_body, help_text=help_text, error=error)
+        return self._wrap_material_field_body(
+            field_body=field_body, help_text=help_text, error=error
+        )
 
     def _render_material_field(
         self,
@@ -802,35 +926,53 @@ class EnhancedFormRenderer:
         error: Optional[str] = None,
         required_fields: Optional[List[str]] = None,
         context: Optional[RenderContext] = None,
-        _layout: str = "vertical",
+        _layout: str = 'vertical',
         all_errors: Optional[Dict[str, Any]] = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
-        ui_info = field_schema.get("ui", {}) or field_schema
+        ui_info = field_schema.get('ui', {}) or field_schema
 
-        if ui_info.get("hidden"):
-            return f'<input type="hidden" name="{field_name}" value="{html.escape(str(value or ""))}">'
+        if ui_info.get('hidden'):
+            return (
+                f'<input type="hidden" name="{field_name}" value="{html.escape(str(value or ""))}">'
+            )
 
         input_type = (
-            ui_info.get("input_type")
-            or ui_info.get("element")
+            ui_info.get('input_type')
+            or ui_info.get('element')
             or self._infer_material_input_type(field_schema)
         )
 
-        if input_type == "layout":
-            return self._render_layout_field(field_name, field_schema, value, error, ui_info, context)
+        if input_type == 'layout':
+            return self._render_layout_field(
+                field_name, field_schema, value, error, ui_info, context
+            )
 
-        if input_type == "model_list":
-            return self._render_material_model_list_field(field_name, field_schema, value, error, required_fields, context, all_errors)
+        if input_type == 'model_list':
+            return self._render_material_model_list_field(
+                field_name, field_schema, value, error, required_fields, context, all_errors
+            )
 
-        label = field_schema.get("title", field_name.replace("_", " ").title())
-        help_text = ui_info.get("help_text") or field_schema.get("description")
+        label = field_schema.get('title', field_name.replace('_', ' ').title())
+        help_text = ui_info.get('help_text') or field_schema.get('description')
         is_required = field_name in (required_fields or [])
 
-        if input_type == "checkbox":
-            return self._render_material_checkbox_field(field_name, label, value, error, help_text, is_required, ui_info)
+        if input_type == 'checkbox':
+            return self._render_material_checkbox_field(
+                field_name, label, value, error, help_text, is_required, ui_info
+            )
 
-        return self._render_material_outlined_field(field_name, input_type, label, value, error, help_text, is_required, ui_info, field_schema)
+        return self._render_material_outlined_field(
+            field_name,
+            input_type,
+            label,
+            value,
+            error,
+            help_text,
+            is_required,
+            ui_info,
+            field_schema,
+        )
 
     def _render_material_model_list_field(
         self,
@@ -843,7 +985,16 @@ class EnhancedFormRenderer:
         all_errors: Optional[Dict[str, Any]] = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
-        field_html = self._field_renderer.render_field(field_name, field_schema, value, error, required_fields or [], context, "vertical", all_errors or {})
+        field_html = self._field_renderer.render_field(
+            field_name,
+            field_schema,
+            value,
+            error,
+            required_fields or [],
+            context,
+            'vertical',
+            all_errors or {},
+        )
         return render_template(FormTemplates.MATERIAL_MODEL_LIST_WRAPPER, content=field_html)
 
     def _build_debug_panel(
@@ -864,44 +1015,46 @@ class EnhancedFormRenderer:
         try:
             model_source = inspect.getsource(model_cls)
         except Exception as exc:  # pragma: no cover - defensive
-            model_source = f"Source not available for {model_cls.__name__}: {exc}"
+            model_source = f'Source not available for {model_cls.__name__}: {exc}'
 
         try:
             schema_json = json.dumps(model_cls.model_json_schema(), indent=2, default=str)
         except Exception as exc:  # pragma: no cover - defensive
-            schema_json = f"Schema generation failed: {exc}"
+            schema_json = f'Schema generation failed: {exc}'
 
         try:
             schema = model_cls.model_json_schema()
-            required = set(schema.get("required", []) or [])
-            properties = schema.get("properties", {}) or {}
+            required = set(schema.get('required', []) or [])
+            properties = schema.get('properties', {}) or {}
             validation_rules: Dict[str, Any] = {}
             for name, prop in properties.items():
-                rule: Dict[str, Any] = {"required": name in required}
+                rule: Dict[str, Any] = {'required': name in required}
                 for key in (
-                    "type",
-                    "format",
-                    "pattern",
-                    "minimum",
-                    "maximum",
-                    "minLength",
-                    "maxLength",
-                    "enum",
+                    'type',
+                    'format',
+                    'pattern',
+                    'minimum',
+                    'maximum',
+                    'minLength',
+                    'maxLength',
+                    'enum',
                 ):
                     if key in prop:
                         rule[key] = prop[key]
                 validation_rules[name] = rule
         except Exception as exc:  # pragma: no cover - defensive
-            validation_rules = {"__error__": f"Could not derive constraints: {exc}"}
+            validation_rules = {'__error__': f'Could not derive constraints: {exc}'}
 
         rendered_tab = html.escape(form_html)
         source_tab = html.escape(model_source)
         schema_tab = html.escape(schema_json)
         validation_tab = html.escape(json.dumps(validation_rules, indent=2, default=str))
-        live_tab = html.escape(json.dumps({"errors": safe_errors, "data": safe_data}, indent=2, default=str))
+        live_tab = html.escape(
+            json.dumps({'errors': safe_errors, 'data': safe_data}, indent=2, default=str)
+        )
 
         # Format render time for display
-        time_display = f" — {render_time:.3f}s render" if render_time > 0 else ""
+        time_display = f' — {render_time:.3f}s render' if render_time > 0 else ''
 
         panel = f"""
 <div class="pf-debug-panel">
@@ -1023,8 +1176,8 @@ def render_form_html(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
     errors: Dict[str, str] | SchemaFormValidationError | None = None,
-    framework: str = "bootstrap",
-    layout: str = "vertical",
+    framework: str = 'bootstrap',
+    layout: str = 'vertical',
     debug: bool = False,
     show_timing: bool = False,
     enable_logging: bool = False,
@@ -1038,20 +1191,20 @@ def render_form_html(
     # - self_contained: inline framework assets (CSS/JS) for the selected framework.
     # - include_framework_assets: explicit opt-in for framework assets.
     # - asset_mode: 'vendored' (inline) or 'cdn' (external).
-    self_contained = bool(kwargs.pop("self_contained", False))
-    include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
-    asset_mode = str(kwargs.pop("asset_mode", "vendored"))
-    submit_url_raw = kwargs.pop("submit_url", None)
+    self_contained = bool(kwargs.pop('self_contained', False))
+    include_framework_assets = bool(kwargs.pop('include_framework_assets', False))
+    asset_mode = str(kwargs.pop('asset_mode', 'vendored'))
+    submit_url_raw = kwargs.pop('submit_url', None)
     if submit_url_raw is None:
-        raise ValueError("submit_url is required; the library does not choose submission targets")
+        raise ValueError('submit_url is required; the library does not choose submission targets')
     submit_url = str(submit_url_raw).strip()
     if not submit_url:
-        raise ValueError("submit_url cannot be empty")
+        raise ValueError('submit_url cannot be empty')
     if self_contained:
         include_framework_assets = True
 
     if isinstance(errors, SchemaFormValidationError):
-        error_dict = {err.get("name", ""): err.get("message", "") for err in errors.errors}
+        error_dict = {err.get('name', ''): err.get('message', '') for err in errors.errors}
         errors = error_dict
 
     renderer = EnhancedFormRenderer(
@@ -1077,8 +1230,8 @@ async def render_form_html_async(
     form_model_cls: Type[FormModel],
     form_data: Optional[Dict[str, Any]] = None,
     errors: Dict[str, str] | SchemaFormValidationError | None = None,
-    framework: str = "bootstrap",
-    layout: str = "vertical",
+    framework: str = 'bootstrap',
+    layout: str = 'vertical',
     debug: bool = False,
     show_timing: bool = False,
     enable_logging: bool = False,
@@ -1089,9 +1242,9 @@ async def render_form_html_async(
     """Async counterpart to render_form_html."""
 
     # Ensure these knobs work consistently in async mode too.
-    self_contained = bool(kwargs.pop("self_contained", False))
-    include_framework_assets = bool(kwargs.pop("include_framework_assets", False))
-    asset_mode = str(kwargs.pop("asset_mode", "vendored"))
+    self_contained = bool(kwargs.pop('self_contained', False))
+    include_framework_assets = bool(kwargs.pop('include_framework_assets', False))
+    asset_mode = str(kwargs.pop('asset_mode', 'vendored'))
     if self_contained:
         include_framework_assets = True
 

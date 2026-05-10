@@ -23,7 +23,7 @@ class SimpleMaterialRenderer(EnhancedFormRenderer):
     """
 
     def __init__(self) -> None:
-        super().__init__(framework="material")
+        super().__init__(framework='material')
 
 
 # Legacy alias

@@ -17,7 +17,7 @@ from typing import Any, Dict, Optional
 
 # Global template cache with explicit locking for thread safety
 _TEMPLATE_CACHE_MAX = 256
-_template_cache: "OrderedDict[str, string.Template]" = OrderedDict()
+_template_cache: 'OrderedDict[str, string.Template]' = OrderedDict()
 _template_cache_lock = RLock()
 
 
@@ -75,9 +75,9 @@ class TemplateString:
         safe_kwargs = {}
         for key, value in kwargs.items():
             if value is None:
-                safe_kwargs[key] = ""
+                safe_kwargs[key] = ''
             elif isinstance(value, bool):
-                safe_kwargs[key] = "true" if value else "false"
+                safe_kwargs[key] = 'true' if value else 'false'
             else:
                 safe_kwargs[key] = str(value)
 
@@ -100,9 +100,9 @@ class TemplateString:
         safe_kwargs = {}
         for key, value in kwargs.items():
             if value is None:
-                safe_kwargs[key] = ""
+                safe_kwargs[key] = ''
             elif isinstance(value, bool):
-                safe_kwargs[key] = "true" if value else "false"
+                safe_kwargs[key] = 'true' if value else 'false'
             else:
                 safe_kwargs[key] = str(value)
 
@@ -623,7 +623,7 @@ def validate_template_variables(template: TemplateString, **kwargs: Any) -> Dict
 
     # Extract variable names from template
     template_vars = set()
-    for match in re.finditer(r"\$\{(\w+)\}", template.template_str):
+    for match in re.finditer(r'\$\{(\w+)\}', template.template_str):
         template_vars.add(match.group(1))
 
     # Check which variables are satisfied
@@ -635,7 +635,7 @@ def validate_template_variables(template: TemplateString, **kwargs: Any) -> Dict
 def precompile_templates():
     """Precompile all form templates for optimal performance."""
     for attr_name in dir(FormTemplates):
-        if not attr_name.startswith("_"):
+        if not attr_name.startswith('_'):
             template = getattr(FormTemplates, attr_name)
             if isinstance(template, TemplateString):
                 # Trigger compilation by accessing _compile_template

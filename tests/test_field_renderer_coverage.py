@@ -15,27 +15,27 @@ class TestFieldRendererBasicSetup:
     def test_field_renderer_init(self):
         """Test FieldRenderer initialization."""
         renderer = Mock()
-        renderer.config = {"framework": "bootstrap"}
-        renderer.framework = "bootstrap"
+        renderer.config = {'framework': 'bootstrap'}
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         assert field_renderer._renderer == renderer
-        assert field_renderer.config == {"framework": "bootstrap"}
-        assert field_renderer.framework == "bootstrap"
+        assert field_renderer.config == {'framework': 'bootstrap'}
+        assert field_renderer.framework == 'bootstrap'
 
     def test_field_renderer_theme_property(self):
         """Test FieldRenderer theme property."""
         renderer = Mock()
-        renderer.theme = {"primary_color": "blue"}
+        renderer.theme = {'primary_color': 'blue'}
 
         field_renderer = FieldRenderer(renderer)
-        assert field_renderer.theme == {"primary_color": "blue"}
+        assert field_renderer.theme == {'primary_color': 'blue'}
 
     def test_field_renderer_theme_none(self):
         """Test FieldRenderer theme property when not set."""
         renderer = Mock(spec=[])
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         assert field_renderer.theme is None
@@ -48,35 +48,35 @@ class TestFieldRendererHiddenFields:
         """Test rendering of hidden input fields."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="hidden_id",
-            field_schema={"ui": {"hidden": True}, "type": "string"},
-            value="123",
-            context=context
+            field_name='hidden_id',
+            field_schema={'ui': {'hidden': True}, 'type': 'string'},
+            value='123',
+            context=context,
         )
 
-        assert "hidden" in result.lower()
-        assert "123" in result
+        assert 'hidden' in result.lower()
+        assert '123' in result
 
     def test_render_field_with_hidden_ui_config(self):
         """Test rendering field marked as hidden in UI config."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="secret",
-            field_schema={"type": "string", "ui": {"hidden": True}},
-            value="secret_value",
-            context=context
+            field_name='secret',
+            field_schema={'type': 'string', 'ui': {'hidden': True}},
+            value='secret_value',
+            context=context,
         )
 
         assert isinstance(result, str)
@@ -90,17 +90,17 @@ class TestFieldRendererUIElementDetection:
         """Test rendering field with explicit UI element specified."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
-        renderer._render_layout_field = Mock(return_value="<div>layout</div>")
+        renderer.framework = 'bootstrap'
+        renderer._render_layout_field = Mock(return_value='<div>layout</div>')
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="custom",
-            field_schema={"type": "string", "ui": {"element": "text"}},
-            value="test",
-            context=context
+            field_name='custom',
+            field_schema={'type': 'string', 'ui': {'element': 'text'}},
+            value='test',
+            context=context,
         )
 
         assert result is not None
@@ -109,16 +109,16 @@ class TestFieldRendererUIElementDetection:
         """Test field renderer detects layout element type."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
-        renderer._render_layout_field = Mock(return_value="<div>layout content</div>")
+        renderer.framework = 'bootstrap'
+        renderer._render_layout_field = Mock(return_value='<div>layout content</div>')
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         field_renderer.render_field(
-            field_name="layout_field",
-            field_schema={"type": "object", "ui": {"element": "layout"}},
-            context=context
+            field_name='layout_field',
+            field_schema={'type': 'object', 'ui': {'element': 'layout'}},
+            context=context,
         )
 
         renderer._render_layout_field.assert_called_once()
@@ -127,17 +127,17 @@ class TestFieldRendererUIElementDetection:
         """Test field renderer detects model_list element type."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
-        renderer._render_model_list_field = Mock(return_value="<ul>list</ul>")
+        renderer.framework = 'bootstrap'
+        renderer._render_model_list_field = Mock(return_value='<ul>list</ul>')
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
-        with patch.object(field_renderer, '_render_model_list_field', return_value="<ul>list</ul>"):
+        with patch.object(field_renderer, '_render_model_list_field', return_value='<ul>list</ul>'):
             field_renderer.render_field(
-                field_name="model_list",
-                field_schema={"type": "array", "ui": {"element": "model_list"}},
-                context=context
+                field_name='model_list',
+                field_schema={'type': 'array', 'ui': {'element': 'model_list'}},
+                context=context,
             )
 
 
@@ -148,36 +148,36 @@ class TestFieldRendererCheckboxHandling:
         """Test rendering checkbox with true value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="agree",
-            field_schema={"type": "boolean"},
+            field_name='agree',
+            field_schema={'type': 'boolean'},
             value=True,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
-        assert "checkbox" in result.lower() or "checked" in result.lower()
+        assert 'checkbox' in result.lower() or 'checked' in result.lower()
 
     def test_render_checkbox_with_string_true_value(self):
         """Test rendering checkbox with string 'true' value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="active",
-            field_schema={"type": "boolean"},
-            value="true",
+            field_name='active',
+            field_schema={'type': 'boolean'},
+            value='true',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -186,17 +186,17 @@ class TestFieldRendererCheckboxHandling:
         """Test rendering checkbox with numeric true value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="enabled",
-            field_schema={"type": "boolean"},
-            value="1",
+            field_name='enabled',
+            field_schema={'type': 'boolean'},
+            value='1',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -205,17 +205,17 @@ class TestFieldRendererCheckboxHandling:
         """Test rendering checkbox with 'on' value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="switch",
-            field_schema={"type": "boolean"},
-            value="on",
+            field_name='switch',
+            field_schema={'type': 'boolean'},
+            value='on',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -228,36 +228,36 @@ class TestFieldRendererPasswordFields:
         """Test rendering of password fields."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="password",
-            field_schema={"type": "string", "ui": {"input_type": "password"}},
-            value="secret123",
+            field_name='password',
+            field_schema={'type': 'string', 'ui': {'input_type': 'password'}},
+            value='secret123',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
-        assert "password" in result.lower()
+        assert 'password' in result.lower()
 
     def test_render_password_field_no_value(self):
         """Test rendering of password field without value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="pwd",
-            field_schema={"type": "string", "ui_element": "password"},
+            field_name='pwd',
+            field_schema={'type': 'string', 'ui_element': 'password'},
             value=None,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -270,18 +270,18 @@ class TestFieldRendererErrorHandling:
         """Test rendering field with error message."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="email",
-            field_schema={"type": "string"},
-            value="invalid",
-            error="Invalid email format",
+            field_name='email',
+            field_schema={'type': 'string'},
+            value='invalid',
+            error='Invalid email format',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -290,23 +290,20 @@ class TestFieldRendererErrorHandling:
         """Test rendering field with all_errors dictionary."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
-        all_errors = {
-            "field1": "error1",
-            "field2": "error2"
-        }
+        all_errors = {'field1': 'error1', 'field2': 'error2'}
 
         result = field_renderer.render_field(
-            field_name="field1",
-            field_schema={"type": "string"},
-            value="test",
+            field_name='field1',
+            field_schema={'type': 'string'},
+            value='test',
             all_errors=all_errors,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -319,20 +316,20 @@ class TestFieldRendererRequiredFields:
         """Test rendering required field."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
-        required_fields = ["username", "email"]
+        required_fields = ['username', 'email']
 
         result = field_renderer.render_field(
-            field_name="username",
-            field_schema={"type": "string"},
-            value="john",
+            field_name='username',
+            field_schema={'type': 'string'},
+            value='john',
             required_fields=required_fields,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -341,20 +338,20 @@ class TestFieldRendererRequiredFields:
         """Test rendering optional field."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
-        required_fields = ["username"]
+        required_fields = ['username']
 
         result = field_renderer.render_field(
-            field_name="optional_field",
-            field_schema={"type": "string"},
-            value="data",
+            field_name='optional_field',
+            field_schema={'type': 'string'},
+            value='data',
             required_fields=required_fields,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -367,17 +364,17 @@ class TestFieldRendererInputInference:
         """Test UI element inference from schema."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         # Test with email type
         result = field_renderer.render_field(
-            field_name="email",
-            field_schema={"type": "string", "format": "email"},
+            field_name='email',
+            field_schema={'type': 'string', 'format': 'email'},
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -386,17 +383,17 @@ class TestFieldRendererInputInference:
         """Test textarea inference for long text."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="description",
-            field_schema={"type": "string", "description": "A long text field"},
-            value="long text content",
+            field_name='description',
+            field_schema={'type': 'string', 'description': 'A long text field'},
+            value='long text content',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -409,16 +406,13 @@ class TestFieldRendererContextRequirement:
         """Test that rendering without context raises error."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
 
-        with pytest.raises(ValueError, match="RenderContext is required"):
+        with pytest.raises(ValueError, match='RenderContext is required'):
             field_renderer.render_field(
-                field_name="test",
-                field_schema={"type": "string"},
-                value="test",
-                context=None
+                field_name='test', field_schema={'type': 'string'}, value='test', context=None
             )
 
 
@@ -429,17 +423,17 @@ class TestFieldRendererLayoutOptions:
         """Test rendering field with vertical layout."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="field",
-            field_schema={"type": "string"},
-            value="test",
+            field_name='field',
+            field_schema={'type': 'string'},
+            value='test',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -448,17 +442,17 @@ class TestFieldRendererLayoutOptions:
         """Test rendering field with horizontal layout."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="field",
-            field_schema={"type": "string"},
-            value="test",
+            field_name='field',
+            field_schema={'type': 'string'},
+            value='test',
             context=context,
-            layout="horizontal"
+            layout='horizontal',
         )
 
         assert isinstance(result, str)
@@ -467,17 +461,17 @@ class TestFieldRendererLayoutOptions:
         """Test rendering field with inline layout."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="field",
-            field_schema={"type": "string"},
-            value="test",
+            field_name='field',
+            field_schema={'type': 'string'},
+            value='test',
             context=context,
-            layout="inline"
+            layout='inline',
         )
 
         assert isinstance(result, str)
@@ -490,39 +484,39 @@ class TestFieldRendererInputClassing:
         """Test input class generation for text input."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
         renderer.theme = Mock()
-        renderer.theme.input_class = Mock(return_value="form-control")
+        renderer.theme.input_class = Mock(return_value='form-control')
 
         field_renderer = FieldRenderer(renderer)
 
-        css_class = field_renderer._get_input_class("text")
+        css_class = field_renderer._get_input_class('text')
         assert isinstance(css_class, str)
 
     def test_get_input_class_for_email(self):
         """Test input class generation for email input."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
         renderer.theme = Mock()
-        renderer.theme.input_class = Mock(return_value="form-control")
+        renderer.theme.input_class = Mock(return_value='form-control')
 
         field_renderer = FieldRenderer(renderer)
 
-        css_class = field_renderer._get_input_class("email")
+        css_class = field_renderer._get_input_class('email')
         assert isinstance(css_class, str)
 
     def test_get_input_class_for_checkbox(self):
         """Test input class generation for checkbox."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
         renderer.theme = Mock()
-        renderer.theme.input_class = Mock(return_value="form-check-input")
+        renderer.theme.input_class = Mock(return_value='form-check-input')
 
         field_renderer = FieldRenderer(renderer)
 
-        css_class = field_renderer._get_input_class("checkbox")
+        css_class = field_renderer._get_input_class('checkbox')
         assert isinstance(css_class, str)
 
 
@@ -532,18 +526,18 @@ class TestFieldRendererFrameworkSpecific:
     def test_render_field_bootstrap_framework(self):
         """Test rendering field for bootstrap framework."""
         renderer = Mock()
-        renderer.config = {"theme": "bootstrap"}
-        renderer.framework = "bootstrap"
+        renderer.config = {'theme': 'bootstrap'}
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="test",
-            field_schema={"type": "string"},
-            value="test",
+            field_name='test',
+            field_schema={'type': 'string'},
+            value='test',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -551,18 +545,18 @@ class TestFieldRendererFrameworkSpecific:
     def test_render_field_material_framework(self):
         """Test rendering field for material framework."""
         renderer = Mock()
-        renderer.config = {"theme": "material"}
-        renderer.framework = "material"
+        renderer.config = {'theme': 'material'}
+        renderer.framework = 'material'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="test",
-            field_schema={"type": "string"},
-            value="test",
+            field_name='test',
+            field_schema={'type': 'string'},
+            value='test',
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -575,17 +569,17 @@ class TestFieldRendererNullValues:
         """Test rendering field with None value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="optional",
-            field_schema={"type": "string"},
+            field_name='optional',
+            field_schema={'type': 'string'},
             value=None,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
@@ -594,30 +588,30 @@ class TestFieldRendererNullValues:
         """Test rendering checkbox with None value."""
         renderer = Mock()
         renderer.config = {}
-        renderer.framework = "bootstrap"
+        renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
         result = field_renderer.render_field(
-            field_name="checkbox",
-            field_schema={"type": "boolean"},
+            field_name='checkbox',
+            field_schema={'type': 'boolean'},
             value=None,
             context=context,
-            layout="vertical"
+            layout='vertical',
         )
 
         assert isinstance(result, str)
 
 
 class _DummyRenderer:
-    def __init__(self, config=None, framework="bootstrap", theme=None):
+    def __init__(self, config=None, framework='bootstrap', theme=None):
         self.config = config or {}
         self.framework = framework
         self.theme = theme
 
     def _render_layout_field(self, *args, **kwargs):
-        return "<div>layout</div>"
+        return '<div>layout</div>'
 
 
 class _CaptureInput:
@@ -640,136 +634,136 @@ def _context(schema_defs=None):
 def test_render_field_uses_schema_and_ui_option_attributes_with_config_wrapper(monkeypatch):
     renderer = _DummyRenderer(
         config={
-            "input_class": "base-input",
-            "field_wrapper_class": "field-wrap",
+            'input_class': 'base-input',
+            'field_wrapper_class': 'field-wrap',
         }
     )
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
-        "pydantic_schemaforms.rendering.field_renderer.get_input_component",
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
         lambda _ui_element: _CaptureInput,
     )
 
     html = field_renderer.render_field(
-        field_name="username",
+        field_name='username',
         field_schema={
-            "type": "string",
-            "title": "User Name",
-            "description": "desc",
-            "minLength": 2,
-            "maxLength": 20,
-            "minimum": 1,
-            "maximum": 99,
-            "pattern": "^[a-z]+$",
-            "ui": {
-                "autofocus": True,
-                "disabled": True,
-                "readonly": True,
-                "placeholder": "Your name",
-                "class": "ui-class",
-                "style": "color: red",
-                "icon": "user",
-                "options": {
-                    "class": "opt-class",
-                    "style": "font-weight: bold",
-                    "data-x": "1",
-                    "choices": ["ignored"],
-                    "obj": {"a": 1},
-                    "list": [1, 2],
+            'type': 'string',
+            'title': 'User Name',
+            'description': 'desc',
+            'minLength': 2,
+            'maxLength': 20,
+            'minimum': 1,
+            'maximum': 99,
+            'pattern': '^[a-z]+$',
+            'ui': {
+                'autofocus': True,
+                'disabled': True,
+                'readonly': True,
+                'placeholder': 'Your name',
+                'class': 'ui-class',
+                'style': 'color: red',
+                'icon': 'user',
+                'options': {
+                    'class': 'opt-class',
+                    'style': 'font-weight: bold',
+                    'data-x': '1',
+                    'choices': ['ignored'],
+                    'obj': {'a': 1},
+                    'list': [1, 2],
                 },
             },
         },
-        value="alice",
-        required_fields=["username"],
+        value='alice',
+        required_fields=['username'],
         context=_context(),
     )
 
-    assert "field-wrap" in html
+    assert 'field-wrap' in html
     captured = _CaptureInput.last_kwargs
     assert captured is not None
-    assert captured["name"] == "username"
-    assert captured["required"] is True
-    assert captured["minlength"] == 2
-    assert captured["maxlength"] == 20
-    assert captured["min"] == 1
-    assert captured["max"] == 99
-    assert captured["pattern"] == "^[a-z]+$"
-    assert captured["placeholder"] == "Your name"
-    assert captured["autofocus"] is True
-    assert captured["disabled"] is True
-    assert captured["readonly"] is True
-    assert "base-input" in captured["class"]
-    assert "ui-class" in captured["class"]
-    assert "opt-class" in captured["class"]
-    assert "color: red" in captured["style"]
-    assert "font-weight: bold" in captured["style"]
-    assert captured["data-x"] == "1"
+    assert captured['name'] == 'username'
+    assert captured['required'] is True
+    assert captured['minlength'] == 2
+    assert captured['maxlength'] == 20
+    assert captured['min'] == 1
+    assert captured['max'] == 99
+    assert captured['pattern'] == '^[a-z]+$'
+    assert captured['placeholder'] == 'Your name'
+    assert captured['autofocus'] is True
+    assert captured['disabled'] is True
+    assert captured['readonly'] is True
+    assert 'base-input' in captured['class']
+    assert 'ui-class' in captured['class']
+    assert 'opt-class' in captured['class']
+    assert 'color: red' in captured['style']
+    assert 'font-weight: bold' in captured['style']
+    assert captured['data-x'] == '1'
 
 
 def test_render_field_uses_theme_wrapper_class(monkeypatch):
     class _Theme:
         @staticmethod
         def input_class(_ui):
-            return "theme-input"
+            return 'theme-input'
 
         @staticmethod
         def field_wrapper_class():
-            return "theme-field-wrap"
+            return 'theme-field-wrap'
 
-    renderer = _DummyRenderer(config={"field_wrapper_class": "config-wrap"}, theme=_Theme())
+    renderer = _DummyRenderer(config={'field_wrapper_class': 'config-wrap'}, theme=_Theme())
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
-        "pydantic_schemaforms.rendering.field_renderer.get_input_component",
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
         lambda _ui_element: _CaptureInput,
     )
 
     html = field_renderer.render_field(
-        field_name="title",
-        field_schema={"type": "string"},
-        value="x",
+        field_name='title',
+        field_schema={'type': 'string'},
+        value='x',
         context=_context(),
     )
 
-    assert "theme-field-wrap" in html
-    assert "config-wrap" not in html
+    assert 'theme-field-wrap' in html
+    assert 'config-wrap' not in html
 
 
 def test_render_field_selection_paths_multiselect_and_no_options(monkeypatch):
-    renderer = _DummyRenderer(config={"select_class": "sel-class"})
+    renderer = _DummyRenderer(config={'select_class': 'sel-class'})
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
-        "pydantic_schemaforms.rendering.field_renderer.get_input_component",
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
         lambda _ui_element: _CaptureInput,
     )
 
     html = field_renderer.render_field(
-        field_name="tags",
+        field_name='tags',
         field_schema={
-            "type": "array",
-            "items": {"enum": ["a", "b", "c"]},
-            "ui": {"element": "multiselect"},
+            'type': 'array',
+            'items': {'enum': ['a', 'b', 'c']},
+            'ui': {'element': 'multiselect'},
         },
-        value=["b"],
+        value=['b'],
         context=_context(),
     )
 
-    assert "captured" in html
+    assert 'captured' in html
     captured = _CaptureInput.last_kwargs
-    assert captured["multiple"] is True
-    assert "value" not in captured
-    assert len(captured["options"]) == 3
-    assert any(opt["value"] == "b" and opt["selected"] for opt in captured["options"])
+    assert captured['multiple'] is True
+    assert 'value' not in captured
+    assert len(captured['options']) == 3
+    assert any(opt['value'] == 'b' and opt['selected'] for opt in captured['options'])
 
     no_options_html = field_renderer.render_field(
-        field_name="empty_select",
-        field_schema={"type": "string", "ui": {"element": "select"}},
+        field_name='empty_select',
+        field_schema={'type': 'string', 'ui': {'element': 'select'}},
         value=None,
         context=_context(),
     )
-    assert "Warning: No options provided" in no_options_html
+    assert 'Warning: No options provided' in no_options_html
 
 
 def test_render_field_handles_none_from_component(monkeypatch):
@@ -777,83 +771,83 @@ def test_render_field_handles_none_from_component(monkeypatch):
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
-        "pydantic_schemaforms.rendering.field_renderer.get_input_component",
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
         lambda _ui_element: _NoneInput,
     )
 
     html = field_renderer.render_field(
-        field_name="nickname",
-        field_schema={"type": "string"},
-        value="nick",
+        field_name='nickname',
+        field_schema={'type': 'string'},
+        value='nick',
         context=_context(),
     )
 
-    assert "input returned None" in html
+    assert 'input returned None' in html
 
 
 def test_extract_apply_and_normalize_option_helpers():
     field_renderer = FieldRenderer(_DummyRenderer())
 
     options_dict, options_list = field_renderer._extract_ui_options(
-        {"options": [{"value": 1}]},
+        {'options': [{'value': 1}]},
         {},
     )
     assert options_dict == {}
-    assert options_list == [{"value": 1}]
+    assert options_list == [{'value': 1}]
 
     options_dict, options_list = field_renderer._extract_ui_options(
-        {"ui_options": {"choices": ["x", "y"]}},
+        {'ui_options': {'choices': ['x', 'y']}},
         {},
     )
-    assert options_dict == {"choices": ["x", "y"]}
-    assert options_list == ["x", "y"]
+    assert options_dict == {'choices': ['x', 'y']}
+    assert options_list == ['x', 'y']
 
     options_dict, options_list = field_renderer._extract_ui_options(
         {},
-        {"ui_options": {"options": ["m", "n"]}},
+        {'ui_options': {'options': ['m', 'n']}},
     )
-    assert options_dict == {"options": ["m", "n"]}
-    assert options_list == ["m", "n"]
+    assert options_dict == {'options': ['m', 'n']}
+    assert options_list == ['m', 'n']
 
     attrs = field_renderer._apply_ui_option_attributes(
-        {"class": "base", "style": "color: red"},
+        {'class': 'base', 'style': 'color: red'},
         {
-            "class": "extra",
-            "style": "font-size: 12px",
-            "size": 5,
-            "choices": [1],
-            "obj": {"a": 1},
+            'class': 'extra',
+            'style': 'font-size: 12px',
+            'size': 5,
+            'choices': [1],
+            'obj': {'a': 1},
         },
     )
-    assert attrs["class"] == "base extra"
-    assert "color: red" in attrs["style"] and "font-size: 12px" in attrs["style"]
-    assert attrs["size"] == 5
+    assert attrs['class'] == 'base extra'
+    assert 'color: red' in attrs['style'] and 'font-size: 12px' in attrs['style']
+    assert attrs['size'] == 5
 
     normalized = field_renderer._normalize_options(
         [
-            {"id": "a", "label": "Alpha"},
-            ("b", "Beta"),
-            "c",
+            {'id': 'a', 'label': 'Alpha'},
+            ('b', 'Beta'),
+            'c',
         ],
-        current_value=["b", "c"],
+        current_value=['b', 'c'],
     )
-    assert normalized[0]["value"] == "a"
-    assert normalized[0]["label"] == "Alpha"
-    assert normalized[1]["selected"] is True
-    assert normalized[2]["selected"] is True
+    assert normalized[0]['value'] == 'a'
+    assert normalized[0]['label'] == 'Alpha'
+    assert normalized[1]['selected'] is True
+    assert normalized[2]['selected'] is True
 
-    assert field_renderer._is_option_selected(None, "x") is False
-    assert field_renderer._is_option_selected("x", None) is False
-    assert field_renderer._is_option_selected("2", {1, 2}) is True
-    assert field_renderer._is_option_selected("2", "2") is True
+    assert field_renderer._is_option_selected(None, 'x') is False
+    assert field_renderer._is_option_selected('x', None) is False
+    assert field_renderer._is_option_selected('2', {1, 2}) is True
+    assert field_renderer._is_option_selected('2', '2') is True
 
 
 def test_render_model_list_field_errors_and_model_class_paths():
     field_renderer = FieldRenderer(_DummyRenderer())
 
     no_ref = field_renderer._render_model_list_field(
-        field_name="items",
-        field_schema={"type": "array", "items": {}},
+        field_name='items',
+        field_schema={'type': 'array', 'items': {}},
         value=None,
         error=None,
         required_fields=[],
@@ -861,11 +855,11 @@ def test_render_model_list_field_errors_and_model_class_paths():
         context=_context(),
         all_errors={},
     )
-    assert "model_class not specified" in no_ref
+    assert 'model_class not specified' in no_ref
 
     unresolved_ref = field_renderer._render_model_list_field(
-        field_name="items",
-        field_schema={"type": "array", "items": {"$ref": "#/defs/Missing"}},
+        field_name='items',
+        field_schema={'type': 'array', 'items': {'$ref': '#/defs/Missing'}},
         value=None,
         error=None,
         required_fields=[],
@@ -873,7 +867,7 @@ def test_render_model_list_field_errors_and_model_class_paths():
         context=_context(schema_defs={}),
         all_errors={},
     )
-    assert "Could not resolve model reference" in unresolved_ref
+    assert 'Could not resolve model reference' in unresolved_ref
 
     class _FakeItem:
         def __init__(self, payload):
@@ -887,25 +881,31 @@ def test_render_model_list_field_errors_and_model_class_paths():
             self.framework = framework
 
         def render_model_list(self, **kwargs):
-            assert kwargs["is_required"] is True
-            assert kwargs["nested_errors"] == {"0.name": "required"}
-            assert kwargs["values"][0] == {"name": "a"}
-            assert kwargs["values"][1] == {"name": "b"}
-            assert kwargs["values"][2] == {"name": "c"}
-            return "<div>model-list-rendered</div>"
+            assert kwargs['is_required'] is True
+            assert kwargs['nested_errors'] == {'0.name': 'required'}
+            assert kwargs['values'][0] == {'name': 'a'}
+            assert kwargs['values'][1] == {'name': 'b'}
+            assert kwargs['values'][2] == {'name': 'c'}
+            return '<div>model-list-rendered</div>'
 
-    with patch("pydantic_schemaforms.model_list.ModelListRenderer", _FakeModelListRenderer):
+    with patch('pydantic_schemaforms.model_list.ModelListRenderer', _FakeModelListRenderer):
         html = field_renderer._render_model_list_field(
-            field_name="items",
-            field_schema={"type": "array", "title": "Items"},
-            value=[_FakeItem({"name": "a"}), {"name": "b"}, _FakeItem({"name": "c"})],
-            error="E",
-            required_fields=["items"],
-            ui_info={"model_class": SimpleNamespace, "help_text": "help", "min_items": 1, "max_items": 4},
+            field_name='items',
+            field_schema={'type': 'array', 'title': 'Items'},
+            value=[_FakeItem({'name': 'a'}), {'name': 'b'}, _FakeItem({'name': 'c'})],
+            error='E',
+            required_fields=['items'],
+            ui_info={
+                'model_class': SimpleNamespace,
+                'help_text': 'help',
+                'min_items': 1,
+                'max_items': 4,
+            },
             context=_context(),
-            all_errors={"items[0].name": "required", "other": "x"},
+            all_errors={'items[0].name': 'required', 'other': 'x'},
         )
-    assert "model-list-rendered" in html
+    assert 'model-list-rendered' in html
+
 
 def test_render_model_list_field_single_model_dump_value_path():
     field_renderer = FieldRenderer(_DummyRenderer())
@@ -913,29 +913,29 @@ def test_render_model_list_field_single_model_dump_value_path():
     class _SingleItem:
         @staticmethod
         def model_dump():
-            return {"name": "single"}
+            return {'name': 'single'}
 
     class _FakeModelListRenderer:
         def __init__(self, framework):
             self.framework = framework
 
         def render_model_list(self, **kwargs):
-            assert kwargs["values"] == [{"name": "single"}]
-            return "<div>single-model</div>"
+            assert kwargs['values'] == [{'name': 'single'}]
+            return '<div>single-model</div>'
 
-    with patch("pydantic_schemaforms.model_list.ModelListRenderer", _FakeModelListRenderer):
+    with patch('pydantic_schemaforms.model_list.ModelListRenderer', _FakeModelListRenderer):
         html = field_renderer._render_model_list_field(
-            field_name="items",
-            field_schema={"type": "array"},
+            field_name='items',
+            field_schema={'type': 'array'},
             value=_SingleItem(),
             error=None,
             required_fields=[],
-            ui_info={"model_class": SimpleNamespace},
+            ui_info={'model_class': SimpleNamespace},
             context=_context(),
             all_errors={},
         )
 
-    assert "single-model" in html
+    assert 'single-model' in html
 
 
 def test_render_model_list_field_schema_fallback_and_container_theming(monkeypatch):
@@ -952,185 +952,187 @@ def test_render_model_list_field_schema_fallback_and_container_theming(monkeypat
         calls.append((field_name, index, dict(item_data)))
         return f"<article data-index='{index}'>item</article>"
 
-    monkeypatch.setattr(field_renderer, "_render_schema_list_item", _fake_item)
+    monkeypatch.setattr(field_renderer, '_render_schema_list_item', _fake_item)
 
     themed = field_renderer.render_model_list_from_schema(
-        field_name="items",
-        field_schema={"title": "Items", "minItems": 2, "maxItems": 5},
-        schema_def={"properties": {"name": {"type": "string"}}},
+        field_name='items',
+        field_schema={'title': 'Items', 'minItems': 2, 'maxItems': 5},
+        schema_def={'properties': {'name': {'type': 'string'}}},
         values=[],
         error=None,
-        ui_info={"help_text": "help", "add_button_label": "Add"},
-        required_fields=["items"],
+        ui_info={'help_text': 'help', 'add_button_label': 'Add'},
+        required_fields=['items'],
         context=_context(),
     )
     assert "data-field='items'" in themed
-    assert calls == [("items", 0, {}), ("items", 1, {}), ("items", 0, {})]
+    assert calls == [('items', 0, {}), ('items', 1, {}), ('items', 0, {})]
 
     class _ThemeEmpty:
         @staticmethod
         def render_model_list_container(**kwargs):
-            return ""
+            return ''
 
     field_renderer_empty = FieldRenderer(_DummyRenderer(theme=_ThemeEmpty()))
-    monkeypatch.setattr(field_renderer_empty, "_render_schema_list_item", _fake_item)
+    monkeypatch.setattr(field_renderer_empty, '_render_schema_list_item', _fake_item)
 
     fallback = field_renderer_empty.render_model_list_from_schema(
-        field_name="things",
-        field_schema={"title": "Things", "minItems": 0, "description": "desc"},
-        schema_def={"properties": {}},
+        field_name='things',
+        field_schema={'title': 'Things', 'minItems': 0, 'description': 'desc'},
+        schema_def={'properties': {}},
         values=[],
-        error="oops",
+        error='oops',
         ui_info={},
         required_fields=[],
         context=_context(),
     )
-    assert "model-list-container" in fallback
+    assert 'model-list-container' in fallback
 
 
 def test_extract_nested_errors_and_schema_list_item_rendering(monkeypatch):
     field_renderer = FieldRenderer(_DummyRenderer())
 
     extracted = field_renderer.extract_nested_errors_for_field(
-        "addresses",
+        'addresses',
         {
-            "addresses[0].street": "required",
-            "addresses[0]": "ignored",
-            "other[0].x": "not used",
+            'addresses[0].street': 'required',
+            'addresses[0]': 'ignored',
+            'other[0].x': 'not used',
         },
     )
-    assert extracted == {"0.street": "required"}
+    assert extracted == {'0.street': 'required'}
 
-    monkeypatch.setattr(field_renderer, "render_field", lambda name, *_args, **_kwargs: f"<input name='{name}' />")
+    monkeypatch.setattr(
+        field_renderer, 'render_field', lambda name, *_args, **_kwargs: f"<input name='{name}' />"
+    )
 
     html_collapsible = field_renderer._render_schema_list_item(
-        field_name="addresses[]",
+        field_name='addresses[]',
         schema_def={
-            "properties": {
-                "_internal": {"type": "string"},
-                "street": {"type": "string"},
-                "phones": {"type": "array", "input_type": "model_list"},
-                "zip": {"type": "string"},
-                "city": {"type": "string"},
-                "country": {"type": "string"},
+            'properties': {
+                '_internal': {'type': 'string'},
+                'street': {'type': 'string'},
+                'phones': {'type': 'array', 'input_type': 'model_list'},
+                'zip': {'type': 'string'},
+                'city': {'type': 'string'},
+                'country': {'type': 'string'},
             }
         },
         index=1,
-        item_data={"street": "Main"},
+        item_data={'street': 'Main'},
         context=_context(),
-        ui_info={"collapsible_items": True, "items_expanded": False},
+        ui_info={'collapsible_items': True, 'items_expanded': False},
     )
-    assert "_item_1_content" in html_collapsible
-    assert "bi-chevron-right" in html_collapsible
-    assert "col-lg-4 col-md-6" in html_collapsible
-    assert "col-12" in html_collapsible
+    assert '_item_1_content' in html_collapsible
+    assert 'bi-chevron-right' in html_collapsible
+    assert 'col-lg-4 col-md-6' in html_collapsible
+    assert 'col-12' in html_collapsible
 
     html_non_collapsible = field_renderer._render_schema_list_item(
-        field_name="tasks",
-        schema_def={"properties": {"name": {"type": "string"}, "due": {"type": "string"}}},
+        field_name='tasks',
+        schema_def={'properties': {'name': {'type': 'string'}, 'due': {'type': 'string'}}},
         index=0,
-        item_data={"name": "A"},
+        item_data={'name': 'A'},
         context=_context(),
-        ui_info={"collapsible_items": False, "item_title_template": "Task #{index}"},
+        ui_info={'collapsible_items': False, 'item_title_template': 'Task #{index}'},
     )
-    assert "bi-card-list" in html_non_collapsible
-    assert "data-bs-toggle=\"collapse\"" not in html_non_collapsible
-    assert "col-12" in html_non_collapsible
+    assert 'bi-card-list' in html_non_collapsible
+    assert 'data-bs-toggle="collapse"' not in html_non_collapsible
+    assert 'col-12' in html_non_collapsible
 
     html_medium_columns = field_renderer._render_schema_list_item(
-        field_name="contacts",
+        field_name='contacts',
         schema_def={
-            "properties": {
-                "name": {"type": "string"},
-                "email": {"type": "string"},
-                "phone": {"type": "string"},
+            'properties': {
+                'name': {'type': 'string'},
+                'email': {'type': 'string'},
+                'phone': {'type': 'string'},
             }
         },
         index=0,
-        item_data={"name": "A"},
+        item_data={'name': 'A'},
         context=_context(),
-        ui_info={"collapsible_items": False},
+        ui_info={'collapsible_items': False},
     )
-    assert "col-md-6" in html_medium_columns
+    assert 'col-md-6' in html_medium_columns
 
 
 def test_render_field_radio_enum_branch_and_helpers(monkeypatch):
-    renderer = _DummyRenderer(config={"select_class": "select-base"})
+    renderer = _DummyRenderer(config={'select_class': 'select-base'})
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
-        "pydantic_schemaforms.rendering.field_renderer.get_input_component",
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
         lambda _ui_element: _CaptureInput,
     )
 
     html = field_renderer.render_field(
-        field_name="status",
+        field_name='status',
         field_schema={
-            "type": "string",
-            "enum": ["open", "closed"],
-            "ui": {"element": "radio"},
+            'type': 'string',
+            'enum': ['open', 'closed'],
+            'ui': {'element': 'radio'},
         },
-        value="closed",
+        value='closed',
         context=_context(),
     )
 
-    assert "captured" in html
+    assert 'captured' in html
     captured = _CaptureInput.last_kwargs
-    assert captured["group_name"] == "status"
-    assert captured["legend"] == "Status"
-    assert any(opt["value"] == "closed" and opt["selected"] for opt in captured["options"])
+    assert captured['group_name'] == 'status'
+    assert captured['legend'] == 'Status'
+    assert any(opt['value'] == 'closed' and opt['selected'] for opt in captured['options'])
 
-    attrs = {"x": 1}
-    assert field_renderer._apply_ui_option_attributes(attrs, {}) == {"x": 1}
+    attrs = {'x': 1}
+    assert field_renderer._apply_ui_option_attributes(attrs, {}) == {'x': 1}
 
-    normalized = field_renderer._normalize_options([{"id": "abc"}], current_value="abc")
-    assert normalized[0]["value"] == "abc"
-    assert normalized[0]["label"] == "abc"
-    assert normalized[0]["selected"] is True
+    normalized = field_renderer._normalize_options([{'id': 'abc'}], current_value='abc')
+    assert normalized[0]['value'] == 'abc'
+    assert normalized[0]['label'] == 'abc'
+    assert normalized[0]['selected'] is True
 
-    assert field_renderer._infer_ui_element({"type": "string", "maxLength": 500}) == "textarea"
-    assert field_renderer._infer_ui_element({"type": "string", "title": "Email Address"}) == "email"
-    assert field_renderer._infer_ui_element({"type": "string", "title": "Password"}) == "password"
-    assert field_renderer._infer_ui_element({"type": "number"}) == "number"
-    assert field_renderer._infer_ui_element({"type": "boolean"}) == "checkbox"
-    assert field_renderer._infer_ui_element({"type": "object"}) == "text"
-    assert field_renderer._get_input_class("checkbox") == ""
+    assert field_renderer._infer_ui_element({'type': 'string', 'maxLength': 500}) == 'textarea'
+    assert field_renderer._infer_ui_element({'type': 'string', 'title': 'Email Address'}) == 'email'
+    assert field_renderer._infer_ui_element({'type': 'string', 'title': 'Password'}) == 'password'
+    assert field_renderer._infer_ui_element({'type': 'number'}) == 'number'
+    assert field_renderer._infer_ui_element({'type': 'boolean'}) == 'checkbox'
+    assert field_renderer._infer_ui_element({'type': 'object'}) == 'text'
+    assert field_renderer._get_input_class('checkbox') == ''
 
 
 def test_render_model_list_field_non_type_model_and_schema_path(monkeypatch):
     field_renderer = FieldRenderer(_DummyRenderer())
 
     non_type_model = field_renderer._render_model_list_field(
-        field_name="items",
-        field_schema={"type": "array", "items": {}},
+        field_name='items',
+        field_schema={'type': 'array', 'items': {}},
         value=None,
         error=None,
         required_fields=[],
-        ui_info={"model_class": "not-a-type"},
+        ui_info={'model_class': 'not-a-type'},
         context=_context(),
         all_errors={},
     )
-    assert "model_class not specified" in non_type_model
+    assert 'model_class not specified' in non_type_model
 
-    schema_defs = {"Thing": {"properties": {"name": {"type": "string"}}}}
+    schema_defs = {'Thing': {'properties': {'name': {'type': 'string'}}}}
 
     monkeypatch.setattr(
         field_renderer,
-        "render_model_list_from_schema",
-        lambda **kwargs: f"schema-list:{kwargs['field_name']}:{len(kwargs['values'])}",
+        'render_model_list_from_schema',
+        lambda **kwargs: f'schema-list:{kwargs["field_name"]}:{len(kwargs["values"])}',
     )
 
     schema_result = field_renderer._render_model_list_field(
-        field_name="things",
-        field_schema={"type": "array", "items": {"$ref": "#/defs/Thing"}},
-        value={"name": "single"},
+        field_name='things',
+        field_schema={'type': 'array', 'items': {'$ref': '#/defs/Thing'}},
+        value={'name': 'single'},
         error=None,
         required_fields=[],
         ui_info={},
         context=_context(schema_defs=schema_defs),
         all_errors={},
     )
-    assert schema_result == "schema-list:things:1"
+    assert schema_result == 'schema-list:things:1'
 
 
 def test_render_model_list_from_schema_values_path(monkeypatch):
@@ -1141,18 +1143,18 @@ def test_render_model_list_from_schema_values_path(monkeypatch):
         call_indexes.append(index)
         return f"<item idx='{index}' />"
 
-    monkeypatch.setattr(field_renderer, "_render_schema_list_item", _fake_item)
+    monkeypatch.setattr(field_renderer, '_render_schema_list_item', _fake_item)
 
     html = field_renderer.render_model_list_from_schema(
-        field_name="rows",
-        field_schema={"title": "Rows", "maxItems": 7},
-        schema_def={"properties": {"name": {"type": "string"}}},
-        values=[{"name": "a"}, {"name": "b"}],
+        field_name='rows',
+        field_schema={'title': 'Rows', 'maxItems': 7},
+        schema_def={'properties': {'name': {'type': 'string'}}},
+        values=[{'name': 'a'}, {'name': 'b'}],
         error=None,
         ui_info={},
         required_fields=[],
         context=_context(),
     )
 
-    assert "model-list-container" in html
+    assert 'model-list-container' in html
     assert call_indexes == [0, 1, 0]

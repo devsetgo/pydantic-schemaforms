@@ -157,7 +157,9 @@ def vendor_htmx(*, version: str | None = None) -> VendoredFile:
     Returns the recorded vendored file info.
     """
     resolved_version = version or latest_htmx_version()
-    download_url = f'https://github.com/bigskysoftware/htmx/releases/download/v{resolved_version}/htmx.min.js'
+    download_url = (
+        f'https://github.com/bigskysoftware/htmx/releases/download/v{resolved_version}/htmx.min.js'
+    )
     license_url = 'https://raw.githubusercontent.com/bigskysoftware/htmx/master/LICENSE'
 
     js_bytes = http_get_bytes(download_url)
@@ -166,7 +168,9 @@ def vendor_htmx(*, version: str | None = None) -> VendoredFile:
 
     license_bytes = http_get_bytes(license_url)
     license_rel_path = Path('pydantic_schemaforms/assets/vendor/htmx/LICENSE')
-    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=license_url)
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=license_url
+    )
 
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):
@@ -205,7 +209,9 @@ def vendor_imask(*, version: str | None = None) -> VendoredFile:
     except FileNotFoundError:
         license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
     license_rel_path = Path('pydantic_schemaforms/assets/vendor/imask/LICENSE')
-    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=tarball_url
+    )
 
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):
@@ -246,7 +252,9 @@ def vendor_materialize(*, version: str = '1.0.0') -> VendoredFile:
     except FileNotFoundError:
         license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
     license_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/LICENSE')
-    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=tarball_url
+    )
 
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):
@@ -297,7 +305,9 @@ def vendor_bootstrap(*, version: str = '5.3.0') -> VendoredFile:
     js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=zip_url)
 
     license_rel_path = Path('pydantic_schemaforms/assets/vendor/bootstrap/LICENSE')
-    license_entry = _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=license_url)
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=license_url
+    )
 
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):
@@ -336,7 +346,7 @@ def verify_manifest_files(*, require_nonempty: bool = False) -> None:
             raise ValueError('vendor manifest asset entries must be objects')
         files = asset.get('files')
         if not isinstance(files, list):
-            raise ValueError(f"asset {asset.get('name')} missing files list")
+            raise ValueError(f'asset {asset.get("name")} missing files list')
         for f in files:
             if not isinstance(f, dict):
                 raise ValueError('asset file entries must be objects')
@@ -345,13 +355,13 @@ def verify_manifest_files(*, require_nonempty: bool = False) -> None:
             if not isinstance(rel, str) or not rel:
                 raise ValueError('asset file missing path')
             if not isinstance(expected, str) or len(expected) != 64:
-                raise ValueError(f"asset file {rel} missing sha256")
+                raise ValueError(f'asset file {rel} missing sha256')
             abs_path = root / rel
             if not abs_path.exists():
-                raise FileNotFoundError(f"vendored file missing: {rel}")
+                raise FileNotFoundError(f'vendored file missing: {rel}')
             actual = sha256_file(abs_path)
             if actual != expected:
-                raise ValueError(f"sha256 mismatch for {rel}: expected {expected} got {actual}")
+                raise ValueError(f'sha256 mismatch for {rel}: expected {expected} got {actual}')
 
 
 def env_truthy(name: str) -> bool:

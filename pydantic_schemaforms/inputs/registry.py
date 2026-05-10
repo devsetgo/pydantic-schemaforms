@@ -35,10 +35,10 @@ def _iter_input_classes() -> Iterable[Type[BaseInput]]:
 
 def _declared_aliases(cls: Type[BaseInput]) -> Tuple[str, ...]:
     names: List[str] = []
-    primary = getattr(cls, "ui_element", None)
+    primary = getattr(cls, 'ui_element', None)
     if primary:
         names.append(primary)
-    aliases = getattr(cls, "ui_element_aliases", ()) or ()
+    aliases = getattr(cls, 'ui_element_aliases', ()) or ()
     names.extend(alias for alias in aliases if alias)
     return tuple(names)
 
@@ -59,7 +59,7 @@ def get_input_component_map() -> Dict[str, Type[BaseInput]]:
     # Ensure we always have a basic text input fallback
     from .text_inputs import TextInput
 
-    mapping.setdefault("text", TextInput)
+    mapping.setdefault('text', TextInput)
     return mapping
 
 
@@ -67,11 +67,11 @@ def register_input_class(cls: Type[BaseInput], *, aliases: Iterable[str] | None 
     """Register a custom input component and clear cached mappings."""
 
     if not issubclass(cls, BaseInput):  # pragma: no cover - defensive
-        raise TypeError("Custom input must subclass BaseInput")
+        raise TypeError('Custom input must subclass BaseInput')
 
     names = list(aliases or []) or list(_declared_aliases(cls))
     if not names:
-        raise ValueError("At least one alias is required to register an input component")
+        raise ValueError('At least one alias is required to register an input component')
 
     for name in names:
         if not name:
@@ -96,8 +96,8 @@ def reset_input_registry() -> None:
 
 
 __all__ = [
-    "get_input_component_map",
-    "register_input_class",
-    "register_inputs",
-    "reset_input_registry",
+    'get_input_component_map',
+    'register_input_class',
+    'register_inputs',
+    'reset_input_registry',
 ]

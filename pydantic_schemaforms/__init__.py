@@ -24,6 +24,7 @@ from .enhanced_renderer import (
     EnhancedFormRenderer,
     SchemaFormValidationError,
 )
+
 # Enhanced FormField matching design_idea.py vision
 from .form_field import (
     CheckboxField,
@@ -35,8 +36,10 @@ from .form_field import (
     TextAreaField,
     TextField,
 )
+
 # Layout composition system matching design_idea.py vision
 from .form_layouts import FormDesign, ListLayout, SectionDesign, TabbedLayout
+
 # Input type constants and validation
 from .input_types import (
     ALL_INPUT_TYPES,
@@ -46,8 +49,10 @@ from .input_types import (
     SPECIALIZED_INPUTS,
     TEXT_INPUTS,
 )
+
 # Input component export metadata
 from .inputs import __all__ as _INPUT_EXPORTS
+
 # Core form building and rendering
 from .integration import (
     AutoFormBuilder,
@@ -61,13 +66,16 @@ from .integration import (
     handle_form_async,
     render_form_page,
 )
+
 # Live validation system
 from .live_validation import HTMXValidationConfig, LiveValidator
+
 # Modern renderer with Python 3.14 template strings
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
 from .render_form import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
 from .form_data import coerce_form_value, parse_nested_form_data
+
 # Layout system
 from .rendering.layout_engine import (
     AccordionLayout,
@@ -82,9 +90,11 @@ from .rendering.layout_engine import (
     TabLayout,
     VerticalLayout,
 )
+
 # FormModel abstraction for Pydantic models with UI hints
 from .schema_form import Field, FormModel, ValidationResult, form_validator
 from .templates import FormTemplates, TemplateString
+
 # Validation system
 from .validation import (
     CrossFieldRules,
@@ -105,6 +115,7 @@ from .validation import (
     create_password_strength_validator,
     create_validator,
 )
+
 # Check Python version before any other imports
 from .version_check import check_python_version, verify_template_strings
 
@@ -117,12 +128,12 @@ from .version_check import check_python_version, verify_template_strings
 # - template_compat.py -> empty/unused
 # App Name and version
 
-__version__ = "26.2.1.beta"
-__package_name__ = "pydantic-schemaforms"
-__author__ = "Pydantic Forms Team"
-__description__ = "Modern form generation library for Python 3.14+"
+__version__ = '26.2.1.beta'
+__package_name__ = 'pydantic-schemaforms'
+__author__ = 'Pydantic Forms Team'
+__description__ = 'Modern form generation library for Python 3.14+'
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
 
 # Library logger — callers configure handlers; we add NullHandler to suppress
 # "No handlers could be found" warnings (PEP 282 / logging best-practices).
@@ -132,59 +143,59 @@ logger.addHandler(logging.NullHandler())
 # Main exports for common usage
 __all__ = [
     # Primary form building interface
-    "FormBuilder",
-    "AutoFormBuilder",
-    "create_form_from_model",
+    'FormBuilder',
+    'AutoFormBuilder',
+    'create_form_from_model',
     # FormModel abstraction
-    "FormModel",
-    "Field",
-    "form_validator",
-    "ValidationResult",
+    'FormModel',
+    'Field',
+    'form_validator',
+    'ValidationResult',
     # Enhanced FormField system
-    "FormField",
-    "TextField",
-    "EmailField",
-    "NumberField",
-    "SelectField",
-    "CheckboxField",
-    "DateField",
-    "TextAreaField",
+    'FormField',
+    'TextField',
+    'EmailField',
+    'NumberField',
+    'SelectField',
+    'CheckboxField',
+    'DateField',
+    'TextAreaField',
     # Core renderers
-    "EnhancedFormRenderer",
-    "CSRFMode",
-    "SchemaFormValidationError",
-    "render_form_html",
-    "render_form_html_async",
+    'EnhancedFormRenderer',
+    'CSRFMode',
+    'SchemaFormValidationError',
+    'render_form_html',
+    'render_form_html_async',
     # Pre-built form templates
-    "create_login_form",
-    "create_registration_form",
-    "create_contact_form",
+    'create_login_form',
+    'create_registration_form',
+    'create_contact_form',
     # Layout system
-    "VerticalLayout",
-    "HorizontalLayout",
-    "TabbedLayout",
-    "ListLayout",
-    "Layout",
-    "LayoutComposer",
+    'VerticalLayout',
+    'HorizontalLayout',
+    'TabbedLayout',
+    'ListLayout',
+    'Layout',
+    'LayoutComposer',
     # Validation system
-    "create_validator",
-    "FormValidator",
-    "RequiredRule",
-    "EmailRule",
+    'create_validator',
+    'FormValidator',
+    'RequiredRule',
+    'EmailRule',
     # Input types
-    "TEXT_INPUTS",
-    "NUMERIC_INPUTS",
-    "SELECTION_INPUTS",
-    "DATETIME_INPUTS",
-    "SPECIALIZED_INPUTS",
+    'TEXT_INPUTS',
+    'NUMERIC_INPUTS',
+    'SELECTION_INPUTS',
+    'DATETIME_INPUTS',
+    'SPECIALIZED_INPUTS',
     # Framework integration
-    "FormIntegration",
-    "handle_form",
-    "handle_form_async",
+    'FormIntegration',
+    'handle_form',
+    'handle_form_async',
     # Raw form-data helpers
-    "parse_nested_form_data",
-    "coerce_form_value",
-    "__package_name__",
+    'parse_nested_form_data',
+    'coerce_form_value',
+    '__package_name__',
 ] + list(_INPUT_EXPORTS)
 
 # Quick start documentation
@@ -259,8 +270,8 @@ result = await FormIntegration.fastapi_integration(form, data)
 def __getattr__(name: str) -> Any:
     """Expose input components lazily at the package root."""
 
-    if name in _INPUT_EXPORTS: # pragma: no cover - improves import time
-        inputs_module = import_module("pydantic_schemaforms.inputs")
+    if name in _INPUT_EXPORTS:  # pragma: no cover - improves import time
+        inputs_module = import_module('pydantic_schemaforms.inputs')
         attr = getattr(inputs_module, name)
         globals()[name] = attr
         return attr

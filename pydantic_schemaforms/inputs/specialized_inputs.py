@@ -11,10 +11,10 @@ from .base import FileInputBase, FormInput
 class FileInput(FileInputBase):
     """File upload input with drag-and-drop support."""
 
-    ui_element = "file"
+    ui_element = 'file'
 
     def get_input_type(self) -> str:
-        return "file"
+        return 'file'
 
     def render(
         self,
@@ -27,25 +27,25 @@ class FileInput(FileInputBase):
         """Render file input with optional preview functionality."""
 
         if accept:
-            kwargs["accept"] = accept
+            kwargs['accept'] = accept
         if multiple:
-            kwargs["multiple"] = True
+            kwargs['multiple'] = True
         if capture:
-            kwargs["capture"] = capture
+            kwargs['capture'] = capture
 
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
         # Render the input
-        file_html = f"<input {attributes_str} />"
+        file_html = f'<input {attributes_str} />'
 
         if show_preview:
-            field_name = kwargs.get("name", "")
-            field_id = kwargs.get("id", field_name)
+            field_name = kwargs.get('name', '')
+            field_id = kwargs.get('id', field_name)
 
             preview_html = f"""
             <div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>
@@ -97,49 +97,49 @@ class ImageInput(FormInput):
     """Image input that acts as a submit button."""
 
     valid_attributes = FormInput.valid_attributes + [
-        "src",
-        "alt",
-        "width",
-        "height",
-        "formaction",
-        "formenctype",
-        "formmethod",
-        "formnovalidate",
-        "formtarget",
+        'src',
+        'alt',
+        'width',
+        'height',
+        'formaction',
+        'formenctype',
+        'formmethod',
+        'formnovalidate',
+        'formtarget',
     ]
 
     def get_input_type(self) -> str:
-        return "image"
+        return 'image'
 
     def render(self, src: str, alt: str, **kwargs) -> str:
         """Render image input with required src and alt attributes."""
-        kwargs["src"] = src
-        kwargs["alt"] = alt
+        kwargs['src'] = src
+        kwargs['alt'] = alt
 
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
         # Render the input
-        return f"<input {attributes_str} />"
+        return f'<input {attributes_str} />'
 
 
 class ColorInput(FormInput):
     """Color picker input."""
 
-    ui_element = "color"
+    ui_element = 'color'
 
     def get_input_type(self) -> str:
-        return "color"
+        return 'color'
 
     def render(self, show_value: bool = True, **kwargs) -> str:
         """Render color input with optional color value display."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
@@ -147,13 +147,13 @@ class ColorInput(FormInput):
         # Use Python 3.14 template string literal and render it
         from .base import render_template
 
-        template = t"<input {attributes_str} />"
+        template = t'<input {attributes_str} />'
         color_html = render_template(template)
 
         if show_value:
-            field_name = kwargs.get("name", "")
-            field_id = kwargs.get("id", field_name)
-            current_value = kwargs.get("value", "#000000")
+            field_name = kwargs.get('name', '')
+            field_id = kwargs.get('id', field_name)
+            current_value = kwargs.get('value', '#000000')
 
             value_display = f"""
             <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
@@ -183,16 +183,16 @@ class ColorInput(FormInput):
 class HiddenInput(FormInput):
     """Hidden input field."""
 
-    ui_element = "hidden"
+    ui_element = 'hidden'
 
     def get_input_type(self) -> str:
-        return "hidden"
+        return 'hidden'
 
     def render(self, **kwargs) -> str:
         """Render hidden input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
@@ -200,23 +200,23 @@ class HiddenInput(FormInput):
         # Use Python 3.14 template string literal and render it
         from .base import render_template
 
-        template = t"<input {attributes_str} />"
+        template = t'<input {attributes_str} />'
         return render_template(template)
 
 
 class ButtonInput(FormInput):
     """Button input field."""
 
-    valid_attributes = FormInput.valid_attributes + ["popovertarget", "popovertargetaction"]
+    valid_attributes = FormInput.valid_attributes + ['popovertarget', 'popovertargetaction']
 
     def get_input_type(self) -> str:
-        return "button"
+        return 'button'
 
     def render(self, **kwargs) -> str:
         """Render button input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
@@ -224,7 +224,7 @@ class ButtonInput(FormInput):
         # Use Python 3.14 template string literal and render it
         from .base import render_template
 
-        template = t"<input {attributes_str} />"
+        template = t'<input {attributes_str} />'
         return render_template(template)
 
 
@@ -232,21 +232,21 @@ class SubmitInput(FormInput):
     """Submit button input."""
 
     valid_attributes = FormInput.valid_attributes + [
-        "formaction",
-        "formenctype",
-        "formmethod",
-        "formnovalidate",
-        "formtarget",
+        'formaction',
+        'formenctype',
+        'formmethod',
+        'formnovalidate',
+        'formtarget',
     ]
 
     def get_input_type(self) -> str:
-        return "submit"
+        return 'submit'
 
     def render(self, **kwargs) -> str:
         """Render submit input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
@@ -254,7 +254,7 @@ class SubmitInput(FormInput):
         # Use Python 3.14 template string literal and render it
         from .base import render_template
 
-        template = t"<input {attributes_str} />"
+        template = t'<input {attributes_str} />'
         return render_template(template)
 
 
@@ -262,13 +262,13 @@ class ResetInput(FormInput):
     """Reset button input."""
 
     def get_input_type(self) -> str:
-        return "reset"
+        return 'reset'
 
     def render(self, **kwargs) -> str:
         """Render reset input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-        attrs["type"] = self.get_input_type()
+        attrs['type'] = self.get_input_type()
 
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
@@ -276,19 +276,19 @@ class ResetInput(FormInput):
         # Use Python 3.14 template string literal and render it
         from .base import render_template
 
-        template = t"<input {attributes_str} />"
+        template = t'<input {attributes_str} />'
         return render_template(template)
 
 
 class CSRFInput(HiddenInput):
     """CSRF token hidden input for security."""
 
-    ui_element = "csrf"
+    ui_element = 'csrf'
 
     def render(self, token: str, **kwargs) -> str:
         """Render CSRF input with token value."""
-        kwargs["name"] = kwargs.get("name", "csrf_token")
-        kwargs["value"] = token
+        kwargs['name'] = kwargs.get('name', 'csrf_token')
+        kwargs['value'] = token
         return super().render(**kwargs)
 
 
@@ -298,11 +298,11 @@ class HoneypotInput(HiddenInput):
     def render(self, **kwargs) -> str:
         """Render honeypot input that should remain empty."""
         # Use a name that looks like a real field but is actually a trap
-        kwargs["name"] = kwargs.get("name", "website_url")
-        kwargs["value"] = ""
-        kwargs["style"] = "display: none !important;"
-        kwargs["tabindex"] = "-1"
-        kwargs["autocomplete"] = "off"
+        kwargs['name'] = kwargs.get('name', 'website_url')
+        kwargs['value'] = ''
+        kwargs['style'] = 'display: none !important;'
+        kwargs['tabindex'] = '-1'
+        kwargs['autocomplete'] = 'off'
         return super().render(**kwargs)
 
 
@@ -316,23 +316,23 @@ class CaptchaInput:
         self.num2 = random.randint(1, 10)
         self.answer = self.num1 + self.num2
 
-    def render(self, name: str = "captcha", **kwargs) -> str:
+    def render(self, name: str = 'captcha', **kwargs) -> str:
         """Render math captcha with validation."""
-        field_id = kwargs.get("id", name)
+        field_id = kwargs.get('id', name)
 
         # Create hidden input with the answer
         hidden_input = HiddenInput()
-        hidden_html = hidden_input.render(name=f"{name}_answer", value=str(self.answer))
+        hidden_html = hidden_input.render(name=f'{name}_answer', value=str(self.answer))
 
         # Create text input for user answer
         text_input = FormInput()
         text_attrs = {
-            "name": name,
-            "id": field_id,
-            "type": "text",
-            "required": True,
-            "placeholder": "Enter the answer",
-            "autocomplete": "off",
+            'name': name,
+            'id': field_id,
+            'type': 'text',
+            'required': True,
+            'placeholder': 'Enter the answer',
+            'autocomplete': 'off',
             **kwargs,
         }
         text_html = text_input.render(**text_attrs)
@@ -374,18 +374,18 @@ class RatingStarsInput:
 
     def render(self, name: str, max_stars: int = 5, current_rating: int = 0, **kwargs) -> str:
         """Render star rating input."""
-        field_id = kwargs.get("id", name)
+        field_id = kwargs.get('id', name)
 
         # Create hidden input to store the rating value
         hidden_input = HiddenInput()
         hidden_html = hidden_input.render(
-            name=name, id=f"{field_id}_value", value=str(current_rating)
+            name=name, id=f'{field_id}_value', value=str(current_rating)
         )
 
         # Create star display
         stars_html = []
         for i in range(1, max_stars + 1):
-            star_class = "star-filled" if i <= current_rating else "star-empty"
+            star_class = 'star-filled' if i <= current_rating else 'star-empty'
             stars_html.append(f'<span class="rating-star {star_class}" data-rating="{i}">★</span>')
 
         rating_html = f"""
@@ -449,22 +449,22 @@ class TagsInput:
     """Tags input widget for entering multiple tags."""
 
     def render(
-        self, name: str, placeholder: str = "Enter tags...", separator: str = ",", **kwargs
+        self, name: str, placeholder: str = 'Enter tags...', separator: str = ',', **kwargs
     ) -> str:
         """Render tags input widget."""
-        field_id = kwargs.get("id", name)
-        initial_tags = kwargs.get("value", "")
+        field_id = kwargs.get('id', name)
+        initial_tags = kwargs.get('value', '')
 
         # Create hidden input to store tag values
         hidden_input = HiddenInput()
-        hidden_html = hidden_input.render(name=name, id=f"{field_id}_value", value=initial_tags)
+        hidden_html = hidden_input.render(name=name, id=f'{field_id}_value', value=initial_tags)
 
         # Create visible input for typing
         text_attrs = {
-            "type": "text",
-            "id": f"{field_id}_input",
-            "placeholder": placeholder,
-            "autocomplete": "off",
+            'type': 'text',
+            'id': f'{field_id}_input',
+            'placeholder': placeholder,
+            'autocomplete': 'off',
         }
 
         text_input = FormInput()
