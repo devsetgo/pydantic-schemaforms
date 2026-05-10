@@ -3,6 +3,8 @@ Enhanced FormField class that matches the design_idea.py vision.
 Provides a clean interface for defining form fields with type validation and icon support.
 """
 
+from __future__ import annotations
+
 import inspect
 from typing import Any, Dict, List, Optional, Type, Union, get_args, get_origin
 

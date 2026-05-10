@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+from typing import Any, Union
 
 
-def map_pydantic_to_json_schema_type(python_type):
+def map_pydantic_to_json_schema_type(python_type: type) -> str:
     if python_type is str:
         return "string"
     if python_type is int:
@@ -21,8 +22,8 @@ def map_pydantic_to_json_schema_type(python_type):
     return "string"
 
 
-def map_ui_element_to_framework(ui_element, framework):
-    mapping = {
+def map_ui_element_to_framework(ui_element: str, framework: str) -> str:
+    mapping: dict[str, dict[str, str]] = {
         "react": {
             "email": "email",
             "password": "password",
@@ -39,7 +40,10 @@ def map_ui_element_to_framework(ui_element, framework):
     return mapping.get(framework, {}).get(ui_element, ui_element)
 
 
-def convert_validation_rules(field_info, framework):  # pragma: no cover - passthrough
+def convert_validation_rules(  # pragma: no cover - passthrough
+    field_info: Any,
+    framework: str,
+) -> Union[dict[str, Any], list[Any]]:
     if framework == "react":
         return {}
     if framework == "vue":

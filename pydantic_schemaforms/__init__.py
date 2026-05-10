@@ -17,6 +17,7 @@ IMPORTANT: This library requires Python 3.14+ and provides NO backward compatibi
 import logging
 import os
 from importlib import import_module
+from typing import Any
 
 from .enhanced_renderer import (
     CSRFMode,
@@ -255,7 +256,7 @@ result = await FormIntegration.fastapi_integration(form, data)
 """
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Expose input components lazily at the package root."""
 
     if name in _INPUT_EXPORTS: # pragma: no cover - improves import time
@@ -268,5 +269,5 @@ def __getattr__(name: str):
     )  # pragma: no cover - improves import time
 
 
-def __dir__():  # pragma: no cover - improves interactive discovery
+def __dir__() -> list[str]:  # pragma: no cover - improves interactive discovery
     return sorted(set(list(globals().keys()) + __all__))

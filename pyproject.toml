@@ -122,4 +122,4 @@ exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "pydantic_schemaforms",]
-include = [ "pydantic_schemaforms/assets/**",]
+include = [ "pydantic_schemaforms/assets/**", "pydantic_schemaforms/py.typed",]
