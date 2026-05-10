@@ -13,7 +13,7 @@ make tests
 This runs:
 1. **Pre-commit hooks** (Ruff linting + formatting, YAML/TOML checks, trailing whitespace)
 2. **Parser regression suite** (`tests/test_form_data_parsing.py`)
-3. **Full pytest suite** (900+ tests covering validation, rendering, async, layouts, integration)
+3. **Full pytest suite** (985 tests covering validation, rendering, async, layouts, integration)
 4. **Coverage badge generation** (summarizes test coverage)
 
 ## What Changed
@@ -42,24 +42,29 @@ make cleanup       # Run all formatters (isort + ruff + autoflake)
 🔍 Running pre-commit (ruff, formatting, yaml/toml checks)...
 ✅ Pre-commit passed. Running form-data parser regression tests...
 🧪 Regression passed. Running full pytest suite...
-[900+ tests run]
+[985 tests run]
 📊 Generating coverage and test badges...
 ✨ Tests complete. Badges updated.
 ```
 
 ## Test Organization
 
-Tests are organized in `tests/` directory:
+Tests are organized in `tests/` by domain — one file per subject area:
 
-| Test File | Purpose | Count |
-|-----------|---------|-------|
-| `test_layout_demo_smoke.py` | Tab/accordion initial render | 3 |
-| `test_e2e_layouts_async.py` | E2E: structure, integration, async | 14 |
-| `test_plugin_hooks.py` | Input/layout registration | 2 |
-| `test_model_list_integration.py` | Model list rendering & validation | 4 |
-| `test_validation_consolidation.py` | Validation engine unification | 10 |
-| `test_layouts.py` | Layout classes (tabs, accordions, cards) | 35+ |
-| ... | Other units, integration, fixtures | 800+ |
+| Test File | Purpose | ~Tests |
+|-----------|---------|--------|
+| `test_inputs.py` | All input component types (text, datetime, selection, specialized) | 148 |
+| `test_validation.py` | Validation rules, engine, HTMX live validation | 144 |
+| `test_integration.py` | FormBuilder, FastAPI integration, HTML markers | 107 |
+| `test_assets.py` | Vendor assets, CDN/vendored modes, Bootstrap Icons | 109 |
+| `test_rendering.py` | EnhancedFormRenderer, themes, templates, modern renderer | 99 |
+| `test_form_layouts.py` | Form-model-backed layouts (Vertical, Horizontal, Tabbed, List) | 100 |
+| `test_layouts.py` | Layout engine, TabLayout, AccordionLayout, async rendering | 94 |
+| `test_field_renderer_coverage.py` | Field-level rendering logic | 43 |
+| `test_schema_form.py` + `test_schema_form_coverage.py` | FormModel, Field, schema parsing | 67 |
+| `test_live_validation_coverage.py` | HTMX live validation config | 34 |
+| `test_form_data_parsing.py` | Nested form data parsing | 16 |
+| Smaller focused files | CSRF, debug mode, model lists, plugin hooks, etc. | ~30 |
 
 ## Linting Rules (Ruff)
 
@@ -134,8 +139,13 @@ pytest tests/
 ### Running a specific test
 
 ```bash
-pytest tests/test_validation_consolidation.py -v
-pytest tests/test_e2e_layouts_async.py::TestAsyncFormRendering::test_async_render_returns_same_html_as_sync -v
+# Run all tests for a domain
+pytest tests/test_validation.py -v
+pytest tests/test_rendering.py -v
+
+# Run a specific test class or function
+pytest tests/test_layouts.py::TestAsyncFormRendering::test_async_render_returns_same_html_as_sync -v
+pytest tests/test_assets.py -k "bootstrap_icons" -v
 ```
 
 ## Contributing

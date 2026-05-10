@@ -736,7 +736,7 @@ def test_cross_field_validation():
 
 ## Layout Demo & Tab Rendering Verification
 
-The `tests/test_layout_demo_smoke.py` smoke test verifies that initial tab content renders correctly for both Bootstrap and Material frameworks:
+The layout smoke tests in `tests/test_layouts.py` verify that initial tab content renders correctly for both Bootstrap and Material frameworks:
 
 ```python
 def test_layout_demo_bootstrap_initial_tab_renders():
@@ -773,8 +773,8 @@ As of this release, all Pydantic v2 deprecation warnings have been resolved:
 
 Run validation tests:
 ```bash
-python -m pytest tests/test_validation_consolidation.py -v
-python -m pytest tests/test_layout_demo_smoke.py -v
+python -m pytest tests/test_validation.py -v
+python -m pytest tests/test_layouts.py -v
 ```
 
 ---
@@ -793,6 +793,6 @@ The unified validation engine provides:
 8. **Pydantic v2 compatibility** with zero deprecation warnings in critical paths
 
 For questions or examples, see:
-- `tests/test_validation_consolidation.py` — Consolidated validation tests (10 tests)
-- `tests/test_layout_demo_smoke.py` — Layout/tab rendering verification
+- `tests/test_validation.py` — All validation tests (144 tests)
+- `tests/test_layouts.py` — Layout/tab rendering verification including async
 - `examples/fastapi_example.py` — Real-world FastAPI integration
