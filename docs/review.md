@@ -117,17 +117,17 @@ These rules are intended to prevent “helpful” drift away from the original c
   _Files:_ `pydantic_schemaforms/model_list.py`, `pydantic_schemaforms/rendering/themes.py`
 
 - **Template engine under-used (Resolved)**
-  The new `FormStyle` contract (in `rendering/form_style.py`) extracts all framework-specific markup into `FormStyleTemplates` dataclass with 13 template slots: `form_wrapper`, `tab_layout`, `tab_button`, `tab_panel`, `accordion_layout`, `accordion_section`, `layout_section`, `layout_help`, `model_list_container`, `model_list_item`, `model_list_help`, `model_list_error`, and `submit_button`. Framework-specific bundles (Bootstrap, Material, Plain, Default) are registered in a centralized registry via `register_form_style()` and queried at render time with `get_form_style(framework, variant)`. `RendererTheme.render_submit_button()`, `render_model_list_*()` methods and `LayoutEngine` tab/accordion layouts all delegate to `FormStyle.templates` with graceful fallback to defaults, eliminating inline markup strings and enabling runtime overrides. Tests in `test_theme_hooks.py` (7 tests) verify custom FormStyle templates drive rendering. FastAPI example paths hardened to use `Path(__file__).resolve().parent` for templates and static dirs, working correctly from any working directory.
-  _Files:_ `pydantic_schemaforms/rendering/form_style.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/rendering/layout_engine.py`, `examples/fastapi_example.py`, `tests/test_theme_hooks.py`, `tests/test_fastapi_example_smoke.py`
+  The new `FormStyle` contract (in `rendering/form_style.py`) extracts all framework-specific markup into `FormStyleTemplates` dataclass with 13 template slots: `form_wrapper`, `tab_layout`, `tab_button`, `tab_panel`, `accordion_layout`, `accordion_section`, `layout_section`, `layout_help`, `model_list_container`, `model_list_item`, `model_list_help`, `model_list_error`, and `submit_button`. Framework-specific bundles (Bootstrap, Material, Plain, Default) are registered in a centralized registry via `register_form_style()` and queried at render time with `get_form_style(framework, variant)`. `RendererTheme.render_submit_button()`, `render_model_list_*()` methods and `LayoutEngine` tab/accordion layouts all delegate to `FormStyle.templates` with graceful fallback to defaults, eliminating inline markup strings and enabling runtime overrides. FastAPI example paths hardened to use `Path(__file__).resolve().parent` for templates and static dirs, working correctly from any working directory.
+  _Files:_ `pydantic_schemaforms/rendering/form_style.py`, `pydantic_schemaforms/rendering/themes.py`, `pydantic_schemaforms/rendering/layout_engine.py`, `examples/fastapi_example.py`, `tests/test_rendering.py`, `tests/test_integration.py`
 
 - **Runtime field registration surfaced (New)**
   Dynamically extending a `FormModel` is now supported via `FormModel.register_field()`, which wires the new `FieldInfo` into the schema cache and the validation stack by synthesizing a runtime subclass when necessary. Legacy `setattr(MyForm, name, Field(...))` still works for rendering, but the helper ensures `validate_form_data()` and HTMX live validation enforce the same constraints without manual plumbing.
-  _Files:_ `pydantic_schemaforms/schema_form.py`, `pydantic_schemaforms/validation.py`, `tests/test_integration_workflow.py`
+  _Files:_ `pydantic_schemaforms/schema_form.py`, `pydantic_schemaforms/validation.py`, `tests/test_integration.py`
   _TODO:_ The temporary `DynamicFormRuntime` created by `pydantic.create_model()` emits a `UserWarning` about shadowing parent attributes. If this becomes noisy, add a local `model_config = {"ignored_types": ...}` or suppress the warning via the helper before rebuilding the runtime model.
 
 - **Validation rule duplication (Resolved)**
   Validation is now canonical in `validation.py` (rules, `ValidationResponse`, convenience validators). `live_validation.py` consumes/re-exports without duplicating code. Added consolidation coverage (10 tests) for schema → live validator flow, convenience validators, and serialization.
-  _Files:_ `pydantic_schemaforms/validation.py`, `pydantic_schemaforms/live_validation.py`, `pydantic_schemaforms/__init__.py`, `tests/test_validation_consolidation.py`
+  _Files:_ `pydantic_schemaforms/validation.py`, `pydantic_schemaforms/live_validation.py`, `pydantic_schemaforms/__init__.py`, `tests/test_validation.py`
 
 - **Input namespace still re-exports everything (Resolved)**
   The root package now exposes inputs via module-level `__getattr__`, delegating to a lazy-loading facade in `pydantic_schemaforms.inputs`. No wildcard imports remain, so importing `pydantic_schemaforms` does not instantiate every widget or template; consumers still get `from pydantic_schemaforms import TextInput` via the cached attribute. Future work can build on the same facade to document a plugin hook for third-party inputs.
@@ -155,7 +155,7 @@ These rules are intended to prevent “helpful” drift away from the original c
 
 ## Testing & Tooling Gaps
 
-- ✅ **Renderer behavior E2E coverage (COMPLETED)** — Added `tests/test_e2e_layouts_async.py` with 14 tests: unit tests for tab/accordion DOM structure, aria attributes, display state; integration tests for `LayoutDemonstrationForm` with nested fields and model lists; async equivalence tests. All passing.
+- ✅ **Renderer behavior E2E coverage (COMPLETED)** — Tab/accordion DOM structure, aria attributes, display state; integration tests for `LayoutDemonstrationForm`; async equivalence tests. All passing (now consolidated in `tests/test_layouts.py`).
 - ✅ **CI/docs alignment (COMPLETED)** — Documented `make tests` as single entry point in new `docs/testing_workflow.md` (comprehensive guide with test organization, linting rules, CI/CD integration, troubleshooting). **Ruff now enabled in `.pre-commit-config.yaml`** and enforced as part of `make tests` before pytest runs.
 
 ## Recommended Next Steps
@@ -178,7 +178,7 @@ These rules are intended to prevent “helpful” drift away from the original c
 
 5. ✅ **Extension hooks for inputs/layouts (COMPLETED)** — Plugin registration API added: `register_input_class()` / `register_inputs()` in `inputs/registry` with cache clearing, and `LayoutEngine.register_layout_renderer()` with metadata-driven dispatch. Documented in `docs/plugin_hooks.md` with examples and best practices.
 
-6. ✅ **Automated E2E coverage for layouts/async (COMPLETED)** — Added comprehensive `tests/test_e2e_layouts_async.py` (14 tests) covering: unit tests for tab/accordion DOM structure, aria attributes, and display state; integration tests for `LayoutDemonstrationForm` tab/layout field rendering with nested content and model lists; async tests verifying `render_form_from_model_async()` produces identical HTML to sync path, handles errors gracefully, and supports concurrent rendering. All tests passing.
+6. ✅ **Automated E2E coverage for layouts/async (COMPLETED)** — Comprehensive coverage of tab/accordion DOM structure, aria attributes, and display state; `LayoutDemonstrationForm` integration tests; async equivalence tests for `render_form_from_model_async()`. All consolidated into `tests/test_layouts.py`.
 
 7. ✅ **CI/docs alignment (COMPLETED)** — Documented `make tests` as single entry point in new `docs/testing_workflow.md` (comprehensive guide with test organization, linting rules, CI/CD integration, troubleshooting). **Ruff now enabled in `.pre-commit-config.yaml`** and enforced as part of `make tests` before pytest runs. All 217+ tests passing with integrated linting.
 
