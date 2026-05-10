@@ -98,6 +98,7 @@ ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
 indent-style = "space"
 quote-style = "single"
 
+
 [tool.coverage.run]
 source = [ "pydantic_schemaforms",]
 omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
