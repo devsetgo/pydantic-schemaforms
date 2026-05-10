@@ -17,12 +17,9 @@ updates:
       include: "scope"
     schedule:
       interval: "cron"
-      # Run on the 2nd Saturday of each month at 04:00
-      cronjob: "0 4 8-14 * 6"
+      # Run on the 1st Saturday of each month at 04:00
+      cronjob: "0 4 1-7 * 6"
       timezone: "America/New_York"
-    # schedule:
-    #   cron: '0 0 5 ? 1/1 SAT#1 *'
-  # packages:
   - package-ecosystem: "github-actions"
     directory: "/"
     labels:
@@ -34,6 +31,6 @@ updates:
       include: "scope"
     schedule:
       interval: "cron"
-      # Run on the 2nd Saturday of each month at 04:00
-      cronjob: "0 4 8-14 * 6"
+      # Run on the 1st Saturday of each month at 04:00
+      cronjob: "0 4 1-7 * 6"
       timezone: "America/New_York"

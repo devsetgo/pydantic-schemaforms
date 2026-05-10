@@ -9,6 +9,36 @@
 # publishing the GitHub Release.
 name-template: "Release Notes (Draft)"
 
+autolabeler:
+  - label: 'breaking'
+    branch:
+      - '/^breaking[/-].+/'
+  - label: 'feature'
+    branch:
+      - '/^feat(ure)?[/-].+/'
+  - label: 'enhancement'
+    branch:
+      - '/^enhance[/-].+/'
+      - '/^improvement[/-].+/'
+  - label: 'bug'
+    branch:
+      - '/^(fix|bugfix|hotfix)[/-].+/'
+  - label: 'docs'
+    branch:
+      - '/^docs?[/-].+/'
+  - label: 'code improvements'
+    branch:
+      - '/^(refactor|optimize|perf|performance)[/-].+/'
+  - label: 'github actions'
+    branch:
+      - '/^(ci|actions?|workflow)[/-].+/'
+  - label: 'chore'
+    branch:
+      - '/^(chore|test|cleanup)[/-].+/'
+  - label: 'dependencies'
+    branch:
+      - '/^(dep|deps|bump|dependabot)[/-].+/'
+
 categories:
   - title: "Breaking Changes"
     labels:
@@ -24,6 +54,12 @@ categories:
   - title: "Documentation"
     labels:
       - "docs"
+  - title: "Code Improvements"
+    labels:
+      - "code improvements"
+  - title: "GitHub Actions"
+    labels:
+      - "github actions"
   - title: "Maintenance"
     labels:
       - "chore"
