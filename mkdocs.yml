@@ -30,6 +30,7 @@ nav:
       - Contributing: 'contribute.md'
       - Release Notes: 'release-notes.md'
       - Library Boundary Analysis: 'library-boundary-risk-analysis.md'
+      - Demo Sync (PAT Setup): 'github_pat_setup.md'
       - Review: 'review.md'
   - About: 'about.md'
     # - QuickStart: 'quickstart.md'
