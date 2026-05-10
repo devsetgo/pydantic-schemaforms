@@ -17,13 +17,12 @@ import asyncio
 import importlib
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from types import SimpleNamespace
 from typing import Annotated, Dict, Optional, Type
 
 import pytest
 from pydantic import BaseModel
-from pydantic import EmailStr
 
 from pydantic_schemaforms.assets import runtime as runtime_assets
 from pydantic_schemaforms.enhanced_renderer import (
