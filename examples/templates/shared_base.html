@@ -141,11 +141,52 @@
             line-height: 1.2;
             pointer-events: none;
         }
+
+        .top-resource-bar {
+            background: #0d0d0d;
+            padding: 0.35rem 0;
+            font-size: 0.78rem;
+        }
+
+        .top-resource-bar a {
+            color: #9ca3af;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.15s;
+        }
+
+        .top-resource-bar a:hover {
+            color: #ffffff;
+        }
+
+        .top-resource-bar .sep {
+            color: #374151;
+            margin: 0 0.5rem;
+        }
     </style>
 
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
+    <div class="top-resource-bar">
+        <div class="container d-flex flex-wrap align-items-center gap-1">
+            <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">
+                <i class="bi bi-book me-1"></i>Documentation
+            </a>
+            <span class="sep">|</span>
+            <a href="https://github.com/devsetgo/pydantic-schemaforms" target="_blank" rel="noopener">
+                <i class="bi bi-github me-1"></i>Repository
+            </a>
+            <span class="sep">|</span>
+            <a href="https://pypi.org/project/pydantic-schemaforms/" target="_blank" rel="noopener">
+                <i class="bi bi-box-seam me-1"></i>PyPI
+            </a>
+            <span class="sep">|</span>
+            <a href="https://github.com/devsetgo/pydantic-schemaforms/issues" target="_blank" rel="noopener">
+                <i class="bi bi-bug me-1"></i>Issues
+            </a>
+        </div>
+    </div>
     <div class="{% if request and 'organization' in request.path %}container-fluid{% else %}container{% endif %} py-4">
         {% if not request or request.url.path != '/' %}
         <div class="site-brand-shell">
