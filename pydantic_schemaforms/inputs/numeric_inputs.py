@@ -11,21 +11,21 @@ from .base import NumericInput
 class NumberInput(NumericInput):
     """Standard numeric input field with step controls."""
 
-    ui_element = "number"
+    ui_element = 'number'
 
     template = """<input type="number" ${attributes} />"""
 
     def get_input_type(self) -> str:
-        return "number"
+        return 'number'
 
     def render(self, **kwargs) -> str:
         # Add input mode for mobile keyboards
-        if "inputmode" not in kwargs:
-            kwargs["inputmode"] = "numeric"
+        if 'inputmode' not in kwargs:
+            kwargs['inputmode'] = 'numeric'
 
         # Set default step if not provided
-        if "step" not in kwargs:
-            kwargs["step"] = "1"
+        if 'step' not in kwargs:
+            kwargs['step'] = '1'
 
         return super().render(**kwargs)
 
@@ -33,20 +33,20 @@ class NumberInput(NumericInput):
 class RangeInput(NumericInput):
     """Range slider input for selecting values within a range."""
 
-    ui_element = "range"
+    ui_element = 'range'
 
     template = """<input type="range" ${attributes} />"""
 
     def get_input_type(self) -> str:
-        return "range"
+        return 'range'
 
     def render(self, show_value: bool = True, **kwargs) -> str:
         """Render range input with optional value display."""
         range_html = super().render(**kwargs)
 
         if show_value:
-            field_name = kwargs.get("name", "")
-            value = kwargs.get("value", kwargs.get("min", "0"))
+            field_name = kwargs.get('name', '')
+            value = kwargs.get('value', kwargs.get('min', '0'))
 
             # Add value display and JavaScript to update it
             value_display = f"""
@@ -73,14 +73,14 @@ class PercentageInput(NumberInput):
 
     def render(self, **kwargs) -> str:
         # Set percentage-specific constraints
-        kwargs["min"] = kwargs.get("min", "0")
-        kwargs["max"] = kwargs.get("max", "100")
-        kwargs["step"] = kwargs.get("step", "0.1")
-        kwargs["placeholder"] = kwargs.get("placeholder", "50.0")
+        kwargs['min'] = kwargs.get('min', '0')
+        kwargs['max'] = kwargs.get('max', '100')
+        kwargs['step'] = kwargs.get('step', '0.1')
+        kwargs['placeholder'] = kwargs.get('placeholder', '50.0')
 
         # Add percentage symbol to placeholder if not present
-        if "%" not in str(kwargs.get("placeholder", "")):
-            kwargs["placeholder"] = f"{kwargs['placeholder']}%"
+        if '%' not in str(kwargs.get('placeholder', '')):
+            kwargs['placeholder'] = f'{kwargs["placeholder"]}%'
 
         return super().render(**kwargs)
 
@@ -91,8 +91,8 @@ class DecimalInput(NumberInput):
     def render(self, decimal_places: int = 2, **kwargs) -> str:
         # Set step based on decimal places
         step = 1 / (10**decimal_places)
-        kwargs["step"] = kwargs.get("step", str(step))
-        kwargs["inputmode"] = "decimal"
+        kwargs['step'] = kwargs.get('step', str(step))
+        kwargs['inputmode'] = 'decimal'
 
         return super().render(**kwargs)
 
@@ -102,8 +102,8 @@ class IntegerInput(NumberInput):
 
     def render(self, **kwargs) -> str:
         # Force step to 1 for integers
-        kwargs["step"] = "1"
-        kwargs["inputmode"] = "numeric"
+        kwargs['step'] = '1'
+        kwargs['inputmode'] = 'numeric'
 
         return super().render(**kwargs)
 
@@ -113,9 +113,9 @@ class AgeInput(IntegerInput):
 
     def render(self, **kwargs) -> str:
         # Set age-appropriate constraints
-        kwargs["min"] = kwargs.get("min", "0")
-        kwargs["max"] = kwargs.get("max", "150")
-        kwargs["placeholder"] = kwargs.get("placeholder", "25")
+        kwargs['min'] = kwargs.get('min', '0')
+        kwargs['max'] = kwargs.get('max', '150')
+        kwargs['placeholder'] = kwargs.get('placeholder', '25')
 
         return super().render(**kwargs)
 
@@ -125,8 +125,8 @@ class QuantityInput(IntegerInput):
 
     def render(self, **kwargs) -> str:
         # Set quantity-appropriate constraints
-        kwargs["min"] = kwargs.get("min", "1")
-        kwargs["placeholder"] = kwargs.get("placeholder", "1")
+        kwargs['min'] = kwargs.get('min', '1')
+        kwargs['placeholder'] = kwargs.get('placeholder', '1')
 
         return super().render(**kwargs)
 
@@ -137,10 +137,10 @@ class ScoreInput(NumberInput):
     def render(
         self, min_score: Union[int, float] = 0, max_score: Union[int, float] = 100, **kwargs
     ) -> str:
-        kwargs["min"] = str(min_score)
-        kwargs["max"] = str(max_score)
-        kwargs["step"] = kwargs.get(
-            "step", "1" if isinstance(min_score, int) and isinstance(max_score, int) else "0.1"
+        kwargs['min'] = str(min_score)
+        kwargs['max'] = str(max_score)
+        kwargs['step'] = kwargs.get(
+            'step', '1' if isinstance(min_score, int) and isinstance(max_score, int) else '0.1'
         )
 
         return super().render(**kwargs)
@@ -151,12 +151,12 @@ class RatingInput(RangeInput):
 
     def render(self, max_rating: int = 5, **kwargs) -> str:
         # Set rating constraints
-        kwargs["min"] = "1"
-        kwargs["max"] = str(max_rating)
-        kwargs["step"] = "1"
-        kwargs["value"] = kwargs.get("value", "3")
+        kwargs['min'] = '1'
+        kwargs['max'] = str(max_rating)
+        kwargs['step'] = '1'
+        kwargs['value'] = kwargs.get('value', '3')
 
-        field_name = kwargs.get("name", "")
+        field_name = kwargs.get('name', '')
 
         # Custom rendering with star display
         range_html = super().render(show_value=False, **kwargs)
@@ -164,7 +164,7 @@ class RatingInput(RangeInput):
         # Add star rating display
         stars_html = f"""
         <div class="star-rating" id="{field_name}-stars">
-            {'★' * int(kwargs.get("value", "3"))}{'☆' * (max_rating - int(kwargs.get("value", "3")))}
+            {'★' * int(kwargs.get('value', '3'))}{'☆' * (max_rating - int(kwargs.get('value', '3')))}
         </div>
         <script>
         document.addEventListener('DOMContentLoaded', function() {{
@@ -192,8 +192,8 @@ class SliderInput(RangeInput):
         slider_html = super().render(show_value=True, **kwargs)
 
         if show_labels:
-            min_val = kwargs.get("min", "0")
-            max_val = kwargs.get("max", "100")
+            min_val = kwargs.get('min', '0')
+            max_val = kwargs.get('max', '100')
 
             labels_html = f"""
             <div class="slider-labels" style="display: flex; justify-content: space-between; margin-top: 5px;">
@@ -209,21 +209,21 @@ class SliderInput(RangeInput):
 class TemperatureInput(NumberInput):
     """Temperature input with unit selection."""
 
-    def render(self, unit: str = "celsius", **kwargs) -> str:
+    def render(self, unit: str = 'celsius', **kwargs) -> str:
         """Render temperature input with unit indicator."""
-        if unit.lower() in ["celsius", "c"]:
-            kwargs["placeholder"] = kwargs.get("placeholder", "20°C")
-            kwargs["min"] = kwargs.get("min", "-273.15")  # Absolute zero
-            kwargs["max"] = kwargs.get("max", "1000")
-        elif unit.lower() in ["fahrenheit", "f"]:
-            kwargs["placeholder"] = kwargs.get("placeholder", "68°F")
-            kwargs["min"] = kwargs.get("min", "-459.67")  # Absolute zero in F
-            kwargs["max"] = kwargs.get("max", "1800")
-        elif unit.lower() in ["kelvin", "k"]:
-            kwargs["placeholder"] = kwargs.get("placeholder", "293K")
-            kwargs["min"] = kwargs.get("min", "0")  # Absolute zero
-            kwargs["max"] = kwargs.get("max", "1273")
+        if unit.lower() in ['celsius', 'c']:
+            kwargs['placeholder'] = kwargs.get('placeholder', '20°C')
+            kwargs['min'] = kwargs.get('min', '-273.15')  # Absolute zero
+            kwargs['max'] = kwargs.get('max', '1000')
+        elif unit.lower() in ['fahrenheit', 'f']:
+            kwargs['placeholder'] = kwargs.get('placeholder', '68°F')
+            kwargs['min'] = kwargs.get('min', '-459.67')  # Absolute zero in F
+            kwargs['max'] = kwargs.get('max', '1800')
+        elif unit.lower() in ['kelvin', 'k']:
+            kwargs['placeholder'] = kwargs.get('placeholder', '293K')
+            kwargs['min'] = kwargs.get('min', '0')  # Absolute zero
+            kwargs['max'] = kwargs.get('max', '1273')
 
-        kwargs["step"] = kwargs.get("step", "0.1")
+        kwargs['step'] = kwargs.get('step', '0.1')
 
         return super().render(**kwargs)

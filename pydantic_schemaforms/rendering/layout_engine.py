@@ -15,8 +15,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 Renderable = Union[str, List[str]]
-_DEFAULT_FORM_STYLE = get_form_style("default", "default")
-LayoutRenderer = Callable[[str, Dict[str, Any], Any, Dict[str, Any], RenderContext, "LayoutEngine"], str]
+_DEFAULT_FORM_STYLE = get_form_style('default', 'default')
+LayoutRenderer = Callable[
+    [str, Dict[str, Any], Any, Dict[str, Any], RenderContext, 'LayoutEngine'], str
+]
 
 
 class HorizontalLayout(BaseLayout):
@@ -28,9 +30,9 @@ class HorizontalLayout(BaseLayout):
         self,
         content: Renderable | BaseLayout | List[BaseLayout] | None = None,
         *,
-        gap: str = "1rem",
-        align_items: str = "flex-start",
-        justify_content: str = "flex-start",
+        gap: str = '1rem',
+        align_items: str = 'flex-start',
+        justify_content: str = 'flex-start',
         **kwargs: Any,
     ) -> None:
         resolved_content = [] if content is None else content
@@ -41,13 +43,13 @@ class HorizontalLayout(BaseLayout):
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         additional_styles = [
-            f"gap: {self.gap}",
-            f"align-items: {self.align_items}",
-            f"justify-content: {self.justify_content}",
+            f'gap: {self.gap}',
+            f'align-items: {self.align_items}',
+            f'justify-content: {self.justify_content}',
         ]
 
-        current_style = kwargs.get("style", "")
-        kwargs["style"] = "; ".join(filter(None, [current_style, *additional_styles]))
+        current_style = kwargs.get('style', '')
+        kwargs['style'] = '; '.join(filter(None, [current_style, *additional_styles]))
 
         return super().render(**kwargs)
 
@@ -61,8 +63,8 @@ class VerticalLayout(BaseLayout):
         self,
         content: Renderable | BaseLayout | List[BaseLayout] | None = None,
         *,
-        gap: str = "1rem",
-        align_items: str = "stretch",
+        gap: str = '1rem',
+        align_items: str = 'stretch',
         **kwargs: Any,
     ) -> None:
         resolved_content = [] if content is None else content
@@ -71,10 +73,10 @@ class VerticalLayout(BaseLayout):
         self.align_items = align_items
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        additional_styles = [f"gap: {self.gap}", f"align-items: {self.align_items}"]
+        additional_styles = [f'gap: {self.gap}', f'align-items: {self.align_items}']
 
-        current_style = kwargs.get("style", "")
-        kwargs["style"] = "; ".join(filter(None, [current_style, *additional_styles]))
+        current_style = kwargs.get('style', '')
+        kwargs['style'] = '; '.join(filter(None, [current_style, *additional_styles]))
 
         return super().render(**kwargs)
 
@@ -88,8 +90,8 @@ class GridLayout(BaseLayout):
         self,
         content: Renderable | BaseLayout | List[BaseLayout] | None = None,
         *,
-        columns: str = "1fr 1fr",
-        gap: str = "1rem",
+        columns: str = '1fr 1fr',
+        gap: str = '1rem',
         rows: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
@@ -100,14 +102,14 @@ class GridLayout(BaseLayout):
         self.rows = rows
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        additional_styles = [f"gap: {self.gap}"]
+        additional_styles = [f'gap: {self.gap}']
 
         if self.rows:
-            additional_styles.append(f"grid-template-rows: {self.rows}")
+            additional_styles.append(f'grid-template-rows: {self.rows}')
 
-        current_style = kwargs.get("style", "")
-        kwargs["style"] = "; ".join(filter(None, [current_style, *additional_styles]))
-        kwargs["columns"] = self.columns
+        current_style = kwargs.get('style', '')
+        kwargs['style'] = '; '.join(filter(None, [current_style, *additional_styles]))
+        kwargs['columns'] = self.columns
 
         return super().render(**kwargs)
 
@@ -119,11 +121,11 @@ class ResponsiveGridLayout(GridLayout):
         self,
         content: Renderable | BaseLayout | List[BaseLayout] | None = None,
         *,
-        min_column_width: str = "300px",
-        gap: str = "1rem",
+        min_column_width: str = '300px',
+        gap: str = '1rem',
         **kwargs: Any,
     ) -> None:
-        columns = f"repeat(auto-fit, minmax({min_column_width}, 1fr))"
+        columns = f'repeat(auto-fit, minmax({min_column_width}, 1fr))'
         super().__init__(content, columns=columns, gap=gap, **kwargs)
 
 
@@ -143,7 +145,7 @@ ${component_assets}
     """
 
     def __init__(self, tabs: List[Dict[str, str]], **kwargs: Any) -> None:
-        super().__init__(content="", **kwargs)
+        super().__init__(content='', **kwargs)
         self.tabs = tabs
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
@@ -151,25 +153,25 @@ ${component_assets}
         layout_class = self._merge_classes(attrs)
         layout_style = self._merge_styles(attrs)
 
-        renderer = attrs.get("renderer")
-        theme = getattr(renderer, "theme", None) if renderer else None
+        renderer = attrs.get('renderer')
+        theme = getattr(renderer, 'theme', None) if renderer else None
 
-        tab_ids = [f"tab-{i}" for i in range(len(self.tabs))]
+        tab_ids = [f'tab-{i}' for i in range(len(self.tabs))]
 
         tab_buttons: List[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
             button_template = FormTemplates.TAB_BUTTON
             if theme:
-                tpl = getattr(theme.form_style.templates, "tab_button", None)
+                tpl = getattr(theme.form_style.templates, 'tab_button', None)
                 if tpl:
                     button_template = tpl
             tab_buttons.append(
                 button_template.render(
-                    active_class=" active" if is_active else "",
-                    aria_selected="true" if is_active else "false",
+                    active_class=' active' if is_active else '',
+                    aria_selected='true' if is_active else 'false',
                     tab_id=tab_id,
-                    title=escape(tab["title"]),
+                    title=escape(tab['title']),
                 )
             )
 
@@ -178,22 +180,22 @@ ${component_assets}
             is_active = i == 0
             panel_template = FormTemplates.TAB_PANEL
             if theme:
-                tpl = getattr(theme.form_style.templates, "tab_panel", None)
+                tpl = getattr(theme.form_style.templates, 'tab_panel', None)
                 if tpl:
                     panel_template = tpl
 
             # Bootstrap tab panels need `show active` to display initial content
-            active_class = " active"
+            active_class = ' active'
             if panel_template is BOOTSTRAP_TAB_PANEL_TEMPLATE:  # type: ignore[name-defined]
-                active_class = " show active"
+                active_class = ' show active'
 
             tab_panels.append(
                 panel_template.render(
                     tab_id=tab_id,
-                    active_class=active_class if is_active else "",
-                    display_style="block" if is_active else "none",
-                    aria_hidden="false" if is_active else "true",
-                    content=tab["content"],
+                    active_class=active_class if is_active else '',
+                    display_style='block' if is_active else 'none',
+                    aria_hidden='false' if is_active else 'true',
+                    content=tab['content'],
                 )
             )
 
@@ -203,15 +205,15 @@ ${component_assets}
             themed_assets = theme.tab_component_assets()
             if themed_assets:
                 assets = themed_assets
-            themed_template = getattr(theme, "tab_layout_template", None)
+            themed_template = getattr(theme, 'tab_layout_template', None)
             if callable(themed_template):
                 template = themed_template()
 
-        return template.render(
+        return template.render(  # type: ignore[union-attr]
             layout_class=layout_class,
             layout_style=layout_style,
-            tab_buttons="\n".join(tab_buttons),
-            tab_panels="\n".join(tab_panels),
+            tab_buttons='\n'.join(tab_buttons),
+            tab_panels='\n'.join(tab_panels),
             component_assets=assets,
         )
 
@@ -227,7 +229,7 @@ ${component_assets}
     """
 
     def __init__(self, sections: List[Dict[str, str]], **kwargs: Any) -> None:
-        super().__init__(content="", **kwargs)
+        super().__init__(content='', **kwargs)
         self.sections = sections
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
@@ -235,26 +237,26 @@ ${component_assets}
         layout_class = self._merge_classes(attrs)
         layout_style = self._merge_styles(attrs)
 
-        renderer = attrs.get("renderer")
-        theme = getattr(renderer, "theme", None) if renderer else None
+        renderer = attrs.get('renderer')
+        theme = getattr(renderer, 'theme', None) if renderer else None
 
-        section_ids = [f"accordion-{i}" for i in range(len(self.sections))]
+        section_ids = [f'accordion-{i}' for i in range(len(self.sections))]
         accordion_sections: List[str] = []
         for _i, (section_id, section) in enumerate(zip(section_ids, self.sections, strict=False)):
-            is_expanded = section.get("expanded", False)
+            is_expanded = section.get('expanded', False)
             section_template = FormTemplates.ACCORDION_SECTION
             if theme:
-                tpl = getattr(theme.form_style.templates, "accordion_section", None)
+                tpl = getattr(theme.form_style.templates, 'accordion_section', None)
                 if tpl:
                     section_template = tpl
             accordion_sections.append(
                 section_template.render(
                     section_id=section_id,
-                    expanded_class=" expanded" if is_expanded else "",
-                    aria_expanded="true" if is_expanded else "false",
-                    display_style="block" if is_expanded else "none",
-                    title=escape(section["title"]),
-                    content=section["content"],
+                    expanded_class=' expanded' if is_expanded else '',
+                    aria_expanded='true' if is_expanded else 'false',
+                    display_style='block' if is_expanded else 'none',
+                    title=escape(section['title']),
+                    content=section['content'],
                 )
             )
 
@@ -264,14 +266,14 @@ ${component_assets}
             themed_assets = theme.accordion_component_assets()
             if themed_assets:
                 assets = themed_assets
-            themed_template = getattr(theme, "accordion_layout_template", None)
+            themed_template = getattr(theme, 'accordion_layout_template', None)
             if callable(themed_template):
                 template = themed_template()
 
-        return template.render(
+        return template.render(  # type: ignore[union-attr]
             layout_class=layout_class,
             layout_style=layout_style,
-            sections="\n".join(accordion_sections),
+            sections='\n'.join(accordion_sections),
             component_assets=assets,
         )
 
@@ -381,8 +383,10 @@ document.addEventListener('keydown', function(e) {
 </style>
     """
 
-    def __init__(self, modal_id: str, title: str, content: str, footer: str = "", **kwargs: Any) -> None:
-        default_footer = footer or f"<button onclick=\"closeModal('{modal_id}')\">Close</button>"
+    def __init__(
+        self, modal_id: str, title: str, content: str, footer: str = '', **kwargs: Any
+    ) -> None:
+        default_footer = footer or f'<button onclick="closeModal(\'{modal_id}\')">Close</button>'
         super().__init__(
             content=content,
             modal_id=modal_id,
@@ -442,14 +446,14 @@ class CardLayout(BaseLayout):
 </style>
     """
 
-    def __init__(self, title: str, content: str, footer: str = "", **kwargs: Any) -> None:
+    def __init__(self, title: str, content: str, footer: str = '', **kwargs: Any) -> None:
         super().__init__(content, **kwargs)
         self.title = title
         self.footer = footer
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        kwargs["title"] = escape(self.title)
-        kwargs["footer"] = self.footer
+        kwargs['title'] = escape(self.title)
+        kwargs['footer'] = self.footer
         return super().render(**kwargs)
 
 
@@ -474,13 +478,13 @@ class LayoutComposer:
         return VerticalLayout(list(content), **kwargs)
 
     @staticmethod
-    def grid(*content: Any, columns: str = "1fr 1fr", **kwargs: Any) -> GridLayout:
+    def grid(*content: Any, columns: str = '1fr 1fr', **kwargs: Any) -> GridLayout:
         return GridLayout(list(content), columns=columns, **kwargs)
 
     @staticmethod
     def responsive_grid(
         *content: Any,
-        min_width: str = "300px",
+        min_width: str = '300px',
         **kwargs: Any,
     ) -> ResponsiveGridLayout:
         return ResponsiveGridLayout(list(content), min_column_width=min_width, **kwargs)
@@ -511,7 +515,7 @@ class LayoutEngine:
 
     _custom_renderers: Dict[str, LayoutRenderer] = {}
 
-    def __init__(self, renderer: "EnhancedFormRenderer") -> None:
+    def __init__(self, renderer: 'EnhancedFormRenderer') -> None:
         self._renderer = renderer
 
     # ------------------------------------------------------------------
@@ -522,7 +526,7 @@ class LayoutEngine:
         """Register a custom layout renderer callable by name."""
 
         if not callable(renderer):  # pragma: no cover - defensive
-            raise TypeError("renderer must be callable")
+            raise TypeError('renderer must be callable')
         cls._custom_renderers[name] = renderer
 
     @classmethod
@@ -558,21 +562,21 @@ class LayoutEngine:
                         errors.get(field_name),
                         required_fields,
                         context,
-                        "vertical",
+                        'vertical',
                         errors,
                     )
                 )
 
             tab_payload.append(
                 {
-                    "title": tab_name,
-                    "content": "".join(field_html_parts),
+                    'title': tab_name,
+                    'content': ''.join(field_html_parts),
                 }
             )
 
         component = TabLayout(
             tabs=tab_payload,
-            class_="tabbed-layout",
+            class_='tabbed-layout',
         )
 
         return [
@@ -595,7 +599,7 @@ class LayoutEngine:
 
         tabs_payload: List[Dict[str, str]] = []
         for field_name, field_schema in layout_fields:
-            ui_info = field_schema.get("ui", {}) or field_schema
+            ui_info = field_schema.get('ui', {}) or field_schema
             layout_content = self.render_layout_field_content(
                 field_name,
                 field_schema,
@@ -606,14 +610,14 @@ class LayoutEngine:
             )
             tabs_payload.append(
                 {
-                    "title": field_schema.get("title", field_name.replace("_", " ").title()),
-                    "content": layout_content,
+                    'title': field_schema.get('title', field_name.replace('_', ' ').title()),
+                    'content': layout_content,
                 }
             )
 
         component = TabLayout(
             tabs=tabs_payload,
-            class_="layout-tabbed-section",
+            class_='layout-tabbed-section',
         )
 
         return [
@@ -632,8 +636,8 @@ class LayoutEngine:
         ui_info: Dict[str, Any],
         context: RenderContext,
     ) -> str:
-        section_title = field_schema.get("title", field_name.replace("_", " ").title())
-        help_text = ui_info.get("help_text", "")
+        section_title = field_schema.get('title', field_name.replace('_', ' ').title())
+        help_text = ui_info.get('help_text', '')
         body_html = self._build_layout_body(field_name, field_schema, value, ui_info, context)
         return self._render_layout_card(section_title, body_html, help_text)
 
@@ -645,33 +649,33 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         form_mapping = {
-            "vertical_tab": "PersonalInfoForm",
-            "horizontal_tab": "ContactInfoForm",
-            "tabbed_tab": "PreferencesForm",
-            "list_tab": "TaskListForm",
+            'vertical_tab': 'PersonalInfoForm',
+            'horizontal_tab': 'ContactInfoForm',
+            'tabbed_tab': 'PreferencesForm',
+            'list_tab': 'TaskListForm',
         }
 
         form_name = form_mapping.get(field_name)
         if form_name:
             try:
-                if form_name == "PersonalInfoForm":
+                if form_name == 'PersonalInfoForm':
                     from examples.shared_models import (
                         PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == "ContactInfoForm":
+                elif form_name == 'ContactInfoForm':
                     from examples.shared_models import (
                         ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == "PreferencesForm":
+                elif form_name == 'PreferencesForm':
                     from examples.shared_models import (
                         PreferencesForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == "TaskListForm":
+                elif form_name == 'TaskListForm':
                     from examples.shared_models import (
                         TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
                 else:  # pragma: no cover - exhaustive safety
-                    raise ImportError(f"Unknown form: {form_name}")
+                    raise ImportError(f'Unknown form: {form_name}')
 
                 nested_data = get_nested_form_data(field_name, context.form_data)
                 nested_renderer = self._renderer.__class__(framework=self._renderer.framework)
@@ -679,7 +683,7 @@ class LayoutEngine:
                     FormClass,
                     data=nested_data,
                     errors={},
-                    layout="vertical",
+                    layout='vertical',
                 )
             except Exception as exc:  # pragma: no cover - fallback messaging
                 return f"""
@@ -722,7 +726,7 @@ class LayoutEngine:
                         errors.get(field_name),
                         required_fields,
                         context,
-                        "vertical",
+                        'vertical',
                         errors,
                     )
                 )
@@ -737,16 +741,16 @@ class LayoutEngine:
                         errors.get(field_name),
                         required_fields,
                         context,
-                        "vertical",
+                        'vertical',
                         errors,
                     )
                 )
 
             layout = HorizontalLayout(
                 content=[f'<div class="side-by-side-column">{col}</div>' for col in columns],
-                class_="side-by-side-row",
-                gap="1.5rem",
-                align_items="flex-start",
+                class_='side-by-side-row',
+                gap='1.5rem',
+                align_items='flex-start',
             )
 
             parts.append(
@@ -769,8 +773,8 @@ class LayoutEngine:
         ui_info: Dict[str, Any],
         context: RenderContext,
     ) -> str:
-        section_title = field_schema.get("title", field_name.replace("_", " ").title())
-        help_text = ui_info.get("help_text", "")
+        section_title = field_schema.get('title', field_name.replace('_', ' ').title())
+        help_text = ui_info.get('help_text', '')
         body_html = self._build_layout_body(field_name, field_schema, value, ui_info, context)
         return self._render_layout_card(section_title, body_html, help_text)
 
@@ -783,7 +787,7 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         try:
-            handler_name = ui_info.get("layout_handler") or ui_info.get("layout_renderer")
+            handler_name = ui_info.get('layout_handler') or ui_info.get('layout_renderer')
             if handler_name:
                 handler = self._custom_renderers.get(str(handler_name))
                 if handler:
@@ -810,40 +814,40 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         form_mapping = {
-            "vertical_tab": "PersonalInfoForm",
-            "horizontal_tab": "ContactInfoForm",
-            "tabbed_tab": "PreferencesForm",
-            "list_tab": "TaskListForm",
+            'vertical_tab': 'PersonalInfoForm',
+            'horizontal_tab': 'ContactInfoForm',
+            'tabbed_tab': 'PreferencesForm',
+            'list_tab': 'TaskListForm',
         }
 
         form_name = form_mapping.get(field_name)
         if form_name:
             try:
-                if form_name == "PersonalInfoForm":
+                if form_name == 'PersonalInfoForm':
                     from examples.shared_models import (
                         PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == "ContactInfoForm":
+                elif form_name == 'ContactInfoForm':
                     from examples.shared_models import (
                         ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == "PreferencesForm":
+                elif form_name == 'PreferencesForm':
                     from examples.shared_models import (
                         PreferencesForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == "TaskListForm":
+                elif form_name == 'TaskListForm':
                     from examples.shared_models import (
                         TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
                 else:
-                    raise ImportError(f"Unknown form: {form_name}")
+                    raise ImportError(f'Unknown form: {form_name}')
 
                 nested_data = get_nested_form_data(field_name, context.form_data)
                 form_html = self._renderer.render_form_fields_only(
                     FormClass,
                     data=nested_data,
                     errors={},
-                    layout="vertical",
+                    layout='vertical',
                 )
                 return form_html
             except Exception as exc:  # pragma: no cover
@@ -863,24 +867,24 @@ class LayoutEngine:
             """
 
     def _render_layout_card(self, title: str, body_html: str, help_text: str) -> str:
-        theme = getattr(self._renderer, "theme", None)
+        theme = getattr(self._renderer, 'theme', None)
         if theme:
             themed_section = theme.render_layout_section(title, body_html, help_text)
             if themed_section:
                 return themed_section
 
-        form_style = getattr(theme, "form_style", None) if theme else None
-        templates = getattr(form_style, "templates", None)
+        form_style = getattr(theme, 'form_style', None) if theme else None
+        templates = getattr(form_style, 'templates', None)
 
-        layout_template = getattr(templates, "layout_section", None)
+        layout_template = getattr(templates, 'layout_section', None)
         if layout_template is None:
             layout_template = _DEFAULT_FORM_STYLE.templates.layout_section
 
-        help_template = getattr(templates, "layout_help", None)
+        help_template = getattr(templates, 'layout_help', None)
         if help_template is None:
             help_template = _DEFAULT_FORM_STYLE.templates.layout_help
 
-        help_html = ""
+        help_html = ''
         if help_text:
             help_html = help_template.render(help_text=escape(help_text))
 
@@ -897,8 +901,8 @@ class LayoutEngine:
         ui_info: Dict[str, Any],
         exc: Exception,
     ) -> str:
-        title = field_schema.get("title", field_name.replace("_", " ").title())
-        help_text = ui_info.get("help_text", "")
+        title = field_schema.get('title', field_name.replace('_', ' ').title())
+        help_text = ui_info.get('help_text', '')
         return f"""
         <div class="layout-field-error alert alert-warning">
             <p>Error rendering layout field "{escape(title)}": {escape(str(exc))}</p>
@@ -918,27 +922,35 @@ class LayoutEngine:
 
         for field_name, field_schema in fields:
             field_lower = field_name.lower()
-            if any(keyword in field_lower for keyword in ["name", "username", "password", "bio", "role"]):
+            if any(
+                keyword in field_lower
+                for keyword in ['name', 'username', 'password', 'bio', 'role']
+            ):
                 personal_fields.append((field_name, field_schema))
-            elif any(keyword in field_lower for keyword in ["email", "phone", "address", "subject", "message"]):
+            elif any(
+                keyword in field_lower
+                for keyword in ['email', 'phone', 'address', 'subject', 'message']
+            ):
                 contact_fields.append((field_name, field_schema))
             else:
                 other_fields.append((field_name, field_schema))
 
         tabs: List[Tuple[str, List[Tuple[str, Dict[str, Any]]]]] = []
         if personal_fields:
-            tabs.append(("Personal Info", personal_fields))
+            tabs.append(('Personal Info', personal_fields))
         if contact_fields:
-            tabs.append(("Contact Details", contact_fields))
+            tabs.append(('Contact Details', contact_fields))
         if other_fields:
-            tabs.append(("Additional", other_fields))
+            tabs.append(('Additional', other_fields))
 
         if not tabs:
-            tabs.append(("Form Fields", fields))
+            tabs.append(('Form Fields', fields))
         return tabs
 
 
-def _extract_existing_field_data(field_name: str, main_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _extract_existing_field_data(
+    field_name: str, main_data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     field_data = main_data.get(field_name)
     if isinstance(field_data, dict):
         return field_data
@@ -946,22 +958,22 @@ def _extract_existing_field_data(field_name: str, main_data: Dict[str, Any]) -> 
 
 
 def _safe_layout_tabs(layout_value: Any) -> List[Tuple[str, Any]]:
-    if not isinstance(layout_value, BaseLayout) or not hasattr(layout_value, "_get_layouts"):
+    if not isinstance(layout_value, BaseLayout) or not hasattr(layout_value, '_get_layouts'):
         return []
     try:
-        return list(layout_value._get_layouts())
+        return list(layout_value._get_layouts())  # type: ignore[union-attr]
     except Exception:
         return []
 
 
 def _tab_payload_from_main_data(tab_layout: Any, main_data: Dict[str, Any]) -> Dict[str, Any]:
-    if not hasattr(tab_layout, "_get_forms"):
+    if not hasattr(tab_layout, '_get_forms'):
         return {}
 
     tab_payload: Dict[str, Any] = {}
     try:
         for form_cls in tab_layout._get_forms():
-            model_fields = getattr(form_cls, "model_fields", {}) or {}
+            model_fields = getattr(form_cls, 'model_fields', {}) or {}
             for form_field_name in model_fields.keys():
                 if form_field_name in main_data:
                     tab_payload[form_field_name] = main_data[form_field_name]
@@ -989,10 +1001,10 @@ def _extract_layout_nested_data(layout_value: Any, main_data: Dict[str, Any]) ->
 
 def _extract_fallback_mapped_data(field_name: str, main_data: Dict[str, Any]) -> Dict[str, Any]:
     field_data_mapping = {
-        "vertical_tab": ["first_name", "last_name", "email", "birth_date"],
-        "horizontal_tab": ["phone", "address", "city", "postal_code"],
-        "tabbed_tab": ["notification_email", "notification_sms", "theme", "language"],
-        "list_tab": ["project_name", "tasks"],
+        'vertical_tab': ['first_name', 'last_name', 'email', 'birth_date'],
+        'horizontal_tab': ['phone', 'address', 'city', 'postal_code'],
+        'tabbed_tab': ['notification_email', 'notification_sms', 'theme', 'language'],
+        'list_tab': ['project_name', 'tasks'],
     }
 
     nested_data: Dict[str, Any] = {}

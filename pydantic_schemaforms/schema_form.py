@@ -35,14 +35,14 @@ def form_validator(func: Callable) -> Callable:
             return func(cls, values)
         except ValueError as e:
             # Convert to a more detailed validation error
-            raise ValueError(f"Form validation failed: {str(e)}")
+            raise ValueError(f'Form validation failed: {str(e)}')
         except Exception as e:
             # Handle unexpected errors
-            raise ValueError(f"Validation error: {str(e)}")
+            raise ValueError(f'Validation error: {str(e)}')
 
     # Mark the function as a form validator
-    wrapper._is_form_validator = True
-    return classmethod(wrapper)
+    wrapper._is_form_validator = True  # type: ignore[attr-defined]
+    return classmethod(wrapper)  # type: ignore[return-value]
 
 
 def Field(
@@ -92,18 +92,18 @@ def Field(
     # Collect UI attributes
     ui_attrs = {}
     ui_params = {
-        "ui_element": ui_element,
-        "ui_widget": ui_widget,
-        "ui_autofocus": ui_autofocus,
-        "ui_options": ui_options,
-        "ui_placeholder": ui_placeholder,
-        "ui_help_text": ui_help_text,
-        "ui_order": ui_order,
-        "ui_disabled": ui_disabled,
-        "ui_readonly": ui_readonly,
-        "ui_hidden": ui_hidden,
-        "ui_class": ui_class,
-        "ui_style": ui_style,
+        'ui_element': ui_element,
+        'ui_widget': ui_widget,
+        'ui_autofocus': ui_autofocus,
+        'ui_options': ui_options,
+        'ui_placeholder': ui_placeholder,
+        'ui_help_text': ui_help_text,
+        'ui_order': ui_order,
+        'ui_disabled': ui_disabled,
+        'ui_readonly': ui_readonly,
+        'ui_hidden': ui_hidden,
+        'ui_class': ui_class,
+        'ui_style': ui_style,
     }
 
     # Filter out None values and add to json_schema_extra
@@ -153,7 +153,7 @@ class FormModel(BaseModel):
     """
 
     __runtime_fields__: Dict[str, Tuple[Any, FieldInfo]] = {}
-    __runtime_model_cache__: Optional[Type["FormModel"]] = None
+    __runtime_model_cache__: Optional[Type['FormModel']] = None
     _dynamic_field_names: Set[str] = set()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -166,8 +166,8 @@ class FormModel(BaseModel):
     def get_json_schema(cls) -> Dict[str, Any]:
         """Get JSON schema with UI element information extracted from field annotations."""
         cls.ensure_dynamic_fields()
-        schema = cls.model_json_schema() if hasattr(cls, "model_json_schema") else cls.schema()
-        properties = schema.get("properties", {})
+        schema = cls.model_json_schema() if hasattr(cls, 'model_json_schema') else cls.schema()
+        properties = schema.get('properties', {})
         enhanced_props = {}
 
         # Get field information from the model
@@ -176,39 +176,39 @@ class FormModel(BaseModel):
 
             # Basic field information
             enhanced = {
-                "type": prop.get("type", "string"),
-                "title": prop.get("title", field_name.replace("_", " ").title()),
-                "description": prop.get("description", ""),
+                'type': prop.get('type', 'string'),
+                'title': prop.get('title', field_name.replace('_', ' ').title()),
+                'description': prop.get('description', ''),
             }
 
             # Add validation constraints
-            if enhanced["type"] == "string":
-                if "minLength" in prop:
-                    enhanced["minLength"] = prop["minLength"]
-                if "maxLength" in prop:
-                    enhanced["maxLength"] = prop["maxLength"]
-                if "pattern" in prop:
-                    enhanced["pattern"] = prop["pattern"]
-            elif enhanced["type"] in ("number", "integer"):
-                if "minimum" in prop:
-                    enhanced["minimum"] = prop["minimum"]
-                if "maximum" in prop:
-                    enhanced["maximum"] = prop["maximum"]
-            if "enum" in prop:
-                enhanced["enum"] = prop["enum"]
+            if enhanced['type'] == 'string':
+                if 'minLength' in prop:
+                    enhanced['minLength'] = prop['minLength']
+                if 'maxLength' in prop:
+                    enhanced['maxLength'] = prop['maxLength']
+                if 'pattern' in prop:
+                    enhanced['pattern'] = prop['pattern']
+            elif enhanced['type'] in ('number', 'integer'):
+                if 'minimum' in prop:
+                    enhanced['minimum'] = prop['minimum']
+                if 'maximum' in prop:
+                    enhanced['maximum'] = prop['maximum']
+            if 'enum' in prop:
+                enhanced['enum'] = prop['enum']
 
             # Extract UI elements from field info
             ui_info = cls._extract_ui_info(field_info)
             if ui_info:
-                enhanced["ui"] = ui_info
+                enhanced['ui'] = ui_info
 
             enhanced_props[field_name] = enhanced
 
         return {
-            "title": schema.get("title", cls.__name__),
-            "type": "object",
-            "properties": enhanced_props,
-            "required": schema.get("required", []),
+            'title': schema.get('title', cls.__name__),
+            'type': 'object',
+            'properties': enhanced_props,
+            'required': schema.get('required', []),
         }
 
     @classmethod
@@ -217,19 +217,19 @@ class FormModel(BaseModel):
         ui_info = {}
 
         # Check for UI element type in json_schema_extra
-        if hasattr(field_info, "json_schema_extra") and field_info.json_schema_extra:
+        if hasattr(field_info, 'json_schema_extra') and field_info.json_schema_extra:
             extra = field_info.json_schema_extra
             if isinstance(extra, dict):
                 for key, value in extra.items():
-                    if key.startswith("ui_"):
+                    if key.startswith('ui_'):
                         ui_key = key[3:]  # Remove 'ui_' prefix
                         ui_info[ui_key] = value
             elif callable(extra):
                 # Handle callable json_schema_extra
                 schema = {}
-                extra(schema, cls)
+                extra(schema, cls)  # type: ignore[call-arg]
                 for key, value in schema.items():
-                    if key.startswith("ui_"):
+                    if key.startswith('ui_'):
                         ui_key = key[3:]  # Remove 'ui_' prefix
                         ui_info[ui_key] = value
 
@@ -240,12 +240,12 @@ class FormModel(BaseModel):
         cls,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         *,
         submit_url: str,
         self_contained: bool = False,
         include_framework_assets: bool = False,
-        asset_mode: str = "vendored",
+        asset_mode: str = 'vendored',
         **kwargs,
     ) -> str:
         """
@@ -279,12 +279,12 @@ class FormModel(BaseModel):
         cls,
         data: Optional[Dict[str, Any]] = None,
         errors: Optional[Dict[str, Any]] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         *,
         submit_url: str,
         self_contained: bool = False,
         include_framework_assets: bool = False,
-        asset_mode: str = "vendored",
+        asset_mode: str = 'vendored',
         **kwargs,
     ) -> str:
         """Async render helper for FormModel."""
@@ -308,9 +308,9 @@ class FormModel(BaseModel):
         data: Dict[str, Any],
         *,
         submit_url: Optional[str] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         **render_kwargs: Any,
-    ) -> "ValidationResult":
+    ) -> 'ValidationResult':
         """Validate form data and return a result that can re-render itself on failure.
 
         The submit_url and framework are stored on the result so that
@@ -342,9 +342,9 @@ class FormModel(BaseModel):
         """Register a new field on the model at runtime."""
 
         field_info = field or Field(...)
-        field_info.annotation = annotation or Any
+        field_info.annotation = annotation or Any  # type: ignore[misc]
 
-        runtime_fields = dict(getattr(cls, "__runtime_fields__", {}))
+        runtime_fields = dict(getattr(cls, '__runtime_fields__', {}))
         runtime_fields[field_name] = (annotation or Any, field_info)
         cls.__runtime_fields__ = runtime_fields
         cls.__runtime_model_cache__ = None
@@ -363,9 +363,9 @@ class FormModel(BaseModel):
     def ensure_dynamic_fields(cls) -> bool:
         """Detect FieldInfo attributes assigned after class creation."""
 
-        processed: set[str] = set(getattr(cls, "_dynamic_field_names", set()))
+        processed: set[str] = set(getattr(cls, '_dynamic_field_names', set()))
         new_fields: List[str] = []
-        runtime_fields = dict(getattr(cls, "__runtime_fields__", {}))
+        runtime_fields = dict(getattr(cls, '__runtime_fields__', {}))
 
         for attr_name, attr_value in cls.__dict__.items():
             if not isinstance(attr_value, FieldInfo):
@@ -376,7 +376,7 @@ class FormModel(BaseModel):
             runtime_fields.setdefault(
                 attr_name,
                 (
-                    getattr(attr_value, "annotation", Any) or Any,
+                    getattr(attr_value, 'annotation', Any) or Any,
                     attr_value,
                 ),
             )
@@ -390,12 +390,12 @@ class FormModel(BaseModel):
         return True
 
     @classmethod
-    def get_runtime_model(cls) -> Type["FormModel"]:
+    def get_runtime_model(cls) -> Type['FormModel']:
         """Return a model class that includes any registered runtime fields."""
 
         cls.ensure_dynamic_fields()
 
-        if not getattr(cls, "__runtime_fields__", {}):
+        if not getattr(cls, '__runtime_fields__', {}):
             return cls
 
         if cls.__runtime_model_cache__ is not None:
@@ -408,10 +408,10 @@ class FormModel(BaseModel):
             for name, (annotation, field_info) in cls.__runtime_fields__.items()
         }
 
-        runtime_model = create_model(
-            f"{cls.__name__}Runtime",
+        runtime_model = create_model(  # type: ignore[call-overload]
+            f'{cls.__name__}Runtime',
             __base__=cls,
-            **field_definitions,
+            **field_definitions,  # type: ignore[arg-type]
         )
         # TODO: Suppress the UserWarning about shadowed fields once the helper
         #       grows a local model_config; the runtime class is expected.
@@ -420,12 +420,12 @@ class FormModel(BaseModel):
         return runtime_model
 
     @classmethod
-    def get_example_form_data(cls: Type["FormModel"]) -> dict:
+    def get_example_form_data(cls: Type['FormModel']) -> dict:
         example = {}
         for field_name, model_field in cls.model_fields.items():
-            typ = getattr(model_field, "annotation", None)
+            typ = getattr(model_field, 'annotation', None)
             if typ is str:
-                example[field_name] = "example"
+                example[field_name] = 'example'
             elif typ is int:
                 example[field_name] = 123
             elif typ is float:
@@ -433,5 +433,5 @@ class FormModel(BaseModel):
             elif typ is bool:
                 example[field_name] = True
             else:
-                example[field_name] = ""
+                example[field_name] = ''
         return example

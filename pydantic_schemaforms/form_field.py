@@ -105,14 +105,14 @@ class FormField:
         # Add FormField-specific UI data
         ui_schema.update(
             {
-                "input_type": input_type,
-                "icon": icon,
-                "options": options,
-                "placeholder": placeholder,
-                "help_text": help_text,
-                "disabled": disabled,
-                "readonly": readonly,
-                "autofocus": autofocus,
+                'input_type': input_type,
+                'icon': icon,
+                'options': options,
+                'placeholder': placeholder,
+                'help_text': help_text,
+                'disabled': disabled,
+                'readonly': readonly,
+                'autofocus': autofocus,
             }
         )
 
@@ -130,14 +130,14 @@ class FormField:
             if isinstance(value, list):
                 return [_sanitize(v) for v in value]
             if inspect.isclass(value):
-                return f"{value.__module__}.{value.__name__}"
+                return f'{value.__module__}.{value.__name__}'
             if callable(value):
-                return getattr(value, "__name__", repr(value))
+                return getattr(value, '__name__', str(value))
             return value
 
         final_schema = {k: _sanitize(v) for k, v in final_schema.items()}
 
-        return PydanticField(
+        return PydanticField(  # type: ignore[call-overload]
             default=default,
             default_factory=default_factory,
             alias=alias,
@@ -166,7 +166,7 @@ class FormField:
 
     @classmethod
     def validate_input_type(
-        cls, field_annotation: Type, input_type: str, field_name: str = ""
+        cls, field_annotation: Type, input_type: str, field_name: str = ''
     ) -> None:
         """
         Validate that an input type is compatible with the field's Python type.
@@ -214,7 +214,7 @@ class FormField:
         return get_default_input_type(field_annotation)
 
     @classmethod
-    def format_icon(cls, icon: str, framework: str = "bootstrap") -> str:
+    def format_icon(cls, icon: str, framework: str = 'bootstrap') -> str:
         """
         Format an icon class for the specified framework.
 
@@ -232,7 +232,7 @@ def create_field_with_validation(
     field_annotation: Type,
     default: Any = ...,
     input_type: Optional[str] = None,
-    field_name: str = "",
+    field_name: str = '',
     **kwargs,
 ) -> Any:
     """
@@ -277,7 +277,7 @@ def TextField(
     """Create a text input field."""
     return FormField(
         default=default,
-        input_type="text",
+        input_type='text',
         title=title,
         placeholder=placeholder,
         help_text=help_text,
@@ -301,11 +301,11 @@ def EmailField(
     """Create an email input field."""
     return FormField(
         default=default,
-        input_type="email",
+        input_type='email',
         title=title,
-        placeholder=placeholder or "example@example.com",
+        placeholder=placeholder or 'example@example.com',
         help_text=help_text,
-        icon=icon or "envelope",
+        icon=icon or 'envelope',
         **kwargs,
     )
 
@@ -324,7 +324,7 @@ def NumberField(
     """Create a number input field."""
     return FormField(
         default=default,
-        input_type="number",
+        input_type='number',
         title=title,
         placeholder=placeholder,
         help_text=help_text,
@@ -347,11 +347,11 @@ def SelectField(
     """Create a select dropdown field."""
     return FormField(
         default=default,
-        input_type="select",
+        input_type='select',
         title=title,
         help_text=help_text,
         icon=icon,
-        options=options,
+        options=options,  # type: ignore[arg-type]
         **kwargs,
     )
 
@@ -367,7 +367,7 @@ def CheckboxField(
     """Create a checkbox input field."""
     return FormField(
         default=default,
-        input_type="checkbox",
+        input_type='checkbox',
         title=title,
         help_text=help_text,
         icon=icon,
@@ -387,10 +387,10 @@ def DateField(
     """Create a date input field."""
     return FormField(
         default=default,
-        input_type="date",
+        input_type='date',
         title=title,
         help_text=help_text,
-        icon=icon or "calendar",
+        icon=icon or 'calendar',
         **kwargs,
     )
 
@@ -409,13 +409,13 @@ def TextAreaField(
 ) -> Any:
     """Create a textarea input field."""
     # Add rows to json_schema_extra
-    extra = kwargs.get("json_schema_extra", {})
-    extra["rows"] = rows
-    kwargs["json_schema_extra"] = extra
+    extra = kwargs.get('json_schema_extra', {})
+    extra['rows'] = rows
+    kwargs['json_schema_extra'] = extra
 
     return FormField(
         default=default,
-        input_type="textarea",
+        input_type='textarea',
         title=title,
         placeholder=placeholder,
         help_text=help_text,
@@ -427,13 +427,13 @@ def TextAreaField(
 
 
 __all__ = [
-    "FormField",
-    "create_field_with_validation",
-    "TextField",
-    "EmailField",
-    "NumberField",
-    "SelectField",
-    "CheckboxField",
-    "DateField",
-    "TextAreaField",
+    'FormField',
+    'create_field_with_validation',
+    'TextField',
+    'EmailField',
+    'NumberField',
+    'SelectField',
+    'CheckboxField',
+    'DateField',
+    'TextAreaField',
 ]

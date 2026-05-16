@@ -35,13 +35,13 @@ class ValidationResponse:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            "field_name": self.field_name,
-            "is_valid": self.is_valid,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "suggestions": self.suggestions,
-            "value": self.value,
-            "formatted_value": self.formatted_value,
+            'field_name': self.field_name,
+            'is_valid': self.is_valid,
+            'errors': self.errors,
+            'warnings': self.warnings,
+            'suggestions': self.suggestions,
+            'value': self.value,
+            'formatted_value': self.formatted_value,
         }
 
     def to_json(self) -> str:
@@ -52,13 +52,13 @@ class ValidationResponse:
 class ValidationRule:
     """Base class for validation rules."""
 
-    rule_name = "base"
+    rule_name = 'base'
 
-    def __init__(self, message: str = "Invalid value", client_side: bool = True):
+    def __init__(self, message: str = 'Invalid value', client_side: bool = True):
         self.message = message
         self.client_side = client_side
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
         """
         Validate a value.
 
@@ -70,20 +70,20 @@ class ValidationRule:
     def get_client_validation(self, field_name: str) -> str:
         """Generate JavaScript validation code."""
         if not self.client_side:
-            return ""
+            return ''
         return self._generate_js_validation(field_name)
 
     def _generate_js_validation(self, field_name: str) -> str:
         """Override in subclasses to provide JavaScript validation."""
-        return ""
+        return ''
 
     def to_descriptor(self) -> Dict[str, Any]:
         """Return a serializable descriptor for this rule."""
 
         descriptor = {
-            "type": self.rule_name,
-            "message": self.message,
-            "client": self.client_side,
+            'type': self.rule_name,
+            'message': self.message,
+            'client': self.client_side,
         }
         descriptor.update(self._descriptor_params())
         return descriptor
@@ -95,15 +95,15 @@ class ValidationRule:
 class RequiredRule(ValidationRule):
     """Validates that a field has a value."""
 
-    rule_name = "required"
+    rule_name = 'required'
 
-    def __init__(self, message: str = "This field is required"):
+    def __init__(self, message: str = 'This field is required'):
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
         if value is None or (isinstance(value, str) and not value.strip()):
             return False, self.message
-        return True, ""
+        return True, ''
 
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
@@ -116,20 +116,20 @@ class RequiredRule(ValidationRule):
 class MinLengthRule(ValidationRule):
     """Validates minimum string length."""
 
-    rule_name = "min_length"
+    rule_name = 'min_length'
 
     def __init__(self, min_length: int, message: Optional[str] = None):
         self.min_length = min_length
-        message = message or f"Must be at least {min_length} characters long"
+        message = message or f'Must be at least {min_length} characters long'
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
         if value is None:
-            return True, ""  # Let RequiredRule handle None values
+            return True, ''  # Let RequiredRule handle None values
 
         if len(str(value)) < self.min_length:
             return False, self.message
-        return True, ""
+        return True, ''
 
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
@@ -139,26 +139,26 @@ class MinLengthRule(ValidationRule):
         """
 
     def _descriptor_params(self) -> Dict[str, Any]:
-        return {"min_length": self.min_length}
+        return {'min_length': self.min_length}
 
 
 class MaxLengthRule(ValidationRule):
     """Validates maximum string length."""
 
-    rule_name = "max_length"
+    rule_name = 'max_length'
 
     def __init__(self, max_length: int, message: Optional[str] = None):
         self.max_length = max_length
-        message = message or f"Must be no more than {max_length} characters long"
+        message = message or f'Must be no more than {max_length} characters long'
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
         if value is None:
-            return True, ""
+            return True, ''
 
         if len(str(value)) > self.max_length:
             return False, self.message
-        return True, ""
+        return True, ''
 
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
@@ -168,30 +168,30 @@ class MaxLengthRule(ValidationRule):
         """
 
     def _descriptor_params(self) -> Dict[str, Any]:
-        return {"max_length": self.max_length}
+        return {'max_length': self.max_length}
 
 
 class RegexRule(ValidationRule):
     """Validates against a regular expression pattern."""
 
-    rule_name = "regex"
+    rule_name = 'regex'
 
-    def __init__(self, pattern: str, message: str = "Invalid format", flags: int = 0):
+    def __init__(self, pattern: str, message: str = 'Invalid format', flags: int = 0):
         self.pattern = pattern
         self.regex = re.compile(pattern, flags)
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
-        if value is None or value == "":
-            return True, ""  # Let RequiredRule handle empty values
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+        if value is None or value == '':
+            return True, ''  # Let RequiredRule handle empty values
 
         if not self.regex.match(str(value)):
             return False, self.message
-        return True, ""
+        return True, ''
 
     def _generate_js_validation(self, field_name: str) -> str:
         # Escape the regex pattern for JavaScript
-        js_pattern = self.pattern.replace("\\", "\\\\").replace("'", "\\'")
+        js_pattern = self.pattern.replace('\\', '\\\\').replace("'", "\\'")
         return f"""
         if (value && !new RegExp('{js_pattern}').test(value)) {{
             return '{escape(self.message)}';
@@ -199,34 +199,34 @@ class RegexRule(ValidationRule):
         """
 
     def _descriptor_params(self) -> Dict[str, Any]:
-        return {"pattern": self.pattern}
+        return {'pattern': self.pattern}
 
 
 class EmailRule(RegexRule):
     """Validates email addresses."""
 
-    rule_name = "email"
+    rule_name = 'email'
 
-    def __init__(self, message: str = "Please enter a valid email address"):
-        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    def __init__(self, message: str = 'Please enter a valid email address'):
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         super().__init__(pattern, message)
 
 
 class PhoneRule(RegexRule):
     """Validates phone numbers."""
 
-    rule_name = "phone"
+    rule_name = 'phone'
 
-    def __init__(self, message: str = "Please enter a valid phone number"):
+    def __init__(self, message: str = 'Please enter a valid phone number'):
         # Accepts various phone formats
-        pattern = r"^[\+]?[1-9]?[\d\s\-\(\)\.]{10,15}$"
+        pattern = r'^[\+]?[1-9]?[\d\s\-\(\)\.]{10,15}$'
         super().__init__(pattern, message)
 
 
 class NumericRangeRule(ValidationRule):
     """Validates numeric values within a range."""
 
-    rule_name = "numeric_range"
+    rule_name = 'numeric_range'
 
     def __init__(
         self,
@@ -239,19 +239,19 @@ class NumericRangeRule(ValidationRule):
 
         if message is None:
             if min_value is not None and max_value is not None:
-                message = f"Must be between {min_value} and {max_value}"
+                message = f'Must be between {min_value} and {max_value}'
             elif min_value is not None:
-                message = f"Must be at least {min_value}"
+                message = f'Must be at least {min_value}'
             elif max_value is not None:
-                message = f"Must be no more than {max_value}"
+                message = f'Must be no more than {max_value}'
             else:
-                message = "Invalid numeric value"
+                message = 'Invalid numeric value'
 
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
-        if value is None or value == "":
-            return True, ""
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+        if value is None or value == '':
+            return True, ''
 
         try:
             num_value = float(value)
@@ -262,21 +262,21 @@ class NumericRangeRule(ValidationRule):
             if self.max_value is not None and num_value > self.max_value:
                 return False, self.message
 
-            return True, ""
-        except (ValueError, TypeError):
-            return False, "Must be a valid number"
+            return True, ''
+        except (ValueError, TypeError):  # fmt: skip
+            return False, 'Must be a valid number'
 
     def _generate_js_validation(self, field_name: str) -> str:
         checks = []
 
         if self.min_value is not None:
-            checks.append(f"numValue < {self.min_value}")
+            checks.append(f'numValue < {self.min_value}')
 
         if self.max_value is not None:
-            checks.append(f"numValue > {self.max_value}")
+            checks.append(f'numValue > {self.max_value}')
 
         if checks:
-            condition = " || ".join(checks)
+            condition = ' || '.join(checks)
             return f"""
             if (value !== '' && value !== null) {{
                 const numValue = parseFloat(value);
@@ -285,16 +285,16 @@ class NumericRangeRule(ValidationRule):
                 }}
             }}
             """
-        return ""
+        return ''
 
     def _descriptor_params(self) -> Dict[str, Any]:
-        return {"min": self.min_value, "max": self.max_value}
+        return {'min': self.min_value, 'max': self.max_value}
 
 
 class DateRangeRule(ValidationRule):
     """Validates dates within a range."""
 
-    rule_name = "date_range"
+    rule_name = 'date_range'
 
     def __init__(
         self,
@@ -307,13 +307,13 @@ class DateRangeRule(ValidationRule):
 
         if message is None:
             if self.min_date and self.max_date:
-                message = f"Date must be between {self.min_date} and {self.max_date}"
+                message = f'Date must be between {self.min_date} and {self.max_date}'
             elif self.min_date:
-                message = f"Date must be on or after {self.min_date}"
+                message = f'Date must be on or after {self.min_date}'
             elif self.max_date:
-                message = f"Date must be on or before {self.max_date}"
+                message = f'Date must be on or before {self.max_date}'
             else:
-                message = "Invalid date"
+                message = 'Invalid date'
 
         super().__init__(message)
 
@@ -322,21 +322,21 @@ class DateRangeRule(ValidationRule):
         if isinstance(date_value, date):
             return date_value
         elif isinstance(date_value, str):
-            return datetime.strptime(date_value, "%Y-%m-%d").date()
+            return datetime.strptime(date_value, '%Y-%m-%d').date()
         else:
-            raise ValueError(f"Invalid date format: {date_value}")
+            raise ValueError(f'Invalid date format: {date_value}')
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
-        if value is None or value == "":
-            return True, ""
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+        if value is None or value == '':
+            return True, ''
 
         try:
             if isinstance(value, str):
-                check_date = datetime.strptime(value, "%Y-%m-%d").date()
+                check_date = datetime.strptime(value, '%Y-%m-%d').date()
             elif isinstance(value, date):
                 check_date = value
             else:
-                return False, "Invalid date format"
+                return False, 'Invalid date format'
 
             if self.min_date and check_date < self.min_date:
                 return False, self.message
@@ -344,9 +344,9 @@ class DateRangeRule(ValidationRule):
             if self.max_date and check_date > self.max_date:
                 return False, self.message
 
-            return True, ""
+            return True, ''
         except ValueError:
-            return False, "Invalid date format"
+            return False, 'Invalid date format'
 
     def _generate_js_validation(self, field_name: str) -> str:
         checks = []
@@ -360,7 +360,7 @@ class DateRangeRule(ValidationRule):
             checks.append(f"dateValue > new Date('{max_str}')")
 
         if checks:
-            condition = " || ".join(checks)
+            condition = ' || '.join(checks)
             return f"""
             if (value !== '' && value !== null) {{
                 const dateValue = new Date(value);
@@ -369,97 +369,100 @@ class DateRangeRule(ValidationRule):
                 }}
             }}
             """
-        return ""
+        return ''
 
     def _descriptor_params(self) -> Dict[str, Any]:
         return {
-            "min_date": self.min_date.isoformat() if self.min_date else None,
-            "max_date": self.max_date.isoformat() if self.max_date else None,
+            'min_date': self.min_date.isoformat() if self.min_date else None,
+            'max_date': self.max_date.isoformat() if self.max_date else None,
         }
 
 
 class CustomRule(ValidationRule):
     """Custom validation using a callback function."""
 
-    rule_name = "custom"
+    rule_name = 'custom'
 
     def __init__(
         self,
         validator_func: Callable[[Any], Union[bool, Tuple[bool, str]]],
-        message: str = "Invalid value",
+        message: str = 'Invalid value',
         client_side: bool = False,
     ):
         self.validator_func = validator_func
         super().__init__(message, client_side)
 
-    def validate(self, value: Any, field_name: str = "") -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
         try:
             result = self.validator_func(value)
 
             if isinstance(result, bool):
-                return result, self.message if not result else ""
+                return result, self.message if not result else ''
             elif isinstance(result, tuple) and len(result) == 2:
                 return result
             else:
-                return False, "Invalid validation result"
+                return False, 'Invalid validation result'
         except Exception as e:
-            return False, f"Validation error: {str(e)}"
+            return False, f'Validation error: {str(e)}'
 
 
 class FieldValidator:
     """Validator for a single field with multiple rules."""
 
-    def __init__(self, field_name: str, rules: List[ValidationRule] = None):
+    def __init__(self, field_name: str, rules: Optional[List[ValidationRule]] = None):
         self.field_name = field_name
         self.rules = rules or []
 
-    def add_rule(self, rule: ValidationRule) -> "FieldValidator":
+    def add_rule(self, rule: ValidationRule) -> 'FieldValidator':
         """Add a validation rule."""
         self.rules.append(rule)
         return self
 
-    def required(self, message: str = None) -> "FieldValidator":
+    def required(self, message: Optional[str] = None) -> 'FieldValidator':
         """Add required validation."""
-        return self.add_rule(RequiredRule(message or "This field is required"))
+        return self.add_rule(RequiredRule(message or 'This field is required'))
 
-    def min_length(self, length: int, message: str = None) -> "FieldValidator":
+    def min_length(self, length: int, message: Optional[str] = None) -> 'FieldValidator':
         """Add minimum length validation."""
         return self.add_rule(MinLengthRule(length, message))
 
-    def max_length(self, length: int, message: str = None) -> "FieldValidator":
+    def max_length(self, length: int, message: Optional[str] = None) -> 'FieldValidator':
         """Add maximum length validation."""
         return self.add_rule(MaxLengthRule(length, message))
 
-    def email(self, message: str = None) -> "FieldValidator":
+    def email(self, message: Optional[str] = None) -> 'FieldValidator':
         """Add email validation."""
-        return self.add_rule(EmailRule(message or "Please enter a valid email address"))
+        return self.add_rule(EmailRule(message or 'Please enter a valid email address'))
 
-    def phone(self, message: str = None) -> "FieldValidator":
+    def phone(self, message: Optional[str] = None) -> 'FieldValidator':
         """Add phone validation."""
-        return self.add_rule(PhoneRule(message or "Please enter a valid phone number"))
+        return self.add_rule(PhoneRule(message or 'Please enter a valid phone number'))
 
     def numeric_range(
-        self, min_val: float = None, max_val: float = None, message: str = None
-    ) -> "FieldValidator":
+        self,
+        min_val: Optional[float] = None,
+        max_val: Optional[float] = None,
+        message: Optional[str] = None,
+    ) -> 'FieldValidator':
         """Add numeric range validation."""
         return self.add_rule(NumericRangeRule(min_val, max_val, message))
 
     def date_range(
         self,
-        min_date: Union[date, str] = None,
-        max_date: Union[date, str] = None,
-        message: str = None,
-    ) -> "FieldValidator":
+        min_date: Optional[Union[date, str]] = None,
+        max_date: Optional[Union[date, str]] = None,
+        message: Optional[str] = None,
+    ) -> 'FieldValidator':
         """Add date range validation."""
         return self.add_rule(DateRangeRule(min_date, max_date, message))
 
-    def regex(self, pattern: str, message: str = None) -> "FieldValidator":
+    def regex(self, pattern: str, message: Optional[str] = None) -> 'FieldValidator':
         """Add regex validation."""
-        return self.add_rule(RegexRule(pattern, message or "Invalid format"))
+        return self.add_rule(RegexRule(pattern, message or 'Invalid format'))
 
-    def custom(self, validator_func: Callable, message: str = None) -> "FieldValidator":
+    def custom(self, validator_func: Callable, message: Optional[str] = None) -> 'FieldValidator':
         """Add custom validation."""
-        return self.add_rule(CustomRule(validator_func, message or "Invalid value"))
+        return self.add_rule(CustomRule(validator_func, message or 'Invalid value'))
 
     def validate(self, value: Any) -> Tuple[bool, List[str]]:
         """
@@ -487,7 +490,7 @@ class FieldValidator:
                 js_validations.append(js_code.strip())
 
         if not js_validations:
-            return ""
+            return ''
 
         template = Template(
             """
@@ -499,10 +502,10 @@ function validate${field_name_camel}(value) {
         )
 
         # Convert field name to camelCase for JavaScript function
-        field_name_camel = "".join(word.capitalize() for word in self.field_name.split("_"))
+        field_name_camel = ''.join(word.capitalize() for word in self.field_name.split('_'))
 
         return template.substitute(
-            field_name_camel=field_name_camel, validations="\n    ".join(js_validations)
+            field_name_camel=field_name_camel, validations='\n    '.join(js_validations)
         )
 
     def to_rule_descriptors(self) -> List[Dict[str, Any]]:
@@ -514,8 +517,8 @@ function validate${field_name_camel}(value) {
         """Return a schema payload for this field."""
 
         return {
-            "field": self.field_name,
-            "rules": self.to_rule_descriptors(),
+            'field': self.field_name,
+            'rules': self.to_rule_descriptors(),
         }
 
 
@@ -525,7 +528,7 @@ class ValidationSchema:
     def __init__(self) -> None:
         self._fields: Dict[str, FieldValidator] = {}
 
-    def add_field(self, validator: FieldValidator) -> "ValidationSchema":
+    def add_field(self, validator: FieldValidator) -> 'ValidationSchema':
         self._fields[validator.field_name] = validator
         return self
 
@@ -609,8 +612,8 @@ class FormValidator:
         except ValidationError as e:
             errors = {}
             for error in e.errors():
-                field_name = error["loc"][0] if error["loc"] else "general"
-                error_message = error["msg"]
+                field_name = error['loc'][0] if error['loc'] else 'general'
+                error_message = error['msg']
 
                 if field_name not in errors:
                     errors[field_name] = []
@@ -629,7 +632,7 @@ class FormValidator:
                 field_functions.append(js_function)
 
                 # Convert field name to camelCase
-                field_name_camel = "".join(word.capitalize() for word in field_name.split("_"))
+                field_name_camel = ''.join(word.capitalize() for word in field_name.split('_'))
                 field_validations.append(f"    '{field_name}': validate{field_name_camel}")
 
         template = Template(
@@ -729,8 +732,8 @@ document.addEventListener('DOMContentLoaded', function() {
         )
 
         return template.substitute(
-            field_functions="\n\n".join(field_functions),
-            field_validations=",\n".join(field_validations),
+            field_functions='\n\n'.join(field_functions),
+            field_validations=',\n'.join(field_validations),
         )
 
 
@@ -740,9 +743,9 @@ class CrossFieldRules:
 
     @staticmethod
     def password_confirmation(
-        password_field: str = "password",
-        confirm_field: str = "confirm_password",
-        message: str = "Passwords do not match",
+        password_field: str = 'password',
+        confirm_field: str = 'confirm_password',
+        message: str = 'Passwords do not match',
     ) -> Callable:
         """Validate that password and confirmation match."""
 
@@ -759,7 +762,7 @@ class CrossFieldRules:
 
     @staticmethod
     def date_range_validation(
-        start_field: str, end_field: str, message: str = "End date must be after start date"
+        start_field: str, end_field: str, message: str = 'End date must be after start date'
     ) -> Callable:
         """Validate that end date is after start date."""
 
@@ -770,14 +773,14 @@ class CrossFieldRules:
             if start_date and end_date:
                 try:
                     if isinstance(start_date, str):
-                        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+                        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
                     if isinstance(end_date, str):
-                        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+                        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
                     if start_date >= end_date:
                         return False, {end_field: message}
                 except ValueError:
-                    return False, {end_field: "Invalid date format"}
+                    return False, {end_field: 'Invalid date format'}
 
             return True, {}
 
@@ -797,21 +800,21 @@ def create_email_validator() -> Callable[[str], ValidationResponse]:
     def validate_email(value: str) -> ValidationResponse:
         if not value:
             return ValidationResponse(
-                field_name="email", is_valid=False, errors=["Email is required"], value=value
+                field_name='email', is_valid=False, errors=['Email is required'], value=value
             )
 
-        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, value):
             return ValidationResponse(
-                field_name="email",
+                field_name='email',
                 is_valid=False,
-                errors=["Please enter a valid email address"],
-                suggestions=["Example: user@example.com"],
+                errors=['Please enter a valid email address'],
+                suggestions=['Example: user@example.com'],
                 value=value,
             )
 
         return ValidationResponse(
-            field_name="email", is_valid=True, value=value, formatted_value=value.lower()
+            field_name='email', is_valid=True, value=value, formatted_value=value.lower()
         )
 
     return validate_email
@@ -826,28 +829,28 @@ def create_password_strength_validator(min_length: int = 8) -> Callable[[str], V
         suggestions = []
 
         if len(value) < min_length:
-            errors.append(f"Password must be at least {min_length} characters long")
+            errors.append(f'Password must be at least {min_length} characters long')
 
-        if not re.search(r"[A-Z]", value):
-            warnings.append("Password should contain at least one uppercase letter")
-            suggestions.append("Add an uppercase letter (A-Z)")
+        if not re.search(r'[A-Z]', value):
+            warnings.append('Password should contain at least one uppercase letter')
+            suggestions.append('Add an uppercase letter (A-Z)')
 
-        if not re.search(r"[a-z]", value):
-            warnings.append("Password should contain at least one lowercase letter")
-            suggestions.append("Add a lowercase letter (a-z)")
+        if not re.search(r'[a-z]', value):
+            warnings.append('Password should contain at least one lowercase letter')
+            suggestions.append('Add a lowercase letter (a-z)')
 
-        if not re.search(r"\d", value):
-            warnings.append("Password should contain at least one number")
-            suggestions.append("Add a number (0-9)")
+        if not re.search(r'\d', value):
+            warnings.append('Password should contain at least one number')
+            suggestions.append('Add a number (0-9)')
 
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
-            warnings.append("Password should contain at least one special character")
-            suggestions.append("Add a special character (!@#$%^&*)")
+            warnings.append('Password should contain at least one special character')
+            suggestions.append('Add a special character (!@#$%^&*)')
 
         is_valid = len(errors) == 0
 
         return ValidationResponse(
-            field_name="password",
+            field_name='password',
             is_valid=is_valid,
             errors=errors,
             warnings=warnings,
@@ -870,7 +873,7 @@ class ValidationResult:
         form_model_cls: Optional[Any] = None,
         original_data: Optional[Dict[str, Any]] = None,
         submit_url: Optional[str] = None,
-        framework: str = "bootstrap",
+        framework: str = 'bootstrap',
         render_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.is_valid = is_valid
@@ -895,12 +898,12 @@ class ValidationResult:
         supplied explicitly, so the common case needs no arguments at all.
         """
         if not self.form_model_cls:
-            raise ValueError("Cannot render form: form_model_cls not provided")
+            raise ValueError('Cannot render form: form_model_cls not provided')
 
         url = submit_url or self._submit_url
         if not url:
             raise ValueError(
-                "submit_url is required. Pass it here or via FormModel.validate(submit_url=...)."
+                'submit_url is required. Pass it here or via FormModel.validate(submit_url=...).'
             )
 
         return self.form_model_cls.render_form(
@@ -941,8 +944,8 @@ class ValidationResult:
 
     def __str__(self) -> str:
         if self.is_valid:
-            return f"ValidationResult(valid=True, data={self.data})"
-        return f"ValidationResult(valid=False, errors={self.errors})"
+            return f'ValidationResult(valid=True, data={self.data})'
+        return f'ValidationResult(valid=False, errors={self.errors})'
 
 
 def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> ValidationResult:
@@ -958,7 +961,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
     """
     runtime_model = (
         form_model_class.get_runtime_model()
-        if hasattr(form_model_class, "get_runtime_model")
+        if hasattr(form_model_class, 'get_runtime_model')
         else form_model_class
     )
 
@@ -969,14 +972,14 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
         # Convert to dict for consistent return format
         validated_data = validated_instance.model_dump()
 
-        model_fields = getattr(runtime_model, "model_fields", {}) or {}
+        model_fields = getattr(runtime_model, 'model_fields', {}) or {}
         layout_field_names = []
         for field_name, field_info in model_fields.items():
-            extra = getattr(field_info, "json_schema_extra", None) or {}
+            extra = getattr(field_info, 'json_schema_extra', None) or {}
             if not isinstance(extra, dict):
                 continue
-            ui_element = extra.get("ui_element") or extra.get("input_type")
-            if ui_element == "layout":
+            ui_element = extra.get('ui_element') or extra.get('input_type')
+            if ui_element == 'layout':
                 layout_field_names.append(field_name)
 
         if layout_field_names:
@@ -996,23 +999,23 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
                     # so constraints like `min_length` and required fields are enforced.
                     nested_result: Optional[ValidationResult] = None
 
-                    validate_method = getattr(layout_value, "validate", None)
+                    validate_method = getattr(layout_value, 'validate', None)
                     if callable(validate_method):
                         try:
-                            nested_result = validate_method(nested_layout_data)
+                            nested_result = validate_method(nested_layout_data)  # type: ignore[assignment]
                         except Exception:
                             nested_result = None
 
                     # Fallback: validate each nested form class if available.
-                    if nested_result is None and hasattr(layout_value, "_get_forms"):
-                        get_forms = getattr(layout_value, "_get_forms", None)
+                    if nested_result is None and hasattr(layout_value, '_get_forms'):
+                        get_forms = getattr(layout_value, '_get_forms', None)
                         if callable(get_forms):
                             combined_data: Dict[str, Any] = {}
                             combined_errors: Dict[str, str] = {}
                             is_valid = True
 
                             try:
-                                for form_cls in get_forms() or []:
+                                for form_cls in get_forms() or []:  # type: ignore[union-attr]
                                     child = validate_form_data(form_cls, nested_layout_data)
                                     if not child.is_valid:
                                         is_valid = False
@@ -1044,10 +1047,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
                     continue
 
                 layout_payload = validated_data.get(layout_field_name)
-                if (
-                    isinstance(layout_payload, dict)
-                    and layout_payload.get("layout") is True
-                ):
+                if isinstance(layout_payload, dict) and layout_payload.get('layout') is True:
                     validated_data.pop(layout_field_name, None)
 
             if layout_errors:
@@ -1070,46 +1070,46 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
         errors = {}
         for error in e.errors():
             # Create more specific field paths for nested data
-            if error["loc"]:
+            if error['loc']:
                 # Handle nested field locations like ('pets', 0, 'weight')
                 field_path_parts = []
-                for loc_part in error["loc"]:
+                for loc_part in error['loc']:
                     if isinstance(loc_part, int):
                         # This is an array index
-                        field_path_parts.append(f"[{loc_part}]")
+                        field_path_parts.append(f'[{loc_part}]')
                     else:
                         if field_path_parts:
-                            field_path_parts.append(f".{loc_part}")
+                            field_path_parts.append(f'.{loc_part}')
                         else:
                             field_path_parts.append(str(loc_part))
 
-                field_name = "".join(field_path_parts)
+                field_name = ''.join(field_path_parts)
 
                 # Create more user-friendly error messages
-                error_message = error["msg"]
-                error_type = error["type"]
+                error_message = error['msg']
+                error_type = error['type']
 
                 # Enhance error messages with context
-                if "greater_than_equal" in error_type:
-                    limit = error.get("ctx", {}).get("ge")
+                if 'greater_than_equal' in error_type:
+                    limit = error.get('ctx', {}).get('ge')
                     if limit is not None:
-                        error_message = f"Must be {limit} or greater"
-                elif "less_than_equal" in error_type:
-                    limit = error.get("ctx", {}).get("le")
+                        error_message = f'Must be {limit} or greater'
+                elif 'less_than_equal' in error_type:
+                    limit = error.get('ctx', {}).get('le')
                     if limit is not None:
-                        error_message = f"Must be {limit} or less"
-                elif "min_length" in error_type:
-                    min_length = error.get("ctx", {}).get("min_length")
+                        error_message = f'Must be {limit} or less'
+                elif 'min_length' in error_type:
+                    min_length = error.get('ctx', {}).get('min_length')
                     if min_length is not None:
-                        error_message = f"Must be at least {min_length} characters"
-                elif "max_length" in error_type:
-                    max_length = error.get("ctx", {}).get("max_length")
+                        error_message = f'Must be at least {min_length} characters'
+                elif 'max_length' in error_type:
+                    max_length = error.get('ctx', {}).get('max_length')
                     if max_length is not None:
-                        error_message = f"Must be no more than {max_length} characters"
+                        error_message = f'Must be no more than {max_length} characters'
 
                 errors[field_name] = error_message
             else:
-                errors["general"] = error["msg"]
+                errors['general'] = error['msg']
 
         return ValidationResult(
             is_valid=False,
@@ -1121,7 +1121,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
     except Exception as e:
         return ValidationResult(
             is_valid=False,
-            errors={"general": str(e)},
+            errors={'general': str(e)},
             form_model_cls=form_model_class,
             original_data=data,
         )
@@ -1129,24 +1129,24 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
 
 # Export validation rules for easy access
 __all__ = [
-    "ValidationResponse",
-    "ValidationRule",
-    "RequiredRule",
-    "MinLengthRule",
-    "MaxLengthRule",
-    "RegexRule",
-    "EmailRule",
-    "PhoneRule",
-    "NumericRangeRule",
-    "DateRangeRule",
-    "CustomRule",
-    "FieldValidator",
-    "ValidationSchema",
-    "FormValidator",
-    "CrossFieldRules",
-    "create_validator",
-    "create_email_validator",
-    "create_password_strength_validator",
-    "ValidationResult",
-    "validate_form_data",
+    'ValidationResponse',
+    'ValidationRule',
+    'RequiredRule',
+    'MinLengthRule',
+    'MaxLengthRule',
+    'RegexRule',
+    'EmailRule',
+    'PhoneRule',
+    'NumericRangeRule',
+    'DateRangeRule',
+    'CustomRule',
+    'FieldValidator',
+    'ValidationSchema',
+    'FormValidator',
+    'CrossFieldRules',
+    'create_validator',
+    'create_email_validator',
+    'create_password_strength_validator',
+    'ValidationResult',
+    'validate_form_data',
 ]

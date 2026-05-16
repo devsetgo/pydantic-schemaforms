@@ -27,16 +27,16 @@ def example_1_no_logging():
     When you use the library without configuring logging,
     the library's internal logs won't appear in your output.
     """
-    print("=" * 70)
-    print("Example 1: Default (No Logging)")
-    print("=" * 70)
+    print('=' * 70)
+    print('Example 1: Default (No Logging)')
+    print('=' * 70)
     print()
 
-    html = render_form_html(MinimalLoginForm, show_timing=True, submit_url="/login")
+    html = render_form_html(MinimalLoginForm, show_timing=True, submit_url='/login')
 
-    print("✅ Form rendered successfully")
-    print("✅ No library logs appeared")
-    print("✅ Timing still works in the HTML output:", "Rendered in" in html)
+    print('✅ Form rendered successfully')
+    print('✅ No library logs appeared')
+    print('✅ Timing still works in the HTML output:', 'Rendered in' in html)
     print()
 
 
@@ -47,23 +47,23 @@ def example_2_with_info_logging():
     Most applications use INFO level logging. The library logs
     won't appear because they use DEBUG level.
     """
-    print("=" * 70)
-    print("Example 2: Application with INFO Level Logging")
-    print("=" * 70)
+    print('=' * 70)
+    print('Example 2: Application with INFO Level Logging')
+    print('=' * 70)
     print()
 
     # Configure your application's logging (typical setup)
     logging.basicConfig(
         level=logging.INFO,
         format='[%(asctime)s] %(levelname)s %(name)s: %(message)s',
-        force=True  # Reconfigure if already configured
+        force=True,  # Reconfigure if already configured
     )
 
-    print("Application logging configured at INFO level\n")
+    print('Application logging configured at INFO level\n')
 
-    render_form_html(UserRegistrationForm, show_timing=True, submit_url="/register")
+    render_form_html(UserRegistrationForm, show_timing=True, submit_url='/register')
 
-    print("\n✅ Form rendered successfully")
+    print('\n✅ Form rendered successfully')
     print("✅ Library logs didn't appear (they use DEBUG level)")
     print()
 
@@ -75,24 +75,24 @@ def example_3_with_debug_logging():
     If you want to see the library's internal logs for debugging,
     configure your logging to DEBUG level.
     """
-    print("=" * 70)
-    print("Example 3: Enable Library Logging (DEBUG Level)")
-    print("=" * 70)
+    print('=' * 70)
+    print('Example 3: Enable Library Logging (DEBUG Level)')
+    print('=' * 70)
     print()
 
     # Configure logging to DEBUG to see library internals
     logging.basicConfig(
         level=logging.DEBUG,
         format='[%(asctime)s] %(levelname)s %(name)s: %(message)s',
-        force=True  # Reconfigure if already configured
+        force=True,  # Reconfigure if already configured
     )
 
-    print("Application logging configured at DEBUG level\n")
+    print('Application logging configured at DEBUG level\n')
 
-    render_form_html(MinimalLoginForm, show_timing=True, submit_url="/login")
+    render_form_html(MinimalLoginForm, show_timing=True, submit_url='/login')
 
-    print("\n✅ Form rendered successfully")
-    print("✅ Library DEBUG logs appeared above (if logging was configured before import)")
+    print('\n✅ Form rendered successfully')
+    print('✅ Library DEBUG logs appeared above (if logging was configured before import)')
     print()
 
 
@@ -103,16 +103,14 @@ def example_4_selective_logging():
     You can enable DEBUG logging just for the library without
     affecting your application's logging level.
     """
-    print("=" * 70)
-    print("Example 4: Selective Library Logging")
-    print("=" * 70)
+    print('=' * 70)
+    print('Example 4: Selective Library Logging')
+    print('=' * 70)
     print()
 
     # Configure root logger at INFO
     logging.basicConfig(
-        level=logging.INFO,
-        format='[%(levelname)s] %(name)s: %(message)s',
-        force=True
+        level=logging.INFO, format='[%(levelname)s] %(name)s: %(message)s', force=True
     )
 
     # Enable DEBUG only for pydantic_schemaforms.
@@ -121,19 +119,19 @@ def example_4_selective_logging():
     pydantic_logger = logging.getLogger('pydantic_schemaforms')
     pydantic_logger.setLevel(logging.DEBUG)
 
-    print("Enabled DEBUG logging only for pydantic_schemaforms\n")
+    print('Enabled DEBUG logging only for pydantic_schemaforms\n')
 
-    render_form_html(UserRegistrationForm, show_timing=True, submit_url="/register")
+    render_form_html(UserRegistrationForm, show_timing=True, submit_url='/register')
 
-    print("\n✅ Form rendered successfully")
-    print("✅ Library logs visible, but application stays at INFO level")
+    print('\n✅ Form rendered successfully')
+    print('✅ Library logs visible, but application stays at INFO level')
     print()
 
 
-if __name__ == "__main__":
-    print("\n" + "=" * 70)
-    print("PYDANTIC-SCHEMAFORMS LOGGING CONFIGURATION EXAMPLES")
-    print("=" * 70)
+if __name__ == '__main__':
+    print('\n' + '=' * 70)
+    print('PYDANTIC-SCHEMAFORMS LOGGING CONFIGURATION EXAMPLES')
+    print('=' * 70)
     print()
 
     # Run examples
@@ -142,12 +140,12 @@ if __name__ == "__main__":
     # example_3_with_debug_logging()  # Uncomment to see DEBUG logs
     # example_4_selective_logging()    # Uncomment to see selective logging
 
-    print("\n" + "=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
+    print('\n' + '=' * 70)
+    print('SUMMARY')
+    print('=' * 70)
     print()
-    print("✅ Library uses NullHandler - no output unless app configures logging")
+    print('✅ Library uses NullHandler - no output unless app configures logging')
     print("✅ Application controls all handlers and levels - library doesn't interfere")
-    print("✅ Enable DEBUG level (with a handler) to see library internals when needed")
-    print("✅ show_timing parameter still works in HTML regardless of logging")
+    print('✅ Enable DEBUG level (with a handler) to see library internals when needed')
+    print('✅ show_timing parameter still works in HTML regardless of logging')
     print()

@@ -21,14 +21,14 @@ def render_form_html(
     form_model_cls: Type[FormModel],
     form_data: Dict[str, Any] | None = None,
     errors: Dict[str, str] | SchemaFormValidationError | None = None,
-    framework: str = "bootstrap",
+    framework: str = 'bootstrap',
     *,
     submit_url: str,
-    asset_mode: str = "vendored",
+    asset_mode: str = 'vendored',
     debug: bool = False,
     show_timing: bool = False,
     enable_logging: bool = False,
-    csrf_mode: str = "off",
+    csrf_mode: str = 'off',
     csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
     **kwargs,
@@ -56,13 +56,13 @@ def render_form_html(
 
     # Normalize kwargs
     render_kwargs: Dict[str, Any] = dict(kwargs)
-    include_imask = bool(render_kwargs.pop("include_imask", False))
-    csrf_field_name = render_kwargs.pop("csrf_field_name", "csrf_token") or "csrf_token"
+    include_imask = bool(render_kwargs.pop('include_imask', False))
+    csrf_field_name = render_kwargs.pop('csrf_field_name', 'csrf_token') or 'csrf_token'
 
     # Set submit_url and action
-    render_kwargs["submit_url"] = submit_url
-    render_kwargs.setdefault("action", submit_url)
-    render_kwargs.setdefault("method", "POST")
+    render_kwargs['submit_url'] = submit_url
+    render_kwargs.setdefault('action', submit_url)
+    render_kwargs.setdefault('method', 'POST')
 
     form_html = _core_render_form_html(
         form_model_cls,
@@ -83,17 +83,19 @@ def render_form_html(
     form_html += '\n<div id="form-response"></div>'
     htmx_tag = htmx_script_tag(asset_mode=asset_mode)
     if htmx_tag:
-        form_html += f"\n{htmx_tag}"
+        form_html += f'\n{htmx_tag}'
 
     if include_imask:
         imask_tag = imask_script_tag(asset_mode=asset_mode)
         if imask_tag:
-            form_html += f"\n{imask_tag}"
+            form_html += f'\n{imask_tag}'
 
     # Calculate and log render time
     render_time = time.perf_counter() - start_time
     if enable_logging:
-        logger.debug(f"Form rendered in {render_time:.3f} seconds (model: {form_model_cls.__name__})")
+        logger.debug(
+            f'Form rendered in {render_time:.3f} seconds (model: {form_model_cls.__name__})'
+        )
 
     from .html_markers import wrap_with_schemaforms_markers
 
@@ -104,14 +106,14 @@ async def render_form_html_async(
     form_model_cls: Type[FormModel],
     form_data: Dict[str, Any] | None = None,
     errors: Dict[str, str] | SchemaFormValidationError | None = None,
-    framework: str = "bootstrap",
+    framework: str = 'bootstrap',
     *,
     submit_url: str,
-    asset_mode: str = "vendored",
+    asset_mode: str = 'vendored',
     debug: bool = False,
     show_timing: bool = False,
     enable_logging: bool = False,
-    csrf_mode: str = "off",
+    csrf_mode: str = 'off',
     csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
     **kwargs,

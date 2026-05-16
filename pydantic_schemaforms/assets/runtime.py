@@ -25,7 +25,7 @@ def read_asset_bytes(relative_path: str) -> bytes:
 
 
 def script_tag_inline(js: str) -> str:
-    return f"<script>\n{js}\n</script>"
+    return f'<script>\n{js}\n</script>'
 
 
 def script_tag_src(src: str) -> str:
@@ -33,7 +33,7 @@ def script_tag_src(src: str) -> str:
 
 
 def style_tag_inline(css: str) -> str:
-    return f"<style>\n{css}\n</style>"
+    return f'<style>\n{css}\n</style>'
 
 
 def style_tag_href(href: str) -> str:
@@ -138,7 +138,9 @@ def framework_css_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
 
     if fw == 'bootstrap':
         if mode == 'cdn':
-            return style_tag_href(_pinned_jsdelivr_url('bootstrap', 'bootstrap', 'dist/css/bootstrap.min.css'))
+            return style_tag_href(
+                _pinned_jsdelivr_url('bootstrap', 'bootstrap', 'dist/css/bootstrap.min.css')
+            )
         css = _vendored_text_or_empty('assets/vendor/bootstrap/bootstrap.min.css')
         return style_tag_inline(css) if css else ''
 
@@ -171,7 +173,9 @@ def framework_js_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
 
     if fw == 'bootstrap':
         if mode == 'cdn':
-            return script_tag_src(_pinned_jsdelivr_url('bootstrap', 'bootstrap', 'dist/js/bootstrap.bundle.min.js'))
+            return script_tag_src(
+                _pinned_jsdelivr_url('bootstrap', 'bootstrap', 'dist/js/bootstrap.bundle.min.js')
+            )
         js = _vendored_text_or_empty('assets/vendor/bootstrap/bootstrap.bundle.min.js')
         return script_tag_inline(js) if js else ''
 
@@ -202,8 +206,12 @@ def _bootstrap_icons_css_inlined() -> str:
         data_uri = f'data:font/woff2;base64,{b64}'
         # Replace both the woff2 url (with or without cache-buster query string) and the
         # woff fallback url so the @font-face block is fully self-contained.
-        css = re.sub(r'url\("[^"]*\.woff2[^"]*"\)\s*format\("woff2"\)', f'url("{data_uri}") format("woff2")', css)
-        css = re.sub(r',\s*url\("[^"]*\.woff[^"]*"\)\s*format\("woff"\)', '', css)
+        css = re.sub(
+            r'url\("[^"]+"\)\s*format\("woff2"\)',
+            f'url("{data_uri}") format("woff2")',
+            css,
+        )
+        css = re.sub(r',\s*url\("[^"]+"\)\s*format\("woff"\)', '', css)
     except FileNotFoundError:
         pass
     return css
@@ -231,7 +239,9 @@ def bootstrap_icons_css_tag(*, asset_mode: str = 'vendored') -> str:
         return ''
     if mode == 'cdn':
         return style_tag_href(
-            _pinned_jsdelivr_url('bootstrap-icons', 'bootstrap-icons', 'font/bootstrap-icons.min.css')
+            _pinned_jsdelivr_url(
+                'bootstrap-icons', 'bootstrap-icons', 'font/bootstrap-icons.min.css'
+            )
         )
     css = _bootstrap_icons_css_inlined()
     return style_tag_inline(css) if css else ''

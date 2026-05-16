@@ -18,10 +18,10 @@ def normalize_form_data(data: Dict[str, Any]) -> Dict[str, Any]:
                 value = value[0]
         if isinstance(value, str):
             lowered = value.lower()
-            if lowered == "on":
+            if lowered == 'on':
                 normalized[key] = True
                 continue
-            if lowered == "off":
+            if lowered == 'off':
                 normalized[key] = False
                 continue
         normalized[key] = value
@@ -40,15 +40,15 @@ def handle_sync_form(
         normalized = normalize_form_data(submitted_data)
         is_valid, errors = form_builder.validate_data(normalized)
         if is_valid:
-            return {"success": True, "data": normalized}
+            return {'success': True, 'data': normalized}
 
-        result: FormResult = {"success": False, "errors": errors}
+        result: FormResult = {'success': False, 'errors': errors}
         if render_on_error:
-            result["form_html"] = form_builder.render(normalized, errors)
+            result['form_html'] = form_builder.render(normalized, errors)
         return result
 
     form_html = form_builder.render(initial_data or {})
-    return {"form_html": form_html}
+    return {'form_html': form_html}
 
 
-__all__ = ["handle_sync_form", "normalize_form_data"]
+__all__ = ['handle_sync_form', 'normalize_form_data']

@@ -12,33 +12,33 @@ from .frameworks import get_framework_config
 from .material_icons import render_material_icon
 
 __all__ = [
-    "RendererTheme",
-    "DefaultTheme",
-    "FrameworkTheme",
-    "BootstrapTheme",
-    "MaterialTheme",
-    "PlainTheme",
-    "MaterialEmbeddedTheme",
-    "get_theme_for_framework",
+    'RendererTheme',
+    'DefaultTheme',
+    'FrameworkTheme',
+    'BootstrapTheme',
+    'MaterialTheme',
+    'PlainTheme',
+    'MaterialEmbeddedTheme',
+    'get_theme_for_framework',
 ]
 
 
 class RendererTheme:
     """Lightweight hook points for wrapping rendered forms per framework."""
 
-    name = "default"
-    style_variant = "default"
+    name = 'default'
+    style_variant = 'default'
 
-    def __init__(self, submit_label: str = "Submit") -> None:
+    def __init__(self, submit_label: str = 'Submit') -> None:
         self.submit_label = submit_label
-        self.form_style: FormStyle = get_form_style("default", "default")
+        self.form_style: FormStyle = get_form_style('default', 'default')
         self._load_form_style(self.name, self.style_variant)
 
     def _load_form_style(self, framework: str, variant: str | None = None) -> None:
         try:
             self.form_style = get_form_style(framework, variant)
         except KeyError:
-            self.form_style = get_form_style("default", "default")
+            self.form_style = get_form_style('default', 'default')
 
     def transform_form_attributes(self, attrs: Dict[str, str]) -> Dict[str, str]:
         """Adjust form attributes before rendering."""
@@ -94,7 +94,7 @@ class RendererTheme:
 
         after_form_assets = self.form_style.assets.after_form
         if after_form_assets:
-            return prevent_enter_script + "\n" + after_form_assets
+            return prevent_enter_script + '\n' + after_form_assets
         return prevent_enter_script
 
     def render_form_wrapper(
@@ -108,13 +108,13 @@ class RendererTheme:
     ) -> str:
         template = self.form_wrapper_template()
         attrs = form_attrs.copy()
-        form_id = attrs.pop("id", "")
-        form_class = attrs.get("class", "")
-        form_style = attrs.get("style", "")
-        method = attrs.get("method", "POST")
-        action = attrs.get("action", "")
+        form_id = attrs.pop('id', '')
+        form_class = attrs.get('class', '')
+        form_style = attrs.get('style', '')
+        method = attrs.get('method', 'POST')
+        action = attrs.get('action', '')
 
-        reserved = {"id", "class", "style", "method", "action"}
+        reserved = {'id', 'class', 'style', 'method', 'action'}
         extra_attrs = []
         for key, value in attrs.items():
             if key in reserved:
@@ -127,53 +127,55 @@ class RendererTheme:
                 extra_attrs.append(f'{key}="{escape(str(value))}"')
 
         # Add timing display if requested
-        timing_display = ""
+        timing_display = ''
         if render_time is not None:
             timing_display = f'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #6c757d; text-align: right;">Rendered in {render_time:.3f}s</div>'
 
         wrapper = template.render(
-            form_id=escape(str(form_id)) if form_id else "",
-            form_class=escape(str(form_class)) if form_class else "",
-            form_style=escape(str(form_style)) if form_style else "",
-            method=escape(str(method)) if method else "POST",
-            action=escape(str(action)) if action else "",
-            form_attributes=" ".join(extra_attrs),
+            form_id=escape(str(form_id)) if form_id else '',
+            form_class=escape(str(form_class)) if form_class else '',
+            form_style=escape(str(form_style)) if form_style else '',
+            method=escape(str(method)) if method else 'POST',
+            action=escape(str(action)) if action else '',
+            form_attributes=' '.join(extra_attrs),
             csrf_token=csrf_token,
             form_content=form_content,
             submit_buttons=submit_markup + timing_display,
         )
 
-        blocks = [fragment for fragment in [self.before_form(), wrapper, self.after_form()] if fragment]
-        return "\n".join(blocks)
+        blocks = [
+            fragment for fragment in [self.before_form(), wrapper, self.after_form()] if fragment
+        ]
+        return '\n'.join(blocks)
 
     def render_submit_button(self, button_class: str) -> str:
         """Return HTML for the submit button."""
         template = self.form_style.templates.submit_button
         return template.render(
             submit_label=escape(self.submit_label),
-            button_class=escape(button_class) if button_class else "",
+            button_class=escape(button_class) if button_class else '',
         )
 
     # --- Framework-specific extension hooks -------------------------------------------------
     def form_class(self) -> str:
         """Return the base CSS class for <form> elements (if any)."""
 
-        return ""
+        return ''
 
     def field_wrapper_class(self) -> str:
         """Return the wrapper class for individual input blocks."""
 
-        return ""
+        return ''
 
     def input_class(self, ui_element: str) -> str:
         """Return the CSS class applied to rendered inputs."""
 
-        return ""
+        return ''
 
     def button_class(self) -> str:
         """Return the CSS class used for submit buttons."""
 
-        return ""
+        return ''
 
     def tab_component_assets(self) -> str:
         """Return CSS/JS assets for tab layouts."""
@@ -203,7 +205,7 @@ class RendererTheme:
     def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
         """Return framework-specific markup for layout/card sections."""
 
-        return ""
+        return ''
 
     def render_model_list_container(
         self,
@@ -220,21 +222,19 @@ class RendererTheme:
     ) -> str:
         """Render framework-aware markup for schema-driven model lists."""
         templates = self.form_style.templates
-        required_indicator = ' <span class="text-danger">*</span>' if is_required else ""
+        required_indicator = ' <span class="text-danger">*</span>' if is_required else ''
         help_html = (
-            templates.model_list_help.render(help_text=escape(help_text)) if help_text else ""
+            templates.model_list_help.render(help_text=escape(help_text)) if help_text else ''
         )
-        error_html = (
-            templates.model_list_error.render(error_text=escape(error)) if error else ""
-        )
+        error_html = templates.model_list_error.render(error_text=escape(error)) if error else ''
 
         return templates.model_list_container.render(
             field_name=escape(field_name, quote=True),
-            label=escape(label) if label else "",
+            label=escape(label) if label else '',
             required_indicator=required_indicator,
             min_items=str(min_items),
             max_items=str(max_items),
-            items_id=escape(f"{field_name}-items", quote=True),
+            items_id=escape(f'{field_name}-items', quote=True),
             items_html=items_html,
             add_button_label=escape(add_button_label),
             help_html=help_html,
@@ -265,7 +265,7 @@ class RendererTheme:
 class DefaultTheme(RendererTheme):
     """Default theme used for Bootstrap/plain frameworks."""
 
-    name = "default"
+    name = 'default'
 
 
 class FrameworkTheme(RendererTheme):
@@ -276,8 +276,8 @@ class FrameworkTheme(RendererTheme):
         framework: str,
         include_assets: bool = False,
         *,
-        asset_mode: str = "vendored",
-        submit_label: str = "Submit",
+        asset_mode: str = 'vendored',
+        submit_label: str = 'Submit',
     ) -> None:
         super().__init__(submit_label=submit_label)
         self.framework = framework
@@ -291,7 +291,7 @@ class FrameworkTheme(RendererTheme):
             css = framework_css_tag(framework=self.framework, asset_mode=self.asset_mode)
             if css:
                 blocks.append(css)
-        return "\n".join([b for b in blocks if b])
+        return '\n'.join([b for b in blocks if b])
 
     def after_form(self) -> str:
         blocks = []
@@ -300,30 +300,30 @@ class FrameworkTheme(RendererTheme):
             if js:
                 blocks.append(js)
         blocks.append(super().after_form())
-        return "\n".join([b for b in blocks if b])
+        return '\n'.join([b for b in blocks if b])
 
     def form_class(self) -> str:
-        return self.config.get("form_class", "")
+        return self.config.get('form_class', '')
 
     def field_wrapper_class(self) -> str:
-        return self.config.get("field_wrapper_class", "")
+        return self.config.get('field_wrapper_class', '')
 
     def input_class(self, ui_element: str) -> str:
-        if ui_element == "checkbox":
-            return self.config.get("checkbox_class", "")
-        if ui_element in {"select", "radio", "multiselect"}:
-            return self.config.get("select_class", "")
-        return self.config.get("input_class", "")
+        if ui_element == 'checkbox':
+            return self.config.get('checkbox_class', '')
+        if ui_element in {'select', 'radio', 'multiselect'}:
+            return self.config.get('select_class', '')
+        return self.config.get('input_class', '')
 
     def button_class(self) -> str:
-        return self.config.get("button_class", "")
+        return self.config.get('button_class', '')
 
 
 class BootstrapTheme(FrameworkTheme):
-    name = "bootstrap"
+    name = 'bootstrap'
 
-    def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
-        super().__init__("bootstrap", include_assets=include_assets, asset_mode=asset_mode)
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
+        super().__init__('bootstrap', include_assets=include_assets, asset_mode=asset_mode)
 
     def before_form(self) -> str:
         base = super().before_form()
@@ -331,15 +331,15 @@ class BootstrapTheme(FrameworkTheme):
             return base
         icons_tag = bootstrap_icons_css_tag(asset_mode=self.asset_mode)
         if icons_tag:
-            return f"{base}\n{icons_tag}" if base else icons_tag
+            return f'{base}\n{icons_tag}' if base else icons_tag
         return base
 
 
 class MaterialTheme(FrameworkTheme):
-    name = "material"
+    name = 'material'
 
-    def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
-        super().__init__("material", include_assets=include_assets, asset_mode=asset_mode)
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
+        super().__init__('material', include_assets=include_assets, asset_mode=asset_mode)
 
     def render_model_list_item(
         self,
@@ -360,30 +360,29 @@ class MaterialTheme(FrameworkTheme):
 
 
 class PlainTheme(FrameworkTheme):
-    name = "plain"
+    name = 'plain'
 
-    def __init__(self, include_assets: bool = False, *, asset_mode: str = "vendored") -> None:
-        super().__init__("none", include_assets=include_assets, asset_mode=asset_mode)
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
+        super().__init__('none', include_assets=include_assets, asset_mode=asset_mode)
 
 
 class MaterialEmbeddedTheme(RendererTheme):
     """Self-contained Material Design 3 theme with inline assets."""
 
-    name = "material-embedded"
+    name = 'material-embedded'
 
     def __init__(self) -> None:
-        super().__init__(submit_label="Submit")
+        super().__init__(submit_label='Submit')
         self._css = self._build_css()
         self._js = self._build_js()
 
     def button_class(self) -> str:
-        return ""
-
+        return ''
 
     def before_form(self) -> str:
-        return "\n".join(
+        return '\n'.join(
             [
-                "<!-- Material Design 3 Self-Contained Form -->",
+                '<!-- Material Design 3 Self-Contained Form -->',
                 self._css,
                 '<div class="md-form-container">',
             ]
@@ -391,12 +390,12 @@ class MaterialEmbeddedTheme(RendererTheme):
 
     def transform_form_attributes(self, attrs: Dict[str, str]) -> Dict[str, str]:
         attrs = attrs.copy()
-        existing_class = attrs.get("class", "").strip()
-        combined = "md-form" if not existing_class else f"md-form {existing_class}"
-        attrs["class"] = combined
+        existing_class = attrs.get('class', '').strip()
+        combined = 'md-form' if not existing_class else f'md-form {existing_class}'
+        attrs['class'] = combined
         # Remove novalidate to enable browser validation for required fields
         # Material inputs have required attributes that should be enforced by the browser
-        attrs.pop("novalidate", None)
+        attrs.pop('novalidate', None)
         return attrs
 
     def after_form(self) -> str:
@@ -438,19 +437,19 @@ class MaterialEmbeddedTheme(RendererTheme):
 })();
 </script>
 """
-        return "\n".join(
+        return '\n'.join(
             [
-                "</div>",
+                '</div>',
                 self._js,
                 prevent_enter_script,
             ]
         )
 
     def render_submit_button(self, button_class: str) -> str:
-        classes = "md-button md-button-filled"
+        classes = 'md-button md-button-filled'
         if button_class:
-            classes = f"{classes} {button_class}".strip()
-        return "\n".join(
+            classes = f'{classes} {button_class}'.strip()
+        return '\n'.join(
             [
                 '<div class="md-field">',
                 f'    <button type="submit" class="{classes}">{escape(self.submit_label)}</button>',
@@ -460,18 +459,18 @@ class MaterialEmbeddedTheme(RendererTheme):
 
     def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
         help_markup = (
-            f'<p class="md-layout-card__help">{escape(help_text)}</p>' if help_text else ""
+            f'<p class="md-layout-card__help">{escape(help_text)}</p>' if help_text else ''
         )
-        return "\n".join(
+        return '\n'.join(
             [
                 '<section class="md-layout-card">',
                 '  <header class="md-layout-card__header">',
                 f'    <span class="md-layout-card__title">{escape(title)}</span>',
                 '  </header>',
                 '  <div class="md-layout-card__body">',
-                f"    {help_markup}",
+                f'    {help_markup}',
                 '    <div class="md-layout-card__content">',
-                f"      {body_html}",
+                f'      {body_html}',
                 '    </div>',
                 '  </div>',
                 '</section>',
@@ -615,13 +614,9 @@ function toggleAccordion(sectionId, buttonElement) {
         error: Optional[str],
         add_button_label: str,
     ) -> str:
-        required_class = " required" if is_required else ""
-        help_block = (
-            f'<p class="md-help-text">{escape(help_text)}</p>' if help_text else ""
-        )
-        error_block = (
-            f'<p class="md-error-text">{escape(error)}</p>' if error else ""
-        )
+        required_class = ' required' if is_required else ''
+        help_block = f'<p class="md-help-text">{escape(help_text)}</p>' if help_text else ''
+        error_block = f'<p class="md-error-text">{escape(error)}</p>' if error else ''
 
         parts = [
             '<section class="md-model-list-wrapper">',
@@ -633,11 +628,11 @@ function toggleAccordion(sectionId, buttonElement) {
         ]
 
         if items_html:
-            parts.append(f"      {items_html}")
+            parts.append(f'      {items_html}')
 
         parts.extend(
             [
-                "    </div>",
+                '    </div>',
                 '    <div class="md-model-list-actions">',
                 f'      <button type="button" class="md-button md-button-tonal add-item-btn" '
                 f'              data-target="{field_name}">',
@@ -655,7 +650,7 @@ function toggleAccordion(sectionId, buttonElement) {
             parts.append(f'  {error_block}')
 
         parts.append('</section>')
-        return "\n".join(parts)
+        return '\n'.join(parts)
 
     def render_model_list_item(
         self,
@@ -670,7 +665,7 @@ function toggleAccordion(sectionId, buttonElement) {
         safe_field = escape(field_name, quote=True)
         safe_remove_label = escape(remove_button_aria_label)
 
-        return "\n".join(
+        return '\n'.join(
             [
                 '<section class="md-model-card" '
                 f'data-index="{index}" data-field-name="{safe_field}">',
@@ -1538,9 +1533,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 _THEME_MAP: Dict[str, Type[RendererTheme]] = {
-    "bootstrap": BootstrapTheme,
-    "material": MaterialTheme,
-    "none": PlainTheme,
+    'bootstrap': BootstrapTheme,
+    'material': MaterialTheme,
+    'none': PlainTheme,
 }
 
 
@@ -1548,11 +1543,11 @@ def get_theme_for_framework(
     framework: str,
     *,
     include_assets: bool = False,
-    asset_mode: str = "vendored",
+    asset_mode: str = 'vendored',
 ) -> RendererTheme:
     """Return a RendererTheme instance that matches the requested framework."""
 
     theme_cls = _THEME_MAP.get(framework.lower())
     if theme_cls is None:
         return FrameworkTheme(framework, include_assets=include_assets, asset_mode=asset_mode)
-    return theme_cls(include_assets=include_assets, asset_mode=asset_mode)
+    return theme_cls(include_assets=include_assets, asset_mode=asset_mode)  # type: ignore[call-arg]

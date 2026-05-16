@@ -19,7 +19,7 @@ import re
 from typing import Any, Dict, Iterable, Mapping, MutableMapping
 
 
-_FORM_PATH_TOKEN_RE = re.compile(r"([^\.\[\]]+)|\[(\d+)\]")
+_FORM_PATH_TOKEN_RE = re.compile(r'([^\.\[\]]+)|\[(\d+)\]')
 
 
 def coerce_form_value(value: Any) -> Any:
@@ -34,9 +34,9 @@ def coerce_form_value(value: Any) -> Any:
 
     if isinstance(value, str):
         lowered = value.lower()
-        if lowered in {"true", "on", "yes", "1"}:
+        if lowered in {'true', 'on', 'yes', '1'}:
             return True
-        if lowered in {"false", "off", "no", "0"}:
+        if lowered in {'false', 'off', 'no', '0'}:
             return False
     return value
 
@@ -116,7 +116,9 @@ def _assign_list_token(
     return current_list[token]
 
 
-def _assign_nested(container: MutableMapping[str, Any], tokens: list[str | int], value: Any) -> None:
+def _assign_nested(
+    container: MutableMapping[str, Any], tokens: list[str | int], value: Any
+) -> None:
     current: Any = container
 
     for idx, token in enumerate(tokens):
@@ -183,4 +185,4 @@ def parse_nested_form_data(
     return result
 
 
-__all__ = ["parse_nested_form_data", "coerce_form_value"]
+__all__ = ['parse_nested_form_data', 'coerce_form_value']

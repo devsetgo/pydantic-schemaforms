@@ -41,15 +41,15 @@ class HTMXValidationConfig:
     clear_on_focus: bool = True
 
     # Visual feedback
-    success_class: str = "is-valid"
-    error_class: str = "is-invalid"
-    warning_class: str = "has-warning"
-    loading_class: str = "is-validating"
+    success_class: str = 'is-valid'
+    error_class: str = 'is-invalid'
+    warning_class: str = 'has-warning'
+    loading_class: str = 'is-validating'
 
     # HTMX settings
-    target_selector: str = "this"
-    swap_strategy: str = "outerHTML"
-    indicator_selector: str = ".validation-indicator"
+    target_selector: str = 'this'
+    swap_strategy: str = 'outerHTML'
+    indicator_selector: str = '.validation-indicator'
 
 
 class LiveValidator:
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         """
         self.validators[field_name] = validator
 
-    def register_field_validator(self, field_validator: "FieldValidator") -> None:
+    def register_field_validator(self, field_validator: 'FieldValidator') -> None:
         """Register a FieldValidator for live use."""
 
         def _runner(value: Any) -> ValidationResponse:
@@ -246,10 +246,10 @@ document.addEventListener('DOMContentLoaded', function() {
         existing = self.field_configs.get(field_validator.field_name, {})
         self.field_configs[field_validator.field_name] = {
             **existing,
-            "rules": field_validator.to_rule_descriptors(),
+            'rules': field_validator.to_rule_descriptors(),
         }
 
-    def register_schema(self, schema: "ValidationSchema") -> None:
+    def register_schema(self, schema: 'ValidationSchema') -> None:
         """Register all FieldValidators contained in a ValidationSchema."""
 
         for field_validator in schema.validators():
@@ -277,8 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     except ValidationError as e:
                         errors = []
                         for error in e.errors():
-                            if error["loc"] == (fname,):
-                                errors.append(error["msg"])
+                            if error['loc'] == (fname,):
+                                errors.append(error['msg'])
 
                         return ValidationResponse(
                             field_name=fname, is_valid=False, errors=errors, value=value
@@ -303,14 +303,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return ValidationResponse(
                 field_name=field_name,
                 is_valid=True,
-                warnings=["No validator registered for this field"],
+                warnings=['No validator registered for this field'],
                 value=value,
             )
 
         validator = self.validators[field_name]
         return validator(value)
 
-    def generate_validation_endpoint_code(self, framework: str = "flask") -> str:
+    def generate_validation_endpoint_code(self, framework: str = 'flask') -> str:
         """
         Generate code for validation endpoints in various frameworks.
 
@@ -320,9 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
         Returns:
             Code string for validation endpoints
         """
-        if framework.lower() == "flask":
+        if framework.lower() == 'flask':
             return self._generate_flask_endpoint()
-        elif framework.lower() == "fastapi":
+        elif framework.lower() == 'fastapi':
             return self._generate_fastapi_endpoint()
         else:
             raise ValueError("Unsupported framework. Use 'flask' or 'fastapi'.")
@@ -399,9 +399,9 @@ async def validate_field(field_name: str, request: ValidationRequest):
     def render_field_with_live_validation(
         self,
         field_name: str,
-        field_type: str = "text",
-        value: Any = "",
-        validation_endpoint: str = None,
+        field_type: str = 'text',
+        value: Any = '',
+        validation_endpoint: Optional[str] = None,
         **kwargs,
     ) -> str:
         """
@@ -418,7 +418,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
             HTML string with live validation setup
         """
         if validation_endpoint is None:
-            validation_endpoint = f"/validate/{field_name}"
+            validation_endpoint = f'/validate/{field_name}'
 
         # Build validation attributes
         validation_attrs = [
@@ -431,7 +431,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         if self.config.validate_on_blur:
             validation_attrs.append('hx-trigger="blur"')
         elif self.config.validate_on_input:
-            trigger = f"input delay:{self.config.debounce_ms}ms"
+            trigger = f'input delay:{self.config.debounce_ms}ms'
             validation_attrs.append(f'hx-trigger="{trigger}"')
         elif self.config.validate_on_change:
             validation_attrs.append('hx-trigger="change"')
@@ -439,20 +439,20 @@ async def validate_field(field_name: str, request: ValidationRequest):
         # Build other attributes
         other_attrs = []
         for key, val in kwargs.items():
-            if key not in ["class", "id", "name"]:
+            if key not in ['class', 'id', 'name']:
                 other_attrs.append(f'{key}="{val}"')
 
         # Render field
         return self.field_template.render(
             field_name=field_name,
             input_type=field_type,
-            value=str(value) if value is not None else "",
-            input_class=kwargs.get("class", ""),
-            group_class="",
+            value=str(value) if value is not None else '',
+            input_class=kwargs.get('class', ''),
+            group_class='',
             label=f'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>',
-            validation_attributes=" ".join(validation_attrs),
-            other_attributes=" ".join(other_attrs),
-            existing_feedback="",
+            validation_attributes=' '.join(validation_attrs),
+            other_attributes=' '.join(other_attrs),
+            existing_feedback='',
         )
 
     def render_htmx_script(self) -> str:
@@ -464,18 +464,18 @@ async def validate_field(field_name: str, request: ValidationRequest):
         """
         config_json = json.dumps(
             {
-                "validate_on_blur": self.config.validate_on_blur,
-                "validate_on_input": self.config.validate_on_input,
-                "validate_on_change": self.config.validate_on_change,
-                "debounce_ms": self.config.debounce_ms,
-                "show_success_indicators": self.config.show_success_indicators,
-                "show_warnings": self.config.show_warnings,
-                "show_suggestions": self.config.show_suggestions,
-                "clear_on_focus": self.config.clear_on_focus,
-                "success_class": self.config.success_class,
-                "error_class": self.config.error_class,
-                "warning_class": self.config.warning_class,
-                "loading_class": self.config.loading_class,
+                'validate_on_blur': self.config.validate_on_blur,
+                'validate_on_input': self.config.validate_on_input,
+                'validate_on_change': self.config.validate_on_change,
+                'debounce_ms': self.config.debounce_ms,
+                'show_success_indicators': self.config.show_success_indicators,
+                'show_warnings': self.config.show_warnings,
+                'show_suggestions': self.config.show_suggestions,
+                'clear_on_focus': self.config.clear_on_focus,
+                'success_class': self.config.success_class,
+                'error_class': self.config.error_class,
+                'warning_class': self.config.warning_class,
+                'loading_class': self.config.loading_class,
             }
         )
 
@@ -483,9 +483,9 @@ async def validate_field(field_name: str, request: ValidationRequest):
 
 
 __all__ = [
-    "ValidationResponse",
-    "HTMXValidationConfig",
-    "LiveValidator",
-    "create_email_validator",
-    "create_password_strength_validator",
+    'ValidationResponse',
+    'HTMXValidationConfig',
+    'LiveValidator',
+    'create_email_validator',
+    'create_password_strength_validator',
 ]
