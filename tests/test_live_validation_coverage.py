@@ -1,8 +1,11 @@
 """Comprehensive tests for live_validation module."""
 
+import json
+
 from pydantic_schemaforms.live_validation import (
     HTMXValidationConfig,
     LiveValidator,
+    validation_response_headers,
 )
 from unittest.mock import patch
 
@@ -379,3 +382,35 @@ class TestLiveValidatorConfigurationVariations:
         assert config.show_warnings is False
         assert config.show_suggestions is False
         assert config.clear_on_focus is False
+
+
+class TestValidationResponseHeaders:
+    """Tests for the validation_response_headers() HTMX helper."""
+
+    def test_valid_result_sets_hx_trigger(self) -> None:
+        headers = validation_response_headers('email', True)
+        assert 'HX-Trigger' in headers
+
+    def test_invalid_result_sets_hx_trigger(self) -> None:
+        headers = validation_response_headers('email', False)
+        assert 'HX-Trigger' in headers
+
+    def test_valid_payload_structure(self) -> None:
+        headers = validation_response_headers('email', True)
+        payload = json.loads(headers['HX-Trigger'])
+        assert payload == {'validationResult': {'field': 'email', 'valid': True}}
+
+    def test_invalid_payload_structure(self) -> None:
+        headers = validation_response_headers('name', False)
+        payload = json.loads(headers['HX-Trigger'])
+        assert payload == {'validationResult': {'field': 'name', 'valid': False}}
+
+    def test_field_name_preserved_in_payload(self) -> None:
+        for field in ('username', 'phone_number', 'zip_code'):
+            headers = validation_response_headers(field, True)
+            payload = json.loads(headers['HX-Trigger'])
+            assert payload['validationResult']['field'] == field
+
+    def test_returns_dict_with_single_key(self) -> None:
+        headers = validation_response_headers('x', True)
+        assert list(headers.keys()) == ['HX-Trigger']

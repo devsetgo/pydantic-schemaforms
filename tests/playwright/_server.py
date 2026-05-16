@@ -1,6 +1,6 @@
 """Minimal FastAPI app used as the live server for Playwright HTMX tests."""
 
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
 from pydantic_schemaforms.assets.runtime import read_asset_text
@@ -44,7 +44,10 @@ async def form_page() -> HTMLResponse:
 
 
 @app.post('/validate/{field_name}', response_class=HTMLResponse)
-async def validate_field(field_name: str, value: str = Form(default='')) -> HTMLResponse:
+async def validate_field(field_name: str, request: Request) -> HTMLResponse:
+    # HTMX sends the input's own name as the form field key, not "value".
+    form = await request.form()
+    value = str(form.get(field_name, '') or '')
     result = live_validator.validate_field(field_name, value)
     if result.is_valid:
         feedback = '<span class="valid-feedback d-block">✓ Looks good</span>'
