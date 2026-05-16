@@ -732,11 +732,11 @@ class ListLayout(FormLayoutBase):
         for i, item_data in enumerate(list_data):
             items_html += self._render_list_item(
                 active_renderer,
-                item_data,
+                item_data,  # type: ignore[arg-type]
                 i,
                 list_id,
                 framework,
-                errors,  # type: ignore[arg-type]
+                errors,
             )
 
         # Render add button

@@ -100,11 +100,13 @@ speedtest: ## Run a speed test
 	if [ ! -f speedtest/http_request.so ]; then gcc -shared -o speedtest/http_request.so speedtest/http_request.c -lcurl -fPIC; fi
 	python3 speedtest/loop.py
 
-test: ## Run the project's tests (linting + pytest + coverage badges)
+test: ## Run the project's tests (linting + pyright + pytest + coverage badges)
 	@start=$$(date +%s); \
 	echo "🔍 Running pre-commit (ruff, formatting, yaml/toml checks)..."; \
 	$(PYTHON) -m pre_commit run -a; \
-	echo "✅ Pre-commit passed. Running form-data parser regression tests..."; \
+	echo "✅ Pre-commit passed. Running type check..."; \
+	$(PYTHON) -m pyright; \
+	echo "✅ Type check passed. Running form-data parser regression tests..."; \
 	$(PYTHON) -m pytest -q tests/test_form_data_parsing.py; \
 	echo "🧪 Regression passed. Running full pytest suite..."; \
 	$(PYTHON) -m pytest -n 2; \
