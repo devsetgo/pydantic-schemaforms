@@ -257,8 +257,8 @@ class FormDefinition:
             raise ValueError('FormDefinition must define at least one field')
 
         model_name = self._model_name()
-        self._model_cache = create_model(model_name, __base__=FormModel, **field_defs)
-        return self._model_cache
+        self._model_cache = create_model(model_name, __base__=FormModel, **field_defs)  # type: ignore[call-overload]
+        return self._model_cache  # type: ignore[return-value]
 
     def _model_name(self) -> str:
         sanitized = re.sub(r'[^0-9a-zA-Z]+', '', self.title) or 'Form'

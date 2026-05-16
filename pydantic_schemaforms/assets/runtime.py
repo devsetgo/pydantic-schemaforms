@@ -207,11 +207,11 @@ def _bootstrap_icons_css_inlined() -> str:
         # Replace both the woff2 url (with or without cache-buster query string) and the
         # woff fallback url so the @font-face block is fully self-contained.
         css = re.sub(
-            r'url\("[^"]*\.woff2[^"]*"\)\s*format\("woff2"\)',
+            r'url\("[^"]+"\)\s*format\("woff2"\)',
             f'url("{data_uri}") format("woff2")',
             css,
         )
-        css = re.sub(r',\s*url\("[^"]*\.woff[^"]*"\)\s*format\("woff"\)', '', css)
+        css = re.sub(r',\s*url\("[^"]+"\)\s*format\("woff"\)', '', css)
     except FileNotFoundError:
         pass
     return css

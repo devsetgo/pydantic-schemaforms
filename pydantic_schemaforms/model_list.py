@@ -39,7 +39,7 @@ class ModelListRenderer:
         field_name: str,
         label: str,
         model_class: Type[FormModel],
-        values: List[Dict[str, Any]] = None,
+        values: Optional[List[Dict[str, Any]]] = None,
         error: Optional[str] = None,
         nested_errors: Optional[Dict[str, str]] = None,
         help_text: Optional[str] = None,

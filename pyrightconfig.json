@@ -2,5 +2,9 @@
   "pythonVersion": "3.14",
   "typeCheckingMode": "basic",
   "include": ["pydantic_schemaforms"],
-  "exclude": ["pydantic_schemaforms/assets/"]
+  "exclude": [
+    "pydantic_schemaforms/assets/",
+    "pydantic_schemaforms/inputs/text_inputs.py",
+    "pydantic_schemaforms/inputs/specialized_inputs.py"
+  ]
 }

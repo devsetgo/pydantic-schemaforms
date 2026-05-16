@@ -132,12 +132,12 @@ class FormField:
             if inspect.isclass(value):
                 return f'{value.__module__}.{value.__name__}'
             if callable(value):
-                return getattr(value, '__name__', repr(value))
+                return getattr(value, '__name__', str(value))
             return value
 
         final_schema = {k: _sanitize(v) for k, v in final_schema.items()}
 
-        return PydanticField(
+        return PydanticField(  # type: ignore[call-overload]
             default=default,
             default_factory=default_factory,
             alias=alias,
@@ -351,7 +351,7 @@ def SelectField(
         title=title,
         help_text=help_text,
         icon=icon,
-        options=options,
+        options=options,  # type: ignore[arg-type]
         **kwargs,
     )
 

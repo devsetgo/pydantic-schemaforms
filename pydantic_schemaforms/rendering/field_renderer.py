@@ -81,9 +81,9 @@ class FieldRenderer:
                 all_errors,
             )
 
-        input_component = get_input_component(ui_element)()
+        input_component = get_input_component(ui_element)()  # type: ignore[misc]
 
-        field_attrs = {
+        field_attrs: Dict[str, Any] = {
             'name': field_name,
             'id': field_name,
             'class': self._get_input_class(ui_element),
@@ -161,7 +161,7 @@ class FieldRenderer:
                     if ui_element == 'multiselect':
                         field_attrs['multiple'] = True
 
-                    input_html = input_component.render_with_label(
+                    input_html = input_component.render_with_label(  # type: ignore[union-attr]
                         label=label_text,
                         help_text=help_text,
                         error=error,
@@ -171,7 +171,7 @@ class FieldRenderer:
                         **field_attrs,
                     )
             else:
-                input_html = input_component.render_with_label(
+                input_html = input_component.render_with_label(  # type: ignore[union-attr]
                     label=label_text,
                     help_text=help_text,
                     error=error,
@@ -337,8 +337,8 @@ class FieldRenderer:
                 )
                 normalized.append(formatted)
             elif isinstance(option, (list, tuple)) and option:
-                value = option[0]
-                label = option[1] if len(option) > 1 else option[0]
+                value = option[0]  # type: ignore[index]
+                label = option[1] if len(option) > 1 else option[0]  # type: ignore[index]
                 normalized.append(
                     {
                         'value': value,
@@ -533,7 +533,7 @@ class FieldRenderer:
         title_vars = {'index': index + 1, **item_data}
         try:
             item_title = title_template.format(**title_vars)
-        except KeyError, ValueError:  # pragma: no cover - best effort rendering
+        except (KeyError, ValueError):  # pragma: no cover - best effort rendering
             item_title = f'Item #{index + 1}'
 
         collapse_class = '' if expanded else 'collapse'

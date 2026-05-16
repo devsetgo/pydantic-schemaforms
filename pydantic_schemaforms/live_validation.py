@@ -401,7 +401,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         field_name: str,
         field_type: str = 'text',
         value: Any = '',
-        validation_endpoint: str = None,
+        validation_endpoint: Optional[str] = None,
         **kwargs,
     ) -> str:
         """

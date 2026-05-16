@@ -1550,4 +1550,4 @@ def get_theme_for_framework(
     theme_cls = _THEME_MAP.get(framework.lower())
     if theme_cls is None:
         return FrameworkTheme(framework, include_assets=include_assets, asset_mode=asset_mode)
-    return theme_cls(include_assets=include_assets, asset_mode=asset_mode)
+    return theme_cls(include_assets=include_assets, asset_mode=asset_mode)  # type: ignore[call-arg]

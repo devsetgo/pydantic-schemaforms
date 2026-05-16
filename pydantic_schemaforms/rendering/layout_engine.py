@@ -209,7 +209,7 @@ ${component_assets}
             if callable(themed_template):
                 template = themed_template()
 
-        return template.render(
+        return template.render(  # type: ignore[union-attr]
             layout_class=layout_class,
             layout_style=layout_style,
             tab_buttons='\n'.join(tab_buttons),
@@ -270,7 +270,7 @@ ${component_assets}
             if callable(themed_template):
                 template = themed_template()
 
-        return template.render(
+        return template.render(  # type: ignore[union-attr]
             layout_class=layout_class,
             layout_style=layout_style,
             sections='\n'.join(accordion_sections),
@@ -961,7 +961,7 @@ def _safe_layout_tabs(layout_value: Any) -> List[Tuple[str, Any]]:
     if not isinstance(layout_value, BaseLayout) or not hasattr(layout_value, '_get_layouts'):
         return []
     try:
-        return list(layout_value._get_layouts())
+        return list(layout_value._get_layouts())  # type: ignore[union-attr]
     except Exception:
         return []
 

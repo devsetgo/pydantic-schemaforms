@@ -110,7 +110,7 @@ class JSONSchemaGenerator:
             return 'string', 'date-time'
         if resolved_type is date:
             return 'string', 'date'
-        if _issubclass_safe(resolved_type, EmailStr):
+        if _issubclass_safe(resolved_type, EmailStr):  # type: ignore[arg-type]
             return 'string', 'email'
         if _issubclass_safe(resolved_type, AnyUrl):
             return 'string', 'uri'

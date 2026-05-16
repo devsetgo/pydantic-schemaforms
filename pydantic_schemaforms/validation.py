@@ -263,7 +263,7 @@ class NumericRangeRule(ValidationRule):
                 return False, self.message
 
             return True, ''
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return False, 'Must be a valid number'
 
     def _generate_js_validation(self, field_name: str) -> str:
@@ -1002,7 +1002,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
                     validate_method = getattr(layout_value, 'validate', None)
                     if callable(validate_method):
                         try:
-                            nested_result = validate_method(nested_layout_data)
+                            nested_result = validate_method(nested_layout_data)  # type: ignore[assignment]
                         except Exception:
                             nested_result = None
 
@@ -1015,7 +1015,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
                             is_valid = True
 
                             try:
-                                for form_cls in get_forms() or []:
+                                for form_cls in get_forms() or []:  # type: ignore[union-attr]
                                     child = validate_form_data(form_cls, nested_layout_data)
                                     if not child.is_valid:
                                         is_valid = False

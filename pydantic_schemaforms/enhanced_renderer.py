@@ -75,7 +75,7 @@ class EnhancedFormRenderer:
         self._theme: RendererTheme = resolved_theme
         self.asset_mode = asset_mode
         if hasattr(self._theme, 'config'):
-            self.config = self._theme.config
+            self.config = self._theme.config  # type: ignore[union-attr]
         elif isinstance(self._theme, MaterialEmbeddedTheme):
             self.config = {}
         else:

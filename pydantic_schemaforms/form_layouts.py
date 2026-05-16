@@ -212,7 +212,7 @@ class FormLayoutBase(SharedBaseLayout, ABC):
                 }
                 if hasattr(value, '_get_layouts'):
                     try:
-                        payload['tabs'] = [name for name, _ in value._get_layouts()]
+                        payload['tabs'] = [name for name, _ in value._get_layouts()]  # type: ignore[union-attr]
                     except Exception:
                         pass
                 return payload
@@ -268,7 +268,7 @@ class FormLayoutBase(SharedBaseLayout, ABC):
             else:
                 # Fallback for unexpected frameworks without dedicated renderer helpers
                 rendered.append(
-                    form_cls.render_form(
+                    form_cls.render_form(  # type: ignore[call-arg]
                         data=data,
                         errors=errors,
                         framework=framework,
@@ -351,7 +351,7 @@ class VerticalLayout(FormLayoutBase):
                 is_valid = False
                 # Extract field errors from validation error
                 if hasattr(e, 'errors'):
-                    for error in e.errors():
+                    for error in e.errors():  # type: ignore[union-attr]
                         field_name = error.get('loc', [''])[0]
                         error_msg = error.get('msg', str(e))
                         all_errors[field_name] = error_msg
@@ -422,7 +422,7 @@ class HorizontalLayout(FormLayoutBase):
             except Exception as e:
                 is_valid = False
                 if hasattr(e, 'errors'):
-                    for error in e.errors():
+                    for error in e.errors():  # type: ignore[union-attr]
                         field_name = error.get('loc', [''])[0]
                         error_msg = error.get('msg', str(e))
                         all_errors[field_name] = error_msg
@@ -731,7 +731,7 @@ class ListLayout(FormLayoutBase):
         items_html = ''
         for i, item_data in enumerate(list_data):
             items_html += self._render_list_item(
-                active_renderer, item_data, i, list_id, framework, errors
+                active_renderer, item_data, i, list_id, framework, errors  # type: ignore[arg-type]
             )
 
         # Render add button

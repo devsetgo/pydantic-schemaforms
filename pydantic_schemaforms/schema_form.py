@@ -41,8 +41,8 @@ def form_validator(func: Callable) -> Callable:
             raise ValueError(f'Validation error: {str(e)}')
 
     # Mark the function as a form validator
-    wrapper._is_form_validator = True
-    return classmethod(wrapper)
+    wrapper._is_form_validator = True  # type: ignore[attr-defined]
+    return classmethod(wrapper)  # type: ignore[return-value]
 
 
 def Field(
@@ -227,7 +227,7 @@ class FormModel(BaseModel):
             elif callable(extra):
                 # Handle callable json_schema_extra
                 schema = {}
-                extra(schema, cls)
+                extra(schema, cls)  # type: ignore[call-arg]
                 for key, value in schema.items():
                     if key.startswith('ui_'):
                         ui_key = key[3:]  # Remove 'ui_' prefix
@@ -342,7 +342,7 @@ class FormModel(BaseModel):
         """Register a new field on the model at runtime."""
 
         field_info = field or Field(...)
-        field_info.annotation = annotation or Any
+        field_info.annotation = annotation or Any  # type: ignore[misc]
 
         runtime_fields = dict(getattr(cls, '__runtime_fields__', {}))
         runtime_fields[field_name] = (annotation or Any, field_info)
@@ -408,10 +408,10 @@ class FormModel(BaseModel):
             for name, (annotation, field_info) in cls.__runtime_fields__.items()
         }
 
-        runtime_model = create_model(
+        runtime_model = create_model(  # type: ignore[call-overload]
             f'{cls.__name__}Runtime',
             __base__=cls,
-            **field_definitions,
+            **field_definitions,  # type: ignore[arg-type]
         )
         # TODO: Suppress the UserWarning about shadowed fields once the helper
         #       grows a local model_config; the runtime class is expected.

@@ -32,8 +32,6 @@ jobs:
   type-check:
     name: Type check (pyright)
     runs-on: ubuntu-latest
-    # continue-on-error: remove this line once all 71 pyright errors are resolved
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
 
@@ -58,7 +56,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.14"]
 
     steps:

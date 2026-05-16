@@ -243,7 +243,7 @@ class AutoFormBuilder(FormBuilder):
         for field_name, field_info in self.model.model_fields.items():
             field_type = field_info.annotation
             field_default = field_info.default
-            input_type = self._get_input_type_for_field(field_type, field_name)
+            input_type = self._get_input_type_for_field(field_type, field_name)  # type: ignore[arg-type]
 
             form_field = FormField(
                 name=field_name,
