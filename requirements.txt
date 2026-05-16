@@ -28,7 +28,7 @@ pytest-runner==6.0.1 # Vulnerabilities: None
 pytest-xdist==3.8.0 # Vulnerabilities: None
 python-json-logger==4.1.0 # Vulnerabilities: None
 python-multipart==0.0.27 # From 0.0.22 | Vulnerabilities: None
-pyright==1.1.400 # Vulnerabilities: None
+pyright==1.1.409 # Vulnerabilities: None
 ruff==0.15.12 # From 0.15.9 | Vulnerabilities: None
 silly==1.1.0 # Vulnerabilities: None
 tox==4.53.1 # From 4.52.0 | Vulnerabilities: None
