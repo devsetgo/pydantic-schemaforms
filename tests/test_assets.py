@@ -422,7 +422,7 @@ class TestWriteVendoredFile:
 
         # Verify ensure_parent_dir was called with the right path
         call_args = mock_ensure_dir.call_args[0][0]
-        assert '/root/sub/file.txt' in str(call_args)
+        assert call_args == Path('/root') / rel_path
 
 
 # ===========================================================================

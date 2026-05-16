@@ -1,0 +1,3 @@
+# Force LF line endings for vendored assets so sha256 checksums are consistent
+# across all platforms (Windows git.core.autocrlf would otherwise convert to CRLF).
+pydantic_schemaforms/assets/vendor/**  text eol=lf
