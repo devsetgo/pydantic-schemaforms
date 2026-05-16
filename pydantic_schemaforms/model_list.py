@@ -317,7 +317,7 @@ class ModelListRenderer:
             field_error = nested_errors.get(f'{index}.{field_key}')
 
             # Get field info from the model
-            field_extra = (
+            (
                 getattr(model_class.model_fields.get(field_key), 'json_schema_extra', {}) or {}
             )
 
