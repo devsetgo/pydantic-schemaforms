@@ -23,8 +23,20 @@ from pydantic_schemaforms.schema_form import Field, FormModel
 # ---------------------------------------------------------------------------
 
 VOID_ELEMENTS = {
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-    'link', 'meta', 'param', 'source', 'track', 'wbr',
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
 }
 
 
@@ -48,9 +60,7 @@ class _StructureValidator(HTMLParser):
         elif self._stack[-1] == tag:
             self._stack.pop()
         else:
-            self.errors.append(
-                f'Mismatched tag: expected </{self._stack[-1]}>, got </{tag}>'
-            )
+            self.errors.append(f'Mismatched tag: expected </{self._stack[-1]}>, got </{tag}>')
 
     @property
     def unclosed(self) -> list[str]:
@@ -127,7 +137,7 @@ class TestRenderFormHtmlStructure:
 
     def test_method_defaults_to_post(self) -> None:
         html = render_form_html(MinimalForm, submit_url='/submit')
-        assert 'method="post"' in html.lower() or 'method=\'post\'' in html.lower()
+        assert 'method="post"' in html.lower() or "method='post'" in html.lower()
 
     def test_required_field_has_required_attribute(self) -> None:
         html = render_form_html(MinimalForm, submit_url='/submit')
@@ -179,9 +189,7 @@ class TestEnhancedRendererStructure:
         html = enhanced_renderer.render_form_from_model(AllInputTypesForm, errors=errors)
         assert_valid_html(html, 'with_errors')
 
-    def test_with_initial_data_valid_html(
-        self, enhanced_renderer: EnhancedFormRenderer
-    ) -> None:
+    def test_with_initial_data_valid_html(self, enhanced_renderer: EnhancedFormRenderer) -> None:
         initial = {
             'text_field': 'Hello',
             'number_field': 42,

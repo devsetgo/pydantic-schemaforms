@@ -69,12 +69,14 @@ def _make_fastapi_app() -> FastAPI:
         raw = dict(form_data)
         try:
             validated = ContactForm(**raw)
-            return JSONResponse({
-                'success': True,
-                'name': validated.name,
-                'email': validated.email,
-                'message': validated.message,
-            })
+            return JSONResponse(
+                {
+                    'success': True,
+                    'name': validated.name,
+                    'email': validated.email,
+                    'message': validated.message,
+                }
+            )
         except ValidationError as e:
             return JSONResponse({'success': False, 'errors': e.errors()}, status_code=422)
 
@@ -159,11 +161,14 @@ class TestFastAPIFormRender:
 
 class TestFastAPIFormSubmission:
     def test_valid_contact_submission(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/contact', data={
-            'name': 'Alice Smith',
-            'email': 'alice@example.com',
-            'message': 'Hello there, this is my message.',
-        })
+        resp = fastapi_client.post(
+            '/contact',
+            data={
+                'name': 'Alice Smith',
+                'email': 'alice@example.com',
+                'message': 'Hello there, this is my message.',
+            },
+        )
         assert resp.status_code == 200
         body = resp.json()
         assert body['success'] is True
@@ -171,11 +176,14 @@ class TestFastAPIFormSubmission:
         assert body['email'] == 'alice@example.com'
 
     def test_invalid_contact_name_too_short(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/contact', data={
-            'name': 'A',
-            'email': 'alice@example.com',
-            'message': 'Hello there.',
-        })
+        resp = fastapi_client.post(
+            '/contact',
+            data={
+                'name': 'A',
+                'email': 'alice@example.com',
+                'message': 'Hello there.',
+            },
+        )
         assert resp.status_code == 422
         body = resp.json()
         assert body['success'] is False
@@ -183,76 +191,103 @@ class TestFastAPIFormSubmission:
         assert 'name' in field_names
 
     def test_invalid_email_format(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/contact', data={
-            'name': 'Alice',
-            'email': 'not-an-email',
-            'message': 'Hello there.',
-        })
+        resp = fastapi_client.post(
+            '/contact',
+            data={
+                'name': 'Alice',
+                'email': 'not-an-email',
+                'message': 'Hello there.',
+            },
+        )
         assert resp.status_code == 422
         body = resp.json()
         assert body['success'] is False
 
     def test_missing_required_field(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/contact', data={
-            'name': 'Alice',
-            'email': 'alice@example.com',
-            # message omitted
-        })
+        resp = fastapi_client.post(
+            '/contact',
+            data={
+                'name': 'Alice',
+                'email': 'alice@example.com',
+                # message omitted
+            },
+        )
         assert resp.status_code == 422
 
     def test_message_too_short(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/contact', data={
-            'name': 'Alice',
-            'email': 'alice@example.com',
-            'message': 'Hi',
-        })
+        resp = fastapi_client.post(
+            '/contact',
+            data={
+                'name': 'Alice',
+                'email': 'alice@example.com',
+                'message': 'Hi',
+            },
+        )
         assert resp.status_code == 422
 
     def test_valid_login(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/login', data={
-            'username': 'alice_user',
-            'password': 'securepassword123',
-        })
+        resp = fastapi_client.post(
+            '/login',
+            data={
+                'username': 'alice_user',
+                'password': 'securepassword123',
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()['success'] is True
 
     def test_login_username_too_short(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/login', data={
-            'username': 'ab',
-            'password': 'securepassword123',
-        })
+        resp = fastapi_client.post(
+            '/login',
+            data={
+                'username': 'ab',
+                'password': 'securepassword123',
+            },
+        )
         assert resp.status_code == 422
 
     def test_login_password_too_short(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/login', data={
-            'username': 'alice_user',
-            'password': 'short',
-        })
+        resp = fastapi_client.post(
+            '/login',
+            data={
+                'username': 'alice_user',
+                'password': 'short',
+            },
+        )
         assert resp.status_code == 422
 
     def test_valid_numeric_submission(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/numeric', data={
-            'age': '25',
-            'score': '87.5',
-            'active': 'on',
-        })
+        resp = fastapi_client.post(
+            '/numeric',
+            data={
+                'age': '25',
+                'score': '87.5',
+                'active': 'on',
+            },
+        )
         assert resp.status_code == 200
         body = resp.json()
         assert body['success'] is True
         assert body['age'] == 25
 
     def test_age_below_minimum(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/numeric', data={
-            'age': '10',
-            'score': '50',
-        })
+        resp = fastapi_client.post(
+            '/numeric',
+            data={
+                'age': '10',
+                'score': '50',
+            },
+        )
         assert resp.status_code == 422
 
     def test_age_above_maximum(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/numeric', data={
-            'age': '200',
-            'score': '50',
-        })
+        resp = fastapi_client.post(
+            '/numeric',
+            data={
+                'age': '200',
+                'score': '50',
+            },
+        )
         assert resp.status_code == 422
 
     def test_optional_fields_only_required(self, fastapi_client: TestClient) -> None:
@@ -261,11 +296,14 @@ class TestFastAPIFormSubmission:
         assert resp.json()['success'] is True
 
     def test_optional_fields_with_all_values(self, fastapi_client: TestClient) -> None:
-        resp = fastapi_client.post('/optional', data={
-            'required_name': 'Bob',
-            'optional_phone': '+1-555-0100',
-            'optional_age': '30',
-        })
+        resp = fastapi_client.post(
+            '/optional',
+            data={
+                'required_name': 'Bob',
+                'optional_phone': '+1-555-0100',
+                'optional_age': '30',
+            },
+        )
         assert resp.status_code == 200
         assert resp.json()['success'] is True
 
@@ -342,47 +380,62 @@ class TestFlaskFormRender:
 
 class TestFlaskFormSubmission:
     def test_valid_contact_submission(self, flask_client) -> None:
-        resp = flask_client.post('/contact', data={
-            'name': 'Bob Jones',
-            'email': 'bob@example.com',
-            'message': 'Hello from Flask test.',
-        })
+        resp = flask_client.post(
+            '/contact',
+            data={
+                'name': 'Bob Jones',
+                'email': 'bob@example.com',
+                'message': 'Hello from Flask test.',
+            },
+        )
         assert resp.status_code == 200
         body = resp.get_json()
         assert body['success'] is True
         assert body['name'] == 'Bob Jones'
 
     def test_invalid_contact_submission(self, flask_client) -> None:
-        resp = flask_client.post('/contact', data={
-            'name': 'B',
-            'email': 'bad-email',
-            'message': 'Hi',
-        })
+        resp = flask_client.post(
+            '/contact',
+            data={
+                'name': 'B',
+                'email': 'bad-email',
+                'message': 'Hi',
+            },
+        )
         assert resp.status_code == 422
         body = resp.get_json()
         assert body['success'] is False
         assert body['error_count'] >= 2
 
     def test_missing_required_field(self, flask_client) -> None:
-        resp = flask_client.post('/contact', data={
-            'name': 'Bob',
-            'email': 'bob@example.com',
-        })
+        resp = flask_client.post(
+            '/contact',
+            data={
+                'name': 'Bob',
+                'email': 'bob@example.com',
+            },
+        )
         assert resp.status_code == 422
 
     def test_valid_login(self, flask_client) -> None:
-        resp = flask_client.post('/login', data={
-            'username': 'bob_user',
-            'password': 'securepass123',
-        })
+        resp = flask_client.post(
+            '/login',
+            data={
+                'username': 'bob_user',
+                'password': 'securepass123',
+            },
+        )
         assert resp.status_code == 200
         assert resp.get_json()['success'] is True
 
     def test_invalid_login_short_password(self, flask_client) -> None:
-        resp = flask_client.post('/login', data={
-            'username': 'bob_user',
-            'password': 'short',
-        })
+        resp = flask_client.post(
+            '/login',
+            data={
+                'username': 'bob_user',
+                'password': 'short',
+            },
+        )
         assert resp.status_code == 422
 
 
@@ -397,6 +450,7 @@ class TestRoundTrip:
 
     def test_contact_form_field_names_match_model(self, fastapi_client: TestClient) -> None:
         import re
+
         html = fastapi_client.get('/contact').text
         rendered_names = set(re.findall(r'name="([^"]+)"', html))
         model_fields = set(ContactForm.model_fields.keys())
@@ -408,6 +462,7 @@ class TestRoundTrip:
 
     def test_login_form_field_names_match_model(self, fastapi_client: TestClient) -> None:
         import re
+
         html = fastapi_client.get('/login').text
         rendered_names = set(re.findall(r'name="([^"]+)"', html))
         model_fields = set(LoginForm.model_fields.keys())

@@ -42,7 +42,6 @@ class FieldRenderer:
         layout: str = 'vertical',
         all_errors: Optional[Dict[str, str]] = None,
     ) -> str:
-
         if context is None:
             raise ValueError('RenderContext is required for field rendering')
 
@@ -533,7 +532,7 @@ class FieldRenderer:
         title_vars = {'index': index + 1, **item_data}
         try:
             item_title = title_template.format(**title_vars)
-        except (KeyError, ValueError):  # pragma: no cover - best effort rendering
+        except KeyError, ValueError:  # pragma: no cover - best effort rendering
             item_title = f'Item #{index + 1}'
 
         collapse_class = '' if expanded else 'collapse'

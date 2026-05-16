@@ -41,15 +41,27 @@ _FIELD_LABEL_STRATEGY = st.text(
 
 _FRAMEWORK_STRATEGY = st.sampled_from(['bootstrap', 'material', 'none'])
 
-_UI_ELEMENT_STRATEGY = st.sampled_from([
-    'text', 'email', 'password', 'number', 'checkbox',
-    'textarea', 'date', 'tel', 'url', 'search', 'hidden',
-])
+_UI_ELEMENT_STRATEGY = st.sampled_from(
+    [
+        'text',
+        'email',
+        'password',
+        'number',
+        'checkbox',
+        'textarea',
+        'date',
+        'tel',
+        'url',
+        'search',
+        'hidden',
+    ]
+)
 
 
 # ---------------------------------------------------------------------------
 # Property: Any valid str field renders without crashing and produces valid HTML
 # ---------------------------------------------------------------------------
+
 
 @given(
     field_name=_IDENT_STRATEGY,
@@ -104,6 +116,7 @@ def test_ui_element_variants_all_render(
 # Property: Numeric range constraints must be honoured in rendered attributes
 # ---------------------------------------------------------------------------
 
+
 @given(
     min_val=st.integers(min_value=0, max_value=50),
     max_val=st.integers(min_value=51, max_value=200),
@@ -126,6 +139,7 @@ def test_numeric_constraints_in_html(min_val: int, max_val: int, framework: str)
 # ---------------------------------------------------------------------------
 # Property: str length constraints produce valid HTML
 # ---------------------------------------------------------------------------
+
 
 @given(
     min_len=st.integers(min_value=1, max_value=10),
@@ -152,15 +166,14 @@ def test_string_length_constraints_in_html(min_len: int, max_len: int, framework
 # Property: Models with optional fields always render without crashing
 # ---------------------------------------------------------------------------
 
+
 @given(
     n_required=st.integers(min_value=1, max_value=4),
     n_optional=st.integers(min_value=0, max_value=4),
     framework=_FRAMEWORK_STRATEGY,
 )
 @settings(max_examples=40, suppress_health_check=[HealthCheck.too_slow])
-def test_mixed_required_optional_fields(
-    n_required: int, n_optional: int, framework: str
-) -> None:
+def test_mixed_required_optional_fields(n_required: int, n_optional: int, framework: str) -> None:
     """Forms with various mixes of required and optional fields must render."""
     annotations: dict = {}
     field_defs: dict = {}
@@ -194,6 +207,7 @@ def test_mixed_required_optional_fields(
 # Property: form HTML always contains a <form> tag
 # ---------------------------------------------------------------------------
 
+
 @given(framework=_FRAMEWORK_STRATEGY)
 @settings(max_examples=10)
 def test_rendered_form_always_has_form_tag(framework: str) -> None:
@@ -209,6 +223,7 @@ def test_rendered_form_always_has_form_tag(framework: str) -> None:
 # ---------------------------------------------------------------------------
 # Property: validation — valid data passes, invalid data fails predictably
 # ---------------------------------------------------------------------------
+
 
 @given(
     name=st.text(min_size=2, max_size=50).filter(lambda s: s.strip()),
@@ -257,6 +272,7 @@ def test_name_too_short_always_fails(length: int) -> None:
 # ---------------------------------------------------------------------------
 # Property: render_form_html is idempotent (same model = same structure)
 # ---------------------------------------------------------------------------
+
 
 @given(framework=_FRAMEWORK_STRATEGY)
 @settings(max_examples=10)
