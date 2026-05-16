@@ -316,11 +316,6 @@ class ModelListRenderer:
             # Get the error for this specific field from nested errors
             field_error = nested_errors.get(f'{index}.{field_key}')
 
-            # Get field info from the model
-            (
-                getattr(model_class.model_fields.get(field_key), 'json_schema_extra', {}) or {}
-            )
-
             html.append(
                 f"""
                         <div class=\"col-md-6\">
