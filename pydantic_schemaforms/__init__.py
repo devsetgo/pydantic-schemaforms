@@ -141,7 +141,7 @@ logger = logging.getLogger(__package__)
 logger.addHandler(logging.NullHandler())
 
 # Main exports for common usage
-__all__ = [
+__all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     # Primary form building interface
     'FormBuilder',
     'AutoFormBuilder',

@@ -76,7 +76,7 @@ UTILITIES = ['build_label', 'build_error_message', 'build_help_text']
 # All available inputs
 ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS + SPECIALIZED_INPUTS
 
-__all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES
+__all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES  # pyright: ignore[reportUnsupportedDunderAll]
 
 _MODULE_MAP: Dict[str, str] = {}
 

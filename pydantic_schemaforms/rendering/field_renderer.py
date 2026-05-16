@@ -532,7 +532,7 @@ class FieldRenderer:
         title_vars = {'index': index + 1, **item_data}
         try:
             item_title = title_template.format(**title_vars)
-        except (KeyError, ValueError):  # pragma: no cover - best effort rendering
+        except (KeyError, ValueError):  # fmt: skip  # pragma: no cover - best effort rendering
             item_title = f'Item #{index + 1}'
 
         collapse_class = '' if expanded else 'collapse'

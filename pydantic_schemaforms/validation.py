@@ -263,7 +263,7 @@ class NumericRangeRule(ValidationRule):
                 return False, self.message
 
             return True, ''
-        except (ValueError, TypeError):
+        except (ValueError, TypeError):  # fmt: skip
             return False, 'Must be a valid number'
 
     def _generate_js_validation(self, field_name: str) -> str:
