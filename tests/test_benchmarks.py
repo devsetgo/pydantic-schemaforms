@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-import pytest
 from pydantic import EmailStr
 
 from pydantic_schemaforms import render_form_html

@@ -217,7 +217,6 @@ def test_rendered_form_always_has_form_tag(framework: str) -> None:
 @settings(max_examples=50)
 def test_valid_model_data_always_validates(name: str, age: int) -> None:
     """Valid data matching field constraints must never raise ValidationError."""
-    from pydantic import ValidationError
 
     class PersonForm(FormModel):
         name: str = Field(..., min_length=2, description='Name')
