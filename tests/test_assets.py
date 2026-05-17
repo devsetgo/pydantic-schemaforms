@@ -1165,13 +1165,17 @@ class TestSanitizeFileEntry:
 
     def test_empty_path_is_allowed(self):
         root, vendor_root = self._roots()
-        result = _sanitize_file_entry({'path': '', 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root)
+        result = _sanitize_file_entry(
+            {'path': '', 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root
+        )
         assert result is not None
         assert result['path'] == ''
 
     def test_non_string_path_is_allowed(self):
         root, vendor_root = self._roots()
-        result = _sanitize_file_entry({'path': None, 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root)
+        result = _sanitize_file_entry(
+            {'path': None, 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root
+        )
         assert result is not None
 
     def test_path_traversal_raises(self):

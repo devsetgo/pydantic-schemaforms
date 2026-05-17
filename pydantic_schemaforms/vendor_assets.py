@@ -46,9 +46,7 @@ _ALLOWED_FILE_FIELDS: frozenset[str] = frozenset({'path', 'sha256', 'source_url'
 _VENDOR_BASE = Path('pydantic_schemaforms') / 'assets' / 'vendor'
 
 
-def _sanitize_file_entry(
-    f: Any, root: Path, vendor_root: Path
-) -> dict[str, str] | None:
+def _sanitize_file_entry(f: Any, root: Path, vendor_root: Path) -> dict[str, str] | None:
     """Validate and clean one file entry; return None if f is not a dict."""
     if not isinstance(f, dict):
         return None
