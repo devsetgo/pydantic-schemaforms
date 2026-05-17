@@ -16,9 +16,8 @@ updates:
       prefix: "pip"
       include: "scope"
     schedule:
-      interval: "cron"
-      # Run on the 1st Saturday of each month at 04:00
-      cronjob: "0 4 1-7 * 6"
+      interval: "monthly"
+      day: "saturday"
       timezone: "America/New_York"
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -30,7 +29,6 @@ updates:
       prefix: "github-actions"
       include: "scope"
     schedule:
-      interval: "cron"
-      # Run on the 1st Saturday of each month at 04:00
-      cronjob: "0 4 1-7 * 6"
+      interval: "monthly"
+      day: "saturday"
       timezone: "America/New_York"
