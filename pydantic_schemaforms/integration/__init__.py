@@ -13,8 +13,6 @@ from .builder import (
     create_registration_form,
     render_form_page,
 )
-from .react import ReactJSONSchemaIntegration
-from .schema import JSONSchemaGenerator, OpenAPISchemaGenerator
 from .sync import handle_sync_form, normalize_form_data
 from .utils import (
     check_framework_availability,
@@ -22,16 +20,11 @@ from .utils import (
     map_pydantic_to_json_schema_type,
     map_ui_element_to_framework,
 )
-from .vue import VueFormulateIntegration
 
 __all__ = [
     'FormBuilder',
     'AutoFormBuilder',
     'FormIntegration',
-    'ReactJSONSchemaIntegration',
-    'VueFormulateIntegration',
-    'JSONSchemaGenerator',
-    'OpenAPISchemaGenerator',
     'create_login_form',
     'create_registration_form',
     'create_contact_form',

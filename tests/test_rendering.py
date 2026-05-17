@@ -1099,10 +1099,6 @@ def test_integration_public_api_imports_directly_without_frameworks_shim() -> No
         'handle_async_form',
         'handle_sync_form',
         'normalize_form_data',
-        'JSONSchemaGenerator',
-        'OpenAPISchemaGenerator',
-        'ReactJSONSchemaIntegration',
-        'VueFormulateIntegration',
     ]
     for name in expected:
         assert hasattr(integ, name), f'integration.{name} is missing'
