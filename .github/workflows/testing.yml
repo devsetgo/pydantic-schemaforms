@@ -75,7 +75,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Test with pytest
-        run: pytest -n 2 --ignore=tests/playwright
+        run: pytest -n 2 --ignore=tests/playwright --cov-fail-under=90
 
   playwright:
     name: Playwright (HTMX live validation)

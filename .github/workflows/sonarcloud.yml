@@ -31,9 +31,7 @@ jobs:
           python -m pytest -q tests/test_form_data_parsing.py
 
           # Override pytest addopts from pyproject.toml so we don't get duplicate --cov/--cov-report flags.
-          # --cov-fail-under=0 explicitly disables the 90% threshold — this partial run only covers
-          # pydantic_schemaforms and is not expected to reach the project-wide threshold.
-          python -m pytest -o addopts= --cov=pydantic_schemaforms --cov-report=xml:coverage.xml --cov-fail-under=0
+          python -m pytest -o addopts= --cov=pydantic_schemaforms --cov-report=xml:coverage.xml
 
           # Normalize Cobertura <sources> so Sonar can resolve both styles of filenames:
           # - filenames like "pydantic_schemaforms/foo.py" resolve via "."
