@@ -1,17 +1,63 @@
 """
-Pydantic Forms - Modern form generation library using Python 3.14 template strings
+Pydantic SchemaForms - Modern Python 3.14 Form Generation
 
-A production-ready competitor to WTForms with React JSON Schema Forms capabilities.
+A production-ready form generation library built on Pydantic and Python 3.14.
+
 Features:
-- Python 3.14 native template strings (REQUIRED)
 - Comprehensive HTML5 input types
 - Multi-framework theming (Bootstrap, Material, none)
-- Advanced validation system
+- Advanced validation system with cross-field rules
 - Async/sync rendering
-- Layout system with responsive grids
+- Layout system (tabbed, grid, accordion, modal, responsive)
 - CSRF protection and security features
+- HTMX live validation
 
-IMPORTANT: This library requires Python 3.14+ and provides NO backward compatibility.
+Requires Python 3.14+.
+
+Quick Start:
+
+1. Define and render a form from a Pydantic model:
+```python
+from pydantic_schemaforms import FormModel, Field, render_form_html
+
+class ContactForm(FormModel):
+    name: str = Field(title="Full Name")
+    email: str = Field(title="Email Address", input_type="email")
+    message: str = Field(title="Message", input_type="textarea")
+
+html = render_form_html(ContactForm, submit_url="/contact")
+```
+
+2. Auto-generate from any Pydantic model:
+```python
+from pydantic import BaseModel
+from pydantic_schemaforms import create_form_from_model
+
+class User(BaseModel):
+    name: str
+    email: str
+    age: int
+
+html = create_form_from_model(User).render()
+```
+
+3. Pre-built forms:
+```python
+from pydantic_schemaforms import create_login_form, render_form_page
+
+login_form = create_login_form()
+page_html = render_form_page(login_form, "Login")
+```
+
+4. Framework integration:
+```python
+# FastAPI (async)
+from pydantic_schemaforms import FormIntegration
+result = await FormIntegration.async_integration(form, data)
+
+# Flask (sync)
+result = FormIntegration.sync_integration(form)
+```
 """
 
 import logging
@@ -41,8 +87,8 @@ from .form_field import (
     TextField,
 )
 
-# Layout composition system matching design_idea.py vision
-from .form_layouts import FormDesign, ListLayout, SectionDesign, TabbedLayout
+# Layout composition system
+from .form_layouts import FormDesign, FormLayoutBase, ListLayout, SectionDesign, TabbedLayout
 
 # Input type constants and validation
 from .input_types import (
@@ -181,6 +227,9 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'TabLayout',
     'TabbedLayout',
     'ListLayout',
+    'FormLayoutBase',
+    'FormDesign',
+    'SectionDesign',
     'Layout',
     'LayoutComposer',
     'LayoutFactory',
@@ -206,78 +255,8 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     # ── FORM DATA UTILITIES ──
     'parse_nested_form_data',
     'coerce_form_value',
-    # ── DEPRECATED: kept for backwards compat; will be removed ──
-    'ModernFormRenderer',  # use EnhancedFormRenderer or FormBuilder instead
     '__package_name__',
 ] + list(_INPUT_EXPORTS)
-
-# Quick start documentation
-__doc__ = """
-Pydantic SchemaForms - Modern Python 3.14 Form Generation
-
-Quick Start Examples:
-
-1. Simple form builder:
-```python
-from pydantic_schemaforms import FormBuilder
-
-form = (FormBuilder()
-        .text_input("name", "Full Name")
-        .email_input("email")
-        .password_input("password")
-        .required("name")
-        .required("email"))
-
-html = form.render()
-```
-
-2. Auto-generate from Pydantic model:
-```python
-from pydantic import BaseModel
-from pydantic_schemaforms import create_form_from_model
-
-class User(BaseModel):
-    name: str
-    email: str
-    age: int
-
-form = create_form_from_model(User)
-html = form.render()
-```
-
-3. Pre-built forms:
-```python
-from pydantic_schemaforms import create_login_form, render_form_page
-
-login_form = create_login_form()
-page_html = render_form_page(login_form, "Login")
-```
-
-4. Advanced layouts:
-```python
-from pydantic_schemaforms import FormBuilder, Layout
-
-form = FormBuilder()
-# ... add fields ...
-
-# Render with different layouts
-grid_html = Layout.grid(form.render(), columns="1fr 1fr")
-tabs_html = Layout.tabs([
-    {"title": "Personal", "content": form.render()},
-    {"title": "Settings", "content": "..."}
-])
-```
-
-5. Framework integration:
-```python
-# Flask (sync)
-from pydantic_schemaforms import FormIntegration
-result = FormIntegration.sync_integration(form)
-
-# FastAPI (async)
-result = await FormIntegration.async_integration(form, data)
-```
-"""
 
 
 def __getattr__(name: str) -> Any:
