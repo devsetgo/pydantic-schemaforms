@@ -5,6 +5,7 @@ import io
 import json
 import os
 from dataclasses import dataclass
+from importlib.resources import files as _pkg_files
 from pathlib import Path
 import tarfile
 import zipfile
@@ -28,7 +29,11 @@ def project_root() -> Path:
 
 
 def manifest_path() -> Path:
-    return project_root() / 'pydantic_schemaforms' / VENDOR_MANIFEST_RELATIVE_PATH
+    # Use importlib.resources so the path is derived from the package
+    # registry rather than __file__, avoiding path-traversal lint warnings.
+    return Path(str(_pkg_files('pydantic_schemaforms').joinpath(
+        'assets/vendor/vendor_manifest.json'
+    )))
 
 
 def load_manifest() -> dict[str, Any]:
@@ -340,7 +345,7 @@ def verify_manifest_files(*, require_nonempty: bool = False) -> None:
     if require_nonempty and not assets:
         raise ValueError('vendor manifest has no assets')
 
-    root = project_root()
+    root = project_root().resolve()
     for asset in assets:
         if not isinstance(asset, dict):
             raise ValueError('vendor manifest asset entries must be objects')
@@ -356,7 +361,9 @@ def verify_manifest_files(*, require_nonempty: bool = False) -> None:
                 raise ValueError('asset file missing path')
             if not isinstance(expected, str) or len(expected) != 64:
                 raise ValueError(f'asset file {rel} missing sha256')
-            abs_path = root / rel
+            abs_path = (root / rel).resolve()
+            if not abs_path.is_relative_to(root):
+                raise ValueError(f'manifest path escapes package root: {rel}')
             if not abs_path.exists():
                 raise FileNotFoundError(f'vendored file missing: {rel}')
             actual = sha256_file(abs_path)

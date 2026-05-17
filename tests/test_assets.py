@@ -1295,9 +1295,12 @@ class TestVerifyManifestFiles:
             'assets': [{'name': 'htmx', 'files': [{'path': 'missing.js', 'sha256': 'a' * 64}]}],
         }
         mock_path = MagicMock(spec=Path)
+        mock_path.resolve.return_value = mock_path
+        mock_path.is_relative_to.return_value = True
         mock_path.exists.return_value = False
 
         mock_root_path = MagicMock(spec=Path)
+        mock_root_path.resolve.return_value = mock_root_path
         mock_root_path.__truediv__ = MagicMock(return_value=mock_path)
         mock_root.return_value = mock_root_path
 
@@ -1314,9 +1317,12 @@ class TestVerifyManifestFiles:
             'assets': [{'name': 'htmx', 'files': [{'path': 'file.js', 'sha256': 'a' * 64}]}],
         }
         mock_path = MagicMock(spec=Path)
+        mock_path.resolve.return_value = mock_path
+        mock_path.is_relative_to.return_value = True
         mock_path.exists.return_value = True
 
         mock_root_path = MagicMock(spec=Path)
+        mock_root_path.resolve.return_value = mock_root_path
         mock_root_path.__truediv__ = MagicMock(return_value=mock_path)
         mock_root.return_value = mock_root_path
 
