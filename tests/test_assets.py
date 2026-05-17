@@ -35,6 +35,7 @@ from pydantic_schemaforms.vendor_assets import (
     upsert_asset_entry,
     env_truthy,
     _safe_member_bytes_from_tgz,
+    _sanitize_file_entry,
     _sanitize_manifest,
     _write_vendored_file,
     http_get_bytes,
@@ -1133,6 +1134,51 @@ class TestVendorBootstrap:
 
         saved_manifest = mock_save.call_args[0][0]
         assert saved_manifest['schema_version'] == 1
+
+
+class TestSanitizeFileEntry:
+    """Tests for _sanitize_file_entry helper."""
+
+    def _roots(self):
+        root = project_root().resolve()
+        vendor_root = (root / Path('pydantic_schemaforms') / 'assets' / 'vendor').resolve()
+        return root, vendor_root
+
+    def test_returns_none_for_non_dict(self):
+        root, vendor_root = self._roots()
+        assert _sanitize_file_entry('bad', root, vendor_root) is None
+        assert _sanitize_file_entry(42, root, vendor_root) is None
+        assert _sanitize_file_entry(None, root, vendor_root) is None
+
+    def test_returns_clean_dict_for_valid_entry(self):
+        root, vendor_root = self._roots()
+        f = {
+            'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js',
+            'sha256': 'a' * 64,
+            'source_url': 'https://example.com',
+            'extra': 'stripped',
+        }
+        result = _sanitize_file_entry(f, root, vendor_root)
+        assert result is not None
+        assert 'extra' not in result
+        assert result['path'] == 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js'
+
+    def test_empty_path_is_allowed(self):
+        root, vendor_root = self._roots()
+        result = _sanitize_file_entry({'path': '', 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root)
+        assert result is not None
+        assert result['path'] == ''
+
+    def test_non_string_path_is_allowed(self):
+        root, vendor_root = self._roots()
+        result = _sanitize_file_entry({'path': None, 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root)
+        assert result is not None
+
+    def test_path_traversal_raises(self):
+        root, vendor_root = self._roots()
+        f = {'path': '../../etc/passwd', 'sha256': 'a' * 64, 'source_url': 'x'}
+        with pytest.raises(ValueError, match='manifest path escapes vendor directory'):
+            _sanitize_file_entry(f, root, vendor_root)
 
 
 class TestSanitizeManifest:

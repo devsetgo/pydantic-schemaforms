@@ -46,6 +46,20 @@ _ALLOWED_FILE_FIELDS: frozenset[str] = frozenset({'path', 'sha256', 'source_url'
 _VENDOR_BASE = Path('pydantic_schemaforms') / 'assets' / 'vendor'
 
 
+def _sanitize_file_entry(
+    f: Any, root: Path, vendor_root: Path
+) -> dict[str, str] | None:
+    """Validate and clean one file entry; return None if f is not a dict."""
+    if not isinstance(f, dict):
+        return None
+    rel = f.get('path', '')
+    if isinstance(rel, str) and rel:
+        abs_path = (root / rel).resolve()
+        if not abs_path.is_relative_to(vendor_root):
+            raise ValueError(f'manifest path escapes vendor directory: {rel}')
+    return {k: str(v) for k, v in f.items() if k in _ALLOWED_FILE_FIELDS}
+
+
 def _sanitize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     """Return a sanitized copy, validating paths and whitelisting allowed fields.
 
@@ -62,14 +76,9 @@ def _sanitize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             continue
         clean_files: list[dict[str, str]] = []
         for f in asset.get('files', []):
-            if not isinstance(f, dict):
-                continue
-            rel = f.get('path', '')
-            if isinstance(rel, str) and rel:
-                abs_path = (root / rel).resolve()
-                if not abs_path.is_relative_to(vendor_root):
-                    raise ValueError(f'manifest path escapes vendor directory: {rel}')
-            clean_files.append({k: str(v) for k, v in f.items() if k in _ALLOWED_FILE_FIELDS})
+            entry = _sanitize_file_entry(f, root, vendor_root)
+            if entry is not None:
+                clean_files.append(entry)
         clean_asset: dict[str, Any] = {k: v for k, v in asset.items() if k in _ALLOWED_ASSET_FIELDS}
         clean_asset['files'] = clean_files
         clean_assets.append(clean_asset)
