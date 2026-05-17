@@ -1983,7 +1983,7 @@ def create_sample_nested_data() -> dict:
                                 ],
                             },
                             {
-                                'name': 'James O\'Brien',
+                                'name': "James O'Brien",
                                 'email': 'james.obrien@techcorp.com',
                                 'role': 'Product Analyst',
                                 'hire_date': '2021-01-18',
@@ -2020,20 +2020,20 @@ def create_sample_nested_data() -> dict:
                                 'status': 'in_progress',
                                 'start_date': '2024-07-01',
                                 'due_date': '2024-07-15',
-                                'assigned_to': 'James O\'Brien',
+                                'assigned_to': "James O'Brien",
                                 'estimated_hours': 40.0,
                                 'subtasks': [
                                     {
                                         'title': 'Send requirements survey',
                                         'description': 'Draft and send survey via Typeform to enterprise contacts',
-                                        'assigned_to': 'James O\'Brien',
+                                        'assigned_to': "James O'Brien",
                                         'estimated_hours': 4.0,
                                         'status': 'completed',
                                     },
                                     {
                                         'title': 'Synthesize survey results',
                                         'description': 'Analyze responses and produce a ranked KPI list',
-                                        'assigned_to': 'James O\'Brien',
+                                        'assigned_to': "James O'Brien",
                                         'estimated_hours': 8.0,
                                         'status': 'in_progress',
                                     },
@@ -2052,7 +2052,7 @@ def create_sample_nested_data() -> dict:
                                     {
                                         'title': 'Evaluate time-series DB options',
                                         'description': 'Compare TimescaleDB, ClickHouse, and BigQuery',
-                                        'assigned_to': 'James O\'Brien',
+                                        'assigned_to': "James O'Brien",
                                         'estimated_hours': 12.0,
                                         'status': 'pending',
                                     },

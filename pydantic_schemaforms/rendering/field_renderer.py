@@ -470,7 +470,9 @@ class FieldRenderer:
         max_items = field_schema.get('maxItems', 10)
         help_text = ui_info.get('help_text') or field_schema.get('description')
         label = field_schema.get('title', field_name.replace('_', ' ').title())
-        add_button_label = ui_info.get('add_button_label') or ui_info.get('add_button_text', 'Add Item')
+        add_button_label = ui_info.get('add_button_label') or ui_info.get(
+            'add_button_text', 'Add Item'
+        )
         is_required = field_name in (required_fields or [])
 
         if self.theme:
@@ -535,7 +537,6 @@ class FieldRenderer:
         except (KeyError, ValueError):  # fmt: skip  # pragma: no cover - best effort rendering
             item_title = f'Item #{index + 1}'
 
-        collapse_class = '' if expanded else 'collapse'
         safe_field_name = re.sub(r'[^a-zA-Z0-9_-]', '_', field_name)
         collapse_id = f'{safe_field_name}_item_{index}_content'
 
