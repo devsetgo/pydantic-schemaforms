@@ -31,9 +31,9 @@ def project_root() -> Path:
 def manifest_path() -> Path:
     # Use importlib.resources so the path is derived from the package
     # registry rather than __file__, avoiding path-traversal lint warnings.
-    return Path(str(_pkg_files('pydantic_schemaforms').joinpath(
-        'assets/vendor/vendor_manifest.json'
-    )))
+    return Path(
+        str(_pkg_files('pydantic_schemaforms').joinpath('assets/vendor/vendor_manifest.json'))
+    )
 
 
 def load_manifest() -> dict[str, Any]:
