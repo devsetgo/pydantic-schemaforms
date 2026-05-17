@@ -786,6 +786,28 @@ async def pets_get(
                     'last_vet_visit': '2024-09-18',
                     'special_needs': 'Dust baths only, no water baths, cool temperature',
                 },
+                {
+                    'name': 'Coco',
+                    'species': 'bird',
+                    'breed': 'African Grey Parrot',
+                    'age': 12,
+                    'weight': 0.45,
+                    'microchipped': True,
+                    'is_vaccinated': True,
+                    'last_vet_visit': '2024-11-10',
+                    'special_needs': 'Highly intelligent, requires 4+ hours of interaction daily',
+                },
+                {
+                    'name': 'Gizmo',
+                    'species': 'other',
+                    'breed': 'Ferret',
+                    'age': 2,
+                    'weight': 0.8,
+                    'microchipped': True,
+                    'is_vaccinated': True,
+                    'last_vet_visit': '2024-10-22',
+                    'special_needs': 'Annual distemper and rabies vaccines required; needs ferret-proofed play area',
+                },
             ],
         }
 

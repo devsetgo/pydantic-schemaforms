@@ -470,7 +470,7 @@ class FieldRenderer:
         max_items = field_schema.get('maxItems', 10)
         help_text = ui_info.get('help_text') or field_schema.get('description')
         label = field_schema.get('title', field_name.replace('_', ' ').title())
-        add_button_label = ui_info.get('add_button_label', 'Add Item')
+        add_button_label = ui_info.get('add_button_label') or ui_info.get('add_button_text', 'Add Item')
         is_required = field_name in (required_fields or [])
 
         if self.theme:
@@ -578,8 +578,9 @@ class FieldRenderer:
             </div>"""
 
         if collapsible:
+            show_class = 'show' if expanded else ''
             html += f"""
-            <div class="collapse {collapse_class} show" id="{collapse_id}">
+            <div class="collapse {show_class}" id="{collapse_id}">
                 <div class="card-body">"""
         else:
             html += """

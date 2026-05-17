@@ -32,7 +32,6 @@
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
-				// "usernamehw.errorlens",
 				"streetsidesoftware.code-spell-checker",
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
@@ -43,7 +42,8 @@
 				"mikestead.dotenv",
 				"oderwat.indent-rainbow",
 				"wayou.vscode-todo-highlight",
-				"peakchen90.open-html-in-browser"
+				"peakchen90.open-html-in-browser",
+				"Anthropic.claude-code"
 			]
 		}
 	},

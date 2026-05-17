@@ -76,14 +76,14 @@ class PetModel(FormModel):
         title='Species',
         input_type='select',
         options=[
-            {'value': 'Dog', 'label': 'Dog 🐕'},
-            {'value': 'Cat', 'label': 'Cat 🐱'},
-            {'value': 'Bird', 'label': 'Bird 🐦'},
-            {'value': 'Fish', 'label': 'Fish 🐠'},
-            {'value': 'Rabbit', 'label': 'Rabbit 🐰'},
-            {'value': 'Hamster', 'label': 'Hamster 🐹'},
-            {'value': 'Reptile', 'label': 'Reptile 🦎'},
-            {'value': 'Other', 'label': 'Other 🐾'},
+            {'value': 'dog', 'label': 'Dog 🐕'},
+            {'value': 'cat', 'label': 'Cat 🐱'},
+            {'value': 'bird', 'label': 'Bird 🐦'},
+            {'value': 'fish', 'label': 'Fish 🐠'},
+            {'value': 'rabbit', 'label': 'Rabbit 🐰'},
+            {'value': 'hamster', 'label': 'Hamster 🐹'},
+            {'value': 'reptile', 'label': 'Reptile 🦎'},
+            {'value': 'other', 'label': 'Other 🐾'},
         ],
         help_text='What type of animal is your pet?',
         icon='collection',
@@ -375,8 +375,7 @@ class PetRegistrationForm(FormModel):
         min_length=1,
         max_length=10,
         model_class=PetModel,
-        add_button_text='Add Another Pet',
-        remove_button_text='Remove Pet',
+        add_button_label='Add Another Pet',
         collapsible_items=True,
         items_expanded=False,  # Start collapsed to show the feature
         item_title_template='Pet #{index}: {name}',  # Dynamic titles
@@ -681,8 +680,7 @@ class CompleteShowcaseForm(FormModel):
         min_length=0,
         max_length=5,
         model_class=PetModel,
-        add_button_text='🐾 Add Another Pet',
-        remove_button_text='Remove Pet',
+        add_button_label='🐾 Add Another Pet',
         collapsible_items=True,
         items_expanded=False,  # Start collapsed to showcase feature
         item_title_template='🐾 {name} the {species}',  # Dynamic titles with emojis
@@ -705,8 +703,7 @@ class CompleteShowcaseForm(FormModel):
         min_length=1,
         max_length=3,
         model_class=EmergencyContactModel,
-        add_button_text='➕ Add Emergency Contact',
-        remove_button_text='Remove Contact',
+        add_button_label='➕ Add Emergency Contact',
         collapsible_items=True,
         items_expanded=True,  # Start expanded for required items
         item_title_template='📞 {name} ({relationship})',
@@ -1140,8 +1137,7 @@ class TeamMember(FormModel):
         min_length=0,
         max_length=20,
         model_class=Certification,
-        add_button_text='➕ Add Certification',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Certification',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='{name} - {issuer}',
@@ -1240,8 +1236,7 @@ class Task(FormModel):
         min_length=0,
         max_length=50,
         model_class=Subtask,
-        add_button_text='➕ Add Subtask',
-        remove_button_text='Remove Subtask',
+        add_button_label='➕ Add Subtask',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔹 {title}',
@@ -1299,8 +1294,7 @@ class Team(FormModel):
         min_length=1,
         max_length=100,
         model_class=TeamMember,
-        add_button_text='👤 Add Team Member',
-        remove_button_text='Remove Member',
+        add_button_label='👤 Add Team Member',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👤 {name} - {role}',
@@ -1387,8 +1381,7 @@ class Project(FormModel):
         min_length=1,
         max_length=200,
         model_class=Task,
-        add_button_text='📝 Add Task',
-        remove_button_text='Remove Task',
+        add_button_label='📝 Add Task',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📋 {title}',
@@ -1464,8 +1457,7 @@ class Department(FormModel):
         min_length=1,
         max_length=50,
         model_class=Team,
-        add_button_text='👥 Add Team',
-        remove_button_text='Remove Team',
+        add_button_label='👥 Add Team',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👥 {name} (Lead: {team_lead})',
@@ -1487,8 +1479,7 @@ class Department(FormModel):
         min_length=0,
         max_length=100,
         model_class=Project,
-        add_button_text='🚀 Add Project',
-        remove_button_text='Remove Project',
+        add_button_label='🚀 Add Project',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🚀 {name}',
@@ -1538,7 +1529,7 @@ class CompanyOrganizationForm(FormModel):
         input_type='textarea',
         placeholder='Full address of headquarters',
         help_text='Main office address',
-        icon='map-marker',
+        icon='geo-alt',
         max_length=500,
     )
 
@@ -1600,8 +1591,7 @@ class CompanyOrganizationForm(FormModel):
         min_length=1,
         max_length=500,
         model_class=Department,
-        add_button_text='🏢 Add Department',
-        remove_button_text='Remove Department',
+        add_button_label='🏢 Add Department',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🏢 {name} (Head: {department_head})',
@@ -1680,11 +1670,105 @@ def create_sample_nested_data() -> dict:
                                         'expiry_date': '2025-05-01',
                                         'credential_id': 'AWS-12345',
                                         'credential_url': 'https://aws.amazon.com/verification/12345',
-                                    }
+                                    },
+                                    {
+                                        'name': 'Certified Kubernetes Administrator',
+                                        'issuer': 'Cloud Native Computing Foundation',
+                                        'issue_date': '2023-01-15',
+                                        'expiry_date': '2026-01-15',
+                                        'credential_id': 'CKA-67890',
+                                        'credential_url': 'https://cncf.io/verify/67890',
+                                    },
+                                    {
+                                        'name': 'Google Cloud Professional Data Engineer',
+                                        'issuer': 'Google Cloud',
+                                        'issue_date': '2023-06-10',
+                                        'expiry_date': '2025-06-10',
+                                        'credential_id': 'GCP-DE-11223',
+                                        'credential_url': 'https://cloud.google.com/verify/11223',
+                                    },
                                 ],
-                            }
+                            },
+                            {
+                                'name': 'Maria Chen',
+                                'email': 'maria.chen@techcorp.com',
+                                'role': 'Backend Developer',
+                                'hire_date': '2019-03-10',
+                                'experience_years': 7,
+                                'manager': 'Alice Johnson',
+                                'certifications': [
+                                    {
+                                        'name': 'AWS Developer Associate',
+                                        'issuer': 'Amazon Web Services',
+                                        'issue_date': '2021-09-20',
+                                        'expiry_date': '2024-09-20',
+                                        'credential_id': 'AWS-DEV-44556',
+                                        'credential_url': 'https://aws.amazon.com/verification/44556',
+                                    },
+                                    {
+                                        'name': 'MongoDB Certified Developer',
+                                        'issuer': 'MongoDB Inc.',
+                                        'issue_date': '2022-11-05',
+                                        'expiry_date': None,
+                                        'credential_id': 'MONGO-77889',
+                                        'credential_url': 'https://university.mongodb.com/verify/77889',
+                                    },
+                                ],
+                            },
                         ],
-                    }
+                    },
+                    {
+                        'name': 'Frontend & UX',
+                        'description': 'Web interfaces and user experience design',
+                        'team_lead': 'Carlos Rivera',
+                        'formed_date': '2017-08-15',
+                        'members': [
+                            {
+                                'name': 'Priya Patel',
+                                'email': 'priya.patel@techcorp.com',
+                                'role': 'Senior Frontend Engineer',
+                                'hire_date': '2018-05-01',
+                                'experience_years': 9,
+                                'manager': 'Carlos Rivera',
+                                'certifications': [
+                                    {
+                                        'name': 'Google UX Design Certificate',
+                                        'issuer': 'Google',
+                                        'issue_date': '2021-04-15',
+                                        'expiry_date': None,
+                                        'credential_id': 'GUX-33445',
+                                        'credential_url': 'https://grow.google/verify/33445',
+                                    },
+                                    {
+                                        'name': 'Meta React Developer Certificate',
+                                        'issuer': 'Meta',
+                                        'issue_date': '2022-07-20',
+                                        'expiry_date': None,
+                                        'credential_id': 'META-REACT-55667',
+                                        'credential_url': 'https://coursera.org/verify/55667',
+                                    },
+                                ],
+                            },
+                            {
+                                'name': 'David Kim',
+                                'email': 'david.kim@techcorp.com',
+                                'role': 'UX Designer',
+                                'hire_date': '2020-11-20',
+                                'experience_years': 5,
+                                'manager': 'Carlos Rivera',
+                                'certifications': [
+                                    {
+                                        'name': 'Certified UX Professional',
+                                        'issuer': 'Nielsen Norman Group',
+                                        'issue_date': '2022-03-12',
+                                        'expiry_date': '2025-03-12',
+                                        'credential_id': 'NNG-UXP-99001',
+                                        'credential_url': 'https://nngroup.com/verify/99001',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
                 ],
                 'projects': [
                     {
@@ -1715,13 +1799,269 @@ def create_sample_nested_data() -> dict:
                                         'assigned_to': 'Bob Wilson',
                                         'estimated_hours': 16.0,
                                         'status': 'completed',
-                                    }
+                                    },
+                                    {
+                                        'title': 'Implement JWT token handling',
+                                        'description': 'Add token generation, validation, and refresh logic',
+                                        'assigned_to': 'Maria Chen',
+                                        'estimated_hours': 24.0,
+                                        'status': 'in_progress',
+                                    },
+                                    {
+                                        'title': 'Write integration tests',
+                                        'description': 'Cover all auth endpoints with pytest',
+                                        'assigned_to': 'Bob Wilson',
+                                        'estimated_hours': 20.0,
+                                        'status': 'pending',
+                                    },
                                 ],
-                            }
+                            },
+                            {
+                                'title': 'Build API Gateway',
+                                'description': 'Central entry point routing requests to microservices',
+                                'priority': 'high',
+                                'status': 'planning',
+                                'start_date': '2024-04-01',
+                                'due_date': '2024-05-31',
+                                'assigned_to': 'Maria Chen',
+                                'estimated_hours': 80.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Evaluate gateway options',
+                                        'description': 'Compare Kong, NGINX, and AWS API Gateway',
+                                        'assigned_to': 'Bob Wilson',
+                                        'estimated_hours': 8.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Configure rate limiting',
+                                        'description': 'Set per-client rate limits and burst handling',
+                                        'assigned_to': 'Maria Chen',
+                                        'estimated_hours': 16.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
+                            {
+                                'title': 'Database Sharding Strategy',
+                                'description': 'Design and implement horizontal database sharding',
+                                'priority': 'medium',
+                                'status': 'planning',
+                                'start_date': '2024-06-01',
+                                'due_date': '2024-08-31',
+                                'assigned_to': 'Bob Wilson',
+                                'estimated_hours': 160.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Analyze current query patterns',
+                                        'description': 'Profile slow queries and identify hot tables',
+                                        'assigned_to': 'Bob Wilson',
+                                        'estimated_hours': 24.0,
+                                        'status': 'pending',
+                                    },
+                                    {
+                                        'title': 'Design shard key schema',
+                                        'description': 'Choose optimal shard keys to minimize cross-shard queries',
+                                        'assigned_to': 'Maria Chen',
+                                        'estimated_hours': 16.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
                         ],
-                    }
+                    },
+                    {
+                        'name': 'Developer Portal Redesign',
+                        'description': 'Modernize the developer documentation and API explorer',
+                        'status': 'in_progress',
+                        'start_date': '2024-03-01',
+                        'target_end_date': '2024-09-30',
+                        'budget': 500000.0,
+                        'project_manager': 'Priya Patel',
+                        'tasks': [
+                            {
+                                'title': 'Redesign navigation & IA',
+                                'description': 'Restructure information architecture and top-level nav',
+                                'priority': 'high',
+                                'status': 'completed',
+                                'start_date': '2024-03-01',
+                                'due_date': '2024-04-15',
+                                'assigned_to': 'David Kim',
+                                'estimated_hours': 60.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'User interviews',
+                                        'description': 'Interview 10 external developers about pain points',
+                                        'assigned_to': 'David Kim',
+                                        'estimated_hours': 12.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Prototype new nav structure',
+                                        'description': 'Figma prototype for usability testing',
+                                        'assigned_to': 'David Kim',
+                                        'estimated_hours': 20.0,
+                                        'status': 'completed',
+                                    },
+                                ],
+                            },
+                            {
+                                'title': 'Implement interactive API playground',
+                                'description': 'Build in-browser API explorer powered by OpenAPI spec',
+                                'priority': 'medium',
+                                'status': 'in_progress',
+                                'start_date': '2024-05-01',
+                                'due_date': '2024-07-31',
+                                'assigned_to': 'Priya Patel',
+                                'estimated_hours': 120.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Integrate Swagger UI',
+                                        'description': 'Embed and theme Swagger UI component',
+                                        'assigned_to': 'Priya Patel',
+                                        'estimated_hours': 16.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Add auth token management',
+                                        'description': 'Let users paste/store API keys in the playground',
+                                        'assigned_to': 'Priya Patel',
+                                        'estimated_hours': 12.0,
+                                        'status': 'in_progress',
+                                    },
+                                    {
+                                        'title': 'Write end-to-end tests',
+                                        'description': 'Playwright tests for the playground UI',
+                                        'assigned_to': 'David Kim',
+                                        'estimated_hours': 20.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
                 ],
-            }
+            },
+            {
+                'name': 'Product',
+                'description': 'Product management, roadmap, and analytics',
+                'department_head': 'Linda Park',
+                'head_email': 'linda.park@techcorp.com',
+                'established_date': '2012-04-01',
+                'budget': 15000000.0,
+                'teams': [
+                    {
+                        'name': 'Product Strategy',
+                        'description': 'Roadmap planning and market research',
+                        'team_lead': 'Marcus Thompson',
+                        'formed_date': '2012-04-01',
+                        'members': [
+                            {
+                                'name': 'Sarah Nguyen',
+                                'email': 'sarah.nguyen@techcorp.com',
+                                'role': 'Senior Product Manager',
+                                'hire_date': '2017-07-10',
+                                'experience_years': 10,
+                                'manager': 'Marcus Thompson',
+                                'certifications': [
+                                    {
+                                        'name': 'Certified Scrum Product Owner',
+                                        'issuer': 'Scrum Alliance',
+                                        'issue_date': '2020-02-14',
+                                        'expiry_date': '2026-02-14',
+                                        'credential_id': 'CSPO-22334',
+                                        'credential_url': 'https://scrumalliance.org/verify/22334',
+                                    },
+                                    {
+                                        'name': 'Professional Scrum Master II',
+                                        'issuer': 'Scrum.org',
+                                        'issue_date': '2021-08-30',
+                                        'expiry_date': None,
+                                        'credential_id': 'PSM-II-55678',
+                                        'credential_url': 'https://scrum.org/verify/55678',
+                                    },
+                                ],
+                            },
+                            {
+                                'name': 'James O\'Brien',
+                                'email': 'james.obrien@techcorp.com',
+                                'role': 'Product Analyst',
+                                'hire_date': '2021-01-18',
+                                'experience_years': 4,
+                                'manager': 'Marcus Thompson',
+                                'certifications': [
+                                    {
+                                        'name': 'Google Analytics Individual Qualification',
+                                        'issuer': 'Google',
+                                        'issue_date': '2022-05-20',
+                                        'expiry_date': '2023-05-20',
+                                        'credential_id': 'GA-IQ-88990',
+                                        'credential_url': 'https://skillshop.google.com/verify/88990',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+                'projects': [
+                    {
+                        'name': 'Q3 Analytics Dashboard',
+                        'description': 'Self-serve analytics for enterprise customers',
+                        'status': 'planning',
+                        'start_date': '2024-07-01',
+                        'target_end_date': '2024-09-30',
+                        'budget': 300000.0,
+                        'project_manager': 'Sarah Nguyen',
+                        'tasks': [
+                            {
+                                'title': 'Define KPI requirements',
+                                'description': 'Gather requirements from top 20 enterprise customers',
+                                'priority': 'high',
+                                'status': 'in_progress',
+                                'start_date': '2024-07-01',
+                                'due_date': '2024-07-15',
+                                'assigned_to': 'James O\'Brien',
+                                'estimated_hours': 40.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Send requirements survey',
+                                        'description': 'Draft and send survey via Typeform to enterprise contacts',
+                                        'assigned_to': 'James O\'Brien',
+                                        'estimated_hours': 4.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Synthesize survey results',
+                                        'description': 'Analyze responses and produce a ranked KPI list',
+                                        'assigned_to': 'James O\'Brien',
+                                        'estimated_hours': 8.0,
+                                        'status': 'in_progress',
+                                    },
+                                ],
+                            },
+                            {
+                                'title': 'Design data model',
+                                'description': 'Schema design for analytics event store',
+                                'priority': 'medium',
+                                'status': 'pending',
+                                'start_date': '2024-07-16',
+                                'due_date': '2024-08-05',
+                                'assigned_to': 'Sarah Nguyen',
+                                'estimated_hours': 60.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Evaluate time-series DB options',
+                                        'description': 'Compare TimescaleDB, ClickHouse, and BigQuery',
+                                        'assigned_to': 'James O\'Brien',
+                                        'estimated_hours': 12.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     }
 
@@ -1753,12 +2093,15 @@ __all__ = [
     'TaskItem',
     'PersonalInfoForm',
     'ContactInfoForm',
-    'PreferencesForm',
+    'NotificationsForm',
+    'AppearanceForm',
     'TaskListForm',
     'LayoutDemonstrationForm',
     # Layout Classes
     'VerticalFormLayout',
     'HorizontalFormLayout',
+    'NotificationsTabLayout',
+    'AppearanceTabLayout',
     'TabbedFormLayout',
     'ListFormLayout',
     # Helper Functions
@@ -1897,8 +2240,8 @@ class ContactInfoForm(FormModel):
     )
 
 
-class PreferencesForm(FormModel):
-    """Preferences form for tabbed layout demonstration."""
+class NotificationsForm(FormModel):
+    """Notification preferences for the Notifications tab."""
 
     notification_email: bool = FormField(
         True,
@@ -1916,6 +2259,32 @@ class PreferencesForm(FormModel):
         icon='phone',
     )
 
+    notification_push: bool = FormField(
+        False,
+        title='Push Notifications',
+        input_type='checkbox',
+        help_text='Receive browser push notifications',
+        icon='bell',
+    )
+
+    digest_frequency: str = FormField(
+        'daily',
+        title='Digest Frequency',
+        input_type='select',
+        options=[
+            {'value': 'realtime', 'label': '⚡ Real-time'},
+            {'value': 'hourly', 'label': '🕐 Hourly'},
+            {'value': 'daily', 'label': '📅 Daily Digest'},
+            {'value': 'weekly', 'label': '📆 Weekly Summary'},
+        ],
+        help_text='How often to receive notification digests',
+        icon='clock',
+    )
+
+
+class AppearanceForm(FormModel):
+    """Appearance preferences for the Appearance tab."""
+
     theme: str = FormField(
         'light',
         title='UI Theme',
@@ -1924,8 +2293,9 @@ class PreferencesForm(FormModel):
             {'value': 'light', 'label': '☀️ Light Theme'},
             {'value': 'dark', 'label': '🌙 Dark Theme'},
             {'value': 'auto', 'label': '🔄 Auto (System)'},
+            {'value': 'high_contrast', 'label': '🔲 High Contrast'},
         ],
-        help_text='Choose your preferred theme',
+        help_text='Choose your preferred colour theme',
         icon='palette',
     )
 
@@ -1941,6 +2311,27 @@ class PreferencesForm(FormModel):
         ],
         help_text='Select your preferred language',
         icon='globe',
+    )
+
+    font_size: str = FormField(
+        'medium',
+        title='Font Size',
+        input_type='select',
+        options=[
+            {'value': 'small', 'label': 'Small'},
+            {'value': 'medium', 'label': 'Medium'},
+            {'value': 'large', 'label': 'Large'},
+        ],
+        help_text='Adjust the base font size across the UI',
+        icon='type',
+    )
+
+    compact_mode: bool = FormField(
+        False,
+        title='Compact Mode',
+        input_type='checkbox',
+        help_text='Reduce spacing for a denser layout',
+        icon='layout-three-columns',
     )
 
 
@@ -1966,10 +2357,9 @@ class TaskListForm(FormModel):
         min_length=1,
         max_length=10,
         model_class=TaskItem,
-        add_button_text='Add Task',
-        remove_button_text='Remove Task',
+        add_button_label='Add Task',
         collapsible_items=True,
-        items_expanded_by_default=True,
+        items_expanded=True,
     )
 
     @field_validator('tasks')
@@ -1999,20 +2389,25 @@ class HorizontalFormLayout(HorizontalLayout):
     form = ContactInfoForm
 
 
-class PreferencesTabLayout(VerticalLayout):
-    """Vertical layout wrapper used inside the preferences TabbedLayout."""
+class NotificationsTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Notifications tab."""
 
-    form = PreferencesForm
+    form = NotificationsForm
+
+
+class AppearanceTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Appearance tab."""
+
+    form = AppearanceForm
 
 
 class TabbedFormLayout(TabbedLayout):
-    """Tabbed layout - preferences organized in tabs."""
+    """Tabbed layout - preferences organized into Notifications and Appearance tabs."""
 
     def __init__(self, form_config=None):
         super().__init__(form_config=form_config)
-        # Each tab must be a layout instance (BaseLayout/FormLayoutBase), not a FormModel class.
-        self.notifications = PreferencesTabLayout()
-        self.appearance = PreferencesTabLayout()
+        self.notifications = NotificationsTabLayout()
+        self.appearance = AppearanceTabLayout()
 
     def _get_layouts(self):
         # Keep ordering stable (and avoid scanning dir(self)).
