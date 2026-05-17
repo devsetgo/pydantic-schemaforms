@@ -47,6 +47,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
 
+from pydantic_schemaforms import __version__ as _psf_version
 from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
 from pydantic_schemaforms.form_data import parse_nested_form_data
@@ -55,7 +56,7 @@ from pydantic_schemaforms.form_layouts import FormLayoutBase
 app = FastAPI(
     title='Pydantic SchemaForms - FastAPI Example',
     description='Comprehensive showcase of pydantic-schemaforms capabilities in async FastAPI',
-    version='25.4.1b1',
+    version=_psf_version,
 )
 
 app.add_middleware(
@@ -411,10 +412,8 @@ async def register_get(
             'email': 'alex.johnson@example.com',
             'password': 'SecurePass123!',
             'confirm_password': 'SecurePass123!',
-            'full_name': 'Alex Johnson',
             'age': 28,
-            'agree_terms': True,
-            'newsletter': True,
+            'role': 'user',
         }
 
     form_html = await render_form_html_async(
@@ -583,21 +582,18 @@ async def showcase_get(
     elif demo:
         # Add comprehensive demo data for all showcase features
         form_data = {
-            'username': 'showcase_user',
+            'first_name': 'Demo',
+            'last_name': 'Showcase User',
             'email': 'showcase@example.com',
-            'password': 'ShowcasePass123!',
-            'full_name': 'Demo Showcase User',
             'bio': 'This is a demo biography showcasing the textarea field with rich content. It demonstrates how longer text content appears in the form.',
             'age': 32,
             'birth_date': '1991-08-15',
-            'website': 'https://example.com',
             'phone': '+1 (555) 123-4567',
             'country': 'US',
             'favorite_color': '#3498db',
-            'experience_level': 7,
-            'receive_notifications': True,
-            'newsletter_frequency': 'weekly',
-            'account_type': 'premium',
+            'experience_level': 'advanced',
+            'newsletter_subscription': True,
+            'newsletter': True,
         }
 
     form_html = await render_form_html_async(
@@ -708,7 +704,6 @@ async def pets_get(
             'owner_name': 'Sarah Thompson',
             'email': 'sarah.thompson@email.com',
             'address': '5 Marine Parade, ',
-            'owner_phone': '+1 (555) 987-6543',
             'emergency_contact': 'Mike Thompson - (555) 123-4567',
             'pets': [
                 {
@@ -1467,7 +1462,7 @@ async def api_render_form(
 @app.get('/api/health')
 async def health_check():
     """Health check endpoint."""
-    return {'status': 'healthy', 'framework': 'fastapi', 'version': '25.4.1b1'}
+    return {'status': 'healthy', 'framework': 'fastapi', 'version': _psf_version}
 
 
 def create_refer_path(request: Request) -> str:
