@@ -29,7 +29,7 @@
 
 <br clear="right" />
 
-> **Note**: This project should be considered in beta as it is actively under development and may have breaking changes.
+> **Requires Python 3.14+** — this library uses Python 3.14 language features and will not import on older versions.
 
 ## Overview
 
@@ -57,8 +57,10 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 
 ## Requirements
 
-- Python **3.14+**
-- Pydantic **2.7+** (included in library)
+> **Python 3.14+ is required.** The library will raise `RuntimeError` on import if your Python version is older.
+
+- Python **3.14+** (hard requirement — no fallback or compatibility shim)
+- Pydantic **2.7+** (included as a dependency)
 
 ## Quick Start
 

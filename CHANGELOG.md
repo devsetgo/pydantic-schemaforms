@@ -64,6 +64,44 @@ First production release. All public Quick Start code paths verified working end
 - `pymdown-extensions`: `10.20` → `10.20.1`
 
 ## Latest Changes
+### <span style='color:blue'>CSRF Feature Release</span> ([26.2.1.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.1.beta))
+
+## Changes
+- Documentation Updates (#116) (@devsetgo)
+
+## Features
+
+- bump to v26.2.1.beta (#117) (@devsetgo)
+- CSRF Feature (#114) (@devsetgo)
+
+## Maintenance
+
+- feat(csrf): add CSRFMode enum with backward-compatible mode handling (#115) (@devsetgo)
+- pip(deps): bump tox from 4.52.0 to 4.52.1 (#104) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump python-multipart from 0.0.24 to 0.0.26 (#106) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/upload-pages-artifact from 4 to 5 (#107) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump mike from 2.1.4 to 2.2.0 (#108) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump fastapi from 0.134.0 to 0.135.3 (#97) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pytest-cov from 7.0.0 to 7.1.0 (#98) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pydantic-extra-types from 2.11.1 to 2.11.2 (#99) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump python-multipart from 0.0.22 to 0.0.24 (#100) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pytest from 9.0.1 to 9.0.3 (#101) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/github-script from 7 to 9 (#102) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump release-drafter/release-drafter from 6.2.0 to 7.2.0 (#103) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- dependency update and tests (#96) (@devsetgo)
+- update of dependencies (#87) (@devsetgo)
+- pip(deps): bump hatchling from 1.28.0 to 1.29.0 (#73) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump tox from 4.44.0 to 4.46.3 (#74) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump fastapi[all] from 0.128.4 to 0.134.0 (#75) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump mkdocs-material from 9.7.2 to 9.7.3 (#76) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump ruff from 0.15.1 to 0.15.4 (#77) (@[dependabot[bot]](https://github.com/apps/dependabot))
+
+## Contributors
+@dependabot[bot], @devsetgo and [dependabot[bot]](https://github.com/apps/dependabot)
+
+
+Published Date: 2026 April 26, 19:26
+
 ### <span style='color:blue'>Removing External Validation Logic</span> ([26.1.8.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.8.beta))
 
 ## Changes
@@ -220,3 +258,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+

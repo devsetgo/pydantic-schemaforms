@@ -38,6 +38,7 @@ class FormBuilder:
             framework=framework,
             include_framework_assets=include_framework_assets,
             asset_mode=asset_mode,
+            _internal=True,
         )
         self.layout_type = 'vertical'
         self.form_attrs: Dict[str, Any] = {}

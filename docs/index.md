@@ -51,9 +51,9 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 
 ## Documentation
 
-- Docs site: https://devsetgo.github.io/pydantic-schemaforms/
-- Live Demo: https://pydantic-schemaforms.devsetgo.com
-- Source: https://github.com/devsetgo/pydantic-schemaforms
+- Docs site: [GitHub Documentation Site](https://devsetgo.github.io/pydantic-schemaforms/)
+- Live Demo: [Running Demo of Current Version](https://pydantic-schemaforms.devsetgo.com)
+- Source: [GitHub Source Code](https://github.com/devsetgo/pydantic-schemaforms)
 
 ## Requirements
 
@@ -103,21 +103,27 @@ app = FastAPI()
 
 @app.api_route("/login", methods=["GET", "POST"], response_class=HTMLResponse)
 async def login(request: Request, style: str = "bootstrap"):
+    form_data = {}
+    errors = {}
+
     if request.method == "POST":
         submitted = dict(await request.form())
-        result = MinimalLoginForm.validate(
-            submitted, submit_url="/login", framework=style
-        )
-        if result.is_valid:
-            return f"Welcome {result.data['username']}!"
-        form_html = await result.render_with_errors_async()
+        form_data = submitted
+        try:
+            MinimalLoginForm(**submitted)
+        except ValidationError as e:
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
     else:
-        form_html = render_form_html(
-            MinimalLoginForm,
-            framework=style,
-            form_data={"username": "demo_user", "remember_me": True},
-            submit_url="/login",
-        )
+        # optional demo data
+        form_data = {"username": "demo_user", "remember_me": True}
+
+    form_html = render_form_html(
+        MinimalLoginForm,
+        framework=style,
+        form_data=form_data,
+        errors=errors,
+        submit_url="/login",
+    )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -165,16 +171,24 @@ app = FastAPI()
 
 @app.api_route("/register", methods=["GET", "POST"], response_class=HTMLResponse)
 async def register(request: Request):
+    form_data = {}
+    errors = {}
+
     if request.method == "POST":
         submitted = dict(await request.form())
-        result = UserRegistrationForm.validate(submitted, submit_url="/register")
-        if result.is_valid:
-            return f"Registered {result.data['username']}!"
-        form_html = await result.render_with_errors_async()
-    else:
-        form_html = render_form_html(
-            UserRegistrationForm, framework="bootstrap", submit_url="/register"
-        )
+        form_data = submitted
+        try:
+            UserRegistrationForm(**submitted)
+        except ValidationError as e:
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
+
+    form_html = render_form_html(
+        UserRegistrationForm,
+        framework="bootstrap",
+        form_data=form_data,
+        errors=errors,
+        submit_url="/register",
+    )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -186,7 +200,7 @@ async def register(request: Request):
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Register</h1>
-  {form_html}
+  {form_html |safe}
 </body>
 </html>"""
 ```
@@ -214,17 +228,24 @@ app = Flask(__name__)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    form_data = {}
+    errors = {}
+
     if request.method == "POST":
-        result = MinimalLoginForm.validate(
-            request.form.to_dict(), submit_url="/login"
-        )
-        if result.is_valid:
-            return f"Welcome {result.data['username']}!"
-        form_html = result.render_with_errors()
-    else:
-        form_html = render_form_html(
-            MinimalLoginForm, framework="bootstrap", submit_url="/login"
-        )
+        submitted = request.form.to_dict()
+        form_data = submitted
+        try:
+            MinimalLoginForm(**submitted)
+        except ValidationError as e:
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
+
+    form_html = render_form_html(
+        MinimalLoginForm,
+        framework="bootstrap",
+        form_data=form_data,
+        errors=errors,
+        submit_url="/login",
+    )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -262,17 +283,24 @@ app = Flask(__name__)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    form_data = {}
+    errors = {}
+
     if request.method == "POST":
-        result = UserRegistrationForm.validate(
-            request.form.to_dict(), submit_url="/register"
-        )
-        if result.is_valid:
-            return f"Registered {result.data['username']}!"
-        form_html = result.render_with_errors()
-    else:
-        form_html = render_form_html(
-            UserRegistrationForm, framework="bootstrap", submit_url="/register"
-        )
+        submitted = request.form.to_dict()
+        form_data = submitted
+        try:
+            UserRegistrationForm(**submitted)
+        except ValidationError as e:
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
+
+    form_html = render_form_html(
+        UserRegistrationForm,
+        framework="bootstrap",
+        form_data=form_data,
+        errors=errors,
+        submit_url="/register",
+    )
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -366,10 +394,8 @@ UserForm.render_form(framework="none", submit_url="/submit")
 
 ## Renderer Architecture
 
-- **EnhancedFormRenderer** is the canonical renderer for all frameworks. It walks the Pydantic `FormModel`, feeds the shared `LayoutEngine`, and delegates chrome/assets to a `RendererTheme`. Pass `framework="bootstrap"` (default), `"material"`, or `"none"` — all routes go through the same engine.
-- **`render_form_html()` helper** is a thin wrapper around `EnhancedFormRenderer` for all frameworks. Pass `self_contained=True` to inline all assets; `asset_mode="vendored"` / `"cdn"` to control how framework CSS/JS are delivered.
-- **`SimpleMaterialRenderer`** is kept as a backward-compatible alias for `EnhancedFormRenderer(framework="material")`. New code should use `EnhancedFormRenderer` directly.
-- **ModernFormRenderer** piggybacks on Enhanced by generating a throwaway `FormModel` from legacy `FormDefinition`/`FormField` helpers. It exists so existing builder/integration code keeps working while still benefiting from the shared pipeline. (The old `Py314Renderer` alias has been removed; import `ModernFormRenderer` directly when you need the builder DSL.)
+- **EnhancedFormRenderer** is the canonical renderer. It walks the Pydantic `FormModel`, feeds the shared `LayoutEngine`, and delegates chrome/assets to a `RendererTheme`.
+- **ModernFormRenderer** now piggybacks on Enhanced by generating a throwaway `FormModel` from legacy `FormDefinition`/`FormField` helpers. It exists so existing builder/integration code keeps working while still benefiting from the shared pipeline. (The old `Py314Renderer` alias has been removed; import `ModernFormRenderer` directly when you need the builder DSL.)
 
 Because everything flows through Enhanced, fixes to layout, validation, or framework themes immediately apply to every renderer (Bootstrap, Material, embedded/self-contained, etc.). Choose the renderer based on the API surface you prefer (Pydantic models for `FormModel` or the builder DSL for `ModernFormRenderer`); the generated HTML is orchestrated by the same core engine either way.
 
@@ -424,21 +450,22 @@ class EventForm(FormModel):
 ```
 
 ### Form Validation
-
-Use `FormModel.validate()` to validate submitted data. It stores the submit URL
-and framework so `render_with_errors()` can re-render the form without repeating them:
-
 ```python
+from pydantic import ValidationError
+
 @app.route("/submit", methods=["POST"])
 def handle_submit():
-    data = request.form.to_dict()
-    result = UserForm.validate(data, submit_url="/submit")
+    try:
+        # Validate form data using your Pydantic model
+        user_data = UserForm(**request.form)
 
-    if result.is_valid:
-        return f"Welcome {result.data['username']}!"
+        # Process valid data
+        return f"Welcome {user_data.username}!"
 
-    # Re-renders with errors — no need to repeat submit_url or framework
-    return result.render_with_errors()
+    except ValidationError as e:
+        # Handle validation errors
+        errors = e.errors()
+        return f"Validation failed: {errors}", 400
 ```
 
 ---
@@ -489,15 +516,21 @@ class UserRegistrationForm(FormModel):
 @app.route("/", methods=["GET", "POST"])
 def registration():
     if request.method == "POST":
-        result = UserRegistrationForm.validate(
-            request.form.to_dict(), submit_url="/"
-        )
-        if result.is_valid:
-            return f"Registration successful for {result.data['username']}!"
-        return render_template_string(
-            BASE_TEMPLATE, form_html=result.render_with_errors()
-        )
+        try:
+            # Validate form data
+            user = UserRegistrationForm(**request.form)
+            return f"Registration successful for {user.username}!"
+        except ValidationError as e:
+            errors = e.errors()
+            # Re-render form with errors
+            form_html = UserRegistrationForm.render_form(
+                framework="bootstrap",
+                submit_url="/",
+                errors=errors
+            )
+            return render_template_string(BASE_TEMPLATE, form_html=form_html)
 
+    # Render empty form
     form_html = UserRegistrationForm.render_form(framework="bootstrap", submit_url="/")
     return render_template_string(BASE_TEMPLATE, form_html=form_html)
 
@@ -570,44 +603,61 @@ See [Render Timing Docs](https://devsetgo.github.io/pydantic-schemaforms/timing/
 
 ## Application Logging
 
-`pydantic_schemaforms` follows the standard library logging convention (PEP 282): it attaches only a `NullHandler` to its logger and leaves all handler/level configuration to the application. This means importing the library never produces log output by default.
+The library provides optional DEBUG-level logging that respects your application's logging configuration:
 
-### Enable logging in your app
+### Automatic Timing Logs
+
+Timing is always logged at INFO level (for production monitoring):
 
 ```python
 import logging
 from pydantic_schemaforms import render_form_html
 
-# Route all logs (including library DEBUG) through the root logger
+logging.basicConfig(level=logging.INFO)
+html = render_form_html(MyForm, submit_url="/submit")
+# Timing is logged automatically
+```
+
+### Optional Debug Logs
+
+Enable DEBUG logging to see detailed rendering steps:
+
+```python
+import logging
+from pydantic_schemaforms import render_form_html
+
+# Option 1: Application-level DEBUG
 logging.basicConfig(level=logging.DEBUG)
 html = render_form_html(MyForm, submit_url="/submit")
 # ✅ Timing + debug logs appear
+
+# Option 2: Per-render control
+html = render_form_html(MyForm, enable_logging=True, submit_url="/submit")
+# ✅ Debug logs appear for this render only
 ```
 
-### Selective logger configuration
+### Selective Logger Configuration
 
-To see library debug output without raising the root logger level:
+Enable library debugging without affecting your app's logging:
 
 ```python
 import logging
 
-logging.basicConfig(level=logging.INFO)  # root stays at INFO
+# Application at INFO level
+logging.basicConfig(level=logging.INFO)
 
-lib_logger = logging.getLogger('pydantic_schemaforms')
-lib_logger.setLevel(logging.DEBUG)
-# Records propagate to root, so the root handler will emit them.
-# Add a dedicated handler here if you want a separate destination.
+# Library DEBUG logs
+library_logger = logging.getLogger('pydantic_schemaforms')
+library_logger.setLevel(logging.DEBUG)
 
 html = render_form_html(MyForm, submit_url="/submit")
-# ✅ Library debug logs visible, app remains at INFO
+# ✅ Library debug logs visible
+# ✅ App remains at INFO level
 ```
 
-### Per-render debug flag
+**Best Practice**: Use Approach 1 (application-level configuration) in most cases. The library respects your app's logging setup.
 
-```python
-html = render_form_html(MyForm, enable_logging=True, submit_url="/submit")
-# ✅ Debug logs emitted for this render only (honours the active logger config)
-```
+See [Application Logging Docs](https://devsetgo.github.io/pydantic-schemaforms/logging/) for complete details and integration examples.
 
 ---
 
@@ -658,7 +708,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 
 ### FormModel
 
-Extend your Pydantic models with `FormModel` to add form rendering and validation capabilities:
+Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
 from pydantic_schemaforms.schema_form import FormModel, Field
@@ -671,17 +721,6 @@ html = MyForm.render_form(framework="bootstrap", submit_url="/submit")
 
 # Render fully self-contained Bootstrap HTML (inlines vendored Bootstrap CSS/JS)
 html = MyForm.render_form(framework="bootstrap", submit_url="/submit", self_contained=True)
-
-# Validate submitted data — returns a ValidationResult
-result = MyForm.validate(data, submit_url="/submit", framework="bootstrap")
-if result.is_valid:
-    process(result.data)
-else:
-    # Re-renders with errors; submit_url and framework already stored above
-    return result.render_with_errors()
-
-# Async variant for FastAPI / ASGI routes
-html = await result.render_with_errors_async()
 ```
 
 ### Field Function

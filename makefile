@@ -22,7 +22,7 @@ LOG_LEVEL = debug
 REQUIREMENTS_PATH = requirements.txt
 # DEV_REQUIREMENTS_PATH = requirements/dev.txt
 
-.PHONY: autoflake black cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test
+.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test
 
 .PHONY: vendor-update-htmx vendor-verify
 
@@ -36,11 +36,18 @@ black: ## Reformat Python code to follow the Black code style
 	# black $(TESTS_PATH)
 	# black $(EXAMPLE_PATH)
 
-# bump: ## Bump the version of the project
-# 	bumpcalver --build
+# Version management via BumpCalver (github.com/devsetgo/bumpcalver).
+# Version format: {YY}.{quarter}.{build_count}  e.g. 26.2.1
+# Use `bump` for production releases, `bump-beta` for pre-release iterations.
+# `bump-undo` reverts version strings only; code changes are unaffected.
+bump: ## Bump to next production version (no suffix) — use for releases
+	$(BUMPCALVER) --build
 
-bump-beta: ## Bump the version of the project
+bump-beta: ## Bump to next beta version
 	$(BUMPCALVER) --build --beta
+
+bump-undo: ## Undo the last version bump
+	$(BUMPCALVER) --undo
 
 
 cleanup: isort ruff autoflake ## Run isort, ruff, autoflake
