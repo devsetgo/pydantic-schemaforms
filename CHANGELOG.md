@@ -4,32 +4,53 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased (since untagged-bfb3bb98aa31ca386d88)
+## [26.2.1] — 2026-05-17
+
+First production release. All public Quick Start code paths verified working end-to-end.
 
 ### Breaking Changes
 
 - `submit_url` is now explicit across public form render APIs and no longer defaults silently.
-- Calls that omit `submit_url` now raise a clear error, enforcing app-owned routing boundaries.
+  Calls that omit `submit_url` raise a clear `ValueError`, enforcing app-owned routing boundaries.
 
 ### Added
 
-- Async-first rendering flow improvements and examples.
-- FastAPI form/style GET+POST matrix testing to validate route and style combinations.
-- Expanded coverage suites for renderer/input modules and validation pathways.
+- **HTMX live validation** — `LiveValidator`, `HTMXValidationConfig`, and `validation_response_headers()`
+  provide server-side field validation triggered by blur/input events via HTMX without page reloads.
+- **Branch coverage** — `branch = true` added to coverage configuration for deeper test quality.
+- **HTML structural validation** — `tests/test_html_structural.py` validates tag balance across all
+  frameworks and field types.
+- **HTTP integration tests** — FastAPI `TestClient` and Flask `test_client` round-trip tests.
+- **Property-based tests** — Hypothesis suite covering arbitrary field names, labels, and frameworks.
+- **Performance benchmarks** — `pytest-benchmark` suite for small, medium, and large form rendering.
+- **Playwright browser tests** — End-to-end HTMX validation tests against a live FastAPI server
+  (`tests/playwright/`), running in CI on Chromium.
+- **macOS in CI matrix** — Tests now run on ubuntu-latest, windows-latest, and macos-latest.
+- `py.typed` marker for PEP 561 compatibility.
+- Vendored assets (htmx, Bootstrap, Materialize, iMask) with sha256 manifest verification.
+- `.gitattributes` forcing LF line endings on vendored assets for cross-platform checksum stability.
+
+### Fixed
+
+- **`create_form_from_model` crashed with any Pydantic model** — `AutoFormBuilder._build_from_model`
+  used the wrong parameter name (`default_value` instead of `value`) and compared against `...`
+  instead of `PydanticUndefined`; the sentinel leaked into `json_schema_extra`, causing
+  `PydanticSerializationError` on every render call.
+- Windows path separator in test assertion caused CI failure on win32.
+- Dependabot config used unsupported `interval: "cron"` — silently ignored, causing weekly runs.
+  Replaced with `interval: "monthly"`.
+- HTMX live validation JS used `JSON.parse(responseText)` on HTML responses; replaced with
+  the idiomatic `HX-Trigger: validationResult` header pattern so CSS classes are applied correctly.
+- `except A, B:` tuple syntax preserved via `# fmt: skip` to prevent ruff from removing parentheses
+  that pyright requires.
 
 ### Changed
 
 - Layout rendering internals refactored for maintainability and reduced cognitive complexity.
-- Reliability and maintainability improvements to satisfy SonarCloud findings.
+- Reliability and maintainability improvements to satisfy SonarCloud quality gate.
 - Improved nested/collapsible form behavior when multiple forms are rendered on a page.
-- Better timing/logging support in examples and diagnostics.
-
-### Fixed
-
-- Removed implicit default submit target behavior (`/submit`) and aligned all call sites/tests.
-- Fixed FastAPI showcase POST re-render path by passing explicit submit target in error flows.
-- Fixed datetime/month/week conversion edge cases (`datetime` vs `date` branch ordering).
-- Fixed model-list and nested rendering edge behavior across schema and runtime paths.
+- Pre-commit ruff version pinned to match `requirements.txt` to eliminate local/CI formatting drift.
+- Pyright added to `make tests` so type errors surface before commit.
 
 ### Dependencies
 

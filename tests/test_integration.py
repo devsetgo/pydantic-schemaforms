@@ -898,6 +898,60 @@ class TestAutoFormBuilder:
         assert field_map['required_field'].required is True
         assert field_map['optional_field'].required is False
 
+    # ------------------------------------------------------------------
+    # Render-path tests — these were missing and hid the PydanticUndefined
+    # serialisation bug in create_form_from_model / AutoFormBuilder.render()
+    # ------------------------------------------------------------------
+
+    def test_render_plain_basemodel(self):
+        """create_form_from_model(BaseModel).render() must not crash."""
+
+        class SimpleUser(BaseModel):
+            name: str
+            email: str
+            age: int
+
+        html = create_form_from_model(SimpleUser).render()
+        assert 'name' in html
+        assert 'email' in html
+        assert 'age' in html
+        assert len(html) > 100
+
+    def test_render_formmodel(self):
+        """create_form_from_model(FormModel).render() must not crash."""
+        from pydantic_schemaforms import FormModel, Field
+
+        class ContactForm(FormModel):
+            name: str = Field(title='Full Name')
+            email: str = Field(title='Email', ui_element='email')
+            message: str = Field(title='Message', ui_element='textarea')
+
+        html = create_form_from_model(ContactForm).render()
+        assert 'Full Name' in html or 'name' in html
+        assert len(html) > 100
+
+    def test_render_model_with_defaults(self):
+        """Optional fields with defaults must not leak PydanticUndefined."""
+
+        class SettingsModel(BaseModel):
+            username: str
+            theme: str = 'light'
+            notifications: bool = True
+
+        html = create_form_from_model(SettingsModel).render()
+        assert 'username' in html
+        assert 'theme' in html
+        assert len(html) > 100
+
+    def test_render_produces_valid_html_structure(self):
+        """Rendered HTML must contain form and input elements."""
+
+        class MinimalModel(BaseModel):
+            title: str
+
+        html = create_form_from_model(MinimalModel).render()
+        assert '<input' in html or '<textarea' in html or '<select' in html
+
 
 # ===========================================================================
 # Section 13 – Builder factory functions
