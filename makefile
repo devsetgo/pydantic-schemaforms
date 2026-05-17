@@ -22,7 +22,7 @@ LOG_LEVEL = debug
 REQUIREMENTS_PATH = requirements.txt
 # DEV_REQUIREMENTS_PATH = requirements/dev.txt
 
-.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test
+.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test ex-run ex-test
 
 .PHONY: vendor-update-htmx vendor-verify
 
@@ -116,7 +116,7 @@ test: ## Run the project's tests (linting + pyright + pytest + coverage badges)
 	echo "✅ Type check passed. Running form-data parser regression tests..."; \
 	$(PYTHON) -m pytest -q tests/test_form_data_parsing.py; \
 	echo "🧪 Regression passed. Running full pytest suite..."; \
-	$(PYTHON) -m pytest -n 2; \
+	$(PYTHON) -m pytest -n 4; \
 	echo "📊 Generating coverage and test badges..."; \
 	genbadge coverage -i /workspaces/$(REPONAME)/coverage.xml 2>/dev/null || true; \
 	genbadge tests -i /workspaces/$(REPONAME)/report.xml 2>/dev/null || true; \
@@ -154,13 +154,9 @@ ruff: ## Format Python code with Ruff
 ex-run: ## Run the FastAPI example (async implementation)
 	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port $(PORT) --reload --reload-dir .. --log-level debug
 
-ex-flask: ## Run the Flask example (sync implementation)
-	cd examples && $(PYTHON) flask_example.py
-
-ex-test: ## Test that both examples can be imported successfully
-	cd examples && $(PYTHON) -c "import flask_example; print('✅ Flask example imports correctly')"
+ex-test: ## Test that the FastAPI example can be imported successfully
 	cd examples && $(PYTHON) -c "import fastapi_example; print('✅ FastAPI example imports correctly')"
-	@echo "🎉 Both examples are ready to run!"
+	@echo "🎉 FastAPI example is ready to run!"
 
 kill:  # Kill any process running on the app port
 	@echo "Stopping any process running on port ${PORT}..."

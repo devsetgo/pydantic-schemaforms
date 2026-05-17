@@ -35,6 +35,8 @@ from pydantic_schemaforms.vendor_assets import (
     upsert_asset_entry,
     env_truthy,
     _safe_member_bytes_from_tgz,
+    _sanitize_file_entry,
+    _sanitize_manifest,
     _write_vendored_file,
     http_get_bytes,
     latest_htmx_version,
@@ -46,6 +48,7 @@ from pydantic_schemaforms.vendor_assets import (
     vendor_materialize,
     vendor_bootstrap,
     verify_manifest_files,
+    write_manifest,
 )
 
 from pydantic_schemaforms.render_form import render_form_html
@@ -1131,6 +1134,279 @@ class TestVendorBootstrap:
 
         saved_manifest = mock_save.call_args[0][0]
         assert saved_manifest['schema_version'] == 1
+
+
+class TestSanitizeFileEntry:
+    """Tests for _sanitize_file_entry helper."""
+
+    def _roots(self):
+        root = project_root().resolve()
+        vendor_root = (root / Path('pydantic_schemaforms') / 'assets' / 'vendor').resolve()
+        return root, vendor_root
+
+    def test_returns_none_for_non_dict(self):
+        root, vendor_root = self._roots()
+        assert _sanitize_file_entry('bad', root, vendor_root) is None
+        assert _sanitize_file_entry(42, root, vendor_root) is None
+        assert _sanitize_file_entry(None, root, vendor_root) is None
+
+    def test_returns_clean_dict_for_valid_entry(self):
+        root, vendor_root = self._roots()
+        f = {
+            'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js',
+            'sha256': 'a' * 64,
+            'source_url': 'https://example.com',
+            'extra': 'stripped',
+        }
+        result = _sanitize_file_entry(f, root, vendor_root)
+        assert result is not None
+        assert 'extra' not in result
+        assert result['path'] == 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js'
+
+    def test_empty_path_is_allowed(self):
+        root, vendor_root = self._roots()
+        result = _sanitize_file_entry(
+            {'path': '', 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root
+        )
+        assert result is not None
+        assert result['path'] == ''
+
+    def test_non_string_path_is_allowed(self):
+        root, vendor_root = self._roots()
+        result = _sanitize_file_entry(
+            {'path': None, 'sha256': 'a' * 64, 'source_url': 'x'}, root, vendor_root
+        )
+        assert result is not None
+
+    def test_path_traversal_raises(self):
+        root, vendor_root = self._roots()
+        f = {'path': '../../etc/passwd', 'sha256': 'a' * 64, 'source_url': 'x'}
+        with pytest.raises(ValueError, match='manifest path escapes vendor directory'):
+            _sanitize_file_entry(f, root, vendor_root)
+
+
+class TestSanitizeManifest:
+    """Tests for _sanitize_manifest — covers every branch for Sonar S2083 coverage."""
+
+    def _valid_manifest(self):
+        return {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'htmx',
+                    'version': '2.0.0',
+                    'files': [
+                        {
+                            'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js',
+                            'sha256': 'a' * 64,
+                            'source_url': 'https://example.com/htmx.min.js',
+                        }
+                    ],
+                }
+            ],
+        }
+
+    def test_returns_clean_copy_of_valid_manifest(self):
+        result = _sanitize_manifest(self._valid_manifest())
+        assert result['schema_version'] == 1
+        assert len(result['assets']) == 1
+        assert result['assets'][0]['name'] == 'htmx'
+        assert result['assets'][0]['version'] == '2.0.0'
+        assert len(result['assets'][0]['files']) == 1
+
+    def test_strips_unknown_asset_fields(self):
+        manifest = self._valid_manifest()
+        manifest['assets'][0]['injected_field'] = 'evil'
+        result = _sanitize_manifest(manifest)
+        assert 'injected_field' not in result['assets'][0]
+
+    def test_strips_unknown_file_fields(self):
+        manifest = self._valid_manifest()
+        manifest['assets'][0]['files'][0]['extra'] = 'bad'
+        result = _sanitize_manifest(manifest)
+        assert 'extra' not in result['assets'][0]['files'][0]
+
+    def test_skips_non_dict_assets(self):
+        manifest = {'schema_version': 1, 'assets': ['not_a_dict', None]}
+        result = _sanitize_manifest(manifest)
+        assert result['assets'] == []
+
+    def test_skips_non_dict_files(self):
+        manifest = self._valid_manifest()
+        manifest['assets'][0]['files'] = ['bad', 42]
+        result = _sanitize_manifest(manifest)
+        assert result['assets'][0]['files'] == []
+
+    def test_missing_schema_version_defaults_to_1(self):
+        manifest = {'assets': []}
+        result = _sanitize_manifest(manifest)
+        assert result['schema_version'] == 1
+
+    def test_empty_assets_list(self):
+        result = _sanitize_manifest({'schema_version': 2, 'assets': []})
+        assert result['assets'] == []
+        assert result['schema_version'] == 2
+
+    def test_path_escaping_vendor_directory_raises(self):
+        manifest = {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'evil',
+                    'files': [
+                        {
+                            'path': '../../etc/passwd',
+                            'sha256': 'a' * 64,
+                            'source_url': 'https://x.com',
+                        }
+                    ],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match='manifest path escapes vendor directory'):
+            _sanitize_manifest(manifest)
+
+    def test_file_with_empty_path_is_allowed(self):
+        manifest = {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'test',
+                    'files': [{'path': '', 'sha256': 'a' * 64, 'source_url': 'https://x.com'}],
+                }
+            ],
+        }
+        result = _sanitize_manifest(manifest)
+        assert result['assets'][0]['files'][0]['path'] == ''
+
+    def test_file_with_non_string_path_is_allowed(self):
+        manifest = {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'test',
+                    'files': [{'path': None, 'sha256': 'a' * 64, 'source_url': 'https://x.com'}],
+                }
+            ],
+        }
+        result = _sanitize_manifest(manifest)
+        assert result['assets'][0]['files'][0]['path'] == 'None'
+
+    def test_multiple_assets_all_sanitized(self):
+        manifest = {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'htmx',
+                    'version': '2.0.0',
+                    'files': [
+                        {
+                            'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js',
+                            'sha256': 'a' * 64,
+                            'source_url': 'https://x.com',
+                        }
+                    ],
+                },
+                {
+                    'name': 'bootstrap',
+                    'version': '5.3.0',
+                    'files': [
+                        {
+                            'path': 'pydantic_schemaforms/assets/vendor/bootstrap/bootstrap.min.css',
+                            'sha256': 'b' * 64,
+                            'source_url': 'https://x.com',
+                        }
+                    ],
+                },
+            ],
+        }
+        result = _sanitize_manifest(manifest)
+        assert len(result['assets']) == 2
+        assert result['assets'][0]['name'] == 'htmx'
+        assert result['assets'][1]['name'] == 'bootstrap'
+
+
+class TestWriteManifest:
+    """Tests for write_manifest — exercises the sanitize→write path."""
+
+    def test_write_manifest_calls_sanitize_and_writes(self, tmp_path):
+        manifest_file = tmp_path / 'vendor_manifest.json'
+        manifest_file.write_text('{}', encoding='utf-8')
+
+        valid_manifest = {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'htmx',
+                    'version': '2.0.0',
+                    'files': [
+                        {
+                            'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js',
+                            'sha256': 'a' * 64,
+                            'source_url': 'https://example.com/htmx.min.js',
+                        }
+                    ],
+                }
+            ],
+        }
+
+        with patch('pydantic_schemaforms.vendor_assets.manifest_path', return_value=manifest_file):
+            write_manifest(valid_manifest)
+
+        written = json.loads(manifest_file.read_text(encoding='utf-8'))
+        assert written['schema_version'] == 1
+        assert written['assets'][0]['name'] == 'htmx'
+
+    def test_write_manifest_rejects_path_traversal(self):
+        evil_manifest = {
+            'schema_version': 1,
+            'assets': [
+                {
+                    'name': 'evil',
+                    'files': [
+                        {
+                            'path': '../../etc/passwd',
+                            'sha256': 'a' * 64,
+                            'source_url': 'https://x.com',
+                        }
+                    ],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match='manifest path escapes vendor directory'):
+            write_manifest(evil_manifest)
+
+    def test_write_manifest_strips_extra_fields(self, tmp_path):
+        manifest_file = tmp_path / 'vendor_manifest.json'
+        manifest_file.write_text('{}', encoding='utf-8')
+
+        manifest = {
+            'schema_version': 1,
+            'injected': 'evil',
+            'assets': [
+                {
+                    'name': 'htmx',
+                    'version': '2.0.0',
+                    'unknown_key': 'bad',
+                    'files': [
+                        {
+                            'path': 'pydantic_schemaforms/assets/vendor/htmx/htmx.min.js',
+                            'sha256': 'a' * 64,
+                            'source_url': 'https://example.com',
+                            'extra': 'stripped',
+                        }
+                    ],
+                }
+            ],
+        }
+
+        with patch('pydantic_schemaforms.vendor_assets.manifest_path', return_value=manifest_file):
+            write_manifest(manifest)
+
+        written = json.loads(manifest_file.read_text(encoding='utf-8'))
+        assert 'injected' not in written
+        assert 'unknown_key' not in written['assets'][0]
+        assert 'extra' not in written['assets'][0]['files'][0]
 
 
 class TestVerifyManifestFiles:
