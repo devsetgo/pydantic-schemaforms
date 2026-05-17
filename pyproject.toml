@@ -30,8 +30,6 @@ fastapi = [ "fastapi>=0.110", "uvicorn>=0.30",]
 flask = [ "flask>=3.0",]
 dev = [ "fastapi[all]==0.136.1", "Flask==3.1.3", "pytest==9.0.3", "pytest-asyncio==1.3.0", "pytest-cov==7.1.0",]
 
-[project.scripts]
-
 [tool.ruff]
 line-length = 100
 indent-width = 4
@@ -108,6 +106,7 @@ source = [ "pydantic_schemaforms",]
 omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
 
 [tool.coverage.report]
+fail_under = 90
 exclude_lines = [ "pragma: no cover", "if __name__", "def main", "import_sqlalchemy",]
 
 [tool.pytest.ini_options]

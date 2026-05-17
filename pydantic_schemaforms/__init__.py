@@ -19,6 +19,10 @@ import os
 from importlib import import_module
 from typing import Any
 
+# Version guard first — gives a clean error on Python < 3.14 before any
+# other import can raise a cryptic SyntaxError or AttributeError.
+from .version_check import check_python_version, verify_template_strings
+
 from .enhanced_renderer import (
     CSRFMode,
     EnhancedFormRenderer,
@@ -116,9 +120,6 @@ from .validation import (
     create_validator,
 )
 
-# Check Python version before any other imports
-from .version_check import check_python_version, verify_template_strings
-
 # Legacy compatibility (deprecated) - archived modules
 # The following modules have been archived:
 # - form_layout.py -> use layouts.py instead
@@ -172,10 +173,21 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     # ── LAYOUT: layout engines and composers ──
     'VerticalLayout',
     'HorizontalLayout',
+    'GridLayout',
+    'ResponsiveGridLayout',
+    'CardLayout',
+    'AccordionLayout',
+    'ModalLayout',
+    'TabLayout',
     'TabbedLayout',
     'ListLayout',
     'Layout',
     'LayoutComposer',
+    'LayoutFactory',
+    'RenderContext',
+    # ── LIVE VALIDATION ──
+    'HTMXValidationConfig',
+    'LiveValidator',
     # ── VALIDATION: rule classes and factory ──
     'create_validator',
     'FormValidator',
@@ -258,12 +270,12 @@ tabs_html = Layout.tabs([
 
 5. Framework integration:
 ```python
-# Flask
+# Flask (sync)
 from pydantic_schemaforms import FormIntegration
-result = FormIntegration.flask_integration(form)
+result = FormIntegration.sync_integration(form)
 
-# FastAPI
-result = await FormIntegration.fastapi_integration(form, data)
+# FastAPI (async)
+result = await FormIntegration.async_integration(form, data)
 ```
 """
 
