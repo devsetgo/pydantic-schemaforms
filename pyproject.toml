@@ -106,14 +106,13 @@ source = [ "pydantic_schemaforms",]
 omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
 
 [tool.coverage.report]
-fail_under = 90
 exclude_lines = [ "pragma: no cover", "if __name__", "def main", "import_sqlalchemy",]
 
 [tool.pytest.ini_options]
 norecursedirs = [ "/tests", ".hypothesis", "playwright",]
 testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
-addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
+addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester", "--cov-fail-under=90",]
 filterwarnings = [ "ignore:Default value .* is not JSON serializable", "ignore:Using extra keyword arguments on.*Field.*is deprecated", "ignore:ModernFormRenderer is deprecated",]
 
 [tool.ruff.lint.per-file-ignores]
