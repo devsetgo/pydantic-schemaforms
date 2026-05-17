@@ -142,16 +142,25 @@ logger.addHandler(logging.NullHandler())
 
 # Main exports for common usage
 __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
-    # Primary form building interface
-    'FormBuilder',
-    'AutoFormBuilder',
-    'create_form_from_model',
-    # FormModel abstraction
+    # ── PRIMARY: FormModel + render_form_html (recommended entry point) ──
     'FormModel',
     'Field',
     'form_validator',
     'ValidationResult',
-    # Enhanced FormField system
+    'render_form_html',
+    'render_form_html_async',
+    'EnhancedFormRenderer',
+    'CSRFMode',
+    'SchemaFormValidationError',
+    # ── BUILDER DSL: FormBuilder / AutoFormBuilder ──
+    'FormBuilder',
+    'AutoFormBuilder',
+    'create_form_from_model',
+    'create_login_form',
+    'create_registration_form',
+    'create_contact_form',
+    'render_form_page',
+    # ── FIELD TYPES: individual field descriptors ──
     'FormField',
     'TextField',
     'EmailField',
@@ -160,41 +169,33 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'CheckboxField',
     'DateField',
     'TextAreaField',
-    # Core renderers
-    'EnhancedFormRenderer',
-    'CSRFMode',
-    'SchemaFormValidationError',
-    'render_form_html',
-    'render_form_html_async',
-    # Pre-built form templates
-    'create_login_form',
-    'create_registration_form',
-    'create_contact_form',
-    # Layout system
+    # ── LAYOUT: layout engines and composers ──
     'VerticalLayout',
     'HorizontalLayout',
     'TabbedLayout',
     'ListLayout',
     'Layout',
     'LayoutComposer',
-    # Validation system
+    # ── VALIDATION: rule classes and factory ──
     'create_validator',
     'FormValidator',
     'RequiredRule',
     'EmailRule',
-    # Input types
+    # ── INPUT TYPE CONSTANTS ──
     'TEXT_INPUTS',
     'NUMERIC_INPUTS',
     'SELECTION_INPUTS',
     'DATETIME_INPUTS',
     'SPECIALIZED_INPUTS',
-    # Framework integration
+    # ── FRAMEWORK INTEGRATION: helpers for Flask / FastAPI ──
     'FormIntegration',
     'handle_form',
     'handle_form_async',
-    # Raw form-data helpers
+    # ── FORM DATA UTILITIES ──
     'parse_nested_form_data',
     'coerce_form_value',
+    # ── DEPRECATED: kept for backwards compat; will be removed ──
+    'ModernFormRenderer',  # use EnhancedFormRenderer or FormBuilder instead
     '__package_name__',
 ] + list(_INPUT_EXPORTS)
 

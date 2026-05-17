@@ -266,7 +266,13 @@ class FormDefinition:
 
 
 class ModernFormRenderer(EnhancedFormRenderer):
-    """Thin wrapper around EnhancedFormRenderer for legacy entry points."""
+    """Legacy renderer used internally by FormBuilder.
+
+    .. deprecated::
+        Instantiate :class:`~pydantic_schemaforms.EnhancedFormRenderer` directly,
+        or use the :class:`~pydantic_schemaforms.FormBuilder` DSL.
+        ``ModernFormRenderer`` will be removed in a future release.
+    """
 
     def __init__(
         self,
@@ -275,7 +281,17 @@ class ModernFormRenderer(EnhancedFormRenderer):
         *,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
+        _internal: bool = False,
     ):
+        if not _internal:
+            import warnings
+
+            warnings.warn(
+                'ModernFormRenderer is deprecated and will be removed in a future release. '
+                'Use EnhancedFormRenderer directly, or use the FormBuilder DSL instead.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
         super().__init__(
             framework=framework,
             theme=theme,
@@ -402,6 +418,7 @@ class ModernFormRenderer(EnhancedFormRenderer):
             theme=theme,
             include_framework_assets=self.include_framework_assets,
             asset_mode=self.asset_mode,
+            _internal=True,
         )
 
     def _clone_theme(self) -> Optional[RendererTheme]:

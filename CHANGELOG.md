@@ -4,32 +4,53 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## Unreleased (since untagged-bfb3bb98aa31ca386d88)
+## [26.2.1] — 2026-05-17
+
+First production release. All public Quick Start code paths verified working end-to-end.
 
 ### Breaking Changes
 
 - `submit_url` is now explicit across public form render APIs and no longer defaults silently.
-- Calls that omit `submit_url` now raise a clear error, enforcing app-owned routing boundaries.
+  Calls that omit `submit_url` raise a clear `ValueError`, enforcing app-owned routing boundaries.
 
 ### Added
 
-- Async-first rendering flow improvements and examples.
-- FastAPI form/style GET+POST matrix testing to validate route and style combinations.
-- Expanded coverage suites for renderer/input modules and validation pathways.
+- **HTMX live validation** — `LiveValidator`, `HTMXValidationConfig`, and `validation_response_headers()`
+  provide server-side field validation triggered by blur/input events via HTMX without page reloads.
+- **Branch coverage** — `branch = true` added to coverage configuration for deeper test quality.
+- **HTML structural validation** — `tests/test_html_structural.py` validates tag balance across all
+  frameworks and field types.
+- **HTTP integration tests** — FastAPI `TestClient` and Flask `test_client` round-trip tests.
+- **Property-based tests** — Hypothesis suite covering arbitrary field names, labels, and frameworks.
+- **Performance benchmarks** — `pytest-benchmark` suite for small, medium, and large form rendering.
+- **Playwright browser tests** — End-to-end HTMX validation tests against a live FastAPI server
+  (`tests/playwright/`), running in CI on Chromium.
+- **macOS in CI matrix** — Tests now run on ubuntu-latest, windows-latest, and macos-latest.
+- `py.typed` marker for PEP 561 compatibility.
+- Vendored assets (htmx, Bootstrap, Materialize, iMask) with sha256 manifest verification.
+- `.gitattributes` forcing LF line endings on vendored assets for cross-platform checksum stability.
+
+### Fixed
+
+- **`create_form_from_model` crashed with any Pydantic model** — `AutoFormBuilder._build_from_model`
+  used the wrong parameter name (`default_value` instead of `value`) and compared against `...`
+  instead of `PydanticUndefined`; the sentinel leaked into `json_schema_extra`, causing
+  `PydanticSerializationError` on every render call.
+- Windows path separator in test assertion caused CI failure on win32.
+- Dependabot config used unsupported `interval: "cron"` — silently ignored, causing weekly runs.
+  Replaced with `interval: "monthly"`.
+- HTMX live validation JS used `JSON.parse(responseText)` on HTML responses; replaced with
+  the idiomatic `HX-Trigger: validationResult` header pattern so CSS classes are applied correctly.
+- `except A, B:` tuple syntax preserved via `# fmt: skip` to prevent ruff from removing parentheses
+  that pyright requires.
 
 ### Changed
 
 - Layout rendering internals refactored for maintainability and reduced cognitive complexity.
-- Reliability and maintainability improvements to satisfy SonarCloud findings.
+- Reliability and maintainability improvements to satisfy SonarCloud quality gate.
 - Improved nested/collapsible form behavior when multiple forms are rendered on a page.
-- Better timing/logging support in examples and diagnostics.
-
-### Fixed
-
-- Removed implicit default submit target behavior (`/submit`) and aligned all call sites/tests.
-- Fixed FastAPI showcase POST re-render path by passing explicit submit target in error flows.
-- Fixed datetime/month/week conversion edge cases (`datetime` vs `date` branch ordering).
-- Fixed model-list and nested rendering edge behavior across schema and runtime paths.
+- Pre-commit ruff version pinned to match `requirements.txt` to eliminate local/CI formatting drift.
+- Pyright added to `make tests` so type errors surface before commit.
 
 ### Dependencies
 
@@ -43,6 +64,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `pymdown-extensions`: `10.20` → `10.20.1`
 
 ## Latest Changes
+### <span style='color:blue'>CSRF Feature Release</span> ([26.2.1.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.1.beta))
+
+## Changes
+- Documentation Updates (#116) (@devsetgo)
+
+## Features
+
+- bump to v26.2.1.beta (#117) (@devsetgo)
+- CSRF Feature (#114) (@devsetgo)
+
+## Maintenance
+
+- feat(csrf): add CSRFMode enum with backward-compatible mode handling (#115) (@devsetgo)
+- pip(deps): bump tox from 4.52.0 to 4.52.1 (#104) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump python-multipart from 0.0.24 to 0.0.26 (#106) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/upload-pages-artifact from 4 to 5 (#107) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump mike from 2.1.4 to 2.2.0 (#108) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump fastapi from 0.134.0 to 0.135.3 (#97) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pytest-cov from 7.0.0 to 7.1.0 (#98) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pydantic-extra-types from 2.11.1 to 2.11.2 (#99) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump python-multipart from 0.0.22 to 0.0.24 (#100) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pytest from 9.0.1 to 9.0.3 (#101) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/github-script from 7 to 9 (#102) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump release-drafter/release-drafter from 6.2.0 to 7.2.0 (#103) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- dependency update and tests (#96) (@devsetgo)
+- update of dependencies (#87) (@devsetgo)
+- pip(deps): bump hatchling from 1.28.0 to 1.29.0 (#73) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump tox from 4.44.0 to 4.46.3 (#74) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump fastapi[all] from 0.128.4 to 0.134.0 (#75) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump mkdocs-material from 9.7.2 to 9.7.3 (#76) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump ruff from 0.15.1 to 0.15.4 (#77) (@[dependabot[bot]](https://github.com/apps/dependabot))
+
+## Contributors
+@dependabot[bot], @devsetgo and [dependabot[bot]](https://github.com/apps/dependabot)
+
+
+Published Date: 2026 April 26, 19:26
+
 ### <span style='color:blue'>Removing External Validation Logic</span> ([26.1.8.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.8.beta))
 
 ## Changes
@@ -199,3 +258,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+
