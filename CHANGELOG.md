@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
+Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
+
 ## [26.2.1] — 2026-05-17
 
 First production release. All public Quick Start code paths verified working end-to-end.
@@ -64,6 +67,9 @@ First production release. All public Quick Start code paths verified working end
 - `pymdown-extensions`: `10.20` → `10.20.1`
 
 ## Latest Changes
+
+#### Production Releases
+
 ### <span style='color:blue'>CSRF Feature Release</span> ([26.2.1.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.1.beta))
 
 ## Changes
@@ -230,6 +236,9 @@ Published Date: 2026 January 18, 13:57
 
 
 Published Date: 2026 January 09, 21:46
+
+
+#### Pre-releases
 
 ### <span style='color:blue'>Initial Beta Release</span> ([26.1.1.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.1.beta))
 
