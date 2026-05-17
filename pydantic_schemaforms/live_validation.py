@@ -200,17 +200,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle HTMX validation responses
+    // Apply CSS classes after HTMX swap completes (triggered by HX-Trigger header)
+    document.addEventListener('validationResult', function(event) {
+        const field = event.detail.field;
+        const valid = event.detail.valid;
+        const element = document.getElementById(field);
+        if (!element) return;
+
+        hideValidationLoading(element);
+        element.classList.remove(
+            validationConfig.success_class,
+            validationConfig.error_class,
+            validationConfig.warning_class
+        );
+
+        if (valid) {
+            if (validationConfig.show_success_indicators) {
+                element.classList.add(validationConfig.success_class);
+            }
+        } else {
+            element.classList.add(validationConfig.error_class);
+        }
+    });
+
+    // Hide loading spinner after any validation request completes
     document.addEventListener('htmx:afterRequest', function(event) {
         const element = event.detail.elt;
         if (element.hasAttribute('data-validate-endpoint')) {
-            try {
-                const response = JSON.parse(event.detail.xhr.responseText);
-                handleValidationResponse(element, response);
-            } catch (e) {
-                console.error('Failed to parse validation response:', e);
-                hideValidationLoading(element);
-            }
+            hideValidationLoading(element);
         }
     });
 });
@@ -482,10 +499,31 @@ async def validate_field(field_name: str, request: ValidationRequest):
         return self.htmx_script.render(config_json=config_json)
 
 
+def validation_response_headers(field_name: str, is_valid: bool) -> Dict[str, str]:
+    """Return HTTP headers for a live-validation endpoint response.
+
+    Emits an ``HX-Trigger: validationResult`` header that the bundled
+    ``htmx_script`` JS uses to apply ``is-valid`` / ``is-invalid`` CSS
+    classes to the input without needing to parse the response body.
+
+    Usage (FastAPI)::
+
+        @app.post("/validate/{field_name}")
+        async def validate(field_name: str, value: str = Form("")):
+            result = live_validator.validate_field(field_name, value)
+            feedback = "<div>✓ OK</div>" if result.is_valid else f"<div>{result.errors[0]}</div>"
+            headers = validation_response_headers(field_name, result.is_valid)
+            return HTMLResponse(feedback, headers=headers)
+    """
+    trigger = json.dumps({'validationResult': {'field': field_name, 'valid': is_valid}})
+    return {'HX-Trigger': trigger}
+
+
 __all__ = [
     'ValidationResponse',
     'HTMXValidationConfig',
     'LiveValidator',
+    'validation_response_headers',
     'create_email_validator',
     'create_password_strength_validator',
 ]

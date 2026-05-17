@@ -108,7 +108,7 @@ omit = [ "setup.py", "_venv/*", "tests/*", "examples/*", "ex.py", "ex_*.py",]
 exclude_lines = [ "pragma: no cover", "if __name__", "def main", "import_sqlalchemy",]
 
 [tool.pytest.ini_options]
-norecursedirs = [ "/tests", ".hypothesis",]
+norecursedirs = [ "/tests", ".hypothesis", "playwright",]
 testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
