@@ -41,9 +41,49 @@ def load_manifest() -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8'))
 
 
+_ALLOWED_ASSET_FIELDS: frozenset[str] = frozenset({'name', 'version', 'files'})
+_ALLOWED_FILE_FIELDS: frozenset[str] = frozenset({'path', 'sha256', 'source_url'})
+_VENDOR_BASE = Path('pydantic_schemaforms') / 'assets' / 'vendor'
+
+
+def _sanitize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
+    """Return a sanitized copy, validating paths and whitelisting allowed fields.
+
+    Breaks the taint chain from HTTP-sourced data by reconstructing the
+    manifest from only known-safe fields and rejecting any path that escapes
+    the vendor directory.
+    """
+    root = project_root().resolve()
+    vendor_root = (root / _VENDOR_BASE).resolve()
+
+    clean_assets: list[dict[str, Any]] = []
+    for asset in manifest.get('assets', []):
+        if not isinstance(asset, dict):
+            continue
+        clean_files: list[dict[str, str]] = []
+        for f in asset.get('files', []):
+            if not isinstance(f, dict):
+                continue
+            rel = f.get('path', '')
+            if isinstance(rel, str) and rel:
+                abs_path = (root / rel).resolve()
+                if not abs_path.is_relative_to(vendor_root):
+                    raise ValueError(f'manifest path escapes vendor directory: {rel}')
+            clean_files.append({k: str(v) for k, v in f.items() if k in _ALLOWED_FILE_FIELDS})
+        clean_asset: dict[str, Any] = {k: v for k, v in asset.items() if k in _ALLOWED_ASSET_FIELDS}
+        clean_asset['files'] = clean_files
+        clean_assets.append(clean_asset)
+
+    return {
+        'schema_version': int(manifest.get('schema_version') or 1),
+        'assets': clean_assets,
+    }
+
+
 def write_manifest(manifest: dict[str, Any]) -> None:
+    clean = _sanitize_manifest(manifest)
     path = manifest_path()
-    path.write_text(json.dumps(manifest, indent=2, sort_keys=False) + '\n', encoding='utf-8')
+    path.write_text(json.dumps(clean, indent=2, sort_keys=False) + '\n', encoding='utf-8')
 
 
 def sha256_bytes(data: bytes) -> str:
