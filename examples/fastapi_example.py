@@ -51,7 +51,7 @@ from pydantic_schemaforms import __version__ as _psf_version
 from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
 from pydantic_schemaforms.form_data import parse_nested_form_data
-from pydantic_schemaforms.form_layouts import FormLayoutBase
+from pydantic_schemaforms import FormLayoutBase
 
 app = FastAPI(
     title='Pydantic SchemaForms - FastAPI Example',

@@ -1,6 +1,6 @@
 # Pydantic SchemaForms
 
-<img align="right" src="pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="336" />
+<img align="right" src="https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/main/docs/pydantic-schemaform-logo.png" alt="Pydantic SchemaForms logo" width="336" />
 
 [![PyPI version](https://badge.fury.io/py/pydantic-schemaforms.svg)](https://pypi.python.org/pypi/pydantic-schemaforms/)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms)](https://pepy.tech/project/pydantic-schemaforms)
@@ -202,7 +202,7 @@ async def register(request: Request):
 </head>
 <body class=\"container my-5\">
   <h1 class=\"mb-4\">Register</h1>
-  {form_html |safe}
+  {form_html}
 </body>
 </html>"""
 ```

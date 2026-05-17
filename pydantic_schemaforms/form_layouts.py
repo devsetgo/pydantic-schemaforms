@@ -1,12 +1,5 @@
-"""
-Legacy form layout composition helpers.
+"""Form layout composition helpers for building tabbed, vertical, horizontal, and list layouts."""
 
-This module is deprecated in favor of composing ``BaseLayout`` instances directly via
-``pydantic_schemaforms.rendering.layout_engine.LayoutComposer`` and rendering them through the
-shared ``LayoutEngine``.
-"""
-
-import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type
 
@@ -151,22 +144,11 @@ class FormDesign:
         return framework_js.get(self.ui_theme, '')
 
 
-_DEPRECATION_MESSAGE = (
-    'pydantic_schemaforms.form_layouts will be removed in a future release. Compose layouts '
-    'using LayoutComposer + LayoutEngine instead.'
-)
-
-
-def _warn_form_layouts_deprecated() -> None:
-    warnings.warn(_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=3)
-
-
 class FormLayoutBase(SharedBaseLayout, ABC):
     """Base class for layout components that orchestrate FormModel instances."""
 
     def __init__(self, form_config: Optional[SectionDesign] = None):
         super().__init__(content='')
-        _warn_form_layouts_deprecated()
         self.form_config = form_config
         self._forms: List[FormModel] = []
         self._rendered_content: Optional[str] = None

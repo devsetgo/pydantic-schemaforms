@@ -31,15 +31,14 @@ from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 from pydantic_schemaforms.integration import (
     FormBuilder,
     FormIntegration,
-    JSONSchemaGenerator,
-    OpenAPISchemaGenerator,
-    ReactJSONSchemaIntegration,
-    VueFormulateIntegration,
     handle_async_form,
     handle_form,
     handle_form_async,
     handle_sync_form,
 )
+from pydantic_schemaforms.integration.react import ReactJSONSchemaIntegration
+from pydantic_schemaforms.integration.schema import JSONSchemaGenerator, OpenAPISchemaGenerator
+from pydantic_schemaforms.integration.vue import VueFormulateIntegration
 from pydantic_schemaforms.integration.builder import (
     AutoFormBuilder,
     create_contact_form,

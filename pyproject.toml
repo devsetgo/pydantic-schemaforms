@@ -30,8 +30,6 @@ fastapi = [ "fastapi>=0.110", "uvicorn>=0.30",]
 flask = [ "flask>=3.0",]
 dev = [ "fastapi[all]==0.136.1", "Flask==3.1.3", "pytest==9.0.3", "pytest-asyncio==1.3.0", "pytest-cov==7.1.0",]
 
-[project.scripts]
-
 [tool.ruff]
 line-length = 100
 indent-width = 4
@@ -115,7 +113,7 @@ norecursedirs = [ "/tests", ".hypothesis", "playwright",]
 testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
-filterwarnings = [ "ignore:pydantic_schemaforms.form_layouts will be removed in a future release", "ignore:Default value .* is not JSON serializable", "ignore:Using extra keyword arguments on.*Field.*is deprecated", "ignore:ModernFormRenderer is deprecated",]
+filterwarnings = [ "ignore:Default value .* is not JSON serializable", "ignore:Using extra keyword arguments on.*Field.*is deprecated", "ignore:ModernFormRenderer is deprecated",]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = [ "F401", "F403",]
