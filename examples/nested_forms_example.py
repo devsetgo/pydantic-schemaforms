@@ -33,7 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pydantic import EmailStr, field_validator
 from pydantic_schemaforms.form_field import FormField
-from pydantic_schemaforms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
+from pydantic_schemaforms.form_layouts import TabbedLayout, VerticalLayout
 from pydantic_schemaforms.schema_form import FormModel
 
 
@@ -213,8 +213,7 @@ class TeamMember(FormModel):
         min_length=0,
         max_length=20,
         model_class=Certification,
-        add_button_text='➕ Add Certification',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Certification',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='{name} - {issuer}',
@@ -313,8 +312,7 @@ class Task(FormModel):
         min_length=0,
         max_length=50,
         model_class=Subtask,
-        add_button_text='➕ Add Subtask',
-        remove_button_text='Remove Subtask',
+        add_button_label='➕ Add Subtask',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔹 {title}',
@@ -377,8 +375,7 @@ class Team(FormModel):
         min_length=1,
         max_length=100,
         model_class=TeamMember,
-        add_button_text='👤 Add Team Member',
-        remove_button_text='Remove Member',
+        add_button_label='👤 Add Team Member',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👤 {name} - {role}',
@@ -465,8 +462,7 @@ class Project(FormModel):
         min_length=1,
         max_length=200,
         model_class=Task,
-        add_button_text='📝 Add Task',
-        remove_button_text='Remove Task',
+        add_button_label='📝 Add Task',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📋 {title}',
@@ -484,97 +480,8 @@ class Project(FormModel):
 # LEVEL 2 - Containers for Level 3
 # ============================================================================
 
+
 # ============================================================================
-# LAYOUT DEMO FORMS (PUSH LAYOUT ENGINE)
-# ============================================================================
-
-
-class DepartmentSummaryForm(FormModel):
-    """Compact summary form used inside layout demos."""
-
-    strategic_goal: str = FormField(
-        title='Strategic Goal',
-        input_type='text',
-        placeholder='e.g., Reduce infra costs by 15%',
-        help_text='Primary department goal for this year',
-        icon='bullseye',
-        max_length=200,
-    )
-
-    hiring_plan: str = FormField(
-        title='Hiring Plan',
-        input_type='textarea',
-        placeholder='Describe the hiring plan for the next 12 months',
-        help_text='Key roles and timeline',
-        max_length=1000,
-    )
-
-    risk_level: str = FormField(
-        'medium',
-        title='Risk Level',
-        input_type='select',
-        options=[
-            {'value': 'low', 'label': '🟢 Low'},
-            {'value': 'medium', 'label': '🟡 Medium'},
-            {'value': 'high', 'label': '🔴 High'},
-        ],
-        help_text='Overall operational risk assessment',
-    )
-
-
-class ProjectPortfolioForm(FormModel):
-    """Portfolio-level details for layout demo."""
-
-    portfolio_owner: str = FormField(
-        title='Portfolio Owner',
-        input_type='text',
-        placeholder='Name of the portfolio owner',
-        help_text='Who owns this portfolio?',
-        icon='person-badge',
-        max_length=100,
-    )
-
-    quarterly_budget: float = FormField(
-        0.0,
-        title='Quarterly Budget ($)',
-        input_type='number',
-        help_text='Planned spend for this quarter',
-        icon='cash-coin',
-        min_value=0,
-    )
-
-    portfolio_status: str = FormField(
-        'on_track',
-        title='Portfolio Status',
-        input_type='select',
-        options=[
-            {'value': 'on_track', 'label': '✅ On Track'},
-            {'value': 'at_risk', 'label': '⚠️ At Risk'},
-            {'value': 'off_track', 'label': '🚨 Off Track'},
-        ],
-        help_text='Overall portfolio health',
-    )
-
-
-class DepartmentSummaryLayout(VerticalLayout):
-    """Vertical layout for department summary."""
-
-    form = DepartmentSummaryForm
-
-
-class ProjectPortfolioLayout(HorizontalLayout):
-    """Horizontal layout for project portfolio."""
-
-    form = ProjectPortfolioForm
-
-
-class DepartmentInsightsTabbed(TabbedLayout):
-    """Tabbed layout combining multiple layout types."""
-
-    summary = DepartmentSummaryLayout()
-    portfolio = ProjectPortfolioLayout()
-
-
 class Department(FormModel):
     """Level 2: Department with teams (Level 3) and projects (Level 3)."""
 
@@ -637,8 +544,7 @@ class Department(FormModel):
         min_length=1,
         max_length=50,
         model_class=Team,
-        add_button_text='👥 Add Team',
-        remove_button_text='Remove Team',
+        add_button_label='👥 Add Team',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👥 {name} (Lead: {team_lead})',
@@ -660,8 +566,7 @@ class Department(FormModel):
         min_length=0,
         max_length=100,
         model_class=Project,
-        add_button_text='🚀 Add Project',
-        remove_button_text='Remove Project',
+        add_button_label='🚀 Add Project',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🚀 {name}',
@@ -736,7 +641,7 @@ class CompanyOrganizationForm(FormModel):
         input_type='textarea',
         placeholder='Full address of headquarters',
         help_text='Main office address',
-        icon='map-marker',
+        icon='geo-alt',
         max_length=500,
     )
 
@@ -798,8 +703,7 @@ class CompanyOrganizationForm(FormModel):
         min_length=1,
         max_length=500,
         model_class=Department,
-        add_button_text='🏢 Add Department',
-        remove_button_text='Remove Department',
+        add_button_label='🏢 Add Department',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🏢 {name} (Head: {department_head})',
@@ -1198,8 +1102,7 @@ class ContactManagementForm(FormModel):
         min_length=0,
         max_length=10,
         model_class=PhoneNumber,
-        add_button_text='➕ Add Phone Number',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Phone Number',
         collapsible_items=True,
         items_expanded=True,
         item_title_template='📞 {phone_type}: {number}',
@@ -1221,8 +1124,7 @@ class ContactManagementForm(FormModel):
         min_length=0,
         max_length=5,
         model_class=Address,
-        add_button_text='➕ Add Address',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Address',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📍 {address_type}: {city}, {state}',
@@ -1423,8 +1325,7 @@ class SchedulingForm(FormModel):
         min_length=0,
         max_length=50,
         model_class=RecurringEvent,
-        add_button_text='➕ Add Recurring Event',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Recurring Event',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔄 {event_name} ({recurrence_pattern})',
@@ -1582,8 +1483,7 @@ class MediaFilesForm(FormModel):
         min_length=0,
         max_length=10,
         model_class=ColorTheme,
-        add_button_text='➕ Add Color Theme',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Color Theme',
         collapsible_items=True,
         items_expanded=True,
         item_title_template='🎨 {theme_name}',
@@ -1773,8 +1673,7 @@ class SettingsForm(FormModel):
         min_length=0,
         max_length=20,
         model_class=NotificationPreference,
-        add_button_text='➕ Add Notification Rule',
-        remove_button_text='Remove',
+        add_button_label='➕ Add Notification Rule',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔔 {event_category} via {notification_type}',
@@ -1942,10 +1841,96 @@ def create_sample_nested_data() -> dict:
                                         'credential_id': 'CKA-67890',
                                         'credential_url': 'https://cncf.io/verify/67890',
                                     },
+                                    {
+                                        'name': 'Google Cloud Professional Data Engineer',
+                                        'issuer': 'Google Cloud',
+                                        'issue_date': '2023-06-10',
+                                        'expiry_date': '2025-06-10',
+                                        'credential_id': 'GCP-DE-11223',
+                                        'credential_url': 'https://cloud.google.com/verify/11223',
+                                    },
                                 ],
-                            }
+                            },
+                            {
+                                'name': 'Maria Chen',
+                                'email': 'maria.chen@techcorp.com',
+                                'role': 'Backend Developer',
+                                'hire_date': '2019-03-10',
+                                'experience_years': 7,
+                                'manager': 'Alice Johnson',
+                                'certifications': [
+                                    {
+                                        'name': 'AWS Developer Associate',
+                                        'issuer': 'Amazon Web Services',
+                                        'issue_date': '2021-09-20',
+                                        'expiry_date': '2024-09-20',
+                                        'credential_id': 'AWS-DEV-44556',
+                                        'credential_url': 'https://aws.amazon.com/verification/44556',
+                                    },
+                                    {
+                                        'name': 'MongoDB Certified Developer',
+                                        'issuer': 'MongoDB Inc.',
+                                        'issue_date': '2022-11-05',
+                                        'expiry_date': None,
+                                        'credential_id': 'MONGO-77889',
+                                        'credential_url': 'https://university.mongodb.com/verify/77889',
+                                    },
+                                ],
+                            },
                         ],
-                    }
+                    },
+                    {
+                        'name': 'Frontend & UX',
+                        'description': 'Web interfaces and user experience design',
+                        'team_lead': 'Carlos Rivera',
+                        'formed_date': '2017-08-15',
+                        'members': [
+                            {
+                                'name': 'Priya Patel',
+                                'email': 'priya.patel@techcorp.com',
+                                'role': 'Senior Frontend Engineer',
+                                'hire_date': '2018-05-01',
+                                'experience_years': 9,
+                                'manager': 'Carlos Rivera',
+                                'certifications': [
+                                    {
+                                        'name': 'Google UX Design Certificate',
+                                        'issuer': 'Google',
+                                        'issue_date': '2021-04-15',
+                                        'expiry_date': None,
+                                        'credential_id': 'GUX-33445',
+                                        'credential_url': 'https://grow.google/verify/33445',
+                                    },
+                                    {
+                                        'name': 'Meta React Developer Certificate',
+                                        'issuer': 'Meta',
+                                        'issue_date': '2022-07-20',
+                                        'expiry_date': None,
+                                        'credential_id': 'META-REACT-55667',
+                                        'credential_url': 'https://coursera.org/verify/55667',
+                                    },
+                                ],
+                            },
+                            {
+                                'name': 'David Kim',
+                                'email': 'david.kim@techcorp.com',
+                                'role': 'UX Designer',
+                                'hire_date': '2020-11-20',
+                                'experience_years': 5,
+                                'manager': 'Carlos Rivera',
+                                'certifications': [
+                                    {
+                                        'name': 'Certified UX Professional',
+                                        'issuer': 'Nielsen Norman Group',
+                                        'issue_date': '2022-03-12',
+                                        'expiry_date': '2025-03-12',
+                                        'credential_id': 'NNG-UXP-99001',
+                                        'credential_url': 'https://nngroup.com/verify/99001',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
                 ],
                 'projects': [
                     {
@@ -1973,13 +1958,269 @@ def create_sample_nested_data() -> dict:
                                         'assigned_to': 'Bob Wilson',
                                         'estimated_hours': 16.0,
                                         'status': 'completed',
-                                    }
+                                    },
+                                    {
+                                        'title': 'Implement JWT token handling',
+                                        'description': 'Add token generation, validation, and refresh logic',
+                                        'assigned_to': 'Maria Chen',
+                                        'estimated_hours': 24.0,
+                                        'status': 'in_progress',
+                                    },
+                                    {
+                                        'title': 'Write integration tests',
+                                        'description': 'Cover all auth endpoints with pytest',
+                                        'assigned_to': 'Bob Wilson',
+                                        'estimated_hours': 20.0,
+                                        'status': 'pending',
+                                    },
                                 ],
-                            }
+                            },
+                            {
+                                'title': 'Build API Gateway',
+                                'description': 'Central entry point routing requests to microservices',
+                                'priority': 'high',
+                                'status': 'planning',
+                                'start_date': '2024-04-01',
+                                'due_date': '2024-05-31',
+                                'assigned_to': 'Maria Chen',
+                                'estimated_hours': 80.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Evaluate gateway options',
+                                        'description': 'Compare Kong, NGINX, and AWS API Gateway',
+                                        'assigned_to': 'Bob Wilson',
+                                        'estimated_hours': 8.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Configure rate limiting',
+                                        'description': 'Set per-client rate limits and burst handling',
+                                        'assigned_to': 'Maria Chen',
+                                        'estimated_hours': 16.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
+                            {
+                                'title': 'Database Sharding Strategy',
+                                'description': 'Design and implement horizontal database sharding',
+                                'priority': 'medium',
+                                'status': 'planning',
+                                'start_date': '2024-06-01',
+                                'due_date': '2024-08-31',
+                                'assigned_to': 'Bob Wilson',
+                                'estimated_hours': 160.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Analyze current query patterns',
+                                        'description': 'Profile slow queries and identify hot tables',
+                                        'assigned_to': 'Bob Wilson',
+                                        'estimated_hours': 24.0,
+                                        'status': 'pending',
+                                    },
+                                    {
+                                        'title': 'Design shard key schema',
+                                        'description': 'Choose optimal shard keys to minimize cross-shard queries',
+                                        'assigned_to': 'Maria Chen',
+                                        'estimated_hours': 16.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
                         ],
-                    }
+                    },
+                    {
+                        'name': 'Developer Portal Redesign',
+                        'description': 'Modernize the developer documentation and API explorer',
+                        'status': 'in_progress',
+                        'start_date': '2024-03-01',
+                        'target_end_date': '2024-09-30',
+                        'budget': 500000.0,
+                        'project_manager': 'Priya Patel',
+                        'tasks': [
+                            {
+                                'title': 'Redesign navigation & IA',
+                                'description': 'Restructure information architecture and top-level nav',
+                                'priority': 'high',
+                                'status': 'completed',
+                                'start_date': '2024-03-01',
+                                'due_date': '2024-04-15',
+                                'assigned_to': 'David Kim',
+                                'estimated_hours': 60.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'User interviews',
+                                        'description': 'Interview 10 external developers about pain points',
+                                        'assigned_to': 'David Kim',
+                                        'estimated_hours': 12.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Prototype new nav structure',
+                                        'description': 'Figma prototype for usability testing',
+                                        'assigned_to': 'David Kim',
+                                        'estimated_hours': 20.0,
+                                        'status': 'completed',
+                                    },
+                                ],
+                            },
+                            {
+                                'title': 'Implement interactive API playground',
+                                'description': 'Build in-browser API explorer powered by OpenAPI spec',
+                                'priority': 'medium',
+                                'status': 'in_progress',
+                                'start_date': '2024-05-01',
+                                'due_date': '2024-07-31',
+                                'assigned_to': 'Priya Patel',
+                                'estimated_hours': 120.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Integrate Swagger UI',
+                                        'description': 'Embed and theme Swagger UI component',
+                                        'assigned_to': 'Priya Patel',
+                                        'estimated_hours': 16.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Add auth token management',
+                                        'description': 'Let users paste/store API keys in the playground',
+                                        'assigned_to': 'Priya Patel',
+                                        'estimated_hours': 12.0,
+                                        'status': 'in_progress',
+                                    },
+                                    {
+                                        'title': 'Write end-to-end tests',
+                                        'description': 'Playwright tests for the playground UI',
+                                        'assigned_to': 'David Kim',
+                                        'estimated_hours': 20.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
                 ],
-            }
+            },
+            {
+                'name': 'Product',
+                'description': 'Product management, roadmap, and analytics',
+                'department_head': 'Linda Park',
+                'head_email': 'linda.park@techcorp.com',
+                'established_date': '2012-04-01',
+                'budget': 15000000.0,
+                'teams': [
+                    {
+                        'name': 'Product Strategy',
+                        'description': 'Roadmap planning and market research',
+                        'team_lead': 'Marcus Thompson',
+                        'formed_date': '2012-04-01',
+                        'members': [
+                            {
+                                'name': 'Sarah Nguyen',
+                                'email': 'sarah.nguyen@techcorp.com',
+                                'role': 'Senior Product Manager',
+                                'hire_date': '2017-07-10',
+                                'experience_years': 10,
+                                'manager': 'Marcus Thompson',
+                                'certifications': [
+                                    {
+                                        'name': 'Certified Scrum Product Owner',
+                                        'issuer': 'Scrum Alliance',
+                                        'issue_date': '2020-02-14',
+                                        'expiry_date': '2026-02-14',
+                                        'credential_id': 'CSPO-22334',
+                                        'credential_url': 'https://scrumalliance.org/verify/22334',
+                                    },
+                                    {
+                                        'name': 'Professional Scrum Master II',
+                                        'issuer': 'Scrum.org',
+                                        'issue_date': '2021-08-30',
+                                        'expiry_date': None,
+                                        'credential_id': 'PSM-II-55678',
+                                        'credential_url': 'https://scrum.org/verify/55678',
+                                    },
+                                ],
+                            },
+                            {
+                                'name': "James O'Brien",
+                                'email': 'james.obrien@techcorp.com',
+                                'role': 'Product Analyst',
+                                'hire_date': '2021-01-18',
+                                'experience_years': 4,
+                                'manager': 'Marcus Thompson',
+                                'certifications': [
+                                    {
+                                        'name': 'Google Analytics Individual Qualification',
+                                        'issuer': 'Google',
+                                        'issue_date': '2022-05-20',
+                                        'expiry_date': '2023-05-20',
+                                        'credential_id': 'GA-IQ-88990',
+                                        'credential_url': 'https://skillshop.google.com/verify/88990',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+                'projects': [
+                    {
+                        'name': 'Q3 Analytics Dashboard',
+                        'description': 'Self-serve analytics for enterprise customers',
+                        'status': 'planning',
+                        'start_date': '2024-07-01',
+                        'target_end_date': '2024-09-30',
+                        'budget': 300000.0,
+                        'project_manager': 'Sarah Nguyen',
+                        'tasks': [
+                            {
+                                'title': 'Define KPI requirements',
+                                'description': 'Gather requirements from top 20 enterprise customers',
+                                'priority': 'high',
+                                'status': 'in_progress',
+                                'start_date': '2024-07-01',
+                                'due_date': '2024-07-15',
+                                'assigned_to': "James O'Brien",
+                                'estimated_hours': 40.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Send requirements survey',
+                                        'description': 'Draft and send survey via Typeform to enterprise contacts',
+                                        'assigned_to': "James O'Brien",
+                                        'estimated_hours': 4.0,
+                                        'status': 'completed',
+                                    },
+                                    {
+                                        'title': 'Synthesize survey results',
+                                        'description': 'Analyze responses and produce a ranked KPI list',
+                                        'assigned_to': "James O'Brien",
+                                        'estimated_hours': 8.0,
+                                        'status': 'in_progress',
+                                    },
+                                ],
+                            },
+                            {
+                                'title': 'Design data model',
+                                'description': 'Schema design for analytics event store',
+                                'priority': 'medium',
+                                'status': 'pending',
+                                'start_date': '2024-07-16',
+                                'due_date': '2024-08-05',
+                                'assigned_to': 'Sarah Nguyen',
+                                'estimated_hours': 60.0,
+                                'subtasks': [
+                                    {
+                                        'title': 'Evaluate time-series DB options',
+                                        'description': 'Compare TimescaleDB, ClickHouse, and BigQuery',
+                                        'assigned_to': "James O'Brien",
+                                        'estimated_hours': 12.0,
+                                        'status': 'pending',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     }
 
@@ -2025,6 +2266,8 @@ def create_comprehensive_sample_data() -> dict:
             'phone_numbers': [
                 {'phone_type': 'mobile', 'number': '+1 (555) 123-4567', 'is_primary': True},
                 {'phone_type': 'work', 'number': '+1 (555) 987-6543', 'is_primary': False},
+                {'phone_type': 'home', 'number': '+1 (555) 246-8101', 'is_primary': False},
+                {'phone_type': 'fax', 'number': '+1 (555) 369-1215', 'is_primary': False},
             ],
             'addresses': [
                 {
@@ -2043,6 +2286,24 @@ def create_comprehensive_sample_data() -> dict:
                     'city': 'Palo Alto',
                     'state': 'CA',
                     'postal_code': '94301',
+                    'country': 'US',
+                },
+                {
+                    'address_type': 'billing',
+                    'street_line1': '789 Invoice Lane',
+                    'street_line2': None,
+                    'city': 'Oakland',
+                    'state': 'CA',
+                    'postal_code': '94601',
+                    'country': 'US',
+                },
+                {
+                    'address_type': 'shipping',
+                    'street_line1': '321 Parcel Road',
+                    'street_line2': 'Unit 7',
+                    'city': 'Berkeley',
+                    'state': 'CA',
+                    'postal_code': '94710',
                     'country': 'US',
                 },
             ],
@@ -2079,6 +2340,50 @@ def create_comprehensive_sample_data() -> dict:
                     'location': 'Main Auditorium',
                     'send_reminder': True,
                 },
+                {
+                    'event_name': 'Bi-weekly 1:1 with Manager',
+                    'event_type': 'meeting',
+                    'start_date': '2024-01-10',
+                    'start_time': '11:00',
+                    'duration_minutes': 60,
+                    'recurrence_pattern': 'biweekly',
+                    'end_date': None,
+                    'location': "Manager's Office",
+                    'send_reminder': True,
+                },
+                {
+                    'event_name': 'Sprint Planning',
+                    'event_type': 'meeting',
+                    'start_date': '2024-01-02',
+                    'start_time': '09:00',
+                    'duration_minutes': 120,
+                    'recurrence_pattern': 'biweekly',
+                    'end_date': '2024-12-31',
+                    'location': 'Virtual - Zoom',
+                    'send_reminder': True,
+                },
+                {
+                    'event_name': 'Annual Performance Review',
+                    'event_type': 'reminder',
+                    'start_date': '2024-12-01',
+                    'start_time': '09:00',
+                    'duration_minutes': 60,
+                    'recurrence_pattern': 'yearly',
+                    'end_date': None,
+                    'location': 'HR Office',
+                    'send_reminder': True,
+                },
+                {
+                    'event_name': 'Quarterly OKR Review',
+                    'event_type': 'deadline',
+                    'start_date': '2024-03-31',
+                    'start_time': '15:00',
+                    'duration_minutes': 90,
+                    'recurrence_pattern': 'monthly',
+                    'end_date': None,
+                    'location': 'Board Room',
+                    'send_reminder': True,
+                },
             ],
         },
         # Tab 5: Media & Files
@@ -2109,6 +2414,33 @@ def create_comprehensive_sample_data() -> dict:
                     'text_color': '#ecf0f1',
                     'is_default': False,
                 },
+                {
+                    'theme_name': 'Forest Green',
+                    'primary_color': '#27ae60',
+                    'secondary_color': '#16a085',
+                    'accent_color': '#d35400',
+                    'background_color': '#f0fdf4',
+                    'text_color': '#1a3c2a',
+                    'is_default': False,
+                },
+                {
+                    'theme_name': 'Sunset Coral',
+                    'primary_color': '#e74c3c',
+                    'secondary_color': '#e67e22',
+                    'accent_color': '#9b59b6',
+                    'background_color': '#fff5f5',
+                    'text_color': '#4a1010',
+                    'is_default': False,
+                },
+                {
+                    'theme_name': 'Monochrome',
+                    'primary_color': '#555555',
+                    'secondary_color': '#888888',
+                    'accent_color': '#111111',
+                    'background_color': '#fafafa',
+                    'text_color': '#222222',
+                    'is_default': False,
+                },
             ],
             'max_upload_size_mb': 25,
         },
@@ -2133,7 +2465,37 @@ def create_comprehensive_sample_data() -> dict:
                 },
                 {
                     'notification_type': 'push',
+                    'event_category': 'security',
+                    'enabled': True,
+                    'frequency': 'realtime',
+                },
+                {
+                    'notification_type': 'push',
                     'event_category': 'updates',
+                    'enabled': True,
+                    'frequency': 'daily',
+                },
+                {
+                    'notification_type': 'email',
+                    'event_category': 'updates',
+                    'enabled': True,
+                    'frequency': 'weekly',
+                },
+                {
+                    'notification_type': 'in_app',
+                    'event_category': 'reminders',
+                    'enabled': True,
+                    'frequency': 'realtime',
+                },
+                {
+                    'notification_type': 'sms',
+                    'event_category': 'reminders',
+                    'enabled': False,
+                    'frequency': 'realtime',
+                },
+                {
+                    'notification_type': 'email',
+                    'event_category': 'social',
                     'enabled': True,
                     'frequency': 'daily',
                 },

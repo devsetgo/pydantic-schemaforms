@@ -651,7 +651,7 @@ class LayoutEngine:
         form_mapping = {
             'vertical_tab': 'PersonalInfoForm',
             'horizontal_tab': 'ContactInfoForm',
-            'tabbed_tab': 'PreferencesForm',
+            'tabbed_tab': 'NotificationsForm',
             'list_tab': 'TaskListForm',
         }
 
@@ -666,9 +666,9 @@ class LayoutEngine:
                     from examples.shared_models import (
                         ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == 'PreferencesForm':
+                elif form_name == 'NotificationsForm':
                     from examples.shared_models import (
-                        PreferencesForm as FormClass,  # pylint: disable=import-outside-toplevel
+                        NotificationsForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
                 elif form_name == 'TaskListForm':
                     from examples.shared_models import (
@@ -816,7 +816,7 @@ class LayoutEngine:
         form_mapping = {
             'vertical_tab': 'PersonalInfoForm',
             'horizontal_tab': 'ContactInfoForm',
-            'tabbed_tab': 'PreferencesForm',
+            'tabbed_tab': 'NotificationsForm',
             'list_tab': 'TaskListForm',
         }
 
@@ -831,9 +831,9 @@ class LayoutEngine:
                     from examples.shared_models import (
                         ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
-                elif form_name == 'PreferencesForm':
+                elif form_name == 'NotificationsForm':
                     from examples.shared_models import (
-                        PreferencesForm as FormClass,  # pylint: disable=import-outside-toplevel
+                        NotificationsForm as FormClass,  # pylint: disable=import-outside-toplevel
                     )
                 elif form_name == 'TaskListForm':
                     from examples.shared_models import (
@@ -1003,7 +1003,12 @@ def _extract_fallback_mapped_data(field_name: str, main_data: Dict[str, Any]) ->
     field_data_mapping = {
         'vertical_tab': ['first_name', 'last_name', 'email', 'birth_date'],
         'horizontal_tab': ['phone', 'address', 'city', 'postal_code'],
-        'tabbed_tab': ['notification_email', 'notification_sms', 'theme', 'language'],
+        'tabbed_tab': [
+            'notification_email',
+            'notification_sms',
+            'notification_push',
+            'digest_frequency',
+        ],
         'list_tab': ['project_name', 'tasks'],
     }
 

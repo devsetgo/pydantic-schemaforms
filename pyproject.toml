@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "26.2.1.beta"
+version = "26.2.2"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
@@ -57,12 +57,10 @@ line_length = 100
 
 [tool.bumpcalver]
 version_format = "{current_date}.{build_count}"
-date_format = "%y.%q"       # YY.quarter  →  26.2
+date_format = "%y.%q"
 timezone = "America/New_York"
 git_tag = true
 auto_commit = false
-# beta_format: planned bumpcalver feature (tracked in bumpcalver repo).
-# When supported, beta bumps will use this PEP 440 suffix instead of ".beta".
 beta_format = "b{beta_count}"
 [[tool.bumpcalver.file]]
 path = "makefile"
@@ -92,6 +90,10 @@ line-length = 100
 target-version = [ "py314",]
 exclude = "(\n    /(\n        \\.git\n      | \\.hg\n      | \\.mypy_cache\n      | \\.tox\n      | \\.venv\n      | _venv\n      | build\n      | dist\n      | pydantic_schemaforms/assets/vendor/node_modules\n    )/\n)\n"
 
+[tool.pytest-benchmark]
+disable_gc = true
+warmup = false
+
 [tool.ruff.lint]
 select = [ "C", "F", "E", "W", "B",]
 ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
@@ -99,7 +101,6 @@ ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
-
 
 [tool.coverage.run]
 branch = true
@@ -115,10 +116,6 @@ testpaths = [ "tests",]
 python_files = [ "test_*.py", "*_test.py",]
 addopts = [ "--cov=./", "--cov-report=html", "--cov-report=xml", "--junitxml=report.xml", "--html=htmlcov/_test_report.html", "--self-contained-html", "-ra", "--strict-markers", "--tb=short", "-p", "pytester",]
 filterwarnings = [ "ignore:pydantic_schemaforms.form_layouts will be removed in a future release", "ignore:Default value .* is not JSON serializable", "ignore:Using extra keyword arguments on.*Field.*is deprecated", "ignore:ModernFormRenderer is deprecated",]
-
-[tool.pytest-benchmark]
-disable_gc = true
-warmup = false
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = [ "F401", "F403",]
