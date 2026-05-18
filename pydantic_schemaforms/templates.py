@@ -95,8 +95,8 @@ def _text_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
-        label, help_text, error_message, required, disabled, readonly, attributes
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = (
+        _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
@@ -136,8 +136,8 @@ def _email_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
-        label, help_text, error_message, required, disabled, readonly, attributes
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = (
+        _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
@@ -177,8 +177,8 @@ def _password_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
-        label, help_text, error_message, required, disabled, readonly, attributes
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = (
+        _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
@@ -226,8 +226,8 @@ def _number_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
-        label, help_text, error_message, required, disabled, readonly, attributes
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = (
+        _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
@@ -269,8 +269,8 @@ def _select_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label, _help_text, _error_message, _required, _disabled, _multiple, _attributes = _cast_input_html(
-        label, help_text, error_message, required, disabled, multiple, attributes
+    _label, _help_text, _error_message, _required, _disabled, _multiple, _attributes = (
+        _cast_input_html(label, help_text, error_message, required, disabled, multiple, attributes)
     )
     _options = SafeHTML(options)
     return html(t'''
@@ -312,8 +312,8 @@ def _textarea_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
-        label, help_text, error_message, required, disabled, readonly, attributes
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = (
+        _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
