@@ -20,6 +20,28 @@ from .tstring import SafeHTML, html
 
 __all__ = ['FormTemplates', 'TemplateString', 'render_template', 'create_custom_template']
 
+
+def _cast_input_html(
+    label: str,
+    help_text: str,
+    error_message: str,
+    required: str,
+    disabled: str,
+    sixth: str,
+    attributes: str,
+) -> tuple[SafeHTML, SafeHTML, SafeHTML, SafeHTML, SafeHTML, SafeHTML, SafeHTML]:
+    # Wraps the seven per-field HTML-fragment params to avoid CPD across input functions.
+    return (
+        SafeHTML(label),
+        SafeHTML(help_text),
+        SafeHTML(error_message),
+        SafeHTML(required),
+        SafeHTML(disabled),
+        SafeHTML(sixth),
+        SafeHTML(attributes),
+    )
+
+
 # ---------------------------------------------------------------------------
 # TemplateString — thin callable wrapper; keeps the .render(**kwargs) API
 # ---------------------------------------------------------------------------
@@ -73,13 +95,9 @@ def _text_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label = SafeHTML(label)
-    _help_text = SafeHTML(help_text)
-    _error_message = SafeHTML(error_message)
-    _required = SafeHTML(required)
-    _disabled = SafeHTML(disabled)
-    _readonly = SafeHTML(readonly)
-    _attributes = SafeHTML(attributes)
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
+        label, help_text, error_message, required, disabled, readonly, attributes
+    )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
     {_label}
@@ -118,13 +136,9 @@ def _email_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label = SafeHTML(label)
-    _help_text = SafeHTML(help_text)
-    _error_message = SafeHTML(error_message)
-    _required = SafeHTML(required)
-    _disabled = SafeHTML(disabled)
-    _readonly = SafeHTML(readonly)
-    _attributes = SafeHTML(attributes)
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
+        label, help_text, error_message, required, disabled, readonly, attributes
+    )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
     {_label}
@@ -163,13 +177,9 @@ def _password_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label = SafeHTML(label)
-    _help_text = SafeHTML(help_text)
-    _error_message = SafeHTML(error_message)
-    _required = SafeHTML(required)
-    _disabled = SafeHTML(disabled)
-    _readonly = SafeHTML(readonly)
-    _attributes = SafeHTML(attributes)
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
+        label, help_text, error_message, required, disabled, readonly, attributes
+    )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
     {_label}
@@ -216,13 +226,9 @@ def _number_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label = SafeHTML(label)
-    _help_text = SafeHTML(help_text)
-    _error_message = SafeHTML(error_message)
-    _required = SafeHTML(required)
-    _disabled = SafeHTML(disabled)
-    _readonly = SafeHTML(readonly)
-    _attributes = SafeHTML(attributes)
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
+        label, help_text, error_message, required, disabled, readonly, attributes
+    )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
     {_label}
@@ -263,13 +269,9 @@ def _select_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label = SafeHTML(label)
-    _help_text = SafeHTML(help_text)
-    _error_message = SafeHTML(error_message)
-    _required = SafeHTML(required)
-    _disabled = SafeHTML(disabled)
-    _multiple = SafeHTML(multiple)
-    _attributes = SafeHTML(attributes)
+    _label, _help_text, _error_message, _required, _disabled, _multiple, _attributes = _cast_input_html(
+        label, help_text, error_message, required, disabled, multiple, attributes
+    )
     _options = SafeHTML(options)
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
@@ -310,13 +312,9 @@ def _textarea_input(
     help_text: str = '',
     error_message: str = '',
 ) -> SafeHTML:
-    _label = SafeHTML(label)
-    _help_text = SafeHTML(help_text)
-    _error_message = SafeHTML(error_message)
-    _required = SafeHTML(required)
-    _disabled = SafeHTML(disabled)
-    _readonly = SafeHTML(readonly)
-    _attributes = SafeHTML(attributes)
+    _label, _help_text, _error_message, _required, _disabled, _readonly, _attributes = _cast_input_html(
+        label, help_text, error_message, required, disabled, readonly, attributes
+    )
     return html(t'''
 <div class="form-group {wrapper_class}" style="{wrapper_style}">
     {_label}
