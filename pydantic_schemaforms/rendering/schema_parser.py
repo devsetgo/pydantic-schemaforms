@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 
 from pydantic.fields import FieldInfo
 
-from ..schema_form import FormModel
+from pydantic_schemaforms.schema_form import FormModel
 
 
 @dataclass(frozen=True)

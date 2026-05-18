@@ -689,16 +689,12 @@ class EnhancedFormRenderer:
     def _render_material_help_block(self, help_text: Optional[str]) -> str:
         if not help_text:
             return ''
-        return render_template(
-            FormTemplates.MATERIAL_HELP_TEXT, help_content=html.escape(str(help_text))
-        )
+        return render_template(FormTemplates.MATERIAL_HELP_TEXT, help_content=str(help_text))
 
     def _render_material_error_block(self, error: Optional[str]) -> str:
         if not error:
             return ''
-        return render_template(
-            FormTemplates.MATERIAL_ERROR_TEXT, error_content=html.escape(str(error))
-        )
+        return render_template(FormTemplates.MATERIAL_ERROR_TEXT, error_content=str(error))
 
     def _wrap_material_field_body(
         self, *, field_body: str, help_text: Optional[str], error: Optional[str]
@@ -803,7 +799,7 @@ class EnhancedFormRenderer:
     ) -> str:
         error_class = ' error' if error else ''
         attrs = self._MATERIAL_REQUIRED if is_required else ''
-        value_content = html.escape(str(value)) if value is not None else ''
+        value_content = str(value) if value is not None else ''
         return render_template(
             FormTemplates.MATERIAL_TEXTAREA,
             name=self._attr(field_name),
@@ -835,7 +831,7 @@ class EnhancedFormRenderer:
                     FormTemplates.MATERIAL_SELECT_OPTION,
                     value=self._attr(opt_value),
                     selected=' selected="selected"' if is_selected else '',
-                    label=html.escape(str(opt_label)),
+                    label=str(opt_label),
                 )
             )
         return render_template(
@@ -868,7 +864,7 @@ class EnhancedFormRenderer:
             FormTemplates.MATERIAL_CHECKBOX_FIELD,
             name=self._attr(field_name),
             field_id=self._attr(field_name),
-            label=html.escape(label),
+            label=label,
             required_indicator=required_text,
             checked=checked_attr,
             required=required_attr,
@@ -910,7 +906,7 @@ class EnhancedFormRenderer:
             FormTemplates.MATERIAL_FIELD_INPUT_WRAPPER,
             input_control=control_html,
             field_id=self._attr(field_name),
-            label=html.escape(label),
+            label=label,
             required_indicator=required_text,
         )
         field_body = self._wrap_material_with_icon(icon, input_wrapper)

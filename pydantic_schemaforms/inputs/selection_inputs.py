@@ -4,9 +4,9 @@ Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
 from html import escape
-from string import Template
 from typing import Any, Dict, List, Optional
 
+from pydantic_schemaforms.tstring import substitute
 from .base import FormInput, SelectInputBase
 
 
@@ -37,14 +37,7 @@ class SelectInput(SelectInputBase):
         # Build the attributes string
         attributes_str = self._build_attributes_string(attrs)
 
-        # Use template substitution
-        try:
-            return Template(self.template).substitute(
-                attributes=attributes_str, options=options_html
-            )
-        except Exception:
-            # Fallback rendering
-            return f'<select {attributes_str}>{options_html}</select>'
+        return substitute(self.template, attributes=attributes_str, options=options_html)
 
     def _build_options(self, options: List[Dict[str, Any]]) -> str:
         """Build HTML options from list of option dictionaries."""
@@ -187,20 +180,12 @@ class CheckboxGroup(SelectInputBase):
         checkboxes_html = '\n'.join(checkboxes)
         legend_text = legend or group_name.replace('_', ' ').title()
 
-        try:
-            return Template(self.template).substitute(
-                fieldset_attributes=fieldset_attributes_str,
-                legend=escape(legend_text),
-                checkboxes=checkboxes_html,
-            )
-        except Exception:
-            # Fallback rendering
-            return f"""
-            <fieldset class="checkbox-group" {fieldset_attributes_str}>
-                <legend>{escape(legend_text)}</legend>
-                {checkboxes_html}
-            </fieldset>
-            """
+        return substitute(
+            self.template,
+            fieldset_attributes=fieldset_attributes_str,
+            legend=escape(legend_text),
+            checkboxes=checkboxes_html,
+        )
 
 
 class RadioInput(FormInput):
@@ -284,20 +269,12 @@ class RadioGroup(SelectInputBase):
         radio_buttons_html = '\n'.join(radio_buttons)
         legend_text = legend or group_name.replace('_', ' ').title()
 
-        try:
-            return Template(self.template).substitute(
-                fieldset_attributes=fieldset_attributes_str,
-                legend=escape(legend_text),
-                radio_buttons=radio_buttons_html,
-            )
-        except Exception:
-            # Fallback rendering
-            return f"""
-            <fieldset class="radio-group" {fieldset_attributes_str}>
-                <legend>{escape(legend_text)}</legend>
-                {radio_buttons_html}
-            </fieldset>
-            """
+        return substitute(
+            self.template,
+            fieldset_attributes=fieldset_attributes_str,
+            legend=escape(legend_text),
+            radio_buttons=radio_buttons_html,
+        )
 
 
 class ToggleSwitch(CheckboxInput):
@@ -365,17 +342,9 @@ class ComboBoxInput(SelectInput):
             del input_attrs['type']
         input_attributes_str = self._build_attributes_string(input_attrs)
 
-        try:
-            return Template(self.template).substitute(
-                input_attributes=input_attributes_str, datalist_id=datalist_id, options=options_html
-            )
-        except Exception:
-            # Fallback rendering
-            return f"""
-            <div class="combobox-wrapper">
-                <input type="text" {input_attributes_str} list="{datalist_id}" />
-                <datalist id="{datalist_id}">
-                    {options_html}
-                </datalist>
-            </div>
-            """
+        return substitute(
+            self.template,
+            input_attributes=input_attributes_str,
+            datalist_id=datalist_id,
+            options=options_html,
+        )

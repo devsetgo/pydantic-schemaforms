@@ -6,10 +6,10 @@ from html import escape
 import re
 from typing import Any, Dict, List, Optional
 
-from ..icon_mapping import map_icon_for_framework
-from ..inputs import HiddenInput
-from ..rendering.context import RenderContext
-from ..rendering.frameworks import get_input_component
+from pydantic_schemaforms.icon_mapping import map_icon_for_framework
+from pydantic_schemaforms.inputs import HiddenInput
+from pydantic_schemaforms.rendering.context import RenderContext
+from pydantic_schemaforms.rendering.frameworks import get_input_component
 from .themes import RendererTheme
 
 
@@ -204,7 +204,7 @@ class FieldRenderer:
         context: RenderContext,
         all_errors: Optional[Dict[str, str]],
     ) -> str:
-        from ..model_list import ModelListRenderer
+        from pydantic_schemaforms.model_list import ModelListRenderer
 
         list_renderer = ModelListRenderer(framework=self.framework)
         model_class = ui_info.get('model_class')

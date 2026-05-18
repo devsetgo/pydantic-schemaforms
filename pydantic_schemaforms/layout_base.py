@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from string import Template
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Union
+
+from .tstring import substitute
 
 try:  # pragma: no cover - optional import for typing only
     from typing import TYPE_CHECKING
@@ -34,7 +35,6 @@ class BaseLayout:
     ) -> None:
         self.content = content
         self.attributes = attributes
-        self.template_renderer = Template(self.template)
 
     # ------------------------------------------------------------------
     # Core rendering API shared across layout stacks
@@ -66,8 +66,7 @@ class BaseLayout:
             **attrs,
         }
 
-        # Use safe_substitute so optional attributes do not raise key errors.
-        return self.template_renderer.safe_substitute(**template_data)
+        return substitute(self.template, **template_data)
 
     # ------------------------------------------------------------------
     # Helpers

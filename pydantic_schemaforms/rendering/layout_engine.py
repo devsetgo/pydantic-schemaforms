@@ -5,13 +5,13 @@ from __future__ import annotations
 from html import escape
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ..layout_base import BaseLayout
-from ..templates import FormTemplates
+from pydantic_schemaforms.layout_base import BaseLayout
+from pydantic_schemaforms.templates import FormTemplates
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ..enhanced_renderer import EnhancedFormRenderer
+    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
 
 Renderable = Union[str, List[str]]
@@ -886,10 +886,10 @@ class LayoutEngine:
 
         help_html = ''
         if help_text:
-            help_html = help_template.render(help_text=escape(help_text))
+            help_html = help_template.render(help_text=help_text)
 
         return layout_template.render(
-            title=escape(title),
+            title=title,
             help_html=help_html,
             body_html=body_html,
         )

@@ -96,8 +96,8 @@ from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 from pydantic_schemaforms.templates import (
     TemplateString,
     create_custom_template,
-    validate_template_variables,
 )
+from pydantic_schemaforms.tstring import SafeHTML, html as thtml
 import pydantic_schemaforms.inputs.specialized_inputs as specialized_inputs
 
 
@@ -1183,7 +1183,7 @@ def test_text_specialized_renderers_cover_patterns() -> None:
     assert '$0.00' in currency_html
 
 
-def test_selection_toggle_and_combobox_and_radio_fallback(monkeypatch) -> None:
+def test_selection_toggle_and_combobox_and_radio_fallback() -> None:
     toggle_html = ToggleSwitch().render(name='enabled', label='Enabled')
     assert 'toggle-switch-wrapper' in toggle_html
     assert 'toggle-switch-text' in toggle_html
@@ -1193,25 +1193,21 @@ def test_selection_toggle_and_combobox_and_radio_fallback(monkeypatch) -> None:
     assert 'datalist' in combo_html
     assert 'Los Angeles' in combo_html
 
-    def _raise(*_args, **_kwargs):
-        raise RuntimeError('boom')
-
-    monkeypatch.setattr('pydantic_schemaforms.inputs.selection_inputs.Template.substitute', _raise)
-    fallback_html = RadioGroup().render(
+    radio_html = RadioGroup().render(
         group_name='g1',
         options=[{'value': 'v1', 'label': 'Value 1', 'checked': True}],
         legend='Legend',
     )
-    assert 'radio-group' in fallback_html
-    assert 'Legend' in fallback_html
+    assert 'radio-group' in radio_html
+    assert 'Legend' in radio_html
 
-    checkbox_fallback = CheckboxGroup().render(
+    checkbox_html = CheckboxGroup().render(
         group_name='g2',
         options=[{'value': 'v1', 'label': 'Value 1', 'disabled': True}],
         legend='Legend 2',
     )
-    assert 'checkbox-group' in checkbox_fallback
-    assert 'Legend 2' in checkbox_fallback
+    assert 'checkbox-group' in checkbox_html
+    assert 'Legend 2' in checkbox_html
 
 
 def test_specialized_widget_renderers_cover_extended_blocks(monkeypatch) -> None:
@@ -2080,93 +2076,50 @@ class TestModernFormRenderer:
 
 
 class TestTemplateStringUtilities:
-    """Test template string utility functions."""
+    """Test TemplateString and create_custom_template with the t-string API."""
 
     def test_create_custom_template(self):
-        """Test the create_custom_template helper function."""
-        template = create_custom_template('Hello ${name}!')
+        def _fn(*, name: str = '', **_):
+            return thtml(t'Hello {name}!')
+
+        template = create_custom_template(_fn)
         assert isinstance(template, TemplateString)
         result = template.render(name='World')
         assert result == 'Hello World!'
 
-    def test_validate_template_variables_all_provided(self):
-        """Test validation when all variables are provided."""
-        template = TemplateString('${name} is ${age} years old')
-        validation = validate_template_variables(
-            template,
-            name='John',
-            age='25',
-        )
-        assert validation == {'name': True, 'age': True}
+    def test_render_returns_safe_html(self):
+        def _fn(*, label: str = '', **_):
+            return thtml(t'<span>{label}</span>')
 
-    def test_validate_template_variables_missing(self):
-        """Test validation when some variables are missing."""
-        template = TemplateString('${name} lives in ${city}')
-        validation = validate_template_variables(template, name='John')
-        assert validation == {'name': True, 'city': False}
+        ts = TemplateString(_fn)
+        result = ts.render(label='hi')
+        assert isinstance(result, SafeHTML)
+        assert result == '<span>hi</span>'
 
-    def test_validate_template_variables_none_provided(self):
-        """Test validation when no variables are provided."""
-        template = TemplateString('${name} is ${age} years old')
-        validation = validate_template_variables(template)
-        assert validation == {'name': False, 'age': False}
+    def test_xss_escaping(self):
+        def _fn(*, value: str = '', **_):
+            return thtml(t'<input value="{value}">')
 
-    def test_validate_template_variables_extra_provided(self):
-        """Test validation when extra variables are provided."""
-        template = TemplateString('Hello ${name}!')
-        validation = validate_template_variables(
-            template,
-            name='World',
-            extra='ignored',
-        )
-        assert validation == {'name': True}
-        # Extra variables don't appear in validation result
+        ts = TemplateString(_fn)
+        result = ts.render(value='<script>alert(1)</script>')
+        assert '&lt;script&gt;' in result
+        assert '<script>' not in result
 
-    def test_safe_render_with_missing_vars(self):
-        """Test safe_render leaves unfilled variables as placeholders."""
-        template = TemplateString('Hello ${name}, you are ${age} years old')
-        result = template.safe_render(name='John')
-        assert 'John' in result
-        assert '${age}' in result  # Unfilled variable preserved
+    def test_safe_html_passthrough(self):
+        def _fn(*, content: str = '', **_):
+            _c = SafeHTML(content)
+            return thtml(t'<div>{_c}</div>')
 
-    def test_safe_render_with_all_vars(self):
-        """Test safe_render when all variables provided."""
-        template = TemplateString('Hello ${name}, age ${age}')
-        result = template.safe_render(name='Jane', age='30')
-        assert result == 'Hello Jane, age 30'
+        ts = TemplateString(_fn)
+        result = ts.render(content='<b>bold</b>')
+        assert result == '<div><b>bold</b></div>'
 
-    def test_template_cache_reuse(self):
-        """Test that templates are cached and reused."""
-        # Create two templates with same string
-        t1 = TemplateString('Hello ${name}')
-        t2 = TemplateString('Hello ${name}')
+    def test_safe_render_is_alias(self):
+        def _fn(*, x: str = '', **_):
+            return thtml(t'{x}')
 
-        # Render both to ensure compilation
-        t1.render(name='A')
-        t2.render(name='B')
-
-        # Both should work correctly (cache doesn't affect functionality)
-        assert t1.render(name='Test1') == 'Hello Test1'
-        assert t2.render(name='Test2') == 'Hello Test2'
-
-    def test_template_with_none_value(self):
-        """Test rendering with None values."""
-        template = TemplateString('Value: ${value}')
-        result = template.render(value=None)
-        assert result == 'Value: '  # None becomes empty string
-
-    def test_template_with_bool_value(self):
-        """Test rendering with boolean values."""
-        template = TemplateString('Active: ${active}, Inactive: ${inactive}')
-        result = template.render(active=True, inactive=False)
-        assert result == 'Active: true, Inactive: false'
-
-    def test_template_with_numeric_value(self):
-        """Test rendering with numeric values."""
-        template = TemplateString('Count: ${count}, Price: ${price}')
-        result = template.render(count=42, price=19.99)
-        assert '42' in result
-        assert '19.99' in result
+        ts = TemplateString(_fn)
+        assert ts.render(x='a') == ts.safe_render(x='a')
 
 
 # ===========================================================================
@@ -2254,14 +2207,36 @@ def test_model_list_uses_form_style_templates() -> None:
 
 
 def test_model_list_respects_custom_form_style_templates() -> None:
+    def _ml_container(
+        *,
+        field_name: str = '',
+        items_html: str = '',
+        help_html: str = '',
+        error_html: str = '',
+        **_,
+    ):
+        return thtml(
+            t"<div class='mlc' data-name='{field_name}'>{SafeHTML(items_html)}{SafeHTML(help_html)}{SafeHTML(error_html)}</div>"
+        )
+
+    def _ml_item(*, index: str = '', body_html: str = '', **_):
+        return thtml(t"<div class='mli' data-idx='{index}'>{SafeHTML(body_html)}</div>")
+
+    def _ml_help(*, help_text: str = '', **_):
+        return thtml(t"<span class='ml-help'>{help_text}</span>")
+
+    def _ml_error(*, error_text: str = '', **_):
+        return thtml(t"<span class='ml-err'>{error_text}</span>")
+
+    def _submit(*, submit_label: str = '', **_):
+        return thtml(t"<button class='custom-submit'>{submit_label}</button>")
+
     custom_templates = FormStyleTemplates(
-        model_list_container=TemplateString(
-            "<div class='mlc' data-name='${field_name}'>${items_html}${help_html}${error_html}</div>"
-        ),
-        model_list_item=TemplateString("<div class='mli' data-idx='${index}'>${body_html}</div>"),
-        model_list_help=TemplateString("<span class='ml-help'>${help_text}</span>"),
-        model_list_error=TemplateString("<span class='ml-err'>${error_text}</span>"),
-        submit_button=TemplateString("<button class='custom-submit'>${submit_label}</button>"),
+        model_list_container=TemplateString(_ml_container),
+        model_list_item=TemplateString(_ml_item),
+        model_list_help=TemplateString(_ml_help),
+        model_list_error=TemplateString(_ml_error),
+        submit_button=TemplateString(_submit),
         # inherit defaults for other templates
     )
 
@@ -2306,12 +2281,21 @@ def test_model_list_respects_custom_form_style_templates() -> None:
 
 
 def test_tab_layout_uses_form_style_templates() -> None:
+    def _tab_layout(*, tab_buttons: str = '', tab_panels: str = '', **_):
+        return thtml(
+            t"<div class='custom-tab-layout'>{SafeHTML(tab_buttons)}{SafeHTML(tab_panels)}</div>"
+        )
+
+    def _tab_button(*, title: str = '', **_):
+        return thtml(t"<button class='custom-tab-btn'>{title}</button>")
+
+    def _tab_panel(*, content: str = '', **_):
+        return thtml(t"<section class='custom-tab-panel'>{SafeHTML(content)}</section>")
+
     custom_templates = FormStyleTemplates(
-        tab_layout=TemplateString(
-            "<div class='custom-tab-layout'>${tab_buttons}${tab_panels}</div>"
-        ),
-        tab_button=TemplateString("<button class='custom-tab-btn'>${title}</button>"),
-        tab_panel=TemplateString("<section class='custom-tab-panel'>${content}</section>"),
+        tab_layout=TemplateString(_tab_layout),
+        tab_button=TemplateString(_tab_button),
+        tab_panel=TemplateString(_tab_panel),
     )
 
     register_form_style(FormStyle(framework='tab-test', templates=custom_templates))
@@ -2335,11 +2319,15 @@ def test_tab_layout_uses_form_style_templates() -> None:
 
 
 def test_accordion_layout_uses_form_style_templates() -> None:
+    def _accordion_layout(*, sections: str = '', **_):
+        return thtml(t"<div class='custom-accordion'>{SafeHTML(sections)}</div>")
+
+    def _accordion_section(*, title: str = '', content: str = '', **_):
+        return thtml(t"<article class='custom-acc-section'>{title}{SafeHTML(content)}</article>")
+
     custom_templates = FormStyleTemplates(
-        accordion_layout=TemplateString("<div class='custom-accordion'>${sections}</div>"),
-        accordion_section=TemplateString(
-            "<article class='custom-acc-section'>${title}${content}</article>"
-        ),
+        accordion_layout=TemplateString(_accordion_layout),
+        accordion_section=TemplateString(_accordion_section),
     )
 
     register_form_style(FormStyle(framework='acc-test', templates=custom_templates))

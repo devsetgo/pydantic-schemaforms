@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 from pydantic import BaseModel, ValidationError
 
 from .templates import TemplateString
+from .tstring import SafeHTML, html as _html_proc
 from .validation import (
     ValidationResponse,
     create_email_validator,
@@ -22,6 +23,104 @@ from .validation import (
 
 if TYPE_CHECKING:  # pragma: no cover
     from .validation import FieldValidator, ValidationSchema
+
+
+# JS generation — uses .format() per CLAUDE.md (JS context, not HTML).
+# {config_json} is the only substitution; all other braces are doubled.
+_HTMX_SCRIPT_TEMPLATE = """\
+<script>
+// HTMX Live Validation System
+document.addEventListener('DOMContentLoaded', function() {{
+
+    const validationConfig = {config_json};
+
+    function addValidationIndicator(element) {{
+        if (!element.parentElement.querySelector('.validation-indicator')) {{
+            const indicator = document.createElement('div');
+            indicator.className = 'validation-indicator';
+            indicator.innerHTML = '<i class="spinner-border spinner-border-sm" role="status"></i>';
+            indicator.style.display = 'none';
+            element.parentElement.appendChild(indicator);
+        }}
+    }}
+
+    function showValidationLoading(element) {{
+        element.classList.add(validationConfig.loading_class);
+        const indicator = element.parentElement.querySelector('.validation-indicator');
+        if (indicator) indicator.style.display = 'inline-block';
+    }}
+
+    function hideValidationLoading(element) {{
+        element.classList.remove(validationConfig.loading_class);
+        const indicator = element.parentElement.querySelector('.validation-indicator');
+        if (indicator) indicator.style.display = 'none';
+    }}
+
+    function applyValidationClasses(element, is_valid) {{
+        element.classList.remove(
+            validationConfig.success_class,
+            validationConfig.error_class,
+            validationConfig.warning_class
+        );
+        if (is_valid) {{
+            if (validationConfig.show_success_indicators) {{
+                element.classList.add(validationConfig.success_class);
+            }}
+        }} else {{
+            element.classList.add(validationConfig.error_class);
+        }}
+    }}
+
+    document.querySelectorAll('[data-validate-endpoint]').forEach(function(element) {{
+        addValidationIndicator(element);
+
+        if (validationConfig.validate_on_blur) {{
+            element.addEventListener('blur', function() {{
+                if (this.value.trim() !== '') showValidationLoading(this);
+            }});
+        }}
+
+        if (validationConfig.validate_on_input && validationConfig.debounce_ms > 0) {{
+            let debounceTimer;
+            element.addEventListener('input', function() {{
+                clearTimeout(debounceTimer);
+                const field = this;
+                debounceTimer = setTimeout(function() {{
+                    if (field.value.trim() !== '') showValidationLoading(field);
+                }}, validationConfig.debounce_ms);
+            }});
+        }}
+
+        if (validationConfig.clear_on_focus) {{
+            element.addEventListener('focus', function() {{
+                const feedbackElement = document.getElementById(this.name + '-feedback');
+                if (feedbackElement) feedbackElement.innerHTML = '';
+                element.classList.remove(
+                    validationConfig.success_class,
+                    validationConfig.error_class,
+                    validationConfig.warning_class
+                );
+            }});
+        }}
+    }});
+
+    // Fired by HX-Trigger: validationResult header from validation_response_headers().
+    document.addEventListener('validationResult', function(event) {{
+        const field = event.detail.field;
+        const valid = event.detail.valid;
+        const element = document.getElementById(field);
+        if (!element) return;
+        hideValidationLoading(element);
+        applyValidationClasses(element, valid);
+    }});
+
+    document.addEventListener('htmx:afterRequest', function(event) {{
+        const element = event.detail.elt;
+        if (element.hasAttribute('data-validate-endpoint')) hideValidationLoading(element);
+    }});
+}});
+</script>
+"""
 
 
 @dataclass
@@ -71,169 +170,42 @@ class LiveValidator:
         self.validators: Dict[str, Callable] = {}
         self.field_configs: Dict[str, Dict[str, Any]] = {}
 
-        # Template for validation responses
-        self.validation_template = TemplateString(
-            """
-<div class="validation-feedback ${feedback_class}"
-     id="${field_name}-feedback">
-    ${feedback_content}
-</div>
-"""
-        )
+        def _validation_feedback(
+            *, feedback_class: str = '', field_name: str = '', feedback_content: str = '', **_: Any
+        ) -> SafeHTML:
+            _content = SafeHTML(feedback_content)
+            return _html_proc(
+                t'<div class="validation-feedback {feedback_class}" id="{field_name}-feedback">{_content}</div>'
+            )
 
-        # Template for field with validation
-        self.field_template = TemplateString(
-            """
-<div class="form-group ${group_class}">
-    ${label}
-    <input type="${input_type}"
-           id="${field_name}"
-           name="${field_name}"
-           class="form-control ${input_class}"
-           value="${value}"
-           ${validation_attributes}
-           ${other_attributes} />
-    <div id="${field_name}-feedback" class="validation-feedback">
-        ${existing_feedback}
-    </div>
-</div>
-"""
-        )
+        def _field_with_validation(
+            *,
+            group_class: str = '',
+            label: str = '',
+            input_type: str = 'text',
+            field_name: str = '',
+            input_class: str = '',
+            value: str = '',
+            validation_attributes: str = '',
+            other_attributes: str = '',
+            existing_feedback: str = '',
+            **_: Any,
+        ) -> SafeHTML:
+            _label = SafeHTML(label)
+            _va = SafeHTML(validation_attributes)
+            _oa = SafeHTML(other_attributes)
+            _fb = SafeHTML(existing_feedback)
+            return _html_proc(
+                t'<div class="form-group {group_class}">{_label}<input type="{input_type}" id="{field_name}" name="{field_name}" class="form-control {input_class}" value="{value}" {_va} {_oa} /><div id="{field_name}-feedback" class="validation-feedback">{_fb}</div></div>'
+            )
 
-        # HTMX JavaScript template
-        self.htmx_script = TemplateString(
-            """
-<script>
-// HTMX Live Validation System
-document.addEventListener('DOMContentLoaded', function() {
+        self.validation_template = TemplateString(_validation_feedback)
+        self.field_template = TemplateString(_field_with_validation)
 
-    // Configure HTMX validation settings
-    const validationConfig = ${config_json};
+        def _htmx_script_fn(*, config_json: str = '{}', **_: Any) -> SafeHTML:
+            return SafeHTML(_HTMX_SCRIPT_TEMPLATE.format(config_json=config_json))
 
-    // Add validation indicators
-    function addValidationIndicator(element) {
-        if (!element.parentElement.querySelector('.validation-indicator')) {
-            const indicator = document.createElement('div');
-            indicator.className = 'validation-indicator';
-            indicator.innerHTML = '<i class="spinner-border spinner-border-sm" role="status"></i>';
-            indicator.style.display = 'none';
-            element.parentElement.appendChild(indicator);
-        }
-    }
-
-    // Show loading state
-    function showValidationLoading(element) {
-        element.classList.add(validationConfig.loading_class);
-        const indicator = element.parentElement.querySelector('.validation-indicator');
-        if (indicator) indicator.style.display = 'inline-block';
-    }
-
-    // Hide loading state
-    function hideValidationLoading(element) {
-        element.classList.remove(validationConfig.loading_class);
-        const indicator = element.parentElement.querySelector('.validation-indicator');
-        if (indicator) indicator.style.display = 'none';
-    }
-
-    // Handle validation response
-    function handleValidationResponse(element, response) {
-        hideValidationLoading(element);
-
-        // Remove previous validation classes
-        element.classList.remove(
-            validationConfig.success_class,
-            validationConfig.error_class,
-            validationConfig.warning_class
-        );
-
-        if (response.is_valid) {
-            if (validationConfig.show_success_indicators) {
-                element.classList.add(validationConfig.success_class);
-            }
-        } else {
-            element.classList.add(validationConfig.error_class);
-        }
-
-        if (response.warnings && response.warnings.length > 0 && validationConfig.show_warnings) {
-            element.classList.add(validationConfig.warning_class);
-        }
-    }
-
-    // Initialize validation for all form fields
-    document.querySelectorAll('[data-validate-endpoint]').forEach(function(element) {
-        addValidationIndicator(element);
-
-        // Add event listeners based on configuration
-        if (validationConfig.validate_on_blur) {
-            element.addEventListener('blur', function() {
-                if (this.value.trim() !== '') {
-                    showValidationLoading(this);
-                }
-            });
-        }
-
-        if (validationConfig.validate_on_input && validationConfig.debounce_ms > 0) {
-            let debounceTimer;
-            element.addEventListener('input', function() {
-                clearTimeout(debounceTimer);
-                const field = this;
-                debounceTimer = setTimeout(function() {
-                    if (field.value.trim() !== '') {
-                        showValidationLoading(field);
-                    }
-                }, validationConfig.debounce_ms);
-            });
-        }
-
-        if (validationConfig.clear_on_focus) {
-            element.addEventListener('focus', function() {
-                const feedbackElement = document.getElementById(this.name + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.innerHTML = '';
-                }
-                this.classList.remove(
-                    validationConfig.success_class,
-                    validationConfig.error_class,
-                    validationConfig.warning_class
-                );
-            });
-        }
-    });
-
-    // Apply CSS classes after HTMX swap completes (triggered by HX-Trigger header)
-    document.addEventListener('validationResult', function(event) {
-        const field = event.detail.field;
-        const valid = event.detail.valid;
-        const element = document.getElementById(field);
-        if (!element) return;
-
-        hideValidationLoading(element);
-        element.classList.remove(
-            validationConfig.success_class,
-            validationConfig.error_class,
-            validationConfig.warning_class
-        );
-
-        if (valid) {
-            if (validationConfig.show_success_indicators) {
-                element.classList.add(validationConfig.success_class);
-            }
-        } else {
-            element.classList.add(validationConfig.error_class);
-        }
-    });
-
-    // Hide loading spinner after any validation request completes
-    document.addEventListener('htmx:afterRequest', function(event) {
-        const element = event.detail.elt;
-        if (element.hasAttribute('data-validate-endpoint')) {
-            hideValidationLoading(element);
-        }
-    });
-});
-</script>
-"""
-        )
+        self.htmx_script = TemplateString(_htmx_script_fn)
 
     def register_validator(
         self, field_name: str, validator: Callable[[Any], ValidationResponse]
@@ -346,8 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     def _generate_flask_endpoint(self) -> str:
         """Generate Flask validation endpoint code."""
-        template = TemplateString(
-            """
+        return """
 from flask import request, jsonify
 from pydantic_schemaforms.live_validation import ValidationResponse
 
@@ -356,30 +327,21 @@ def validate_field(field_name):
     '''Live validation endpoint for individual fields.'''
     try:
         value = request.form.get('value') or request.json.get('value')
-
-        # Get the validator instance (you need to inject this)
-        validator = get_validator_instance()  # Implement this function
-
+        validator = get_validator_instance()
         response = validator.validate_field(field_name, value)
-
         if response.is_valid:
-            feedback_html = '<div class="valid-feedback">✓ Valid</div>'
+            feedback_html = '<div class="valid-feedback">\\u2713 Valid</div>'
         else:
             errors_html = '<br>'.join(response.errors)
             feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
-
         return feedback_html, 200 if response.is_valid else 400
-
     except Exception as e:
         return f'<div class="invalid-feedback">Validation error: {str(e)}</div>', 500
 """
-        )
-        return template.render()
 
     def _generate_fastapi_endpoint(self) -> str:
         """Generate FastAPI validation endpoint code."""
-        template = TemplateString(
-            """
+        return """
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pydantic_schemaforms.live_validation import ValidationResponse
@@ -391,27 +353,17 @@ class ValidationRequest(BaseModel):
 async def validate_field(field_name: str, request: ValidationRequest):
     '''Live validation endpoint for individual fields.'''
     try:
-        # Get the validator instance (you need to inject this)
-        validator = get_validator_instance()  # Implement this function
-
+        validator = get_validator_instance()
         response = validator.validate_field(field_name, request.value)
-
         if response.is_valid:
-            feedback_html = '<div class="valid-feedback">✓ Valid</div>'
+            feedback_html = '<div class="valid-feedback">\\u2713 Valid</div>'
         else:
             errors_html = '<br>'.join(response.errors)
             feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
-
-        return HTMLResponse(
-            content=feedback_html,
-            status_code=200 if response.is_valid else 400
-        )
-
+        return HTMLResponse(content=feedback_html, status_code=200 if response.is_valid else 400)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Validation error: {str(e)}')
 """
-        )
-        return template.render()
 
     def render_field_with_live_validation(
         self,

@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
-import string
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Type, Union
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
 
-from ..modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
-from ..assets.runtime import bootstrap_icons_css_tag, framework_css_tag, framework_js_tag
-from ..validation import create_validator
+from pydantic_schemaforms.modern_renderer import (
+    FormDefinition,
+    FormField,
+    FormSection,
+    ModernFormRenderer,
+)
+from pydantic_schemaforms.assets.runtime import (
+    bootstrap_icons_css_tag,
+    framework_css_tag,
+    framework_js_tag,
+)
+from pydantic_schemaforms.validation import create_validator
+from pydantic_schemaforms.tstring import SafeHTML, html as _html_proc
 
 
 class FormBuilder:
@@ -323,7 +332,7 @@ def create_registration_form(framework: str = 'bootstrap') -> FormBuilder:
         .min_length('password', 8, 'Password must be at least 8 characters')
     )
 
-    from ..validation import CrossFieldRules
+    from pydantic_schemaforms.validation import CrossFieldRules
 
     builder.validator.add_cross_field_rule(
         CrossFieldRules.password_confirmation('password', 'confirm_password')
@@ -350,47 +359,59 @@ def create_form_from_model(model: Type[BaseModel], **kwargs: Any) -> AutoFormBui
     return AutoFormBuilder(model, **kwargs)
 
 
-FORM_PAGE_TEMPLATE = string.Template(
-    """<!--- Start Pydantic-SchemaForms -->
+def _render_form_page_html(
+    *,
+    title: str,
+    framework_css_tag: str,
+    bootstrap_icons_css_tag: str,
+    form_html: str,
+    framework_js_tag: str,
+    validation_script: str,
+) -> str:
+    _css = SafeHTML(framework_css_tag)
+    _icons_css = SafeHTML(bootstrap_icons_css_tag)
+    _form = SafeHTML(form_html)
+    _js = SafeHTML(framework_js_tag)
+    _validation = SafeHTML(validation_script)
+    return _html_proc(t"""<!--- Start Pydantic-SchemaForms -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
-    ${framework_css_tag}
-    ${bootstrap_icons_css_tag}
+    <title>{title}</title>
+    {_css}
+    {_icons_css}
     <style>
-        body { background-color: #f8f9fa; }
-        .form-container {
+        body {{ background-color: #f8f9fa; }}
+        .form-container {{
             max-width: 600px;
             margin: 2rem auto;
             background: white;
             padding: 2rem;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .form-title {
+        }}
+        .form-title {{
             text-align: center;
             margin-bottom: 2rem;
             color: #343a40;
-        }
+        }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="form-container">
-            <h1 class="form-title">${title}</h1>
-            ${form_html}
+            <h1 class="form-title">{title}</h1>
+            {_form}
         </div>
     </div>
 
-    ${framework_js_tag}
-    ${validation_script}
+    {_js}
+    {_validation}
 </body>
 </html>
-<!--- End Pydantic-SchemaForms -->"""
-)
+<!--- End Pydantic-SchemaForms -->""")
 
 
 def _framework_asset_tags(
@@ -437,10 +458,10 @@ def render_form_page(
             asset_mode=asset_mode,
         )
     )
-    from ..html_markers import wrap_with_schemaforms_markers
+    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
-    html = FORM_PAGE_TEMPLATE.substitute(**template_data)
-    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
+    page = _render_form_page_html(**template_data)
+    return wrap_with_schemaforms_markers(page, enabled=include_html_markers)
 
 
 __all__ = [

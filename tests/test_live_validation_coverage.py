@@ -184,14 +184,14 @@ class TestLiveValidatorTemplates:
         validator = LiveValidator()
 
         assert validator.validation_template is not None
-        assert hasattr(validator.validation_template, 'template_str')
+        assert hasattr(validator.validation_template, 'render')
 
     def test_field_template_exists(self):
         """Test field template is properly set."""
         validator = LiveValidator()
 
         assert validator.field_template is not None
-        assert hasattr(validator.field_template, 'template_str')
+        assert hasattr(validator.field_template, 'render')
 
 
 class TestLiveValidatorIntegration:
@@ -330,7 +330,6 @@ class TestLiveValidatorHTMLGeneration:
         validator = LiveValidator()
 
         assert validator.validation_template is not None
-        assert hasattr(validator.validation_template, 'template_str')
         from pydantic_schemaforms.templates import TemplateString
 
         assert isinstance(validator.validation_template, TemplateString)
@@ -340,7 +339,6 @@ class TestLiveValidatorHTMLGeneration:
         validator = LiveValidator()
 
         assert validator.field_template is not None
-        assert hasattr(validator.field_template, 'template_str')
         from pydantic_schemaforms.templates import TemplateString
 
         assert isinstance(validator.field_template, TemplateString)

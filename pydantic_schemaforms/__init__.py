@@ -144,6 +144,7 @@ from .rendering.layout_engine import (
 # FormModel abstraction for Pydantic models with UI hints
 from .schema_form import Field, FormModel, ValidationResult, form_validator
 from .templates import FormTemplates, TemplateString
+from .tstring import SafeHTML, html
 
 # Validation system
 from .validation import (
@@ -255,6 +256,9 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     # ── FORM DATA UTILITIES ──
     'parse_nested_form_data',
     'coerce_form_value',
+    # ── T-STRING SAFETY: structural XSS protection ──
+    'SafeHTML',
+    'html',
     '__package_name__',
 ] + list(_INPUT_EXPORTS)
 

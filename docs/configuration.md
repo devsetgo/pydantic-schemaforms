@@ -152,3 +152,13 @@ The enhanced renderer injects a small internal style block to keep nested/layout
 
 - This reduces the need for route-specific template CSS hacks.
 - If your app provides strict custom CSS, you can still override these classes in your host stylesheet.
+
+## Future functionality
+
+### Custom templates
+
+A custom template API is planned that will let you replace individual form widgets and layout sections with your own markup, while retaining the library's structural XSS safety guarantees (Python 3.14 t-strings with the `html()` processor).
+
+This is not yet available for external use. The internal implementation (`FormStyleTemplates`, `TemplateString`, `FormStyle`) is stable, but the public authoring API — how you write and register a custom template — has not been finalised.
+
+Watch the [release notes](release-notes.md) for when this is ready.

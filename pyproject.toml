@@ -93,8 +93,15 @@ disable_gc = true
 warmup = false
 
 [tool.ruff.lint]
-select = [ "C", "F", "E", "W", "B",]
+select = [ "C", "F", "E", "W", "B", "TID",]
 ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
+
+# ARCHITECTURAL INVARIANT — see CLAUDE.md §"T-string rule" and tests/test_invariants.py.
+# string.Template (${}  interpolation) has no XSS protection.
+# All HTML generation MUST use t-strings with html() from pydantic_schemaforms.tstring.
+# Do NOT remove or weaken this entry — it is also enforced by tests/test_invariants.py.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"string.Template" = {msg = "Use t-strings with html() from pydantic_schemaforms.tstring — see CLAUDE.md"}
 
 [tool.ruff.format]
 indent-style = "space"
