@@ -6,7 +6,11 @@ from html import escape
 from typing import Dict, Optional, Type
 
 from pydantic_schemaforms.templates import TemplateString
-from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_tag, framework_css_tag, framework_js_tag
+from pydantic_schemaforms.assets.runtime import (
+    bootstrap_icons_css_tag,
+    framework_css_tag,
+    framework_js_tag,
+)
 from .form_style import FormStyle, get_form_style
 from .frameworks import get_framework_config
 from .material_icons import render_material_icon

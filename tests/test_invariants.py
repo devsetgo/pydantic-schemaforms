@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 _SRC_ROOT = Path(__file__).parent.parent / 'pydantic_schemaforms'
 _PYPROJECT = Path(__file__).parent.parent / 'pyproject.toml'
@@ -75,6 +74,7 @@ def test_no_string_template_in_source() -> None:
 # Invariant 2: ruff banned-api config must still reference string.Template
 # ---------------------------------------------------------------------------
 
+
 def test_tstring_ruff_config_present() -> None:
     """pyproject.toml must still have string.Template in the banned-api table.
 
@@ -95,6 +95,7 @@ def test_tstring_ruff_config_present() -> None:
 # ---------------------------------------------------------------------------
 # Invariant 3: self-integrity — key test functions must still exist here
 # ---------------------------------------------------------------------------
+
 
 def test_invariant_self_integrity() -> None:
     """This file must still contain the core invariant test functions.

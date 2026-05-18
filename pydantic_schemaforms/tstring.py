@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import html as _html
 import re
-from string.templatelib import Interpolation, Template
+from string.templatelib import Template
 from typing import Any
 
 __all__ = ['SafeHTML', 'html', 'substitute']

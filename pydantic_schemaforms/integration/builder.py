@@ -8,8 +8,17 @@ from typing import Any, Dict, List, Optional, Type, Union
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
 
-from pydantic_schemaforms.modern_renderer import FormDefinition, FormField, FormSection, ModernFormRenderer
-from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_tag, framework_css_tag, framework_js_tag
+from pydantic_schemaforms.modern_renderer import (
+    FormDefinition,
+    FormField,
+    FormSection,
+    ModernFormRenderer,
+)
+from pydantic_schemaforms.assets.runtime import (
+    bootstrap_icons_css_tag,
+    framework_css_tag,
+    framework_js_tag,
+)
 from pydantic_schemaforms.validation import create_validator
 
 
