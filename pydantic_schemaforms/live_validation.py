@@ -25,6 +25,104 @@ if TYPE_CHECKING:  # pragma: no cover
     from .validation import FieldValidator, ValidationSchema
 
 
+# JS generation — uses .format() per CLAUDE.md (JS context, not HTML).
+# {config_json} is the only substitution; all other braces are doubled.
+_HTMX_SCRIPT_TEMPLATE = """\
+<script>
+// HTMX Live Validation System
+document.addEventListener('DOMContentLoaded', function() {{
+
+    const validationConfig = {config_json};
+
+    function addValidationIndicator(element) {{
+        if (!element.parentElement.querySelector('.validation-indicator')) {{
+            const indicator = document.createElement('div');
+            indicator.className = 'validation-indicator';
+            indicator.innerHTML = '<i class="spinner-border spinner-border-sm" role="status"></i>';
+            indicator.style.display = 'none';
+            element.parentElement.appendChild(indicator);
+        }}
+    }}
+
+    function showValidationLoading(element) {{
+        element.classList.add(validationConfig.loading_class);
+        const indicator = element.parentElement.querySelector('.validation-indicator');
+        if (indicator) indicator.style.display = 'inline-block';
+    }}
+
+    function hideValidationLoading(element) {{
+        element.classList.remove(validationConfig.loading_class);
+        const indicator = element.parentElement.querySelector('.validation-indicator');
+        if (indicator) indicator.style.display = 'none';
+    }}
+
+    function applyValidationClasses(element, is_valid) {{
+        element.classList.remove(
+            validationConfig.success_class,
+            validationConfig.error_class,
+            validationConfig.warning_class
+        );
+        if (is_valid) {{
+            if (validationConfig.show_success_indicators) {{
+                element.classList.add(validationConfig.success_class);
+            }}
+        }} else {{
+            element.classList.add(validationConfig.error_class);
+        }}
+    }}
+
+    document.querySelectorAll('[data-validate-endpoint]').forEach(function(element) {{
+        addValidationIndicator(element);
+
+        if (validationConfig.validate_on_blur) {{
+            element.addEventListener('blur', function() {{
+                if (this.value.trim() !== '') showValidationLoading(this);
+            }});
+        }}
+
+        if (validationConfig.validate_on_input && validationConfig.debounce_ms > 0) {{
+            let debounceTimer;
+            element.addEventListener('input', function() {{
+                clearTimeout(debounceTimer);
+                const field = this;
+                debounceTimer = setTimeout(function() {{
+                    if (field.value.trim() !== '') showValidationLoading(field);
+                }}, validationConfig.debounce_ms);
+            }});
+        }}
+
+        if (validationConfig.clear_on_focus) {{
+            element.addEventListener('focus', function() {{
+                const feedbackElement = document.getElementById(this.name + '-feedback');
+                if (feedbackElement) feedbackElement.innerHTML = '';
+                element.classList.remove(
+                    validationConfig.success_class,
+                    validationConfig.error_class,
+                    validationConfig.warning_class
+                );
+            }});
+        }}
+    }});
+
+    // Fired by HX-Trigger: validationResult header from validation_response_headers().
+    document.addEventListener('validationResult', function(event) {{
+        const field = event.detail.field;
+        const valid = event.detail.valid;
+        const element = document.getElementById(field);
+        if (!element) return;
+        hideValidationLoading(element);
+        applyValidationClasses(element, valid);
+    }});
+
+    document.addEventListener('htmx:afterRequest', function(event) {{
+        const element = event.detail.elt;
+        if (element.hasAttribute('data-validate-endpoint')) hideValidationLoading(element);
+    }});
+}});
+</script>
+"""
+
+
 @dataclass
 class HTMXValidationConfig:
     """Configuration for HTMX validation behavior."""
@@ -105,10 +203,7 @@ class LiveValidator:
         self.field_template = TemplateString(_field_with_validation)
 
         def _htmx_script_fn(*, config_json: str = '{}', **_: Any) -> SafeHTML:
-            _json = SafeHTML(config_json)
-            return _html_proc(
-                t"<script>\n// HTMX Live Validation System\ndocument.addEventListener('DOMContentLoaded', function() {{\n\n    const validationConfig = {_json};\n\n    function addValidationIndicator(element) {{\n        if (!element.parentElement.querySelector('.validation-indicator')) {{\n            const indicator = document.createElement('div');\n            indicator.className = 'validation-indicator';\n            indicator.innerHTML = '<i class=\"spinner-border spinner-border-sm\" role=\"status\"></i>';\n            indicator.style.display = 'none';\n            element.parentElement.appendChild(indicator);\n        }}\n    }}\n\n    function showValidationLoading(element) {{\n        element.classList.add(validationConfig.loading_class);\n        const indicator = element.parentElement.querySelector('.validation-indicator');\n        if (indicator) indicator.style.display = 'inline-block';\n    }}\n\n    function hideValidationLoading(element) {{\n        element.classList.remove(validationConfig.loading_class);\n        const indicator = element.parentElement.querySelector('.validation-indicator');\n        if (indicator) indicator.style.display = 'none';\n    }}\n\n    document.querySelectorAll('[data-validate-endpoint]').forEach(function(element) {{\n        addValidationIndicator(element);\n\n        if (validationConfig.validate_on_blur) {{\n            element.addEventListener('blur', function() {{\n                if (this.value.trim() !== '') showValidationLoading(this);\n            }});\n        }}\n\n        if (validationConfig.validate_on_input && validationConfig.debounce_ms > 0) {{\n            let debounceTimer;\n            element.addEventListener('input', function() {{\n                clearTimeout(debounceTimer);\n                const field = this;\n                debounceTimer = setTimeout(function() {{\n                    if (field.value.trim() !== '') showValidationLoading(field);\n                }}, validationConfig.debounce_ms);\n            }});\n        }}\n\n        if (validationConfig.clear_on_focus) {{\n            element.addEventListener('focus', function() {{\n                const feedbackElement = document.getElementById(this.name + '-feedback');\n                if (feedbackElement) feedbackElement.innerHTML = '';\n                this.classList.remove(validationConfig.success_class, validationConfig.error_class, validationConfig.warning_class);\n            }});\n        }}\n    }});\n\n    document.addEventListener('htmx:afterRequest', function(event) {{\n        const element = event.detail.elt;\n        if (element.hasAttribute('data-validate-endpoint')) hideValidationLoading(element);\n    }});\n}});\n</script>\n"
-            )
+            return SafeHTML(_HTMX_SCRIPT_TEMPLATE.format(config_json=config_json))
 
         self.htmx_script = TemplateString(_htmx_script_fn)
 
