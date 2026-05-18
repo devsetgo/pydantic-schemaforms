@@ -419,7 +419,11 @@ async def validate_field(field_name: str, request: ValidationRequest):
             value=str(value) if value is not None else '',
             input_class=kwargs.get('class', ''),
             group_class='',
-            label=str(_html_proc(t'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>')),
+            label=str(
+                _html_proc(
+                    t'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>'
+                )
+            ),
             validation_attributes=' '.join(validation_attrs),
             other_attributes=' '.join(other_attrs),
             existing_feedback='',
