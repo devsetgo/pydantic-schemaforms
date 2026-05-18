@@ -1,646 +1,973 @@
+"""PEP 750 t-string form template library for pydantic-schemaforms.
+
+All rendering uses t-strings with the html() processor from tstring.py.
+The legacy ${}-interpolation approach is banned — see pyproject.toml [TID251].
+
+Parameter conventions used throughout this module:
+  - Plain str params (value, placeholder, title, label_text, help_text as text)
+      → auto-escaped by the html() processor.
+  - SafeHTML params (pre-rendered HTML fragments: label, help_text as HTML,
+      error_message, options, sections, content, attributes, boolean-attr
+      strings like required/disabled/checked)
+      → passed through unescaped via explicit SafeHTML() cast inside each fn.
 """
-Native Python 3.14 template string system for pydantic-schemaforms.
 
-This module provides a high-performance template engine using Python 3.14's
-native string.templatelib. No backward compatibility is provided.
+from __future__ import annotations
 
-Requires: Python 3.14+
-"""
+from typing import Any, Callable
 
-import string
-import string.templatelib
-from collections import OrderedDict
-from threading import RLock
-from typing import Any, Dict, Optional
+from .tstring import SafeHTML, html
 
-# Import version check to ensure compatibility
+__all__ = ['FormTemplates', 'TemplateString', 'render_template', 'create_custom_template']
 
-# Global template cache with explicit locking for thread safety
-_TEMPLATE_CACHE_MAX = 256
-_template_cache: 'OrderedDict[str, string.Template]' = OrderedDict()
-_template_cache_lock = RLock()
+# ---------------------------------------------------------------------------
+# TemplateString — thin callable wrapper; keeps the .render(**kwargs) API
+# ---------------------------------------------------------------------------
+
+_RenderFn = Callable[..., SafeHTML]
 
 
 class TemplateString:
-    """
-    Native Python 3.14 template string wrapper.
+    """Wraps a t-string render function; call .render(**kwargs) to get SafeHTML.
 
-    Provides a clean API for template rendering with automatic caching and
-    type-safe variable substitution using string.templatelib.
-
-    No legacy template support - Python 3.14+ only.
+    Stored as class attributes on FormTemplates and as dataclass field defaults
+    in FormStyleTemplates — the .render() / .safe_render() API is unchanged
+    from the previous template-string-based implementation.
     """
 
-    def __init__(self, template_str: str):
-        """
-        Initialize template string.
+    __slots__ = ('_fn',)
 
-        Args:
-            template_str: Template string with ${variable} placeholders
-        """
-        self.template_str = template_str
-        self._compiled: Optional[string.Template] = None
+    def __init__(self, fn: _RenderFn) -> None:
+        self._fn = fn
 
-    def _compile_template(self, template_str: str) -> string.Template:
-        """Compile and cache template for performance using global cache."""
-        with _template_cache_lock:
-            template = _template_cache.get(template_str)
-            if template is None:
-                template = string.Template(template_str)
-                _template_cache[template_str] = template
-                if len(_template_cache) > _TEMPLATE_CACHE_MAX:
-                    _template_cache.popitem(last=False)
-            else:
-                _template_cache.move_to_end(template_str)
+    def render(self, **kwargs: Any) -> SafeHTML:
+        return self._fn(**kwargs)
 
-            return template
-
-    def render(self, **kwargs: Any) -> str:
-        """
-        Render template with provided variables.
-
-        Args:
-            **kwargs: Variables to substitute in template
-
-        Returns:
-            Rendered template string
-
-        Raises:
-            KeyError: If required template variables are missing
-        """
-        if self._compiled is None:
-            self._compiled = self._compile_template(self.template_str)
-
-        # Convert all values to strings, handling None gracefully
-        safe_kwargs = {}
-        for key, value in kwargs.items():
-            if value is None:
-                safe_kwargs[key] = ''
-            elif isinstance(value, bool):
-                safe_kwargs[key] = 'true' if value else 'false'
-            else:
-                safe_kwargs[key] = str(value)
-
-        return self._compiled.substitute(**safe_kwargs)
-
-    def safe_render(self, **kwargs: Any) -> str:
-        """
-        Safely render template, leaving unfilled variables as placeholders.
-
-        Args:
-            **kwargs: Variables to substitute in template
-
-        Returns:
-            Rendered template string with unfilled variables preserved
-        """
-        if self._compiled is None:
-            self._compiled = self._compile_template(self.template_str)
-
-        # Convert all values to strings
-        safe_kwargs = {}
-        for key, value in kwargs.items():
-            if value is None:
-                safe_kwargs[key] = ''
-            elif isinstance(value, bool):
-                safe_kwargs[key] = 'true' if value else 'false'
-            else:
-                safe_kwargs[key] = str(value)
-
-        return self._compiled.safe_substitute(**safe_kwargs)
+    # Alias: old callers used safe_render() for missing-variable tolerance.
+    # t-string functions use keyword defaults so the same tolerance applies.
+    safe_render = render
 
 
-class FormTemplates:
-    """
-    Collection of modern form templates using Python 3.14 template strings.
+# ---------------------------------------------------------------------------
+# Private render functions — one per FormTemplates attribute
+# ---------------------------------------------------------------------------
 
-    Provides pre-built templates for common form elements and layouts with
-    optimized rendering performance.
-    """
+# ── Input templates ──────────────────────────────────────────────────────────
 
-    # Input Templates
-    TEXT_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
+
+def _text_input(
+    *,
+    id: str = '',
+    name: str = '',
+    value: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    placeholder: str = '',
+    required: str = '',
+    disabled: str = '',
+    readonly: str = '',
+    attributes: str = '',
+    label: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _readonly = SafeHTML(readonly)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
     <input type="text"
-           id="${id}"
-           name="${name}"
-           class="form-control ${input_class}"
-           style="${input_style}"
-           value="${value}"
-           placeholder="${placeholder}"
-           ${required}
-           ${disabled}
-           ${readonly}
-           ${attributes} />
-    ${help_text}
-    ${error_message}
+           id="{id}"
+           name="{name}"
+           class="form-control {input_class}"
+           style="{input_style}"
+           value="{value}"
+           placeholder="{placeholder}"
+           {_required}
+           {_disabled}
+           {_readonly}
+           {_attributes} />
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    EMAIL_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
+
+def _email_input(
+    *,
+    id: str = '',
+    name: str = '',
+    value: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    placeholder: str = '',
+    required: str = '',
+    disabled: str = '',
+    readonly: str = '',
+    attributes: str = '',
+    label: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _readonly = SafeHTML(readonly)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
     <input type="email"
-           id="${id}"
-           name="${name}"
-           class="form-control ${input_class}"
-           style="${input_style}"
-           value="${value}"
-           placeholder="${placeholder}"
-           ${required}
-           ${disabled}
-           ${readonly}
-           ${attributes} />
-    ${help_text}
-    ${error_message}
+           id="{id}"
+           name="{name}"
+           class="form-control {input_class}"
+           style="{input_style}"
+           value="{value}"
+           placeholder="{placeholder}"
+           {_required}
+           {_disabled}
+           {_readonly}
+           {_attributes} />
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    PASSWORD_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
+
+def _password_input(
+    *,
+    id: str = '',
+    name: str = '',
+    value: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    placeholder: str = '',
+    required: str = '',
+    disabled: str = '',
+    readonly: str = '',
+    attributes: str = '',
+    label: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _readonly = SafeHTML(readonly)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
     <div class="input-group">
         <input type="password"
-               id="${id}"
-               name="${name}"
-               class="form-control ${input_class}"
-               style="${input_style}"
-               value="${value}"
-               placeholder="${placeholder}"
-               ${required}
-               ${disabled}
-               ${readonly}
-               ${attributes} />
-        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('${id}')">
-            <i class="bi bi-eye" id="${id}_toggle_icon"></i>
+               id="{id}"
+               name="{name}"
+               class="form-control {input_class}"
+               style="{input_style}"
+               value="{value}"
+               placeholder="{placeholder}"
+               {_required}
+               {_disabled}
+               {_readonly}
+               {_attributes} />
+        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword(&#39;{id}&#39;)">
+            <i class="bi bi-eye" id="{id}_toggle_icon"></i>
         </button>
     </div>
-    ${help_text}
-    ${error_message}
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    NUMBER_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
+
+def _number_input(
+    *,
+    id: str = '',
+    name: str = '',
+    value: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    placeholder: str = '',
+    min_value: str = '',
+    max_value: str = '',
+    step: str = '',
+    required: str = '',
+    disabled: str = '',
+    readonly: str = '',
+    attributes: str = '',
+    label: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _readonly = SafeHTML(readonly)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
     <input type="number"
-           id="${id}"
-           name="${name}"
-           class="form-control ${input_class}"
-           style="${input_style}"
-           value="${value}"
-           placeholder="${placeholder}"
-           min="${min_value}"
-           max="${max_value}"
-           step="${step}"
-           ${required}
-           ${disabled}
-           ${readonly}
-           ${attributes} />
-    ${help_text}
-    ${error_message}
+           id="{id}"
+           name="{name}"
+           class="form-control {input_class}"
+           style="{input_style}"
+           value="{value}"
+           placeholder="{placeholder}"
+           min="{min_value}"
+           max="{max_value}"
+           step="{step}"
+           {_required}
+           {_disabled}
+           {_readonly}
+           {_attributes} />
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    SELECT_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
-    <select id="${id}"
-            name="${name}"
-            class="form-select ${input_class}"
-            style="${input_style}"
-            ${required}
-            ${disabled}
-            ${multiple}
-            ${attributes}>
-        ${options}
+
+def _select_input(
+    *,
+    id: str = '',
+    name: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    required: str = '',
+    disabled: str = '',
+    multiple: str = '',
+    attributes: str = '',
+    options: str = '',
+    label: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _multiple = SafeHTML(multiple)
+    _attributes = SafeHTML(attributes)
+    _options = SafeHTML(options)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
+    <select id="{id}"
+            name="{name}"
+            class="form-select {input_class}"
+            style="{input_style}"
+            {_required}
+            {_disabled}
+            {_multiple}
+            {_attributes}>
+        {_options}
     </select>
-    ${help_text}
-    ${error_message}
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    TEXTAREA_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
-    <textarea id="${id}"
-              name="${name}"
-              class="form-control ${input_class}"
-              style="${input_style}"
-              rows="${rows}"
-              cols="${cols}"
-              placeholder="${placeholder}"
-              ${required}
-              ${disabled}
-              ${readonly}
-              ${attributes}>${value}</textarea>
-    ${help_text}
-    ${error_message}
+
+def _textarea_input(
+    *,
+    id: str = '',
+    name: str = '',
+    value: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    placeholder: str = '',
+    rows: str = '4',
+    cols: str = '',
+    required: str = '',
+    disabled: str = '',
+    readonly: str = '',
+    attributes: str = '',
+    label: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _readonly = SafeHTML(readonly)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
+    <textarea id="{id}"
+              name="{name}"
+              class="form-control {input_class}"
+              style="{input_style}"
+              rows="{rows}"
+              cols="{cols}"
+              placeholder="{placeholder}"
+              {_required}
+              {_disabled}
+              {_readonly}
+              {_attributes}>{value}</textarea>
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    CHECKBOX_INPUT = TemplateString(
-        """
-<div class="form-check ${wrapper_class}" style="${wrapper_style}">
+
+def _checkbox_input(
+    *,
+    id: str = '',
+    name: str = '',
+    checkbox_value: str = '',
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    input_class: str = '',
+    input_style: str = '',
+    checked: str = '',
+    required: str = '',
+    disabled: str = '',
+    attributes: str = '',
+    label_text: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    _checked = SafeHTML(checked)
+    _required = SafeHTML(required)
+    _disabled = SafeHTML(disabled)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<div class="form-check {wrapper_class}" style="{wrapper_style}">
     <input type="checkbox"
-           id="${id}"
-           name="${name}"
-           class="form-check-input ${input_class}"
-           style="${input_style}"
-           value="${checkbox_value}"
-           ${checked}
-           ${required}
-           ${disabled}
-           ${attributes} />
-    <label class="form-check-label" for="${id}">
-        ${label_text}
+           id="{id}"
+           name="{name}"
+           class="form-check-input {input_class}"
+           style="{input_style}"
+           value="{checkbox_value}"
+           {_checked}
+           {_required}
+           {_disabled}
+           {_attributes} />
+    <label class="form-check-label" for="{id}">
+        {label_text}
     </label>
-    ${help_text}
-    ${error_message}
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    RADIO_INPUT = TemplateString(
-        """
-<div class="form-group ${wrapper_class}" style="${wrapper_style}">
-    ${label}
+
+def _radio_input(
+    *,
+    wrapper_class: str = '',
+    wrapper_style: str = '',
+    label: str = '',
+    radio_options: str = '',
+    help_text: str = '',
+    error_message: str = '',
+) -> SafeHTML:
+    _label = SafeHTML(label)
+    _radio_options = SafeHTML(radio_options)
+    _help_text = SafeHTML(help_text)
+    _error_message = SafeHTML(error_message)
+    return html(t'''
+<div class="form-group {wrapper_class}" style="{wrapper_style}">
+    {_label}
     <div class="radio-group">
-        ${radio_options}
+        {_radio_options}
     </div>
-    ${help_text}
-    ${error_message}
+    {_help_text}
+    {_error_message}
 </div>
-"""
-    )
+''')
 
-    # Layout Templates
-    FORM_WRAPPER = TemplateString(
-        """
-<form id="${form_id}"
-      class="pydantic-form ${form_class}"
-      style="${form_style}"
-      method="${method}"
-      action="${action}"
-      ${form_attributes}>
-    ${csrf_token}
-    ${form_content}
-    ${submit_buttons}
+
+# ── Layout templates ─────────────────────────────────────────────────────────
+
+
+def _form_wrapper(
+    *,
+    form_id: str = '',
+    form_class: str = '',
+    form_style: str = '',
+    method: str = 'post',
+    action: str = '',
+    form_attributes: str = '',
+    csrf_token: str = '',
+    form_content: str = '',
+    submit_buttons: str = '',
+) -> SafeHTML:
+    _form_attributes = SafeHTML(form_attributes)
+    _csrf_token = SafeHTML(csrf_token)
+    _form_content = SafeHTML(form_content)
+    _submit_buttons = SafeHTML(submit_buttons)
+    return html(t'''
+<form id="{form_id}"
+      class="pydantic-form {form_class}"
+      style="{form_style}"
+      method="{method}"
+      action="{action}"
+      {_form_attributes}>
+    {_csrf_token}
+    {_form_content}
+    {_submit_buttons}
 </form>
-"""
-    )
+''')
 
-    VERTICAL_LAYOUT = TemplateString(
-        """
-<div class="vertical-layout ${layout_class}" style="${layout_style}">
-    ${sections}
+
+def _vertical_layout(
+    *,
+    layout_class: str = '',
+    layout_style: str = '',
+    sections: str = '',
+) -> SafeHTML:
+    _sections = SafeHTML(sections)
+    return html(t'''
+<div class="vertical-layout {layout_class}" style="{layout_style}">
+    {_sections}
 </div>
-"""
-    )
+''')
 
-    HORIZONTAL_LAYOUT = TemplateString(
-        """
-<div class="horizontal-layout row ${layout_class}" style="${layout_style}">
-    ${sections}
+
+def _horizontal_layout(
+    *,
+    layout_class: str = '',
+    layout_style: str = '',
+    sections: str = '',
+) -> SafeHTML:
+    _sections = SafeHTML(sections)
+    return html(t'''
+<div class="horizontal-layout row {layout_class}" style="{layout_style}">
+    {_sections}
 </div>
-"""
-    )
+''')
 
-    TAB_LAYOUT = TemplateString(
-        """
-<div class="tab-layout ${layout_class}" style="${layout_style}">
+
+def _tab_layout(
+    *,
+    layout_class: str = '',
+    layout_style: str = '',
+    tab_buttons: str = '',
+    tab_panels: str = '',
+    component_assets: str = '',
+) -> SafeHTML:
+    _tab_buttons = SafeHTML(tab_buttons)
+    _tab_panels = SafeHTML(tab_panels)
+    _component_assets = SafeHTML(component_assets)
+    return html(t'''
+<div class="tab-layout {layout_class}" style="{layout_style}">
     <div class="tab-navigation" role="tablist">
-        ${tab_buttons}
+        {_tab_buttons}
     </div>
     <div class="tab-content">
-        ${tab_panels}
+        {_tab_panels}
     </div>
 </div>
-${component_assets}
-"""
-    )
+{_component_assets}
+''')
 
-    TAB_BUTTON = TemplateString(
-        """
-<button class="tab-button${active_class}"
+
+def _tab_button(
+    *,
+    tab_id: str = '',
+    title: str = '',
+    active_class: str = '',
+    aria_selected: str = 'false',
+) -> SafeHTML:
+    _active_class = SafeHTML(active_class)
+    return html(t'''
+<button class="tab-button{_active_class}"
         type="button"
         role="tab"
-        aria-selected="${aria_selected}"
-        aria-controls="${tab_id}"
-        onclick="switchTab('${tab_id}', this)">
-    ${title}
+        aria-selected="{aria_selected}"
+        aria-controls="{tab_id}"
+        onclick="switchTab(&#39;{tab_id}&#39;, this)">
+    {title}
 </button>
-"""
-    )
+''')
 
-    TAB_PANEL = TemplateString(
-        """
-<div id="${tab_id}"
-     class="tab-panel${active_class}"
+
+def _tab_panel(
+    *,
+    tab_id: str = '',
+    content: str = '',
+    active_class: str = '',
+    display_style: str = 'none',
+    aria_hidden: str = 'true',
+) -> SafeHTML:
+    _content = SafeHTML(content)
+    _active_class = SafeHTML(active_class)
+    return html(t'''
+<div id="{tab_id}"
+     class="tab-panel{_active_class}"
      role="tabpanel"
-     style="display: ${display_style};"
-     aria-hidden="${aria_hidden}">
-    ${content}
+     style="display: {display_style};"
+     aria-hidden="{aria_hidden}">
+    {_content}
 </div>
-"""
-    )
+''')
 
-    ACCORDION_LAYOUT = TemplateString(
-        """
-<div class="accordion-layout ${layout_class}" style="${layout_style}">
-    ${sections}
+
+def _accordion_layout(
+    *,
+    layout_class: str = '',
+    layout_style: str = '',
+    sections: str = '',
+    component_assets: str = '',
+) -> SafeHTML:
+    _sections = SafeHTML(sections)
+    _component_assets = SafeHTML(component_assets)
+    return html(t'''
+<div class="accordion-layout {layout_class}" style="{layout_style}">
+    {_sections}
 </div>
-${component_assets}
-"""
-    )
+{_component_assets}
+''')
 
-    ACCORDION_SECTION = TemplateString(
-        """
+
+def _accordion_section(
+    *,
+    section_id: str = '',
+    title: str = '',
+    content: str = '',
+    expanded_class: str = '',
+    aria_expanded: str = 'false',
+    display_style: str = 'none',
+) -> SafeHTML:
+    _content = SafeHTML(content)
+    _expanded_class = SafeHTML(expanded_class)
+    return html(t'''
 <div class="accordion-section">
-    <button class="accordion-header${expanded_class}"
-            aria-expanded="${aria_expanded}"
-            aria-controls="${section_id}"
-            onclick="toggleAccordion('${section_id}', this)">
-        ${title}
+    <button class="accordion-header{_expanded_class}"
+            aria-expanded="{aria_expanded}"
+            aria-controls="{section_id}"
+            onclick="toggleAccordion(&#39;{section_id}&#39;, this)">
+        {title}
     </button>
-    <div id="${section_id}"
+    <div id="{section_id}"
          class="accordion-content"
-         style="display: ${display_style};">
-        ${content}
+         style="display: {display_style};">
+        {_content}
     </div>
 </div>
-"""
-    )
+''')
 
-    SECTION = TemplateString(
-        """
-<div class="form-section ${section_class}" style="${section_style}">
-    ${section_title}
-    ${section_content}
+
+def _section(
+    *,
+    section_class: str = '',
+    section_style: str = '',
+    section_title: str = '',
+    section_content: str = '',
+) -> SafeHTML:
+    _section_title = SafeHTML(section_title)
+    _section_content = SafeHTML(section_content)
+    return html(t'''
+<div class="form-section {section_class}" style="{section_style}">
+    {_section_title}
+    {_section_content}
 </div>
-"""
-    )
+''')
 
-    # Helper Templates
-    LABEL = TemplateString(
-        """
-<label for="${for_id}" class="form-label ${label_class}" style="${label_style}">
-    ${icon}${label_text}${required_indicator}
+
+# ── Helper templates ─────────────────────────────────────────────────────────
+
+
+def _label(
+    *,
+    for_id: str = '',
+    label_class: str = '',
+    label_style: str = '',
+    icon: str = '',
+    label_text: str = '',
+    required_indicator: str = '',
+) -> SafeHTML:
+    _icon = SafeHTML(icon)
+    _required_indicator = SafeHTML(required_indicator)
+    return html(t'''
+<label for="{for_id}" class="form-label {label_class}" style="{label_style}">
+    {_icon}{label_text}{_required_indicator}
 </label>
-"""
-    )
+''')
 
-    HELP_TEXT = TemplateString(
-        """
-<div class="form-text ${help_class}" style="${help_style}">
-    ${help_content}
+
+def _help_text(
+    *,
+    help_class: str = '',
+    help_style: str = '',
+    help_content: str = '',
+) -> SafeHTML:
+    return html(t'''
+<div class="form-text {help_class}" style="{help_style}">
+    {help_content}
 </div>
-"""
-    )
+''')
 
-    ERROR_MESSAGE = TemplateString(
-        """
-<div class="invalid-feedback ${error_class}" style="${error_style}">
-    ${error_content}
+
+def _error_message(
+    *,
+    error_class: str = '',
+    error_style: str = '',
+    error_content: str = '',
+) -> SafeHTML:
+    return html(t'''
+<div class="invalid-feedback {error_class}" style="{error_style}">
+    {error_content}
 </div>
-"""
-    )
+''')
 
-    ICON = TemplateString(
-        """
-<i class="bi bi-${icon_name} ${icon_class}" style="${icon_style}"></i>
-"""
-    )
 
-    # Form Control Groups
-    INPUT_GROUP = TemplateString(
-        """
-<div class="input-group ${group_class}" style="${group_style}">
-    ${prepend}
-    ${input_element}
-    ${append}
+def _icon(
+    *,
+    icon_name: str = '',
+    icon_class: str = '',
+    icon_style: str = '',
+) -> SafeHTML:
+    return html(t'<i class="bi bi-{icon_name} {icon_class}" style="{icon_style}"></i>')
+
+
+def _input_group(
+    *,
+    group_class: str = '',
+    group_style: str = '',
+    prepend: str = '',
+    input_element: str = '',
+    append: str = '',
+) -> SafeHTML:
+    _prepend = SafeHTML(prepend)
+    _input_element = SafeHTML(input_element)
+    _append = SafeHTML(append)
+    return html(t'''
+<div class="input-group {group_class}" style="{group_style}">
+    {_prepend}
+    {_input_element}
+    {_append}
 </div>
-"""
-    )
+''')
 
-    # Complete Page Templates
-    FORM_PAGE = TemplateString(
-        """<!--- Start Pydantic-SchemaForms -->
+
+def _form_page(
+    *,
+    page_title: str = '',
+    css_links: str = '',
+    custom_styles: str = '',
+    page_header: str = '',
+    form_content: str = '',
+    page_footer: str = '',
+    js_links: str = '',
+    custom_scripts: str = '',
+) -> SafeHTML:
+    _css_links = SafeHTML(css_links)
+    _custom_styles = SafeHTML(custom_styles)
+    _page_header = SafeHTML(page_header)
+    _form_content = SafeHTML(form_content)
+    _page_footer = SafeHTML(page_footer)
+    _js_links = SafeHTML(js_links)
+    _custom_scripts = SafeHTML(custom_scripts)
+    return html(t"""<!--- Start Pydantic-SchemaForms -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${page_title}</title>
-    ${css_links}
-    ${custom_styles}
+    <title>{page_title}</title>
+    {_css_links}
+    {_custom_styles}
 </head>
 <body>
     <div class="container">
-        ${page_header}
-        ${form_content}
-        ${page_footer}
+        {_page_header}
+        {_form_content}
+        {_page_footer}
     </div>
-    ${js_links}
-    ${custom_scripts}
+    {_js_links}
+    {_custom_scripts}
 </body>
 </html>
-<!--- End Pydantic-SchemaForms -->"""
-    )
+<!--- End Pydantic-SchemaForms -->""")
 
-    # Material Templates
-    MATERIAL_FIELD_CONTAINER = TemplateString(
-        """
+
+# ── Material Design templates ─────────────────────────────────────────────────
+
+
+def _material_field_container(
+    *,
+    field_body: str = '',
+    help_text: str = '',
+    error_text: str = '',
+) -> SafeHTML:
+    _field_body = SafeHTML(field_body)
+    _help_text = SafeHTML(help_text)
+    _error_text = SafeHTML(error_text)
+    return html(t"""
 <div class="md-field">
-    ${field_body}
-    ${help_text}
-    ${error_text}
+    {_field_body}
+    {_help_text}
+    {_error_text}
 </div>
-"""
-    )
+""")
 
-    MATERIAL_FIELD_WITH_ICON = TemplateString(
-        """
+
+def _material_field_with_icon(
+    *,
+    icon_markup: str = '',
+    input_wrapper: str = '',
+) -> SafeHTML:
+    _icon_markup = SafeHTML(icon_markup)
+    _input_wrapper = SafeHTML(input_wrapper)
+    return html(t"""
 <div class="md-field-with-icon">
-    ${icon_markup}
-    ${input_wrapper}
+    {_icon_markup}
+    {_input_wrapper}
 </div>
-"""
-    )
+""")
 
-    MATERIAL_FIELD_INPUT_WRAPPER = TemplateString(
-        """
+
+def _material_field_input_wrapper(
+    *,
+    field_id: str = '',
+    input_control: str = '',
+    label: str = '',
+    required_indicator: str = '',
+) -> SafeHTML:
+    _input_control = SafeHTML(input_control)
+    _required_indicator = SafeHTML(required_indicator)
+    return html(t'''
 <div class="md-input-wrapper">
-    ${input_control}
-    <label class="md-floating-label" for="${field_id}">${label}${required_indicator}</label>
+    {_input_control}
+    <label class="md-floating-label" for="{field_id}">{label}{_required_indicator}</label>
 </div>
-"""
-    )
+''')
 
-    MATERIAL_ICON = TemplateString(
-        """
-<span class="md-icon material-icons">${icon_name}</span>
-"""
-    )
 
-    MATERIAL_TEXT_INPUT = TemplateString(
-        """
-<input type="${input_type}"
-       name="${name}"
-       id="${field_id}"
-       class="md-input${error_class}"
-       value="${value}"
-    placeholder=" " ${attributes}>
-"""
-    )
+def _material_icon(*, icon_name: str = '') -> SafeHTML:
+    return html(t'<span class="md-icon material-icons">{icon_name}</span>')
 
-    MATERIAL_TEXTAREA = TemplateString(
-        """
-<textarea name="${name}"
-          id="${field_id}"
-          class="md-textarea${error_class}"
-          placeholder=" " ${attributes}>${value}</textarea>
-"""
-    )
 
-    MATERIAL_SELECT = TemplateString(
-        """
-<select name="${name}"
-        id="${field_id}"
-        class="md-select${error_class}" ${attributes}>
-    ${options}
+def _material_text_input(
+    *,
+    input_type: str = 'text',
+    name: str = '',
+    field_id: str = '',
+    error_class: str = '',
+    value: str = '',
+    attributes: str = '',
+) -> SafeHTML:
+    _error_class = SafeHTML(error_class)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<input type="{input_type}"
+       name="{name}"
+       id="{field_id}"
+       class="md-input{_error_class}"
+       value="{value}"
+    placeholder=" " {_attributes}>
+''')
+
+
+def _material_textarea(
+    *,
+    name: str = '',
+    field_id: str = '',
+    error_class: str = '',
+    value: str = '',
+    attributes: str = '',
+) -> SafeHTML:
+    _error_class = SafeHTML(error_class)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<textarea name="{name}"
+          id="{field_id}"
+          class="md-textarea{_error_class}"
+          placeholder=" " {_attributes}>{value}</textarea>
+''')
+
+
+def _material_select(
+    *,
+    name: str = '',
+    field_id: str = '',
+    error_class: str = '',
+    options: str = '',
+    attributes: str = '',
+) -> SafeHTML:
+    _error_class = SafeHTML(error_class)
+    _options = SafeHTML(options)
+    _attributes = SafeHTML(attributes)
+    return html(t'''
+<select name="{name}"
+        id="{field_id}"
+        class="md-select{_error_class}" {_attributes}>
+    {_options}
 </select>
-"""
-    )
+''')
 
-    MATERIAL_SELECT_OPTION = TemplateString(
-        """
-<option value="${value}"${selected}>${label}</option>
-"""
-    )
 
-    MATERIAL_HELP_TEXT = TemplateString(
-        """
-<div class="md-help-text">${help_content}</div>
-"""
-    )
+def _material_select_option(
+    *,
+    value: str = '',
+    selected: str = '',
+    label: str = '',
+) -> SafeHTML:
+    _selected = SafeHTML(selected)
+    return html(t'<option value="{value}"{_selected}>{label}</option>')
 
-    MATERIAL_ERROR_TEXT = TemplateString(
-        """
-<div class="md-error-text">${error_content}</div>
-"""
-    )
 
-    MATERIAL_CHECKBOX_FIELD = TemplateString(
-        """
+def _material_help_text(*, help_content: str = '') -> SafeHTML:
+    return html(t'<div class="md-help-text">{help_content}</div>')
+
+
+def _material_error_text(*, error_content: str = '') -> SafeHTML:
+    return html(t'<div class="md-error-text">{error_content}</div>')
+
+
+def _material_checkbox_field(
+    *,
+    name: str = '',
+    field_id: str = '',
+    label: str = '',
+    required_indicator: str = '',
+    checked: str = '',
+    required: str = '',
+    help_text: str = '',
+    error_text: str = '',
+) -> SafeHTML:
+    _required_indicator = SafeHTML(required_indicator)
+    _checked = SafeHTML(checked)
+    _required = SafeHTML(required)
+    _help_text = SafeHTML(help_text)
+    _error_text = SafeHTML(error_text)
+    return html(t'''
 <div class="md-field">
     <div class="md-checkbox-container">
         <input type="checkbox"
-               name="${name}"
-               id="${field_id}"
+               name="{name}"
+               id="{field_id}"
                class="md-checkbox"
                value="true"
-             ${checked} ${required}>
-        <label for="${field_id}" class="md-checkbox-label">${label}${required_indicator}</label>
+             {_checked} {_required}>
+        <label for="{field_id}" class="md-checkbox-label">{label}{_required_indicator}</label>
     </div>
-    ${help_text}
-    ${error_text}
+    {_help_text}
+    {_error_text}
 </div>
-"""
-    )
+''')
 
-    MATERIAL_SUBMIT_BUTTON = TemplateString(
-        """
+
+def _material_submit_button(*, label: str = '') -> SafeHTML:
+    return html(t"""
 <div class="md-field">
-    <button type="submit" class="md-button md-button-filled">${label}</button>
+    <button type="submit" class="md-button md-button-filled">{label}</button>
 </div>
-"""
-    )
+""")
 
-    MATERIAL_MODEL_LIST_WRAPPER = TemplateString(
-        """
+
+def _material_model_list_wrapper(*, content: str = '') -> SafeHTML:
+    _content = SafeHTML(content)
+    return html(t"""
 <div class="md-field">
     <div class="md-model-list-container">
-        ${content}
+        {_content}
     </div>
 </div>
-"""
-    )
+""")
 
 
-def render_template(template: TemplateString, **kwargs: Any) -> str:
-    """
-    Convenience function to render a template with variables.
+# ---------------------------------------------------------------------------
+# FormTemplates — public collection
+# ---------------------------------------------------------------------------
 
-    Args:
-        template: TemplateString instance to render
-        **kwargs: Variables for template substitution
 
-    Returns:
-        Rendered template string
-    """
+class FormTemplates:
+    """Pre-built t-string render functions for common form elements and layouts."""
+
+    # Input templates
+    TEXT_INPUT = TemplateString(_text_input)
+    EMAIL_INPUT = TemplateString(_email_input)
+    PASSWORD_INPUT = TemplateString(_password_input)
+    NUMBER_INPUT = TemplateString(_number_input)
+    SELECT_INPUT = TemplateString(_select_input)
+    TEXTAREA_INPUT = TemplateString(_textarea_input)
+    CHECKBOX_INPUT = TemplateString(_checkbox_input)
+    RADIO_INPUT = TemplateString(_radio_input)
+
+    # Layout templates
+    FORM_WRAPPER = TemplateString(_form_wrapper)
+    VERTICAL_LAYOUT = TemplateString(_vertical_layout)
+    HORIZONTAL_LAYOUT = TemplateString(_horizontal_layout)
+    TAB_LAYOUT = TemplateString(_tab_layout)
+    TAB_BUTTON = TemplateString(_tab_button)
+    TAB_PANEL = TemplateString(_tab_panel)
+    ACCORDION_LAYOUT = TemplateString(_accordion_layout)
+    ACCORDION_SECTION = TemplateString(_accordion_section)
+    SECTION = TemplateString(_section)
+
+    # Helper templates
+    LABEL = TemplateString(_label)
+    HELP_TEXT = TemplateString(_help_text)
+    ERROR_MESSAGE = TemplateString(_error_message)
+    ICON = TemplateString(_icon)
+    INPUT_GROUP = TemplateString(_input_group)
+    FORM_PAGE = TemplateString(_form_page)
+
+    # Material Design templates
+    MATERIAL_FIELD_CONTAINER = TemplateString(_material_field_container)
+    MATERIAL_FIELD_WITH_ICON = TemplateString(_material_field_with_icon)
+    MATERIAL_FIELD_INPUT_WRAPPER = TemplateString(_material_field_input_wrapper)
+    MATERIAL_ICON = TemplateString(_material_icon)
+    MATERIAL_TEXT_INPUT = TemplateString(_material_text_input)
+    MATERIAL_TEXTAREA = TemplateString(_material_textarea)
+    MATERIAL_SELECT = TemplateString(_material_select)
+    MATERIAL_SELECT_OPTION = TemplateString(_material_select_option)
+    MATERIAL_HELP_TEXT = TemplateString(_material_help_text)
+    MATERIAL_ERROR_TEXT = TemplateString(_material_error_text)
+    MATERIAL_CHECKBOX_FIELD = TemplateString(_material_checkbox_field)
+    MATERIAL_SUBMIT_BUTTON = TemplateString(_material_submit_button)
+    MATERIAL_MODEL_LIST_WRAPPER = TemplateString(_material_model_list_wrapper)
+
+
+# ---------------------------------------------------------------------------
+# Public helpers
+# ---------------------------------------------------------------------------
+
+
+def render_template(template: TemplateString, **kwargs: Any) -> SafeHTML:
+    """Convenience wrapper: render a TemplateString with keyword arguments."""
     return template.render(**kwargs)
 
 
-def create_custom_template(template_str: str) -> TemplateString:
-    """
-    Create a custom template from a string.
+def create_custom_template(fn: _RenderFn) -> TemplateString:
+    """Wrap a t-string render function as a TemplateString.
 
     Args:
-        template_str: Template string with ${variable} placeholders
+        fn: A callable that accepts keyword arguments and returns SafeHTML,
+            typically defined using t-strings and the html() processor.
 
     Returns:
-        TemplateString instance
+        TemplateString wrapping the function.
     """
-    return TemplateString(template_str)
-
-
-# Template validation and utilities
-def validate_template_variables(template: TemplateString, **kwargs: Any) -> Dict[str, bool]:
-    """
-    Validate that all required template variables are provided.
-
-    Args:
-        template: TemplateString to validate
-        **kwargs: Variables to check
-
-    Returns:
-        Dictionary mapping variable names to whether they are satisfied
-    """
-    import re
-
-    # Extract variable names from template
-    template_vars = set()
-    for match in re.finditer(r'\$\{(\w+)\}', template.template_str):
-        template_vars.add(match.group(1))
-
-    # Check which variables are satisfied
-    provided_vars = set(kwargs.keys())
-    return {var: var in provided_vars for var in template_vars}
-
-
-# Performance utilities
-def precompile_templates():
-    """Precompile all form templates for optimal performance."""
-    for attr_name in dir(FormTemplates):
-        if not attr_name.startswith('_'):
-            template = getattr(FormTemplates, attr_name)
-            if isinstance(template, TemplateString):
-                # Trigger compilation by accessing _compile_template
-                template._compile_template(template.template_str)
-
-
-# Initialize template compilation on import for better performance
-precompile_templates()
+    return TemplateString(fn)

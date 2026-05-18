@@ -48,6 +48,7 @@ from pydantic_schemaforms.rendering.layout_engine import (
     get_nested_form_data,
 )
 from pydantic_schemaforms.templates import TemplateString
+from pydantic_schemaforms.tstring import SafeHTML, html as thtml
 from pydantic_schemaforms.validation import validate_form_data
 
 
@@ -731,19 +732,16 @@ class TestFormStyleLayoutSections:
     """Ensure layout sections honor FormStyle templates."""
 
     def test_layout_card_uses_custom_form_style_template(self):
-        section_template = TemplateString(
-            """
-<section class="custom-layout" data-title="${title}">
-    ${help_html}
-    <div class="custom-body">${body_html}</div>
-</section>
-"""
-        )
-        help_template = TemplateString(
-            """
-<aside class="custom-help">${help_text}</aside>
-"""
-        )
+        def _section(*, title: str = '', help_html: str = '', body_html: str = '', **_):
+            return thtml(
+                t'<section class="custom-layout" data-title="{title}">{SafeHTML(help_html)}<div class="custom-body">{SafeHTML(body_html)}</div></section>'
+            )
+
+        def _help(*, help_text: str = '', **_):
+            return thtml(t'<aside class="custom-help">{help_text}</aside>')
+
+        section_template = TemplateString(_section)
+        help_template = TemplateString(_help)
 
         custom_style = FormStyle(
             framework='custom',

@@ -187,7 +187,7 @@ class FormInput(BaseInput):
         Returns:
             Complete HTML for the input with label and decorations
         """
-        from ..icon_mapping import map_icon_for_framework
+        from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 
         # Map icon to appropriate framework if provided
         if icon:
@@ -359,7 +359,7 @@ class SelectInputBase(BaseInput):
         Returns:
             Complete HTML for the input with label and decorations
         """
-        from ..icon_mapping import map_icon_for_framework
+        from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 
         # Ensure we have an input type
         self.get_input_type()

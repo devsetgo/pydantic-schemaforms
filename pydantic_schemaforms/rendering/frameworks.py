@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Dict, Type
 
-from ..inputs import TextInput
-from ..inputs.base import BaseInput
-from ..inputs.registry import get_input_component_map
+from pydantic_schemaforms.inputs import TextInput
+from pydantic_schemaforms.inputs.base import BaseInput
+from pydantic_schemaforms.inputs.registry import get_input_component_map
 
 # Framework configurations extracted from the enhanced renderer to keep the class slim.
 FRAMEWORKS: Dict[str, Dict[str, str]] = {

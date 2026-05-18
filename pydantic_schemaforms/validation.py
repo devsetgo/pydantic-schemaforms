@@ -12,7 +12,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from html import escape
-from string import Template
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from pydantic import ValidationError
@@ -492,21 +491,9 @@ class FieldValidator:
         if not js_validations:
             return ''
 
-        template = Template(
-            """
-function validate${field_name_camel}(value) {
-    ${validations}
-    return null; // No errors
-}
-        """
-        )
-
-        # Convert field name to camelCase for JavaScript function
         field_name_camel = ''.join(word.capitalize() for word in self.field_name.split('_'))
-
-        return template.substitute(
-            field_name_camel=field_name_camel, validations='\n    '.join(js_validations)
-        )
+        validations = '\n    '.join(js_validations)
+        return f'\nfunction validate{field_name_camel}(value) {{\n    {validations}\n    return null; // No errors\n}}\n'
 
     def to_rule_descriptors(self) -> List[Dict[str, Any]]:
         """Return serializable descriptors for all rules."""
@@ -635,37 +622,37 @@ class FormValidator:
                 field_name_camel = ''.join(word.capitalize() for word in field_name.split('_'))
                 field_validations.append(f"    '{field_name}': validate{field_name_camel}")
 
-        template = Template(
-            """
-<script>
-${field_functions}
+        fn_block = '\n\n'.join(field_functions)
+        validators_block = ',\n'.join(field_validations)
+        return f"""<script>
+{fn_block}
 
-const formValidators = {
-${field_validations}
-};
+const formValidators = {{
+{validators_block}
+}};
 
-function validateField(fieldName, value) {
+function validateField(fieldName, value) {{
     const validator = formValidators[fieldName];
-    if (validator) {
+    if (validator) {{
         return validator(value);
-    }
+    }}
     return null;
-}
+}}
 
-function validateForm(formElement) {
+function validateForm(formElement) {{
     let isValid = true;
-    const errors = {};
+    const errors = {{}};
 
     // Clear previous errors
     formElement.querySelectorAll('.error-message').forEach(el => el.remove());
     formElement.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
 
     // Validate each field
-    for (const [fieldName, validator] of Object.entries(formValidators)) {
-        const input = formElement.querySelector(`[name="$${fieldName}"]`);
-        if (input) {
+    for (const [fieldName, validator] of Object.entries(formValidators)) {{
+        const input = formElement.querySelector(`[name="${{fieldName}}"]`);
+        if (input) {{
             const error = validator(input.value);
-            if (error) {
+            if (error) {{
                 errors[fieldName] = error;
                 isValid = false;
 
@@ -675,66 +662,59 @@ function validateForm(formElement) {
                 errorElement.className = 'error-message';
                 errorElement.textContent = error;
                 input.parentNode.insertBefore(errorElement, input.nextSibling);
-            }
-        }
-    }
+            }}
+        }}
+    }}
 
-    return { isValid, errors };
-}
+    return {{ isValid, errors }};
+}}
 
 // Add live validation on input events
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('input', function(e) {
+document.addEventListener('DOMContentLoaded', function() {{
+    document.querySelectorAll('form').forEach(form => {{
+        form.addEventListener('input', function(e) {{
             const fieldName = e.target.name;
-            if (fieldName && formValidators[fieldName]) {
+            if (fieldName && formValidators[fieldName]) {{
                 const error = validateField(fieldName, e.target.value);
 
                 // Clear previous error
                 const existingError = e.target.parentNode.querySelector('.error-message');
-                if (existingError) {
+                if (existingError) {{
                     existingError.remove();
-                }
+                }}
                 e.target.classList.remove('error');
 
                 // Show new error if any
-                if (error) {
+                if (error) {{
                     e.target.classList.add('error');
                     const errorElement = document.createElement('div');
                     errorElement.className = 'error-message';
                     errorElement.textContent = error;
                     e.target.parentNode.insertBefore(errorElement, e.target.nextSibling);
-                }
-            }
-        });
+                }}
+            }}
+        }});
 
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function(e) {{
             const validation = validateForm(form);
-            if (!validation.isValid) {
+            if (!validation.isValid) {{
                 e.preventDefault();
-            }
-        });
-    });
-});
+            }}
+        }});
+    }});
+}});
 </script>
 <style>
-.error {
+.error {{
     border-color: #dc3545 !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-.error-message {
+}}
+.error-message {{
     color: #dc3545;
     font-size: 0.875rem;
     margin-top: 0.25rem;
-}
-</style>
-        """
-        )
-
-        return template.substitute(
-            field_functions='\n\n'.join(field_functions),
-            field_validations=',\n'.join(field_validations),
-        )
+}}
+</style>"""
 
 
 # Common cross-field validation rules
