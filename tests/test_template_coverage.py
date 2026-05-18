@@ -8,7 +8,6 @@ content branches in layout_base.BaseLayout.
 
 from __future__ import annotations
 
-import pytest
 
 from pydantic_schemaforms.layout_base import BaseLayout
 from pydantic_schemaforms.rendering.form_style import (
@@ -366,9 +365,7 @@ class TestBootstrapAccordionTemplates:
 
     def test_bootstrap_accordion_layout(self):
         sections = SafeHTML('<div class="accordion-item">item</div>')
-        out = BOOTSTRAP_ACCORDION_LAYOUT_TEMPLATE.render(
-            layout_id='acc1', sections=str(sections)
-        )
+        out = BOOTSTRAP_ACCORDION_LAYOUT_TEMPLATE.render(layout_id='acc1', sections=str(sections))
         assert isinstance(out, SafeHTML)
         assert 'accordion' in out
         assert 'accordion-item' in out
@@ -425,8 +422,11 @@ class TestGetFormStyleBranches:
     def test_base_framework_fallback(self):
         # Register only 'default' variant, request a specific variant that isn't
         # registered — hits: return _FORM_STYLE_REGISTRY[base_key]
-        register_form_style(FormStyle(framework='test-fw-fallback', variant='default',
-                                      templates=FormStyleTemplates()))
+        register_form_style(
+            FormStyle(
+                framework='test-fw-fallback', variant='default', templates=FormStyleTemplates()
+            )
+        )
         style = get_form_style('test-fw-fallback:99')
         assert style.framework == 'test-fw-fallback'
 
