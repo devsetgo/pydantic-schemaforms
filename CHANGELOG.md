@@ -7,34 +7,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
-## [26.2.2] — 2026-05-18
-
-### Security
-
-- **XSS fix in `live_validation.py`** — `render_field_with_live_validation()` built the field
-  label and extra HTML attributes via f-strings and then wrapped the result in `SafeHTML()`,
-  silently bypassing the t-string escaping pipeline. Fixed by rendering the label through the
-  `html()` t-string processor and escaping attribute values with `html.escape()` before
-  interpolation.
-
-### Changed
-
-- **T-string HTML generation** — All HTML output in `pydantic_schemaforms/` now uses Python 3.14
-  t-strings processed by the `html()` function from `tstring.py`. `string.Template` is removed
-  from the codebase and banned at lint time via ruff TID251. XSS protection is now structural:
-  plain `str` interpolations are auto-escaped; pre-rendered fragments require an explicit
-  `SafeHTML()` cast.
-- **Reduced code duplication** — Extracted `_cast_input_html()` helper in `templates.py` to
-  eliminate a repeated seven-line SafeHTML initialisation block across six input render functions,
-  bringing SonarQube duplication below the 3% quality-gate threshold.
-- **Dependency upper bounds** — Production and optional dependencies now carry upper-bound caps
-  (`pydantic<4`, `pydantic-extra-types<3`, `fastapi<2`, `uvicorn<1`, `flask<4`) to prevent
-  silent breakage from future major-version releases.
-
-### Tests
-
-- Test coverage raised to upper 90s across all source modules; all files above 90%.
-
 ## [26.2.1] — 2026-05-17
 
 First production release. All public Quick Start code paths verified working end-to-end.
