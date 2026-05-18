@@ -11,16 +11,14 @@ import asyncio
 import sys
 import warnings
 from datetime import date, datetime
-from typing import Annotated, Optional, Union
+from typing import Annotated, Optional
 from unittest import mock
 
 import pytest
-from annotated_types import Ge, Gt, Le, Lt, MaxLen, MinLen, MultipleOf
-from pydantic import AnyUrl, BaseModel, EmailStr
+from pydantic import AnyUrl, BaseModel
 from pydantic.fields import FieldInfo
 
 from pydantic_schemaforms import FormModel
-from pydantic_schemaforms.tstring import SafeHTML
 
 
 # ---------------------------------------------------------------------------
@@ -36,6 +34,7 @@ class TestLayoutsDeprecationShim:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter('always')
             import pydantic_schemaforms.layouts as layouts_mod  # noqa: F401
+
             sys.modules.pop(mod_name, None)  # clean up for other test runs
 
         dep_warns = [w for w in caught if issubclass(w.category, DeprecationWarning)]
@@ -96,6 +95,7 @@ class TestVersionCheckUncovered:
         from pydantic_schemaforms.version_check import check_python_version
 
         import collections
+
         VersionInfo = collections.namedtuple(
             'version_info', ['major', 'minor', 'micro', 'releaselevel', 'serial']
         )
@@ -1057,7 +1057,6 @@ class TestModelListUncovered:
         renderer = ModelListRenderer(framework='bootstrap')
 
         # Patch the theme to return '' so the default fallback activates
-        original_resolve = renderer._resolve_theme
 
         class EmptyTheme(RendererTheme):
             def render_model_list_container(self, **kwargs):
