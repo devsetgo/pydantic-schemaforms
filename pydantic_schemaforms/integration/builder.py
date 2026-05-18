@@ -20,6 +20,7 @@ from pydantic_schemaforms.assets.runtime import (
     framework_js_tag,
 )
 from pydantic_schemaforms.validation import create_validator
+from pydantic_schemaforms.tstring import SafeHTML, html as _html_proc
 
 
 class FormBuilder:
@@ -356,9 +357,6 @@ def create_contact_form(framework: str = 'bootstrap') -> FormBuilder:
 
 def create_form_from_model(model: Type[BaseModel], **kwargs: Any) -> AutoFormBuilder:
     return AutoFormBuilder(model, **kwargs)
-
-
-from pydantic_schemaforms.tstring import SafeHTML, html as _html_proc
 
 
 def _render_form_page_html(
