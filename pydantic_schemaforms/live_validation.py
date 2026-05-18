@@ -9,6 +9,7 @@ Requires: Python 3.14+ (uses native template strings)
 
 import json
 from dataclasses import dataclass
+from html import escape as _html_escape
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from pydantic import BaseModel, ValidationError
@@ -409,7 +410,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         other_attrs = []
         for key, val in kwargs.items():
             if key not in ['class', 'id', 'name']:
-                other_attrs.append(f'{key}="{val}"')
+                other_attrs.append(f'{key}="{_html_escape(str(val))}"')
 
         # Render field
         return self.field_template.render(
@@ -418,7 +419,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
             value=str(value) if value is not None else '',
             input_class=kwargs.get('class', ''),
             group_class='',
-            label=f'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>',
+            label=str(_html_proc(t'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>')),
             validation_attributes=' '.join(validation_attrs),
             other_attributes=' '.join(other_attrs),
             existing_feedback='',
