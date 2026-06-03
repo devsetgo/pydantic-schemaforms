@@ -20,7 +20,7 @@ pydantic-extra-types[all]==2.11.1 # Vulnerabilities: None
 pymdown-extensions==10.21.3 # From 10.21.2 | Vulnerabilities: None
 pyright==1.1.409 # From 1.1.400 | Vulnerabilities: None
 pytest==9.0.3 # Vulnerabilities: None
-pytest-asyncio==1.3.0 # Vulnerabilities: None
+pytest-asyncio==1.4.0 # Vulnerabilities: None
 pytest-benchmark==5.2.3 # Vulnerabilities: None
 pytest-cov==7.1.0 # Vulnerabilities: None
 pytest-html==4.2.0 # Vulnerabilities: None
