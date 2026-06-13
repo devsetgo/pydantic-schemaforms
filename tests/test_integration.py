@@ -36,9 +36,9 @@ from pydantic_schemaforms.integration import (
     handle_form_async,
     handle_sync_form,
 )
-from pydantic_schemaforms.integration.react import ReactJSONSchemaIntegration
+from pydantic_schemaforms.integration.json_schema_form_adapter import ReactJSONSchemaFormAdapter
 from pydantic_schemaforms.integration.schema import JSONSchemaGenerator, OpenAPISchemaGenerator
-from pydantic_schemaforms.integration.vue import VueFormulateIntegration
+from pydantic_schemaforms.integration.vue_formulate_adapter import VueFormulateAdapter
 from pydantic_schemaforms.integration.builder import (
     AutoFormBuilder,
     create_contact_form,
@@ -218,12 +218,12 @@ class TestGenericServerIntegrations:
 # ===========================================================================
 
 
-class TestReactJSONSchemaIntegration:
+class TestReactJSONSchemaFormAdapter:
     """Test React JSON Schema Forms integration."""
 
     def test_react_integration_creation(self):
-        """Test basic ReactJSONSchemaIntegration creation."""
-        integration = ReactJSONSchemaIntegration()
+        """Test basic ReactJSONSchemaFormAdapter creation."""
+        integration = ReactJSONSchemaFormAdapter()
         assert integration is not None
         assert hasattr(integration, 'generate_schema')
         assert hasattr(integration, 'generate_ui_schema')
@@ -231,7 +231,7 @@ class TestReactJSONSchemaIntegration:
 
     def test_react_schema_generation(self, simple_form_model):
         """Test React JSON Schema generation."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         schema = integration.generate_schema(simple_form_model)
 
@@ -255,7 +255,7 @@ class TestReactJSONSchemaIntegration:
 
     def test_react_ui_schema_generation(self, complex_form_model):
         """Test React UI Schema generation."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         ui_schema = integration.generate_ui_schema(complex_form_model)
 
@@ -273,7 +273,7 @@ class TestReactJSONSchemaIntegration:
 
     def test_react_form_data_generation(self, simple_form_model, sample_form_data):
         """Test React form data generation."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         form_data = integration.generate_form_data(simple_form_model, sample_form_data)
 
@@ -283,7 +283,7 @@ class TestReactJSONSchemaIntegration:
 
     def test_react_complete_form_config(self, complex_form_model):
         """Test complete React form configuration."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         config = integration.generate_complete_config(complex_form_model)
 
@@ -303,19 +303,19 @@ class TestReactJSONSchemaIntegration:
 # ===========================================================================
 
 
-class TestVueFormulateIntegration:
+class TestVueFormulateAdapter:
     """Test Vue Formulate integration."""
 
     def test_vue_integration_creation(self):
-        """Test basic VueFormulateIntegration creation."""
-        integration = VueFormulateIntegration()
+        """Test basic VueFormulateAdapter creation."""
+        integration = VueFormulateAdapter()
         assert integration is not None
         assert hasattr(integration, 'generate_form_config')
         assert hasattr(integration, 'generate_validation_rules')
 
     def test_vue_form_config_generation(self, simple_form_model):
         """Test Vue Formulate configuration generation."""
-        integration = VueFormulateIntegration()
+        integration = VueFormulateAdapter()
 
         config = integration.generate_form_config(simple_form_model)
 
@@ -330,7 +330,7 @@ class TestVueFormulateIntegration:
 
     def test_vue_validation_rules(self, simple_form_model):
         """Test Vue Formulate validation rules."""
-        integration = VueFormulateIntegration()
+        integration = VueFormulateAdapter()
 
         rules = integration.generate_validation_rules(simple_form_model)
 
@@ -534,7 +534,7 @@ class TestIntegrationErrorHandling:
 
     def test_invalid_form_model_handling(self):
         """Test handling of invalid form models."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         # Test with None
         with pytest.raises((TypeError, ValueError)):
@@ -557,7 +557,7 @@ class TestIntegrationErrorHandling:
 
     def test_integration_fallbacks(self, simple_form_model):
         """Test integration fallback mechanisms."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         # Test with minimal form model
         class MinimalForm(FormModel):
@@ -1330,7 +1330,7 @@ class TestFormIntegration:
 
     def test_react_json_schema_integration(self, simple_form_model):
         """Test React JSON Schema integration."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         # Convert pydantic model to JSON schema
         json_schema = integration.generate_schema(simple_form_model)
@@ -1349,7 +1349,7 @@ class TestFormIntegration:
 
     def test_json_schema_validation_integration(self, simple_form_model):
         """Test JSON schema validation integration."""
-        integration = ReactJSONSchemaIntegration()
+        integration = ReactJSONSchemaFormAdapter()
 
         # Get JSON schema
         json_schema = integration.generate_schema(simple_form_model)

@@ -232,9 +232,11 @@ class TestSyncUncovered:
 
 class TestReactIntegrationUncovered:
     def _make(self):
-        from pydantic_schemaforms.integration.react import ReactJSONSchemaIntegration
+        from pydantic_schemaforms.integration.json_schema_form_adapter import (
+            ReactJSONSchemaFormAdapter,
+        )
 
-        return ReactJSONSchemaIntegration()
+        return ReactJSONSchemaFormAdapter()
 
     def test_datetime_field_gets_datetime_widget(self):
         class M(BaseModel):
@@ -337,9 +339,9 @@ class TestReactIntegrationUncovered:
 
 class TestVueIntegrationUncovered:
     def _make(self):
-        from pydantic_schemaforms.integration.vue import VueFormulateIntegration
+        from pydantic_schemaforms.integration.vue_formulate_adapter import VueFormulateAdapter
 
-        return VueFormulateIntegration()
+        return VueFormulateAdapter()
 
     def test_optional_field_unwrapped(self):
         class M(BaseModel):
