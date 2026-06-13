@@ -102,6 +102,7 @@ class EnhancedFormRenderer:
         debug: bool = False,
         show_timing: bool = False,
         enable_logging: bool = False,
+        inject_layout_styles: bool = True,
         **kwargs,
     ) -> str:
         """Render a complete HTML form from a FormModel definition."""
@@ -220,7 +221,8 @@ class EnhancedFormRenderer:
             render_time=render_time if show_timing else None,
         )
 
-        output_parts = [self._render_layout_support_styles(), form_markup]
+        styles = self._render_layout_support_styles() if inject_layout_styles else ''
+        output_parts = [styles, form_markup] if styles else [form_markup]
 
         has_model_list_fields = any(
             resolve_ui_element(field_schema) == 'model_list' for _name, field_schema in fields
@@ -303,6 +305,7 @@ class EnhancedFormRenderer:
         csrf_field_name: str = 'csrf_token',
         include_submit_button: bool = True,
         layout: str = 'vertical',
+        inject_layout_styles: bool = True,
         **kwargs,
     ) -> str:
         """Async wrapper for render_form_from_model."""
@@ -320,10 +323,11 @@ class EnhancedFormRenderer:
             csrf_field_name=csrf_field_name,
             include_submit_button=include_submit_button,
             layout=layout,
+            inject_layout_styles=inject_layout_styles,
             **kwargs,
         )
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, render_callable)
 
     def _render_field(
