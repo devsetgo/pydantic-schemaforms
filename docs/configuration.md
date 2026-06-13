@@ -2,6 +2,25 @@
 
 This library is driven almost entirely by **render-time options** (which framework/theme to target, whether to inline assets, what layout to use) plus **field-level UI metadata** stored in your model’s JSON Schema.
 
+## What render_form_html returns
+
+`render_form_html()` returns an **HTML fragment** — a `<form>` element and its supporting scripts, not a complete HTML page. You are responsible for embedding it in your page template and for loading any required CSS framework.
+
+```python
+# fragment — embed it inside your own <html>/<head>/<body>
+form_html = render_form_html(MyForm, submit_url="/submit")
+```
+
+**CSS loading options:**
+
+| How you load CSS | Render call |
+|---|---|
+| Your page already includes Bootstrap/Material | Default — no extra args |
+| You want fully self-contained HTML (inlined CSS) | Pass `self_contained=True` |
+| You want the renderer to emit `<link>` tags | Pass `include_framework_assets=True` |
+
+If you embed `form_html` in a plain HTML response without loading Bootstrap/Material, the form will render without styling. Pass `self_contained=True` for offline/standalone use, or load Bootstrap/Material in your base template.
+
 ## Rendering entry points
 
 `submit_url` is required for render calls. This library does not default form submit targets.
@@ -13,8 +32,7 @@ You can render forms in a few different ways. Pick one that matches your project
 Use `FormModel` + `render_form_html()`.
 
 ```python
-from pydantic_schemaforms import Field, FormModel
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class RegistrationForm(FormModel):

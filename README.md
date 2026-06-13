@@ -465,8 +465,8 @@ def handle_submit():
         return f"Welcome {user_data.username}!"
 
     except ValidationError as e:
-        # Handle validation errors
-        errors = e.errors()
+        # Convert Pydantic errors to field→message mapping
+        errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
         return f"Validation failed: {errors}", 400
 ```
 
@@ -523,7 +523,8 @@ def registration():
             user = UserRegistrationForm(**request.form)
             return f"Registration successful for {user.username}!"
         except ValidationError as e:
-            errors = e.errors()
+            # Convert Pydantic errors to field→message mapping expected by render_form
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
             # Re-render form with errors
             form_html = UserRegistrationForm.render_form(
                 framework="bootstrap",
