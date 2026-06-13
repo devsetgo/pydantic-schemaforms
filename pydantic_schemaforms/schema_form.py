@@ -225,9 +225,8 @@ class FormModel(BaseModel):
                         ui_key = key[3:]  # Remove 'ui_' prefix
                         ui_info[ui_key] = value
             elif callable(extra):
-                # Handle callable json_schema_extra
                 schema = {}
-                extra(schema, cls)  # type: ignore[call-arg]
+                extra(schema)
                 for key, value in schema.items():
                     if key.startswith('ui_'):
                         ui_key = key[3:]  # Remove 'ui_' prefix
