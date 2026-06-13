@@ -376,8 +376,7 @@ class TestVerticalLayout:
         """Test vertical layout validation."""
         layout = VerticalLayout()
         result = layout.validate({'test': 'data'})
-        assert result is not None
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
     def test_vertical_layout_section_class(self):
         """Test section class generation."""
@@ -453,8 +452,7 @@ class TestHorizontalLayout:
         """Test horizontal layout validation."""
         layout = HorizontalLayout()
         result = layout.validate({'test': 'data'})
-        assert result is not None
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
     # --- From test_form_layouts_advanced.py ---
 
@@ -519,8 +517,7 @@ class TestTabbedLayout:
         """Test tabbed layout validation."""
         layout = TabbedLayout()
         result = layout.validate({'test': 'data'})
-        assert result is not None
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
     def test_tabbed_layout_render_complete_page(self):
         """Test rendering complete page with form design."""
@@ -532,7 +529,7 @@ class TestTabbedLayout:
         layout = TabbedLayout(form_config=design)
         layout.test_tab = VerticalLayout()
         html = layout.render(framework='bootstrap')
-        assert 'Complete Form' in html or isinstance(html, str)
+        assert 'Complete Form' in html
 
 
 class TestListLayout:
@@ -579,9 +576,7 @@ class TestListLayout:
         """Test validating empty list layout."""
         layout = ListLayout(form_model=SimpleFormModel, min_items=0)
         result = layout.validate({})
-        assert result is not None
-        # Should be valid since min_items is 0
-        assert result.is_valid or not result.is_valid
+        assert result.is_valid
 
     def test_list_layout_validate_with_items(self):
         """Test validating list layout with items."""
@@ -592,16 +587,13 @@ class TestListLayout:
                 'item_1_name': 'Second',
             }
         )
-        assert result is not None
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
     def test_list_layout_validate_min_items_constraint(self):
         """Test validation with minimum items constraint."""
         layout = ListLayout(form_model=ValueFormModel, min_items=3)
         result = layout.validate({})
-        assert result is not None
-        # Should have constraint error or be invalid
-        assert 'list_constraint' in result.errors or not result.is_valid
+        assert not result.is_valid
 
     def test_list_layout_validate_max_items_constraint(self):
         """Test validation with maximum items constraint."""
@@ -613,9 +605,7 @@ class TestListLayout:
                 'item_2_value': 'c',
             }
         )
-        # Should have constraint error for exceeding max
-        assert result is not None
-        assert hasattr(result, 'errors')
+        assert not result.is_valid
 
     def test_list_layout_render_bootstrap(self):
         """Test rendering list layout with Bootstrap."""
@@ -1221,7 +1211,7 @@ class TestLayoutValidation:
 
         result = layout.validate({})
 
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
     def test_layout_validate_with_data(self):
         """Test validating layout with data."""
@@ -1229,7 +1219,7 @@ class TestLayoutValidation:
 
         result = layout.validate({'field': 'value'})
 
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
 
 class TestLayoutEdgeCases:
@@ -1258,7 +1248,7 @@ class TestLayoutEdgeCases:
 
         result = layout.validate({})
 
-        assert hasattr(result, 'is_valid')
+        assert result.is_valid
 
     def test_tabs_layout_active_tab(self):
         """Test tabs layout with active tab."""
