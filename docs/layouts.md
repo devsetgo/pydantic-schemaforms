@@ -16,7 +16,7 @@ Supported values:
 - `side-by-side`: renders fields in two-column rows
 
 ```python
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 
 html = render_form_html(MyFormModel, layout="side-by-side", submit_url="/submit")
 ```

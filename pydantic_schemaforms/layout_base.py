@@ -45,7 +45,7 @@ class BaseLayout:
         *,
         data: dict[str, Any] | None = None,
         errors: dict[str, Any] | None = None,
-        renderer: 'EnhancedFormRenderer' | None = None,
+        renderer: EnhancedFormRenderer | None = None,
         framework: str = 'bootstrap',
         **kwargs: Any,
     ) -> str:
@@ -77,7 +77,7 @@ class BaseLayout:
         *,
         data: dict[str, Any],
         errors: dict[str, Any],
-        renderer: 'EnhancedFormRenderer' | None,
+        renderer: EnhancedFormRenderer | None,
         framework: str,
     ) -> str:
         """Render nested content recursively."""
@@ -109,11 +109,11 @@ class BaseLayout:
 
     def _render_nested(
         self,
-        item: str | 'BaseLayout',
+        item: str | BaseLayout,
         *,
         data: dict[str, Any],
         errors: dict[str, Any],
-        renderer: 'EnhancedFormRenderer' | None,
+        renderer: EnhancedFormRenderer | None,
         framework: str,
     ) -> str:
         if isinstance(item, BaseLayout):

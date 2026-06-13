@@ -58,7 +58,6 @@ class ModelListRenderer:
             error: Validation error message
             nested_errors: Nested validation errors (e.g., {'0.weight': 'Must be greater than 0'})
             help_text: Help text for the field
-            help_text: Help text for the field
             is_required: Whether the field is required
             min_items: Minimum number of items allowed
             max_items: Maximum number of items allowed
