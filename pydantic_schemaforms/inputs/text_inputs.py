@@ -3,8 +3,6 @@ Text input components using Python 3.14 template strings.
 Includes TextInput, PasswordInput, EmailInput, TextArea, and SearchInput.
 """
 
-from typing import Optional
-
 from .base import FormInput, render_template
 
 
@@ -235,7 +233,7 @@ class PhoneInput(TelInput):
     ui_element = 'phone'
     ui_element_aliases = ('phone_number',)
 
-    def render(self, country_code: Optional[str] = None, **kwargs) -> str:
+    def render(self, country_code: str | None = None, **kwargs) -> str:
         """Render phone input using Python 3.14 template strings."""
         if country_code:
             # Add country code to the value or placeholder

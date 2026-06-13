@@ -8,7 +8,7 @@ Formulate form.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 
 class VueFormulateAdapter:
@@ -19,8 +19,8 @@ class VueFormulateAdapter:
     components are generated.
     """
 
-    def generate_form_config(self, form_model) -> List[Dict[str, Any]]:
-        config: List[Dict[str, Any]] = []
+    def generate_form_config(self, form_model) -> list[dict[str, Any]]:
+        config: list[dict[str, Any]] = []
 
         for field_name, field_info in form_model.model_fields.items():
             field_type = field_info.annotation
@@ -47,11 +47,11 @@ class VueFormulateAdapter:
 
         return config
 
-    def generate_validation_rules(self, form_model) -> Dict[str, List[str]]:
-        rules: Dict[str, List[str]] = {}
+    def generate_validation_rules(self, form_model) -> dict[str, list[str]]:
+        rules: dict[str, list[str]] = {}
 
         for field_name, field_info in form_model.model_fields.items():
-            field_rules: List[str] = []
+            field_rules: list[str] = []
             if field_info.is_required():
                 field_rules.append('required')
             if 'email' in field_name.lower():

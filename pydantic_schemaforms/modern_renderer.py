@@ -10,7 +10,8 @@ lived in this file and keeps all framework-specific markup in one place.
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any
+from collections.abc import Callable
 
 from pydantic import create_model
 
@@ -21,7 +22,7 @@ from .schema_form import Field as SchemaField
 from .schema_form import FormModel
 
 # Basic mapping from legacy field types to Python annotations used by FormModel
-_FIELD_TYPE_ANNOTATIONS: Dict[str, Any] = {
+_FIELD_TYPE_ANNOTATIONS: dict[str, Any] = {
     'text': str,
     'email': str,
     'password': str,
@@ -49,7 +50,7 @@ _FIELD_TYPE_ANNOTATIONS: Dict[str, Any] = {
     'range': float,
     'checkbox': bool,
     'toggle': bool,
-    'multiselect': List[str],
+    'multiselect': list[str],
 }
 
 _HONEYPOT_FIELD_NAME = 'honeypot_trap'
@@ -65,17 +66,17 @@ class FormField:
     def __init__(
         self,
         name: str,
-        field_type: Optional[str] = None,
-        label: Optional[str] = None,
+        field_type: str | None = None,
+        label: str | None = None,
         required: bool = False,
-        placeholder: Optional[str] = None,
-        help_text: Optional[str] = None,
+        placeholder: str | None = None,
+        help_text: str | None = None,
         value: Any = None,
-        options: Optional[List[Dict[str, Any]]] = None,
-        validators: Optional[List[Callable[[Any], Any]]] = None,
-        attributes: Optional[Dict[str, Any]] = None,
-        input_type: Optional[str] = None,
-        ui_section: Optional[str] = None,
+        options: list[dict[str, Any]] | None = None,
+        validators: list[Callable[[Any], Any]] | None = None,
+        attributes: dict[str, Any] | None = None,
+        input_type: str | None = None,
+        ui_section: str | None = None,
         **kwargs: Any,
     ):
         self.name = name
@@ -91,7 +92,7 @@ class FormField:
         self.ui_section = ui_section or kwargs.pop('ui_section', None)
         self.order = kwargs.pop('order', None)
         self.extra_attrs = kwargs
-        self.errors: List[str] = []
+        self.errors: list[str] = []
 
     def validate(self, value: Any) -> bool:
         """Run stored validators while preserving the legacy API."""
@@ -112,11 +113,11 @@ class FormField:
 
         return not self.errors
 
-    def as_model_field(self, order: int, section: Optional[str]) -> Tuple[Type[Any], Any]:
+    def as_model_field(self, order: int, section: str | None) -> tuple[type[Any], Any]:
         annotation = _resolve_annotation(self.field_type)
         default = self.value if self.value is not None else (None if not self.required else ...)
 
-        ui_options: Dict[str, Any] = {}
+        ui_options: dict[str, Any] = {}
         if self.options:
             ui_options['options'] = self.options
         if self.attributes:
@@ -130,7 +131,7 @@ class FormField:
                 continue
             ui_options[key] = val
 
-        json_extra: Dict[str, Any] = {}
+        json_extra: dict[str, Any] = {}
         section_name = section or self.ui_section
         if section_name:
             json_extra['ui_section'] = section_name
@@ -141,7 +142,7 @@ class FormField:
         if order_value is not None:
             json_extra['ui_order'] = order_value
 
-        field_kwargs: Dict[str, Any] = {
+        field_kwargs: dict[str, Any] = {
             'title': self.label,
             'description': self.help_text,
             'ui_element': self.field_type,
@@ -167,7 +168,7 @@ class FormSection:
     def __init__(
         self,
         title: str,
-        fields: List[FormField],
+        fields: list[FormField],
         layout: str = 'vertical',
         collapsible: bool = False,
         collapsed: bool = False,
@@ -187,15 +188,15 @@ class FormDefinition:
     def __init__(
         self,
         title: str = 'Form',
-        sections: Optional[List[FormSection]] = None,
-        fields: Optional[List[FormField]] = None,
+        sections: list[FormSection] | None = None,
+        fields: list[FormField] | None = None,
         submit_url: str = '/submit',
         method: str = 'POST',
         css_framework: str = 'bootstrap',
         live_validation: bool = True,
         csrf_protection: bool = False,
         honeypot_protection: bool = False,
-        layout: Optional[str] = None,
+        layout: str | None = None,
         **kwargs: Any,
     ):
         framework_alias = kwargs.pop('framework', None)
@@ -222,23 +223,23 @@ class FormDefinition:
         self.layout = layout or kwargs.pop('layout', 'vertical')
         self.theme = kwargs.pop('theme', None)
         self.extra_attrs = dict(kwargs)
-        self._model_cache: Optional[Type[FormModel]] = None
+        self._model_cache: type[FormModel] | None = None
 
         if self.fields and not self.sections:
             self.sections = [FormSection('Main', self.fields)]
 
-    def _iter_fields(self) -> List[Tuple[FormField, Optional[str]]]:
-        ordered: List[Tuple[FormField, Optional[str]]] = []
+    def _iter_fields(self) -> list[tuple[FormField, str | None]]:
+        ordered: list[tuple[FormField, str | None]] = []
         for section in self.sections:
             for field in section.fields:
                 ordered.append((field, section.title))
         return ordered
 
-    def to_form_model_class(self) -> Type[FormModel]:
+    def to_form_model_class(self) -> type[FormModel]:
         if self._model_cache is not None:
             return self._model_cache
 
-        field_defs: Dict[str, Tuple[Type[Any], Any]] = {}
+        field_defs: dict[str, tuple[type[Any], Any]] = {}
         for order, (field, section_title) in enumerate(self._iter_fields()):
             annotation, model_field = field.as_model_field(order, section_title)
             field_defs[field.name] = (annotation, model_field)
@@ -266,32 +267,22 @@ class FormDefinition:
 
 
 class ModernFormRenderer(EnhancedFormRenderer):
-    """Legacy renderer used internally by FormBuilder.
+    """Renderer used internally by FormBuilder.
 
-    .. deprecated::
-        Instantiate :class:`~pydantic_schemaforms.EnhancedFormRenderer` directly,
-        or use the :class:`~pydantic_schemaforms.FormBuilder` DSL.
-        ``ModernFormRenderer`` will be removed in a future release.
+    Thin subclass of :class:`~pydantic_schemaforms.EnhancedFormRenderer` retained
+    as the rendering backbone of the :class:`~pydantic_schemaforms.FormBuilder` DSL.
+    Prefer instantiating ``EnhancedFormRenderer`` directly for standalone use.
     """
 
     def __init__(
         self,
         framework: str = 'bootstrap',
-        theme: Optional[RendererTheme] = None,
+        theme: RendererTheme | None = None,
         *,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
         _internal: bool = False,
     ):
-        if not _internal:
-            import warnings
-
-            warnings.warn(
-                'ModernFormRenderer is deprecated and will be removed in a future release. '
-                'Use EnhancedFormRenderer directly, or use the FormBuilder DSL instead.',
-                DeprecationWarning,
-                stacklevel=2,
-            )
         super().__init__(
             framework=framework,
             theme=theme,
@@ -302,8 +293,8 @@ class ModernFormRenderer(EnhancedFormRenderer):
     def render_form(
         self,
         form_def: FormDefinition,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> str:
         renderer = self._ensure_renderer(form_def.css_framework)
@@ -330,8 +321,8 @@ class ModernFormRenderer(EnhancedFormRenderer):
     async def render_form_async(
         self,
         form_def: FormDefinition,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> str:
         renderer = self._ensure_renderer(form_def.css_framework)
@@ -358,8 +349,8 @@ class ModernFormRenderer(EnhancedFormRenderer):
     async def render_async(
         self,
         form_def: FormDefinition,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> str:
         """Legacy alias retained for older integration tests."""
@@ -369,19 +360,19 @@ class ModernFormRenderer(EnhancedFormRenderer):
     async def async_render(
         self,
         form_def: FormDefinition,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> str:
         """Another legacy alias; matches historical API variants."""
 
         return await self.render_form_async(form_def, data=data, errors=errors, **kwargs)
 
-    def extract_form_fields(self, model_cls: Type[FormModel]) -> List[FormField]:
+    def extract_form_fields(self, model_cls: type[FormModel]) -> list[FormField]:
         """Return lightweight FormField representations for introspection/tests."""
 
         metadata = build_schema_metadata(model_cls)
-        extracted: List[FormField] = []
+        extracted: list[FormField] = []
 
         for order, (field_name, field_schema) in enumerate(metadata.fields):
             ui_element = resolve_ui_element(field_schema) or 'text'
@@ -421,7 +412,7 @@ class ModernFormRenderer(EnhancedFormRenderer):
             _internal=True,
         )
 
-    def _clone_theme(self) -> Optional[RendererTheme]:
+    def _clone_theme(self) -> RendererTheme | None:
         theme_cls = type(self._theme)
         try:
             return theme_cls()  # type: ignore[call-arg]
@@ -431,8 +422,8 @@ class ModernFormRenderer(EnhancedFormRenderer):
     def _prepare_render_kwargs(
         self,
         form_def: FormDefinition,
-        call_kwargs: Dict[str, Any],
-    ) -> Tuple[str, Dict[str, Any]]:
+        call_kwargs: dict[str, Any],
+    ) -> tuple[str, dict[str, Any]]:
         resolved = dict(form_def.extra_attrs)
         resolved.update(call_kwargs)
         layout = resolved.pop('layout', form_def.layout)

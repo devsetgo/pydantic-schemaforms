@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .builder import FormBuilder
 from .sync import normalize_form_data
 
-FormResult = Dict[str, Any]
+FormResult = dict[str, Any]
 
 
 async def handle_async_form(
     form_builder: FormBuilder,
-    submitted_data: Optional[Dict[str, Any]] = None,
+    submitted_data: dict[str, Any] | None = None,
     *,
-    initial_data: Optional[Dict[str, Any]] = None,
+    initial_data: dict[str, Any] | None = None,
     render_on_error: bool = True,
 ) -> FormResult:
     """Validate and render forms for async frameworks (FastAPI, Litestar, etc.)."""

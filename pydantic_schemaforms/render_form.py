@@ -6,7 +6,8 @@ This module maintains compatibility with existing code while using the enhanced 
 import asyncio
 import logging
 import time
-from typing import Any, Callable, Dict, Type
+from typing import Any
+from collections.abc import Callable
 
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
@@ -18,9 +19,9 @@ logger.addHandler(logging.NullHandler())
 
 
 def render_form_html(
-    form_model_cls: Type[FormModel],
-    form_data: Dict[str, Any] | None = None,
-    errors: Dict[str, str] | SchemaFormValidationError | None = None,
+    form_model_cls: type[FormModel],
+    form_data: dict[str, Any] | None = None,
+    errors: dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = 'bootstrap',
     *,
     submit_url: str,
@@ -57,7 +58,7 @@ def render_form_html(
     start_time = time.perf_counter()
 
     # Normalize kwargs
-    render_kwargs: Dict[str, Any] = dict(kwargs)
+    render_kwargs: dict[str, Any] = dict(kwargs)
     include_imask = bool(render_kwargs.pop('include_imask', False))
     csrf_field_name = render_kwargs.pop('csrf_field_name', 'csrf_token') or 'csrf_token'
 
@@ -106,9 +107,9 @@ def render_form_html(
 
 
 async def render_form_html_async(
-    form_model_cls: Type[FormModel],
-    form_data: Dict[str, Any] | None = None,
-    errors: Dict[str, str] | SchemaFormValidationError | None = None,
+    form_model_cls: type[FormModel],
+    form_data: dict[str, Any] | None = None,
+    errors: dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = 'bootstrap',
     *,
     submit_url: str,

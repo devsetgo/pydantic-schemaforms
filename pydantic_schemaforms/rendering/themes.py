@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from html import escape
-from typing import Dict, Optional, Type
 
 from pydantic_schemaforms.templates import TemplateString
 from pydantic_schemaforms.assets.runtime import (
@@ -44,7 +43,7 @@ class RendererTheme:
         except KeyError:
             self.form_style = get_form_style('default', 'default')
 
-    def transform_form_attributes(self, attrs: Dict[str, str]) -> Dict[str, str]:
+    def transform_form_attributes(self, attrs: dict[str, str]) -> dict[str, str]:
         """Adjust form attributes before rendering."""
 
         return attrs
@@ -104,11 +103,11 @@ class RendererTheme:
     def render_form_wrapper(
         self,
         *,
-        form_attrs: Dict[str, str],
+        form_attrs: dict[str, str],
         csrf_token: str,
         form_content: str,
         submit_markup: str,
-        render_time: Optional[float] = None,
+        render_time: float | None = None,
     ) -> str:
         template = self.form_wrapper_template()
         attrs = form_attrs.copy()
@@ -220,8 +219,8 @@ class RendererTheme:
         min_items: int,
         max_items: int,
         items_html: str,
-        help_text: Optional[str],
-        error: Optional[str],
+        help_text: str | None,
+        error: str | None,
         add_button_label: str,
     ) -> str:
         """Render framework-aware markup for schema-driven model lists."""
@@ -392,7 +391,7 @@ class MaterialEmbeddedTheme(RendererTheme):
             ]
         )
 
-    def transform_form_attributes(self, attrs: Dict[str, str]) -> Dict[str, str]:
+    def transform_form_attributes(self, attrs: dict[str, str]) -> dict[str, str]:
         attrs = attrs.copy()
         existing_class = attrs.get('class', '').strip()
         combined = 'md-form' if not existing_class else f'md-form {existing_class}'
@@ -614,8 +613,8 @@ function toggleAccordion(sectionId, buttonElement) {
         min_items: int,
         max_items: int,
         items_html: str,
-        help_text: Optional[str],
-        error: Optional[str],
+        help_text: str | None,
+        error: str | None,
         add_button_label: str,
     ) -> str:
         required_class = ' required' if is_required else ''
@@ -1536,7 +1535,7 @@ document.addEventListener('DOMContentLoaded', function() {
 """
 
 
-_THEME_MAP: Dict[str, Type[RendererTheme]] = {
+_THEME_MAP: dict[str, type[RendererTheme]] = {
     'bootstrap': BootstrapTheme,
     'material': MaterialTheme,
     'none': PlainTheme,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import types
 from datetime import date, datetime
-from typing import Annotated, Any, Dict, Optional, Type, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 
 from annotated_types import Ge, Gt, Le, Lt, MaxLen, MinLen, MultipleOf
 from pydantic import AnyUrl, BaseModel, EmailStr
@@ -23,9 +23,9 @@ def _issubclass_safe(candidate: Any, parent: type) -> bool:
 class JSONSchemaGenerator:
     """Generate JSON Schema definitions from Pydantic form models."""
 
-    def generate_schema(self, form_model) -> Dict[str, Any]:
+    def generate_schema(self, form_model) -> dict[str, Any]:
         model_cls = self.ensure_model_class(form_model)
-        properties: Dict[str, Dict[str, Any]] = {}
+        properties: dict[str, dict[str, Any]] = {}
         required_fields = []
 
         for field_name, field_info in model_cls.model_fields.items():
@@ -39,13 +39,13 @@ class JSONSchemaGenerator:
     def generate_field_schema(
         self,
         field_type: Any,
-        field_info: Optional[FieldInfo] = None,
-        field_name: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        field_info: FieldInfo | None = None,
+        field_name: str | None = None,
+    ) -> dict[str, Any]:
         resolved_type = self.normalize_annotation(field_type)
         schema_type, format_hint = self._map_type_to_schema(resolved_type)
 
-        schema: Dict[str, Any] = {'type': schema_type}
+        schema: dict[str, Any] = {'type': schema_type}
         if format_hint:
             schema['format'] = format_hint
 
@@ -58,7 +58,7 @@ class JSONSchemaGenerator:
         return schema
 
     @staticmethod
-    def ensure_model_class(form_model) -> Type[BaseModel]:
+    def ensure_model_class(form_model) -> type[BaseModel]:
         """Normalize user input to a BaseModel subclass and validate it."""
 
         if form_model is None:
@@ -97,7 +97,7 @@ class JSONSchemaGenerator:
 
         return annotation
 
-    def _map_type_to_schema(self, resolved_type: Any) -> tuple[str, Optional[str]]:
+    def _map_type_to_schema(self, resolved_type: Any) -> tuple[str, str | None]:
         """Map a Python type to JSON Schema type/format."""
 
         if _issubclass_safe(resolved_type, bool):
@@ -117,7 +117,7 @@ class JSONSchemaGenerator:
 
         return 'string', None
 
-    def _apply_name_based_hints(self, field_name: str, schema: Dict[str, Any]) -> None:
+    def _apply_name_based_hints(self, field_name: str, schema: dict[str, Any]) -> None:
         """Infer formats from conventional field names when not already set."""
 
         if schema.get('type') != 'string' or 'format' in schema:
@@ -129,7 +129,7 @@ class JSONSchemaGenerator:
         elif any(token in lowered for token in ('url', 'uri', 'website')):
             schema['format'] = 'uri'
 
-    def _apply_field_metadata(self, schema: Dict[str, Any], field_info: FieldInfo) -> None:
+    def _apply_field_metadata(self, schema: dict[str, Any], field_info: FieldInfo) -> None:
         """Augment schema with description and validation constraints."""
 
         if getattr(field_info, 'description', None):
@@ -161,11 +161,11 @@ class JSONSchemaGenerator:
 
 
 class OpenAPISchemaGenerator:
-    def generate_request_schema(self, form_model) -> Dict[str, Any]:
+    def generate_request_schema(self, form_model) -> dict[str, Any]:
         schema = JSONSchemaGenerator().generate_schema(form_model)
         return {'content': {'application/json': {'schema': schema}}}
 
-    def generate_response_schema(self, form_model) -> Dict[str, Any]:
+    def generate_response_schema(self, form_model) -> dict[str, Any]:
         return {
             '200': {
                 'description': 'Success',
@@ -201,7 +201,7 @@ class OpenAPISchemaGenerator:
 
     def generate_complete_spec(
         self, form_model, endpoint_path: str, method: str = 'POST'
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             'paths': {
                 endpoint_path: {

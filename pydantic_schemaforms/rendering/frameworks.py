@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Dict, Type
 
 from pydantic_schemaforms.inputs import TextInput
 from pydantic_schemaforms.inputs.base import BaseInput
 from pydantic_schemaforms.inputs.registry import get_input_component_map
 
 # Framework configurations extracted from the enhanced renderer to keep the class slim.
-FRAMEWORKS: Dict[str, Dict[str, str]] = {
+FRAMEWORKS: dict[str, dict[str, str]] = {
     'bootstrap': {
         'css_url': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
         'js_url': 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
@@ -54,10 +53,10 @@ FRAMEWORKS: Dict[str, Dict[str, str]] = {
     },
 }
 
-UI_ELEMENT_MAPPING: Dict[str, Type[BaseInput]] = get_input_component_map()
+UI_ELEMENT_MAPPING: dict[str, type[BaseInput]] = get_input_component_map()
 
 
-def get_framework_config(framework: str) -> Dict[str, str]:
+def get_framework_config(framework: str) -> dict[str, str]:
     """Return the framework configuration, defaulting to Bootstrap."""
     return FRAMEWORKS.get(framework, FRAMEWORKS['bootstrap'])
 

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Union
+from typing import Any, Optional, Union
+from collections.abc import Callable, Iterable, Sequence
 
 from .tstring import substitute
 
@@ -16,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 RenderableContent = Union[str, 'BaseLayout', Sequence[Union[str, 'BaseLayout']]]
 ContentCallable = Callable[
-    [Dict[str, Any], Dict[str, Any], Optional['EnhancedFormRenderer'], str], str
+    [dict[str, Any], dict[str, Any], Optional['EnhancedFormRenderer'], str], str
 ]
 
 
@@ -31,7 +32,7 @@ class BaseLayout:
     template: str = '<div class="${class_}" style="${style}">${content}</div>'
 
     def __init__(
-        self, content: Optional[Union[RenderableContent, ContentCallable]] = None, **attributes: Any
+        self, content: RenderableContent | ContentCallable | None = None, **attributes: Any
     ) -> None:
         self.content = content
         self.attributes = attributes
@@ -42,19 +43,19 @@ class BaseLayout:
     def render(
         self,
         *,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
-        renderer: Optional['EnhancedFormRenderer'] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
+        renderer: 'EnhancedFormRenderer' | None = None,
         framework: str = 'bootstrap',
         **kwargs: Any,
     ) -> str:
         """Render the layout by combining template attributes and content."""
 
-        attrs: Dict[str, Any] = {**self.attributes, **kwargs}
+        attrs: dict[str, Any] = {**self.attributes, **kwargs}
         class_attr = self._merge_classes(attrs)
         style_attr = self._merge_styles(attrs)
 
-        template_data: Dict[str, Any] = {
+        template_data: dict[str, Any] = {
             'content': self._render_content(
                 data=data or {},
                 errors=errors or {},
@@ -74,9 +75,9 @@ class BaseLayout:
     def _render_content(
         self,
         *,
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        renderer: Optional['EnhancedFormRenderer'],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        renderer: 'EnhancedFormRenderer' | None,
         framework: str,
     ) -> str:
         """Render nested content recursively."""
@@ -108,11 +109,11 @@ class BaseLayout:
 
     def _render_nested(
         self,
-        item: Union[str, 'BaseLayout'],
+        item: str | 'BaseLayout',
         *,
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        renderer: Optional['EnhancedFormRenderer'],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        renderer: 'EnhancedFormRenderer' | None,
         framework: str,
     ) -> str:
         if isinstance(item, BaseLayout):
@@ -120,11 +121,11 @@ class BaseLayout:
         return str(item)
 
     @staticmethod
-    def _merge_classes(attrs: Dict[str, Any]) -> str:
+    def _merge_classes(attrs: dict[str, Any]) -> str:
         classes: Iterable[str] = filter(None, [attrs.pop('class_', ''), attrs.pop('css_class', '')])
         return ' '.join(cls for cls in classes if cls)
 
     @staticmethod
-    def _merge_styles(attrs: Dict[str, Any]) -> str:
+    def _merge_styles(attrs: dict[str, Any]) -> str:
         styles: Iterable[str] = filter(None, [attrs.pop('style', ''), attrs.pop('css_style', '')])
         return '; '.join(s for s in styles if s)

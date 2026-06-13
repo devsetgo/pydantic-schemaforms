@@ -16,7 +16,8 @@ These helpers are intentionally framework-agnostic (FastAPI/Flask/etc.).
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, Mapping, MutableMapping
+from typing import Any
+from collections.abc import Iterable, Mapping, MutableMapping
 
 
 _FORM_PATH_TOKEN_RE = re.compile(r'([^\.\[\]]+)|\[(\d+)\]')
@@ -154,7 +155,7 @@ def parse_nested_form_data(
     form_data: Mapping[str, Any] | Iterable[tuple[str, Any]],
     *,
     coerce_values: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convert flat form keys into nested dict/list structures.
 
     Accepts either a mapping (``dict``/Starlette ``FormData``/etc.) or an
@@ -166,7 +167,7 @@ def parse_nested_form_data(
 
     items = form_data.items() if isinstance(form_data, Mapping) else form_data
 
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
 
     for key, raw_value in items:
         value = coerce_form_value(raw_value) if coerce_values else raw_value

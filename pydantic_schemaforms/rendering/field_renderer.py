@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from html import escape
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 from pydantic_schemaforms.inputs import HiddenInput
@@ -20,7 +20,7 @@ class FieldRenderer:
         self._renderer = renderer
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return self._renderer.config
 
     @property
@@ -34,13 +34,13 @@ class FieldRenderer:
     def render_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any = None,
-        error: Optional[str] = None,
-        required_fields: Optional[List[str]] = None,
-        context: Optional[RenderContext] = None,
+        error: str | None = None,
+        required_fields: list[str] | None = None,
+        context: RenderContext | None = None,
         layout: str = 'vertical',
-        all_errors: Optional[Dict[str, str]] = None,
+        all_errors: dict[str, str] | None = None,
     ) -> str:
         if context is None:
             raise ValueError('RenderContext is required for field rendering')
@@ -82,7 +82,7 @@ class FieldRenderer:
 
         input_component = get_input_component(ui_element)()  # type: ignore[misc]
 
-        field_attrs: Dict[str, Any] = {
+        field_attrs: dict[str, Any] = {
             'name': field_name,
             'id': field_name,
             'class': self._get_input_class(ui_element),
@@ -196,13 +196,13 @@ class FieldRenderer:
     def _render_model_list_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any,
-        error: Optional[str],
-        required_fields: Optional[List[str]],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        required_fields: list[str] | None,
+        ui_info: dict[str, Any],
         context: RenderContext,
-        all_errors: Optional[Dict[str, str]],
+        all_errors: dict[str, str] | None,
     ) -> str:
         from pydantic_schemaforms.model_list import ModelListRenderer
 
@@ -210,7 +210,7 @@ class FieldRenderer:
         model_class = ui_info.get('model_class')
         if model_class and not isinstance(model_class, type):
             model_class = None
-        schema_def: Optional[Dict[str, Any]] = None
+        schema_def: dict[str, Any] | None = None
 
         if not model_class:
             items_ref = field_schema.get('items', {}).get('$ref')
@@ -223,7 +223,7 @@ class FieldRenderer:
             else:
                 return f"<!-- Error: model_class not specified and no items.$ref found for model_list field '{field_name}' -->"
 
-        list_values: List[Dict[str, Any]] = []
+        list_values: list[dict[str, Any]] = []
         if value:
             if isinstance(value, list):
                 for item in value:
@@ -264,8 +264,8 @@ class FieldRenderer:
         )
 
     def _extract_ui_options(
-        self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]
-    ) -> tuple[Dict[str, Any], List[Any]]:
+        self, ui_info: dict[str, Any], field_schema: dict[str, Any]
+    ) -> tuple[dict[str, Any], list[Any]]:
         raw_options = (
             ui_info.get('options')
             or ui_info.get('ui_options')
@@ -273,8 +273,8 @@ class FieldRenderer:
             or {}
         )
 
-        options_dict: Dict[str, Any] = raw_options if isinstance(raw_options, dict) else {}
-        options_list: List[Any] = []
+        options_dict: dict[str, Any] = raw_options if isinstance(raw_options, dict) else {}
+        options_list: list[Any] = []
 
         if isinstance(raw_options, list):
             options_list = raw_options
@@ -287,8 +287,8 @@ class FieldRenderer:
         return options_dict, options_list
 
     def _apply_ui_option_attributes(
-        self, field_attrs: Dict[str, Any], ui_options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, field_attrs: dict[str, Any], ui_options: dict[str, Any]
+    ) -> dict[str, Any]:
         if not ui_options:
             return field_attrs
 
@@ -310,11 +310,11 @@ class FieldRenderer:
 
         return field_attrs
 
-    def _normalize_options(self, options: List[Any], current_value: Any) -> List[Dict[str, Any]]:
+    def _normalize_options(self, options: list[Any], current_value: Any) -> list[dict[str, Any]]:
         if not options:
             return []
 
-        normalized: List[Dict[str, Any]] = []
+        normalized: list[dict[str, Any]] = []
 
         for option in options:
             if isinstance(option, dict):
@@ -371,7 +371,7 @@ class FieldRenderer:
         hidden_input = HiddenInput()
         return hidden_input.render(name=field_name, id=field_name, value=value or '')
 
-    def _infer_ui_element(self, field_schema: Dict[str, Any]) -> str:
+    def _infer_ui_element(self, field_schema: dict[str, Any]) -> str:
         field_type = field_schema.get('type', 'string')
 
         if field_type == 'string':
@@ -404,15 +404,15 @@ class FieldRenderer:
     def render_model_list_from_schema(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
-        schema_def: Dict[str, Any],
-        values: List[Dict[str, Any]],
-        error: Optional[str],
-        ui_info: Dict[str, Any],
-        required_fields: List[str],
+        field_schema: dict[str, Any],
+        schema_def: dict[str, Any],
+        values: list[dict[str, Any]],
+        error: str | None,
+        ui_info: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
     ) -> str:
-        items_parts: List[str] = []
+        items_parts: list[str] = []
 
         for i, item_data in enumerate(values):
             items_parts.append(
@@ -503,9 +503,9 @@ class FieldRenderer:
         )
 
     def extract_nested_errors_for_field(
-        self, field_name: str, all_errors: Dict[str, Any]
-    ) -> Dict[str, str]:
-        nested_errors: Dict[str, str] = {}
+        self, field_name: str, all_errors: dict[str, Any]
+    ) -> dict[str, str]:
+        nested_errors: dict[str, str] = {}
         field_prefix = f'{field_name}['
 
         for error_path, error_message in (all_errors or {}).items():
@@ -520,11 +520,11 @@ class FieldRenderer:
     def _render_schema_list_item(
         self,
         field_name: str,
-        schema_def: Dict[str, Any],
+        schema_def: dict[str, Any],
         index: int,
-        item_data: Dict[str, Any],
+        item_data: dict[str, Any],
         context: RenderContext,
-        ui_info: Optional[Dict[str, Any]] = None,
+        ui_info: dict[str, Any] | None = None,
     ) -> str:
         ui_info = ui_info or {}
         collapsible = ui_info.get('collapsible_items', True)

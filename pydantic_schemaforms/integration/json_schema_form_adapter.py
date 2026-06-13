@@ -7,7 +7,7 @@ component. It does NOT render HTML or produce React components.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .schema import JSONSchemaGenerator
 
@@ -27,7 +27,7 @@ class ReactJSONSchemaFormAdapter:
         return self._schema_generator.generate_schema(form_model)
 
     def generate_ui_schema(self, form_model):
-        ui_schema: Dict[str, Dict[str, Any]] = {}
+        ui_schema: dict[str, dict[str, Any]] = {}
         model_cls = JSONSchemaGenerator.ensure_model_class(form_model)
 
         for field_name, field_info in model_cls.model_fields.items():
@@ -41,8 +41,8 @@ class ReactJSONSchemaFormAdapter:
         return ui_schema
 
     def _build_ui_entry(
-        self, field_name: str, field_schema: Dict[str, Any], field_info
-    ) -> Optional[Dict[str, Any]]:
+        self, field_name: str, field_schema: dict[str, Any], field_info
+    ) -> dict[str, Any] | None:
         raw_extra = getattr(field_info, 'json_schema_extra', None)
         extra = raw_extra if isinstance(raw_extra, dict) else {}
         widget = extra.get('ui_widget') or extra.get('ui_element')
@@ -60,7 +60,7 @@ class ReactJSONSchemaFormAdapter:
         if not widget:
             return None
 
-        ui_entry: Dict[str, Any] = {'ui:widget': widget}
+        ui_entry: dict[str, Any] = {'ui:widget': widget}
 
         options = extra.get('ui_options')
         if isinstance(options, dict) and options:
@@ -82,7 +82,7 @@ class ReactJSONSchemaFormAdapter:
     def generate_form_data(self, form_model, data):  # pragma: no cover - passthrough
         return data
 
-    def generate_complete_config(self, form_model, initial_data: Optional[Dict[str, Any]] = None):
+    def generate_complete_config(self, form_model, initial_data: dict[str, Any] | None = None):
         return {
             'schema': self.generate_schema(form_model),
             'uiSchema': self.generate_ui_schema(form_model),

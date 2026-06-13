@@ -4,7 +4,6 @@ Includes DateInput, TimeInput, DatetimeInput, MonthInput, WeekInput.
 """
 
 from datetime import date, datetime, time
-from typing import Optional, Union
 
 from .base import FormInput
 
@@ -223,8 +222,8 @@ class DateRangeInput:
         name: str,
         start_label: str = 'Start Date',
         end_label: str = 'End Date',
-        start_value: Optional[Union[str, date]] = None,
-        end_value: Optional[Union[str, date]] = None,
+        start_value: str | date | None = None,
+        end_value: str | date | None = None,
         **kwargs,
     ) -> str:
         """Render date range with start and end inputs."""
@@ -319,8 +318,8 @@ class TimeRangeInput:
         name: str,
         start_label: str = 'Start Time',
         end_label: str = 'End Time',
-        start_value: Optional[Union[str, time]] = None,
-        end_value: Optional[Union[str, time]] = None,
+        start_value: str | time | None = None,
+        end_value: str | time | None = None,
         **kwargs,
     ) -> str:
         """Render time range with start and end inputs."""

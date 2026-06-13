@@ -4,7 +4,7 @@ Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
 from html import escape
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic_schemaforms.tstring import substitute
 from .base import FormInput, SelectInputBase
@@ -22,7 +22,7 @@ class SelectInput(SelectInputBase):
     def get_input_type(self) -> str:
         return 'select'
 
-    def render(self, options: List[Dict[str, Any]], **kwargs) -> str:
+    def render(self, options: list[dict[str, Any]], **kwargs) -> str:
         """Render select input with provided options."""
         # Build options HTML
         options_html = self._build_options(options)
@@ -39,7 +39,7 @@ class SelectInput(SelectInputBase):
 
         return substitute(self.template, attributes=attributes_str, options=options_html)
 
-    def _build_options(self, options: List[Dict[str, Any]]) -> str:
+    def _build_options(self, options: list[dict[str, Any]]) -> str:
         """Build HTML options from list of option dictionaries."""
         option_parts = []
 
@@ -73,7 +73,7 @@ class MultiSelectInput(SelectInput):
 
     ui_element = 'multiselect'
 
-    def render(self, options: List[Dict[str, Any]], **kwargs) -> str:
+    def render(self, options: list[dict[str, Any]], **kwargs) -> str:
         """Render multi-select with multiple attribute set."""
         kwargs['multiple'] = True
         return super().render(options, **kwargs)
@@ -91,7 +91,7 @@ class CheckboxInput(FormInput):
     def get_input_type(self) -> str:
         return 'checkbox'
 
-    def render(self, label: Optional[str] = None, **kwargs) -> str:
+    def render(self, label: str | None = None, **kwargs) -> str:
         """Render checkbox with optional label."""
         # Set default value if not provided
         if 'value' not in kwargs:
@@ -127,7 +127,7 @@ class CheckboxGroup(SelectInputBase):
         return 'checkbox-group'
 
     def render(
-        self, options: List[Dict[str, Any]], group_name: str, legend: Optional[str] = None, **kwargs
+        self, options: list[dict[str, Any]], group_name: str, legend: str | None = None, **kwargs
     ) -> str:
         """Render group of checkboxes."""
         checkboxes = []
@@ -221,7 +221,7 @@ class RadioGroup(SelectInputBase):
         return 'radio-group'
 
     def render(
-        self, options: List[Dict[str, Any]], group_name: str, legend: Optional[str] = None, **kwargs
+        self, options: list[dict[str, Any]], group_name: str, legend: str | None = None, **kwargs
     ) -> str:
         """Render group of radio buttons."""
         radio_buttons = []
@@ -321,7 +321,7 @@ class ComboBoxInput(SelectInput):
     </datalist>
 </div>"""
 
-    def render(self, options: List[Dict[str, Any]], **kwargs) -> str:
+    def render(self, options: list[dict[str, Any]], **kwargs) -> str:
         """Render combo box with datalist."""
         field_name = kwargs.get('name', '')
         datalist_id = f'{field_name}_datalist'

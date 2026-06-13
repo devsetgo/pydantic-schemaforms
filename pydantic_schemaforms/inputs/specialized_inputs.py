@@ -3,8 +3,6 @@ Specialized input components using Python 3.14 template strings.
 Includes FileInput, ColorInput, HiddenInput, ImageInput, ButtonInput, etc.
 """
 
-from typing import Optional
-
 from .base import FileInputBase, FormInput
 
 
@@ -18,9 +16,9 @@ class FileInput(FileInputBase):
 
     def render(
         self,
-        accept: Optional[str] = None,
+        accept: str | None = None,
         multiple: bool = False,
-        capture: Optional[str] = None,
+        capture: str | None = None,
         show_preview: bool = True,
         **kwargs,
     ) -> str:

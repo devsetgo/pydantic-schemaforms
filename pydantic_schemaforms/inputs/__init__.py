@@ -78,7 +78,7 @@ ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS +
 
 __all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES  # pyright: ignore[reportUnsupportedDunderAll]
 
-_MODULE_MAP: Dict[str, str] = {}
+_MODULE_MAP: dict[str, str] = {}
 
 # Wire categories to their modules without importing them eagerly
 for _name in BASE_CLASSES + UTILITIES:

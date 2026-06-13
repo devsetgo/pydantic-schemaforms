@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .async_support import handle_async_form
 from .builder import FormBuilder
 from .sync import handle_sync_form
 
-FormResult = Dict[str, Any]
+FormResult = dict[str, Any]
 
 
 def handle_form(
     form_builder: FormBuilder,
-    submitted_data: Optional[Dict[str, Any]] = None,
+    submitted_data: dict[str, Any] | None = None,
     *,
-    initial_data: Optional[Dict[str, Any]] = None,
+    initial_data: dict[str, Any] | None = None,
     render_on_error: bool = True,
 ) -> FormResult:
     """Canonical synchronous entry point.
@@ -34,9 +34,9 @@ def handle_form(
 
 async def handle_form_async(
     form_builder: FormBuilder,
-    submitted_data: Optional[Dict[str, Any]] = None,
+    submitted_data: dict[str, Any] | None = None,
     *,
-    initial_data: Optional[Dict[str, Any]] = None,
+    initial_data: dict[str, Any] | None = None,
     render_on_error: bool = True,
 ) -> FormResult:
     """Canonical asynchronous entry point.
@@ -59,10 +59,10 @@ class FormIntegration:
     def sync_integration(
         form_builder: FormBuilder,
         *,
-        submitted_data: Optional[Dict[str, Any]] = None,
-        initial_data: Optional[Dict[str, Any]] = None,
+        submitted_data: dict[str, Any] | None = None,
+        initial_data: dict[str, Any] | None = None,
         render_on_error: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return handle_form(
             form_builder,
             submitted_data,
@@ -74,10 +74,10 @@ class FormIntegration:
     async def async_integration(
         form_builder: FormBuilder,
         *,
-        submitted_data: Optional[Dict[str, Any]] = None,
-        initial_data: Optional[Dict[str, Any]] = None,
+        submitted_data: dict[str, Any] | None = None,
+        initial_data: dict[str, Any] | None = None,
         render_on_error: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return await handle_form_async(
             form_builder,
             submitted_data,

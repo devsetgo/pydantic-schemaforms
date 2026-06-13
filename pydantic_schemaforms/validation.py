@@ -11,12 +11,24 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from html import escape
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any
+from collections.abc import Callable
 
 from pydantic import ValidationError
 
 # Import version check to ensure compatibility
+
+
+def _js_str(msg: str) -> str:
+    """Escape *msg* for safe embedding in a JS single-quoted string inside a <script> block."""
+    return (
+        msg.replace('\\', '\\\\')
+        .replace("'", "\\'")
+        .replace('\n', '\\n')
+        .replace('\r', '')
+        .replace('<', '\\u003C')
+        .replace('>', '\\u003E')
+    )
 
 
 @dataclass
@@ -25,13 +37,13 @@ class ValidationResponse:
 
     field_name: str
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    suggestions: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
     value: Any = None
-    formatted_value: Optional[str] = None
+    formatted_value: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             'field_name': self.field_name,
@@ -57,7 +69,7 @@ class ValidationRule:
         self.message = message
         self.client_side = client_side
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         """
         Validate a value.
 
@@ -76,7 +88,7 @@ class ValidationRule:
         """Override in subclasses to provide JavaScript validation."""
         return ''
 
-    def to_descriptor(self) -> Dict[str, Any]:
+    def to_descriptor(self) -> dict[str, Any]:
         """Return a serializable descriptor for this rule."""
 
         descriptor = {
@@ -87,7 +99,7 @@ class ValidationRule:
         descriptor.update(self._descriptor_params())
         return descriptor
 
-    def _descriptor_params(self) -> Dict[str, Any]:
+    def _descriptor_params(self) -> dict[str, Any]:
         return {}
 
 
@@ -99,7 +111,7 @@ class RequiredRule(ValidationRule):
     def __init__(self, message: str = 'This field is required'):
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         if value is None or (isinstance(value, str) and not value.strip()):
             return False, self.message
         return True, ''
@@ -107,7 +119,7 @@ class RequiredRule(ValidationRule):
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
         if (!value || (typeof value === 'string' && !value.trim())) {{
-            return '{escape(self.message)}';
+            return '{_js_str(self.message)}';
         }}
         """
 
@@ -117,12 +129,12 @@ class MinLengthRule(ValidationRule):
 
     rule_name = 'min_length'
 
-    def __init__(self, min_length: int, message: Optional[str] = None):
+    def __init__(self, min_length: int, message: str | None = None):
         self.min_length = min_length
         message = message or f'Must be at least {min_length} characters long'
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         if value is None:
             return True, ''  # Let RequiredRule handle None values
 
@@ -133,11 +145,11 @@ class MinLengthRule(ValidationRule):
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
         if (value && value.length < {self.min_length}) {{
-            return '{escape(self.message)}';
+            return '{_js_str(self.message)}';
         }}
         """
 
-    def _descriptor_params(self) -> Dict[str, Any]:
+    def _descriptor_params(self) -> dict[str, Any]:
         return {'min_length': self.min_length}
 
 
@@ -146,12 +158,12 @@ class MaxLengthRule(ValidationRule):
 
     rule_name = 'max_length'
 
-    def __init__(self, max_length: int, message: Optional[str] = None):
+    def __init__(self, max_length: int, message: str | None = None):
         self.max_length = max_length
         message = message or f'Must be no more than {max_length} characters long'
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         if value is None:
             return True, ''
 
@@ -162,11 +174,11 @@ class MaxLengthRule(ValidationRule):
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
         if (value && value.length > {self.max_length}) {{
-            return '{escape(self.message)}';
+            return '{_js_str(self.message)}';
         }}
         """
 
-    def _descriptor_params(self) -> Dict[str, Any]:
+    def _descriptor_params(self) -> dict[str, Any]:
         return {'max_length': self.max_length}
 
 
@@ -180,7 +192,7 @@ class RegexRule(ValidationRule):
         self.regex = re.compile(pattern, flags)
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         if value is None or value == '':
             return True, ''  # Let RequiredRule handle empty values
 
@@ -193,11 +205,11 @@ class RegexRule(ValidationRule):
         js_pattern = self.pattern.replace('\\', '\\\\').replace("'", "\\'")
         return f"""
         if (value && !new RegExp('{js_pattern}').test(value)) {{
-            return '{escape(self.message)}';
+            return '{_js_str(self.message)}';
         }}
         """
 
-    def _descriptor_params(self) -> Dict[str, Any]:
+    def _descriptor_params(self) -> dict[str, Any]:
         return {'pattern': self.pattern}
 
 
@@ -229,9 +241,9 @@ class NumericRangeRule(ValidationRule):
 
     def __init__(
         self,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        message: Optional[str] = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        message: str | None = None,
     ):
         self.min_value = min_value
         self.max_value = max_value
@@ -248,7 +260,7 @@ class NumericRangeRule(ValidationRule):
 
         super().__init__(message)
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         if value is None or value == '':
             return True, ''
 
@@ -280,13 +292,13 @@ class NumericRangeRule(ValidationRule):
             if (value !== '' && value !== null) {{
                 const numValue = parseFloat(value);
                 if (isNaN(numValue) || {condition}) {{
-                    return '{escape(self.message)}';
+                    return '{_js_str(self.message)}';
                 }}
             }}
             """
         return ''
 
-    def _descriptor_params(self) -> Dict[str, Any]:
+    def _descriptor_params(self) -> dict[str, Any]:
         return {'min': self.min_value, 'max': self.max_value}
 
 
@@ -297,9 +309,9 @@ class DateRangeRule(ValidationRule):
 
     def __init__(
         self,
-        min_date: Optional[Union[date, str]] = None,
-        max_date: Optional[Union[date, str]] = None,
-        message: Optional[str] = None,
+        min_date: date | str | None = None,
+        max_date: date | str | None = None,
+        message: str | None = None,
     ):
         self.min_date = self._parse_date(min_date) if min_date else None
         self.max_date = self._parse_date(max_date) if max_date else None
@@ -316,7 +328,7 @@ class DateRangeRule(ValidationRule):
 
         super().__init__(message)
 
-    def _parse_date(self, date_value: Union[date, str]) -> date:
+    def _parse_date(self, date_value: date | str) -> date:
         """Parse a date from string or date object."""
         if isinstance(date_value, date):
             return date_value
@@ -325,7 +337,7 @@ class DateRangeRule(ValidationRule):
         else:
             raise ValueError(f'Invalid date format: {date_value}')
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         if value is None or value == '':
             return True, ''
 
@@ -364,13 +376,13 @@ class DateRangeRule(ValidationRule):
             if (value !== '' && value !== null) {{
                 const dateValue = new Date(value);
                 if (isNaN(dateValue.getTime()) || {condition}) {{
-                    return '{escape(self.message)}';
+                    return '{_js_str(self.message)}';
                 }}
             }}
             """
         return ''
 
-    def _descriptor_params(self) -> Dict[str, Any]:
+    def _descriptor_params(self) -> dict[str, Any]:
         return {
             'min_date': self.min_date.isoformat() if self.min_date else None,
             'max_date': self.max_date.isoformat() if self.max_date else None,
@@ -384,14 +396,14 @@ class CustomRule(ValidationRule):
 
     def __init__(
         self,
-        validator_func: Callable[[Any], Union[bool, Tuple[bool, str]]],
+        validator_func: Callable[[Any], bool | tuple[bool, str]],
         message: str = 'Invalid value',
         client_side: bool = False,
     ):
         self.validator_func = validator_func
         super().__init__(message, client_side)
 
-    def validate(self, value: Any, field_name: str = '') -> Tuple[bool, str]:
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
         try:
             result = self.validator_func(value)
 
@@ -408,7 +420,7 @@ class CustomRule(ValidationRule):
 class FieldValidator:
     """Validator for a single field with multiple rules."""
 
-    def __init__(self, field_name: str, rules: Optional[List[ValidationRule]] = None):
+    def __init__(self, field_name: str, rules: list[ValidationRule] | None = None):
         self.field_name = field_name
         self.rules = rules or []
 
@@ -417,53 +429,53 @@ class FieldValidator:
         self.rules.append(rule)
         return self
 
-    def required(self, message: Optional[str] = None) -> 'FieldValidator':
+    def required(self, message: str | None = None) -> 'FieldValidator':
         """Add required validation."""
         return self.add_rule(RequiredRule(message or 'This field is required'))
 
-    def min_length(self, length: int, message: Optional[str] = None) -> 'FieldValidator':
+    def min_length(self, length: int, message: str | None = None) -> 'FieldValidator':
         """Add minimum length validation."""
         return self.add_rule(MinLengthRule(length, message))
 
-    def max_length(self, length: int, message: Optional[str] = None) -> 'FieldValidator':
+    def max_length(self, length: int, message: str | None = None) -> 'FieldValidator':
         """Add maximum length validation."""
         return self.add_rule(MaxLengthRule(length, message))
 
-    def email(self, message: Optional[str] = None) -> 'FieldValidator':
+    def email(self, message: str | None = None) -> 'FieldValidator':
         """Add email validation."""
         return self.add_rule(EmailRule(message or 'Please enter a valid email address'))
 
-    def phone(self, message: Optional[str] = None) -> 'FieldValidator':
+    def phone(self, message: str | None = None) -> 'FieldValidator':
         """Add phone validation."""
         return self.add_rule(PhoneRule(message or 'Please enter a valid phone number'))
 
     def numeric_range(
         self,
-        min_val: Optional[float] = None,
-        max_val: Optional[float] = None,
-        message: Optional[str] = None,
+        min_val: float | None = None,
+        max_val: float | None = None,
+        message: str | None = None,
     ) -> 'FieldValidator':
         """Add numeric range validation."""
         return self.add_rule(NumericRangeRule(min_val, max_val, message))
 
     def date_range(
         self,
-        min_date: Optional[Union[date, str]] = None,
-        max_date: Optional[Union[date, str]] = None,
-        message: Optional[str] = None,
+        min_date: date | str | None = None,
+        max_date: date | str | None = None,
+        message: str | None = None,
     ) -> 'FieldValidator':
         """Add date range validation."""
         return self.add_rule(DateRangeRule(min_date, max_date, message))
 
-    def regex(self, pattern: str, message: Optional[str] = None) -> 'FieldValidator':
+    def regex(self, pattern: str, message: str | None = None) -> 'FieldValidator':
         """Add regex validation."""
         return self.add_rule(RegexRule(pattern, message or 'Invalid format'))
 
-    def custom(self, validator_func: Callable, message: Optional[str] = None) -> 'FieldValidator':
+    def custom(self, validator_func: Callable, message: str | None = None) -> 'FieldValidator':
         """Add custom validation."""
         return self.add_rule(CustomRule(validator_func, message or 'Invalid value'))
 
-    def validate(self, value: Any) -> Tuple[bool, List[str]]:
+    def validate(self, value: Any) -> tuple[bool, list[str]]:
         """
         Validate a value against all rules.
 
@@ -495,12 +507,12 @@ class FieldValidator:
         validations = '\n    '.join(js_validations)
         return f'\nfunction validate{field_name_camel}(value) {{\n    {validations}\n    return null; // No errors\n}}\n'
 
-    def to_rule_descriptors(self) -> List[Dict[str, Any]]:
+    def to_rule_descriptors(self) -> list[dict[str, Any]]:
         """Return serializable descriptors for all rules."""
 
         return [rule.to_descriptor() for rule in self.rules]
 
-    def to_schema(self) -> Dict[str, Any]:
+    def to_schema(self) -> dict[str, Any]:
         """Return a schema payload for this field."""
 
         return {
@@ -513,16 +525,16 @@ class ValidationSchema:
     """Aggregate FieldValidator instances into a reusable schema."""
 
     def __init__(self) -> None:
-        self._fields: Dict[str, FieldValidator] = {}
+        self._fields: dict[str, FieldValidator] = {}
 
     def add_field(self, validator: FieldValidator) -> 'ValidationSchema':
         self._fields[validator.field_name] = validator
         return self
 
-    def to_dict(self) -> Dict[str, List[Dict[str, Any]]]:
+    def to_dict(self) -> dict[str, list[dict[str, Any]]]:
         return {name: validator.to_rule_descriptors() for name, validator in self._fields.items()}
 
-    def validators(self) -> List[FieldValidator]:
+    def validators(self) -> list[FieldValidator]:
         return list(self._fields.values())
 
     def build_live_validator(self):  # pragma: no cover - thin wrapper
@@ -540,8 +552,8 @@ class FormValidator:
     """Validator for entire forms with multiple fields."""
 
     def __init__(self):
-        self.field_validators: Dict[str, FieldValidator] = {}
-        self.cross_field_rules: List[Callable[[Dict[str, Any]], Tuple[bool, Dict[str, str]]]] = []
+        self.field_validators: dict[str, FieldValidator] = {}
+        self.cross_field_rules: list[Callable[[dict[str, Any]], tuple[bool, dict[str, str]]]] = []
 
     def field(self, field_name: str) -> FieldValidator:
         """Get or create a field validator."""
@@ -549,11 +561,11 @@ class FormValidator:
             self.field_validators[field_name] = FieldValidator(field_name)
         return self.field_validators[field_name]
 
-    def add_cross_field_rule(self, rule: Callable[[Dict[str, Any]], Tuple[bool, Dict[str, str]]]):
+    def add_cross_field_rule(self, rule: Callable[[dict[str, Any]], tuple[bool, dict[str, str]]]):
         """Add a cross-field validation rule."""
         self.cross_field_rules.append(rule)
 
-    def validate(self, data: Dict[str, Any]) -> Tuple[bool, Dict[str, List[str]]]:
+    def validate(self, data: dict[str, Any]) -> tuple[bool, dict[str, list[str]]]:
         """
         Validate form data.
 
@@ -585,8 +597,8 @@ class FormValidator:
         return is_form_valid, all_errors
 
     def validate_pydantic_model(
-        self, model_class: type, data: Dict[str, Any]
-    ) -> Tuple[bool, Dict[str, List[str]]]:
+        self, model_class: type, data: dict[str, Any]
+    ) -> tuple[bool, dict[str, list[str]]]:
         """
         Validate data against a Pydantic model.
 
@@ -729,7 +741,7 @@ class CrossFieldRules:
     ) -> Callable:
         """Validate that password and confirmation match."""
 
-        def validator(data: Dict[str, Any]) -> Tuple[bool, Dict[str, str]]:
+        def validator(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
             password = data.get(password_field)
             confirm = data.get(confirm_field)
 
@@ -746,7 +758,7 @@ class CrossFieldRules:
     ) -> Callable:
         """Validate that end date is after start date."""
 
-        def validator(data: Dict[str, Any]) -> Tuple[bool, Dict[str, str]]:
+        def validator(data: dict[str, Any]) -> tuple[bool, dict[str, str]]:
             start_date = data.get(start_field)
             end_date = data.get(end_field)
 
@@ -848,13 +860,13 @@ class ValidationResult:
     def __init__(
         self,
         is_valid: bool,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
-        form_model_cls: Optional[Any] = None,
-        original_data: Optional[Dict[str, Any]] = None,
-        submit_url: Optional[str] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
+        form_model_cls: Any | None = None,
+        original_data: dict[str, Any] | None = None,
+        submit_url: str | None = None,
         framework: str = 'bootstrap',
-        render_kwargs: Optional[Dict[str, Any]] = None,
+        render_kwargs: dict[str, Any] | None = None,
     ):
         self.is_valid = is_valid
         self.data = data or {}
@@ -867,9 +879,9 @@ class ValidationResult:
 
     def render_with_errors(
         self,
-        framework: Optional[str] = None,
+        framework: str | None = None,
         *,
-        submit_url: Optional[str] = None,
+        submit_url: str | None = None,
         **kwargs,
     ) -> str:
         """Render the form with validation errors displayed.
@@ -896,9 +908,9 @@ class ValidationResult:
 
     async def render_with_errors_async(
         self,
-        framework: Optional[str] = None,
+        framework: str | None = None,
         *,
-        submit_url: Optional[str] = None,
+        submit_url: str | None = None,
         **kwargs,
     ) -> str:
         """Async variant of render_with_errors — runs the sync renderer off the event loop.
@@ -928,7 +940,7 @@ class ValidationResult:
         return f'ValidationResult(valid=False, errors={self.errors})'
 
 
-def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> ValidationResult:
+def validate_form_data(form_model_class: type[Any], data: dict[str, Any]) -> ValidationResult:
     """
     Validate form data against a Pydantic model.
 
@@ -938,6 +950,12 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
 
     Returns:
         ValidationResult with is_valid, data, and errors
+
+    Note:
+        Extra keys in ``data`` that are not declared on the model are silently
+        stripped from the validated output. This follows Pydantic's default
+        ``extra='ignore'`` behaviour and is intentional for HTML form submissions,
+        which may include browser-injected fields (CSRF tokens, honeypots, etc.).
     """
     runtime_model = (
         form_model_class.get_runtime_model()
@@ -965,7 +983,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
         if layout_field_names:
             from .rendering.layout_engine import get_nested_form_data
 
-            layout_errors: Dict[str, str] = {}
+            layout_errors: dict[str, str] = {}
 
             for layout_field_name in layout_field_names:
                 layout_value = getattr(validated_instance, layout_field_name, None)
@@ -977,7 +995,7 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
 
                     # Validate the nested payload against the layout's underlying FormModel(s)
                     # so constraints like `min_length` and required fields are enforced.
-                    nested_result: Optional[ValidationResult] = None
+                    nested_result: ValidationResult | None = None
 
                     validate_method = getattr(layout_value, 'validate', None)
                     if callable(validate_method):
@@ -990,8 +1008,8 @@ def validate_form_data(form_model_class: Type[Any], data: Dict[str, Any]) -> Val
                     if nested_result is None and hasattr(layout_value, '_get_forms'):
                         get_forms = getattr(layout_value, '_get_forms', None)
                         if callable(get_forms):
-                            combined_data: Dict[str, Any] = {}
-                            combined_errors: Dict[str, str] = {}
+                            combined_data: dict[str, Any] = {}
+                            combined_errors: dict[str, str] = {}
                             is_valid = True
 
                             try:

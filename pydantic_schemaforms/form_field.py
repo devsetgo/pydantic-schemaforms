@@ -6,7 +6,7 @@ Provides a clean interface for defining form fields with type validation and ico
 from __future__ import annotations
 
 import inspect
-from typing import Any, Dict, List, Optional, Type, Union, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
 
 from pydantic import Field as PydanticField
 
@@ -26,47 +26,47 @@ class FormField:
     def __new__(
         cls,
         default: Any = ...,
-        default_factory: Optional[Any] = None,
+        default_factory: Any | None = None,
         *,
         # Core field parameters
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        input_type: Optional[str] = None,
+        title: str | None = None,
+        description: str | None = None,
+        input_type: str | None = None,
         # UI-specific parameters
-        placeholder: Optional[str] = None,
-        help_text: Optional[str] = None,
-        icon: Optional[str] = None,
+        placeholder: str | None = None,
+        help_text: str | None = None,
+        icon: str | None = None,
         # Validation parameters
-        min_value: Optional[Union[int, float]] = None,
-        max_value: Optional[Union[int, float]] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
-        pattern: Optional[str] = None,
+        min_value: int | float | None = None,
+        max_value: int | float | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        pattern: str | None = None,
         # Selection parameters
-        options: Optional[Union[List[str], List[Dict[str, Any]]]] = None,
+        options: list[str] | list[dict[str, Any]] | None = None,
         # Boolean parameters
         required: bool = True,
         disabled: bool = False,
         readonly: bool = False,
         autofocus: bool = False,
         # Standard Pydantic Field parameters
-        alias: Optional[str] = None,
-        examples: Optional[List[Any]] = None,
-        exclude: Optional[bool] = None,
-        discriminator: Optional[str] = None,
-        json_schema_extra: Optional[Dict[str, Any]] = None,
-        frozen: Optional[bool] = None,
-        validate_default: Optional[bool] = None,
+        alias: str | None = None,
+        examples: list[Any] | None = None,
+        exclude: bool | None = None,
+        discriminator: str | None = None,
+        json_schema_extra: dict[str, Any] | None = None,
+        frozen: bool | None = None,
+        validate_default: bool | None = None,
         repr: bool = True,
-        init_var: Optional[bool] = None,
-        kw_only: Optional[bool] = None,
-        strict: Optional[bool] = None,
-        gt: Optional[float] = None,
-        ge: Optional[float] = None,
-        lt: Optional[float] = None,
-        le: Optional[float] = None,
-        multiple_of: Optional[float] = None,
-        allow_inf_nan: Optional[bool] = None,
+        init_var: bool | None = None,
+        kw_only: bool | None = None,
+        strict: bool | None = None,
+        gt: float | None = None,
+        ge: float | None = None,
+        lt: float | None = None,
+        le: float | None = None,
+        multiple_of: float | None = None,
+        allow_inf_nan: bool | None = None,
         **kwargs: Any,
     ) -> Any:
         """
@@ -166,7 +166,7 @@ class FormField:
 
     @classmethod
     def validate_input_type(
-        cls, field_annotation: Type, input_type: str, field_name: str = ''
+        cls, field_annotation: type, input_type: str, field_name: str = ''
     ) -> None:
         """
         Validate that an input type is compatible with the field's Python type.
@@ -192,7 +192,7 @@ class FormField:
         is_input_type_valid(field_annotation, input_type, field_name)
 
     @classmethod
-    def get_default_input_type(cls, field_annotation: Type) -> str:
+    def get_default_input_type(cls, field_annotation: type) -> str:
         """
         Get the default input type for a field's Python type.
 
@@ -229,9 +229,9 @@ class FormField:
 
 
 def create_field_with_validation(
-    field_annotation: Type,
+    field_annotation: type,
     default: Any = ...,
-    input_type: Optional[str] = None,
+    input_type: str | None = None,
     field_name: str = '',
     **kwargs,
 ) -> Any:
@@ -265,13 +265,13 @@ def create_field_with_validation(
 def TextField(
     default: Any = ...,
     *,
-    title: Optional[str] = None,
-    placeholder: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
-    pattern: Optional[str] = None,
+    title: str | None = None,
+    placeholder: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    pattern: str | None = None,
     **kwargs,
 ) -> Any:
     """Create a text input field."""
@@ -292,10 +292,10 @@ def TextField(
 def EmailField(
     default: Any = ...,
     *,
-    title: Optional[str] = None,
-    placeholder: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
+    title: str | None = None,
+    placeholder: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
     **kwargs,
 ) -> Any:
     """Create an email input field."""
@@ -313,12 +313,12 @@ def EmailField(
 def NumberField(
     default: Any = ...,
     *,
-    title: Optional[str] = None,
-    placeholder: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
-    min_value: Optional[Union[int, float]] = None,
-    max_value: Optional[Union[int, float]] = None,
+    title: str | None = None,
+    placeholder: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
+    min_value: int | float | None = None,
+    max_value: int | float | None = None,
     **kwargs,
 ) -> Any:
     """Create a number input field."""
@@ -338,10 +338,10 @@ def NumberField(
 def SelectField(
     default: Any = ...,
     *,
-    title: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
-    options: List[Union[str, Dict[str, Any]]],
+    title: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
+    options: list[str | dict[str, Any]],
     **kwargs,
 ) -> Any:
     """Create a select dropdown field."""
@@ -359,9 +359,9 @@ def SelectField(
 def CheckboxField(
     default: bool = False,
     *,
-    title: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
+    title: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
     **kwargs,
 ) -> Any:
     """Create a checkbox input field."""
@@ -379,9 +379,9 @@ def CheckboxField(
 def DateField(
     default: Any = ...,
     *,
-    title: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
+    title: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
     **kwargs,
 ) -> Any:
     """Create a date input field."""
@@ -398,12 +398,12 @@ def DateField(
 def TextAreaField(
     default: Any = ...,
     *,
-    title: Optional[str] = None,
-    placeholder: Optional[str] = None,
-    help_text: Optional[str] = None,
-    icon: Optional[str] = None,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
+    title: str | None = None,
+    placeholder: str | None = None,
+    help_text: str | None = None,
+    icon: str | None = None,
+    min_length: int | None = None,
+    max_length: int | None = None,
     rows: int = 4,
     **kwargs,
 ) -> Any:

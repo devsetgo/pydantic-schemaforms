@@ -4,7 +4,7 @@ Base classes and utilities for form inputs with Python 3.14 template strings.
 
 from abc import ABC, abstractmethod
 from html import escape
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 # Add t() fallback for Python <3.14 compatibility
@@ -35,9 +35,9 @@ def render_template(template_obj) -> str:
 class BaseInput(ABC):
     """Common attribute handling + rendering contract for all input widgets."""
 
-    ui_element: Optional[str] = None
-    ui_element_aliases: Tuple[str, ...] = ()
-    valid_attributes: List[str] = [
+    ui_element: str | None = None
+    ui_element_aliases: tuple[str, ...] = ()
+    valid_attributes: list[str] = [
         'name',
         'id',
         'class',
@@ -68,9 +68,9 @@ class BaseInput(ABC):
     def get_input_type(self) -> str:
         """Return the HTML input type for concrete input classes."""
 
-    def validate_attributes(self, **kwargs) -> Dict[str, Any]:
+    def validate_attributes(self, **kwargs) -> dict[str, Any]:
         """Validate and sanitize input attributes consistently across subclasses."""
-        validated: Dict[str, Any] = {}
+        validated: dict[str, Any] = {}
 
         name = kwargs.get('name')
         if name:
@@ -107,8 +107,8 @@ class BaseInput(ABC):
             return ' '.join(str(v) for v in value if v is not None)
         return str(value)
 
-    def _build_attributes_string(self, attrs: Dict[str, Any]) -> str:
-        parts: List[str] = []
+    def _build_attributes_string(self, attrs: dict[str, Any]) -> str:
+        parts: list[str] = []
         for key, value in attrs.items():
             if isinstance(value, bool):
                 if value:
@@ -163,12 +163,12 @@ class FormInput(BaseInput):
 
     def render_with_label(
         self,
-        label: Optional[str] = None,
-        help_text: Optional[str] = None,
-        error: Optional[str] = None,
-        icon: Optional[str] = None,
+        label: str | None = None,
+        help_text: str | None = None,
+        error: str | None = None,
+        icon: str | None = None,
         framework: str = 'bootstrap',
-        options: Optional[List[Dict[str, Any]]] = None,
+        options: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> str:
         """
@@ -254,9 +254,9 @@ class FormInput(BaseInput):
 
 def build_label(
     field_name: str,
-    label: Optional[str] = None,
+    label: str | None = None,
     required: bool = False,
-    icon: Optional[str] = None,
+    icon: str | None = None,
     framework: str = 'bootstrap',
 ) -> str:
     """Build label element with optional icon support."""
@@ -335,12 +335,12 @@ class SelectInputBase(BaseInput):
 
     def render_with_label(
         self,
-        label: Optional[str] = None,
-        help_text: Optional[str] = None,
-        error: Optional[str] = None,
-        icon: Optional[str] = None,
+        label: str | None = None,
+        help_text: str | None = None,
+        error: str | None = None,
+        icon: str | None = None,
         framework: str = 'bootstrap',
-        options: Optional[List[Dict[str, Any]]] = None,
+        options: list[dict[str, Any]] | None = None,
         **kwargs,
     ) -> str:
         """

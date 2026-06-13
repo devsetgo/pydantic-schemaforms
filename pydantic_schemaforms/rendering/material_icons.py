@@ -11,7 +11,7 @@ ligature markup (which requires the font to be available).
 from __future__ import annotations
 
 from html import escape
-from typing import Final, Optional
+from typing import Final
 
 
 # Minimal set of SVG paths for common Material icon names used by the demo.
@@ -36,7 +36,7 @@ def render_material_icon(
     *,
     classes: str = '',
     aria_hidden: bool = True,
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> str:
     """Render a Material icon by name.
 

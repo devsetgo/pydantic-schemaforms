@@ -16,7 +16,7 @@ Features:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.themes import RendererTheme, get_theme_for_framework
@@ -38,11 +38,11 @@ class ModelListRenderer:
         self,
         field_name: str,
         label: str,
-        model_class: Type[FormModel],
-        values: Optional[List[Dict[str, Any]]] = None,
-        error: Optional[str] = None,
-        nested_errors: Optional[Dict[str, str]] = None,
-        help_text: Optional[str] = None,
+        model_class: type[FormModel],
+        values: list[dict[str, Any]] | None = None,
+        error: str | None = None,
+        nested_errors: dict[str, str] | None = None,
+        help_text: str | None = None,
         is_required: bool = False,
         min_items: int = 0,
         max_items: int = 10,
@@ -90,11 +90,11 @@ class ModelListRenderer:
         theme: RendererTheme,
         field_name: str,
         label: str,
-        model_class: Type[FormModel],
-        values: List[Dict[str, Any]],
-        error: Optional[str],
-        nested_errors: Optional[Dict[str, str]],
-        help_text: Optional[str],
+        model_class: type[FormModel],
+        values: list[dict[str, Any]],
+        error: str | None,
+        nested_errors: dict[str, str] | None,
+        help_text: str | None,
         is_required: bool,
         min_items: int,
         max_items: int,
@@ -106,7 +106,7 @@ class ModelListRenderer:
         model_label = model_class.__name__.replace('Model', '') or model_class.__name__
         add_button_label = f'Add {label or model_label}' if label else f'Add {model_label}'
 
-        html_parts: List[str] = []
+        html_parts: list[str] = []
 
         for index, item_data in enumerate(values):
             item_body = self._render_item_body(
@@ -202,10 +202,10 @@ class ModelListRenderer:
     def _render_item_body(
         self,
         field_name: str,
-        model_class: Type[FormModel],
+        model_class: type[FormModel],
         index: int,
-        item_data: Dict[str, Any],
-        nested_errors: Optional[Dict[str, str]] = None,
+        item_data: dict[str, Any],
+        nested_errors: dict[str, str] | None = None,
     ) -> str:
         if self.framework == 'material':
             return self._render_material_list_item(
@@ -226,10 +226,10 @@ class ModelListRenderer:
     def _render_bootstrap_list_item(
         self,
         field_name: str,
-        model_class: Type[FormModel],
+        model_class: type[FormModel],
         index: int,
-        item_data: Dict[str, Any],
-        nested_errors: Optional[Dict[str, str]] = None,
+        item_data: dict[str, Any],
+        nested_errors: dict[str, str] | None = None,
     ) -> str:
         """Render a single Bootstrap list item."""
 
@@ -284,10 +284,10 @@ class ModelListRenderer:
     def _render_material_list_item(
         self,
         field_name: str,
-        model_class: Type[FormModel],
+        model_class: type[FormModel],
         index: int,
-        item_data: Dict[str, Any],
-        nested_errors: Optional[Dict[str, str]] = None,
+        item_data: dict[str, Any],
+        nested_errors: dict[str, str] | None = None,
     ) -> str:
         """Render a single Material Design list item."""
 

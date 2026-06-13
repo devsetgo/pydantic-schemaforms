@@ -14,7 +14,8 @@ import re
 import time
 from enum import Enum
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any
+from collections.abc import Callable
 
 from .html_markers import wrap_with_schemaforms_markers
 from .icon_mapping import map_icon_for_framework
@@ -47,7 +48,7 @@ CSRF_MODES = {mode.value for mode in CSRFMode}
 class SchemaFormValidationError(Exception):
     """Raised when validation errors match the SchemaForm contract."""
 
-    def __init__(self, errors: List[Dict[str, Any]]):
+    def __init__(self, errors: list[dict[str, Any]]):
         self.errors = errors
         super().__init__('Schema form validation error')
 
@@ -58,7 +59,7 @@ class EnhancedFormRenderer:
     def __init__(
         self,
         framework: str = 'bootstrap',
-        theme: Optional[RendererTheme] = None,
+        theme: RendererTheme | None = None,
         *,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
@@ -89,9 +90,9 @@ class EnhancedFormRenderer:
 
     def render_form_from_model(
         self,
-        model_cls: Type[FormModel],
-        data: Dict[str, Any] | None = None,
-        errors: Dict[str, Any] | None = None,
+        model_cls: type[FormModel],
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         *,
         submit_url: str = '/submit',
         method: str = 'POST',
@@ -146,7 +147,7 @@ class EnhancedFormRenderer:
             csrf_token_provider=csrf_token_provider,
             csrf_field_name=csrf_field_name,
         )
-        form_body_parts: List[str] = []
+        form_body_parts: list[str] = []
 
         fields = metadata.fields
         required_fields = metadata.required_fields
@@ -254,9 +255,9 @@ class EnhancedFormRenderer:
 
     def render_form_fields_only(
         self,
-        model_cls: Type[FormModel],
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        model_cls: type[FormModel],
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         layout: str = 'vertical',
         **kwargs,
     ) -> str:
@@ -274,7 +275,7 @@ class EnhancedFormRenderer:
         fields = metadata.fields
         required_fields = metadata.required_fields
 
-        form_parts: List[str] = []
+        form_parts: list[str] = []
         for field_name, field_schema in fields:
             form_parts.append(
                 self._render_field(
@@ -293,9 +294,9 @@ class EnhancedFormRenderer:
 
     async def render_form_from_model_async(
         self,
-        model_cls: Type[FormModel],
-        data: Dict[str, Any] | None = None,
-        errors: Dict[str, Any] | None = None,
+        model_cls: type[FormModel],
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         *,
         submit_url: str = '/submit',
         method: str = 'POST',
@@ -333,13 +334,13 @@ class EnhancedFormRenderer:
     def _render_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any = None,
-        error: Optional[str] = None,
-        required_fields: Optional[List[str]] = None,
-        context: Optional[RenderContext] = None,
+        error: str | None = None,
+        required_fields: list[str] | None = None,
+        context: RenderContext | None = None,
         layout: str = 'vertical',
-        all_errors: Optional[Dict[str, str]] = None,
+        all_errors: dict[str, str] | None = None,
     ) -> str:
         if self.framework == 'material':
             return self._render_material_field(
@@ -365,24 +366,24 @@ class EnhancedFormRenderer:
 
     def _render_tabbed_layout(
         self,
-        fields: List[Tuple[str, Dict[str, Any]]],
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        required_fields: List[str],
+        fields: list[tuple[str, dict[str, Any]]],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
-    ) -> List[str]:
+    ) -> list[str]:
         return self._layout_engine.render_tabbed_layout(
             fields, data, errors, required_fields, context
         )
 
     def _render_layout_fields_as_tabs(
         self,
-        layout_fields: List[Tuple[str, Dict[str, Any]]],
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        required_fields: List[str],
+        layout_fields: list[tuple[str, dict[str, Any]]],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
-    ) -> List[str]:
+    ) -> list[str]:
         return self._layout_engine.render_layout_fields_as_tabs(
             layout_fields,
             data,
@@ -394,10 +395,10 @@ class EnhancedFormRenderer:
     def _render_layout_field_content(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         return self._layout_engine.render_layout_field_content(
@@ -412,18 +413,18 @@ class EnhancedFormRenderer:
     def _get_nested_form_data(
         self,
         field_name: str,
-        main_data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        main_data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         return get_nested_form_data(field_name, main_data or {})
 
     def _render_side_by_side_layout(
         self,
-        fields: List[Tuple[str, Dict[str, Any]]],
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        required_fields: List[str],
+        fields: list[tuple[str, dict[str, Any]]],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
-    ) -> List[str]:
+    ) -> list[str]:
         return self._layout_engine.render_side_by_side_layout(
             fields,
             data,
@@ -433,9 +434,9 @@ class EnhancedFormRenderer:
         )
 
     def _extract_nested_errors_for_field(
-        self, field_name: str, all_errors: Dict[str, Any]
-    ) -> Dict[str, str]:
-        nested_errors: Dict[str, str] = {}
+        self, field_name: str, all_errors: dict[str, Any]
+    ) -> dict[str, str]:
+        nested_errors: dict[str, str] = {}
         field_prefix = f'{field_name}['
 
         for error_path, error_message in (all_errors or {}).items():
@@ -463,14 +464,14 @@ class EnhancedFormRenderer:
 .md-form > div,
 .md-form > fieldset,
 .md-form > [class*="row"] {
-    width: 100% !important;
-    max-width: none !important;
+    width: 100%;
+    max-width: none;
 }
 
 .pydantic-form [class*="col-"],
 .md-form [class*="col-"] {
     min-width: 0;
-    flex: 1 1 auto !important;
+    flex: 1 1 auto;
 }
 
 .pydantic-form [class*="section"],
@@ -479,17 +480,17 @@ class EnhancedFormRenderer:
 .md-form [class*="section"],
 .md-form [data-schemaforms-section],
 .md-form fieldset {
-    width: 100% !important;
-    max-width: none !important;
+    width: 100%;
+    max-width: none;
     box-sizing: border-box;
 }
 </style>
 """
 
-    def _flatten_error_messages(self, errors: Any, prefix: str = '') -> List[Tuple[str, str]]:
+    def _flatten_error_messages(self, errors: Any, prefix: str = '') -> list[tuple[str, str]]:
         """Flatten mixed error payloads into (field_path, message) tuples."""
 
-        flattened: List[Tuple[str, str]] = []
+        flattened: list[tuple[str, str]] = []
 
         if isinstance(errors, dict):
             for key, value in errors.items():
@@ -523,7 +524,7 @@ class EnhancedFormRenderer:
         if not field_path or field_path == 'form':
             return 'Form'
 
-        tokens: List[str | int] = []
+        tokens: list[str | int] = []
         for name_token, index_token in re.findall(r'([^.\[\]]+)|\[(\d+)\]', field_path):
             if name_token:
                 tokens.append(name_token)
@@ -533,7 +534,7 @@ class EnhancedFormRenderer:
         if not tokens:
             return field_path
 
-        parts: List[str] = []
+        parts: list[str] = []
         for token in tokens:
             if isinstance(token, str):
                 pretty = token.replace('_', ' ').strip().title()
@@ -548,7 +549,7 @@ class EnhancedFormRenderer:
 
         return ' — '.join(parts)
 
-    def _render_error_summary(self, errors: Dict[str, Any]) -> str:
+    def _render_error_summary(self, errors: dict[str, Any]) -> str:
         """Render a framework-aware top-level summary for validation errors."""
 
         if not isinstance(errors, dict) or not errors:
@@ -652,10 +653,10 @@ class EnhancedFormRenderer:
     def _render_layout_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         return self._layout_engine.render_layout_field(
@@ -690,18 +691,18 @@ class EnhancedFormRenderer:
     def _attr(value: Any) -> str:
         return html.escape(str(value)) if value is not None else ''
 
-    def _render_material_help_block(self, help_text: Optional[str]) -> str:
+    def _render_material_help_block(self, help_text: str | None) -> str:
         if not help_text:
             return ''
         return render_template(FormTemplates.MATERIAL_HELP_TEXT, help_content=str(help_text))
 
-    def _render_material_error_block(self, error: Optional[str]) -> str:
+    def _render_material_error_block(self, error: str | None) -> str:
         if not error:
             return ''
         return render_template(FormTemplates.MATERIAL_ERROR_TEXT, error_content=str(error))
 
     def _wrap_material_field_body(
-        self, *, field_body: str, help_text: Optional[str], error: Optional[str]
+        self, *, field_body: str, help_text: str | None, error: str | None
     ) -> str:
         return render_template(
             FormTemplates.MATERIAL_FIELD_CONTAINER,
@@ -710,7 +711,7 @@ class EnhancedFormRenderer:
             error_text=self._render_material_error_block(error),
         )
 
-    def _wrap_material_with_icon(self, icon: Optional[str], input_wrapper: str) -> str:
+    def _wrap_material_with_icon(self, icon: str | None, input_wrapper: str) -> str:
         if not icon:
             return input_wrapper
         icon_markup = render_material_icon(icon, classes='md-icon')
@@ -720,7 +721,7 @@ class EnhancedFormRenderer:
             input_wrapper=input_wrapper,
         )
 
-    def _build_material_text_input_attributes(self, ui_info: Dict[str, Any]) -> str:
+    def _build_material_text_input_attributes(self, ui_info: dict[str, Any]) -> str:
         attrs = []
         for source, attr_name in (
             ('min_value', 'min'),
@@ -739,12 +740,12 @@ class EnhancedFormRenderer:
         return ' '.join(attrs)
 
     def _build_material_select_options(
-        self, ui_info: Dict[str, Any], field_schema: Dict[str, Any]
-    ) -> List[List[str]]:
+        self, ui_info: dict[str, Any], field_schema: dict[str, Any]
+    ) -> list[list[str]]:
         options = ui_info.get('options', [])
         if not options and 'enum' in field_schema:
             options = [{'value': v, 'label': v} for v in field_schema['enum']]
-        normalized: List[List[str]] = []
+        normalized: list[list[str]] = []
         for option in options:
             if isinstance(option, dict):
                 opt_value = option.get('value', '')
@@ -754,7 +755,7 @@ class EnhancedFormRenderer:
             normalized.append([opt_value, opt_label])
         return normalized
 
-    def _infer_material_input_type(self, field_schema: Dict[str, Any]) -> str:
+    def _infer_material_input_type(self, field_schema: dict[str, Any]) -> str:
         field_type = field_schema.get('type', 'string')
         field_format = field_schema.get('format', '')
         if field_format == 'email':
@@ -774,8 +775,8 @@ class EnhancedFormRenderer:
         field_name: str,
         input_type: str,
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
         is_required: bool,
     ) -> str:
         error_class = ' error' if error else ''
@@ -797,8 +798,8 @@ class EnhancedFormRenderer:
         self,
         field_name: str,
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
         is_required: bool,
     ) -> str:
         error_class = ' error' if error else ''
@@ -817,9 +818,9 @@ class EnhancedFormRenderer:
         self,
         field_name: str,
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
-        field_schema: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
+        field_schema: dict[str, Any],
         is_required: bool,
     ) -> str:
         error_class = ' error' if error else ''
@@ -852,10 +853,10 @@ class EnhancedFormRenderer:
         field_name: str,
         label: str,
         value: Any,
-        error: Optional[str],
-        help_text: Optional[str],
+        error: str | None,
+        help_text: str | None,
         is_required: bool,
-        ui_info: Dict[str, Any],
+        ui_info: dict[str, Any],
     ) -> str:
         required_text = ' *' if is_required else ''
         checked_attr = (
@@ -882,11 +883,11 @@ class EnhancedFormRenderer:
         input_type: str,
         label: str,
         value: Any,
-        error: Optional[str],
-        help_text: Optional[str],
+        error: str | None,
+        help_text: str | None,
         is_required: bool,
-        ui_info: Dict[str, Any],
-        field_schema: Dict[str, Any],
+        ui_info: dict[str, Any],
+        field_schema: dict[str, Any],
     ) -> str:
         required_text = ' *' if is_required else ''
         icon = ui_info.get('icon')
@@ -921,13 +922,13 @@ class EnhancedFormRenderer:
     def _render_material_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any = None,
-        error: Optional[str] = None,
-        required_fields: Optional[List[str]] = None,
-        context: Optional[RenderContext] = None,
+        error: str | None = None,
+        required_fields: list[str] | None = None,
+        context: RenderContext | None = None,
         _layout: str = 'vertical',
-        all_errors: Optional[Dict[str, Any]] = None,
+        all_errors: dict[str, Any] | None = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
         ui_info = field_schema.get('ui', {}) or field_schema
@@ -977,12 +978,12 @@ class EnhancedFormRenderer:
     def _render_material_model_list_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any = None,
-        error: Optional[str] = None,
-        required_fields: Optional[List[str]] = None,
-        context: Optional[RenderContext] = None,
-        all_errors: Optional[Dict[str, Any]] = None,
+        error: str | None = None,
+        required_fields: list[str] | None = None,
+        context: RenderContext | None = None,
+        all_errors: dict[str, Any] | None = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
         field_html = self._field_renderer.render_field(
@@ -1001,9 +1002,9 @@ class EnhancedFormRenderer:
         self,
         *,
         form_html: str,
-        model_cls: Type[FormModel],
-        data: Optional[Dict[str, Any]],
-        errors: Optional[Dict[str, Any]],
+        model_cls: type[FormModel],
+        data: dict[str, Any] | None,
+        errors: dict[str, Any] | None,
         metadata: SchemaMetadata,
         render_time: float = 0.0,
     ) -> str:
@@ -1026,9 +1027,9 @@ class EnhancedFormRenderer:
             schema = model_cls.model_json_schema()
             required = set(schema.get('required', []) or [])
             properties = schema.get('properties', {}) or {}
-            validation_rules: Dict[str, Any] = {}
+            validation_rules: dict[str, Any] = {}
             for name, prop in properties.items():
-                rule: Dict[str, Any] = {'required': name in required}
+                rule: dict[str, Any] = {'required': name in required}
                 for key in (
                     'type',
                     'format',
@@ -1173,9 +1174,9 @@ class EnhancedFormRenderer:
 
 
 def render_form_html(
-    form_model_cls: Type[FormModel],
-    form_data: Optional[Dict[str, Any]] = None,
-    errors: Dict[str, str] | SchemaFormValidationError | None = None,
+    form_model_cls: type[FormModel],
+    form_data: dict[str, Any] | None = None,
+    errors: dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = 'bootstrap',
     layout: str = 'vertical',
     debug: bool = False,
@@ -1227,9 +1228,9 @@ def render_form_html(
 
 
 async def render_form_html_async(
-    form_model_cls: Type[FormModel],
-    form_data: Optional[Dict[str, Any]] = None,
-    errors: Dict[str, str] | SchemaFormValidationError | None = None,
+    form_model_cls: type[FormModel],
+    form_data: dict[str, Any] | None = None,
+    errors: dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = 'bootstrap',
     layout: str = 'vertical',
     debug: bool = False,

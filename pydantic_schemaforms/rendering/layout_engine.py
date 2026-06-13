@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from html import escape
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Union
+from collections.abc import Callable
 
 from pydantic_schemaforms.layout_base import BaseLayout
 from pydantic_schemaforms.templates import FormTemplates
@@ -14,10 +15,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
 
-Renderable = Union[str, List[str]]
+Renderable = Union[str, list[str]]
 _DEFAULT_FORM_STYLE = get_form_style('default', 'default')
 LayoutRenderer = Callable[
-    [str, Dict[str, Any], Any, Dict[str, Any], RenderContext, 'LayoutEngine'], str
+    [str, dict[str, Any], Any, dict[str, Any], RenderContext, 'LayoutEngine'], str
 ]
 
 
@@ -28,7 +29,7 @@ class HorizontalLayout(BaseLayout):
 
     def __init__(
         self,
-        content: Renderable | BaseLayout | List[BaseLayout] | None = None,
+        content: Renderable | BaseLayout | list[BaseLayout] | None = None,
         *,
         gap: str = '1rem',
         align_items: str = 'flex-start',
@@ -61,7 +62,7 @@ class VerticalLayout(BaseLayout):
 
     def __init__(
         self,
-        content: Renderable | BaseLayout | List[BaseLayout] | None = None,
+        content: Renderable | BaseLayout | list[BaseLayout] | None = None,
         *,
         gap: str = '1rem',
         align_items: str = 'stretch',
@@ -88,11 +89,11 @@ class GridLayout(BaseLayout):
 
     def __init__(
         self,
-        content: Renderable | BaseLayout | List[BaseLayout] | None = None,
+        content: Renderable | BaseLayout | list[BaseLayout] | None = None,
         *,
         columns: str = '1fr 1fr',
         gap: str = '1rem',
-        rows: Optional[str] = None,
+        rows: str | None = None,
         **kwargs: Any,
     ) -> None:
         resolved_content = [] if content is None else content
@@ -119,7 +120,7 @@ class ResponsiveGridLayout(GridLayout):
 
     def __init__(
         self,
-        content: Renderable | BaseLayout | List[BaseLayout] | None = None,
+        content: Renderable | BaseLayout | list[BaseLayout] | None = None,
         *,
         min_column_width: str = '300px',
         gap: str = '1rem',
@@ -144,12 +145,12 @@ class TabLayout(BaseLayout):
 ${component_assets}
     """
 
-    def __init__(self, tabs: List[Dict[str, str]], **kwargs: Any) -> None:
+    def __init__(self, tabs: list[dict[str, str]], **kwargs: Any) -> None:
         super().__init__(content='', **kwargs)
         self.tabs = tabs
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        attrs: Dict[str, Any] = {**self.attributes, **kwargs}
+        attrs: dict[str, Any] = {**self.attributes, **kwargs}
         layout_class = self._merge_classes(attrs)
         layout_style = self._merge_styles(attrs)
 
@@ -158,7 +159,7 @@ ${component_assets}
 
         tab_ids = [f'tab-{i}' for i in range(len(self.tabs))]
 
-        tab_buttons: List[str] = []
+        tab_buttons: list[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
             button_template = FormTemplates.TAB_BUTTON
@@ -175,7 +176,7 @@ ${component_assets}
                 )
             )
 
-        tab_panels: List[str] = []
+        tab_panels: list[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
             is_active = i == 0
             panel_template = FormTemplates.TAB_PANEL
@@ -228,12 +229,12 @@ class AccordionLayout(BaseLayout):
 ${component_assets}
     """
 
-    def __init__(self, sections: List[Dict[str, str]], **kwargs: Any) -> None:
+    def __init__(self, sections: list[dict[str, str]], **kwargs: Any) -> None:
         super().__init__(content='', **kwargs)
         self.sections = sections
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        attrs: Dict[str, Any] = {**self.attributes, **kwargs}
+        attrs: dict[str, Any] = {**self.attributes, **kwargs}
         layout_class = self._merge_classes(attrs)
         layout_style = self._merge_styles(attrs)
 
@@ -241,7 +242,7 @@ ${component_assets}
         theme = getattr(renderer, 'theme', None) if renderer else None
 
         section_ids = [f'accordion-{i}' for i in range(len(self.sections))]
-        accordion_sections: List[str] = []
+        accordion_sections: list[str] = []
         for _i, (section_id, section) in enumerate(zip(section_ids, self.sections, strict=False)):
             is_expanded = section.get('expanded', False)
             section_template = FormTemplates.ACCORDION_SECTION
@@ -490,11 +491,11 @@ class LayoutComposer:
         return ResponsiveGridLayout(list(content), min_column_width=min_width, **kwargs)
 
     @staticmethod
-    def tabs(tabs: List[Dict[str, str]], **kwargs: Any) -> TabLayout:
+    def tabs(tabs: list[dict[str, str]], **kwargs: Any) -> TabLayout:
         return TabLayout(tabs, **kwargs)
 
     @staticmethod
-    def accordion(sections: List[Dict[str, str]], **kwargs: Any) -> AccordionLayout:
+    def accordion(sections: list[dict[str, str]], **kwargs: Any) -> AccordionLayout:
         return AccordionLayout(sections, **kwargs)
 
     @staticmethod
@@ -513,7 +514,7 @@ Layout = LayoutComposer
 class LayoutEngine:
     """Encapsulates layout rendering routines for form renderers."""
 
-    _custom_renderers: Dict[str, LayoutRenderer] = {}
+    _custom_renderers: dict[str, LayoutRenderer] = {}
 
     def __init__(self, renderer: 'EnhancedFormRenderer') -> None:
         self._renderer = renderer
@@ -540,19 +541,19 @@ class LayoutEngine:
     # ------------------------------------------------------------------
     def render_tabbed_layout(
         self,
-        fields: List[Tuple[str, Dict[str, Any]]],
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        required_fields: List[str],
+        fields: list[tuple[str, dict[str, Any]]],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
-    ) -> List[str]:
+    ) -> list[str]:
         tabs = self._group_fields_into_tabs(fields)
         if not tabs:
             return []
 
-        tab_payload: List[Dict[str, str]] = []
+        tab_payload: list[dict[str, str]] = []
         for tab_name, tab_fields in tabs:
-            field_html_parts: List[str] = []
+            field_html_parts: list[str] = []
             for field_name, field_schema in tab_fields:
                 field_html_parts.append(
                     self._renderer._render_field(  # noqa: SLF001 - intentional internal call
@@ -588,16 +589,16 @@ class LayoutEngine:
 
     def render_layout_fields_as_tabs(
         self,
-        layout_fields: List[Tuple[str, Dict[str, Any]]],
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        required_fields: List[str],
+        layout_fields: list[tuple[str, dict[str, Any]]],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
-    ) -> List[str]:
+    ) -> list[str]:
         if not layout_fields:
             return []
 
-        tabs_payload: List[Dict[str, str]] = []
+        tabs_payload: list[dict[str, str]] = []
         for field_name, field_schema in layout_fields:
             ui_info = field_schema.get('ui', {}) or field_schema
             layout_content = self.render_layout_field_content(
@@ -630,10 +631,10 @@ class LayoutEngine:
     def render_layout_field_content(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         section_title = field_schema.get('title', field_name.replace('_', ' ').title())
@@ -644,8 +645,8 @@ class LayoutEngine:
     def render_layout_field_content_fallback(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
-        ui_info: Dict[str, Any],
+        field_schema: dict[str, Any],
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         form_mapping = {
@@ -703,19 +704,19 @@ class LayoutEngine:
 
     def render_side_by_side_layout(
         self,
-        fields: List[Tuple[str, Dict[str, Any]]],
-        data: Dict[str, Any],
-        errors: Dict[str, Any],
-        required_fields: List[str],
+        fields: list[tuple[str, dict[str, Any]]],
+        data: dict[str, Any],
+        errors: dict[str, Any],
+        required_fields: list[str],
         context: RenderContext,
-    ) -> List[str]:
-        parts: List[str] = []
+    ) -> list[str]:
+        parts: list[str] = []
         field_pairs = []
         for i in range(0, len(fields), 2):
             field_pairs.append((fields[i], fields[i + 1] if i + 1 < len(fields) else None))
 
         for left_field, right_field in field_pairs:
-            columns: List[str] = []
+            columns: list[str] = []
             if left_field:
                 field_name, field_schema = left_field
                 columns.append(
@@ -767,10 +768,10 @@ class LayoutEngine:
     def render_layout_field(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any,
-        error: Optional[str],
-        ui_info: Dict[str, Any],
+        error: str | None,
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         section_title = field_schema.get('title', field_name.replace('_', ' ').title())
@@ -781,9 +782,9 @@ class LayoutEngine:
     def _build_layout_body(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
+        field_schema: dict[str, Any],
         value: Any,
-        ui_info: Dict[str, Any],
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         try:
@@ -809,8 +810,8 @@ class LayoutEngine:
     def render_layout_field_fallback(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
-        ui_info: Dict[str, Any],
+        field_schema: dict[str, Any],
+        ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
         form_mapping = {
@@ -897,8 +898,8 @@ class LayoutEngine:
     def _layout_error_message(
         self,
         field_name: str,
-        field_schema: Dict[str, Any],
-        ui_info: Dict[str, Any],
+        field_schema: dict[str, Any],
+        ui_info: dict[str, Any],
         exc: Exception,
     ) -> str:
         title = field_schema.get('title', field_name.replace('_', ' ').title())
@@ -914,11 +915,11 @@ class LayoutEngine:
     # Internal helpers
     # ------------------------------------------------------------------
     def _group_fields_into_tabs(
-        self, fields: List[Tuple[str, Dict[str, Any]]]
-    ) -> List[Tuple[str, List[Tuple[str, Dict[str, Any]]]]]:
-        personal_fields: List[Tuple[str, Dict[str, Any]]] = []
-        contact_fields: List[Tuple[str, Dict[str, Any]]] = []
-        other_fields: List[Tuple[str, Dict[str, Any]]] = []
+        self, fields: list[tuple[str, dict[str, Any]]]
+    ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
+        personal_fields: list[tuple[str, dict[str, Any]]] = []
+        contact_fields: list[tuple[str, dict[str, Any]]] = []
+        other_fields: list[tuple[str, dict[str, Any]]] = []
 
         for field_name, field_schema in fields:
             field_lower = field_name.lower()
@@ -935,7 +936,7 @@ class LayoutEngine:
             else:
                 other_fields.append((field_name, field_schema))
 
-        tabs: List[Tuple[str, List[Tuple[str, Dict[str, Any]]]]] = []
+        tabs: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
         if personal_fields:
             tabs.append(('Personal Info', personal_fields))
         if contact_fields:
@@ -949,15 +950,15 @@ class LayoutEngine:
 
 
 def _extract_existing_field_data(
-    field_name: str, main_data: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    field_name: str, main_data: dict[str, Any]
+) -> dict[str, Any] | None:
     field_data = main_data.get(field_name)
     if isinstance(field_data, dict):
         return field_data
     return None
 
 
-def _safe_layout_tabs(layout_value: Any) -> List[Tuple[str, Any]]:
+def _safe_layout_tabs(layout_value: Any) -> list[tuple[str, Any]]:
     if not isinstance(layout_value, BaseLayout) or not hasattr(layout_value, '_get_layouts'):
         return []
     try:
@@ -966,11 +967,11 @@ def _safe_layout_tabs(layout_value: Any) -> List[Tuple[str, Any]]:
         return []
 
 
-def _tab_payload_from_main_data(tab_layout: Any, main_data: Dict[str, Any]) -> Dict[str, Any]:
+def _tab_payload_from_main_data(tab_layout: Any, main_data: dict[str, Any]) -> dict[str, Any]:
     if not hasattr(tab_layout, '_get_forms'):
         return {}
 
-    tab_payload: Dict[str, Any] = {}
+    tab_payload: dict[str, Any] = {}
     try:
         for form_cls in tab_layout._get_forms():
             model_fields = getattr(form_cls, 'model_fields', {}) or {}
@@ -983,8 +984,8 @@ def _tab_payload_from_main_data(tab_layout: Any, main_data: Dict[str, Any]) -> D
     return tab_payload
 
 
-def _extract_layout_nested_data(layout_value: Any, main_data: Dict[str, Any]) -> Dict[str, Any]:
-    nested_data: Dict[str, Any] = {}
+def _extract_layout_nested_data(layout_value: Any, main_data: dict[str, Any]) -> dict[str, Any]:
+    nested_data: dict[str, Any] = {}
 
     for tab_name, tab_layout in _safe_layout_tabs(layout_value):
         tab_data = main_data.get(tab_name)
@@ -999,7 +1000,7 @@ def _extract_layout_nested_data(layout_value: Any, main_data: Dict[str, Any]) ->
     return nested_data
 
 
-def _extract_fallback_mapped_data(field_name: str, main_data: Dict[str, Any]) -> Dict[str, Any]:
+def _extract_fallback_mapped_data(field_name: str, main_data: dict[str, Any]) -> dict[str, Any]:
     field_data_mapping = {
         'vertical_tab': ['first_name', 'last_name', 'email', 'birth_date'],
         'horizontal_tab': ['phone', 'address', 'city', 'postal_code'],
@@ -1012,7 +1013,7 @@ def _extract_fallback_mapped_data(field_name: str, main_data: Dict[str, Any]) ->
         'list_tab': ['project_name', 'tasks'],
     }
 
-    nested_data: Dict[str, Any] = {}
+    nested_data: dict[str, Any] = {}
     for key in field_data_mapping.get(field_name, []):
         if key in main_data:
             nested_data[key] = main_data[key]
@@ -1021,9 +1022,9 @@ def _extract_fallback_mapped_data(field_name: str, main_data: Dict[str, Any]) ->
 
 def get_nested_form_data(
     field_name: str,
-    main_data: Dict[str, Any],
-    layout_value: Optional[Any] = None,
-) -> Dict[str, Any]:
+    main_data: dict[str, Any],
+    layout_value: Any | None = None,
+) -> dict[str, Any]:
     """Utility used across renderers to extract nested layout data."""
     existing = _extract_existing_field_data(field_name, main_data)
     if existing is not None:

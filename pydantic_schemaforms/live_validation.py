@@ -10,7 +10,8 @@ Requires: Python 3.14+ (uses native template strings)
 import json
 from dataclasses import dataclass
 from html import escape as _html_escape
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
 
 from pydantic import BaseModel, ValidationError
 
@@ -160,7 +161,7 @@ class LiveValidator:
     validation using Python 3.14 template strings for optimal performance.
     """
 
-    def __init__(self, config: Optional[HTMXValidationConfig] = None):
+    def __init__(self, config: HTMXValidationConfig | None = None):
         """
         Initialize live validator.
 
@@ -168,8 +169,8 @@ class LiveValidator:
             config: HTMX validation configuration
         """
         self.config = config or HTMXValidationConfig()
-        self.validators: Dict[str, Callable] = {}
-        self.field_configs: Dict[str, Dict[str, Any]] = {}
+        self.validators: dict[str, Callable] = {}
+        self.field_configs: dict[str, dict[str, Any]] = {}
 
         def _validation_feedback(
             *, feedback_class: str = '', field_name: str = '', feedback_content: str = '', **_: Any
@@ -320,6 +321,7 @@ class LiveValidator:
     def _generate_flask_endpoint(self) -> str:
         """Generate Flask validation endpoint code."""
         return """
+from html import escape as _html_escape
 from flask import request, jsonify
 from pydantic_schemaforms.live_validation import ValidationResponse
 
@@ -333,16 +335,17 @@ def validate_field(field_name):
         if response.is_valid:
             feedback_html = '<div class="valid-feedback">\\u2713 Valid</div>'
         else:
-            errors_html = '<br>'.join(response.errors)
+            errors_html = '<br>'.join(_html_escape(e) for e in response.errors)
             feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
         return feedback_html, 200 if response.is_valid else 400
     except Exception as e:
-        return f'<div class="invalid-feedback">Validation error: {str(e)}</div>', 500
+        return f'<div class="invalid-feedback">Validation error: {_html_escape(str(e))}</div>', 500
 """
 
     def _generate_fastapi_endpoint(self) -> str:
         """Generate FastAPI validation endpoint code."""
         return """
+from html import escape as _html_escape
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pydantic_schemaforms.live_validation import ValidationResponse
@@ -359,11 +362,11 @@ async def validate_field(field_name: str, request: ValidationRequest):
         if response.is_valid:
             feedback_html = '<div class="valid-feedback">\\u2713 Valid</div>'
         else:
-            errors_html = '<br>'.join(response.errors)
+            errors_html = '<br>'.join(_html_escape(e) for e in response.errors)
             feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
         return HTMLResponse(content=feedback_html, status_code=200 if response.is_valid else 400)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Validation error: {str(e)}')
+        raise HTTPException(status_code=500, detail=f'Validation error: {_html_escape(str(e))}')
 """
 
     def render_field_with_live_validation(
@@ -371,7 +374,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         field_name: str,
         field_type: str = 'text',
         value: Any = '',
-        validation_endpoint: Optional[str] = None,
+        validation_endpoint: str | None = None,
         **kwargs,
     ) -> str:
         """
@@ -456,7 +459,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         return self.htmx_script.render(config_json=config_json)
 
 
-def validation_response_headers(field_name: str, is_valid: bool) -> Dict[str, str]:
+def validation_response_headers(field_name: str, is_valid: bool) -> dict[str, str]:
     """Return HTTP headers for a live-validation endpoint response.
 
     Emits an ``HX-Trigger: validationResult`` header that the bundled

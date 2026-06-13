@@ -1,77 +1,36 @@
 """
-Pydantic SchemaForms - Modern Python 3.14 Form Generation
+Pydantic SchemaForms — server-rendered HTML forms for Pydantic 2 models.
 
-A production-ready form generation library built on Pydantic and Python 3.14.
+Requires Python 3.14+. Primary entry point::
 
-Features:
-- Comprehensive HTML5 input types
-- Multi-framework theming (Bootstrap, Material, none)
-- Advanced validation system with cross-field rules
-- Async/sync rendering
-- Layout system (tabbed, grid, accordion, modal, responsive)
-- CSRF protection and security features
-- HTMX live validation
+    from pydantic_schemaforms import FormModel, Field, render_form_html
 
-Requires Python 3.14+.
+    class ContactForm(FormModel):
+        name: str = Field(title="Full Name")
+        email: str = Field(title="Email Address", input_type="email")
+        message: str = Field(title="Message", input_type="textarea")
 
-Quick Start:
+    html = render_form_html(ContactForm, submit_url="/contact")
 
-1. Define and render a form from a Pydantic model:
-```python
-from pydantic_schemaforms import FormModel, Field, render_form_html
+Alternatively, use the builder DSL for programmatic form construction::
 
-class ContactForm(FormModel):
-    name: str = Field(title="Full Name")
-    email: str = Field(title="Email Address", input_type="email")
-    message: str = Field(title="Message", input_type="textarea")
+    from pydantic_schemaforms import FormBuilder
 
-html = render_form_html(ContactForm, submit_url="/contact")
-```
+    form = FormBuilder().text_input("name").email_input("email")
+    html = form.set_form_attributes(submit_url="/contact").render()
 
-2. Auto-generate from any Pydantic model:
-```python
-from pydantic import BaseModel
-from pydantic_schemaforms import create_form_from_model
-
-class User(BaseModel):
-    name: str
-    email: str
-    age: int
-
-html = create_form_from_model(User).set_form_attributes(submit_url="/users").render()
-```
-
-3. Pre-built forms:
-```python
-from pydantic_schemaforms import create_login_form, render_form_page
-
-login_form = create_login_form()
-page_html = render_form_page(login_form, "Login")
-```
-
-4. Framework integration:
-```python
-# FastAPI (async)
-from pydantic_schemaforms import FormIntegration, create_login_form
-
-form_builder = create_login_form()
-result = await FormIntegration.async_integration(
-    form_builder, submitted_data={"email": "user@example.com", "password": "secret"}
-)
-
-# Flask (sync)
-result = FormIntegration.sync_integration(form_builder, submitted_data=request.form)
-```
+See the README for framework integration (FastAPI, Flask), layout system,
+validation, CSRF protection, and HTMX live validation.
 """
 
 import logging
-import os
 from importlib import import_module
 from typing import Any
 
 # Version guard first — gives a clean error on Python < 3.14 before any
 # other import can raise a cryptic SyntaxError or AttributeError.
-from .version_check import check_python_version, verify_template_strings
+from .version_check import check_python_version as _check_python_version  # noqa: F401
+from .version_check import verify_template_strings as _verify_template_strings  # noqa: F401
 
 from .enhanced_renderer import (
     CSRFMode,
@@ -185,8 +144,6 @@ __version__ = '26.2.2'
 __package_name__ = 'pydantic-schemaforms'
 __author__ = 'Pydantic Forms Team'
 __description__ = 'Modern form generation library for Python 3.14+'
-
-STATIC_DIR = os.path.join(os.path.dirname(__file__), 'static')
 
 # Library logger — callers configure handlers; we add NullHandler to suppress
 # "No handlers could be found" warnings (PEP 282 / logging best-practices).

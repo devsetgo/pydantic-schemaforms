@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Dict, Iterable, List, Set, Tuple, Type
+from collections.abc import Iterable
 
 from . import (  # noqa: F401
     datetime_inputs,
@@ -15,14 +15,14 @@ from . import (  # noqa: F401
 from .base import BaseInput
 
 
-_EXTRA_INPUTS: Dict[str, Type[BaseInput]] = {}
+_EXTRA_INPUTS: dict[str, type[BaseInput]] = {}
 
 
-def _iter_input_classes() -> Iterable[Type[BaseInput]]:
+def _iter_input_classes() -> Iterable[type[BaseInput]]:
     """Yield every concrete BaseInput subclass (depth-first, unique)."""
 
-    seen: Set[Type[BaseInput]] = set()
-    stack: List[Type[BaseInput]] = list(BaseInput.__subclasses__())
+    seen: set[type[BaseInput]] = set()
+    stack: list[type[BaseInput]] = list(BaseInput.__subclasses__())
 
     while stack:
         cls = stack.pop()
@@ -33,8 +33,8 @@ def _iter_input_classes() -> Iterable[Type[BaseInput]]:
         stack.extend(cls.__subclasses__())
 
 
-def _declared_aliases(cls: Type[BaseInput]) -> Tuple[str, ...]:
-    names: List[str] = []
+def _declared_aliases(cls: type[BaseInput]) -> tuple[str, ...]:
+    names: list[str] = []
     primary = getattr(cls, 'ui_element', None)
     if primary:
         names.append(primary)
@@ -44,10 +44,10 @@ def _declared_aliases(cls: Type[BaseInput]) -> Tuple[str, ...]:
 
 
 @lru_cache()
-def get_input_component_map() -> Dict[str, Type[BaseInput]]:
+def get_input_component_map() -> dict[str, type[BaseInput]]:
     """Return a mapping of ui_element aliases to their component classes."""
 
-    mapping: Dict[str, Type[BaseInput]] = {}
+    mapping: dict[str, type[BaseInput]] = {}
 
     for cls in _iter_input_classes():
         for alias in _declared_aliases(cls):
@@ -63,7 +63,7 @@ def get_input_component_map() -> Dict[str, Type[BaseInput]]:
     return mapping
 
 
-def register_input_class(cls: Type[BaseInput], *, aliases: Iterable[str] | None = None) -> None:
+def register_input_class(cls: type[BaseInput], *, aliases: Iterable[str] | None = None) -> None:
     """Register a custom input component and clear cached mappings."""
 
     if not issubclass(cls, BaseInput):  # pragma: no cover - defensive
@@ -81,7 +81,7 @@ def register_input_class(cls: Type[BaseInput], *, aliases: Iterable[str] | None 
     get_input_component_map.cache_clear()
 
 
-def register_inputs(classes: Iterable[Type[BaseInput]]) -> None:
+def register_inputs(classes: Iterable[type[BaseInput]]) -> None:
     """Register multiple custom input components at once."""
 
     for cls in classes:

@@ -6,7 +6,6 @@ Provides organized collections of input types and validation mappings.
 from __future__ import annotations
 
 from datetime import date, datetime, time
-from typing import Dict, Set, Type
 
 # Text input types
 TEXT_INPUTS = [
@@ -85,7 +84,7 @@ ALL_INPUT_TYPES = (
 )
 
 # Type mapping for automatic input type detection
-PYTHON_TYPE_TO_INPUT_TYPE: Dict[Type, str] = {
+PYTHON_TYPE_TO_INPUT_TYPE: dict[type, str] = {
     str: 'text',
     int: 'number',
     float: 'number',
@@ -95,7 +94,7 @@ PYTHON_TYPE_TO_INPUT_TYPE: Dict[Type, str] = {
 }
 
 # Valid input types for each Python type
-VALID_INPUT_TYPES_BY_PYTHON_TYPE: Dict[Type, Set[str]] = {
+VALID_INPUT_TYPES_BY_PYTHON_TYPE: dict[type, set[str]] = {
     str: {
         'text',
         'password',
@@ -149,7 +148,7 @@ VALID_INPUT_TYPES_BY_PYTHON_TYPE.update(
 )
 
 # Input type defaults by Python type
-DEFAULT_INPUT_TYPE_BY_PYTHON_TYPE: Dict[Type, str] = {
+DEFAULT_INPUT_TYPE_BY_PYTHON_TYPE: dict[type, str] = {
     str: 'text',
     int: 'number',
     float: 'number',
@@ -162,7 +161,7 @@ DEFAULT_INPUT_TYPE_BY_PYTHON_TYPE: Dict[Type, str] = {
 }
 
 
-def validate_input_type_for_python_type(python_type: Type, input_type: str) -> bool:
+def validate_input_type_for_python_type(python_type: type, input_type: str) -> bool:
     """
     Validate that an input type is compatible with a Python type.
 
@@ -177,7 +176,7 @@ def validate_input_type_for_python_type(python_type: Type, input_type: str) -> b
     return input_type in valid_types
 
 
-def get_default_input_type(python_type: Type) -> str:
+def get_default_input_type(python_type: type) -> str:
     """
     Get the default input type for a Python type.
 
@@ -190,7 +189,7 @@ def get_default_input_type(python_type: Type) -> str:
     return DEFAULT_INPUT_TYPE_BY_PYTHON_TYPE.get(python_type, 'text')
 
 
-def get_valid_input_types(python_type: Type) -> Set[str]:
+def get_valid_input_types(python_type: type) -> set[str]:
     """
     Get all valid input types for a Python type.
 
@@ -203,7 +202,7 @@ def get_valid_input_types(python_type: Type) -> Set[str]:
     return VALID_INPUT_TYPES_BY_PYTHON_TYPE.get(python_type, set())
 
 
-def is_input_type_valid(python_type: Type, input_type: str, field_name: str = '') -> None:
+def is_input_type_valid(python_type: type, input_type: str, field_name: str = '') -> None:
     """
     Validate input type for Python type and raise descriptive error if invalid.
 

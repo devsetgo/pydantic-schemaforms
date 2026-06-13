@@ -3,8 +3,6 @@ Numeric input components using Python 3.14 template strings.
 Includes NumberInput, RangeInput, and specialized numeric inputs.
 """
 
-from typing import Union
-
 from .base import NumericInput
 
 
@@ -134,9 +132,7 @@ class QuantityInput(IntegerInput):
 class ScoreInput(NumberInput):
     """Score input with configurable min/max range."""
 
-    def render(
-        self, min_score: Union[int, float] = 0, max_score: Union[int, float] = 100, **kwargs
-    ) -> str:
+    def render(self, min_score: int | float = 0, max_score: int | float = 100, **kwargs) -> str:
         kwargs['min'] = str(min_score)
         kwargs['max'] = str(max_score)
         kwargs['step'] = kwargs.get(

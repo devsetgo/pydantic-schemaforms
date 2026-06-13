@@ -49,6 +49,9 @@ jobs:
       - name: Run pyright
         run: pyright
 
+      - name: Verify exported types (py.typed)
+        run: pyright --verifytypes pydantic_schemaforms --ignoreexternal
+
   test:
     name: Test (Python ${{ matrix.python-version }} / ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
