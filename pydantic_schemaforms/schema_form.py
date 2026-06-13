@@ -164,7 +164,7 @@ class FormModel(BaseModel):
     def get_json_schema(cls) -> Dict[str, Any]:
         """Get JSON schema with UI element information extracted from field annotations."""
         cls.ensure_dynamic_fields()
-        schema = cls.model_json_schema() if hasattr(cls, 'model_json_schema') else cls.schema()
+        schema = cls.model_json_schema()
         properties = schema.get('properties', {})
         enhanced_props = {}
 
