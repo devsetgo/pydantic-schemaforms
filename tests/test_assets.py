@@ -1839,7 +1839,9 @@ def test_render_form_default_has_no_unpkg() -> None:
 
 
 def test_render_form_cdn_mode_includes_unpkg() -> None:
-    html = render_form_html(_CdnCheckForm, asset_mode='cdn', submit_url='/test')
+    html = render_form_html(
+        _CdnCheckForm, asset_mode='cdn', submit_url='/test', include_htmx_script=True
+    )
     assert 'unpkg.com' in html
     v = vendored_asset_version('htmx')
     assert v is not None

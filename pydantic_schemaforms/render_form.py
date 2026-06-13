@@ -31,6 +31,8 @@ def render_form_html(
     csrf_mode: str = 'off',
     csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
+    include_htmx_script: bool = False,
+    include_htmx_response_container: bool = False,
     **kwargs,
 ) -> str:
     """
@@ -78,12 +80,12 @@ def render_form_html(
         **render_kwargs,
     )
 
-    # Add HTMX response container and scripts for backward compatibility.
-    # Default is offline-by-default: vendored HTMX is inlined unless asset_mode="cdn".
-    form_html += '\n<div id="form-response"></div>'
-    htmx_tag = htmx_script_tag(asset_mode=asset_mode)
-    if htmx_tag:
-        form_html += f'\n{htmx_tag}'
+    if include_htmx_response_container:
+        form_html += '\n<div id="form-response"></div>'
+    if include_htmx_script:
+        htmx_tag = htmx_script_tag(asset_mode=asset_mode)
+        if htmx_tag:
+            form_html += f'\n{htmx_tag}'
 
     if include_imask:
         imask_tag = imask_script_tag(asset_mode=asset_mode)
@@ -116,6 +118,8 @@ async def render_form_html_async(
     csrf_mode: str = 'off',
     csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
+    include_htmx_script: bool = False,
+    include_htmx_response_container: bool = False,
     **kwargs,
 ) -> str:
     """Async wrapper for render_form_html that avoids blocking the event loop."""
@@ -134,6 +138,8 @@ async def render_form_html_async(
             csrf_mode=csrf_mode,
             csrf_token_provider=csrf_token_provider,
             include_html_markers=include_html_markers,
+            include_htmx_script=include_htmx_script,
+            include_htmx_response_container=include_htmx_response_container,
             **kwargs,
         )
 

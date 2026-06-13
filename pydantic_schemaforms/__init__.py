@@ -122,7 +122,7 @@ from .live_validation import HTMXValidationConfig, LiveValidator
 
 # Modern renderer with Python 3.14 template strings
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
-from .render_form import render_form_html, render_form_html_async
+from .enhanced_renderer import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
 from .form_data import coerce_form_value, parse_nested_form_data
 
