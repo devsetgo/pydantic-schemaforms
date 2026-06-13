@@ -33,12 +33,10 @@ def form_validator(func: Callable) -> Callable:
     def wrapper(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         try:
             return func(cls, values)
-        except ValueError as e:
-            # Convert to a more detailed validation error
-            raise ValueError(f'Form validation failed: {str(e)}')
+        except ValueError:
+            raise
         except Exception as e:
-            # Handle unexpected errors
-            raise ValueError(f'Validation error: {str(e)}')
+            raise ValueError(f'Validation error: {str(e)}') from e
 
     # Mark the function as a form validator
     wrapper._is_form_validator = True  # type: ignore[attr-defined]
