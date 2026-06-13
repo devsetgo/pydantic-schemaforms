@@ -81,7 +81,8 @@ def render_form_html(
     )
 
     if include_htmx_response_container:
-        form_html += '\n<div id="form-response"></div>'
+        container_id = f'form-response-{form_model_cls.__name__.lower()}'
+        form_html += f'\n<div id="{container_id}"></div>'
     if include_htmx_script:
         htmx_tag = htmx_script_tag(asset_mode=asset_mode)
         if htmx_tag:
@@ -143,9 +144,5 @@ async def render_form_html_async(
             **kwargs,
         )
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.get_event_loop()
-
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, render_callable)
