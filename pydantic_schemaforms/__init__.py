@@ -38,7 +38,7 @@ class User(BaseModel):
     email: str
     age: int
 
-html = create_form_from_model(User).render()
+html = create_form_from_model(User).set_form_attributes(submit_url="/users").render()
 ```
 
 3. Pre-built forms:
@@ -52,11 +52,15 @@ page_html = render_form_page(login_form, "Login")
 4. Framework integration:
 ```python
 # FastAPI (async)
-from pydantic_schemaforms import FormIntegration
-result = await FormIntegration.async_integration(form, data)
+from pydantic_schemaforms import FormIntegration, create_login_form
+
+form_builder = create_login_form()
+result = await FormIntegration.async_integration(
+    form_builder, submitted_data={"email": "user@example.com", "password": "secret"}
+)
 
 # Flask (sync)
-result = FormIntegration.sync_integration(form)
+result = FormIntegration.sync_integration(form_builder, submitted_data=request.form)
 ```
 """
 
