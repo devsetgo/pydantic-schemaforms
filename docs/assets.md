@@ -41,11 +41,23 @@ html = render_form_html(
     framework=”bootstrap”,
     asset_mode=”vendored”,
     include_framework_assets=True,  # inline Bootstrap CSS/JS for self-contained HTML
-    include_imask=True,  # enable when you use masked inputs
 )
 ```
 
-HTMX and IMask are **not** injected by default — pass `include_htmx_script=True` or `include_imask=True` to opt in.
+HTMX and IMask are **not** injected by `render_form_html()`. If you need HTMX/IMask injection, use the legacy `render_form.py` wrapper directly:
+
+```python
+from pydantic_schemaforms.render_form import render_form_html as render_form_html_legacy
+
+html = render_form_html_legacy(
+    MyForm,
+    submit_url=”/submit”,
+    include_htmx_script=True,  # injects HTMX
+    include_imask=True,         # injects IMask for masked inputs
+)
+```
+
+Otherwise, add HTMX and IMask scripts to your host page manually.
 
 If you already provide Bootstrap/Materialize in your host app, keep `include_framework_assets=False`.
 Use `self_contained=True` as a shorthand for `include_framework_assets=True, asset_mode=”vendored”` — for Bootstrap this also embeds Bootstrap Icons as a data URI (truly zero external dependencies).

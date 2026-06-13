@@ -475,7 +475,7 @@ Complete Flask application example:
 ```python
 from flask import Flask, request, render_template_string
 from pydantic import ValidationError
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import FormModel, Field
 
 app = Flask(__name__)
 
@@ -519,7 +519,7 @@ def registration():
             user = UserRegistrationForm(**request.form)
             return f"Registration successful for {user.username}!"
         except ValidationError as e:
-            errors = e.errors()
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
             # Re-render form with errors
             form_html = UserRegistrationForm.render_form(
                 framework="bootstrap",
@@ -709,7 +709,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import FormModel, Field
 
 class MyForm(FormModel):
     field_name: str = Field(..., ui_element="email")
