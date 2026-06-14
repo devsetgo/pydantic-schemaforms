@@ -1777,13 +1777,15 @@ def test_render_form_html_wrapped_by_default() -> None:
 
 
 def test_legacy_render_form_html_wraps_after_appends() -> None:
-    from pydantic_schemaforms.render_form import render_form_html
+    import pytest
+    from pydantic_schemaforms.render_form import render_form_html as legacy_render
     from pydantic_schemaforms.schema_form import Field, FormModel
 
     class _MarkerForm(FormModel):
         name: str = Field(default='', title='Name')
 
-    html = render_form_html(_MarkerForm, submit_url='/test')
+    with pytest.warns(DeprecationWarning, match='render_form.render_form_html is deprecated'):
+        html = legacy_render(_MarkerForm, submit_url='/test')
     assert html.splitlines()[0] == '<!--- Start Pydantic-SchemaForms -->'
     assert html.splitlines()[-1] == '<!--- End Pydantic-SchemaForms -->'
 
