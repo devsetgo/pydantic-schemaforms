@@ -6,6 +6,7 @@ This module maintains compatibility with existing code while using the enhanced 
 import asyncio
 import logging
 import time
+import warnings
 from typing import Any
 from collections.abc import Callable
 
@@ -54,6 +55,13 @@ def render_form_html(
     Returns:
         Complete HTML form as string
     """
+    warnings.warn(
+        "pydantic_schemaforms.render_form.render_form_html is deprecated. "
+        "Use pydantic_schemaforms.render_form_html instead. "
+        "Note: include_htmx_script and include_imask are only supported here.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Start timing
     start_time = time.perf_counter()
 
@@ -125,6 +133,12 @@ async def render_form_html_async(
     **kwargs: Any,
 ) -> str:
     """Async wrapper for render_form_html that avoids blocking the event loop."""
+    warnings.warn(
+        "pydantic_schemaforms.render_form.render_form_html_async is deprecated. "
+        "Use pydantic_schemaforms.render_form_html_async instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def render_callable():
         return render_form_html(
