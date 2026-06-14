@@ -51,7 +51,15 @@ from .form_field import (
 )
 
 # Layout composition system
-from .form_layouts import FormDesign, FormLayoutBase, HorizontalLayout, ListLayout, SectionDesign, TabbedLayout, VerticalLayout
+from .form_layouts import (
+    FormDesign,
+    FormLayoutBase,
+    HorizontalLayout,
+    ListLayout,
+    SectionDesign,
+    TabbedLayout,
+    VerticalLayout,
+)
 
 # Input type constants and validation
 from .input_types import (

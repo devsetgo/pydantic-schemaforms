@@ -56,9 +56,9 @@ def render_form_html(
         Complete HTML form as string
     """
     warnings.warn(
-        "pydantic_schemaforms.render_form.render_form_html is deprecated. "
-        "Use pydantic_schemaforms.render_form_html instead. "
-        "Note: include_htmx_script and include_imask are only supported here.",
+        'pydantic_schemaforms.render_form.render_form_html is deprecated. '
+        'Use pydantic_schemaforms.render_form_html instead. '
+        'Note: include_htmx_script and include_imask are only supported here.',
         DeprecationWarning,
         stacklevel=2,
     )
@@ -134,8 +134,8 @@ async def render_form_html_async(
 ) -> str:
     """Async wrapper for render_form_html that avoids blocking the event loop."""
     warnings.warn(
-        "pydantic_schemaforms.render_form.render_form_html_async is deprecated. "
-        "Use pydantic_schemaforms.render_form_html_async instead.",
+        'pydantic_schemaforms.render_form.render_form_html_async is deprecated. '
+        'Use pydantic_schemaforms.render_form_html_async instead.',
         DeprecationWarning,
         stacklevel=2,
     )
