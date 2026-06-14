@@ -3,18 +3,20 @@ Text input components using Python 3.14 template strings.
 Includes TextInput, PasswordInput, EmailInput, TextArea, and SearchInput.
 """
 
+from typing import Any
+
 from .base import FormInput, render_template
 
 
 class TextInput(FormInput):
     """Standard text input field."""
 
-    ui_element = 'text'
+    ui_element: str = 'text'
 
     def get_input_type(self) -> str:
         return 'text'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render text input."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -29,12 +31,12 @@ class TextInput(FormInput):
 class PasswordInput(FormInput):
     """Password input field with masking."""
 
-    ui_element = 'password'
+    ui_element: str = 'password'
 
     def get_input_type(self) -> str:
         return 'password'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render password input using Python 3.14 template strings."""
         # Remove autocomplete by default for security
         if 'autocomplete' not in kwargs:
@@ -55,12 +57,12 @@ class PasswordInput(FormInput):
 class EmailInput(FormInput):
     """Email input field with built-in validation."""
 
-    ui_element = 'email'
+    ui_element: str = 'email'
 
     def get_input_type(self) -> str:
         return 'email'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render email input using Python 3.14 template strings."""
         # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
@@ -81,12 +83,12 @@ class EmailInput(FormInput):
 class SearchInput(FormInput):
     """Search input field with search-specific behavior."""
 
-    ui_element = 'search'
+    ui_element: str = 'search'
 
     def get_input_type(self) -> str:
         return 'search'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render search input using Python 3.14 template strings."""
         # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
@@ -107,14 +109,14 @@ class SearchInput(FormInput):
 class TextArea(FormInput):
     """Multi-line text input area."""
 
-    ui_element = 'textarea'
+    ui_element: str = 'textarea'
 
-    valid_attributes = FormInput.valid_attributes + ['rows', 'cols', 'wrap', 'resize']
+    valid_attributes: list[str] = FormInput.valid_attributes + ['rows', 'cols', 'wrap', 'resize']
 
     def get_input_type(self) -> str:
         return 'textarea'  # Not a real input type, but used for identification
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render textarea element."""
         # Extract value for content
         value = kwargs.pop('value', '')
@@ -140,12 +142,12 @@ class TextArea(FormInput):
 class URLInput(FormInput):
     """URL input field with URL validation."""
 
-    ui_element = 'url'
+    ui_element: str = 'url'
 
     def get_input_type(self) -> str:
         return 'url'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render URL input using Python 3.14 template strings."""
         # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
@@ -170,12 +172,12 @@ class URLInput(FormInput):
 class TelInput(FormInput):
     """Telephone input field with phone number formatting."""
 
-    ui_element = 'tel'
+    ui_element: str = 'tel'
 
     def get_input_type(self) -> str:
         return 'tel'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render tel input using Python 3.14 template strings."""
         # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
@@ -203,10 +205,10 @@ class TelInput(FormInput):
 class SSNInput(TextInput):
     """Social Security Number input with formatting."""
 
-    ui_element = 'ssn'
-    ui_element_aliases = ('social_security_number',)
+    ui_element: str = 'ssn'
+    ui_element_aliases: tuple[str, ...] = ('social_security_number',)
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render SSN input using Python 3.14 template strings."""
         # Add SSN-specific attributes
         kwargs['pattern'] = r'\d{3}-\d{2}-\d{4}'
@@ -230,10 +232,10 @@ class SSNInput(TextInput):
 class PhoneInput(TelInput):
     """Phone number input with country code support."""
 
-    ui_element = 'phone'
-    ui_element_aliases = ('phone_number',)
+    ui_element: str = 'phone'
+    ui_element_aliases: tuple[str, ...] = ('phone_number',)
 
-    def render(self, country_code: str | None = None, **kwargs) -> str:
+    def render(self, country_code: str | None = None, **kwargs: Any) -> str:
         """Render phone input using Python 3.14 template strings."""
         if country_code:
             # Add country code to the value or placeholder
@@ -248,10 +250,10 @@ class PhoneInput(TelInput):
 class CreditCardInput(TextInput):
     """Credit card number input with formatting."""
 
-    ui_element = 'credit_card'
-    ui_element_aliases = ('card', 'cc_number')
+    ui_element: str = 'credit_card'
+    ui_element_aliases: tuple[str, ...] = ('card', 'cc_number')
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render credit card input using Python 3.14 template strings."""
         # Add credit card specific attributes
         kwargs['pattern'] = r'\d{4}\s?\d{4}\s?\d{4}\s?\d{4}'
@@ -275,10 +277,10 @@ class CreditCardInput(TextInput):
 class CurrencyInput(TextInput):
     """Currency input with formatting."""
 
-    ui_element = 'currency'
-    ui_element_aliases = ('money',)
+    ui_element: str = 'currency'
+    ui_element_aliases: tuple[str, ...] = ('money',)
 
-    def render(self, currency_symbol: str = '$', **kwargs) -> str:
+    def render(self, currency_symbol: str = '$', **kwargs: Any) -> str:
         """Render currency input using Python 3.14 template strings."""
         # Add currency-specific attributes
         kwargs['pattern'] = rf'^\{currency_symbol}?\d+(\.\d{{2}})?$'

@@ -189,7 +189,7 @@ class RegexRule(ValidationRule):
 
     def __init__(self, pattern: str, message: str = 'Invalid format', flags: int = 0):
         self.pattern = pattern
-        self.regex = re.compile(pattern, flags)
+        self.regex: re.Pattern[str] = re.compile(pattern, flags)
         super().__init__(message)
 
     def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
@@ -313,8 +313,8 @@ class DateRangeRule(ValidationRule):
         max_date: date | str | None = None,
         message: str | None = None,
     ):
-        self.min_date = self._parse_date(min_date) if min_date else None
-        self.max_date = self._parse_date(max_date) if max_date else None
+        self.min_date: date | None = self._parse_date(min_date) if min_date else None
+        self.max_date: date | None = self._parse_date(max_date) if max_date else None
 
         if message is None:
             if self.min_date and self.max_date:
@@ -422,7 +422,7 @@ class FieldValidator:
 
     def __init__(self, field_name: str, rules: list[ValidationRule] | None = None):
         self.field_name = field_name
-        self.rules = rules or []
+        self.rules: list[ValidationRule] = rules or []
 
     def add_rule(self, rule: ValidationRule) -> 'FieldValidator':
         """Add a validation rule."""
@@ -537,7 +537,7 @@ class ValidationSchema:
     def validators(self) -> list[FieldValidator]:
         return list(self._fields.values())
 
-    def build_live_validator(self):  # pragma: no cover - thin wrapper
+    def build_live_validator(self) -> Any:  # pragma: no cover - thin wrapper
         """Create a LiveValidator pre-populated with this schema."""
 
         from .live_validation import LiveValidator
@@ -561,7 +561,9 @@ class FormValidator:
             self.field_validators[field_name] = FieldValidator(field_name)
         return self.field_validators[field_name]
 
-    def add_cross_field_rule(self, rule: Callable[[dict[str, Any]], tuple[bool, dict[str, str]]]):
+    def add_cross_field_rule(
+        self, rule: Callable[[dict[str, Any]], tuple[bool, dict[str, str]]]
+    ) -> None:
         """Add a cross-field validation rule."""
         self.cross_field_rules.append(rule)
 
@@ -869,20 +871,20 @@ class ValidationResult:
         render_kwargs: dict[str, Any] | None = None,
     ):
         self.is_valid = is_valid
-        self.data = data or {}
-        self.errors = errors or {}
+        self.data: dict[str, Any] = data or {}
+        self.errors: dict[str, Any] = errors or {}
         self.form_model_cls = form_model_cls
-        self.original_data = original_data or {}
+        self.original_data: dict[str, Any] = original_data or {}
         self._submit_url = submit_url
         self._framework = framework
-        self._render_kwargs = render_kwargs or {}
+        self._render_kwargs: dict[str, Any] = render_kwargs or {}
 
     def render_with_errors(
         self,
         framework: str | None = None,
         *,
         submit_url: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render the form with validation errors displayed.
 
@@ -911,7 +913,7 @@ class ValidationResult:
         framework: str | None = None,
         *,
         submit_url: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Async variant of render_with_errors — runs the sync renderer off the event loop.
 

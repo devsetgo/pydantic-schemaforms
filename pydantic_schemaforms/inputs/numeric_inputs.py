@@ -3,20 +3,22 @@ Numeric input components using Python 3.14 template strings.
 Includes NumberInput, RangeInput, and specialized numeric inputs.
 """
 
+from typing import Any
+
 from .base import NumericInput
 
 
 class NumberInput(NumericInput):
     """Standard numeric input field with step controls."""
 
-    ui_element = 'number'
+    ui_element: str = 'number'
 
     template = """<input type="number" ${attributes} />"""
 
     def get_input_type(self) -> str:
         return 'number'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
             kwargs['inputmode'] = 'numeric'
@@ -31,14 +33,14 @@ class NumberInput(NumericInput):
 class RangeInput(NumericInput):
     """Range slider input for selecting values within a range."""
 
-    ui_element = 'range'
+    ui_element: str = 'range'
 
     template = """<input type="range" ${attributes} />"""
 
     def get_input_type(self) -> str:
         return 'range'
 
-    def render(self, show_value: bool = True, **kwargs) -> str:
+    def render(self, show_value: bool = True, **kwargs: Any) -> str:
         """Render range input with optional value display."""
         range_html = super().render(**kwargs)
 
@@ -69,7 +71,7 @@ class RangeInput(NumericInput):
 class PercentageInput(NumberInput):
     """Percentage input with automatic % formatting."""
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         # Set percentage-specific constraints
         kwargs['min'] = kwargs.get('min', '0')
         kwargs['max'] = kwargs.get('max', '100')
@@ -86,7 +88,7 @@ class PercentageInput(NumberInput):
 class DecimalInput(NumberInput):
     """Decimal number input with configurable precision."""
 
-    def render(self, decimal_places: int = 2, **kwargs) -> str:
+    def render(self, decimal_places: int = 2, **kwargs: Any) -> str:
         # Set step based on decimal places
         step = 1 / (10**decimal_places)
         kwargs['step'] = kwargs.get('step', str(step))
@@ -98,7 +100,7 @@ class DecimalInput(NumberInput):
 class IntegerInput(NumberInput):
     """Integer-only input field."""
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         # Force step to 1 for integers
         kwargs['step'] = '1'
         kwargs['inputmode'] = 'numeric'
@@ -109,7 +111,7 @@ class IntegerInput(NumberInput):
 class AgeInput(IntegerInput):
     """Age input with sensible defaults."""
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         # Set age-appropriate constraints
         kwargs['min'] = kwargs.get('min', '0')
         kwargs['max'] = kwargs.get('max', '150')
@@ -121,7 +123,7 @@ class AgeInput(IntegerInput):
 class QuantityInput(IntegerInput):
     """Quantity input for shopping carts, inventory, etc."""
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         # Set quantity-appropriate constraints
         kwargs['min'] = kwargs.get('min', '1')
         kwargs['placeholder'] = kwargs.get('placeholder', '1')
@@ -132,7 +134,9 @@ class QuantityInput(IntegerInput):
 class ScoreInput(NumberInput):
     """Score input with configurable min/max range."""
 
-    def render(self, min_score: int | float = 0, max_score: int | float = 100, **kwargs) -> str:
+    def render(
+        self, min_score: int | float = 0, max_score: int | float = 100, **kwargs: Any
+    ) -> str:
         kwargs['min'] = str(min_score)
         kwargs['max'] = str(max_score)
         kwargs['step'] = kwargs.get(
@@ -145,7 +149,7 @@ class ScoreInput(NumberInput):
 class RatingInput(RangeInput):
     """Rating input using range slider with star display."""
 
-    def render(self, max_rating: int = 5, **kwargs) -> str:
+    def render(self, max_rating: int = 5, **kwargs: Any) -> str:
         # Set rating constraints
         kwargs['min'] = '1'
         kwargs['max'] = str(max_rating)
@@ -183,7 +187,7 @@ class RatingInput(RangeInput):
 class SliderInput(RangeInput):
     """Enhanced slider with custom styling and labels."""
 
-    def render(self, show_labels: bool = True, **kwargs) -> str:
+    def render(self, show_labels: bool = True, **kwargs: Any) -> str:
         """Render slider with optional min/max labels."""
         slider_html = super().render(show_value=True, **kwargs)
 
@@ -205,7 +209,7 @@ class SliderInput(RangeInput):
 class TemperatureInput(NumberInput):
     """Temperature input with unit selection."""
 
-    def render(self, unit: str = 'celsius', **kwargs) -> str:
+    def render(self, unit: str = 'celsius', **kwargs: Any) -> str:
         """Render temperature input with unit indicator."""
         if unit.lower() in ['celsius', 'c']:
             kwargs['placeholder'] = kwargs.get('placeholder', '20°C')

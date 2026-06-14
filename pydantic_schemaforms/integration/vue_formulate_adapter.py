@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any, Union
 
+from pydantic import BaseModel
+
 
 class VueFormulateAdapter:
     """Produce configuration data for Vue Formulate consumers.
@@ -19,7 +21,7 @@ class VueFormulateAdapter:
     components are generated.
     """
 
-    def generate_form_config(self, form_model) -> list[dict[str, Any]]:
+    def generate_form_config(self, form_model: type[BaseModel] | BaseModel) -> list[dict[str, Any]]:
         config: list[dict[str, Any]] = []
 
         for field_name, field_info in form_model.model_fields.items():
@@ -47,7 +49,9 @@ class VueFormulateAdapter:
 
         return config
 
-    def generate_validation_rules(self, form_model) -> dict[str, list[str]]:
+    def generate_validation_rules(
+        self, form_model: type[BaseModel] | BaseModel
+    ) -> dict[str, list[str]]:
         rules: dict[str, list[str]] = {}
 
         for field_name, field_info in form_model.model_fields.items():

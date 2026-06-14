@@ -95,7 +95,7 @@ for _name in TEXT_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.text_inputs'
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> type:
     """Lazily import concrete input classes on first access."""
 
     if name not in _MODULE_MAP:
@@ -104,8 +104,8 @@ def __getattr__(name: str):
     module = import_module(_MODULE_MAP[name])
     attr = getattr(module, name)
     globals()[name] = attr
-    return attr
+    return attr  # type: ignore[return-value]
 
 
-def __dir__():  # pragma: no cover - aids interactive discovery
+def __dir__() -> list[str]:  # pragma: no cover - aids interactive discovery
     return sorted(set(list(globals().keys()) + __all__))

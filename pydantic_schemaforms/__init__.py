@@ -147,7 +147,7 @@ __description__ = 'Modern form generation library for Python 3.14+'
 
 # Library logger — callers configure handlers; we add NullHandler to suppress
 # "No handlers could be found" warnings (PEP 282 / logging best-practices).
-logger = logging.getLogger(__package__)
+logger: logging.Logger = logging.getLogger(__package__)
 logger.addHandler(logging.NullHandler())
 
 # Main exports for common usage

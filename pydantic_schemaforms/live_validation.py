@@ -168,7 +168,7 @@ class LiveValidator:
         Args:
             config: HTMX validation configuration
         """
-        self.config = config or HTMXValidationConfig()
+        self.config: HTMXValidationConfig = config or HTMXValidationConfig()
         self.validators: dict[str, Callable] = {}
         self.field_configs: dict[str, dict[str, Any]] = {}
 
@@ -201,13 +201,13 @@ class LiveValidator:
                 t'<div class="form-group {group_class}">{_label}<input type="{input_type}" id="{field_name}" name="{field_name}" class="form-control {input_class}" value="{value}" {_va} {_oa} /><div id="{field_name}-feedback" class="validation-feedback">{_fb}</div></div>'
             )
 
-        self.validation_template = TemplateString(_validation_feedback)
-        self.field_template = TemplateString(_field_with_validation)
+        self.validation_template: TemplateString = TemplateString(_validation_feedback)
+        self.field_template: TemplateString = TemplateString(_field_with_validation)
 
         def _htmx_script_fn(*, config_json: str = '{}', **_: Any) -> SafeHTML:
             return SafeHTML(_HTMX_SCRIPT_TEMPLATE.format(config_json=config_json))
 
-        self.htmx_script = TemplateString(_htmx_script_fn)
+        self.htmx_script: TemplateString = TemplateString(_htmx_script_fn)
 
     def register_validator(
         self, field_name: str, validator: Callable[[Any], ValidationResponse]
@@ -375,7 +375,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         field_type: str = 'text',
         value: Any = '',
         validation_endpoint: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Render a form field with live validation capabilities.

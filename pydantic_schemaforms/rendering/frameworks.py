@@ -61,6 +61,6 @@ def get_framework_config(framework: str) -> dict[str, str]:
     return FRAMEWORKS.get(framework, FRAMEWORKS['bootstrap'])
 
 
-def get_input_component(element: str):
+def get_input_component(element: str) -> type[BaseInput]:
     """Return the input component class for the given UI element key."""
     return UI_ELEMENT_MAPPING.get(element, TextInput)

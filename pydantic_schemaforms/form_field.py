@@ -233,7 +233,7 @@ def create_field_with_validation(
     default: Any = ...,
     input_type: str | None = None,
     field_name: str = '',
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """
     Create a FormField with automatic input type detection and validation.
@@ -272,7 +272,7 @@ def TextField(
     min_length: int | None = None,
     max_length: int | None = None,
     pattern: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create a text input field."""
     return FormField(
@@ -296,7 +296,7 @@ def EmailField(
     placeholder: str | None = None,
     help_text: str | None = None,
     icon: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create an email input field."""
     return FormField(
@@ -319,7 +319,7 @@ def NumberField(
     icon: str | None = None,
     min_value: int | float | None = None,
     max_value: int | float | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create a number input field."""
     return FormField(
@@ -342,7 +342,7 @@ def SelectField(
     help_text: str | None = None,
     icon: str | None = None,
     options: list[str | dict[str, Any]],
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create a select dropdown field."""
     return FormField(
@@ -362,7 +362,7 @@ def CheckboxField(
     title: str | None = None,
     help_text: str | None = None,
     icon: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create a checkbox input field."""
     return FormField(
@@ -382,7 +382,7 @@ def DateField(
     title: str | None = None,
     help_text: str | None = None,
     icon: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create a date input field."""
     return FormField(
@@ -405,7 +405,7 @@ def TextAreaField(
     min_length: int | None = None,
     max_length: int | None = None,
     rows: int = 4,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """Create a textarea input field."""
     # Add rows to json_schema_extra

@@ -46,7 +46,7 @@ class ModelListRenderer:
         is_required: bool = False,
         min_items: int = 0,
         max_items: int = 10,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render a dynamic list of models with add/remove functionality.
 

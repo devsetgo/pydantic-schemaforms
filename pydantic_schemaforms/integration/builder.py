@@ -19,7 +19,7 @@ from pydantic_schemaforms.assets.runtime import (
     framework_css_tag,
     framework_js_tag,
 )
-from pydantic_schemaforms.validation import create_validator
+from pydantic_schemaforms.validation import FormValidator, create_validator
 from pydantic_schemaforms.tstring import SafeHTML, html as _html_proc
 
 
@@ -42,17 +42,17 @@ class FormBuilder:
         self.asset_mode = asset_mode
         self.fields: list[FormField] = []
         self.sections: list[FormSection] = []
-        self.validator = create_validator()
-        self.renderer = ModernFormRenderer(
+        self.validator: FormValidator = create_validator()
+        self.renderer: ModernFormRenderer = ModernFormRenderer(
             framework=framework,
             include_framework_assets=include_framework_assets,
             asset_mode=asset_mode,
             _internal=True,
         )
-        self.layout_type = 'vertical'
+        self.layout_type: str = 'vertical'
         self.form_attrs: dict[str, Any] = {}
-        self.csrf_enabled = True
-        self.honeypot_enabled = True
+        self.csrf_enabled: bool = True
+        self.honeypot_enabled: bool = True
 
     def add_field(self, field: FormField) -> 'FormBuilder':
         self.fields.append(field)

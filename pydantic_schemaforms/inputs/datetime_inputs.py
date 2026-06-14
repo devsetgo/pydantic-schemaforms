@@ -5,20 +5,22 @@ Includes DateInput, TimeInput, DatetimeInput, MonthInput, WeekInput.
 
 from datetime import date, datetime, time
 
+from typing import Any
+
 from .base import FormInput
 
 
 class DateInput(FormInput):
     """Date input field with date picker."""
 
-    ui_element = 'date'
+    ui_element: str = 'date'
 
     template = """<input type="date" ${attributes} />"""
 
     def get_input_type(self) -> str:
         return 'date'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render date input with proper formatting."""
         # Convert date objects to string format
         if 'value' in kwargs and isinstance(kwargs['value'], date):
@@ -41,14 +43,14 @@ class DateInput(FormInput):
 class TimeInput(FormInput):
     """Time input field with time picker."""
 
-    ui_element = 'time'
+    ui_element: str = 'time'
 
     template = """<input type="time" ${attributes} />"""
 
     def get_input_type(self) -> str:
         return 'time'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render time input with proper formatting."""
         # Convert time objects to string format
         if 'value' in kwargs and isinstance(kwargs['value'], time):
@@ -75,8 +77,8 @@ class TimeInput(FormInput):
 class DatetimeInput(FormInput):
     """Datetime-local input field with datetime picker."""
 
-    ui_element = 'datetime'
-    ui_element_aliases = ('datetime-local',)
+    ui_element: str = 'datetime'
+    ui_element_aliases: tuple[str, ...] = ('datetime-local',)
 
     template = """<input type="datetime-local" ${attributes} />"""
 
@@ -84,7 +86,7 @@ class DatetimeInput(FormInput):
         return 'datetime-local'
 
     def render(
-        self, auto_set_current: bool = False, with_set_now_button: bool = False, **kwargs
+        self, auto_set_current: bool = False, with_set_now_button: bool = False, **kwargs: Any
     ) -> str:
         """Render datetime input with optional current time features."""
         # Convert datetime objects to string format
@@ -141,14 +143,14 @@ class DatetimeInput(FormInput):
 class MonthInput(FormInput):
     """Month input field for selecting year and month."""
 
-    ui_element = 'month'
+    ui_element: str = 'month'
 
     template = """<input type="month" ${attributes} />"""
 
     def get_input_type(self) -> str:
         return 'month'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render month input with proper formatting."""
         # Convert date objects to month format (YYYY-MM)
         if 'value' in kwargs:
@@ -182,14 +184,14 @@ class MonthInput(FormInput):
 class WeekInput(FormInput):
     """Week input field for selecting year and week number."""
 
-    ui_element = 'week'
+    ui_element: str = 'week'
 
     template = """<input type="week" ${attributes} />"""
 
     def get_input_type(self) -> str:
         return 'week'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render week input with proper formatting."""
         # Convert date objects to week format (YYYY-W##)
         if 'value' in kwargs:
@@ -214,8 +216,8 @@ class DateRangeInput:
     """Date range input with start and end date fields."""
 
     def __init__(self):
-        self.start_input = DateInput()
-        self.end_input = DateInput()
+        self.start_input: DateInput = DateInput()
+        self.end_input: DateInput = DateInput()
 
     def render(
         self,
@@ -224,7 +226,7 @@ class DateRangeInput:
         end_label: str = 'End Date',
         start_value: str | date | None = None,
         end_value: str | date | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render date range with start and end inputs."""
 
@@ -310,8 +312,8 @@ class TimeRangeInput:
     """Time range input with start and end time fields."""
 
     def __init__(self):
-        self.start_input = TimeInput()
-        self.end_input = TimeInput()
+        self.start_input: TimeInput = TimeInput()
+        self.end_input: TimeInput = TimeInput()
 
     def render(
         self,
@@ -320,7 +322,7 @@ class TimeRangeInput:
         end_label: str = 'End Time',
         start_value: str | time | None = None,
         end_value: str | time | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render time range with start and end inputs."""
 
@@ -401,7 +403,7 @@ class TimeRangeInput:
 class BirthdateInput(DateInput):
     """Specialized date input for birthdays with age calculation."""
 
-    def render(self, show_age: bool = True, **kwargs) -> str:
+    def render(self, show_age: bool = True, **kwargs: Any) -> str:
         """Render birthdate input with optional age display."""
         # Set reasonable constraints for birthdates
         if 'max' not in kwargs:

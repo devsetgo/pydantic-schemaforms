@@ -23,7 +23,7 @@ def _issubclass_safe(candidate: Any, parent: type) -> bool:
 class JSONSchemaGenerator:
     """Generate JSON Schema definitions from Pydantic form models."""
 
-    def generate_schema(self, form_model) -> dict[str, Any]:
+    def generate_schema(self, form_model: type[BaseModel] | BaseModel) -> dict[str, Any]:
         model_cls = self.ensure_model_class(form_model)
         properties: dict[str, dict[str, Any]] = {}
         required_fields = []
@@ -58,7 +58,7 @@ class JSONSchemaGenerator:
         return schema
 
     @staticmethod
-    def ensure_model_class(form_model) -> type[BaseModel]:
+    def ensure_model_class(form_model: type[BaseModel] | BaseModel | Any) -> type[BaseModel]:
         """Normalize user input to a BaseModel subclass and validate it."""
 
         if form_model is None:
@@ -161,11 +161,11 @@ class JSONSchemaGenerator:
 
 
 class OpenAPISchemaGenerator:
-    def generate_request_schema(self, form_model) -> dict[str, Any]:
+    def generate_request_schema(self, form_model: type[BaseModel] | BaseModel) -> dict[str, Any]:
         schema = JSONSchemaGenerator().generate_schema(form_model)
         return {'content': {'application/json': {'schema': schema}}}
 
-    def generate_response_schema(self, form_model) -> dict[str, Any]:
+    def generate_response_schema(self, form_model: type[BaseModel] | BaseModel) -> dict[str, Any]:
         return {
             '200': {
                 'description': 'Success',
@@ -200,7 +200,7 @@ class OpenAPISchemaGenerator:
         }
 
     def generate_complete_spec(
-        self, form_model, endpoint_path: str, method: str = 'POST'
+        self, form_model: type[BaseModel] | BaseModel, endpoint_path: str, method: str = 'POST'
     ) -> dict[str, Any]:
         return {
             'paths': {

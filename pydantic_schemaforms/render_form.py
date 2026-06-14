@@ -14,7 +14,7 @@ from .enhanced_renderer import render_form_html as _core_render_form_html
 from .assets.runtime import htmx_script_tag, imask_script_tag
 from .schema_form import FormModel
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
@@ -34,7 +34,7 @@ def render_form_html(
     include_html_markers: bool = True,
     include_htmx_script: bool = False,
     include_htmx_response_container: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     """
     Render an HTML form for the given FormModel class with UI element support.
@@ -122,7 +122,7 @@ async def render_form_html_async(
     include_html_markers: bool = True,
     include_htmx_script: bool = False,
     include_htmx_response_container: bool = False,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     """Async wrapper for render_form_html that avoids blocking the event loop."""
 

@@ -80,18 +80,18 @@ class FormField:
         **kwargs: Any,
     ):
         self.name = name
-        self.field_type = field_type or input_type or kwargs.pop('ui_element', None) or 'text'
-        self.label = label or name.replace('_', ' ').title()
+        self.field_type: str = field_type or input_type or kwargs.pop('ui_element', None) or 'text'
+        self.label: str = label or name.replace('_', ' ').title()
         self.required = required
         self.placeholder = placeholder
         self.help_text = help_text
         self.value = value
-        self.options = options or []
-        self.validators = validators or []
-        self.attributes = attributes.copy() if attributes else {}
-        self.ui_section = ui_section or kwargs.pop('ui_section', None)
-        self.order = kwargs.pop('order', None)
-        self.extra_attrs = kwargs
+        self.options: list[dict[str, Any]] = options or []
+        self.validators: list[Callable[[Any], Any]] = validators or []
+        self.attributes: dict[str, Any] = attributes.copy() if attributes else {}
+        self.ui_section: str | None = ui_section or kwargs.pop('ui_section', None)
+        self.order: Any = kwargs.pop('order', None)
+        self.extra_attrs: dict[str, Any] = kwargs
         self.errors: list[str] = []
 
     def validate(self, value: Any) -> bool:
@@ -212,17 +212,17 @@ class FormDefinition:
             honeypot_protection = honeypot_alias
 
         self.title = title
-        self.sections = sections or []
-        self.fields = fields or []
+        self.sections: list[FormSection] = sections or []
+        self.fields: list[FormField] = fields or []
         self.submit_url = submit_url
         self.method = method
         self.css_framework = css_framework
         self.live_validation = live_validation
         self.csrf_protection = csrf_protection
         self.honeypot_protection = honeypot_protection
-        self.layout = layout or kwargs.pop('layout', 'vertical')
-        self.theme = kwargs.pop('theme', None)
-        self.extra_attrs = dict(kwargs)
+        self.layout: str = layout or kwargs.pop('layout', 'vertical')
+        self.theme: Any = kwargs.pop('theme', None)
+        self.extra_attrs: dict[str, Any] = dict(kwargs)
         self._model_cache: type[FormModel] | None = None
 
         if self.fields and not self.sections:

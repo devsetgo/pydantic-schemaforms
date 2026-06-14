@@ -244,7 +244,7 @@ class FormModel(BaseModel):
         self_contained: bool = False,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Render the form as HTML using the enhanced form renderer.
@@ -283,7 +283,7 @@ class FormModel(BaseModel):
         self_contained: bool = False,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Async render helper for FormModel."""
         from .enhanced_renderer import render_form_html_async

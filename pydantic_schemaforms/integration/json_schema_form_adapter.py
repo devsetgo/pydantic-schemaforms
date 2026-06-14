@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel
+
 from .schema import JSONSchemaGenerator
 
 
@@ -23,10 +25,12 @@ class ReactJSONSchemaFormAdapter:
     def __init__(self) -> None:
         self._schema_generator = JSONSchemaGenerator()
 
-    def generate_schema(self, form_model):
+    def generate_schema(self, form_model: type[BaseModel] | BaseModel) -> dict[str, Any]:
         return self._schema_generator.generate_schema(form_model)
 
-    def generate_ui_schema(self, form_model):
+    def generate_ui_schema(
+        self, form_model: type[BaseModel] | BaseModel
+    ) -> dict[str, dict[str, Any]]:
         ui_schema: dict[str, dict[str, Any]] = {}
         model_cls = JSONSchemaGenerator.ensure_model_class(form_model)
 
@@ -79,10 +83,14 @@ class ReactJSONSchemaFormAdapter:
 
         return ui_entry
 
-    def generate_form_data(self, form_model, data):  # pragma: no cover - passthrough
+    def generate_form_data(
+        self, form_model: type[BaseModel] | BaseModel, data: dict[str, Any]
+    ) -> dict[str, Any]:  # pragma: no cover - passthrough
         return data
 
-    def generate_complete_config(self, form_model, initial_data: dict[str, Any] | None = None):
+    def generate_complete_config(
+        self, form_model: type[BaseModel] | BaseModel, initial_data: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         return {
             'schema': self.generate_schema(form_model),
             'uiSchema': self.generate_ui_schema(form_model),

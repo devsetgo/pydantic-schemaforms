@@ -284,7 +284,7 @@ class FrameworkTheme(RendererTheme):
     ) -> None:
         super().__init__(submit_label=submit_label)
         self.framework = framework
-        self.config = get_framework_config(framework)
+        self.config: dict[str, str] = get_framework_config(framework)
         self.include_assets = include_assets
         self.asset_mode = asset_mode
 

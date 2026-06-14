@@ -13,16 +13,20 @@ from .base import FormInput, SelectInputBase
 class SelectInput(SelectInputBase):
     """Dropdown select input with support for single and multiple selection."""
 
-    ui_element = 'select'
+    ui_element: str = 'select'
 
     template = """<select ${attributes}>${options}</select>"""
 
-    valid_attributes = SelectInputBase.valid_attributes + ['size', 'multiple', 'autofocus']
+    valid_attributes: list[str] = SelectInputBase.valid_attributes + [
+        'size',
+        'multiple',
+        'autofocus',
+    ]
 
     def get_input_type(self) -> str:
         return 'select'
 
-    def render(self, options: list[dict[str, Any]], **kwargs) -> str:
+    def render(self, options: list[dict[str, Any]], **kwargs: Any) -> str:
         """Render select input with provided options."""
         # Build options HTML
         options_html = self._build_options(options)
@@ -71,9 +75,9 @@ class SelectInput(SelectInputBase):
 class MultiSelectInput(SelectInput):
     """Multi-select dropdown with enhanced functionality."""
 
-    ui_element = 'multiselect'
+    ui_element: str = 'multiselect'
 
-    def render(self, options: list[dict[str, Any]], **kwargs) -> str:
+    def render(self, options: list[dict[str, Any]], **kwargs: Any) -> str:
         """Render multi-select with multiple attribute set."""
         kwargs['multiple'] = True
         return super().render(options, **kwargs)
@@ -82,16 +86,16 @@ class MultiSelectInput(SelectInput):
 class CheckboxInput(FormInput):
     """Single checkbox input."""
 
-    ui_element = 'checkbox'
+    ui_element: str = 'checkbox'
 
     template = """<input type="checkbox" ${attributes} />"""
 
-    valid_attributes = FormInput.valid_attributes + ['checked', 'value']
+    valid_attributes: list[str] = FormInput.valid_attributes + ['checked', 'value']
 
     def get_input_type(self) -> str:
         return 'checkbox'
 
-    def render(self, label: str | None = None, **kwargs) -> str:
+    def render(self, label: str | None = None, **kwargs: Any) -> str:
         """Render checkbox with optional label."""
         # Set default value if not provided
         if 'value' not in kwargs:
@@ -127,7 +131,11 @@ class CheckboxGroup(SelectInputBase):
         return 'checkbox-group'
 
     def render(
-        self, options: list[dict[str, Any]], group_name: str, legend: str | None = None, **kwargs
+        self,
+        options: list[dict[str, Any]],
+        group_name: str,
+        legend: str | None = None,
+        **kwargs: Any,
     ) -> str:
         """Render group of checkboxes."""
         checkboxes = []
@@ -193,12 +201,12 @@ class RadioInput(FormInput):
 
     template = """<input type="radio" ${attributes} />"""
 
-    valid_attributes = FormInput.valid_attributes + ['checked', 'value']
+    valid_attributes: list[str] = FormInput.valid_attributes + ['checked', 'value']
 
     def get_input_type(self) -> str:
         return 'radio'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render a radio input element."""
 
         attrs = self.validate_attributes(**kwargs)
@@ -210,7 +218,7 @@ class RadioInput(FormInput):
 class RadioGroup(SelectInputBase):
     """Group of radio button inputs for single selection."""
 
-    ui_element = 'radio'
+    ui_element: str = 'radio'
 
     template = """<fieldset class="radio-group" ${fieldset_attributes}>
     <legend>${legend}</legend>
@@ -221,7 +229,11 @@ class RadioGroup(SelectInputBase):
         return 'radio-group'
 
     def render(
-        self, options: list[dict[str, Any]], group_name: str, legend: str | None = None, **kwargs
+        self,
+        options: list[dict[str, Any]],
+        group_name: str,
+        legend: str | None = None,
+        **kwargs: Any,
     ) -> str:
         """Render group of radio buttons."""
         radio_buttons = []
@@ -280,10 +292,10 @@ class RadioGroup(SelectInputBase):
 class ToggleSwitch(CheckboxInput):
     """Toggle switch styled as a modern switch instead of checkbox."""
 
-    ui_element = 'toggle'
-    ui_element_aliases = ('toggle_switch', 'checkbox_toggle')
+    ui_element: str = 'toggle'
+    ui_element_aliases: tuple[str, ...] = ('toggle_switch', 'checkbox_toggle')
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render toggle switch with custom styling."""
         # Add toggle-specific classes
         current_class = kwargs.get('class', '')
@@ -312,7 +324,7 @@ class ToggleSwitch(CheckboxInput):
 class ComboBoxInput(SelectInput):
     """Combo box input that combines text input with dropdown selection."""
 
-    ui_element = 'combobox'
+    ui_element: str = 'combobox'
 
     template = """<div class="combobox-wrapper">
     <input type="text" ${input_attributes} list="${datalist_id}" />
@@ -321,7 +333,7 @@ class ComboBoxInput(SelectInput):
     </datalist>
 </div>"""
 
-    def render(self, options: list[dict[str, Any]], **kwargs) -> str:
+    def render(self, options: list[dict[str, Any]], **kwargs: Any) -> str:
         """Render combo box with datalist."""
         field_name = kwargs.get('name', '')
         datalist_id = f'{field_name}_datalist'

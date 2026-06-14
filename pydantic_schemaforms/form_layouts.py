@@ -30,7 +30,7 @@ class SectionDesign:
         collapsible: bool = False,
         collapsed: bool = False,
         css_class: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         self.section_title = section_title
         self.section_description = section_description
@@ -38,7 +38,7 @@ class SectionDesign:
         self.collapsible = collapsible
         self.collapsed = collapsed
         self.css_class = css_class
-        self.extra_attrs = kwargs
+        self.extra_attrs: dict[str, Any] = kwargs
 
     def render_header(self, framework: str = 'bootstrap') -> str:
         """Render the section header HTML."""
@@ -84,7 +84,7 @@ class FormDesign:
         error_notification_style: str = 'inline',
         show_debug_info: bool = False,
         asset_mode: str = 'vendored',
-        **kwargs,
+        **kwargs: Any,
     ):
         self.ui_theme = ui_theme
         self.ui_theme_custom_css = ui_theme_custom_css
@@ -92,11 +92,11 @@ class FormDesign:
         self.form_enctype = form_enctype
         self.form_width = form_width
         self.target_url = target_url
-        self.form_method = form_method.lower()
+        self.form_method: str = form_method.lower()
         self.error_notification_style = error_notification_style
         self.show_debug_info = show_debug_info
         self.asset_mode = asset_mode
-        self.extra_attrs = kwargs
+        self.extra_attrs: dict[str, Any] = kwargs
 
     def get_form_attributes(self) -> dict[str, str]:
         """Get HTML form attributes."""
@@ -590,7 +590,7 @@ class ListLayout(FormLayoutBase):
         section_design: SectionDesign | None = None,
         collapsible_items: bool = False,
         items_expanded_by_default: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ):
         super().__init__(section_design)
         self.form_model = form_model
@@ -600,11 +600,11 @@ class ListLayout(FormLayoutBase):
         self.remove_button_text = remove_button_text
         self.collapsible_items = collapsible_items
         self.items_expanded_by_default = items_expanded_by_default
-        self.section_design = section_design or SectionDesign(
+        self.section_design: SectionDesign = section_design or SectionDesign(
             section_title=f'{form_model.__name__} List',
             section_description=f'List of {form_model.__name__} items',
         )
-        self.form_config = self.section_design
+        self.form_config: SectionDesign = self.section_design
 
     def get_form_models(self) -> list[type[FormModel]]:
         """Get all FormModel classes from the layout."""

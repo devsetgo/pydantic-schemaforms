@@ -29,7 +29,7 @@ from .rendering.themes import MaterialEmbeddedTheme, RendererTheme, get_theme_fo
 from .schema_form import FormModel
 from .templates import FormTemplates, render_template
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
@@ -55,6 +55,8 @@ class SchemaFormValidationError(Exception):
 
 class EnhancedFormRenderer:
     """Render Pydantic FormModels into HTML using UI metadata."""
+
+    config: dict[str, str]
 
     def __init__(
         self,
@@ -104,7 +106,7 @@ class EnhancedFormRenderer:
         show_timing: bool = False,
         enable_logging: bool = False,
         inject_layout_styles: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render a complete HTML form from a FormModel definition."""
 
@@ -259,7 +261,7 @@ class EnhancedFormRenderer:
         data: dict[str, Any] | None = None,
         errors: dict[str, Any] | None = None,
         layout: str = 'vertical',
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render only the field markup for nested usage."""
 
@@ -307,7 +309,7 @@ class EnhancedFormRenderer:
         include_submit_button: bool = True,
         layout: str = 'vertical',
         inject_layout_styles: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Async wrapper for render_form_from_model."""
 
@@ -1184,7 +1186,7 @@ def render_form_html(
     enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     """Convenience wrapper mirroring the legacy helper."""
 
@@ -1238,7 +1240,7 @@ async def render_form_html_async(
     enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     """Async counterpart to render_form_html."""
 
