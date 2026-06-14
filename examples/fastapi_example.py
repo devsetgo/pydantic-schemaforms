@@ -47,11 +47,14 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
 
-from pydantic_schemaforms import __version__ as _psf_version
-from pydantic_schemaforms import render_form_html_async
+from pydantic_schemaforms import (
+    __version__ as _psf_version,
+    EnhancedFormRenderer,
+    FormLayoutBase,
+    parse_nested_form_data,
+    render_form_html_async,
+)
 from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
-from pydantic_schemaforms.form_data import parse_nested_form_data
-from pydantic_schemaforms import FormLayoutBase
 
 app = FastAPI(
     title='Pydantic SchemaForms - FastAPI Example',
@@ -1189,7 +1192,6 @@ async def layouts_get(
             },
         }
 
-    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
     from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
     renderer = EnhancedFormRenderer(framework=style)
@@ -1249,7 +1251,6 @@ async def layouts_post(
         )
 
     # Re-render the form with validation errors + user data.
-    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
     from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
 
     renderer = EnhancedFormRenderer(framework=style)
