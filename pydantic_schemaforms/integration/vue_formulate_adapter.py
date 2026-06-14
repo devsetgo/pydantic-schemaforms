@@ -8,7 +8,7 @@ Formulate form.
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -26,8 +26,8 @@ class VueFormulateAdapter:
 
         for field_name, field_info in form_model.model_fields.items():
             field_type = field_info.annotation
-            if hasattr(field_type, '__origin__') and field_type.__origin__ == Union:
-                non_none_types = [t for t in field_type.__args__ if t is not type(None)]
+            if get_origin(field_type) is Union:
+                non_none_types = [t for t in get_args(field_type) if t is not type(None)]
                 if non_none_types:
                     field_type = non_none_types[0]
 
