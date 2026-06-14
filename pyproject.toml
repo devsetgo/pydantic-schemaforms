@@ -10,7 +10,7 @@ description = "Server-rendered form components and layout helpers for Pydantic m
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
 readme = "README.md"
 classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 5 - Production/Stable", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
-dependencies = [ "pydantic>=2.7,<4", "pydantic-extra-types[all]>=2.10.6,<3",]
+dependencies = [ "pydantic>=2.13,<3", "pydantic-extra-types[all]>=2.11,<3",]
 [[project.authors]]
 name = "Mike Ryan"
 
