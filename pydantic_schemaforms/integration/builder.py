@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Union
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
@@ -19,7 +19,7 @@ from pydantic_schemaforms.assets.runtime import (
     framework_css_tag,
     framework_js_tag,
 )
-from pydantic_schemaforms.validation import create_validator
+from pydantic_schemaforms.validation import FormValidator, create_validator
 from pydantic_schemaforms.tstring import SafeHTML, html as _html_proc
 
 
@@ -28,7 +28,7 @@ class FormBuilder:
 
     def __init__(
         self,
-        model: Optional[Type[BaseModel]] = None,
+        model: type[BaseModel] | None = None,
         framework: str = 'bootstrap',
         theme: str = 'default',
         *,
@@ -40,19 +40,19 @@ class FormBuilder:
         self.theme = theme
         self.include_framework_assets = include_framework_assets
         self.asset_mode = asset_mode
-        self.fields: List[FormField] = []
-        self.sections: List[FormSection] = []
-        self.validator = create_validator()
-        self.renderer = ModernFormRenderer(
+        self.fields: list[FormField] = []
+        self.sections: list[FormSection] = []
+        self.validator: FormValidator = create_validator()
+        self.renderer: ModernFormRenderer = ModernFormRenderer(
             framework=framework,
             include_framework_assets=include_framework_assets,
             asset_mode=asset_mode,
             _internal=True,
         )
-        self.layout_type = 'vertical'
-        self.form_attrs: Dict[str, Any] = {}
-        self.csrf_enabled = True
-        self.honeypot_enabled = True
+        self.layout_type: str = 'vertical'
+        self.form_attrs: dict[str, Any] = {}
+        self.csrf_enabled: bool = True
+        self.honeypot_enabled: bool = True
 
     def add_field(self, field: FormField) -> 'FormBuilder':
         self.fields.append(field)
@@ -62,7 +62,7 @@ class FormBuilder:
         self.sections.append(section)
         return self
 
-    def text_input(self, name: str, label: Optional[str] = None, **kwargs: Any) -> 'FormBuilder':
+    def text_input(self, name: str, label: str | None = None, **kwargs: Any) -> 'FormBuilder':
         field = FormField(
             name=name,
             label=label or name.replace('_', ' ').title(),
@@ -87,9 +87,9 @@ class FormBuilder:
     def number_input(
         self,
         name: str,
-        label: Optional[str] = None,
-        min_val: Optional[float] = None,
-        max_val: Optional[float] = None,
+        label: str | None = None,
+        min_val: float | None = None,
+        max_val: float | None = None,
         **kwargs: Any,
     ) -> 'FormBuilder':
         field = FormField(
@@ -107,8 +107,8 @@ class FormBuilder:
     def select_input(
         self,
         name: str,
-        options: List[Dict[str, str]],
-        label: Optional[str] = None,
+        options: list[dict[str, str]],
+        label: str | None = None,
         **kwargs: Any,
     ) -> 'FormBuilder':
         field = FormField(
@@ -120,9 +120,7 @@ class FormBuilder:
         )
         return self.add_field(field)
 
-    def checkbox_input(
-        self, name: str, label: Optional[str] = None, **kwargs: Any
-    ) -> 'FormBuilder':
+    def checkbox_input(self, name: str, label: str | None = None, **kwargs: Any) -> 'FormBuilder':
         field = FormField(
             name=name,
             label=label or name.replace('_', ' ').title(),
@@ -134,7 +132,7 @@ class FormBuilder:
     def textarea_input(
         self,
         name: str,
-        label: Optional[str] = None,
+        label: str | None = None,
         rows: int = 4,
         **kwargs: Any,
     ) -> 'FormBuilder':
@@ -147,7 +145,7 @@ class FormBuilder:
         )
         return self.add_field(field)
 
-    def date_input(self, name: str, label: Optional[str] = None, **kwargs: Any) -> 'FormBuilder':
+    def date_input(self, name: str, label: str | None = None, **kwargs: Any) -> 'FormBuilder':
         field = FormField(
             name=name,
             label=label or name.replace('_', ' ').title(),
@@ -159,11 +157,11 @@ class FormBuilder:
     def file_input(
         self,
         name: str,
-        label: Optional[str] = None,
-        accept: Optional[str] = None,
+        label: str | None = None,
+        accept: str | None = None,
         **kwargs: Any,
     ) -> 'FormBuilder':
-        attributes: Dict[str, str] = {}
+        attributes: dict[str, str] = {}
         if accept:
             attributes['accept'] = accept
 
@@ -176,19 +174,15 @@ class FormBuilder:
         )
         return self.add_field(field)
 
-    def required(self, field_name: str, message: Optional[str] = None) -> 'FormBuilder':
+    def required(self, field_name: str, message: str | None = None) -> 'FormBuilder':
         self.validator.field(field_name).required(message)
         return self
 
-    def min_length(
-        self, field_name: str, length: int, message: Optional[str] = None
-    ) -> 'FormBuilder':
+    def min_length(self, field_name: str, length: int, message: str | None = None) -> 'FormBuilder':
         self.validator.field(field_name).min_length(length, message)
         return self
 
-    def max_length(
-        self, field_name: str, length: int, message: Optional[str] = None
-    ) -> 'FormBuilder':
+    def max_length(self, field_name: str, length: int, message: str | None = None) -> 'FormBuilder':
         self.validator.field(field_name).max_length(length, message)
         return self
 
@@ -220,18 +214,18 @@ class FormBuilder:
         )
 
     def render(
-        self, data: Optional[Dict[str, Any]] = None, errors: Optional[Dict[str, List[str]]] = None
+        self, data: dict[str, Any] | None = None, errors: dict[str, list[str]] | None = None
     ) -> str:
         form_def = self.build()
         return self.renderer.render_form(form_def, data=data or {}, errors=errors or {})
 
     async def render_async(
-        self, data: Optional[Dict[str, Any]] = None, errors: Optional[Dict[str, List[str]]] = None
+        self, data: dict[str, Any] | None = None, errors: dict[str, list[str]] | None = None
     ) -> str:
         form_def = self.build()
         return await self.renderer.render_form_async(form_def, data=data or {}, errors=errors or {})
 
-    def validate_data(self, data: Dict[str, Any]) -> tuple[bool, Dict[str, List[str]]]:
+    def validate_data(self, data: dict[str, Any]) -> tuple[bool, dict[str, list[str]]]:
         if self.model:
             return self.validator.validate_pydantic_model(self.model, data)
         return self.validator.validate(data)
@@ -243,7 +237,7 @@ class FormBuilder:
 class AutoFormBuilder(FormBuilder):
     """Automatically builds forms from Pydantic models."""
 
-    def __init__(self, model: Type[BaseModel], **kwargs: Any) -> None:
+    def __init__(self, model: type[BaseModel], **kwargs: Any) -> None:
         super().__init__(model, **kwargs)
         self._build_from_model()
 
@@ -269,7 +263,7 @@ class AutoFormBuilder(FormBuilder):
             self._add_field_validation(field_name, field_info)
             self.add_field(form_field)
 
-    def _get_input_type_for_field(self, field_type: Type, field_name: str) -> str:
+    def _get_input_type_for_field(self, field_type: type, field_name: str) -> str:
         if hasattr(field_type, '__origin__') and field_type.__origin__ is Union:
             non_none_types = [t for t in field_type.__args__ if t is not type(None)]
             if non_none_types:
@@ -355,7 +349,7 @@ def create_contact_form(framework: str = 'bootstrap') -> FormBuilder:
     )
 
 
-def create_form_from_model(model: Type[BaseModel], **kwargs: Any) -> AutoFormBuilder:
+def create_form_from_model(model: type[BaseModel], **kwargs: Any) -> AutoFormBuilder:
     return AutoFormBuilder(model, **kwargs)
 
 
@@ -416,7 +410,7 @@ def _render_form_page_html(
 
 def _framework_asset_tags(
     *, framework: str, include_framework_assets: bool, asset_mode: str
-) -> Dict[str, str]:
+) -> dict[str, str]:
     if not include_framework_assets:
         return {'framework_css_tag': '', 'framework_js_tag': '', 'bootstrap_icons_css_tag': ''}
 
@@ -437,8 +431,8 @@ def _framework_asset_tags(
 def render_form_page(
     form_builder: FormBuilder,
     title: str = 'Form',
-    data: Optional[Dict[str, Any]] = None,
-    errors: Optional[Dict[str, List[str]]] = None,
+    data: dict[str, Any] | None = None,
+    errors: dict[str, list[str]] | None = None,
     *,
     include_framework_assets: bool = False,
     asset_mode: str = 'vendored',

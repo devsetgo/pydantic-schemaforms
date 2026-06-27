@@ -3,7 +3,7 @@ Specialized input components using Python 3.14 template strings.
 Includes FileInput, ColorInput, HiddenInput, ImageInput, ButtonInput, etc.
 """
 
-from typing import Optional
+from typing import Any
 
 from .base import FileInputBase, FormInput
 
@@ -11,18 +11,18 @@ from .base import FileInputBase, FormInput
 class FileInput(FileInputBase):
     """File upload input with drag-and-drop support."""
 
-    ui_element = 'file'
+    ui_element: str = 'file'
 
     def get_input_type(self) -> str:
         return 'file'
 
     def render(
         self,
-        accept: Optional[str] = None,
+        accept: str | None = None,
         multiple: bool = False,
-        capture: Optional[str] = None,
+        capture: str | None = None,
         show_preview: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Render file input with optional preview functionality."""
 
@@ -96,7 +96,7 @@ class FileInput(FileInputBase):
 class ImageInput(FormInput):
     """Image input that acts as a submit button."""
 
-    valid_attributes = FormInput.valid_attributes + [
+    valid_attributes: list[str] = FormInput.valid_attributes + [
         'src',
         'alt',
         'width',
@@ -111,7 +111,7 @@ class ImageInput(FormInput):
     def get_input_type(self) -> str:
         return 'image'
 
-    def render(self, src: str, alt: str, **kwargs) -> str:
+    def render(self, src: str, alt: str, **kwargs: Any) -> str:
         """Render image input with required src and alt attributes."""
         kwargs['src'] = src
         kwargs['alt'] = alt
@@ -130,12 +130,12 @@ class ImageInput(FormInput):
 class ColorInput(FormInput):
     """Color picker input."""
 
-    ui_element = 'color'
+    ui_element: str = 'color'
 
     def get_input_type(self) -> str:
         return 'color'
 
-    def render(self, show_value: bool = True, **kwargs) -> str:
+    def render(self, show_value: bool = True, **kwargs: Any) -> str:
         """Render color input with optional color value display."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -183,12 +183,12 @@ class ColorInput(FormInput):
 class HiddenInput(FormInput):
     """Hidden input field."""
 
-    ui_element = 'hidden'
+    ui_element: str = 'hidden'
 
     def get_input_type(self) -> str:
         return 'hidden'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render hidden input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -207,12 +207,15 @@ class HiddenInput(FormInput):
 class ButtonInput(FormInput):
     """Button input field."""
 
-    valid_attributes = FormInput.valid_attributes + ['popovertarget', 'popovertargetaction']
+    valid_attributes: list[str] = FormInput.valid_attributes + [
+        'popovertarget',
+        'popovertargetaction',
+    ]
 
     def get_input_type(self) -> str:
         return 'button'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render button input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -231,7 +234,7 @@ class ButtonInput(FormInput):
 class SubmitInput(FormInput):
     """Submit button input."""
 
-    valid_attributes = FormInput.valid_attributes + [
+    valid_attributes: list[str] = FormInput.valid_attributes + [
         'formaction',
         'formenctype',
         'formmethod',
@@ -242,7 +245,7 @@ class SubmitInput(FormInput):
     def get_input_type(self) -> str:
         return 'submit'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render submit input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -264,7 +267,7 @@ class ResetInput(FormInput):
     def get_input_type(self) -> str:
         return 'reset'
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render reset input using Python 3.14 template strings."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -283,9 +286,9 @@ class ResetInput(FormInput):
 class CSRFInput(HiddenInput):
     """CSRF token hidden input for security."""
 
-    ui_element = 'csrf'
+    ui_element: str = 'csrf'
 
-    def render(self, token: str, **kwargs) -> str:
+    def render(self, token: str, **kwargs: Any) -> str:
         """Render CSRF input with token value."""
         kwargs['name'] = kwargs.get('name', 'csrf_token')
         kwargs['value'] = token
@@ -295,7 +298,7 @@ class CSRFInput(HiddenInput):
 class HoneypotInput(HiddenInput):
     """Honeypot input for spam protection."""
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render honeypot input that should remain empty."""
         # Use a name that looks like a real field but is actually a trap
         kwargs['name'] = kwargs.get('name', 'website_url')
@@ -312,11 +315,11 @@ class CaptchaInput:
     def __init__(self):
         import random
 
-        self.num1 = random.randint(1, 10)
-        self.num2 = random.randint(1, 10)
-        self.answer = self.num1 + self.num2
+        self.num1: int = random.randint(1, 10)
+        self.num2: int = random.randint(1, 10)
+        self.answer: int = self.num1 + self.num2
 
-    def render(self, name: str = 'captcha', **kwargs) -> str:
+    def render(self, name: str = 'captcha', **kwargs: Any) -> str:
         """Render math captcha with validation."""
         field_id = kwargs.get('id', name)
 
@@ -372,7 +375,7 @@ class CaptchaInput:
 class RatingStarsInput:
     """Star rating input widget."""
 
-    def render(self, name: str, max_stars: int = 5, current_rating: int = 0, **kwargs) -> str:
+    def render(self, name: str, max_stars: int = 5, current_rating: int = 0, **kwargs: Any) -> str:
         """Render star rating input."""
         field_id = kwargs.get('id', name)
 
@@ -449,7 +452,7 @@ class TagsInput:
     """Tags input widget for entering multiple tags."""
 
     def render(
-        self, name: str, placeholder: str = 'Enter tags...', separator: str = ',', **kwargs
+        self, name: str, placeholder: str = 'Enter tags...', separator: str = ',', **kwargs: Any
     ) -> str:
         """Render tags input widget."""
         field_id = kwargs.get('id', name)

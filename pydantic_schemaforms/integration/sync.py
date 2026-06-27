@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .builder import FormBuilder
 
-FormResult = Dict[str, Any]
+FormResult = dict[str, Any]
 
 
-def normalize_form_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_form_data(data: dict[str, Any]) -> dict[str, Any]:
     """Normalize raw request payloads (e.g. checkbox "on" values)."""
-    normalized: Dict[str, Any] = {}
+    normalized: dict[str, Any] = {}
     for key, value in data.items():
         if isinstance(value, (list, tuple)):
             if len(value) == 1:
@@ -30,9 +30,9 @@ def normalize_form_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def handle_sync_form(
     form_builder: FormBuilder,
-    submitted_data: Optional[Dict[str, Any]] = None,
+    submitted_data: dict[str, Any] | None = None,
     *,
-    initial_data: Optional[Dict[str, Any]] = None,
+    initial_data: dict[str, Any] | None = None,
     render_on_error: bool = True,
 ) -> FormResult:
     """Validate and render forms for synchronous frameworks."""

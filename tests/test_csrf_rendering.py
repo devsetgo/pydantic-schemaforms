@@ -2,7 +2,7 @@ import pytest
 
 from pydantic_schemaforms.enhanced_renderer import CSRFMode, EnhancedFormRenderer
 from pydantic_schemaforms.inputs.registry import get_input_component_map
-from pydantic_schemaforms.render_form import render_form_html
+from pydantic_schemaforms import render_form_html
 from pydantic_schemaforms.schema_form import Field, FormModel
 
 

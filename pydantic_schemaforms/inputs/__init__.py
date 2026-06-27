@@ -78,7 +78,7 @@ ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS +
 
 __all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES  # pyright: ignore[reportUnsupportedDunderAll]
 
-_MODULE_MAP: Dict[str, str] = {}
+_MODULE_MAP: dict[str, str] = {}
 
 # Wire categories to their modules without importing them eagerly
 for _name in BASE_CLASSES + UTILITIES:
@@ -95,7 +95,7 @@ for _name in TEXT_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.text_inputs'
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> type:
     """Lazily import concrete input classes on first access."""
 
     if name not in _MODULE_MAP:
@@ -104,8 +104,8 @@ def __getattr__(name: str):
     module = import_module(_MODULE_MAP[name])
     attr = getattr(module, name)
     globals()[name] = attr
-    return attr
+    return attr  # type: ignore[return-value]
 
 
-def __dir__():  # pragma: no cover - aids interactive discovery
+def __dir__() -> list[str]:  # pragma: no cover - aids interactive discovery
     return sorted(set(list(globals().keys()) + __all__))

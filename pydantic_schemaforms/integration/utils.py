@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
-from typing import Any, Union
+from typing import Any
 
 
 def map_pydantic_to_json_schema_type(python_type: type) -> str:
@@ -43,7 +43,7 @@ def map_ui_element_to_framework(ui_element: str, framework: str) -> str:
 def convert_validation_rules(  # pragma: no cover - passthrough
     field_info: Any,
     framework: str,
-) -> Union[dict[str, Any], list[Any]]:
+) -> dict[str, Any] | list[Any]:
     if framework == 'react':
         return {}
     if framework == 'vue':

@@ -20,12 +20,18 @@ jobs:
 
     steps:
       - name: Generate and set PR title
+        continue-on-error: true
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY is not set, skipping title generation."
+            exit 0
+          fi
+
           COMMITS=$(gh pr view "$PR_NUMBER" --repo "$REPO" \
             --json commits \
             --jq '[.commits[].messageHeadline] | join("\n")' \
@@ -52,6 +58,7 @@ jobs:
           fi
 
       - name: Generate PR description
+        continue-on-error: true
         uses: platisd/openai-pr-description@master
         with:
           github_token: ${{ github.token }}

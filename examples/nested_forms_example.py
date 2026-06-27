@@ -32,9 +32,8 @@ from typing import List, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pydantic import EmailStr, field_validator
-from pydantic_schemaforms.form_field import FormField
+from pydantic_schemaforms import FormField, FormModel
 from pydantic_schemaforms.form_layouts import TabbedLayout, VerticalLayout
-from pydantic_schemaforms.schema_form import FormModel
 
 
 # ============================================================================

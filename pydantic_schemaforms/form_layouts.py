@@ -1,7 +1,7 @@
 """Form layout composition helpers for building tabbed, vertical, horizontal, and list layouts."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
@@ -25,12 +25,12 @@ class SectionDesign:
     def __init__(
         self,
         section_title: str,
-        section_description: Optional[str] = None,
-        icon: Optional[str] = None,
+        section_description: str | None = None,
+        icon: str | None = None,
         collapsible: bool = False,
         collapsed: bool = False,
-        css_class: Optional[str] = None,
-        **kwargs,
+        css_class: str | None = None,
+        **kwargs: Any,
     ):
         self.section_title = section_title
         self.section_description = section_description
@@ -38,7 +38,7 @@ class SectionDesign:
         self.collapsible = collapsible
         self.collapsed = collapsed
         self.css_class = css_class
-        self.extra_attrs = kwargs
+        self.extra_attrs: dict[str, Any] = kwargs
 
     def render_header(self, framework: str = 'bootstrap') -> str:
         """Render the section header HTML."""
@@ -75,7 +75,7 @@ class FormDesign:
     def __init__(
         self,
         ui_theme: str = 'bootstrap',
-        ui_theme_custom_css: Optional[str] = None,
+        ui_theme_custom_css: str | None = None,
         form_name: str = 'Form',
         form_enctype: str = 'application/x-www-form-urlencoded',
         form_width: str = '600px',
@@ -84,7 +84,7 @@ class FormDesign:
         error_notification_style: str = 'inline',
         show_debug_info: bool = False,
         asset_mode: str = 'vendored',
-        **kwargs,
+        **kwargs: Any,
     ):
         self.ui_theme = ui_theme
         self.ui_theme_custom_css = ui_theme_custom_css
@@ -92,13 +92,13 @@ class FormDesign:
         self.form_enctype = form_enctype
         self.form_width = form_width
         self.target_url = target_url
-        self.form_method = form_method.lower()
+        self.form_method: str = form_method.lower()
         self.error_notification_style = error_notification_style
         self.show_debug_info = show_debug_info
         self.asset_mode = asset_mode
-        self.extra_attrs = kwargs
+        self.extra_attrs: dict[str, Any] = kwargs
 
-    def get_form_attributes(self) -> Dict[str, str]:
+    def get_form_attributes(self) -> dict[str, str]:
         """Get HTML form attributes."""
         attrs = {
             'action': self.target_url,
@@ -147,11 +147,11 @@ class FormDesign:
 class FormLayoutBase(SharedBaseLayout, ABC):
     """Base class for layout components that orchestrate FormModel instances."""
 
-    def __init__(self, form_config: Optional[SectionDesign] = None):
+    def __init__(self, form_config: SectionDesign | None = None):
         super().__init__(content='')
         self.form_config = form_config
-        self._forms: List[FormModel] = []
-        self._rendered_content: Optional[str] = None
+        self._forms: list[FormModel] = []
+        self._rendered_content: str | None = None
 
     # ------------------------------------------------------------------
     # Shared helpers so concrete layouts can lean on BaseLayout subclasses
@@ -186,9 +186,9 @@ class FormLayoutBase(SharedBaseLayout, ABC):
     ) -> core_schema.CoreSchema:
         """Allow layout classes to be used as field types within FormModel schemas."""
 
-        def _serialize_layout(value: Any) -> Dict[str, Any]:
+        def _serialize_layout(value: Any) -> dict[str, Any]:
             if isinstance(value, FormLayoutBase):
-                payload: Dict[str, Any] = {
+                payload: dict[str, Any] = {
                     'type': value.__class__.__name__,
                     'layout': True,
                 }
@@ -212,30 +212,30 @@ class FormLayoutBase(SharedBaseLayout, ABC):
     @abstractmethod
     def render(
         self,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
-        renderer: Optional[Any] = None,
+        renderer: Any | None = None,
         **_kwargs: Any,
     ) -> str:
         raise NotImplementedError
 
     @abstractmethod
     def validate(
-        self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
+        self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         raise NotImplementedError
 
     def _render_form_instances(
         self,
         *,
-        data: Optional[Dict[str, Any]],
-        errors: Optional[Dict[str, Any]],
+        data: dict[str, Any] | None,
+        errors: dict[str, Any] | None,
         framework: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Render nested FormModel instances without wrapping them in nested <form> tags."""
 
-        rendered: List[str] = []
+        rendered: list[str] = []
         renderer = self._get_renderer_for_framework(framework)
 
         for form_cls in self._get_forms():
@@ -267,8 +267,8 @@ class FormLayoutBase(SharedBaseLayout, ABC):
 
         return EnhancedFormRenderer(framework=framework)
 
-    def _get_forms(self) -> List[Type[FormModel]]:
-        forms: List[Type[FormModel]] = []
+    def _get_forms(self) -> list[type[FormModel]]:
+        forms: list[type[FormModel]] = []
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
             if isinstance(attr, type) and issubclass(attr, FormModel) and attr is not FormModel:
@@ -288,13 +288,13 @@ class VerticalLayout(FormLayoutBase):
 
     def render(
         self,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
-        renderer: Optional[Any] = None,
+        renderer: Any | None = None,
         **_kwargs: Any,
     ) -> str:
-        content_parts: List[str] = []
+        content_parts: list[str] = []
         header = self._section_header(framework)
         if header:
             content_parts.append(header)
@@ -315,7 +315,7 @@ class VerticalLayout(FormLayoutBase):
         )
 
     def validate(
-        self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
+        self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         """Validate all forms in the vertical layout."""
         all_data = {}
@@ -357,10 +357,10 @@ class HorizontalLayout(FormLayoutBase):
 
     def render(
         self,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
-        renderer: Optional[Any] = None,
+        renderer: Any | None = None,
         **_kwargs: Any,
     ) -> str:
         header_html = self._section_header(framework)
@@ -387,7 +387,7 @@ class HorizontalLayout(FormLayoutBase):
         return layout_html
 
     def validate(
-        self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
+        self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         """Validate all forms in the horizontal layout."""
         # Same validation logic as VerticalLayout
@@ -426,16 +426,16 @@ class TabbedLayout(FormLayoutBase):
     Matches the design_idea.py vision where tab order is determined by declaration order.
     """
 
-    def __init__(self, form_config: Optional[FormDesign] = None):
+    def __init__(self, form_config: FormDesign | None = None):
         super().__init__()
         self.form_config = form_config  # TabbedLayout uses FormDesign instead of SectionDesign
 
     def render(
         self,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
-        renderer: Optional[Any] = None,
+        renderer: Any | None = None,
         **_kwargs: Any,
     ) -> str:
         """Render the tabbed layout with all tabs."""
@@ -443,7 +443,7 @@ class TabbedLayout(FormLayoutBase):
         if not layouts:
             return '<div class="alert alert-warning">No layouts found in tabbed layout</div>'
 
-        tabs_payload: List[Dict[str, str]] = []
+        tabs_payload: list[dict[str, str]] = []
         for tab_name, layout_instance in layouts:
             tab_data = data
             if isinstance(data, dict) and tab_name in data and isinstance(data[tab_name], dict):
@@ -471,7 +471,7 @@ class TabbedLayout(FormLayoutBase):
         return tabs_html
 
     def validate(
-        self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
+        self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         """Validate all layouts in the tabbed layout."""
         all_data = {}
@@ -504,7 +504,7 @@ class TabbedLayout(FormLayoutBase):
             original_data=form_data,
         )
 
-    def _get_layouts(self) -> List[tuple[str, BaseLayout]]:
+    def _get_layouts(self) -> list[tuple[str, BaseLayout]]:
         """Get all layout attributes in declaration order."""
         layouts = []
         for attr_name in dir(self):
@@ -582,15 +582,15 @@ class ListLayout(FormLayoutBase):
 
     def __init__(
         self,
-        form_model: Type[FormModel],
+        form_model: type[FormModel],
         min_items: int = 0,
-        max_items: Optional[int] = None,
+        max_items: int | None = None,
         add_button_text: str = 'Add Item',
         remove_button_text: str = 'Remove',
-        section_design: Optional[SectionDesign] = None,
+        section_design: SectionDesign | None = None,
         collapsible_items: bool = False,
         items_expanded_by_default: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ):
         super().__init__(section_design)
         self.form_model = form_model
@@ -600,18 +600,18 @@ class ListLayout(FormLayoutBase):
         self.remove_button_text = remove_button_text
         self.collapsible_items = collapsible_items
         self.items_expanded_by_default = items_expanded_by_default
-        self.section_design = section_design or SectionDesign(
+        self.section_design: SectionDesign = section_design or SectionDesign(
             section_title=f'{form_model.__name__} List',
             section_description=f'List of {form_model.__name__} items',
         )
-        self.form_config = self.section_design
+        self.form_config: SectionDesign = self.section_design
 
-    def get_form_models(self) -> List[Type[FormModel]]:
+    def get_form_models(self) -> list[type[FormModel]]:
         """Get all FormModel classes from the layout."""
         return [self.form_model]
 
     def validate(
-        self, form_data: Dict[str, Any], files: Optional[Dict[str, Any]] = None
+        self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         """
         Validate all items in the list.
@@ -668,10 +668,10 @@ class ListLayout(FormLayoutBase):
 
     def render(
         self,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
-        renderer: Optional[Any] = None,
+        renderer: Any | None = None,
         **_kwargs: Any,
     ) -> str:
         """
@@ -765,11 +765,11 @@ class ListLayout(FormLayoutBase):
     def _render_list_item(
         self,
         renderer,
-        item_data: Dict[str, Any],
+        item_data: dict[str, Any],
         index: int,
         list_id: str,
         framework: str,
-        errors: Optional[Dict[str, Any]] = None,
+        errors: dict[str, Any] | None = None,
     ) -> str:
         """Render a single list item with form and remove button."""
         # Create form instance with data
@@ -832,7 +832,7 @@ class ListLayout(FormLayoutBase):
         list_id: str,
         framework: str,
         item_class: str,
-        item_data: Dict[str, Any],
+        item_data: dict[str, Any],
     ) -> str:
         """Render a collapsible card for the list item."""
         # Generate unique IDs for the collapsible item
@@ -887,7 +887,7 @@ class ListLayout(FormLayoutBase):
             </div>
             """
 
-    def _create_item_summary(self, item_data: Dict[str, Any], index: int) -> str:
+    def _create_item_summary(self, item_data: dict[str, Any], index: int) -> str:
         """Create a summary string for the collapsible item header."""
         if not item_data:
             return f'{self.form_model.__name__} #{index + 1}'

@@ -232,9 +232,11 @@ class TestSyncUncovered:
 
 class TestReactIntegrationUncovered:
     def _make(self):
-        from pydantic_schemaforms.integration.react import ReactJSONSchemaIntegration
+        from pydantic_schemaforms.integration.json_schema_form_adapter import (
+            ReactJSONSchemaFormAdapter,
+        )
 
-        return ReactJSONSchemaIntegration()
+        return ReactJSONSchemaFormAdapter()
 
     def test_datetime_field_gets_datetime_widget(self):
         class M(BaseModel):
@@ -337,9 +339,9 @@ class TestReactIntegrationUncovered:
 
 class TestVueIntegrationUncovered:
     def _make(self):
-        from pydantic_schemaforms.integration.vue import VueFormulateIntegration
+        from pydantic_schemaforms.integration.vue_formulate_adapter import VueFormulateAdapter
 
-        return VueFormulateIntegration()
+        return VueFormulateAdapter()
 
     def test_optional_field_unwrapped(self):
         class M(BaseModel):
@@ -883,7 +885,7 @@ class TestSchemaParserUncovered:
 
 class TestRenderFormUncovered:
     def test_render_form_html_asset_mode_none_skips_htmx(self):
-        from pydantic_schemaforms.render_form import render_form_html
+        from pydantic_schemaforms import render_form_html
 
         class M(FormModel):
             name: str
@@ -892,22 +894,26 @@ class TestRenderFormUncovered:
         assert 'name' in html
 
     def test_render_form_html_include_imask(self):
-        from pydantic_schemaforms.render_form import render_form_html
+        import pytest
+        from pydantic_schemaforms.render_form import render_form_html as legacy_render
 
         class M(FormModel):
             name: str
 
-        html = render_form_html(M, submit_url='/submit', include_imask=True)
+        with pytest.warns(DeprecationWarning, match='render_form.render_form_html is deprecated'):
+            html = legacy_render(M, submit_url='/submit', include_imask=True)
         assert 'name' in html
 
     def test_render_form_html_async_no_running_loop(self):
-        from pydantic_schemaforms.render_form import render_form_html_async
+        import pytest
+        from pydantic_schemaforms.render_form import render_form_html_async as legacy_async
 
         class M(FormModel):
             name: str
 
         # Run without an event loop — hits the except RuntimeError branch
-        html = asyncio.run(render_form_html_async(M, submit_url='/submit'))
+        with pytest.warns(DeprecationWarning):
+            html = asyncio.run(legacy_async(M, submit_url='/submit'))
         assert 'name' in html
 
 
@@ -1079,13 +1085,15 @@ class TestModelListUncovered:
 
 class TestRenderFormRemainder:
     def test_include_imask_no_tag_emitted(self):
-        from pydantic_schemaforms.render_form import render_form_html
+        import pytest
+        from pydantic_schemaforms.render_form import render_form_html as legacy_render
 
         class M(FormModel):
             name: str
 
         # asset_mode='none' → imask_script_tag returns '' → inner if imask_tag is False
-        html = render_form_html(M, submit_url='/submit', include_imask=True, asset_mode='none')
+        with pytest.warns(DeprecationWarning, match='render_form.render_form_html is deprecated'):
+            html = legacy_render(M, submit_url='/submit', include_imask=True, asset_mode='none')
         assert 'name' in html
 
 

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from .adapters import FormIntegration, handle_form, handle_form_async
+from .json_schema_form_adapter import ReactJSONSchemaFormAdapter
+from .vue_formulate_adapter import VueFormulateAdapter
 from .async_support import handle_async_form
 from .builder import (
     AutoFormBuilder,
@@ -25,6 +27,8 @@ __all__ = [
     'FormBuilder',
     'AutoFormBuilder',
     'FormIntegration',
+    'ReactJSONSchemaFormAdapter',
+    'VueFormulateAdapter',
     'create_login_form',
     'create_registration_form',
     'create_contact_form',

@@ -6,21 +6,23 @@ This module maintains compatibility with existing code while using the enhanced 
 import asyncio
 import logging
 import time
-from typing import Any, Callable, Dict, Type
+import warnings
+from typing import Any
+from collections.abc import Callable
 
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
 from .assets.runtime import htmx_script_tag, imask_script_tag
 from .schema_form import FormModel
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
 def render_form_html(
-    form_model_cls: Type[FormModel],
-    form_data: Dict[str, Any] | None = None,
-    errors: Dict[str, str] | SchemaFormValidationError | None = None,
+    form_model_cls: type[FormModel],
+    form_data: dict[str, Any] | None = None,
+    errors: dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = 'bootstrap',
     *,
     submit_url: str,
@@ -31,7 +33,9 @@ def render_form_html(
     csrf_mode: str = 'off',
     csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
-    **kwargs,
+    include_htmx_script: bool = False,
+    include_htmx_response_container: bool = False,
+    **kwargs: Any,
 ) -> str:
     """
     Render an HTML form for the given FormModel class with UI element support.
@@ -51,11 +55,18 @@ def render_form_html(
     Returns:
         Complete HTML form as string
     """
+    warnings.warn(
+        'pydantic_schemaforms.render_form.render_form_html is deprecated. '
+        'Use pydantic_schemaforms.render_form_html instead. '
+        'Note: include_htmx_script and include_imask are only supported here.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Start timing
     start_time = time.perf_counter()
 
     # Normalize kwargs
-    render_kwargs: Dict[str, Any] = dict(kwargs)
+    render_kwargs: dict[str, Any] = dict(kwargs)
     include_imask = bool(render_kwargs.pop('include_imask', False))
     csrf_field_name = render_kwargs.pop('csrf_field_name', 'csrf_token') or 'csrf_token'
 
@@ -78,12 +89,13 @@ def render_form_html(
         **render_kwargs,
     )
 
-    # Add HTMX response container and scripts for backward compatibility.
-    # Default is offline-by-default: vendored HTMX is inlined unless asset_mode="cdn".
-    form_html += '\n<div id="form-response"></div>'
-    htmx_tag = htmx_script_tag(asset_mode=asset_mode)
-    if htmx_tag:
-        form_html += f'\n{htmx_tag}'
+    if include_htmx_response_container:
+        container_id = f'form-response-{form_model_cls.__name__.lower()}'
+        form_html += f'\n<div id="{container_id}"></div>'
+    if include_htmx_script:
+        htmx_tag = htmx_script_tag(asset_mode=asset_mode)
+        if htmx_tag:
+            form_html += f'\n{htmx_tag}'
 
     if include_imask:
         imask_tag = imask_script_tag(asset_mode=asset_mode)
@@ -103,9 +115,9 @@ def render_form_html(
 
 
 async def render_form_html_async(
-    form_model_cls: Type[FormModel],
-    form_data: Dict[str, Any] | None = None,
-    errors: Dict[str, str] | SchemaFormValidationError | None = None,
+    form_model_cls: type[FormModel],
+    form_data: dict[str, Any] | None = None,
+    errors: dict[str, str] | SchemaFormValidationError | None = None,
     framework: str = 'bootstrap',
     *,
     submit_url: str,
@@ -116,9 +128,17 @@ async def render_form_html_async(
     csrf_mode: str = 'off',
     csrf_token_provider: str | Callable[[], str] | None = None,
     include_html_markers: bool = True,
-    **kwargs,
+    include_htmx_script: bool = False,
+    include_htmx_response_container: bool = False,
+    **kwargs: Any,
 ) -> str:
     """Async wrapper for render_form_html that avoids blocking the event loop."""
+    warnings.warn(
+        'pydantic_schemaforms.render_form.render_form_html_async is deprecated. '
+        'Use pydantic_schemaforms.render_form_html_async instead.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def render_callable():
         return render_form_html(
@@ -134,12 +154,10 @@ async def render_form_html_async(
             csrf_mode=csrf_mode,
             csrf_token_provider=csrf_token_provider,
             include_html_markers=include_html_markers,
+            include_htmx_script=include_htmx_script,
+            include_htmx_response_container=include_htmx_response_container,
             **kwargs,
         )
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.get_event_loop()
-
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, render_callable)

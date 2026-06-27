@@ -5,8 +5,6 @@ This module provides a system to switch between different icon frameworks
 (Bootstrap Icons vs Material Design Icons) based on the UI framework being used.
 """
 
-from typing import Optional
-
 # Icon mapping dictionary - maps semantic icon names to framework-specific icons
 ICON_MAPPING = {
     # User and Person icons
@@ -77,7 +75,7 @@ ICON_MAPPING = {
 }
 
 
-def get_icon(semantic_name: str, framework: str = 'bootstrap') -> Optional[str]:
+def get_icon(semantic_name: str, framework: str = 'bootstrap') -> str | None:
     """
     Get the appropriate icon class for a given semantic name and framework.
 
@@ -140,11 +138,11 @@ def update_field_icons_for_framework(form_fields: dict, framework: str = 'bootst
 
 
 # Convenience functions for specific frameworks
-def get_bootstrap_icon(semantic_name: str) -> Optional[str]:
+def get_bootstrap_icon(semantic_name: str) -> str | None:
     """Get Bootstrap icon class for semantic name."""
     return get_icon(semantic_name, 'bootstrap')
 
 
-def get_material_icon(semantic_name: str) -> Optional[str]:
+def get_material_icon(semantic_name: str) -> str | None:
     """Get Material Design icon class for semantic name."""
     return get_icon(semantic_name, 'material')

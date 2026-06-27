@@ -79,7 +79,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 from pydantic_schemaforms.schema_form import Field, FormModel
 
 
@@ -158,7 +158,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 from pydantic_schemaforms.schema_form import FormModel, Field
 
 
@@ -215,7 +215,7 @@ In synchronous apps (Flask), the simplest pattern is the same: define a `FormMod
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 from pydantic_schemaforms.schema_form import Field, FormModel
 
 
@@ -270,7 +270,7 @@ def login():
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 from pydantic_schemaforms.schema_form import FormModel, Field
 
 
@@ -353,7 +353,7 @@ Note: Bootstrap **markup/classes** are always generated, but Bootstrap **CSS/JS*
 If you want a single HTML string that includes Bootstrap CSS/JS inline (no CDN, no global layout requirements), use the `self_contained=True` convenience flag:
 
 ```python
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 
 form_html = render_form_html(
     UserRegistrationForm,
@@ -465,8 +465,8 @@ def handle_submit():
         return f"Welcome {user_data.username}!"
 
     except ValidationError as e:
-        # Handle validation errors
-        errors = e.errors()
+        # Convert Pydantic errors to field→message mapping
+        errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
         return f"Validation failed: {errors}", 400
 ```
 
@@ -523,7 +523,8 @@ def registration():
             user = UserRegistrationForm(**request.form)
             return f"Registration successful for {user.username}!"
         except ValidationError as e:
-            errors = e.errors()
+            # Convert Pydantic errors to field→message mapping expected by render_form
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
             # Re-render form with errors
             form_html = UserRegistrationForm.render_form(
                 framework="bootstrap",
@@ -591,7 +592,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 html = render_form_html(MyForm, submit_url="/submit")
-# Logs: INFO pydantic_schemaforms.enhanced_renderer: Form rendered in 0.0045s
+# Logs: INFO pydantic_schemaforms: Form rendered in 0.0045s
 ```
 
 **Use Cases:**

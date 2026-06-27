@@ -9,7 +9,9 @@ Requires: Python 3.14+ (uses native template strings)
 
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from html import escape as _html_escape
+from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
 
 from pydantic import BaseModel, ValidationError
 
@@ -159,16 +161,16 @@ class LiveValidator:
     validation using Python 3.14 template strings for optimal performance.
     """
 
-    def __init__(self, config: Optional[HTMXValidationConfig] = None):
+    def __init__(self, config: HTMXValidationConfig | None = None):
         """
         Initialize live validator.
 
         Args:
             config: HTMX validation configuration
         """
-        self.config = config or HTMXValidationConfig()
-        self.validators: Dict[str, Callable] = {}
-        self.field_configs: Dict[str, Dict[str, Any]] = {}
+        self.config: HTMXValidationConfig = config or HTMXValidationConfig()
+        self.validators: dict[str, Callable] = {}
+        self.field_configs: dict[str, dict[str, Any]] = {}
 
         def _validation_feedback(
             *, feedback_class: str = '', field_name: str = '', feedback_content: str = '', **_: Any
@@ -199,13 +201,13 @@ class LiveValidator:
                 t'<div class="form-group {group_class}">{_label}<input type="{input_type}" id="{field_name}" name="{field_name}" class="form-control {input_class}" value="{value}" {_va} {_oa} /><div id="{field_name}-feedback" class="validation-feedback">{_fb}</div></div>'
             )
 
-        self.validation_template = TemplateString(_validation_feedback)
-        self.field_template = TemplateString(_field_with_validation)
+        self.validation_template: TemplateString = TemplateString(_validation_feedback)
+        self.field_template: TemplateString = TemplateString(_field_with_validation)
 
         def _htmx_script_fn(*, config_json: str = '{}', **_: Any) -> SafeHTML:
             return SafeHTML(_HTMX_SCRIPT_TEMPLATE.format(config_json=config_json))
 
-        self.htmx_script = TemplateString(_htmx_script_fn)
+        self.htmx_script: TemplateString = TemplateString(_htmx_script_fn)
 
     def register_validator(
         self, field_name: str, validator: Callable[[Any], ValidationResponse]
@@ -319,6 +321,7 @@ class LiveValidator:
     def _generate_flask_endpoint(self) -> str:
         """Generate Flask validation endpoint code."""
         return """
+from html import escape as _html_escape
 from flask import request, jsonify
 from pydantic_schemaforms.live_validation import ValidationResponse
 
@@ -332,16 +335,17 @@ def validate_field(field_name):
         if response.is_valid:
             feedback_html = '<div class="valid-feedback">\\u2713 Valid</div>'
         else:
-            errors_html = '<br>'.join(response.errors)
+            errors_html = '<br>'.join(_html_escape(e) for e in response.errors)
             feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
         return feedback_html, 200 if response.is_valid else 400
     except Exception as e:
-        return f'<div class="invalid-feedback">Validation error: {str(e)}</div>', 500
+        return f'<div class="invalid-feedback">Validation error: {_html_escape(str(e))}</div>', 500
 """
 
     def _generate_fastapi_endpoint(self) -> str:
         """Generate FastAPI validation endpoint code."""
         return """
+from html import escape as _html_escape
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pydantic_schemaforms.live_validation import ValidationResponse
@@ -358,11 +362,11 @@ async def validate_field(field_name: str, request: ValidationRequest):
         if response.is_valid:
             feedback_html = '<div class="valid-feedback">\\u2713 Valid</div>'
         else:
-            errors_html = '<br>'.join(response.errors)
+            errors_html = '<br>'.join(_html_escape(e) for e in response.errors)
             feedback_html = f'<div class="invalid-feedback">{errors_html}</div>'
         return HTMLResponse(content=feedback_html, status_code=200 if response.is_valid else 400)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Validation error: {str(e)}')
+        raise HTTPException(status_code=500, detail=f'Validation error: {_html_escape(str(e))}')
 """
 
     def render_field_with_live_validation(
@@ -370,8 +374,8 @@ async def validate_field(field_name: str, request: ValidationRequest):
         field_name: str,
         field_type: str = 'text',
         value: Any = '',
-        validation_endpoint: Optional[str] = None,
-        **kwargs,
+        validation_endpoint: str | None = None,
+        **kwargs: Any,
     ) -> str:
         """
         Render a form field with live validation capabilities.
@@ -409,7 +413,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         other_attrs = []
         for key, val in kwargs.items():
             if key not in ['class', 'id', 'name']:
-                other_attrs.append(f'{key}="{val}"')
+                other_attrs.append(f'{key}="{_html_escape(str(val))}"')
 
         # Render field
         return self.field_template.render(
@@ -418,7 +422,11 @@ async def validate_field(field_name: str, request: ValidationRequest):
             value=str(value) if value is not None else '',
             input_class=kwargs.get('class', ''),
             group_class='',
-            label=f'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>',
+            label=str(
+                _html_proc(
+                    t'<label for="{field_name}">{kwargs.get("label", field_name.title())}</label>'
+                )
+            ),
             validation_attributes=' '.join(validation_attrs),
             other_attributes=' '.join(other_attrs),
             existing_feedback='',
@@ -451,7 +459,7 @@ async def validate_field(field_name: str, request: ValidationRequest):
         return self.htmx_script.render(config_json=config_json)
 
 
-def validation_response_headers(field_name: str, is_valid: bool) -> Dict[str, str]:
+def validation_response_headers(field_name: str, is_valid: bool) -> dict[str, str]:
     """Return HTTP headers for a live-validation endpoint response.
 
     Emits an ``HX-Trigger: validationResult`` header that the bundled

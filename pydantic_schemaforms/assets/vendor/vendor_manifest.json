@@ -44,7 +44,7 @@
       "files": [
         {
           "path": "pydantic_schemaforms/assets/vendor/materialize/materialize.min.css",
-          "sha256": "3b079a3ff21ceabb15fa5cac7f24b887e2cceac470b8eddeb9361fafa335db88",
+          "sha256": "1722909f2115ebb1795cc3085bdce9396073b8b378debe7dc9c42fc34f5dbf64",
           "source_url": "https://registry.npmjs.org/@materializecss/materialize/-/materialize-1.0.0.tgz"
         },
         {

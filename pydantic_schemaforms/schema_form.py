@@ -1,5 +1,6 @@
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
+from typing import Any
+from collections.abc import Callable
 
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
@@ -17,11 +18,11 @@ def form_validator(func: Callable) -> Callable:
 
     Usage:
         class MyForm(FormModel):
-            age: int = FormField(..., input_type="number")
-            parental_consent: bool = FormField(False, input_type="checkbox")
+            age: int = Field(..., input_type="number")
+            parental_consent: bool = Field(False, input_type="checkbox")
 
             @form_validator
-            def check_age_and_consent(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+            def check_age_and_consent(cls, values: dict[str, Any]) -> dict[str, Any]:
                 age = values.get('age')
                 consent = values.get('parental_consent')
                 if age is not None and age < 18 and not consent:
@@ -30,15 +31,13 @@ def form_validator(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def wrapper(cls, values: dict[str, Any]) -> dict[str, Any]:
         try:
             return func(cls, values)
-        except ValueError as e:
-            # Convert to a more detailed validation error
-            raise ValueError(f'Form validation failed: {str(e)}')
+        except ValueError:
+            raise
         except Exception as e:
-            # Handle unexpected errors
-            raise ValueError(f'Validation error: {str(e)}')
+            raise ValueError(f'Validation error: {str(e)}') from e
 
     # Mark the function as a form validator
     wrapper._is_form_validator = True  # type: ignore[attr-defined]
@@ -48,41 +47,41 @@ def form_validator(func: Callable) -> Callable:
 def Field(
     default: Any = ...,
     *,
-    alias: Optional[str] = None,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    examples: Optional[List[Any]] = None,
-    exclude: Optional[bool] = None,
-    discriminator: Optional[str] = None,
-    json_schema_extra: Optional[Dict[str, Any]] = None,
-    frozen: Optional[bool] = None,
-    validate_default: Optional[bool] = None,
+    alias: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    examples: list[Any] | None = None,
+    exclude: bool | None = None,
+    discriminator: str | None = None,
+    json_schema_extra: dict[str, Any] | None = None,
+    frozen: bool | None = None,
+    validate_default: bool | None = None,
     repr: bool = True,
-    init_var: Optional[bool] = None,
-    kw_only: Optional[bool] = None,
-    pattern: Optional[str] = None,
-    strict: Optional[bool] = None,
-    gt: Optional[float] = None,
-    ge: Optional[float] = None,
-    lt: Optional[float] = None,
-    le: Optional[float] = None,
-    multiple_of: Optional[float] = None,
-    allow_inf_nan: Optional[bool] = None,
-    max_length: Optional[int] = None,
-    min_length: Optional[int] = None,
+    init_var: bool | None = None,
+    kw_only: bool | None = None,
+    pattern: str | None = None,
+    strict: bool | None = None,
+    gt: float | None = None,
+    ge: float | None = None,
+    lt: float | None = None,
+    le: float | None = None,
+    multiple_of: float | None = None,
+    allow_inf_nan: bool | None = None,
+    max_length: int | None = None,
+    min_length: int | None = None,
     # UI-specific parameters
-    ui_element: Optional[str] = None,
-    ui_widget: Optional[str] = None,
-    ui_autofocus: Optional[bool] = None,
-    ui_options: Optional[Dict[str, Any]] = None,
-    ui_placeholder: Optional[str] = None,
-    ui_help_text: Optional[str] = None,
-    ui_order: Optional[int] = None,
-    ui_disabled: Optional[bool] = None,
-    ui_readonly: Optional[bool] = None,
-    ui_hidden: Optional[bool] = None,
-    ui_class: Optional[str] = None,
-    ui_style: Optional[str] = None,
+    ui_element: str | None = None,
+    ui_widget: str | None = None,
+    ui_autofocus: bool | None = None,
+    ui_options: dict[str, Any] | None = None,
+    ui_placeholder: str | None = None,
+    ui_help_text: str | None = None,
+    ui_order: int | None = None,
+    ui_disabled: bool | None = None,
+    ui_readonly: bool | None = None,
+    ui_hidden: bool | None = None,
+    ui_class: str | None = None,
+    ui_style: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -152,9 +151,9 @@ class FormModel(BaseModel):
     rich schemas for form rendering using a JSON-schema-form style UI vocabulary.
     """
 
-    __runtime_fields__: Dict[str, Tuple[Any, FieldInfo]] = {}
-    __runtime_model_cache__: Optional[Type['FormModel']] = None
-    _dynamic_field_names: Set[str] = set()
+    __runtime_fields__: dict[str, tuple[Any, FieldInfo]] = {}
+    __runtime_model_cache__: type['FormModel'] | None = None
+    _dynamic_field_names: set[str] = set()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -163,10 +162,10 @@ class FormModel(BaseModel):
         cls._dynamic_field_names = set()
 
     @classmethod
-    def get_json_schema(cls) -> Dict[str, Any]:
+    def get_json_schema(cls) -> dict[str, Any]:
         """Get JSON schema with UI element information extracted from field annotations."""
         cls.ensure_dynamic_fields()
-        schema = cls.model_json_schema() if hasattr(cls, 'model_json_schema') else cls.schema()
+        schema = cls.model_json_schema()
         properties = schema.get('properties', {})
         enhanced_props = {}
 
@@ -212,7 +211,7 @@ class FormModel(BaseModel):
         }
 
     @classmethod
-    def _extract_ui_info(cls, field_info: FieldInfo) -> Dict[str, Any]:
+    def _extract_ui_info(cls, field_info: FieldInfo) -> dict[str, Any]:
         """Extract UI-specific information from field annotations."""
         ui_info = {}
 
@@ -225,9 +224,8 @@ class FormModel(BaseModel):
                         ui_key = key[3:]  # Remove 'ui_' prefix
                         ui_info[ui_key] = value
             elif callable(extra):
-                # Handle callable json_schema_extra
                 schema = {}
-                extra(schema, cls)  # type: ignore[call-arg]
+                extra(schema)
                 for key, value in schema.items():
                     if key.startswith('ui_'):
                         ui_key = key[3:]  # Remove 'ui_' prefix
@@ -238,15 +236,15 @@ class FormModel(BaseModel):
     @classmethod
     def render_form(
         cls,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
         *,
         submit_url: str,
         self_contained: bool = False,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Render the form as HTML using the enhanced form renderer.
@@ -277,15 +275,15 @@ class FormModel(BaseModel):
     @classmethod
     async def render_form_async(
         cls,
-        data: Optional[Dict[str, Any]] = None,
-        errors: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
         framework: str = 'bootstrap',
         *,
         submit_url: str,
         self_contained: bool = False,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Async render helper for FormModel."""
         from .enhanced_renderer import render_form_html_async
@@ -305,9 +303,9 @@ class FormModel(BaseModel):
     @classmethod
     def validate(
         cls,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         *,
-        submit_url: Optional[str] = None,
+        submit_url: str | None = None,
         framework: str = 'bootstrap',
         **render_kwargs: Any,
     ) -> 'ValidationResult':
@@ -337,7 +335,7 @@ class FormModel(BaseModel):
         field_name: str,
         *,
         annotation: Any = Any,
-        field: Optional[FieldInfo] = None,
+        field: FieldInfo | None = None,
     ) -> FieldInfo:
         """Register a new field on the model at runtime."""
 
@@ -364,7 +362,7 @@ class FormModel(BaseModel):
         """Detect FieldInfo attributes assigned after class creation."""
 
         processed: set[str] = set(getattr(cls, '_dynamic_field_names', set()))
-        new_fields: List[str] = []
+        new_fields: list[str] = []
         runtime_fields = dict(getattr(cls, '__runtime_fields__', {}))
 
         for attr_name, attr_value in cls.__dict__.items():
@@ -390,7 +388,7 @@ class FormModel(BaseModel):
         return True
 
     @classmethod
-    def get_runtime_model(cls) -> Type['FormModel']:
+    def get_runtime_model(cls) -> type['FormModel']:
         """Return a model class that includes any registered runtime fields."""
 
         cls.ensure_dynamic_fields()
@@ -401,6 +399,7 @@ class FormModel(BaseModel):
         if cls.__runtime_model_cache__ is not None:
             return cls.__runtime_model_cache__
 
+        import warnings
         from pydantic import create_model
 
         field_definitions = {
@@ -408,19 +407,19 @@ class FormModel(BaseModel):
             for name, (annotation, field_info) in cls.__runtime_fields__.items()
         }
 
-        runtime_model = create_model(  # type: ignore[call-overload]
-            f'{cls.__name__}Runtime',
-            __base__=cls,
-            **field_definitions,  # type: ignore[arg-type]
-        )
-        # TODO: Suppress the UserWarning about shadowed fields once the helper
-        #       grows a local model_config; the runtime class is expected.
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning, message='.*shadow.*')
+            runtime_model = create_model(  # type: ignore[call-overload]
+                f'{cls.__name__}Runtime',
+                __base__=cls,
+                **field_definitions,  # type: ignore[arg-type]
+            )
 
         cls.__runtime_model_cache__ = runtime_model
         return runtime_model
 
     @classmethod
-    def get_example_form_data(cls: Type['FormModel']) -> dict:
+    def get_example_form_data(cls: type['FormModel']) -> dict:
         example = {}
         for field_name, model_field in cls.model_fields.items():
             typ = getattr(model_field, 'annotation', None)

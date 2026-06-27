@@ -79,8 +79,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class MinimalLoginForm(FormModel):
@@ -158,8 +157,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class UserRegistrationForm(FormModel):
@@ -215,8 +213,7 @@ In synchronous apps (Flask), the simplest pattern is the same: define a `FormMod
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class MinimalLoginForm(FormModel):
@@ -270,8 +267,7 @@ def login():
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms.enhanced_renderer import render_form_html
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class UserRegistrationForm(FormModel):
@@ -353,7 +349,7 @@ Note: Bootstrap **markup/classes** are always generated, but Bootstrap **CSS/JS*
 If you want a single HTML string that includes Bootstrap CSS/JS inline (no CDN, no global layout requirements), use the `self_contained=True` convenience flag:
 
 ```python
-from pydantic_schemaforms.enhanced_renderer import render_form_html
+from pydantic_schemaforms import render_form_html
 
 form_html = render_form_html(
     UserRegistrationForm,
@@ -479,7 +475,7 @@ Complete Flask application example:
 ```python
 from flask import Flask, request, render_template_string
 from pydantic import ValidationError
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import FormModel, Field
 
 app = Flask(__name__)
 
@@ -523,7 +519,7 @@ def registration():
             user = UserRegistrationForm(**request.form)
             return f"Registration successful for {user.username}!"
         except ValidationError as e:
-            errors = e.errors()
+            errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
             # Re-render form with errors
             form_html = UserRegistrationForm.render_form(
                 framework="bootstrap",
@@ -713,7 +709,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import FormModel, Field
 
 class MyForm(FormModel):
     field_name: str = Field(..., ui_element="email")

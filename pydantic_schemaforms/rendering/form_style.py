@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from pydantic_schemaforms.templates import FormTemplates, TemplateString
 from pydantic_schemaforms.tstring import SafeHTML, html
@@ -699,14 +699,14 @@ class FormStyle:
     templates: FormStyleTemplates = FormStyleTemplates()
     assets: FormStyleAssets = FormStyleAssets()
 
-    def key(self) -> Tuple[str, str]:
+    def key(self) -> tuple[str, str]:
         return (self.framework, self.variant)
 
 
-_FORM_STYLE_REGISTRY: Dict[Tuple[str, str], FormStyle] = {}
+_FORM_STYLE_REGISTRY: dict[tuple[str, str], FormStyle] = {}
 
 
-def _parse_framework_variant(framework: str, variant: str | None = None) -> Tuple[str, str]:
+def _parse_framework_variant(framework: str, variant: str | None = None) -> tuple[str, str]:
     """Normalize framework/variant inputs, supporting descriptor syntax like 'bootstrap:5'."""
     if variant:
         return framework, variant

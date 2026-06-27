@@ -4,7 +4,7 @@ Base classes and utilities for form inputs with Python 3.14 template strings.
 
 from abc import ABC, abstractmethod
 from html import escape
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 # Add t() fallback for Python <3.14 compatibility
@@ -13,7 +13,7 @@ def t(template: str) -> str:
     return template
 
 
-def render_template(template_obj) -> str:
+def render_template(template_obj: Any) -> str:
     """Render a Python 3.14 template string to final HTML."""
     if hasattr(template_obj, 'strings') and hasattr(template_obj, 'values'):
         # This is a Template object from t'...' syntax
@@ -35,9 +35,9 @@ def render_template(template_obj) -> str:
 class BaseInput(ABC):
     """Common attribute handling + rendering contract for all input widgets."""
 
-    ui_element: Optional[str] = None
-    ui_element_aliases: Tuple[str, ...] = ()
-    valid_attributes: List[str] = [
+    ui_element: str | None = None
+    ui_element_aliases: tuple[str, ...] = ()
+    valid_attributes: list[str] = [
         'name',
         'id',
         'class',
@@ -68,9 +68,9 @@ class BaseInput(ABC):
     def get_input_type(self) -> str:
         """Return the HTML input type for concrete input classes."""
 
-    def validate_attributes(self, **kwargs) -> Dict[str, Any]:
+    def validate_attributes(self, **kwargs: Any) -> dict[str, Any]:
         """Validate and sanitize input attributes consistently across subclasses."""
-        validated: Dict[str, Any] = {}
+        validated: dict[str, Any] = {}
 
         name = kwargs.get('name')
         if name:
@@ -107,8 +107,8 @@ class BaseInput(ABC):
             return ' '.join(str(v) for v in value if v is not None)
         return str(value)
 
-    def _build_attributes_string(self, attrs: Dict[str, Any]) -> str:
-        parts: List[str] = []
+    def _build_attributes_string(self, attrs: dict[str, Any]) -> str:
+        parts: list[str] = []
         for key, value in attrs.items():
             if isinstance(value, bool):
                 if value:
@@ -119,7 +119,7 @@ class BaseInput(ABC):
         return ' '.join(parts)
 
     @abstractmethod
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Concrete inputs must implement HTML rendering."""
 
 
@@ -127,7 +127,7 @@ class FormInput(BaseInput):
     """Base class for form input elements with form-specific attributes."""
 
     # Form-specific attributes
-    valid_attributes = BaseInput.valid_attributes + [
+    valid_attributes: list[str] = BaseInput.valid_attributes + [
         'value',
         'placeholder',
         'required',
@@ -163,13 +163,13 @@ class FormInput(BaseInput):
 
     def render_with_label(
         self,
-        label: Optional[str] = None,
-        help_text: Optional[str] = None,
-        error: Optional[str] = None,
-        icon: Optional[str] = None,
+        label: str | None = None,
+        help_text: str | None = None,
+        error: str | None = None,
+        icon: str | None = None,
         framework: str = 'bootstrap',
-        options: Optional[List[Dict[str, Any]]] = None,
-        **kwargs,
+        options: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
     ) -> str:
         """
         Render the input with its label, help text, error message, and optional icon.
@@ -254,9 +254,9 @@ class FormInput(BaseInput):
 
 def build_label(
     field_name: str,
-    label: Optional[str] = None,
+    label: str | None = None,
     required: bool = False,
-    icon: Optional[str] = None,
+    icon: str | None = None,
     framework: str = 'bootstrap',
 ) -> str:
     """Build label element with optional icon support."""
@@ -294,9 +294,9 @@ class NumericInput(FormInput):
     Base class for numeric inputs with additional numeric attributes.
     """
 
-    valid_attributes = FormInput.valid_attributes + ['min', 'max', 'step']
+    valid_attributes: list[str] = FormInput.valid_attributes + ['min', 'max', 'step']
 
-    def render(self, **kwargs) -> str:
+    def render(self, **kwargs: Any) -> str:
         """Render numeric input."""
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
@@ -313,7 +313,7 @@ class FileInputBase(FormInput):
     Base class for file inputs with file-specific attributes.
     """
 
-    valid_attributes = FormInput.valid_attributes + ['accept', 'capture']
+    valid_attributes: list[str] = FormInput.valid_attributes + ['accept', 'capture']
 
 
 class SelectInputBase(BaseInput):
@@ -321,7 +321,7 @@ class SelectInputBase(BaseInput):
     Base class for selection inputs (select, radio, checkbox).
     """
 
-    valid_attributes = BaseInput.valid_attributes + [
+    valid_attributes: list[str] = BaseInput.valid_attributes + [
         'name',
         'value',
         'checked',
@@ -335,13 +335,13 @@ class SelectInputBase(BaseInput):
 
     def render_with_label(
         self,
-        label: Optional[str] = None,
-        help_text: Optional[str] = None,
-        error: Optional[str] = None,
-        icon: Optional[str] = None,
+        label: str | None = None,
+        help_text: str | None = None,
+        error: str | None = None,
+        icon: str | None = None,
         framework: str = 'bootstrap',
-        options: Optional[List[Dict[str, Any]]] = None,
-        **kwargs,
+        options: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
     ) -> str:
         """
         Render the input with its label, help text, error message, and optional icon.

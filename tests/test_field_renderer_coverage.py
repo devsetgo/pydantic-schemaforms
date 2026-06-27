@@ -79,8 +79,8 @@ class TestFieldRendererHiddenFields:
             context=context,
         )
 
-        assert isinstance(result, str)
-        assert len(result) > 0
+        assert 'hidden' in result.lower()
+        assert 'secret_value' in result
 
 
 class TestFieldRendererUIElementDetection:
@@ -103,7 +103,7 @@ class TestFieldRendererUIElementDetection:
             context=context,
         )
 
-        assert result is not None
+        assert 'name="custom"' in result
 
     def test_render_field_detects_layout_element(self):
         """Test field renderer detects layout element type."""
@@ -180,7 +180,7 @@ class TestFieldRendererCheckboxHandling:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'checked' in result
 
     def test_render_checkbox_with_numeric_true_value(self):
         """Test rendering checkbox with numeric true value."""
@@ -199,7 +199,7 @@ class TestFieldRendererCheckboxHandling:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'checked' in result
 
     def test_render_checkbox_with_on_value(self):
         """Test rendering checkbox with 'on' value."""
@@ -218,7 +218,7 @@ class TestFieldRendererCheckboxHandling:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'checked' in result
 
 
 class TestFieldRendererPasswordFields:
@@ -260,7 +260,7 @@ class TestFieldRendererPasswordFields:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'password' in result.lower()
 
 
 class TestFieldRendererErrorHandling:
@@ -284,7 +284,7 @@ class TestFieldRendererErrorHandling:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'Invalid email format' in result
 
     def test_render_field_with_all_errors_dict(self):
         """Test rendering field with all_errors dictionary."""
@@ -306,7 +306,7 @@ class TestFieldRendererErrorHandling:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'name="field1"' in result
 
 
 class TestFieldRendererRequiredFields:
@@ -332,7 +332,7 @@ class TestFieldRendererRequiredFields:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'required' in result.lower()
 
     def test_render_optional_field(self):
         """Test rendering optional field."""
@@ -377,7 +377,7 @@ class TestFieldRendererInputInference:
             layout='vertical',
         )
 
-        assert isinstance(result, str)
+        assert 'email' in result.lower()
 
     def test_infer_textarea_for_long_string(self):
         """Test textarea inference for long text."""
@@ -491,7 +491,7 @@ class TestFieldRendererInputClassing:
         field_renderer = FieldRenderer(renderer)
 
         css_class = field_renderer._get_input_class('text')
-        assert isinstance(css_class, str)
+        assert 'form-control' in css_class
 
     def test_get_input_class_for_email(self):
         """Test input class generation for email input."""
@@ -504,7 +504,7 @@ class TestFieldRendererInputClassing:
         field_renderer = FieldRenderer(renderer)
 
         css_class = field_renderer._get_input_class('email')
-        assert isinstance(css_class, str)
+        assert 'form-control' in css_class
 
     def test_get_input_class_for_checkbox(self):
         """Test input class generation for checkbox."""
@@ -517,7 +517,7 @@ class TestFieldRendererInputClassing:
         field_renderer = FieldRenderer(renderer)
 
         css_class = field_renderer._get_input_class('checkbox')
-        assert isinstance(css_class, str)
+        assert 'form-check-input' in css_class
 
 
 class TestFieldRendererFrameworkSpecific:

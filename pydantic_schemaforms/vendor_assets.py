@@ -192,7 +192,14 @@ def _safe_member_bytes_from_tgz(tgz_bytes: bytes, member_path: str) -> bytes:
     raise FileNotFoundError(f'missing file in npm tarball: {member_path}')
 
 
+_TEXT_SUFFIXES = frozenset({'.css', '.js', '.html', '.txt', '.md', '.json', '.svg', '.xml'})
+
+
 def _write_vendored_file(*, rel_path: Path, data: bytes, source_url: str) -> dict[str, str]:
+    # Normalize CRLF → LF for text files so the sha256 matches what git stores
+    # after its eol=lf gitattributes rule (binary files like .woff2 are unaffected).
+    if rel_path.suffix.lower() in _TEXT_SUFFIXES:
+        data = data.replace(b'\r\n', b'\n')
     abs_path = project_root() / rel_path
     ensure_parent_dir(abs_path)
     abs_path.write_bytes(data)

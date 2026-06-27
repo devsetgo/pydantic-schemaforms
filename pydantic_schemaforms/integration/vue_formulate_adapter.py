@@ -1,0 +1,69 @@
+"""Vue Formulate data adapter.
+
+This module generates field configuration and validation rule dicts for
+Vue Formulate. It does NOT render HTML or produce Vue components — it
+outputs data structures that a frontend developer wires into a Vue
+Formulate form.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Union, get_args, get_origin
+
+from pydantic import BaseModel
+
+
+class VueFormulateAdapter:
+    """Produce configuration data for Vue Formulate consumers.
+
+    Outputs field config lists and validation rule dicts that a frontend
+    developer passes to Vue Formulate. No HTML is produced; no Vue
+    components are generated.
+    """
+
+    def generate_form_config(self, form_model: type[BaseModel] | BaseModel) -> list[dict[str, Any]]:
+        config: list[dict[str, Any]] = []
+
+        for field_name, field_info in form_model.model_fields.items():
+            field_type = field_info.annotation
+            if get_origin(field_type) is Union:
+                non_none_types = [t for t in get_args(field_type) if t is not type(None)]
+                if non_none_types:
+                    field_type = non_none_types[0]
+
+            field_config = {'name': field_name, 'label': field_name.replace('_', ' ').title()}
+            lowered = field_name.lower()
+
+            if 'email' in lowered:
+                field_config['type'] = 'email'
+            elif 'password' in lowered:
+                field_config['type'] = 'password'
+            elif field_type is bool:
+                field_config['type'] = 'checkbox'
+            elif field_type in (int, float):
+                field_config['type'] = 'number'
+            else:
+                field_config['type'] = 'text'
+
+            config.append(field_config)
+
+        return config
+
+    def generate_validation_rules(
+        self, form_model: type[BaseModel] | BaseModel
+    ) -> dict[str, list[str]]:
+        rules: dict[str, list[str]] = {}
+
+        for field_name, field_info in form_model.model_fields.items():
+            field_rules: list[str] = []
+            if field_info.is_required():
+                field_rules.append('required')
+            if 'email' in field_name.lower():
+                field_rules.append('email')
+            if field_rules:
+                rules[field_name] = field_rules
+
+        return rules
+
+
+__all__ = ['VueFormulateAdapter']

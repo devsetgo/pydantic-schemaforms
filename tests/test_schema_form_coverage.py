@@ -157,7 +157,7 @@ class TestFormModelExtractUiInfo:
     def test_extract_ui_info_with_callable_extra(self):
         """Test _extract_ui_info extracts UI info from callable json_schema_extra."""
 
-        def schema_modifier(schema, model_type):
+        def schema_modifier(schema):
             schema['ui_placeholder'] = 'Enter value'
             schema['ui_class'] = 'form-control'
 
