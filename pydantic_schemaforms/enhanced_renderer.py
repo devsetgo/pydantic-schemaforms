@@ -44,6 +44,8 @@ CSRF_MODE_FIELD_ONLY = CSRFMode.FIELD_ONLY.value
 CSRF_MODE_REQUIRED_PROVIDER = CSRFMode.REQUIRED_PROVIDER.value
 CSRF_MODES = {mode.value for mode in CSRFMode}
 
+_ERROR_CLASS = ' error'
+
 
 class SchemaFormValidationError(Exception):
     """Raised when validation errors match the SchemaForm contract."""
@@ -180,7 +182,6 @@ class EnhancedFormRenderer:
                 self._render_layout_fields_as_tabs(
                     layout_fields,
                     data,
-                    errors,
                     context,
                 )
             )
@@ -250,7 +251,6 @@ class EnhancedFormRenderer:
             model_cls=model_cls,
             data=data,
             errors=errors,
-            metadata=metadata,
             render_time=render_time,
         )
 
@@ -381,13 +381,11 @@ class EnhancedFormRenderer:
         self,
         layout_fields: list[tuple[str, dict[str, Any]]],
         data: dict[str, Any],
-        errors: dict[str, Any],
         context: RenderContext,
     ) -> list[str]:
         return self._layout_engine.render_layout_fields_as_tabs(
             layout_fields,
             data,
-            errors,
             context,
         )
 
@@ -774,7 +772,7 @@ class EnhancedFormRenderer:
         ui_info: dict[str, Any],
         is_required: bool,
     ) -> str:
-        error_class = ' error' if error else ''
+        error_class = _ERROR_CLASS if error else ''
         attrs = self._build_material_text_input_attributes(ui_info)
         if is_required:
             attrs = f'{attrs} {self._MATERIAL_REQUIRED}'.strip()
@@ -796,7 +794,7 @@ class EnhancedFormRenderer:
         error: str | None,
         is_required: bool,
     ) -> str:
-        error_class = ' error' if error else ''
+        error_class = _ERROR_CLASS if error else ''
         attrs = self._MATERIAL_REQUIRED if is_required else ''
         value_content = str(value) if value is not None else ''
         return render_template(
@@ -817,7 +815,7 @@ class EnhancedFormRenderer:
         field_schema: dict[str, Any],
         is_required: bool,
     ) -> str:
-        error_class = ' error' if error else ''
+        error_class = _ERROR_CLASS if error else ''
         attrs = self._MATERIAL_REQUIRED if is_required else ''
         options = self._build_material_select_options(ui_info, field_schema)
         rendered_options = [
@@ -996,7 +994,6 @@ class EnhancedFormRenderer:
         model_cls: type[FormModel],
         data: dict[str, Any] | None,
         errors: dict[str, Any] | None,
-        metadata: SchemaMetadata,
         render_time: float = 0.0,
     ) -> str:
         """Return a collapsed debug panel with tabs for rendered output, source, schema, and errors."""

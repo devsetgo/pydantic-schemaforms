@@ -5,7 +5,7 @@ Includes FileInput, ColorInput, HiddenInput, ImageInput, ButtonInput, etc.
 
 from typing import Any
 
-from .base import FileInputBase, FormInput
+from .base import FileInputBase, FormInput, _render_input_tag
 
 
 class FileInput(FileInputBase):
@@ -141,14 +141,7 @@ class ColorInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-
-        template = t'<input {attributes_str} />'
-        color_html = render_template(template)
+        color_html = _render_input_tag(self._build_attributes_string(attrs))
 
         if show_value:
             field_name = kwargs.get('name', '')
@@ -194,14 +187,7 @@ class HiddenInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class ButtonInput(FormInput):
@@ -221,14 +207,7 @@ class ButtonInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class SubmitInput(FormInput):
@@ -251,14 +230,7 @@ class SubmitInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class ResetInput(FormInput):
@@ -273,14 +245,7 @@ class ResetInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        from .base import render_template
-
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class CSRFInput(HiddenInput):

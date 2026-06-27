@@ -568,7 +568,7 @@ class TestLayoutFactory:
 
     def test_layout_factory_horizontal(self):
         """Test LayoutFactory horizontal method."""
-        layout = LayoutFactory.horizontal('Item 1', 'Item 2', gap='2rem')
+        layout = LayoutFactory.create_horizontal('Item 1', 'Item 2', gap='2rem')
         assert isinstance(layout, HorizontalLayout)
 
         html = layout.render()
@@ -579,7 +579,7 @@ class TestLayoutFactory:
 
     def test_layout_factory_vertical(self):
         """Test LayoutFactory vertical method."""
-        layout = LayoutFactory.vertical('Item 1', 'Item 2', gap='1rem')
+        layout = LayoutFactory.create_vertical('Item 1', 'Item 2', gap='1rem')
         assert isinstance(layout, VerticalLayout)
 
         html = layout.render()
@@ -589,7 +589,7 @@ class TestLayoutFactory:
 
     def test_layout_factory_grid(self):
         """Test LayoutFactory grid method."""
-        layout = LayoutFactory.grid('Item 1', 'Item 2', columns='1fr 2fr')
+        layout = LayoutFactory.create_grid('Item 1', 'Item 2', columns='1fr 2fr')
         assert isinstance(layout, GridLayout)
 
         html = layout.render()
@@ -624,7 +624,7 @@ class TestLayoutFactory:
 
     def test_layout_factory_modal(self):
         """Test LayoutFactory modal method."""
-        layout = LayoutFactory.modal('test-modal', 'Title', 'Content')
+        layout = LayoutFactory.create_modal('test-modal', 'Title', 'Content')
         assert isinstance(layout, ModalLayout)
 
         html = layout.render()
@@ -633,7 +633,7 @@ class TestLayoutFactory:
 
     def test_layout_factory_card(self):
         """Test LayoutFactory card method."""
-        layout = LayoutFactory.card('Title', 'Content')
+        layout = LayoutFactory.create_card('Title', 'Content')
         assert isinstance(layout, CardLayout)
 
         html = layout.render()
@@ -649,16 +649,16 @@ class TestLayoutAlias:
         assert Layout is LayoutFactory
 
     def test_layout_alias_horizontal(self):
-        """Test Layout.horizontal works."""
-        layout = Layout.horizontal('Test content')
+        """Test Layout.create_horizontal works."""
+        layout = Layout.create_horizontal('Test content')
         assert isinstance(layout, HorizontalLayout)
 
         html = layout.render()
         assert 'Test content' in html
 
     def test_layout_alias_card(self):
-        """Test Layout.card works."""
-        layout = Layout.card('Test Title', 'Test content')
+        """Test Layout.create_card works."""
+        layout = Layout.create_card('Test Title', 'Test content')
         assert isinstance(layout, CardLayout)
 
         html = layout.render()
@@ -792,9 +792,7 @@ class TestLayoutEngine:
         engine = LayoutEngine(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
-        result = engine.render_layout_fields_as_tabs(
-            layout_fields=[], data={}, errors={}, context=context
-        )
+        result = engine.render_layout_fields_as_tabs(layout_fields=[], data={}, context=context)
 
         assert result == []
 
@@ -877,7 +875,6 @@ def test_render_layout_fields_as_tabs_and_layout_field_wrapper():
             )
         ],
         data=context.form_data,
-        errors={},
         context=context,
     )
 

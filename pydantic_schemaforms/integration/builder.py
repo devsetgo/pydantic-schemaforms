@@ -22,6 +22,8 @@ from pydantic_schemaforms.assets.runtime import (
 from pydantic_schemaforms.validation import FormValidator, create_validator
 from pydantic_schemaforms.tstring import SafeHTML, html as _html_proc
 
+_EMAIL_LABEL = 'Email Address'
+
 
 class FormBuilder:
     """Enhanced form builder that integrates all pydantic-schemaforms components."""
@@ -303,7 +305,7 @@ class AutoFormBuilder(FormBuilder):
 def create_login_form(framework: str = 'bootstrap') -> FormBuilder:
     return (
         FormBuilder(framework=framework)
-        .email_input('email', 'Email Address')
+        .email_input('email', _EMAIL_LABEL)
         .password_input('password', 'Password')
         .required('email')
         .required('password')
@@ -315,7 +317,7 @@ def create_registration_form(framework: str = 'bootstrap') -> FormBuilder:
         FormBuilder(framework=framework)
         .text_input('first_name', 'First Name')
         .text_input('last_name', 'Last Name')
-        .email_input('email', 'Email Address')
+        .email_input('email', _EMAIL_LABEL)
         .password_input('password', 'Password')
         .password_input('confirm_password', 'Confirm Password')
         .required('first_name')
@@ -339,7 +341,7 @@ def create_contact_form(framework: str = 'bootstrap') -> FormBuilder:
     return (
         FormBuilder(framework=framework)
         .text_input('name', 'Full Name')
-        .email_input('email', 'Email Address')
+        .email_input('email', _EMAIL_LABEL)
         .text_input('subject', 'Subject')
         .textarea_input('message', 'Message', rows=6)
         .required('name')

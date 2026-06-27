@@ -19,6 +19,11 @@ from pydantic import ValidationError
 # Import version check to ensure compatibility
 
 
+_INVALID_VALUE_MSG = 'Invalid value'
+_INVALID_EMAIL_MSG = 'Please enter a valid email address'
+_INVALID_DATE_MSG = 'Invalid date format'
+
+
 def _js_str(msg: str) -> str:
     """Escape *msg* for safe embedding in a JS single-quoted string inside a <script> block."""
     return (
@@ -65,7 +70,7 @@ class ValidationRule:
 
     rule_name = 'base'
 
-    def __init__(self, message: str = 'Invalid value', client_side: bool = True):
+    def __init__(self, message: str = _INVALID_VALUE_MSG, client_side: bool = True):
         self.message = message
         self.client_side = client_side
 
@@ -84,7 +89,7 @@ class ValidationRule:
             return ''
         return self._generate_js_validation(field_name)
 
-    def _generate_js_validation(self, field_name: str) -> str:
+    def _generate_js_validation(self, _field_name: str) -> str:
         """Override in subclasses to provide JavaScript validation."""
         return ''
 
@@ -218,7 +223,7 @@ class EmailRule(RegexRule):
 
     rule_name = 'email'
 
-    def __init__(self, message: str = 'Please enter a valid email address'):
+    def __init__(self, message: str = _INVALID_EMAIL_MSG):
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         super().__init__(pattern, message)
 
@@ -347,7 +352,7 @@ class DateRangeRule(ValidationRule):
             elif isinstance(value, date):
                 check_date = value
             else:
-                return False, 'Invalid date format'
+                return False, _INVALID_DATE_MSG
 
             if self.min_date and check_date < self.min_date:
                 return False, self.message
@@ -357,7 +362,7 @@ class DateRangeRule(ValidationRule):
 
             return True, ''
         except ValueError:
-            return False, 'Invalid date format'
+            return False, _INVALID_DATE_MSG
 
     def _generate_js_validation(self, field_name: str) -> str:
         checks = []
@@ -397,7 +402,7 @@ class CustomRule(ValidationRule):
     def __init__(
         self,
         validator_func: Callable[[Any], bool | tuple[bool, str]],
-        message: str = 'Invalid value',
+        message: str = _INVALID_VALUE_MSG,
         client_side: bool = False,
     ):
         self.validator_func = validator_func
@@ -443,7 +448,7 @@ class FieldValidator:
 
     def email(self, message: str | None = None) -> 'FieldValidator':
         """Add email validation."""
-        return self.add_rule(EmailRule(message or 'Please enter a valid email address'))
+        return self.add_rule(EmailRule(message or _INVALID_EMAIL_MSG))
 
     def phone(self, message: str | None = None) -> 'FieldValidator':
         """Add phone validation."""
@@ -473,7 +478,7 @@ class FieldValidator:
 
     def custom(self, validator_func: Callable, message: str | None = None) -> 'FieldValidator':
         """Add custom validation."""
-        return self.add_rule(CustomRule(validator_func, message or 'Invalid value'))
+        return self.add_rule(CustomRule(validator_func, message or _INVALID_VALUE_MSG))
 
     def validate(self, value: Any) -> tuple[bool, list[str]]:
         """
@@ -774,7 +779,7 @@ class CrossFieldRules:
                     if start_date >= end_date:
                         return False, {end_field: message}
                 except ValueError:
-                    return False, {end_field: 'Invalid date format'}
+                    return False, {end_field: _INVALID_DATE_MSG}
 
             return True, {}
 
@@ -802,7 +807,7 @@ def create_email_validator() -> Callable[[str], ValidationResponse]:
             return ValidationResponse(
                 field_name='email',
                 is_valid=False,
-                errors=['Please enter a valid email address'],
+                errors=[_INVALID_EMAIL_MSG],
                 suggestions=['Example: user@example.com'],
                 value=value,
             )

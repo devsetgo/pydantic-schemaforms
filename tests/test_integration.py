@@ -513,14 +513,14 @@ class TestIntegrationUtilities:
         """Test conversion of Pydantic validation to framework rules."""
         from pydantic_schemaforms.integration import convert_validation_rules
 
-        field = Field(..., min_length=3, max_length=50, ge=1, le=100)
+        Field(..., min_length=3, max_length=50, ge=1, le=100)
 
         # Test React JSON Schema validation
-        react_rules = convert_validation_rules(field, 'react')
+        react_rules = convert_validation_rules('react')
         assert isinstance(react_rules, dict)
 
         # Test Vue Formulate validation
-        vue_rules = convert_validation_rules(field, 'vue')
+        vue_rules = convert_validation_rules('vue')
         assert isinstance(vue_rules, (list, dict, str))
 
 

@@ -22,6 +22,8 @@ from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.themes import RendererTheme, get_theme_for_framework
 from pydantic_schemaforms.schema_form import FormModel
 
+_REMOVE_LABEL = 'Remove this item'
+
 
 class ModelListRenderer:
     """Renderer for dynamic model lists with add/remove functionality."""
@@ -121,7 +123,7 @@ class ModelListRenderer:
                     model_label=model_label,
                     index=index,
                     body_html=item_body,
-                    remove_button_aria_label='Remove this item',
+                    remove_button_aria_label=_REMOVE_LABEL,
                 )
             )
 
@@ -140,7 +142,7 @@ class ModelListRenderer:
                         model_label=model_label,
                         index=index,
                         body_html=item_body,
-                        remove_button_aria_label='Remove this item',
+                        remove_button_aria_label=_REMOVE_LABEL,
                     )
                 )
 

@@ -41,7 +41,6 @@ def map_ui_element_to_framework(ui_element: str, framework: str) -> str:
 
 
 def convert_validation_rules(  # pragma: no cover - passthrough
-    field_info: Any,
     framework: str,
 ) -> dict[str, Any] | list[Any]:
     if framework == 'react':

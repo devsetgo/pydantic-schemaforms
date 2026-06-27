@@ -5,7 +5,7 @@ Includes TextInput, PasswordInput, EmailInput, TextArea, and SearchInput.
 
 from typing import Any
 
-from .base import FormInput, render_template
+from .base import FormInput, _render_input_tag
 
 
 class TextInput(FormInput):
@@ -46,12 +46,7 @@ class PasswordInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class EmailInput(FormInput):
@@ -72,12 +67,7 @@ class EmailInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class SearchInput(FormInput):
@@ -98,12 +88,7 @@ class SearchInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class TextArea(FormInput):
@@ -161,12 +146,7 @@ class URLInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class TelInput(FormInput):
@@ -191,12 +171,7 @@ class TelInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 # Specialized text inputs with formatting and validation
@@ -221,12 +196,7 @@ class SSNInput(TextInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class PhoneInput(TelInput):
@@ -266,12 +236,7 @@ class CreditCardInput(TextInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class CurrencyInput(TextInput):
@@ -291,9 +256,4 @@ class CurrencyInput(TextInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        # Use Python 3.14 template string literal and render it
-        template = t'<input {attributes_str} />'
-        return render_template(template)
+        return _render_input_tag(self._build_attributes_string(attrs))
