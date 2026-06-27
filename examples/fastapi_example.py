@@ -63,6 +63,7 @@ from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
 # Dual-use demo: one FormModel, two endpoints (HTML form + JSON API)
 # ---------------------------------------------------------------------------
 
+
 class ContactForm(FormModel):
     """Simple contact form that also serves as a typed JSON API body."""
 

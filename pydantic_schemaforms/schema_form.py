@@ -448,8 +448,9 @@ class FormModel(BaseModel):
         for name, fi in cls.get_runtime_model().model_fields.items():
             clean = copy.copy(fi)
             if isinstance(fi.json_schema_extra, dict):
-                stripped = {k: v for k, v in fi.json_schema_extra.items()
-                            if not k.startswith('ui_')}
+                stripped = {
+                    k: v for k, v in fi.json_schema_extra.items() if not k.startswith('ui_')
+                }
                 clean.json_schema_extra = stripped or None
             field_defs[name] = (fi.annotation, clean)
 

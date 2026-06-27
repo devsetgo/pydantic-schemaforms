@@ -342,6 +342,7 @@ class TestAsApiModel:
         ContactForm = self._make_form()
         ApiModel = ContactForm.as_api_model()
         from pydantic import BaseModel
+
         assert issubclass(ApiModel, BaseModel)
         assert not issubclass(ApiModel, FormModel)
 
@@ -380,7 +381,9 @@ class TestAsApiModel:
     def test_valid_data_accepted(self):
         ContactForm = self._make_form()
         ApiModel = ContactForm.as_api_model()
-        instance = ApiModel.model_validate({'name': 'Alice', 'email': 'alice@example.com', 'age': 30})
+        instance = ApiModel.model_validate(
+            {'name': 'Alice', 'email': 'alice@example.com', 'age': 30}
+        )
         assert instance.name == 'Alice'
         assert instance.age == 30
 
