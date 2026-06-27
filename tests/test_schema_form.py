@@ -312,3 +312,96 @@ def assert_form_validation_fails(form_model, data, expected_fields=None):
             assert field in error_fields, (
                 f"Expected validation error for field '{field}', got errors for: {error_fields}"
             )
+
+
+class TestAsApiModel:
+    """Tests for FormModel.as_api_model()."""
+
+    def _make_form(self):
+        class ContactForm(FormModel):
+            name: str = Field(
+                ...,
+                min_length=2,
+                title='Full Name',
+                description='Your full name',
+                examples=['Alice Smith'],
+                ui_element='text',
+                ui_placeholder='Enter name',
+            )
+            email: str = Field(
+                ...,
+                title='Email Address',
+                examples=['alice@example.com'],
+                ui_element='email',
+            )
+            age: int = Field(..., ge=0, le=120)
+
+        return ContactForm
+
+    def test_returns_basemodel_not_formmodel(self):
+        ContactForm = self._make_form()
+        ApiModel = ContactForm.as_api_model()
+        from pydantic import BaseModel
+        assert issubclass(ApiModel, BaseModel)
+        assert not issubclass(ApiModel, FormModel)
+
+    def test_same_field_names(self):
+        ContactForm = self._make_form()
+        ApiModel = ContactForm.as_api_model()
+        assert set(ApiModel.model_fields) == set(ContactForm.model_fields)
+
+    def test_ui_keys_stripped_from_schema(self):
+        ContactForm = self._make_form()
+        schema = ContactForm.as_api_model().model_json_schema()
+        for prop in schema.get('properties', {}).values():
+            for key in prop:
+                assert not key.startswith('ui_'), f'UI key {key!r} found in API schema'
+
+    def test_examples_survive(self):
+        ContactForm = self._make_form()
+        schema = ContactForm.as_api_model().model_json_schema()
+        assert schema['properties']['name']['examples'] == ['Alice Smith']
+        assert schema['properties']['email']['examples'] == ['alice@example.com']
+
+    def test_titles_and_descriptions_survive(self):
+        ContactForm = self._make_form()
+        schema = ContactForm.as_api_model().model_json_schema()
+        assert schema['properties']['name']['title'] == 'Full Name'
+        assert schema['properties']['name']['description'] == 'Your full name'
+
+    def test_validation_constraints_enforced(self):
+        ContactForm = self._make_form()
+        ApiModel = ContactForm.as_api_model()
+        with pytest.raises(Exception):
+            ApiModel.model_validate({'name': 'A', 'email': 'x@x.com', 'age': 30})
+        with pytest.raises(Exception):
+            ApiModel.model_validate({'name': 'Alice', 'email': 'x@x.com', 'age': -1})
+
+    def test_valid_data_accepted(self):
+        ContactForm = self._make_form()
+        ApiModel = ContactForm.as_api_model()
+        instance = ApiModel.model_validate({'name': 'Alice', 'email': 'alice@example.com', 'age': 30})
+        assert instance.name == 'Alice'
+        assert instance.age == 30
+
+    def test_result_is_cached(self):
+        ContactForm = self._make_form()
+        assert ContactForm.as_api_model() is ContactForm.as_api_model()
+
+    def test_subclass_cache_is_isolated(self):
+        class FormA(FormModel):
+            x: str = Field(..., ui_element='text')
+
+        class FormB(FormModel):
+            y: int = Field(..., ge=0)
+
+        assert FormA.as_api_model() is not FormB.as_api_model()
+        assert 'x' in FormA.as_api_model().model_fields
+        assert 'y' in FormB.as_api_model().model_fields
+
+    def test_original_schema_still_has_ui_keys(self):
+        ContactForm = self._make_form()
+        _ = ContactForm.as_api_model()  # populate cache
+        original_schema = ContactForm.model_json_schema()
+        props = original_schema.get('properties', {})
+        assert 'ui_element' in props['name']
