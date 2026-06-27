@@ -938,9 +938,7 @@ class EnhancedFormRenderer:
         )
 
         if input_type == 'layout':
-            return self._render_layout_field(
-                field_name, field_schema, value, ui_info, context
-            )
+            return self._render_layout_field(field_name, field_schema, value, ui_info, context)
 
         if input_type == 'model_list':
             return self._render_material_model_list_field(

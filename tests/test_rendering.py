@@ -1560,8 +1560,7 @@ def test_enhanced_renderer_branches_and_wrappers(monkeypatch: pytest.MonkeyPatch
     )
     assert renderer_wrappers._render_tabbed_layout([], {}, {}, [], SimpleNamespace()) == ['X']
     assert (
-        renderer_wrappers._render_layout_field_content('n', {}, None, {}, SimpleNamespace())
-        == 'Y'
+        renderer_wrappers._render_layout_field_content('n', {}, None, {}, SimpleNamespace()) == 'Y'
     )
     assert renderer_wrappers._render_side_by_side_layout([], {}, {}, [], SimpleNamespace()) == ['Z']
     assert renderer_wrappers._get_nested_form_data('name', {'name': {'x': 1}}) == {'x': 1}
