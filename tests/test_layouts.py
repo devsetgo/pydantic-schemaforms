@@ -607,7 +607,7 @@ class TestLayoutFactory:
     def test_layout_factory_tabs(self):
         """Test LayoutFactory tabs method."""
         tabs = [{'title': 'Tab 1', 'content': 'Content 1'}]
-        layout = LayoutFactory.tabs(tabs)
+        layout = LayoutFactory.create_tabs(tabs)
         assert isinstance(layout, TabLayout)
 
         html = layout.render()
@@ -616,7 +616,7 @@ class TestLayoutFactory:
     def test_layout_factory_accordion(self):
         """Test LayoutFactory accordion method."""
         sections = [{'title': 'Section 1', 'content': 'Content 1'}]
-        layout = LayoutFactory.accordion(sections)
+        layout = LayoutFactory.create_accordion(sections)
         assert isinstance(layout, AccordionLayout)
 
         html = layout.render()
@@ -793,7 +793,7 @@ class TestLayoutEngine:
         context = RenderContext(form_data={}, schema_defs={})
 
         result = engine.render_layout_fields_as_tabs(
-            layout_fields=[], data={}, errors={}, required_fields=[], context=context
+            layout_fields=[], data={}, errors={}, context=context
         )
 
         assert result == []
@@ -878,14 +878,12 @@ def test_render_layout_fields_as_tabs_and_layout_field_wrapper():
         ],
         data=context.form_data,
         errors={},
-        required_fields=[],
         context=context,
     )
 
     direct = engine.render_layout_field(
         'unknown_layout',
         {'title': 'Unknown Layout'},
-        None,
         None,
         {'help_text': 'wrapper help'},
         context,
@@ -909,7 +907,6 @@ def test_render_layout_field_content_fallback_success_error_and_unknown(monkeypa
     )
     success = engine.render_layout_field_content_fallback(
         'vertical_tab',
-        {},
         {'help_text': 'vertical help'},
         context,
     )
@@ -920,14 +917,12 @@ def test_render_layout_field_content_fallback_success_error_and_unknown(monkeypa
     monkeypatch.setattr(EnhancedFormRenderer, 'render_form_fields_only', _raise_render)
     failed = engine.render_layout_field_content_fallback(
         'vertical_tab',
-        {},
         {'help_text': 'vertical help'},
         context,
     )
 
     unknown = engine.render_layout_field_content_fallback(
         'unknown_layout',
-        {},
         {'help_text': 'unknown help'},
         context,
     )
@@ -948,7 +943,6 @@ def test_render_layout_field_fallback_success_error_and_unknown(monkeypatch):
     )
     success = engine.render_layout_field_fallback(
         'vertical_tab',
-        {},
         {'help_text': 'vertical help'},
         context,
     )
@@ -960,14 +954,12 @@ def test_render_layout_field_fallback_success_error_and_unknown(monkeypatch):
     )
     failed = engine.render_layout_field_fallback(
         'vertical_tab',
-        {},
         {'help_text': 'help <b>unsafe</b>'},
         context,
     )
 
     unknown = engine.render_layout_field_fallback(
         'no_mapping',
-        {},
         {'help_text': 'plain unknown'},
         context,
     )
@@ -990,7 +982,6 @@ def test_build_layout_body_error_message_via_custom_handler():
     output = engine.render_layout_field(
         'layout_sample',
         {'title': 'Layout Sample'},
-        None,
         None,
         {'layout_handler': 'broken_layout', 'help_text': 'show me'},
         _context(),

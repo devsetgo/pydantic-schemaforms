@@ -181,7 +181,6 @@ class EnhancedFormRenderer:
                     layout_fields,
                     data,
                     errors,
-                    required_fields,
                     context,
                 )
             )
@@ -383,14 +382,12 @@ class EnhancedFormRenderer:
         layout_fields: list[tuple[str, dict[str, Any]]],
         data: dict[str, Any],
         errors: dict[str, Any],
-        required_fields: list[str],
         context: RenderContext,
     ) -> list[str]:
         return self._layout_engine.render_layout_fields_as_tabs(
             layout_fields,
             data,
             errors,
-            required_fields,
             context,
         )
 
@@ -399,7 +396,6 @@ class EnhancedFormRenderer:
         field_name: str,
         field_schema: dict[str, Any],
         value: Any,
-        error: str | None,
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
@@ -407,7 +403,6 @@ class EnhancedFormRenderer:
             field_name,
             field_schema,
             value,
-            error,
             ui_info,
             context,
         )
@@ -657,7 +652,6 @@ class EnhancedFormRenderer:
         field_name: str,
         field_schema: dict[str, Any],
         value: Any,
-        error: str | None,
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
@@ -665,7 +659,6 @@ class EnhancedFormRenderer:
             field_name,
             field_schema,
             value,
-            error,
             ui_info,
             context,
         )
@@ -801,7 +794,6 @@ class EnhancedFormRenderer:
         field_name: str,
         value: Any,
         error: str | None,
-        ui_info: dict[str, Any],
         is_required: bool,
     ) -> str:
         error_class = ' error' if error else ''
@@ -858,7 +850,6 @@ class EnhancedFormRenderer:
         error: str | None,
         help_text: str | None,
         is_required: bool,
-        ui_info: dict[str, Any],
     ) -> str:
         required_text = ' *' if is_required else ''
         checked_attr = (
@@ -898,7 +889,7 @@ class EnhancedFormRenderer:
 
         if input_type == 'textarea':
             control_html = self._render_material_textarea_input(
-                field_name, value, error, ui_info, is_required
+                field_name, value, error, is_required
             )
         elif input_type == 'select':
             control_html = self._render_material_select_input(
@@ -948,7 +939,7 @@ class EnhancedFormRenderer:
 
         if input_type == 'layout':
             return self._render_layout_field(
-                field_name, field_schema, value, error, ui_info, context
+                field_name, field_schema, value, ui_info, context
             )
 
         if input_type == 'model_list':
@@ -962,7 +953,7 @@ class EnhancedFormRenderer:
 
         if input_type == 'checkbox':
             return self._render_material_checkbox_field(
-                field_name, label, value, error, help_text, is_required, ui_info
+                field_name, label, value, error, help_text, is_required
             )
 
         return self._render_material_outlined_field(
