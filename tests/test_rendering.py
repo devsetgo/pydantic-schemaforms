@@ -1647,8 +1647,8 @@ def test_form_layouts_branches_for_tabbed_and_list_layout() -> None:
     assert 'toggleCollapse' in js
     assert 'Maximum 1 items allowed' in js
 
-    assert 'newCollapseId' in list_layout._render_collapsible_update_js('list_x', 'material')
-    assert 'newCollapseId' in list_layout._render_collapsible_reindex_js('list_x', 'material')
+    assert 'newCollapseId' in list_layout._render_collapsible_update_js('list_x')
+    assert 'newCollapseId' in list_layout._render_collapsible_reindex_js('list_x')
 
     validation = list_layout.validate({'item_0_qty': 'not-int'})
     assert not validation.is_valid

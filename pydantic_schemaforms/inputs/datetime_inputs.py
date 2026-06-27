@@ -9,6 +9,8 @@ from typing import Any
 
 from .base import FormInput
 
+_DATETIME_FMT = '%Y-%m-%dT%H:%M'
+
 
 class DateInput(FormInput):
     """Date input field with date picker."""
@@ -91,15 +93,15 @@ class DatetimeInput(FormInput):
         """Render datetime input with optional current time features."""
         # Convert datetime objects to string format
         if 'value' in kwargs and isinstance(kwargs['value'], datetime):
-            kwargs['value'] = kwargs['value'].strftime('%Y-%m-%dT%H:%M')
+            kwargs['value'] = kwargs['value'].strftime(_DATETIME_FMT)
         if 'min' in kwargs and isinstance(kwargs['min'], datetime):
-            kwargs['min'] = kwargs['min'].strftime('%Y-%m-%dT%H:%M')
+            kwargs['min'] = kwargs['min'].strftime(_DATETIME_FMT)
         if 'max' in kwargs and isinstance(kwargs['max'], datetime):
-            kwargs['max'] = kwargs['max'].strftime('%Y-%m-%dT%H:%M')
+            kwargs['max'] = kwargs['max'].strftime(_DATETIME_FMT)
 
         # Auto-set to current datetime if requested and no value provided
         if auto_set_current and 'value' not in kwargs:
-            current_time = datetime.now().strftime('%Y-%m-%dT%H:%M')
+            current_time = datetime.now().strftime(_DATETIME_FMT)
             kwargs['value'] = current_time
 
         # Validate and format attributes
@@ -153,23 +155,9 @@ class MonthInput(FormInput):
     def render(self, **kwargs: Any) -> str:
         """Render month input with proper formatting."""
         # Convert date objects to month format (YYYY-MM)
-        if 'value' in kwargs:
-            if isinstance(kwargs['value'], datetime):
-                kwargs['value'] = kwargs['value'].strftime('%Y-%m')
-            elif isinstance(kwargs['value'], date):
-                kwargs['value'] = kwargs['value'].strftime('%Y-%m')
-
-        if 'min' in kwargs:
-            if isinstance(kwargs['min'], datetime):
-                kwargs['min'] = kwargs['min'].strftime('%Y-%m')
-            elif isinstance(kwargs['min'], date):
-                kwargs['min'] = kwargs['min'].strftime('%Y-%m')
-
-        if 'max' in kwargs:
-            if isinstance(kwargs['max'], datetime):
-                kwargs['max'] = kwargs['max'].strftime('%Y-%m')
-            elif isinstance(kwargs['max'], date):
-                kwargs['max'] = kwargs['max'].strftime('%Y-%m')
+        for key in ('value', 'min', 'max'):
+            if key in kwargs and isinstance(kwargs[key], (datetime, date)):
+                kwargs[key] = kwargs[key].strftime('%Y-%m')
 
         # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)

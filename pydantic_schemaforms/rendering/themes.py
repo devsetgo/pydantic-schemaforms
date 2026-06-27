@@ -25,6 +25,9 @@ __all__ = [
     'get_theme_for_framework',
 ]
 
+_CLOSE_SECTION = '</section>'
+_CLOSE_INNER_DIV = '  </div>'
+
 
 class RendererTheme:
     """Lightweight hook points for wrapping rendered forms per framework."""
@@ -170,7 +173,7 @@ class RendererTheme:
 
         return ''
 
-    def input_class(self, ui_element: str) -> str:
+    def input_class(self, _ui_element: str) -> str:
         """Return the CSS class applied to rendered inputs."""
 
         return ''
@@ -205,7 +208,7 @@ class RendererTheme:
 
         return self.form_style.templates.accordion_layout
 
-    def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
+    def render_layout_section(self, _title: str, _body_html: str, _help_text: str) -> str:
         """Return framework-specific markup for layout/card sections."""
 
         return ''
@@ -475,8 +478,8 @@ class MaterialEmbeddedTheme(RendererTheme):
                 '    <div class="md-layout-card__content">',
                 f'      {body_html}',
                 '    </div>',
-                '  </div>',
-                '</section>',
+                _CLOSE_INNER_DIV,
+                _CLOSE_SECTION,
             ]
         )
 
@@ -643,7 +646,7 @@ function toggleAccordion(sectionId, buttonElement) {
                 f'        <span class="md-button__label">{escape(add_button_label)}</span>',
                 '      </button>',
                 '    </div>',
-                '  </div>',
+                _CLOSE_INNER_DIV,
             ]
         )
 
@@ -652,7 +655,7 @@ function toggleAccordion(sectionId, buttonElement) {
         if error_block:
             parts.append(f'  {error_block}')
 
-        parts.append('</section>')
+        parts.append(_CLOSE_SECTION)
         return '\n'.join(parts)
 
     def render_model_list_item(
@@ -683,8 +686,8 @@ function toggleAccordion(sectionId, buttonElement) {
                 '  </header>',
                 '  <div class="md-model-card__body">',
                 f'    {body_html}',
-                '  </div>',
-                '</section>',
+                _CLOSE_INNER_DIV,
+                _CLOSE_SECTION,
             ]
         )
 

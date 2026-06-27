@@ -257,7 +257,7 @@ class LiveValidator:
 
         for field_name, field_info in model_fields.items():
 
-            def create_model_validator(fname: str, finfo: Any):
+            def create_model_validator(fname: str, _finfo: Any):
                 def validator(value: Any) -> ValidationResponse:
                     try:
                         # Create a partial model instance for validation

@@ -471,15 +471,15 @@ class LayoutComposer:
     Card = CardLayout
 
     @staticmethod
-    def horizontal(*content: Any, **kwargs: Any) -> HorizontalLayout:
+    def create_horizontal(*content: Any, **kwargs: Any) -> HorizontalLayout:
         return HorizontalLayout(list(content), **kwargs)
 
     @staticmethod
-    def vertical(*content: Any, **kwargs: Any) -> VerticalLayout:
+    def create_vertical(*content: Any, **kwargs: Any) -> VerticalLayout:
         return VerticalLayout(list(content), **kwargs)
 
     @staticmethod
-    def grid(*content: Any, columns: str = '1fr 1fr', **kwargs: Any) -> GridLayout:
+    def create_grid(*content: Any, columns: str = '1fr 1fr', **kwargs: Any) -> GridLayout:
         return GridLayout(list(content), columns=columns, **kwargs)
 
     @staticmethod
@@ -499,11 +499,11 @@ class LayoutComposer:
         return AccordionLayout(sections, **kwargs)
 
     @staticmethod
-    def modal(modal_id: str, title: str, content: str, **kwargs: Any) -> ModalLayout:
+    def create_modal(modal_id: str, title: str, content: str, **kwargs: Any) -> ModalLayout:
         return ModalLayout(modal_id, title, content, **kwargs)
 
     @staticmethod
-    def card(title: str, content: str, **kwargs: Any) -> CardLayout:
+    def create_card(title: str, content: str, **kwargs: Any) -> CardLayout:
         return CardLayout(title, content, **kwargs)
 
 

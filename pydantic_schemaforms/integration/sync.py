@@ -13,9 +13,8 @@ def normalize_form_data(data: dict[str, Any]) -> dict[str, Any]:
     """Normalize raw request payloads (e.g. checkbox "on" values)."""
     normalized: dict[str, Any] = {}
     for key, value in data.items():
-        if isinstance(value, (list, tuple)):
-            if len(value) == 1:
-                value = value[0]
+        if isinstance(value, (list, tuple)) and len(value) == 1:
+            value = value[0]
         if isinstance(value, str):
             lowered = value.lower()
             if lowered == 'on':

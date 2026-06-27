@@ -1005,7 +1005,7 @@ class ListLayout(FormLayoutBase):
             newItem.setAttribute('data-item-index', newIndex);
 
             // Update collapsible IDs if using collapsible items
-            {self._render_collapsible_update_js(list_id, framework) if self.collapsible_items else ''}
+            {self._render_collapsible_update_js(list_id) if self.collapsible_items else ''}
 
             // Update all form field names and IDs
             const inputs = newItem.querySelectorAll('input, select, textarea');
@@ -1082,7 +1082,7 @@ class ListLayout(FormLayoutBase):
                     item.setAttribute('data-item-index', index);
 
                     // Update collapsible IDs
-                    {self._render_collapsible_reindex_js(list_id, framework) if self.collapsible_items else ''}
+                    {self._render_collapsible_reindex_js(list_id) if self.collapsible_items else ''}
 
                     // Update all form field names and IDs
                     const inputs = item.querySelectorAll('input, select, textarea');
@@ -1129,7 +1129,7 @@ class ListLayout(FormLayoutBase):
         </script>
         """
 
-    def _render_collapsible_update_js(self, list_id: str, framework: str) -> str:
+    def _render_collapsible_update_js(self, list_id: str) -> str:
         """Generate JavaScript for updating collapsible IDs when adding items."""
         return f"""
             // Update collapsible collapse target
@@ -1151,7 +1151,7 @@ class ListLayout(FormLayoutBase):
             }}
         """
 
-    def _render_collapsible_reindex_js(self, list_id: str, framework: str) -> str:
+    def _render_collapsible_reindex_js(self, list_id: str) -> str:
         """Generate JavaScript for reindexing collapsible IDs when removing items."""
         return f"""
             // Update collapsible IDs

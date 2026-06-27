@@ -115,7 +115,12 @@ class FormField:
 
     def as_model_field(self, order: int, section: str | None) -> tuple[type[Any], Any]:
         annotation = _resolve_annotation(self.field_type)
-        default = self.value if self.value is not None else (None if not self.required else ...)
+        if self.value is not None:
+            default: Any = self.value
+        elif not self.required:
+            default = None
+        else:
+            default = ...
 
         ui_options: dict[str, Any] = {}
         if self.options:
@@ -126,7 +131,7 @@ class FormField:
         extra_attr_copy = self.extra_attrs.copy()
         css_class = extra_attr_copy.pop('class', None)
         inline_style = extra_attr_copy.pop('style', None)
-        for key, val in list(extra_attr_copy.items()):
+        for key, val in extra_attr_copy.items():
             if isinstance(val, (list, dict)):
                 continue
             ui_options[key] = val

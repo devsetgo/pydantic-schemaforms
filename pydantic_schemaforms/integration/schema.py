@@ -11,6 +11,9 @@ from pydantic import AnyUrl, BaseModel, EmailStr
 from pydantic.fields import FieldInfo
 
 
+_JSON_CONTENT_TYPE = 'application/json'
+
+
 def _issubclass_safe(candidate: Any, parent: type) -> bool:
     """Return True if candidate is a subclass of parent without raising."""
 
@@ -163,14 +166,14 @@ class JSONSchemaGenerator:
 class OpenAPISchemaGenerator:
     def generate_request_schema(self, form_model: type[BaseModel] | BaseModel) -> dict[str, Any]:
         schema = JSONSchemaGenerator().generate_schema(form_model)
-        return {'content': {'application/json': {'schema': schema}}}
+        return {'content': {_JSON_CONTENT_TYPE: {'schema': schema}}}
 
     def generate_response_schema(self, form_model: type[BaseModel] | BaseModel) -> dict[str, Any]:
         return {
             '200': {
                 'description': 'Success',
                 'content': {
-                    'application/json': {
+                    _JSON_CONTENT_TYPE: {
                         'schema': {
                             'type': 'object',
                             'properties': {
@@ -184,7 +187,7 @@ class OpenAPISchemaGenerator:
             '422': {
                 'description': 'Validation Error',
                 'content': {
-                    'application/json': {
+                    _JSON_CONTENT_TYPE: {
                         'schema': {
                             'type': 'object',
                             'properties': {

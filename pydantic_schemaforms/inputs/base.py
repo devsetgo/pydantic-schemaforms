@@ -13,6 +13,9 @@ def t(template: str) -> str:
     return template
 
 
+_CLOSE_DIV = '</div>'
+
+
 def render_template(template_obj: Any) -> str:
     """Render a Python 3.14 template string to final HTML."""
     if hasattr(template_obj, 'strings') and hasattr(template_obj, 'values'):
@@ -30,6 +33,11 @@ def render_template(template_obj: Any) -> str:
     else:
         # This is already a string
         return str(template_obj)
+
+
+def _render_input_tag(attributes_str: str) -> str:
+    template = t'<input {attributes_str} />'
+    return render_template(template)
 
 
 class BaseInput(ABC):
@@ -395,7 +403,7 @@ class SelectInputBase(BaseInput):
                     f'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>'
                 )
                 field_parts.append(input_html)
-                field_parts.append('</div>')
+                field_parts.append(_CLOSE_DIV)
             else:
                 field_parts.append(input_html)
 
@@ -405,7 +413,7 @@ class SelectInputBase(BaseInput):
             if error:
                 field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
 
-            field_parts.append('</div>')
+            field_parts.append(_CLOSE_DIV)
 
         elif framework == 'material':
             # Material Design styling
@@ -424,8 +432,8 @@ class SelectInputBase(BaseInput):
                 )
 
             if icon:
-                field_parts.append('</div>')  # Close md-input-wrapper
-                field_parts.append('</div>')  # Close md-field-with-icon
+                field_parts.append(_CLOSE_DIV)  # Close md-input-wrapper
+                field_parts.append(_CLOSE_DIV)  # Close md-field-with-icon
 
             if help_text:
                 field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
@@ -433,7 +441,7 @@ class SelectInputBase(BaseInput):
             if error:
                 field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
 
-            field_parts.append('</div>')
+            field_parts.append(_CLOSE_DIV)
 
         else:
             # Basic/no framework styling
@@ -447,7 +455,7 @@ class SelectInputBase(BaseInput):
                     f'<div class="input-with-icon"><span class="input-icon">{icon}</span>'
                 )
                 field_parts.append(input_html)
-                field_parts.append('</div>')
+                field_parts.append(_CLOSE_DIV)
             else:
                 field_parts.append(input_html)
 
@@ -457,6 +465,6 @@ class SelectInputBase(BaseInput):
             if error:
                 field_parts.append(f'<div class="error-message">{escape(error)}</div>')
 
-            field_parts.append('</div>')
+            field_parts.append(_CLOSE_DIV)
 
         return '\n'.join(field_parts)
