@@ -36,8 +36,7 @@ def render_template(template_obj: Any) -> str:
 
 
 def _render_input_tag(attributes_str: str) -> str:
-    template = t'<input {attributes_str} />'
-    return render_template(template)
+    return f'<input {attributes_str} />'
 
 
 class BaseInput(ABC):
