@@ -491,11 +491,11 @@ class LayoutComposer:
         return ResponsiveGridLayout(list(content), min_column_width=min_width, **kwargs)
 
     @staticmethod
-    def tabs(tabs: list[dict[str, str]], **kwargs: Any) -> TabLayout:
+    def create_tabs(tabs: list[dict[str, str]], **kwargs: Any) -> TabLayout:
         return TabLayout(tabs, **kwargs)
 
     @staticmethod
-    def accordion(sections: list[dict[str, str]], **kwargs: Any) -> AccordionLayout:
+    def create_accordion(sections: list[dict[str, str]], **kwargs: Any) -> AccordionLayout:
         return AccordionLayout(sections, **kwargs)
 
     @staticmethod
@@ -592,7 +592,6 @@ class LayoutEngine:
         layout_fields: list[tuple[str, dict[str, Any]]],
         data: dict[str, Any],
         errors: dict[str, Any],
-        required_fields: list[str],
         context: RenderContext,
     ) -> list[str]:
         if not layout_fields:
@@ -605,7 +604,6 @@ class LayoutEngine:
                 field_name,
                 field_schema,
                 data.get(field_name),
-                errors.get(field_name),
                 ui_info,
                 context,
             )
@@ -633,7 +631,6 @@ class LayoutEngine:
         field_name: str,
         field_schema: dict[str, Any],
         value: Any,
-        error: str | None,
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
@@ -645,7 +642,6 @@ class LayoutEngine:
     def render_layout_field_content_fallback(
         self,
         field_name: str,
-        field_schema: dict[str, Any],
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
@@ -770,7 +766,6 @@ class LayoutEngine:
         field_name: str,
         field_schema: dict[str, Any],
         value: Any,
-        error: str | None,
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
@@ -803,14 +798,13 @@ class LayoutEngine:
                     framework=self._renderer.framework,
                 )
 
-            return self.render_layout_field_fallback(field_name, field_schema, ui_info, context)
+            return self.render_layout_field_fallback(field_name, ui_info, context)
         except Exception as exc:  # pragma: no cover - defensive message
             return self._layout_error_message(field_name, field_schema, ui_info, exc)
 
     def render_layout_field_fallback(
         self,
         field_name: str,
-        field_schema: dict[str, Any],
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:

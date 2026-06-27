@@ -63,7 +63,6 @@ class FieldRenderer:
                 field_name,
                 field_schema,
                 value,
-                error,
                 ui_info,
                 context,
             )
