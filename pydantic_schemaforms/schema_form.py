@@ -153,12 +153,14 @@ class FormModel(BaseModel):
 
     __runtime_fields__: dict[str, tuple[Any, FieldInfo]] = {}
     __runtime_model_cache__: type['FormModel'] | None = None
+    __api_model_cache__: type[BaseModel] | None = None
     _dynamic_field_names: set[str] = set()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         cls.__runtime_fields__ = {}
         cls.__runtime_model_cache__ = None
+        cls.__api_model_cache__ = None
         cls._dynamic_field_names = set()
 
     @classmethod
@@ -417,6 +419,44 @@ class FormModel(BaseModel):
 
         cls.__runtime_model_cache__ = runtime_model
         return runtime_model
+
+    @classmethod
+    def as_api_model(cls) -> type[BaseModel]:
+        """Return a pure Pydantic BaseModel with UI metadata stripped.
+
+        Preserves field types, titles, descriptions, examples, and all
+        validation constraints (min_length, ge, pattern, …). Only removes
+        keys starting with ``ui_`` from json_schema_extra so that FastAPI's
+        OpenAPI output looks like a normal Pydantic model.
+
+        The result is cached per subclass and safe to assign at module level::
+
+            ContactSchema = ContactForm.as_api_model()
+
+            @app.post('/api/contact', response_model=ContactSchema)
+            async def api_contact(data: ContactSchema): ...
+        """
+        if cls.__api_model_cache__ is not None:
+            return cls.__api_model_cache__
+
+        import copy
+        from pydantic import create_model as _create_model
+
+        cls.ensure_dynamic_fields()
+
+        field_defs: dict[str, tuple[Any, FieldInfo]] = {}
+        for name, fi in cls.get_runtime_model().model_fields.items():
+            clean = copy.copy(fi)
+            if isinstance(fi.json_schema_extra, dict):
+                stripped = {
+                    k: v for k, v in fi.json_schema_extra.items() if not k.startswith('ui_')
+                }
+                clean.json_schema_extra = stripped or None
+            field_defs[name] = (fi.annotation, clean)
+
+        model = _create_model(cls.__name__, __base__=BaseModel, **field_defs)  # type: ignore[call-overload]
+        cls.__api_model_cache__ = model
+        return model
 
     @classmethod
     def get_example_form_data(cls: type['FormModel']) -> dict:

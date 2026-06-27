@@ -137,6 +137,99 @@ FastAPI’s `Request.form()` is async, so the most natural implementation is an 
 
 If you *already* have a `dict` of submitted data (for example from a different parsing path), you can still call the sync renderer inside an `async def` route — but for large forms, the async renderer avoids blocking the event loop.
 
+## Dual-use: HTML form + JSON API from one model
+
+`FormModel` is a plain Pydantic `BaseModel` subclass, so it can validate JSON
+directly. The only friction is that `Field(ui_element=..., ui_placeholder=...)`
+stores rendering metadata in the JSON schema, cluttering the OpenAPI docs when
+the class is used as a FastAPI body type.
+
+`as_api_model()` returns a new `BaseModel` with the same fields and validation
+rules but no `ui_*` keys — exactly what a hand-written Pydantic model looks
+like. `Field(title=...)`, `Field(description=...)`, `Field(examples=[...])`,
+and all validation constraints (`min_length`, `ge`, `pattern`, …) are fully
+preserved.
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+
+from pydantic_schemaforms import Field, FormModel, parse_nested_form_data
+
+app = FastAPI()
+
+
+class ContactForm(FormModel):
+    name: str = Field(
+        ...,
+        min_length=2,
+        title="Full Name",
+        examples=["Alice Smith"],
+        ui_element="text",
+        ui_placeholder="Enter your full name",
+    )
+    email: str = Field(
+        ...,
+        title="Email Address",
+        examples=["alice@example.com"],
+        ui_element="email",
+    )
+    message: str = Field(
+        ...,
+        min_length=10,
+        title="Message",
+        examples=["Hello, I would like to ask about..."],
+        ui_element="textarea",
+    )
+
+
+# Derive the clean API model once at module level — safe to use as a
+# FastAPI body type or response_model.
+ContactSchema = ContactForm.as_api_model()
+
+
+# ── HTML form ────────────────────────────────────────────────────────────────
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact_get():
+    return await ContactForm.render_form_async(submit_url="/contact")
+
+
+@app.post("/contact", response_class=HTMLResponse)
+async def contact_post(request: Request):
+    data = parse_nested_form_data(await request.form())
+    result = ContactForm.validate(data, submit_url="/contact")
+    if result.is_valid:
+        return f"<p>Thank you, {result.data['name']}!</p>"
+    return HTMLResponse(await result.render_with_errors_async())
+
+
+# ── JSON API — OpenAPI shows clean schema with examples ─────────────────────
+
+@app.post("/api/contact", response_model=ContactSchema)
+async def api_contact(data: ContactSchema):
+    # `data` is a fully validated ContactSchema instance.
+    # FastAPI's Swagger UI shows the request body and response schema without
+    # any ui_* keys, identical to a hand-written Pydantic model.
+    return data
+```
+
+**What the OpenAPI schema looks like** for the `/api/contact` body:
+
+```json
+{
+  "properties": {
+    "name":    { "minLength": 2, "title": "Full Name",     "examples": ["Alice Smith"],  "type": "string" },
+    "email":   {                 "title": "Email Address",  "examples": ["alice@..."],    "type": "string" },
+    "message": { "minLength": 10,"title": "Message",        "examples": ["Hello..."],     "type": "string" }
+  },
+  "required": ["name", "email", "message"]
+}
+```
+
+No `ui_element`, no `ui_placeholder` — just the information an API consumer
+needs.
+
 ## Next steps
 
 - Learn about asset delivery (`asset_mode`) in [assets.md](assets.md)

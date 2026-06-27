@@ -50,11 +50,52 @@ from examples.nested_forms_example import create_comprehensive_sample_data
 from pydantic_schemaforms import (
     __version__ as _psf_version,
     EnhancedFormRenderer,
+    Field,
     FormLayoutBase,
+    FormModel,
     parse_nested_form_data,
     render_form_html_async,
 )
 from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
+
+
+# ---------------------------------------------------------------------------
+# Dual-use demo: one FormModel, two endpoints (HTML form + JSON API)
+# ---------------------------------------------------------------------------
+
+
+class ContactForm(FormModel):
+    """Simple contact form that also serves as a typed JSON API body."""
+
+    name: str = Field(
+        ...,
+        min_length=2,
+        title='Full Name',
+        description='Your full name',
+        examples=['Alice Smith'],
+        ui_element='text',
+        ui_placeholder='Enter your full name',
+    )
+    email: str = Field(
+        ...,
+        title='Email Address',
+        description='We will never share your email',
+        examples=['alice@example.com'],
+        ui_element='email',
+    )
+    message: str = Field(
+        ...,
+        min_length=10,
+        title='Message',
+        description='What would you like to say?',
+        examples=['Hello, I would like to ask about...'],
+        ui_element='textarea',
+    )
+
+
+# Derive the API model once at module level.
+# Same fields and validation rules; ui_* keys stripped so OpenAPI docs are clean.
+ContactSchema = ContactForm.as_api_model()
 
 app = FastAPI(
     title='Pydantic SchemaForms - FastAPI Example',
@@ -1478,6 +1519,77 @@ async def api_render_form(
 
 
 # ================================
+# DUAL-USE: FORM + JSON API
+# ================================
+# One FormModel class serves both a browser form and a typed JSON endpoint.
+# ContactForm renders to HTML; ContactSchema (= ContactForm.as_api_model())
+# is the clean Pydantic model used by the JSON endpoint — ui_* keys stripped,
+# all validation constraints and Field(examples=[...]) preserved.
+
+
+@app.get('/contact', response_class=HTMLResponse)
+async def contact_get(request: Request):
+    """Render the contact form (HTML)."""
+    form_html = await ContactForm.render_form_async(
+        submit_url='/contact',
+        framework='bootstrap',
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'title': 'Contact — HTML Form',
+            'form_html': form_html,
+            'refer_path': '/contact',
+        },
+    )
+
+
+@app.post('/contact', response_class=HTMLResponse)
+async def contact_post(request: Request):
+    """Accept and validate a browser form submission (multipart/form-data)."""
+    raw = await request.form()
+    data = parse_nested_form_data(raw)
+    result = ContactForm.validate(data, submit_url='/contact', framework='bootstrap')
+    if result.is_valid:
+        name = result.data.get('name', '')
+        return HTMLResponse(f'<p>Thank you, {name}! Your message was received.</p>')
+    form_html = await result.render_with_errors_async()
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'title': 'Contact — HTML Form',
+            'form_html': form_html,
+            'refer_path': '/contact',
+        },
+    )
+
+
+@app.post('/api/contact', response_model=ContactSchema)
+async def api_contact(data: ContactSchema):
+    """
+    Accept a JSON body validated against the same model as the HTML form.
+
+    FastAPI uses ContactSchema (ContactForm.as_api_model()) so the OpenAPI
+    docs show a clean schema with no ui_* keys — identical to a hand-written
+    Pydantic model, with Field examples and validation constraints intact.
+
+    Try it:
+        curl -X POST http://localhost:8000/api/contact \\
+             -H 'Content-Type: application/json' \\
+             -d '{"name":"Alice","email":"alice@example.com","message":"Hello there!"}'
+    """
+    return data
+
+
+@app.get('/api/contact/schema')
+async def api_contact_schema():
+    """Return the clean JSON Schema used by the /api/contact endpoint."""
+    return ContactSchema.model_json_schema()
+
+
+# ================================
 # HEALTH CHECK
 # ================================
 
@@ -1528,6 +1640,11 @@ if __name__ == '__main__':
     print('   • Self-Contained: http://localhost:8000/self-contained')
     print('   • API Docs:       http://localhost:8000/docs')
     print('   • Home Page:      http://localhost:8000/')
+    print('')
+    print('🔗 Dual-Use Demo (form + JSON API from one FormModel):')
+    print('   • HTML Form:  http://localhost:8000/contact')
+    print('   • JSON API:   POST http://localhost:8000/api/contact')
+    print('   • API Schema: http://localhost:8000/api/contact/schema')
     print('')
     print('🔧 API Endpoints:')
     print('   • Schema:              http://localhost:8000/api/forms/register/schema')
