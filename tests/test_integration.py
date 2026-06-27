@@ -275,7 +275,7 @@ class TestReactJSONSchemaFormAdapter:
         """Test React form data generation."""
         integration = ReactJSONSchemaFormAdapter()
 
-        form_data = integration.generate_form_data(simple_form_model, sample_form_data)
+        form_data = integration.generate_form_data(sample_form_data)
 
         assert isinstance(form_data, dict)
         assert form_data['name'] == sample_form_data['name']

@@ -83,9 +83,7 @@ class ReactJSONSchemaFormAdapter:
 
         return ui_entry
 
-    def generate_form_data(
-        self, form_model: type[BaseModel] | BaseModel, data: dict[str, Any]
-    ) -> dict[str, Any]:  # pragma: no cover - passthrough
+    def generate_form_data(self, data: dict[str, Any]) -> dict[str, Any]:  # pragma: no cover
         return data
 
     def generate_complete_config(
