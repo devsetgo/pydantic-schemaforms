@@ -1,3 +1,15 @@
-# Force LF line endings for vendored assets so sha256 checksums are consistent
+# Force LF line endings for vendored text assets so sha256 checksums are consistent
 # across all platforms (Windows git.core.autocrlf would otherwise convert to CRLF).
 pydantic_schemaforms/assets/vendor/**  text eol=lf
+
+# Binary font/image files must NOT be CRLF-normalized — the glob above would
+# corrupt them and cause sha256 mismatches between local write and CI checkout.
+*.woff2  binary
+*.woff   binary
+*.ttf    binary
+*.eot    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
