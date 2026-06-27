@@ -168,6 +168,26 @@ def user_form():
     return handle_form(builder)["form_html"]
 ```
 
+## Dual-use: form endpoint + JSON API
+
+Because `FormModel` is a plain Pydantic `BaseModel`, you can use it for JSON
+validation directly. Call `as_api_model()` to get a clean `BaseModel` with all
+`ui_*` rendering metadata stripped — safe to use as a FastAPI typed body or
+`response_model` without cluttering the OpenAPI docs.
+
+```python
+ContactSchema = ContactForm.as_api_model()
+
+@app.post("/api/contact", response_model=ContactSchema)
+async def api_contact(data: ContactSchema):
+    return data          # FastAPI validates JSON; Swagger shows a clean schema
+```
+
+`Field(title=...)`, `Field(description=...)`, `Field(examples=[...])`, and all
+validation constraints survive the transform unchanged.
+
+See the full pattern in [tutorial_fastapi.md](tutorial_fastapi.md#dual-use-html-form--json-api-from-one-model).
+
 ## Notes
 
 - `handle_form*()` returns either `{form_html}` (initial render) or `{success: bool, ...}` (submission).
