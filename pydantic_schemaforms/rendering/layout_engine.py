@@ -591,7 +591,6 @@ class LayoutEngine:
         self,
         layout_fields: list[tuple[str, dict[str, Any]]],
         data: dict[str, Any],
-        errors: dict[str, Any],
         context: RenderContext,
     ) -> list[str]:
         if not layout_fields:

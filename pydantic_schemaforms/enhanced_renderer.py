@@ -180,7 +180,6 @@ class EnhancedFormRenderer:
                 self._render_layout_fields_as_tabs(
                     layout_fields,
                     data,
-                    errors,
                     context,
                 )
             )
@@ -381,13 +380,11 @@ class EnhancedFormRenderer:
         self,
         layout_fields: list[tuple[str, dict[str, Any]]],
         data: dict[str, Any],
-        errors: dict[str, Any],
         context: RenderContext,
     ) -> list[str]:
         return self._layout_engine.render_layout_fields_as_tabs(
             layout_fields,
             data,
-            errors,
             context,
         )
 

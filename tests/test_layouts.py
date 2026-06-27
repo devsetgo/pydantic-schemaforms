@@ -793,7 +793,7 @@ class TestLayoutEngine:
         context = RenderContext(form_data={}, schema_defs={})
 
         result = engine.render_layout_fields_as_tabs(
-            layout_fields=[], data={}, errors={}, context=context
+            layout_fields=[], data={}, context=context
         )
 
         assert result == []
@@ -877,7 +877,6 @@ def test_render_layout_fields_as_tabs_and_layout_field_wrapper():
             )
         ],
         data=context.form_data,
-        errors={},
         context=context,
     )
 
