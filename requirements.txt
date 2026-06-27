@@ -29,7 +29,7 @@ pytest-playwright==0.7.2 # From 0.7.0 | Vulnerabilities: None
 pytest-runner==6.0.1 # Vulnerabilities: None
 pytest-xdist==3.8.0 # Vulnerabilities: None
 python-json-logger==4.1.0 # Vulnerabilities: None
-python-multipart==0.0.28 # From 0.0.27 | Vulnerabilities: None
+python-multipart==0.0.31 # From 0.0.27 | Vulnerabilities: None
 ruff==0.15.13 # From 0.15.12 | Vulnerabilities: None
 silly==1.1.0 # Vulnerabilities: None
 tox==4.55.0 # From 4.53.1 | Vulnerabilities: None
