@@ -5,7 +5,10 @@
       "Bash(python -m pytest tests/test_inputs.py tests/test_input_types_coverage.py tests/test_specialized_inputs_coverage.py -q --tb=no)",
       "Bash(python -m pytest tests/test_inputs.py tests/test_input_types_coverage.py tests/test_specialized_inputs_coverage.py -q --collect-only --tb=no)",
       "Bash(git -C /workspaces/pydantic-schemaforms add docs/recipes.md docs/js/demo-link.js mkdocs.yml)",
-      "Bash(git -C /workspaces/pydantic-schemaforms commit -m ' *)"
+      "Bash(git -C /workspaces/pydantic-schemaforms commit -m ' *)",
+      "Bash(xargs ls -la)",
+      "Bash(pytest tests/playwright/ -v --no-cov -p no:xdist)",
+      "Bash(git -C /workspaces/pydantic-schemaforms add tests/playwright/_server.py)"
     ]
   }
 }
