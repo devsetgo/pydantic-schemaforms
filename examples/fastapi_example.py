@@ -50,13 +50,19 @@ from examples.nested_forms_example import create_comprehensive_sample_data
 from pydantic_schemaforms import (
     __version__ as _psf_version,
     EnhancedFormRenderer,
+    EmailRule,
     Field,
+    FieldValidator,
     FormLayoutBase,
     FormModel,
+    HTMXValidationConfig,
+    LiveValidator,
+    MinLengthRule,
     parse_nested_form_data,
     render_form_html_async,
 )
-from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
+from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content, htmx_script_tag, read_asset_text
+from pydantic_schemaforms.live_validation import validation_response_headers
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +140,28 @@ class FeedbackForm(FormModel):
 
 # ge/le constraints (minimum/maximum) are preserved in the API schema.
 FeedbackSchema = FeedbackForm.as_api_model()
+
+# ---------------------------------------------------------------------------
+# Live-validation: field-level validators for the /live-validation demo
+# ---------------------------------------------------------------------------
+
+_contact_live_validator = LiveValidator(
+    HTMXValidationConfig(validate_on_blur=True, validate_on_input=False, validate_on_change=False)
+)
+
+_nv = FieldValidator('name')
+_nv.add_rule(MinLengthRule(2, message='Name must be at least 2 characters'))
+_contact_live_validator.register_field_validator(_nv)
+
+_ev = FieldValidator('email')
+_ev.add_rule(EmailRule())
+_contact_live_validator.register_field_validator(_ev)
+
+_mv = FieldValidator('message')
+_mv.add_rule(MinLengthRule(10, message='Message must be at least 10 characters'))
+_contact_live_validator.register_field_validator(_mv)
+
+_LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
 
 _openapi_tags = [
     {
@@ -278,6 +306,13 @@ async def vendor_bootstrap_icons_css():
     """Serve the vendored Bootstrap Icons CSS with the woff2 font embedded as a data URI."""
     css = bootstrap_icons_css_content()
     return Response(content=css, media_type='text/css')
+
+
+@app.get('/vendor/htmx.min.js', tags=['System'])
+async def vendor_htmx_js():
+    """Serve the vendored HTMX JavaScript."""
+    js = read_asset_text('assets/vendor/htmx/htmx.min.js')
+    return Response(content=js, media_type='application/javascript')
 
 
 def render_self_contained_demo_page(selected_style: str, form_html: str, renderer_name: str) -> str:
@@ -1812,6 +1847,83 @@ async def api_feedback_schema():
 
 
 # ================================
+# LIVE HTMX VALIDATION DEMO
+# ================================
+
+
+@app.get('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
+async def live_validation_get(request: Request, style: str = 'bootstrap'):
+    """Demonstrate real-time HTMX field validation on blur."""
+    return templates.TemplateResponse(
+        request,
+        'live_validation.html',
+        {
+            'request': request,
+            'title': 'Live HTMX Validation',
+            'description': 'Fields validate on blur via HTMX — no page reload required.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'form_data': {},
+            'errors': {},
+        },
+    )
+
+
+@app.post('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
+async def live_validation_post(request: Request, style: str = 'bootstrap'):
+    """Handle contact form submission for the live-validation demo."""
+    raw = await request.form()
+    data = parse_nested_form_data(raw)
+    result = ContactForm.validate(data, submit_url=f'/live-validation?style={style}', framework=style)
+    if result.is_valid:
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Message Sent!',
+                'message': f'Thank you, {result.data.get("name", "")}! Your message was received.',
+                'data': result.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': f'/live-validation?style={style}',
+            },
+        )
+    return templates.TemplateResponse(
+        request,
+        'live_validation.html',
+        {
+            'request': request,
+            'title': 'Live HTMX Validation',
+            'description': 'Fields validate on blur via HTMX — no page reload required.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'form_data': data,
+            'errors': result.errors,
+        },
+    )
+
+
+@app.post('/validate/{field_name}', response_class=HTMLResponse, tags=['Live Validation'])
+async def htmx_validate_field(field_name: str, request: Request):
+    """HTMX endpoint: validate a single contact form field and return feedback HTML."""
+    raw = await request.form()
+    value = raw.get(field_name, '')
+    result = _contact_live_validator.validate_field(field_name, str(value))
+    if result.is_valid:
+        feedback = '<span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Looks good!</span>'
+    else:
+        error_text = '; '.join(result.errors)
+        feedback = f'<span class="text-danger small"><i class="bi bi-exclamation-circle-fill me-1"></i>{error_text}</span>'
+    headers = validation_response_headers(field_name, result.is_valid)
+    return HTMLResponse(feedback, headers=headers)
+
+
+# ================================
 # HEALTH CHECK
 # ================================
 
@@ -1859,9 +1971,10 @@ if __name__ == '__main__':
     print('   • Show Timing:     add ?show_timing=1')
     print('')
     print('🎯 Special Demos:')
-    print('   • Self-Contained: http://localhost:8000/self-contained')
-    print('   • API Docs:       http://localhost:8000/docs')
-    print('   • Home Page:      http://localhost:8000/')
+    print('   • Live HTMX Validation: http://localhost:8000/live-validation')
+    print('   • Self-Contained:       http://localhost:8000/self-contained')
+    print('   • API Docs:             http://localhost:8000/docs')
+    print('   • Home Page:            http://localhost:8000/')
     print('')
     print('🔗 Dual-Use Demos (form + JSON API from one FormModel):')
     print('   Contact form (str fields):')

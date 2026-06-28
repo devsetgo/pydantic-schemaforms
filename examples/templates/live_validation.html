@@ -1,0 +1,149 @@
+{% extends "shared_base.html" %}
+
+{% block extra_styles %}
+<style>
+    .validation-feedback {
+        font-size: 0.85em;
+        min-height: 1.4em;
+        margin-top: 0.25rem;
+    }
+    .is-validating {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3e%3cpath d='M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(.375em + .1875rem) center;
+        background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+    }
+    .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+    .htmx-request .htmx-indicator { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="demo-card">
+            <div class="form-header">
+                <h2 class="mb-2">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>
+                    Live HTMX Validation
+                </h2>
+                <p class="mb-0">
+                    Fields validate on blur via HTMX — no page reload required.
+                    <span class="badge bg-info ms-2">Async</span>
+                </p>
+            </div>
+
+            <div class="p-4">
+                <form method="post" action="/live-validation">
+                    <!-- Name -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">
+                            <i class="bi bi-person me-1"></i>Full Name
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            class="form-control{% if errors.name %} is-invalid{% endif %}"
+                            placeholder="Your name"
+                            value="{{ form_data.get('name', '') }}"
+                            hx-post="/validate/name"
+                            hx-trigger="blur"
+                            hx-target="#name-feedback"
+                            hx-swap="innerHTML"
+                            data-validate-endpoint="true"
+                        />
+                        <div id="name-feedback" class="validation-feedback">
+                            {% if errors.name %}
+                            <span class="text-danger small">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>{{ errors.name[0] }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">
+                            <i class="bi bi-envelope me-1"></i>Email Address
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="form-control{% if errors.email %} is-invalid{% endif %}"
+                            placeholder="you@example.com"
+                            value="{{ form_data.get('email', '') }}"
+                            hx-post="/validate/email"
+                            hx-trigger="blur"
+                            hx-target="#email-feedback"
+                            hx-swap="innerHTML"
+                            data-validate-endpoint="true"
+                        />
+                        <div id="email-feedback" class="validation-feedback">
+                            {% if errors.email %}
+                            <span class="text-danger small">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>{{ errors.email[0] }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="mb-4">
+                        <label for="message" class="form-label fw-semibold">
+                            <i class="bi bi-chat-left-text me-1"></i>Message
+                        </label>
+                        <textarea
+                            id="message"
+                            name="message"
+                            class="form-control{% if errors.message %} is-invalid{% endif %}"
+                            placeholder="Your message (at least 10 characters)…"
+                            rows="4"
+                            hx-post="/validate/message"
+                            hx-trigger="blur"
+                            hx-target="#message-feedback"
+                            hx-swap="innerHTML"
+                            data-validate-endpoint="true"
+                        >{{ form_data.get('message', '') }}</textarea>
+                        <div id="message-feedback" class="validation-feedback">
+                            {% if errors.message %}
+                            <span class="text-danger small">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i>{{ errors.message[0] }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-demo">
+                        <i class="bi bi-send-fill me-2"></i>Send Message
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Examples
+                    </a>
+                </div>
+
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-info-circle me-1"></i>How it works
+                    </h6>
+                    <ul class="small mb-0 text-muted">
+                        <li>Each input has <code>hx-post="/validate/{field}"</code>, <code>hx-trigger="blur"</code>, and <code>hx-target</code> pointing to its feedback div.</li>
+                        <li>On blur, HTMX POSTs the field value to the server and swaps the feedback div with the returned HTML fragment.</li>
+                        <li>The server returns an <code>HX-Trigger: validationResult</code> header; the <code>LiveValidator</code> JS listens for it and applies <code>is-valid</code> / <code>is-invalid</code> classes to the input.</li>
+                        <li>The final submit still uses standard server-side Pydantic validation as a safety net.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/vendor/htmx.min.js"></script>
+{{ validator_script | safe }}
+{% endblock %}
