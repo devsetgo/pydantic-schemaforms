@@ -65,7 +65,10 @@
       "Bash(python -m pytest tests/test_http_integration.py -x -q)",
       "Bash(python -m pytest -x -q --no-header)",
       "Bash(pip show *)",
-      "Bash(python -m pytest tests/test_property_based.py -x -q --no-header)"
+      "Bash(python -m pytest tests/test_property_based.py -x -q --no-header)",
+      "Bash(pytest -n 2 --ignore=tests/playwright -q)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "/tmp",

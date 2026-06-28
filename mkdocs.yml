@@ -11,9 +11,11 @@ copyright: 'Copyright &copy; 2025 - 2026 Mike Ryan'
 
 nav:
   - Introduction: 'index.md'
+  - "Live Demo ↗": 'https://pydantic-schemaforms.devsetgo.com/'
   - Quick Start: 'quickstart.md'
   - Tutorials:
       - FastAPI Project: 'tutorial_fastapi.md'
+      - Recipes: 'recipes.md'
       # Legacy tutorial removed
   - Reference:
       - Configuration: 'configuration.md'
@@ -132,10 +134,16 @@ markdown_extensions:
   - pymdownx.superfences
   - toc:
       permalink: true
+extra_javascript:
+  - js/demo-link.js
+
 extra:
   version:
     provider: mike
   social:
+    - icon: material/web
+      link: https://pydantic-schemaforms.devsetgo.com/
+      name: Live Demo
     - icon: fontawesome/brands/github-alt
       link: https://github.com/devsetgo
     - icon: fontawesome/brands/twitter

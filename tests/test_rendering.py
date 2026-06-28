@@ -1268,15 +1268,25 @@ def test_live_validator_model_schema_and_render_paths() -> None:
 
 
 def test_live_validator_trigger_variants_and_htmx_script() -> None:
-    blur_validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True))
+    # blur only — disable other triggers explicitly
+    blur_validator = LiveValidator(
+        HTMXValidationConfig(
+            validate_on_blur=True, validate_on_input=False, validate_on_change=False
+        )
+    )
     blur_html = blur_validator.render_field_with_live_validation('username', label='User')
     assert 'hx-trigger="blur"' in blur_html
 
+    # input only — all enabled: blur + input + change → combined trigger
     input_validator = LiveValidator(
-        HTMXValidationConfig(validate_on_blur=False, validate_on_input=True, debounce_ms=150)
+        HTMXValidationConfig(
+            validate_on_blur=True, validate_on_input=True, validate_on_change=True, debounce_ms=150
+        )
     )
     input_html = input_validator.render_field_with_live_validation('email')
-    assert 'hx-trigger="input delay:150ms"' in input_html
+    assert 'blur' in input_html
+    assert 'input delay:150ms' in input_html
+    assert 'change' in input_html
 
     change_validator = LiveValidator(
         HTMXValidationConfig(

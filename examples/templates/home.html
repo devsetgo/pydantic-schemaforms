@@ -46,6 +46,18 @@
         font-size: 0.75rem;
         font-weight: 600;
     }
+    .live-validation-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: linear-gradient(45deg, #6610f2, #6f42c1);
+        color: white;
+        padding: 3px 9px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
     @media (max-width: 991px) {
         body .hero-section {
             padding: 2.5rem 1.5rem;
@@ -503,6 +515,33 @@
                         {% endif %}
                     </div>
                     <small class="text-muted mt-2">int + ge/le · <a href="/api/feedback/schema" target="_blank" class="text-decoration-none">schema</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live HTMX Validation -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Live Validation</div>
+            <div class="live-validation-badge"><i class="bi bi-lightning-charge-fill me-1"></i>HTMX</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <h5 class="card-title">Live HTMX Validation</h5>
+                <p class="card-text flex-grow-1">
+                    Real-time field validation on blur via HTMX — each field
+                    checked server-side without a full page reload.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/live-validation" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Live Validation
+                        </a>
+                    </div>
+                    <small class="text-muted mt-2">LiveValidator · HTMX on blur</small>
                 </div>
             </div>
         </div>

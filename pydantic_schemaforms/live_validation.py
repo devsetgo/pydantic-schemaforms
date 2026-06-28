@@ -260,17 +260,12 @@ class LiveValidator:
             def create_model_validator(fname: str, _finfo: Any):
                 def validator(value: Any) -> ValidationResponse:
                     try:
-                        # Create a partial model instance for validation
-                        test_data = {fname: value}
-                        model_class.model_validate(test_data, strict=False)
-
+                        model_class.__pydantic_validator__.validate_assignment(
+                            model_class.model_construct(), fname, value
+                        )
                         return ValidationResponse(field_name=fname, is_valid=True, value=value)
                     except ValidationError as e:
-                        errors = []
-                        for error in e.errors():
-                            if error['loc'] == (fname,):
-                                errors.append(error['msg'])
-
+                        errors = [err['msg'] for err in e.errors()]
                         return ValidationResponse(
                             field_name=fname, is_valid=False, errors=errors, value=value
                         )
@@ -401,13 +396,15 @@ async def validate_field(field_name: str, request: ValidationRequest):
             'data-validate-endpoint="true"',
         ]
 
+        triggers = []
         if self.config.validate_on_blur:
-            validation_attrs.append('hx-trigger="blur"')
-        elif self.config.validate_on_input:
-            trigger = f'input delay:{self.config.debounce_ms}ms'
-            validation_attrs.append(f'hx-trigger="{trigger}"')
-        elif self.config.validate_on_change:
-            validation_attrs.append('hx-trigger="change"')
+            triggers.append('blur')
+        if self.config.validate_on_input:
+            triggers.append(f'input delay:{self.config.debounce_ms}ms')
+        if self.config.validate_on_change:
+            triggers.append('change')
+        if triggers:
+            validation_attrs.append(f'hx-trigger="{", ".join(triggers)}"')
 
         # Build other attributes
         other_attrs = []

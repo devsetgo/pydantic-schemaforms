@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python -m pytest tests/test_vendor_assets_coverage.py tests/test_vendor_assets_network_mocked.py tests/test_vendor_assets_remaining.py tests/test_vendor_assets_scaffolding.py tests/test_asset_mode_pattern.py tests/test_no_external_cdn_default.py tests/test_no_external_cdn_more.py --collect-only -q)",
       "Bash(python -m pytest tests/test_inputs.py tests/test_input_types_coverage.py tests/test_specialized_inputs_coverage.py -q --tb=no)",
-      "Bash(python -m pytest tests/test_inputs.py tests/test_input_types_coverage.py tests/test_specialized_inputs_coverage.py -q --collect-only --tb=no)"
+      "Bash(python -m pytest tests/test_inputs.py tests/test_input_types_coverage.py tests/test_specialized_inputs_coverage.py -q --collect-only --tb=no)",
+      "Bash(git -C /workspaces/pydantic-schemaforms add docs/recipes.md docs/js/demo-link.js mkdocs.yml)",
+      "Bash(git -C /workspaces/pydantic-schemaforms commit -m ' *)",
+      "Bash(xargs ls -la)",
+      "Bash(pytest tests/playwright/ -v --no-cov -p no:xdist)",
+      "Bash(git -C /workspaces/pydantic-schemaforms add tests/playwright/_server.py)"
     ]
   }
 }
