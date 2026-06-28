@@ -14,7 +14,7 @@ from pydantic_schemaforms.validation import FieldValidator
 _email_fv = FieldValidator('email').email()
 _name_fv = FieldValidator('name').required().min_length(2, 'Name must be at least 2 characters')
 
-_config = HTMXValidationConfig(validate_on_blur=True, validate_on_input=False)
+_config = HTMXValidationConfig(validate_on_blur=True, validate_on_input=False, validate_on_change=False)
 live_validator = LiveValidator(config=_config)
 live_validator.register_field_validator(_email_fv)
 live_validator.register_field_validator(_name_fv)
