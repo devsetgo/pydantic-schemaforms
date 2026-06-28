@@ -1,7 +1,7 @@
 name: Deploy Documentation
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: "Docs version label for mike (e.g. 26.1.2b1)"

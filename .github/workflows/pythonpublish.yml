@@ -32,37 +32,40 @@ jobs:
         with:
           packages-dir: dist
 
-  trigger-docs:
-    name: Trigger documentation deployment
+  prepare-docs-inputs:
+    name: Prepare docs deployment inputs
     runs-on: ubuntu-latest
-    needs: deploy  # Wait for PyPI deployment to complete
-    permissions:
-      actions: write
-      contents: read
+    outputs:
+      version: ${{ steps.docs-inputs.outputs.version }}
+      checkout_ref: ${{ steps.docs-inputs.outputs.checkout_ref }}
+      aliases: ${{ steps.docs-inputs.outputs.aliases }}
     steps:
-      - name: Dispatch docs workflow on main
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const rawTag = context.payload.release?.tag_name;
-            if (!rawTag) {
-              core.setFailed('Missing release.tag_name; cannot dispatch docs build.');
-              return;
-            }
+      - name: Compute docs inputs from release tag
+        id: docs-inputs
+        run: |
+          raw_tag="${{ github.event.release.tag_name }}"
+          if [ -z "$raw_tag" ]; then
+            echo "Missing release.tag_name; cannot continue."
+            exit 1
+          fi
 
-            // Strip optional v-prefix for mike version label.
-            const version = rawTag.startsWith('v') ? rawTag.slice(1) : rawTag;
+          version="${raw_tag#v}"
 
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-docs.yml',
-              ref: 'main',
-              inputs: {
-                version,
-                checkout_ref: rawTag,
-                aliases: 'latest stable',
-              },
-            });
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "checkout_ref=$raw_tag" >> "$GITHUB_OUTPUT"
+          echo "aliases=latest stable" >> "$GITHUB_OUTPUT"
 
-            core.info(`Dispatched deploy-docs.yml on ref=main (checkout_ref=${rawTag}, version=${version})`);
+  deploy-docs:
+    name: Deploy documentation after PyPI publish
+    needs:
+      - deploy
+      - prepare-docs-inputs
+    uses: ./.github/workflows/deploy-docs.yml
+    with:
+      version: ${{ needs.prepare-docs-inputs.outputs.version }}
+      checkout_ref: ${{ needs.prepare-docs-inputs.outputs.checkout_ref }}
+      aliases: ${{ needs.prepare-docs-inputs.outputs.aliases }}
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
