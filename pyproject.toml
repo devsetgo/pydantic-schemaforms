@@ -9,7 +9,7 @@ requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
 readme = "README.md"
-classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 5 - Production/Stable", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
+classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Topic :: Software Development :: Libraries :: Python Modules", "Typing :: Typed", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
 dependencies = [ "pydantic>=2.13,<3", "pydantic-extra-types[all]>=2.11,<3",]
 [[project.authors]]
 name = "Mike Ryan"
@@ -24,6 +24,7 @@ file = "LICENSE"
 Homepage = "https://github.com/devsetgo/pydantic-schemaforms"
 Documentation = "https://devsetgo.github.io/pydantic-schemaforms/"
 Repository = "https://github.com/devsetgo/pydantic-schemaforms"
+"Bug Tracker" = "https://github.com/devsetgo/pydantic-schemaforms/issues"
 
 [project.optional-dependencies]
 fastapi = [ "fastapi>=0.110,<2", "uvicorn>=0.30,<1",]
