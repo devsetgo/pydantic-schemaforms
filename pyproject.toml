@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "26.2.2"
+version = "26.2.3"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
 readme = "README.md"
-classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 5 - Production/Stable", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
+classifiers = [ "License :: OSI Approved :: MIT License", "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "Programming Language :: Python", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.14", "Framework :: FastAPI", "Framework :: Flask", "Topic :: Internet :: WWW/HTTP :: Dynamic Content", "Topic :: Software Development :: Libraries :: Python Modules", "Typing :: Typed", "Operating System :: POSIX :: Linux", "Operating System :: MacOS :: MacOS X", "Operating System :: Microsoft :: Windows",]
 dependencies = [ "pydantic>=2.13,<3", "pydantic-extra-types[all]>=2.11,<3",]
 [[project.authors]]
 name = "Mike Ryan"
@@ -24,6 +24,7 @@ file = "LICENSE"
 Homepage = "https://github.com/devsetgo/pydantic-schemaforms"
 Documentation = "https://devsetgo.github.io/pydantic-schemaforms/"
 Repository = "https://github.com/devsetgo/pydantic-schemaforms"
+"Bug Tracker" = "https://github.com/devsetgo/pydantic-schemaforms/issues"
 
 [project.optional-dependencies]
 fastapi = [ "fastapi>=0.110,<2", "uvicorn>=0.30,<1",]
@@ -96,13 +97,6 @@ warmup = false
 select = [ "C", "F", "E", "W", "B", "TID",]
 ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
 
-# ARCHITECTURAL INVARIANT — see CLAUDE.md §"T-string rule" and tests/test_invariants.py.
-# string.Template (${}  interpolation) has no XSS protection.
-# All HTML generation MUST use t-strings with html() from pydantic_schemaforms.tstring.
-# Do NOT remove or weaken this entry — it is also enforced by tests/test_invariants.py.
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"string.Template" = {msg = "Use t-strings with html() from pydantic_schemaforms.tstring — see CLAUDE.md"}
-
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
@@ -133,3 +127,6 @@ exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 [tool.hatch.build.targets.wheel]
 packages = [ "pydantic_schemaforms",]
 include = [ "pydantic_schemaforms/assets/**", "pydantic_schemaforms/py.typed",]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api."string.Template"]
+msg = "Use t-strings with html() from pydantic_schemaforms.tstring — see CLAUDE.md"

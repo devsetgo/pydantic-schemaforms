@@ -3,13 +3,13 @@ autopep8==2.3.2 # Vulnerabilities: None
 black==26.5.1 # Vulnerabilities: None
 bumpcalver==2026.5.24.1 # Vulnerabilities: None
 devsetgo-lib==2026.3.15.1 # Vulnerabilities: None
-fastapi[all]==0.136.1 # Vulnerabilities: None
-httpx2==2.5.0 # Vulnerabilities: None
+fastapi[all]==0.138.1 # From 0.136.1 | Vulnerabilities: None
 flake8==7.3.0 # Vulnerabilities: None
 Flask==3.1.3 # Vulnerabilities: None
 genbadge[all]==1.1.3 # Vulnerabilities: None
-hatchling==1.29.0 # Vulnerabilities: None
-hypothesis==6.152.7 # Vulnerabilities: None
+hatchling==1.30.1 # From 1.29.0 | Vulnerabilities: None
+httpx2==2.5.0 # Vulnerabilities: None
+hypothesis==6.155.7 # From 6.152.7 | Vulnerabilities: None
 isort==8.0.1 # Vulnerabilities: None
 mike==2.2.0 # Vulnerabilities: None
 mkdocs-material==9.7.6 # Vulnerabilities: None
@@ -18,21 +18,22 @@ mkdocstrings[python]==1.0.4 # Vulnerabilities: None
 packaging==26.2 # Vulnerabilities: None
 pre-commit==4.6.0 # Vulnerabilities: None
 pydantic-extra-types[all]==2.11.1 # Vulnerabilities: None
-pymdown-extensions==10.21.3 # From 10.21.2 | Vulnerabilities: None
-pyright==1.1.410 # From 1.1.400 | Vulnerabilities: None
-pytest==9.0.3 # Vulnerabilities: None
+pymdown-extensions==11.0 # From 10.21.3 | Vulnerabilities: None
+pyright==1.1.411 # From 1.1.410 | Vulnerabilities: None
+pytest==9.1.1 # From 9.0.3 | Vulnerabilities: None
 pytest-asyncio==1.4.0 # Vulnerabilities: None
 pytest-benchmark==5.2.3 # Vulnerabilities: None
 pytest-cov==7.1.0 # Vulnerabilities: None
 pytest-html==4.2.0 # Vulnerabilities: None
 pytest-mock==3.15.1 # Vulnerabilities: None
-pytest-playwright==0.7.2 # From 0.7.0 | Vulnerabilities: None
+pytest-playwright==0.8.0 # From 0.7.2 | Vulnerabilities: None
 pytest-runner==6.0.1 # Vulnerabilities: None
 pytest-xdist==3.8.0 # Vulnerabilities: None
 python-json-logger==4.1.0 # Vulnerabilities: None
-python-multipart==0.0.31 # From 0.0.27 | Vulnerabilities: None
-ruff==0.15.13 # From 0.15.12 | Vulnerabilities: None
+python-multipart==0.0.32 # From 0.0.28 | Vulnerabilities: None
+ruff==0.15.20 # From 0.15.13 | Vulnerabilities: None
 silly==1.1.0 # Vulnerabilities: None
-tox==4.55.0 # From 4.53.1 | Vulnerabilities: None
-tqdm==4.67.3 # Vulnerabilities: None
+tox==4.56.1 # From 4.55.0 | Vulnerabilities: None
+tqdm==4.68.3 # From 4.67.3 | Vulnerabilities: None
 twine==6.2.0 # Vulnerabilities: None
+
