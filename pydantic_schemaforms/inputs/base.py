@@ -133,7 +133,6 @@ class BaseInput(ABC):
 class FormInput(BaseInput):
     """Base class for form input elements with form-specific attributes."""
 
-    # Form-specific attributes
     valid_attributes: list[str] = BaseInput.valid_attributes + [
         'value',
         'placeholder',
@@ -178,47 +177,27 @@ class FormInput(BaseInput):
         options: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> str:
-        """
-        Render the input with its label, help text, error message, and optional icon.
-        This method is required for all input components to work with the form renderer.
-
-        Args:
-            label: Label text for the input
-            help_text: Help text to display
-            error: Error message to display
-            icon: Icon name (will be mapped to framework)
-            framework: UI framework being used
-            options: Options for select/radio inputs
-            **kwargs: Additional attributes for the input
-
-        Returns:
-            Complete HTML for the input with label and decorations
-        """
+        """Render the input with its label, help text, and error message."""
         from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 
-        # Map icon to appropriate framework if provided
         if icon:
             icon = map_icon_for_framework(icon, framework)
 
-        # Get the input HTML - call the render method of the specific input type
         if hasattr(self, 'render'):
             if options is not None:
                 input_html = self.render(options=options, **kwargs)
             else:
                 input_html = self.render(**kwargs)
         else:
-            # Fallback rendering
             attrs = self.validate_attributes(**kwargs)
             input_type = getattr(self, 'get_input_type', lambda: 'text')()
             attrs['type'] = input_type
             attributes_str = self._build_attributes_string(attrs)
             input_html = f'<input {attributes_str} />'
 
-        # Build the complete field HTML based on framework
         field_parts = []
 
         if framework == 'bootstrap':
-            # Bootstrap styling
             if label:
                 label_html = build_label(
                     kwargs.get('name', 'field'),
@@ -237,7 +216,6 @@ class FormInput(BaseInput):
             if error:
                 field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
         else:
-            # Material Design or other frameworks
             if label:
                 label_html = build_label(
                     kwargs.get('name', 'field'),
@@ -269,12 +247,9 @@ def build_label(
     """Build label element with optional icon support."""
     display_label = label or field_name.replace('_', ' ').title()
     required_indicator = ' *' if required else ''
-
-    # Add icon if provided
     icon_html = ''
     if icon:
         if framework == 'bootstrap':
-            # Handle both with and without bi bi- prefix
             icon_class = icon if icon.startswith('bi bi-') else f'bi bi-{icon}'
             icon_html = f'<i class="{icon_class}"></i> '
         elif framework == 'material':
@@ -304,15 +279,9 @@ class NumericInput(FormInput):
     valid_attributes: list[str] = FormInput.valid_attributes + ['min', 'max', 'step']
 
     def render(self, **kwargs: Any) -> str:
-        """Render numeric input."""
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        return f'<input {attributes_str} />'
+        return f'<input {self._build_attributes_string(attrs)} />'
 
 
 class FileInputBase(FormInput):
@@ -350,45 +319,24 @@ class SelectInputBase(BaseInput):
         options: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> str:
-        """
-        Render the input with its label, help text, error message, and optional icon.
-        This method is required for all input components to work with the form renderer.
-
-        Args:
-            label: Label text for the input
-            help_text: Help text to display
-            error: Error message to display
-            icon: Icon name (will be mapped to framework)
-            framework: UI framework being used
-            options: Options for select/radio inputs
-            **kwargs: Additional attributes for the input
-
-        Returns:
-            Complete HTML for the input with label and decorations
-        """
+        """Render the selection input with its label, help text, and error message."""
         from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 
-        # Ensure we have an input type
         self.get_input_type()
 
-        # Map icon to appropriate framework if provided
         if icon:
             icon = map_icon_for_framework(icon, framework)
 
-        # For selection inputs, we need options
         if hasattr(self, 'render') and options is not None:
             input_html = self.render(options=options, **kwargs)
         else:
-            # Fallback rendering
             attrs = self.validate_attributes(**kwargs)
             attributes_str = self._build_attributes_string(attrs)
             input_html = f'<select {attributes_str}></select>'
 
-        # Build the complete field HTML based on framework
         field_parts = []
 
         if framework == 'bootstrap':
-            # Bootstrap styling
             field_parts.append('<div class="mb-3">')
 
             if label:
@@ -415,7 +363,6 @@ class SelectInputBase(BaseInput):
             field_parts.append(_CLOSE_DIV)
 
         elif framework == 'material':
-            # Material Design styling
             field_parts.append('<div class="md-field">')
 
             if icon:
@@ -431,8 +378,8 @@ class SelectInputBase(BaseInput):
                 )
 
             if icon:
-                field_parts.append(_CLOSE_DIV)  # Close md-input-wrapper
-                field_parts.append(_CLOSE_DIV)  # Close md-field-with-icon
+                field_parts.append(_CLOSE_DIV)
+                field_parts.append(_CLOSE_DIV)
 
             if help_text:
                 field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
@@ -443,7 +390,6 @@ class SelectInputBase(BaseInput):
             field_parts.append(_CLOSE_DIV)
 
         else:
-            # Basic/no framework styling
             field_parts.append('<div class="field">')
 
             if label:

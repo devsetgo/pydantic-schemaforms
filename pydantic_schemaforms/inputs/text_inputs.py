@@ -1,7 +1,4 @@
-"""
-Text input components using Python 3.14 template strings.
-Includes TextInput, PasswordInput, EmailInput, TextArea, and SearchInput.
-"""
+"""Text input components: TextInput, PasswordInput, EmailInput, TextArea, SearchInput, and specialised variants."""
 
 from typing import Any
 
@@ -17,15 +14,9 @@ class TextInput(FormInput):
         return 'text'
 
     def render(self, **kwargs: Any) -> str:
-        """Render text input."""
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
-        return f'<input {attributes_str} />'
+        return f'<input {self._build_attributes_string(attrs)} />'
 
 
 class PasswordInput(FormInput):
@@ -37,15 +28,11 @@ class PasswordInput(FormInput):
         return 'password'
 
     def render(self, **kwargs: Any) -> str:
-        """Render password input using Python 3.14 template strings."""
-        # Remove autocomplete by default for security
+        # Suppress autocomplete so browsers don't pre-fill saved passwords into new-password fields.
         if 'autocomplete' not in kwargs:
             kwargs['autocomplete'] = 'new-password'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
@@ -58,15 +45,10 @@ class EmailInput(FormInput):
         return 'email'
 
     def render(self, **kwargs: Any) -> str:
-        """Render email input using Python 3.14 template strings."""
-        # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
-            kwargs['inputmode'] = 'email'
-
-        # Validate and format attributes
+            kwargs['inputmode'] = 'email'  # numeric-friendly keyboard on mobile
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
@@ -79,15 +61,10 @@ class SearchInput(FormInput):
         return 'search'
 
     def render(self, **kwargs: Any) -> str:
-        """Render search input using Python 3.14 template strings."""
-        # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
             kwargs['inputmode'] = 'search'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
@@ -95,32 +72,19 @@ class TextArea(FormInput):
     """Multi-line text input area."""
 
     ui_element: str = 'textarea'
-
     valid_attributes: list[str] = FormInput.valid_attributes + ['rows', 'cols', 'wrap', 'resize']
 
     def get_input_type(self) -> str:
-        return 'textarea'  # Not a real input type, but used for identification
+        return 'textarea'  # Not a real input type, but used for identification.
 
     def render(self, **kwargs: Any) -> str:
-        """Render textarea element."""
-        # Extract value for content
         value = kwargs.pop('value', '')
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
-
-        # Don't include type attribute for textarea
         if 'type' in attrs:
-            del attrs['type']
-
-        # Build the attributes string
+            del attrs['type']  # <textarea> has no type attribute.
         attributes_str = self._build_attributes_string(attrs)
-
-        # Escape the content value
         from html import escape
-
         escaped_value = escape(str(value)) if value is not None else ''
-
         return f'<textarea {attributes_str}>{escaped_value}</textarea>'
 
 
@@ -133,19 +97,12 @@ class URLInput(FormInput):
         return 'url'
 
     def render(self, **kwargs: Any) -> str:
-        """Render URL input using Python 3.14 template strings."""
-        # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
             kwargs['inputmode'] = 'url'
-
-        # Add default pattern for URL validation if not provided
         if 'pattern' not in kwargs:
             kwargs['pattern'] = r'https?://.+'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
@@ -158,23 +115,16 @@ class TelInput(FormInput):
         return 'tel'
 
     def render(self, **kwargs: Any) -> str:
-        """Render tel input using Python 3.14 template strings."""
-        # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
             kwargs['inputmode'] = 'tel'
-
-        # Add autocomplete hint
         if 'autocomplete' not in kwargs:
             kwargs['autocomplete'] = 'tel'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
-# Specialized text inputs with formatting and validation
+# Specialised text inputs with formatting constraints.
 
 
 class SSNInput(TextInput):
@@ -184,18 +134,13 @@ class SSNInput(TextInput):
     ui_element_aliases: tuple[str, ...] = ('social_security_number',)
 
     def render(self, **kwargs: Any) -> str:
-        """Render SSN input using Python 3.14 template strings."""
-        # Add SSN-specific attributes
         kwargs['pattern'] = r'\d{3}-\d{2}-\d{4}'
         kwargs['placeholder'] = kwargs.get('placeholder', '123-45-6789')
         kwargs['maxlength'] = '11'
         kwargs['inputmode'] = 'numeric'
         kwargs['autocomplete'] = 'off'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
@@ -206,14 +151,11 @@ class PhoneInput(TelInput):
     ui_element_aliases: tuple[str, ...] = ('phone_number',)
 
     def render(self, country_code: str | None = None, **kwargs: Any) -> str:
-        """Render phone input using Python 3.14 template strings."""
         if country_code:
-            # Add country code to the value or placeholder
             if 'value' in kwargs and not kwargs['value'].startswith(country_code):
                 kwargs['value'] = f'{country_code} {kwargs["value"]}'
             elif 'placeholder' in kwargs and not kwargs['placeholder'].startswith(country_code):
                 kwargs['placeholder'] = f'{country_code} {kwargs["placeholder"]}'
-
         return super().render(**kwargs)
 
 
@@ -224,18 +166,13 @@ class CreditCardInput(TextInput):
     ui_element_aliases: tuple[str, ...] = ('card', 'cc_number')
 
     def render(self, **kwargs: Any) -> str:
-        """Render credit card input using Python 3.14 template strings."""
-        # Add credit card specific attributes
         kwargs['pattern'] = r'\d{4}\s?\d{4}\s?\d{4}\s?\d{4}'
         kwargs['placeholder'] = kwargs.get('placeholder', '1234 5678 9012 3456')
-        kwargs['maxlength'] = '19'  # Including spaces
+        kwargs['maxlength'] = '19'  # 16 digits + 3 separator spaces
         kwargs['inputmode'] = 'numeric'
         kwargs['autocomplete'] = 'cc-number'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
@@ -246,14 +183,9 @@ class CurrencyInput(TextInput):
     ui_element_aliases: tuple[str, ...] = ('money',)
 
     def render(self, currency_symbol: str = '$', **kwargs: Any) -> str:
-        """Render currency input using Python 3.14 template strings."""
-        # Add currency-specific attributes
         kwargs['pattern'] = rf'^\{currency_symbol}?\d+(\.\d{{2}})?$'
         kwargs['placeholder'] = kwargs.get('placeholder', f'{currency_symbol}0.00')
         kwargs['inputmode'] = 'decimal'
-
-        # Validate and format attributes
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-
         return _render_input_tag(self._build_attributes_string(attrs))

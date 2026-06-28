@@ -10,25 +10,7 @@ from .validation import ValidationResult
 
 
 def form_validator(func: Callable) -> Callable:
-    """
-    Decorator for form validation methods that matches the design_idea.py vision.
-
-    This decorator provides a clean way to define cross-field validation on FormModel classes.
-    It wraps the function to provide better error handling and integration with the form system.
-
-    Usage:
-        class MyForm(FormModel):
-            age: int = Field(..., input_type="number")
-            parental_consent: bool = Field(False, input_type="checkbox")
-
-            @form_validator
-            def check_age_and_consent(cls, values: dict[str, Any]) -> dict[str, Any]:
-                age = values.get('age')
-                consent = values.get('parental_consent')
-                if age is not None and age < 18 and not consent:
-                    raise ValueError("Parental consent is required for users under 18.")
-                return values
-    """
+    """Classmethod decorator for cross-field validation on FormModel subclasses."""
 
     @wraps(func)
     def wrapper(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -39,7 +21,6 @@ def form_validator(func: Callable) -> Callable:
         except Exception as e:
             raise ValueError(f'Validation error: {str(e)}') from e
 
-    # Mark the function as a form validator
     wrapper._is_form_validator = True  # type: ignore[attr-defined]
     return classmethod(wrapper)  # type: ignore[return-value]
 

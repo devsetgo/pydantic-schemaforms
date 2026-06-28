@@ -36,22 +36,12 @@ class SafeHTML(str):
 
 
 def html(template: Template) -> SafeHTML:
-    """Render a t-string, HTML-escaping every interpolation that is not SafeHTML.
-
-    Static string parts of the t-string are emitted verbatim; interpolated
-    values are passed through html.escape() unless they are already SafeHTML.
-
-    Args:
-        template: A t-string literal, e.g. t'<div>{value}</div>'
-
-    Returns:
-        SafeHTML — a str subclass marking the result as safe for further use.
-    """
+    """Render a t-string, HTML-escaping every interpolation that is not already SafeHTML."""
     parts: list[str] = []
     for chunk in template:
         if isinstance(chunk, str):
             parts.append(chunk)
-        else:  # Interpolation
+        else:
             val = chunk.value
             if isinstance(val, SafeHTML):
                 parts.append(str(val))
@@ -64,20 +54,7 @@ _PLACEHOLDER: re.Pattern[str] = re.compile(r'\$\{(\w+)\}')
 
 
 def substitute(template_str: str, **kwargs: Any) -> SafeHTML:
-    """Replace ${var} placeholders without HTML-escaping the substituted values.
-
-    Use ONLY for layout wrapper templates (layout_base.py subclasses) whose
-    structure is defined as a class attribute string with ${var} placeholders.
-    Every value passed here must be developer-controlled or already SafeHTML —
-    never pass unvalidated user input through substitute().
-
-    Args:
-        template_str: Template string containing ${variable} placeholders.
-        **kwargs: Values to substitute; missing placeholders are left as-is.
-
-    Returns:
-        SafeHTML wrapping the substituted string.
-    """
+    """Replace ${var} placeholders without escaping — only for developer-controlled layout templates."""
 
     def _replace(m: re.Match[str]) -> str:
         return str(kwargs.get(m.group(1), m.group(0)))
