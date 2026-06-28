@@ -74,6 +74,38 @@
                     </div>
                 </div>
 
+                {% if api_endpoint %}
+                <!-- Dual-Use API callout — shown when the route passes api_endpoint context -->
+                <div class="mt-4 p-3 rounded border" style="border-color: #0d6efd !important; background-color: rgba(13,110,253,.05);">
+                    <h6 class="mb-2" style="color: #0d6efd;">
+                        <i class="bi bi-braces me-2"></i>
+                        Also available as a JSON API
+                    </h6>
+                    <p class="small text-muted mb-2">
+                        This form shares a single <code>FormModel</code> with a typed JSON endpoint via
+                        <code>as_api_model()</code>. The API schema has no <code>ui_*</code> keys —
+                        identical to a hand-written Pydantic model, with all validation constraints intact.
+                    </p>
+                    <div class="row g-2 small">
+                        <div class="col-md-6">
+                            <div><strong>POST JSON:</strong> <code>{{ api_endpoint }}</code></div>
+                            <div><strong>Clean schema:</strong>
+                                <a href="{{ api_schema_endpoint }}" target="_blank" class="text-decoration-none">
+                                    GET {{ api_schema_endpoint }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div><strong>OpenAPI docs:</strong>
+                                <a href="/docs" target="_blank" class="text-decoration-none">
+                                    Interactive API Docs <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if framework == "fastapi" %}
                 <!-- API Info -->
                 <div class="mt-4 p-3 bg-info bg-opacity-10 rounded">

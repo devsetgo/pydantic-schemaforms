@@ -1,11 +1,4 @@
-"""Utilities for wrapping rendered HTML with identifiable markers.
-
-These markers can be useful when embedding SchemaForms output inside larger HTML
-responses, debugging, or post-processing HTML.
-
-The goal is for the start marker to be the first line and the end marker to be
-the last line of the returned HTML string.
-"""
+"""Start/end HTML comment markers that frame every SchemaForms-rendered block."""
 
 from __future__ import annotations
 
@@ -16,27 +9,11 @@ END_MARKER = '<!--- End Pydantic-SchemaForms -->'
 
 
 def wrap_with_schemaforms_markers(html: str, *, enabled: bool = True) -> str:
-    """Wrap HTML with SchemaForms start/end markers.
-
-    - Ensures the start marker is the first line (no leading whitespace).
-    - Ensures the end marker is the last line (no trailing whitespace).
-    - Avoids duplicating markers if already present.
-
-    Args:
-        html: HTML string to wrap.
-        enabled: If False, returns html unchanged.
-
-    Returns:
-        Wrapped HTML string.
-    """
-
+    """Wrap html with start/end markers; idempotent and strips existing markers first."""
     if not enabled:
         return html
 
-    # Normalize whitespace so our markers become true first/last lines.
     normalized = (html or '').lstrip().rstrip()
-
-    # Strip existing markers if present (so we can reliably enforce first/last).
     lines = normalized.splitlines()
     if lines and lines[0].strip() == START_MARKER:
         lines = lines[1:]

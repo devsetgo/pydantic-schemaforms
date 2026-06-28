@@ -97,10 +97,92 @@ class ContactForm(FormModel):
 # Same fields and validation rules; ui_* keys stripped so OpenAPI docs are clean.
 ContactSchema = ContactForm.as_api_model()
 
+
+# ---------------------------------------------------------------------------
+# Second dual-use demo: integer + select fields via as_api_model()
+# ---------------------------------------------------------------------------
+
+
+class FeedbackForm(FormModel):
+    """Product feedback form that also serves as a typed JSON API body."""
+
+    subject: str = Field(
+        ...,
+        title='Subject',
+        description='What are you giving feedback on?',
+        examples=['Documentation', 'Performance', 'New feature request'],
+        ui_element='text',
+        ui_placeholder='e.g. Documentation clarity',
+    )
+    rating: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        title='Rating (1–5)',
+        description='1 = poor, 5 = excellent',
+        examples=[4],
+        ui_element='number',
+    )
+    comment: str = Field(
+        '',
+        title='Comment',
+        description='Any additional details (optional)',
+        examples=['Great library, very easy to integrate!'],
+        ui_element='textarea',
+    )
+
+
+# ge/le constraints (minimum/maximum) are preserved in the API schema.
+FeedbackSchema = FeedbackForm.as_api_model()
+
+_openapi_tags = [
+    {
+        'name': 'Simple Forms',
+        'description': 'Minimal login form — basic fields, CSRF protection, and two CSS frameworks.',
+    },
+    {
+        'name': 'Registration',
+        'description': 'Medium-complexity registration form with role selection and responsive design.',
+    },
+    {
+        'name': 'Dynamic Lists',
+        'description': 'Pet registration — repeating sub-forms (model-list fields) with add/remove controls.',
+    },
+    {
+        'name': 'Showcase',
+        'description': 'Complete field showcase and complex layout compositions (tabs, accordions, grids).',
+    },
+    {
+        'name': 'Advanced Nested',
+        'description': 'Five-level nested organization hierarchy — the stress test for the rendering engine.',
+    },
+    {
+        'name': 'Self-Contained',
+        'description': 'Forms rendered with inline Bootstrap assets — no CDN required.',
+    },
+    {
+        'name': 'Dual-Use: Form + JSON API',
+        'description': (
+            'One `FormModel` serves both an HTML browser form and a typed JSON endpoint. '
+            '`as_api_model()` strips `ui_*` keys so the schema here looks hand-written, '
+            'with all validation constraints intact.'
+        ),
+    },
+    {
+        'name': 'Generic Form API',
+        'description': 'JSON endpoints for schema introspection, server-side rendering, and headless submission.',
+    },
+    {
+        'name': 'System',
+        'description': 'Health check and static asset endpoints.',
+    },
+]
+
 app = FastAPI(
     title='Pydantic SchemaForms - FastAPI Example',
     description='Comprehensive showcase of pydantic-schemaforms capabilities in async FastAPI',
     version=_psf_version,
+    openapi_tags=_openapi_tags,
 )
 
 app.add_middleware(
@@ -191,7 +273,7 @@ templates.env.filters['safe_json'] = safe_json_filter
 app.mount('/static', StaticFiles(directory=_base_dir / 'img'), name='static')
 
 
-@app.get('/vendor/bootstrap-icons.css')
+@app.get('/vendor/bootstrap-icons.css', tags=['System'])
 async def vendor_bootstrap_icons_css():
     """Serve the vendored Bootstrap Icons CSS with the woff2 font embedded as a data URI."""
     css = bootstrap_icons_css_content()
@@ -252,7 +334,7 @@ def render_self_contained_demo_page(selected_style: str, form_html: str, rendere
 # ================================
 
 
-@app.get('/', response_class=HTMLResponse)
+@app.get('/', response_class=HTMLResponse, tags=['System'])
 async def home(request: Request):
     """Home page showcasing all form examples."""
     return templates.TemplateResponse(
@@ -272,7 +354,7 @@ async def home(request: Request):
 # ================================
 
 
-@app.get('/login', response_class=HTMLResponse)
+@app.get('/login', response_class=HTMLResponse, tags=['Simple Forms'])
 async def login_get(
     request: Request,
     style: str = 'bootstrap',
@@ -326,7 +408,7 @@ async def login_get(
     )
 
 
-@app.post('/login', response_class=HTMLResponse)
+@app.post('/login', response_class=HTMLResponse, tags=['Simple Forms'])
 async def login_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -428,7 +510,7 @@ async def login_post(
 # ================================
 
 
-@app.get('/register', response_class=HTMLResponse)
+@app.get('/register', response_class=HTMLResponse, tags=['Registration'])
 async def register_get(
     request: Request,
     style: str = 'bootstrap',
@@ -490,7 +572,7 @@ async def register_get(
 
 
 # Alias for /user route (used in templates)
-@app.get('/user', response_class=HTMLResponse)
+@app.get('/user', response_class=HTMLResponse, include_in_schema=False)
 async def user_get(
     request: Request,
     style: str = 'bootstrap',
@@ -503,7 +585,7 @@ async def user_get(
     return await register_get(request, style, data, demo, debug, show_timing)
 
 
-@app.post('/register', response_class=HTMLResponse)
+@app.post('/register', response_class=HTMLResponse, tags=['Registration'])
 async def register_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -604,7 +686,7 @@ async def register_post(
 # ================================
 
 
-@app.get('/showcase', response_class=HTMLResponse)
+@app.get('/showcase', response_class=HTMLResponse, tags=['Showcase'])
 async def showcase_get(
     request: Request,
     style: str = 'bootstrap',
@@ -665,7 +747,7 @@ async def showcase_get(
     )
 
 
-@app.post('/showcase', response_class=HTMLResponse)
+@app.post('/showcase', response_class=HTMLResponse, tags=['Showcase'])
 async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -723,7 +805,7 @@ async def showcase_post(
 
 
 # Alias routes for template compatibility
-@app.get('/pets', response_class=HTMLResponse)
+@app.get('/pets', response_class=HTMLResponse, tags=['Dynamic Lists'])
 async def pets_get(
     request: Request,
     style: str = 'bootstrap',
@@ -880,7 +962,7 @@ async def pets_get(
     )
 
 
-@app.post('/pets', response_class=HTMLResponse)
+@app.post('/pets', response_class=HTMLResponse, tags=['Dynamic Lists'])
 async def pets_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -940,7 +1022,7 @@ async def pets_post(
 # ================================
 
 
-@app.get('/organization', response_class=HTMLResponse)
+@app.get('/organization', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1008,7 +1090,7 @@ async def organization_get(
     )
 
 
-@app.post('/organization', response_class=HTMLResponse)
+@app.post('/organization', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -1066,7 +1148,7 @@ async def organization_post(
         )
 
 
-@app.get('/organization-shared', response_class=HTMLResponse)
+@app.get('/organization-shared', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_shared_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1118,7 +1200,7 @@ async def organization_shared_get(
     )
 
 
-@app.post('/organization-shared', response_class=HTMLResponse)
+@app.post('/organization-shared', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_shared_post(
     request: Request,
     style: str = 'bootstrap',
@@ -1176,7 +1258,7 @@ async def organization_shared_post(
     )
 
 
-@app.get('/layouts', response_class=HTMLResponse)
+@app.get('/layouts', response_class=HTMLResponse, tags=['Showcase'])
 async def layouts_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1261,7 +1343,7 @@ async def layouts_get(
     )
 
 
-@app.post('/layouts', response_class=HTMLResponse)
+@app.post('/layouts', response_class=HTMLResponse, tags=['Showcase'])
 async def layouts_post(
     request: Request,
     style: str = 'bootstrap',
@@ -1322,7 +1404,7 @@ async def layouts_post(
     )
 
 
-@app.get('/self-contained', response_class=HTMLResponse)
+@app.get('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
 async def self_contained(
     style: str = 'material',
     demo: bool = True,
@@ -1371,7 +1453,7 @@ async def self_contained(
     return render_self_contained_demo_page(selected_style, form_html, renderer_name)
 
 
-@app.post('/self-contained', response_class=HTMLResponse)
+@app.post('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
 async def self_contained_post(
     request: Request,
     style: str = 'material',
@@ -1447,7 +1529,7 @@ FORM_REGISTRY = {
 }
 
 
-@app.get('/api/forms/{form_type}/schema')
+@app.get('/api/forms/{form_type}/schema', tags=['Generic Form API'])
 async def api_form_schema(form_type: str):
     """
     Return JSON Schema for a form model.
@@ -1465,7 +1547,7 @@ async def api_form_schema(form_type: str):
     return {'form_type': form_type, 'schema': schema, 'framework': 'fastapi'}
 
 
-@app.post('/api/forms/{form_type}/submit')
+@app.post('/api/forms/{form_type}/submit', tags=['Generic Form API'])
 async def api_submit_form(form_type: str, request: Request):
     """
     Validate JSON form submissions against a selected Pydantic form model.
@@ -1491,7 +1573,7 @@ async def api_submit_form(form_type: str, request: Request):
     }
 
 
-@app.get('/api/forms/{form_type}/render')
+@app.get('/api/forms/{form_type}/render', tags=['Generic Form API'])
 async def api_render_form(
     form_type: str, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -1527,12 +1609,30 @@ async def api_render_form(
 # all validation constraints and Field(examples=[...]) preserved.
 
 
-@app.get('/contact', response_class=HTMLResponse)
-async def contact_get(request: Request):
+@app.get('/contact', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+async def contact_get(
+    request: Request,
+    style: str = 'bootstrap',
+    demo: bool = False,
+    debug: bool = False,
+    show_timing: bool = False,
+):
     """Render the contact form (HTML)."""
+    form_data = (
+        {
+            'name': 'Alice Example',
+            'email': 'alice@example.com',
+            'message': 'Hello! I have a question about your library.',
+        }
+        if demo
+        else {}
+    )
     form_html = await ContactForm.render_form_async(
-        submit_url='/contact',
-        framework='bootstrap',
+        submit_url=f'/contact?style={style}',
+        framework=style,
+        data=form_data,
+        debug=debug,
+        show_timing=show_timing,
     )
     return templates.TemplateResponse(
         request,
@@ -1541,20 +1641,37 @@ async def contact_get(request: Request):
             'title': 'Contact — HTML Form',
             'form_html': form_html,
             'refer_path': '/contact',
+            'api_endpoint': '/api/contact',
+            'api_schema_endpoint': '/api/contact/schema',
         },
     )
 
 
-@app.post('/contact', response_class=HTMLResponse)
-async def contact_post(request: Request):
+@app.post('/contact', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+async def contact_post(
+    request: Request,
+    style: str = 'bootstrap',
+    debug: bool = False,
+    show_timing: bool = False,
+):
     """Accept and validate a browser form submission (multipart/form-data)."""
     raw = await request.form()
     data = parse_nested_form_data(raw)
-    result = ContactForm.validate(data, submit_url='/contact', framework='bootstrap')
+    result = ContactForm.validate(data, submit_url=f'/contact?style={style}', framework=style)
     if result.is_valid:
-        name = result.data.get('name', '')
-        return HTMLResponse(f'<p>Thank you, {name}! Your message was received.</p>')
-    form_html = await result.render_with_errors_async()
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'title': 'Message Sent!',
+                'message': f'Thank you, {result.data.get("name", "")}! Your message was received.',
+                'data': result.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': f'/contact?style={style}&demo=true&debug={debug}&show_timing={show_timing}',
+            },
+        )
+    form_html = await result.render_with_errors_async(debug=debug, show_timing=show_timing)
     return templates.TemplateResponse(
         request,
         'form.html',
@@ -1562,11 +1679,13 @@ async def contact_post(request: Request):
             'title': 'Contact — HTML Form',
             'form_html': form_html,
             'refer_path': '/contact',
+            'api_endpoint': '/api/contact',
+            'api_schema_endpoint': '/api/contact/schema',
         },
     )
 
 
-@app.post('/api/contact', response_model=ContactSchema)
+@app.post('/api/contact', response_model=ContactSchema, tags=['Dual-Use: Form + JSON API'])
 async def api_contact(data: ContactSchema):
     """
     Accept a JSON body validated against the same model as the HTML form.
@@ -1583,10 +1702,113 @@ async def api_contact(data: ContactSchema):
     return data
 
 
-@app.get('/api/contact/schema')
+@app.get('/api/contact/schema', tags=['Dual-Use: Form + JSON API'])
 async def api_contact_schema():
     """Return the clean JSON Schema used by the /api/contact endpoint."""
     return ContactSchema.model_json_schema()
+
+
+# ================================
+# FEEDBACK — second dual-use demo
+# ================================
+
+
+@app.get('/feedback', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+async def feedback_get(
+    request: Request,
+    style: str = 'bootstrap',
+    demo: bool = False,
+    debug: bool = False,
+    show_timing: bool = False,
+):
+    """Render the feedback form (HTML)."""
+    form_data = (
+        {
+            'subject': 'Documentation',
+            'rating': 4,
+            'comment': 'Very clear examples — the dual-use pattern is especially handy!',
+        }
+        if demo
+        else {}
+    )
+    form_html = await FeedbackForm.render_form_async(
+        submit_url=f'/feedback?style={style}',
+        framework=style,
+        data=form_data,
+        debug=debug,
+        show_timing=show_timing,
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'title': 'Feedback — HTML Form',
+            'form_html': form_html,
+            'refer_path': '/feedback',
+            'api_endpoint': '/api/feedback',
+            'api_schema_endpoint': '/api/feedback/schema',
+        },
+    )
+
+
+@app.post('/feedback', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+async def feedback_post(
+    request: Request,
+    style: str = 'bootstrap',
+    debug: bool = False,
+    show_timing: bool = False,
+):
+    """Accept and validate a browser feedback submission."""
+    raw = await request.form()
+    data = parse_nested_form_data(raw)
+    result = FeedbackForm.validate(data, submit_url=f'/feedback?style={style}', framework=style)
+    if result.is_valid:
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'title': 'Feedback Received!',
+                'message': f'Thanks for the {result.data.get("rating", "")}-star feedback!',
+                'data': result.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': f'/feedback?style={style}&demo=true&debug={debug}&show_timing={show_timing}',
+            },
+        )
+    form_html = await result.render_with_errors_async(debug=debug, show_timing=show_timing)
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'title': 'Feedback — HTML Form',
+            'form_html': form_html,
+            'refer_path': '/feedback',
+            'api_endpoint': '/api/feedback',
+            'api_schema_endpoint': '/api/feedback/schema',
+        },
+    )
+
+
+@app.post('/api/feedback', response_model=FeedbackSchema, tags=['Dual-Use: Form + JSON API'])
+async def api_feedback(data: FeedbackSchema):
+    """
+    Accept a JSON body validated against the same model as the HTML feedback form.
+
+    FeedbackSchema is FeedbackForm.as_api_model(): integer rating with ge=1/le=5
+    constraints (minimum/maximum in JSON Schema) and no ui_* keys in OpenAPI.
+
+    Try it:
+        curl -X POST http://localhost:8000/api/feedback \\
+             -H 'Content-Type: application/json' \\
+             -d '{"subject":"Documentation","rating":5,"comment":"Very clear!"}'
+    """
+    return data
+
+
+@app.get('/api/feedback/schema', tags=['Dual-Use: Form + JSON API'])
+async def api_feedback_schema():
+    """Return the clean JSON Schema used by the /api/feedback endpoint."""
+    return FeedbackSchema.model_json_schema()
 
 
 # ================================
@@ -1594,7 +1816,7 @@ async def api_contact_schema():
 # ================================
 
 
-@app.get('/api/health')
+@app.get('/api/health', tags=['System'])
 async def health_check():
     """Health check endpoint."""
     return {'status': 'healthy', 'framework': 'fastapi', 'version': _psf_version}
@@ -1641,10 +1863,15 @@ if __name__ == '__main__':
     print('   • API Docs:       http://localhost:8000/docs')
     print('   • Home Page:      http://localhost:8000/')
     print('')
-    print('🔗 Dual-Use Demo (form + JSON API from one FormModel):')
+    print('🔗 Dual-Use Demos (form + JSON API from one FormModel):')
+    print('   Contact form (str fields):')
     print('   • HTML Form:  http://localhost:8000/contact')
     print('   • JSON API:   POST http://localhost:8000/api/contact')
     print('   • API Schema: http://localhost:8000/api/contact/schema')
+    print('   Feedback form (int rating with ge/le constraints):')
+    print('   • HTML Form:  http://localhost:8000/feedback')
+    print('   • JSON API:   POST http://localhost:8000/api/feedback')
+    print('   • API Schema: http://localhost:8000/api/feedback/schema')
     print('')
     print('🔧 API Endpoints:')
     print('   • Schema:              http://localhost:8000/api/forms/register/schema')

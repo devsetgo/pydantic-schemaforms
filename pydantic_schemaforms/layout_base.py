@@ -37,9 +37,6 @@ class BaseLayout:
         self.content = content
         self.attributes = attributes
 
-    # ------------------------------------------------------------------
-    # Core rendering API shared across layout stacks
-    # ------------------------------------------------------------------
     def render(
         self,
         *,
@@ -49,8 +46,6 @@ class BaseLayout:
         framework: str = 'bootstrap',
         **kwargs: Any,
     ) -> str:
-        """Render the layout by combining template attributes and content."""
-
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
         class_attr = self._merge_classes(attrs)
         style_attr = self._merge_styles(attrs)
@@ -69,9 +64,6 @@ class BaseLayout:
 
         return substitute(self.template, **template_data)
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
     def _render_content(
         self,
         *,
@@ -80,8 +72,6 @@ class BaseLayout:
         renderer: EnhancedFormRenderer | None,
         framework: str,
     ) -> str:
-        """Render nested content recursively."""
-
         if self.content is None:
             return ''
 

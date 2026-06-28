@@ -7,6 +7,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [26.2.2] — 2026-06-28
+
+### Added
+
+- **`FormModel.as_api_model()`** — new class method that returns a pure Pydantic `BaseModel`
+  with `ui_*` rendering metadata stripped from `json_schema_extra`. Allows the same model
+  class to serve both as an HTML form and as a typed FastAPI body / `response_model` without
+  `ui_element`, `ui_placeholder`, etc. appearing in the OpenAPI/Swagger docs.
+  `Field(title=...)`, `Field(examples=[...])`, descriptions, and all validation constraints
+  (`min_length`, `ge`, `pattern`, …) are fully preserved. Result is cached per subclass and
+  safe to assign at module level (`ContactSchema = ContactForm.as_api_model()`).
+
+### Changed
+
+- Reduced SonarCloud code smells: extracted duplicate magic strings to named constants,
+  prefixed unused parameters with `_`, renamed methods that shadowed class attributes,
+  and merged nested `if` statements into compound conditions across multiple modules.
+
+---
+
 ## [26.2.1] — 2026-05-17
 
 First production release. All public Quick Start code paths verified working end-to-end.

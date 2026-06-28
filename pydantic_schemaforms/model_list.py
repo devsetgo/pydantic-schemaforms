@@ -165,8 +165,8 @@ class ModelListRenderer:
         # Note: do not set data-field-name here; JS looks up the list container by
         # [data-field-name="..."] and we don't want the template to be returned.
         template_html = (
-            '<template class="model-list-item-template">{template_item}</template>'
-        ).format(template_item=template_item)
+            '<template class="model-list-item-template">' + template_item + '</template>'
+        )
 
         items_html = '\n'.join([template_html, *html_parts])
 

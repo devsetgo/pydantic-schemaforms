@@ -543,7 +543,7 @@ class FieldRenderer:
         <div class="model-list-item card border mb-3"
              data-index="{index}"
              data-title-template="{escape(title_template)}"
-             data-field-name="{field_name}">
+             data-field-name="{escape(field_name, quote=True)}">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">"""
 
@@ -571,7 +571,7 @@ class FieldRenderer:
                 <button type="button"
                         class="btn btn-outline-danger btn-sm remove-item-btn"
                         data-index="{index}"
-                        data-field-name="{field_name}"
+                        data-field-name="{escape(field_name, quote=True)}"
                         title="Remove this item">
                     <i class="bi bi-trash"></i>
                 </button>

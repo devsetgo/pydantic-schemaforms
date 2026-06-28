@@ -38,7 +38,6 @@ from .enhanced_renderer import (
     SchemaFormValidationError,
 )
 
-# Enhanced FormField matching design_idea.py vision
 from .form_field import (
     CheckboxField,
     DateField,
@@ -50,7 +49,6 @@ from .form_field import (
     TextField,
 )
 
-# Layout composition system
 from .form_layouts import (
     FormDesign,
     FormLayoutBase,
@@ -61,7 +59,6 @@ from .form_layouts import (
     VerticalLayout,
 )
 
-# Input type constants and validation
 from .input_types import (
     ALL_INPUT_TYPES,
     DATETIME_INPUTS,
@@ -71,10 +68,7 @@ from .input_types import (
     TEXT_INPUTS,
 )
 
-# Input component export metadata
 from .inputs import __all__ as _INPUT_EXPORTS
-
-# Core form building and rendering
 from .integration import (
     AutoFormBuilder,
     FormBuilder,
@@ -88,16 +82,12 @@ from .integration import (
     render_form_page,
 )
 
-# Live validation system
 from .live_validation import HTMXValidationConfig, LiveValidator
-
-# Modern renderer with Python 3.14 template strings
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
 from .enhanced_renderer import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
 from .form_data import coerce_form_value, parse_nested_form_data
 
-# Layout system (primitives; form-aware VerticalLayout/HorizontalLayout come from form_layouts above)
 from .rendering.layout_engine import (
     AccordionLayout,
     CardLayout,
@@ -110,12 +100,10 @@ from .rendering.layout_engine import (
     TabLayout,
 )
 
-# FormModel abstraction for Pydantic models with UI hints
 from .schema_form import Field, FormModel, ValidationResult, form_validator
 from .templates import FormTemplates, TemplateString
 from .tstring import SafeHTML, html
 
-# Validation system
 from .validation import (
     CrossFieldRules,
     CustomRule,
@@ -137,15 +125,6 @@ from .validation import (
     create_validator,
 )
 
-# Legacy compatibility (deprecated) - archived modules
-# The following modules have been archived:
-# - form_layout.py -> use layouts.py instead
-# - form_model.py -> use schema_form.py instead
-# - form_renderer.py -> use enhanced_renderer.py or modern_renderer.py instead
-# - ui_elements.py -> use inputs/ directory structure instead
-# - template_compat.py -> empty/unused
-# App Name and version
-
 __version__ = '26.2.2'
 __package_name__ = 'pydantic-schemaforms'
 __author__ = 'Pydantic Forms Team'
@@ -156,7 +135,6 @@ __description__ = 'Modern form generation library for Python 3.14+'
 logger: logging.Logger = logging.getLogger(__package__)
 logger.addHandler(logging.NullHandler())
 
-# Main exports for common usage
 __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     # ── PRIMARY: FormModel + render_form_html (recommended entry point) ──
     'FormModel',

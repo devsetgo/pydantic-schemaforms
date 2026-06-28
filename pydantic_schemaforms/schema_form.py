@@ -10,25 +10,7 @@ from .validation import ValidationResult
 
 
 def form_validator(func: Callable) -> Callable:
-    """
-    Decorator for form validation methods that matches the design_idea.py vision.
-
-    This decorator provides a clean way to define cross-field validation on FormModel classes.
-    It wraps the function to provide better error handling and integration with the form system.
-
-    Usage:
-        class MyForm(FormModel):
-            age: int = Field(..., input_type="number")
-            parental_consent: bool = Field(False, input_type="checkbox")
-
-            @form_validator
-            def check_age_and_consent(cls, values: dict[str, Any]) -> dict[str, Any]:
-                age = values.get('age')
-                consent = values.get('parental_consent')
-                if age is not None and age < 18 and not consent:
-                    raise ValueError("Parental consent is required for users under 18.")
-                return values
-    """
+    """Classmethod decorator for cross-field validation on FormModel subclasses."""
 
     @wraps(func)
     def wrapper(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -39,7 +21,6 @@ def form_validator(func: Callable) -> Callable:
         except Exception as e:
             raise ValueError(f'Validation error: {str(e)}') from e
 
-    # Mark the function as a form validator
     wrapper._is_form_validator = True  # type: ignore[attr-defined]
     return classmethod(wrapper)  # type: ignore[return-value]
 
@@ -182,21 +163,23 @@ class FormModel(BaseModel):
                 'description': prop.get('description', ''),
             }
 
-            # Add validation constraints
-            if enhanced['type'] == 'string':
-                if 'minLength' in prop:
-                    enhanced['minLength'] = prop['minLength']
-                if 'maxLength' in prop:
-                    enhanced['maxLength'] = prop['maxLength']
-                if 'pattern' in prop:
-                    enhanced['pattern'] = prop['pattern']
-            elif enhanced['type'] in ('number', 'integer'):
-                if 'minimum' in prop:
-                    enhanced['minimum'] = prop['minimum']
-                if 'maximum' in prop:
-                    enhanced['maximum'] = prop['maximum']
-            if 'enum' in prop:
-                enhanced['enum'] = prop['enum']
+            # Forward all standard JSON Schema constraint keys
+            _CONSTRAINT_KEYS = {
+                'minLength',
+                'maxLength',
+                'pattern',
+                'format',
+                'minimum',
+                'maximum',
+                'exclusiveMinimum',
+                'exclusiveMaximum',
+                'multipleOf',
+                'enum',
+                'const',
+            }
+            for _key in _CONSTRAINT_KEYS:
+                if _key in prop:
+                    enhanced[_key] = prop[_key]
 
             # Extract UI elements from field info
             ui_info = cls._extract_ui_info(field_info)
@@ -454,7 +437,11 @@ class FormModel(BaseModel):
                 clean.json_schema_extra = stripped or None
             field_defs[name] = (fi.annotation, clean)
 
-        model = _create_model(cls.__name__, __base__=BaseModel, **field_defs)  # type: ignore[call-overload]
+        model = _create_model(  # type: ignore[call-overload]
+            cls.__name__,
+            __base__=BaseModel,
+            **field_defs,  # type: ignore[arg-type]
+        )
         cls.__api_model_cache__ = model
         return model
 

@@ -44,6 +44,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🔧 **JSON-Schema-form style UI hints**: Uses a familiar `ui_element`, `ui_autofocus`, `ui_options` vocabulary
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
+- 🔀 **Dual-use form + JSON API**: `as_api_model()` returns a clean Pydantic `BaseModel` — one model class drives both the HTML form and a typed JSON API, with UI metadata stripped from OpenAPI docs
 
 > **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
 
@@ -725,6 +726,30 @@ html = MyForm.render_form(framework="bootstrap", submit_url="/submit")
 # Render fully self-contained Bootstrap HTML (inlines vendored Bootstrap CSS/JS)
 html = MyForm.render_form(framework="bootstrap", submit_url="/submit", self_contained=True)
 ```
+
+#### `as_api_model()` — dual-use form + JSON API
+
+`FormModel` is a plain Pydantic `BaseModel`, so it validates JSON directly. However, `ui_*` metadata stored in `json_schema_extra` clutters the FastAPI/OpenAPI docs when used as a body type. `as_api_model()` strips that metadata and returns a clean `BaseModel` that is safe to use as a FastAPI request/response model:
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+class ContactForm(FormModel):
+    name: str = Field(..., min_length=2, title="Full Name",
+                      examples=["Alice Smith"],
+                      ui_element="text", ui_placeholder="Your name")
+    email: str = Field(..., title="Email", examples=["alice@example.com"],
+                       ui_element="email")
+
+# Derive once at module level — cached per subclass
+ContactSchema = ContactForm.as_api_model()
+
+@app.post("/api/contact", response_model=ContactSchema)
+async def api_contact(data: ContactSchema):
+    return data   # Swagger shows clean schema; no ui_* keys
+```
+
+`Field(title=...)`, `Field(examples=[...])`, descriptions, and all validation constraints (`min_length`, `ge`, `pattern`, …) are fully preserved in the API model. Only `ui_*` keys are removed.
 
 ### Field Function
 

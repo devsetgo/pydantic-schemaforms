@@ -1249,6 +1249,7 @@ async def render_form_html_async(
         enable_logging=enable_logging,
         include_framework_assets=include_framework_assets,
         asset_mode=asset_mode,
+        include_html_markers=include_html_markers,
         **kwargs,
     )
 
@@ -1257,5 +1258,4 @@ async def render_form_html_async(
     except RuntimeError:
         loop = asyncio.get_event_loop()
 
-    html = await loop.run_in_executor(None, render_callable)
-    return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
+    return await loop.run_in_executor(None, render_callable)

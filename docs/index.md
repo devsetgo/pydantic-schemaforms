@@ -44,6 +44,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🔧 **JSON-Schema-form style UI hints**: Uses a familiar `ui_element`, `ui_autofocus`, `ui_options` vocabulary
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
+- 🔀 **Dual-use form + JSON API**: `as_api_model()` returns a clean Pydantic `BaseModel` — one model class drives both the HTML form and a typed JSON API, with UI metadata stripped from OpenAPI docs
 
 > **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
 
@@ -79,7 +80,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms import Field, FormModel, render_form_html
+from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
 class MinimalLoginForm(FormModel):
@@ -157,7 +159,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms import Field, FormModel, render_form_html
+from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 
 class UserRegistrationForm(FormModel):
@@ -213,7 +216,8 @@ In synchronous apps (Flask), the simplest pattern is the same: define a `FormMod
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms import Field, FormModel, render_form_html
+from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 
 class MinimalLoginForm(FormModel):
@@ -267,7 +271,8 @@ def login():
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms import Field, FormModel, render_form_html
+from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 
 class UserRegistrationForm(FormModel):
@@ -461,8 +466,8 @@ def handle_submit():
         return f"Welcome {user_data.username}!"
 
     except ValidationError as e:
-        # Handle validation errors
-        errors = e.errors()
+        # Convert Pydantic errors to field→message mapping
+        errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
         return f"Validation failed: {errors}", 400
 ```
 
@@ -475,7 +480,7 @@ Complete Flask application example:
 ```python
 from flask import Flask, request, render_template_string
 from pydantic import ValidationError
-from pydantic_schemaforms import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 app = Flask(__name__)
 
@@ -519,6 +524,7 @@ def registration():
             user = UserRegistrationForm(**request.form)
             return f"Registration successful for {user.username}!"
         except ValidationError as e:
+            # Convert Pydantic errors to field→message mapping expected by render_form
             errors = {err["loc"][0]: err["msg"] for err in e.errors() if err.get("loc")}
             # Re-render form with errors
             form_html = UserRegistrationForm.render_form(
@@ -587,7 +593,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 html = render_form_html(MyForm, submit_url="/submit")
-# Logs: INFO pydantic_schemaforms.enhanced_renderer: Form rendered in 0.0045s
+# Logs: INFO pydantic_schemaforms: Form rendered in 0.0045s
 ```
 
 **Use Cases:**
@@ -709,7 +715,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
-from pydantic_schemaforms import FormModel, Field
+from pydantic_schemaforms.schema_form import FormModel, Field
 
 class MyForm(FormModel):
     field_name: str = Field(..., ui_element="email")
@@ -720,6 +726,30 @@ html = MyForm.render_form(framework="bootstrap", submit_url="/submit")
 # Render fully self-contained Bootstrap HTML (inlines vendored Bootstrap CSS/JS)
 html = MyForm.render_form(framework="bootstrap", submit_url="/submit", self_contained=True)
 ```
+
+#### `as_api_model()` — dual-use form + JSON API
+
+`FormModel` is a plain Pydantic `BaseModel`, so it validates JSON directly. However, `ui_*` metadata stored in `json_schema_extra` clutters the FastAPI/OpenAPI docs when used as a body type. `as_api_model()` strips that metadata and returns a clean `BaseModel` that is safe to use as a FastAPI request/response model:
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+class ContactForm(FormModel):
+    name: str = Field(..., min_length=2, title="Full Name",
+                      examples=["Alice Smith"],
+                      ui_element="text", ui_placeholder="Your name")
+    email: str = Field(..., title="Email", examples=["alice@example.com"],
+                       ui_element="email")
+
+# Derive once at module level — cached per subclass
+ContactSchema = ContactForm.as_api_model()
+
+@app.post("/api/contact", response_model=ContactSchema)
+async def api_contact(data: ContactSchema):
+    return data   # Swagger shows clean schema; no ui_* keys
+```
+
+`Field(title=...)`, `Field(examples=[...])`, descriptions, and all validation constraints (`min_length`, `ge`, `pattern`, …) are fully preserved in the API model. Only `ui_*` keys are removed.
 
 ### Field Function
 
