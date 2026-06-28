@@ -27,7 +27,7 @@ def set_date_time(published_at: str) -> str:
 
 
 def get_github_releases(repo: str) -> list[dict]:
-    url = f"https://api.github.com/repos/{repo}/releases?per_page=100"
+    url = f"https://api.github.com/repos/{repo}/releases?per_page=1000"
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "pydantic-schemaforms-docs",

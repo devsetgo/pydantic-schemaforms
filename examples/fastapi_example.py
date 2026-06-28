@@ -61,7 +61,10 @@ from pydantic_schemaforms import (
     parse_nested_form_data,
     render_form_html_async,
 )
-from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content, htmx_script_tag, read_asset_text
+from pydantic_schemaforms.assets.runtime import (
+    bootstrap_icons_css_content,
+    read_asset_text,
+)
 from pydantic_schemaforms.live_validation import validation_response_headers
 
 
@@ -1876,7 +1879,9 @@ async def live_validation_post(request: Request, style: str = 'bootstrap'):
     """Handle contact form submission for the live-validation demo."""
     raw = await request.form()
     data = parse_nested_form_data(raw)
-    result = ContactForm.validate(data, submit_url=f'/live-validation?style={style}', framework=style)
+    result = ContactForm.validate(
+        data, submit_url=f'/live-validation?style={style}', framework=style
+    )
     if result.is_valid:
         return templates.TemplateResponse(
             request,
