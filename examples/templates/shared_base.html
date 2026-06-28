@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -125,11 +126,11 @@
          * `select.browser-default`. Without the Material webfont/CSS stack,
          * this label overlaps selected text (e.g., Species over Dog 🐕).
          */
-        .md-input-wrapper > select.browser-default {
+        .md-input-wrapper>select.browser-default {
             width: 100%;
         }
 
-        .md-input-wrapper > select.browser-default + .md-floating-label {
+        .md-input-wrapper>select.browser-default+.md-floating-label {
             position: static !important;
             display: block;
             transform: none !important;
@@ -167,7 +168,27 @@
 
     {% block extra_styles %}{% endblock %}
 </head>
+
 <body>
+    <div class="top-resource-bar">
+        <div class="container d-flex flex-wrap align-items-center gap-1">
+            <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">
+                <i class="bi bi-book me-1"></i>Documentation
+            </a>
+            <span class="sep">|</span>
+            <a href="https://github.com/devsetgo/pydantic-schemaforms" target="_blank" rel="noopener">
+                <i class="bi bi-github me-1"></i>Repository
+            </a>
+            <span class="sep">|</span>
+            <a href="https://pypi.org/project/pydantic-schemaforms/" target="_blank" rel="noopener">
+                <i class="bi bi-box-seam me-1"></i>PyPI
+            </a>
+            <span class="sep">|</span>
+            <a href="https://github.com/devsetgo/pydantic-schemaforms/issues" target="_blank" rel="noopener">
+                <i class="bi bi-bug me-1"></i>Issues
+            </a>
+        </div>
+    </div>
     <div class="top-resource-bar">
         <div class="container d-flex flex-wrap align-items-center gap-1">
             <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">
@@ -191,8 +212,10 @@
         {% if not request or request.url.path != '/' %}
         <div class="site-brand-shell">
             <a class="site-brand" href="/" aria-label="Pydantic Schemaform home">
-                <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}" alt="Pydantic Schemaform logo">
-                <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}" alt="Pydantic Schemaform icon">
+                <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}"
+                    alt="Pydantic Schemaform logo">
+                <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}"
+                    alt="Pydantic Schemaform icon">
                 <span class="site-brand-copy">
                     <span class="site-brand-title d-block">Pydantic Schemaform</span>
                     <span class="site-brand-subtitle d-block">Pydantic models to polished forms</span>
@@ -206,4 +229,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
+
 </html>
