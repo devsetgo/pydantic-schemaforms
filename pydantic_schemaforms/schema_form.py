@@ -182,21 +182,15 @@ class FormModel(BaseModel):
                 'description': prop.get('description', ''),
             }
 
-            # Add validation constraints
-            if enhanced['type'] == 'string':
-                if 'minLength' in prop:
-                    enhanced['minLength'] = prop['minLength']
-                if 'maxLength' in prop:
-                    enhanced['maxLength'] = prop['maxLength']
-                if 'pattern' in prop:
-                    enhanced['pattern'] = prop['pattern']
-            elif enhanced['type'] in ('number', 'integer'):
-                if 'minimum' in prop:
-                    enhanced['minimum'] = prop['minimum']
-                if 'maximum' in prop:
-                    enhanced['maximum'] = prop['maximum']
-            if 'enum' in prop:
-                enhanced['enum'] = prop['enum']
+            # Forward all standard JSON Schema constraint keys
+            _CONSTRAINT_KEYS = {
+                'minLength', 'maxLength', 'pattern', 'format',
+                'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf',
+                'enum', 'const',
+            }
+            for _key in _CONSTRAINT_KEYS:
+                if _key in prop:
+                    enhanced[_key] = prop[_key]
 
             # Extract UI elements from field info
             ui_info = cls._extract_ui_info(field_info)

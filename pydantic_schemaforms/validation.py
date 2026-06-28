@@ -123,7 +123,7 @@ class RequiredRule(ValidationRule):
 
     def _generate_js_validation(self, field_name: str) -> str:
         return f"""
-        if (!value || (typeof value === 'string' && !value.trim())) {{
+        if (value === null || value === undefined || (typeof value === 'string' && !value.trim())) {{
             return '{_js_str(self.message)}';
         }}
         """

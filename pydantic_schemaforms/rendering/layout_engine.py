@@ -172,7 +172,7 @@ ${component_assets}
                     active_class=' active' if is_active else '',
                     aria_selected='true' if is_active else 'false',
                     tab_id=tab_id,
-                    title=escape(tab['title']),
+                    title=tab['title'],
                 )
             )
 
@@ -256,7 +256,7 @@ ${component_assets}
                     expanded_class=' expanded' if is_expanded else '',
                     aria_expanded='true' if is_expanded else 'false',
                     display_style='block' if is_expanded else 'none',
-                    title=escape(section['title']),
+                    title=section['title'],
                     content=section['content'],
                 )
             )
@@ -387,7 +387,8 @@ document.addEventListener('keydown', function(e) {
     def __init__(
         self, modal_id: str, title: str, content: str, footer: str = '', **kwargs: Any
     ) -> None:
-        default_footer = footer or f'<button onclick="closeModal(\'{modal_id}\')">Close</button>'
+        safe_modal_id = ''.join(c if c.isalnum() or c in '_-' else '_' for c in modal_id)
+        default_footer = footer or f'<button onclick="closeModal(\'{safe_modal_id}\')">Close</button>'
         super().__init__(
             content=content,
             modal_id=modal_id,
@@ -684,16 +685,16 @@ class LayoutEngine:
             except Exception as exc:  # pragma: no cover - fallback messaging
                 return f"""
                 <div class="layout-field-placeholder alert alert-info">
-                    <p>Layout demonstration: {form_name}</p>
-                    <small class="text-muted">{ui_info.get('help_text', '')}</small>
-                    <small class="text-danger d-block">Could not render: {str(exc)}</small>
+                    <p>Layout demonstration: {escape(form_name)}</p>
+                    <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
+                    <small class="text-danger d-block">Could not render: {escape(str(exc))}</small>
                 </div>
                 """
 
         return f"""
             <div class="layout-field-unknown alert alert-secondary">
                 <p>Unknown layout field type</p>
-                <small class="text-muted">{ui_info.get('help_text', '')}</small>
+                <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
             </div>
             """
 
