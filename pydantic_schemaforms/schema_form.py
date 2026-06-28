@@ -184,9 +184,17 @@ class FormModel(BaseModel):
 
             # Forward all standard JSON Schema constraint keys
             _CONSTRAINT_KEYS = {
-                'minLength', 'maxLength', 'pattern', 'format',
-                'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf',
-                'enum', 'const',
+                'minLength',
+                'maxLength',
+                'pattern',
+                'format',
+                'minimum',
+                'maximum',
+                'exclusiveMinimum',
+                'exclusiveMaximum',
+                'multipleOf',
+                'enum',
+                'const',
             }
             for _key in _CONSTRAINT_KEYS:
                 if _key in prop:

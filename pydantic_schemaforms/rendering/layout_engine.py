@@ -388,7 +388,9 @@ document.addEventListener('keydown', function(e) {
         self, modal_id: str, title: str, content: str, footer: str = '', **kwargs: Any
     ) -> None:
         safe_modal_id = ''.join(c if c.isalnum() or c in '_-' else '_' for c in modal_id)
-        default_footer = footer or f'<button onclick="closeModal(\'{safe_modal_id}\')">Close</button>'
+        default_footer = (
+            footer or f'<button onclick="closeModal(\'{safe_modal_id}\')">Close</button>'
+        )
         super().__init__(
             content=content,
             modal_id=modal_id,
