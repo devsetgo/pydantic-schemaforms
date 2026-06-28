@@ -1,5 +1,13 @@
 [
   {
+    "version": "untagged-74efc607d73062a649c6",
+    "title": "Release untagged-74efc607d73062a649c6",
+    "aliases": [
+      "latest",
+      "stable"
+    ]
+  },
+  {
     "version": "untagged-bfb3bb98aa31ca386d88",
     "title": "Release untagged-bfb3bb98aa31ca386d88",
     "aliases": []
@@ -7,10 +15,7 @@
   {
     "version": "26.2.3",
     "title": "Release 26.2.3",
-    "aliases": [
-      "latest",
-      "stable"
-    ]
+    "aliases": []
   },
   {
     "version": "26.2.1.beta",
