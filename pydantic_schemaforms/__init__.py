@@ -125,7 +125,7 @@ from .validation import (
     create_validator,
 )
 
-__version__ = '26.2.2'
+__version__ = '26.2.3'
 __package_name__ = 'pydantic-schemaforms'
 __author__ = 'Pydantic Forms Team'
 __description__ = 'Modern form generation library for Python 3.14+'

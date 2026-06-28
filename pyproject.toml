@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "26.2.2"
+version = "26.2.3"
 requires-python = ">=3.14"
 description = "Server-rendered form components and layout helpers for Pydantic models"
 keywords = [ "pydantic", "forms", "schema", "schemaforms", "ui", "htmx",]
@@ -97,13 +97,6 @@ warmup = false
 select = [ "C", "F", "E", "W", "B", "TID",]
 ignore = [ "C901", "E501", "B017", "B904", "B008", "I",]
 
-# ARCHITECTURAL INVARIANT — see CLAUDE.md §"T-string rule" and tests/test_invariants.py.
-# string.Template (${}  interpolation) has no XSS protection.
-# All HTML generation MUST use t-strings with html() from pydantic_schemaforms.tstring.
-# Do NOT remove or weaken this entry — it is also enforced by tests/test_invariants.py.
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"string.Template" = {msg = "Use t-strings with html() from pydantic_schemaforms.tstring — see CLAUDE.md"}
-
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
@@ -134,3 +127,6 @@ exclude = [ "bumpcalver-history.json", "pkg/_compat.py",]
 [tool.hatch.build.targets.wheel]
 packages = [ "pydantic_schemaforms",]
 include = [ "pydantic_schemaforms/assets/**", "pydantic_schemaforms/py.typed",]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api."string.Template"]
+msg = "Use t-strings with html() from pydantic_schemaforms.tstring — see CLAUDE.md"
