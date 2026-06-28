@@ -84,6 +84,7 @@ class TextArea(FormInput):
             del attrs['type']  # <textarea> has no type attribute.
         attributes_str = self._build_attributes_string(attrs)
         from html import escape
+
         escaped_value = escape(str(value)) if value is not None else ''
         return f'<textarea {attributes_str}>{escaped_value}</textarea>'
 
