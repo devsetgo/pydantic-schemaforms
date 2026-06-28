@@ -71,8 +71,8 @@ create-docs-local: ## Build and deploy the project's documentation
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
 	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
-	cp /workspaces/$(REPONAME)/pydantic-schemaform-logo.png /workspaces/$(REPONAME)/docs/pydantic-schemaform-logo.png
-	cp /workspaces/$(REPONAME)/favicon.png /workspaces/$(REPONAME)/docs/favicon.png
+# 	cp /workspaces/$(REPONAME)/pydantic-schemaform-logo.png /workspaces/$(REPONAME)/docs/pydantic-schemaform-logo.png
+# 	cp /workspaces/$(REPONAME)/favicon.png /workspaces/$(REPONAME)/docs/favicon.png
 	mkdocs build
 
 

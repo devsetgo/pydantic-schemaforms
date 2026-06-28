@@ -437,7 +437,11 @@ class FormModel(BaseModel):
                 clean.json_schema_extra = stripped or None
             field_defs[name] = (fi.annotation, clean)
 
-        model = _create_model(cls.__name__, __base__=BaseModel, **field_defs)  # type: ignore[call-overload]
+        model = _create_model(  # type: ignore[call-overload]
+            cls.__name__,
+            __base__=BaseModel,
+            **field_defs,  # type: ignore[arg-type]
+        )
         cls.__api_model_cache__ = model
         return model
 
