@@ -7,6 +7,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [26.2.3] — 2026-06-28
+
+### Fixed
+
+- **`LiveValidator.register_model_validator` partial-validation bug** — previously called
+  `model_class.model_validate({field: value})` with only one field's data; if the model
+  had other required fields, Pydantic raised `ValidationError` for them, causing all
+  unrelated fields to produce `is_valid=False` with no errors even when the value was valid.
+  Now uses `__pydantic_validator__.validate_assignment(model_construct(), field_name, value)`
+  to validate each field in isolation, independent of sibling required fields.
+
+- **`LiveValidator.render_field_with_live_validation` single-trigger limitation** — the
+  `if/elif/elif` chain for `validate_on_blur` / `validate_on_input` / `validate_on_change`
+  silently dropped every trigger after the first truthy one. Changed to independent `if`
+  checks so all enabled triggers combine into a single `hx-trigger` attribute
+  (e.g. `hx-trigger="blur, change"` when both are `True`).
+
+### Added
+
+- **Live-validation example** — `GET /live-validation` demo route in the FastAPI example
+  app shows a contact form with per-field HTMX validation on blur. Includes
+  `POST /validate/{field_name}` HTMX endpoint using `validation_response_headers()` and
+  `GET /vendor/htmx.min.js` to serve the vendored HTMX asset.
+
+---
+
 ## [26.2.2] — 2026-06-28
 
 ### Added

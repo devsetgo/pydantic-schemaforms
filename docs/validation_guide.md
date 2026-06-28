@@ -188,42 +188,42 @@ is_valid, errors = form_validator.validate_pydantic_model(
 
 ### LiveValidator Setup
 
-Use `LiveValidator` for server-side validation triggered via HTMX on blur/change events:
+Use `LiveValidator` for server-side validation triggered via HTMX on blur/input/change events:
 
 ```python
-from pydantic_schemaforms.live_validation import LiveValidator, HTMXValidationConfig
-from pydantic_schemaforms.validation import FieldValidator, EmailRule
+from pydantic_schemaforms import LiveValidator, HTMXValidationConfig, FieldValidator, EmailRule, MinLengthRule
 
-# Configure HTMX behavior
+# Configure HTMX behavior — any combination of triggers may be enabled.
+# When multiple are True, the generated hx-trigger combines them:
+#   validate_on_blur=True + validate_on_change=True  →  hx-trigger="blur, change"
 config = HTMXValidationConfig(
     validate_on_blur=True,           # Validate when field loses focus
-    validate_on_input=False,         # Don't validate on every keystroke
-    validate_on_change=True,         # Validate when value changes
-    debounce_ms=300,                 # Wait 300ms before validation request
-    show_success_indicators=True,    # Visual feedback on valid input
-    show_warnings=True,              # Display warnings
-    show_suggestions=True,           # Show helpful hints
-    success_class="is-valid",        # Bootstrap/custom CSS classes
+    validate_on_input=False,         # Validate on every keystroke (with debounce)
+    validate_on_change=True,         # Validate on value change (select, checkbox)
+    debounce_ms=300,                 # Debounce delay for validate_on_input
+    show_success_indicators=True,    # Apply success_class on valid input
+    success_class="is-valid",        # Bootstrap / custom CSS classes
     error_class="is-invalid",
     warning_class="has-warning",
-    loading_class="is-validating"
+    loading_class="is-validating",
 )
 
 live_validator = LiveValidator(config)
 
 # Register field validators
-email_validator = FieldValidator("email")
-email_validator.add_rule(EmailRule())
-live_validator.register_field_validator(email_validator)
+email_fv = FieldValidator("email")
+email_fv.add_rule(EmailRule())
+live_validator.register_field_validator(email_fv)
 
-password_validator = FieldValidator("password")
-password_validator.add_rule(LengthRule(min=8))
-live_validator.register_field_validator(password_validator)
+password_fv = FieldValidator("password")
+password_fv.add_rule(MinLengthRule(8))
+live_validator.register_field_validator(password_fv)
 ```
 
 ### HTML Integration with HTMX
 
-In your template, set up HTMX triggers for real-time validation:
+Use `hx-swap="innerHTML"` so HTMX replaces only the *content* of the feedback container,
+keeping the element's `id` stable for future swaps:
 
 ```html
 <!-- Form field with HTMX validation -->
@@ -234,73 +234,104 @@ In your template, set up HTMX triggers for real-time validation:
     class="form-control"
     placeholder="you@example.com"
     hx-post="/validate/email"
-    hx-trigger="blur, change delay:300ms"
+    hx-trigger="blur, change"
     hx-target="#email-feedback"
-    hx-swap="outerHTML"
+    hx-swap="innerHTML"
+    data-validate-endpoint="true"
 />
 
 <!-- Validation feedback container -->
 <div id="email-feedback"></div>
 ```
 
+> **`data-validate-endpoint="true"`** — the script emitted by `render_htmx_script()` uses
+> this attribute to attach loading-indicator and focus-clear behaviour automatically.
+
 ### FastAPI Endpoint for HTMX Validation
 
+A single parameterised endpoint handles all fields. `validate_field()` returns a
+`ValidationResponse`; `validation_response_headers()` emits the `HX-Trigger` header that
+the bundled JS uses to apply `is-valid` / `is-invalid` CSS classes to the input.
+
 ```python
-from fastapi import FastAPI, Request
+from fastapi import Request
 from fastapi.responses import HTMLResponse
-from pydantic_schemaforms.live_validation import LiveValidator
-from pydantic_schemaforms.validation import FieldValidator, EmailRule
+from pydantic_schemaforms import LiveValidator, HTMXValidationConfig, FieldValidator, EmailRule, MinLengthRule
+from pydantic_schemaforms.live_validation import validation_response_headers
 
-app = FastAPI()
-live_validator = LiveValidator()
+live_validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True))
 
-# Register validators
-email_validator = FieldValidator("email")
-email_validator.add_rule(EmailRule())
-live_validator.register_field_validator(email_validator)
+email_fv = FieldValidator("email")
+email_fv.add_rule(EmailRule())
+live_validator.register_field_validator(email_fv)
 
-@app.post("/validate/email", response_class=HTMLResponse)
-async def validate_email(request: Request):
+@app.post("/validate/{field_name}", response_class=HTMLResponse)
+async def htmx_validate(field_name: str, request: Request):
     data = await request.form()
-    value = data.get("email", "")
+    value = str(data.get(field_name, ""))
+    result = live_validator.validate_field(field_name, value)
 
-    # Get validator for this field
-    validator = live_validator.get_field_validator("email")
-    response = validator.validate(value)
-
-    # Render feedback HTML
-    if response.is_valid:
-        return f"""
-        <div id="email-feedback" class="valid-feedback">
-            ✓ Email looks good
-        </div>
-        """
+    if result.is_valid:
+        feedback = '<span class="valid-feedback">✓ Looks good!</span>'
     else:
-        errors_html = "".join([f"<li>{e}</li>" for e in response.errors])
-        return f"""
-        <div id="email-feedback" class="invalid-feedback">
-            <ul>{errors_html}</ul>
-        </div>
-        """
+        feedback = f'<span class="invalid-feedback">{"; ".join(result.errors)}</span>'
+
+    headers = validation_response_headers(field_name, result.is_valid)
+    return HTMLResponse(feedback, headers=headers)
+```
+
+Include the init script in your template so the `validationResult` event updates CSS classes:
+
+```python
+# Pass to template context
+validator_script = live_validator.render_htmx_script()
+```
+
+```html
+<!-- In your base template, after HTMX is loaded -->
+<script src="/vendor/htmx.min.js"></script>
+{{ validator_script | safe }}
 ```
 
 ### Building LiveValidator from ValidationSchema
 
-Automatically convert a schema to HTMX-ready validators:
-
 ```python
-from pydantic_schemaforms.validation import ValidationSchema, FieldValidator, EmailRule
+from pydantic_schemaforms import FieldValidator, EmailRule
+from pydantic_schemaforms.validation import ValidationSchema
 
 schema = ValidationSchema()
 
-email_validator = FieldValidator("email")
-email_validator.add_rule(EmailRule())
-schema.add_field(email_validator)
+email_fv = FieldValidator("email")
+email_fv.add_rule(EmailRule())
+schema.add_field(email_fv)
 
-# Create HTMX live validator from schema
+# Converts the schema to a ready-to-use LiveValidator
 live_validator = schema.build_live_validator()
+```
 
-# Now use live_validator in HTMX endpoints
+### Validating Pydantic Model Fields
+
+`register_model_validator()` registers a validator for every field in a Pydantic model.
+Each field is validated in isolation using `validate_assignment`, so valid fields are never
+marked invalid just because other required fields are absent:
+
+```python
+from pydantic import BaseModel
+from pydantic_schemaforms import LiveValidator
+
+class ProfileModel(BaseModel):
+    name: str
+    age: int
+
+live_validator = LiveValidator()
+live_validator.register_model_validator(ProfileModel)
+
+# Only the age field's own constraints are checked — name being absent is irrelevant
+result = live_validator.validate_field("age", "not-a-number")
+# result.is_valid == False, result.errors == ["Input should be a valid integer..."]
+
+result = live_validator.validate_field("age", 25)
+# result.is_valid == True
 ```
 
 ---
@@ -445,7 +476,8 @@ The validation system includes pre-built rules for common patterns:
 | Rule | Purpose | Example |
 |------|---------|---------|
 | `RequiredRule()` | Field must have a value | Required name field |
-| `LengthRule(min, max)` | String length constraints | 3–20 char username |
+| `MinLengthRule(n)` | Minimum string length | Username ≥ 3 chars |
+| `MaxLengthRule(n)` | Maximum string length | Username ≤ 20 chars |
 | `EmailRule()` | Valid email format | Email field |
 | `PhoneRule()` | Valid phone number | Phone field |
 | `NumericRangeRule(min, max)` | Numeric value range | Age 0–150 |
@@ -456,22 +488,19 @@ The validation system includes pre-built rules for common patterns:
 ### Example: Complete Field Validation
 
 ```python
-from pydantic_schemaforms.validation import (
-    FieldValidator,
-    EmailRule,
-    LengthRule,
-    NumericRangeRule
-)
+from pydantic_schemaforms import FieldValidator, EmailRule, MinLengthRule, MaxLengthRule
+from pydantic_schemaforms.validation import RequiredRule, NumericRangeRule, FormValidator
 
 # Email field validator
 email_validator = FieldValidator("email")
 email_validator.add_rule(RequiredRule("Email is required"))
 email_validator.add_rule(EmailRule())
 
-# Username field validator
+# Username field validator (fluent API: .min_length() / .max_length())
 username_validator = FieldValidator("username")
 username_validator.add_rule(RequiredRule("Username is required"))
-username_validator.add_rule(LengthRule(min=3, max=20, message="3–20 characters"))
+username_validator.add_rule(MinLengthRule(3, message="Minimum 3 characters"))
+username_validator.add_rule(MaxLengthRule(20, message="Maximum 20 characters"))
 
 # Age field validator
 age_validator = FieldValidator("age")
@@ -480,7 +509,7 @@ age_validator.add_rule(NumericRangeRule(min=13, max=150, message="Must be 13+"))
 # Use in form validator
 form_validator = FormValidator()
 form_validator.field("email").add_rule(EmailRule())
-form_validator.field("username").add_rule(LengthRule(min=3, max=20))
+form_validator.field("username").add_rule(MinLengthRule(3)).add_rule(MaxLengthRule(20))
 form_validator.field("age").add_rule(NumericRangeRule(min=13, max=150))
 ```
 
@@ -537,28 +566,17 @@ class RegistrationForm(FormModel):
 #### 2. Set Up Validation
 
 ```python
-from pydantic_schemaforms.validation import (
-    FormValidator,
-    FieldValidator,
-    EmailRule,
-    LengthRule,
-    NumericRangeRule
-)
+from pydantic_schemaforms import FieldValidator, EmailRule, MinLengthRule, MaxLengthRule, LiveValidator
+from pydantic_schemaforms.validation import FormValidator, NumericRangeRule
 
 # Create form validator with all rules
 form_validator = FormValidator()
 
 # Field validators
-form_validator.field("username").add_rule(
-    LengthRule(min=3, max=20, message="3–20 characters")
-)
+form_validator.field("username").add_rule(MinLengthRule(3, message="3–20 characters")).add_rule(MaxLengthRule(20))
 form_validator.field("email").add_rule(EmailRule())
-form_validator.field("password").add_rule(
-    LengthRule(min=8, message="Minimum 8 characters")
-)
-form_validator.field("age").add_rule(
-    NumericRangeRule(min=13, max=150, message="Must be 13+")
-)
+form_validator.field("password").add_rule(MinLengthRule(8, message="Minimum 8 characters"))
+form_validator.field("age").add_rule(NumericRangeRule(min=13, max=150, message="Must be 13+"))
 
 # Cross-field rules
 def validate_passwords_match(data):
@@ -602,41 +620,21 @@ async def handle_registration(request: Request):
     else:
         return await result.render_with_errors_async()
 
-# HTMX validation endpoints
-@app.post("/validate/username")
-async def validate_username(request: Request):
+# HTMX validation — one parameterised endpoint handles every field
+@app.post("/validate/{field_name}", response_class=HTMLResponse)
+async def htmx_validate(field_name: str, request: Request):
+    from pydantic_schemaforms.live_validation import validation_response_headers
     data = await request.form()
-    value = data.get("username", "")
+    value = str(data.get(field_name, ""))
+    result = live_validator.validate_field(field_name, value)
 
-    validator = form_validator.field("username")
-    response = validator.validate(value)
-
-    if response.is_valid:
-        return HTMLResponse(
-            f'<div class="valid-feedback">✓ Available</div>'
-        )
+    if result.is_valid:
+        feedback = '<span class="valid-feedback">✓ Looks good!</span>'
     else:
-        errors = "".join([f"<li>{e}</li>" for e in response.errors])
-        return HTMLResponse(
-            f'<div class="invalid-feedback"><ul>{errors}</ul></div>'
-        )
+        feedback = f'<span class="invalid-feedback">{"; ".join(result.errors)}</span>'
 
-@app.post("/validate/email")
-async def validate_email(request: Request):
-    data = await request.form()
-    value = data.get("email", "")
-
-    response = form_validator.field("email").validate(value)
-
-    if response.is_valid:
-        return HTMLResponse(
-            f'<div class="valid-feedback">✓ Valid email</div>'
-        )
-    else:
-        errors = "".join([f"<li>{e}</li>" for e in response.errors])
-        return HTMLResponse(
-            f'<div class="invalid-feedback"><ul>{errors}</ul></div>'
-        )
+    headers = validation_response_headers(field_name, result.is_valid)
+    return HTMLResponse(feedback, headers=headers)
 ```
 
 #### 4. HTML Template
@@ -655,7 +653,7 @@ async def validate_email(request: Request):
             hx-post="/validate/username"
             hx-trigger="blur, change delay:300ms"
             hx-target="#username-feedback"
-            hx-swap="outerHTML"
+            hx-swap="innerHTML"
         />
         <div id="username-feedback"></div>
     </div>
@@ -672,7 +670,7 @@ async def validate_email(request: Request):
             hx-post="/validate/email"
             hx-trigger="blur, change delay:300ms"
             hx-target="#email-feedback"
-            hx-swap="outerHTML"
+            hx-swap="innerHTML"
         />
         <div id="email-feedback"></div>
     </div>
