@@ -66,7 +66,7 @@ jobs:
           echo "checkout_ref=$checkout_ref" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository (build from requested ref)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.resolve.outputs.checkout_ref }}
           fetch-depth: 0
