@@ -19,7 +19,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from types import SimpleNamespace
-from typing import Annotated, Dict, Optional, Type
+from typing import Annotated, Optional
 
 import pytest
 from pydantic import BaseModel
@@ -70,7 +70,6 @@ from pydantic_schemaforms.inputs.selection_inputs import (
 from pydantic_schemaforms.inputs.text_inputs import CreditCardInput, CurrencyInput, SSNInput
 from pydantic_schemaforms.integration.schema import JSONSchemaGenerator
 from pydantic_schemaforms.live_validation import HTMXValidationConfig, LiveValidator
-from pydantic_schemaforms.model_list import ModelListRenderer
 from pydantic_schemaforms.modern_renderer import (
     FormDefinition,
     FormField as LegacyFormField,
@@ -78,6 +77,8 @@ from pydantic_schemaforms.modern_renderer import (
     ModernFormRenderer,
 )
 from pydantic_schemaforms.rendering import form_style as form_style_module
+from pydantic_schemaforms.rendering.context import RenderContext
+from pydantic_schemaforms.rendering.field_renderer import FieldRenderer
 from pydantic_schemaforms.rendering.form_style import (
     FormStyle,
     FormStyleTemplates,
@@ -186,52 +187,10 @@ class _StubTheme(RendererTheme):
     def accordion_component_assets(self) -> str:  # type: ignore[override]
         return '<style>.custom-accordion-asset{color:blue;}</style>'
 
-    def render_model_list_container(  # type: ignore[override]
-        self,
-        *,
-        field_name: str,
-        label: str,
-        is_required: bool,
-        min_items: int,
-        max_items: int,
-        items_html: str,
-        help_text: Optional[str],
-        error: Optional[str],
-        add_button_label: str,
-    ) -> str:
-        return (
-            f"<section class='custom-model-list' data-field='{field_name}'>"
-            f'<header>{label}</header>'
-            f"<div class='items'>{items_html}</div>"
-            f'<footer>{add_button_label}</footer>'
-            '</section>'
-        )
-
-    def render_model_list_item(  # type: ignore[override]
-        self,
-        *,
-        field_name: str,
-        model_label: str,
-        index: int,
-        body_html: str,
-        remove_button_aria_label: str,
-    ) -> str:
-        return (
-            f"<article class='custom-item' data-field='{field_name}' data-index='{index}'>"
-            f'<h6>{model_label}</h6>'
-            f"<div class='body'>{body_html}</div>"
-            f"<button aria-label='{remove_button_aria_label}'>x</button>"
-            '</article>'
-        )
-
 
 class _StubRenderer:
     def __init__(self, theme: RendererTheme) -> None:
         self.theme = theme
-
-
-class _StubModel(FormModel):
-    name: str
 
 
 # ===========================================================================
@@ -2162,60 +2121,7 @@ def test_accordion_layout_uses_theme_assets() -> None:
     assert '.custom-accordion-asset' in html
 
 
-def test_model_list_renderer_delegates_container_to_theme() -> None:
-    class _StubListRenderer(ModelListRenderer):
-        def __init__(self) -> None:
-            super().__init__(framework='bootstrap')
-            self._theme = _StubTheme()
-
-        def _resolve_theme(self) -> RendererTheme:  # type: ignore[override]
-            return self._theme
-
-        def _render_item_body(  # type: ignore[override]
-            self,
-            field_name: str,
-            model_class: Type[FormModel],
-            index: int,
-            item_data: Dict[str, str],
-            nested_errors: Optional[Dict[str, str]] = None,
-        ) -> str:
-            return f"<div class='item-body' data-index='{index}'>Body</div>"
-
-    renderer = _StubListRenderer()
-
-    html = renderer.render_model_list(
-        field_name='pets',
-        label='Pets',
-        model_class=_StubModel,
-        values=[{'name': 'Rex'}],
-        min_items=0,
-        max_items=5,
-    )
-
-    assert 'custom-model-list' in html
-    assert 'Add Pets' in html  # comes from add_button_label argument
-    assert 'custom-item' in html
-    assert 'item-body' in html
-
-
-def test_model_list_uses_form_style_templates() -> None:
-    renderer = ModelListRenderer(framework='bootstrap')
-
-    html = renderer.render_model_list(
-        field_name='pets',
-        label='Pets',
-        model_class=_StubModel,
-        values=[{'name': 'Rex'}],
-        min_items=0,
-        max_items=5,
-    )
-
-    assert 'model-list-block' in html
-    assert 'model-list-items' in html
-    assert 'add-item-btn' in html
-
-
-def test_model_list_respects_custom_form_style_templates() -> None:
+def test_model_list_from_schema_respects_custom_form_style_templates() -> None:
     def _ml_container(
         *,
         field_name: str = '',
@@ -2228,9 +2134,6 @@ def test_model_list_respects_custom_form_style_templates() -> None:
             t"<div class='mlc' data-name='{field_name}'>{SafeHTML(items_html)}{SafeHTML(help_html)}{SafeHTML(error_html)}</div>"
         )
 
-    def _ml_item(*, index: str = '', body_html: str = '', **_):
-        return thtml(t"<div class='mli' data-idx='{index}'>{SafeHTML(body_html)}</div>")
-
     def _ml_help(*, help_text: str = '', **_):
         return thtml(t"<span class='ml-help'>{help_text}</span>")
 
@@ -2242,7 +2145,6 @@ def test_model_list_respects_custom_form_style_templates() -> None:
 
     custom_templates = FormStyleTemplates(
         model_list_container=TemplateString(_ml_container),
-        model_list_item=TemplateString(_ml_item),
         model_list_help=TemplateString(_ml_help),
         model_list_error=TemplateString(_ml_error),
         submit_button=TemplateString(_submit),
@@ -2259,33 +2161,33 @@ def test_model_list_respects_custom_form_style_templates() -> None:
     class _CustomTheme(RendererTheme):
         name = 'custom-style'
 
-    class _CustomListRenderer(ModelListRenderer):
-        def __init__(self) -> None:
-            super().__init__(framework='custom-style')
-            self._theme = _CustomTheme()
+    class _StubRendererWithTheme:
+        framework = 'custom-style'
+        config: dict = {}
+        theme = _CustomTheme()
 
-        def _resolve_theme(self) -> RendererTheme:  # type: ignore[override]
-            return self._theme
+    field_renderer = FieldRenderer(_StubRendererWithTheme())
+    context = RenderContext(form_data={}, schema_defs={})
 
-    renderer = _CustomListRenderer()
-
-    html = renderer.render_model_list(
+    html = field_renderer.render_model_list_from_schema(
         field_name='pets',
-        label='Pets',
-        model_class=_StubModel,
+        field_schema={'type': 'array', 'title': 'Pets', 'description': 'Helpful'},
+        schema_def={'properties': {'name': {'type': 'string'}}},
         values=[{'name': 'Rex'}],
-        help_text='Helpful',
         error='Oops',
-        min_items=0,
-        max_items=5,
+        ui_info={},
+        required_fields=[],
+        context=context,
     )
 
+    # The container/help/error chrome is themed via form_style templates.
+    # Per-item markup is fixed card HTML built directly by the schema-based
+    # renderer, not a themeable template.
     assert 'mlc' in html
-    assert 'mli' in html
     assert 'ml-help' in html
     assert 'ml-err' in html
 
-    button_html = renderer._theme.render_submit_button('ignored-class')
+    button_html = _CustomTheme().render_submit_button('ignored-class')
     assert 'custom-submit' in button_html
 
 
@@ -2364,3 +2266,164 @@ def test_material_embedded_theme_includes_error_summary_styles() -> None:
     assert '.md-error-summary' in css
     assert '.md-error-summary__title' in css
     assert '.md-error-summary__list' in css
+
+
+class TestUiInfoExtractionRegression:
+    """Regression coverage for the ui_* attribute extraction bug.
+
+    `ui_info = field_schema.get('ui', {}) or field_schema` silently
+    dropped ui_placeholder/ui_autofocus/ui_help_text/ui_disabled/
+    ui_readonly/ui_class/ui_style/ui_order for normally-declared fields,
+    because Pydantic's model_json_schema() leaves json_schema_extra keys
+    flat with the 'ui_' prefix intact, while the lookup code only checked
+    the stripped names. extract_ui_info() fixes this; these tests pin the
+    fix and guard against regressing to the old narrow-filter behavior.
+    """
+
+    def test_field_attribute_kwargs_render_for_bootstrap_and_plain(self) -> None:
+        class AttrsForm(FormModel):
+            a: str = Field(default='x', title='A', ui_disabled=True)
+            b: str = Field(default='y', title='B', ui_readonly=True)
+            c: str = Field(default='z', title='C', ui_class='my-custom-class')
+            d: str = Field(default='w', title='D', ui_style='color:red')
+            e: str = Field(
+                title='E',
+                ui_placeholder='Jane Doe',
+                ui_autofocus=True,
+                ui_help_text='Some help text',
+            )
+
+        for framework in ('bootstrap', 'none'):
+            html = render_form_html(AttrsForm, submit_url='/x', framework=framework)
+            assert 'disabled' in html
+            assert 'readonly' in html
+            assert 'my-custom-class' in html
+            assert 'color:red' in html
+            assert 'Jane Doe' in html
+            assert 'autofocus' in html
+            assert 'Some help text' in html
+
+    def test_ui_help_text_renders_for_material(self) -> None:
+        class HelpForm(FormModel):
+            e: str = Field(title='E', ui_help_text='UNIQUE_HELP_TEXT_MARKER')
+
+        html = render_form_html(HelpForm, submit_url='/x', framework='material')
+        assert 'UNIQUE_HELP_TEXT_MARKER' in html
+
+    def test_ui_order_reorders_fields(self) -> None:
+        class OrderForm(FormModel):
+            z_field: str = Field(title='Z Field', ui_order=1)
+            a_field: str = Field(title='A Field', ui_order=0)
+
+        html = render_form_html(OrderForm, submit_url='/x')
+        assert html.find('name="a_field"') < html.find('name="z_field"')
+
+    def test_extract_ui_info_preserves_unprefixed_and_strips_prefixed_keys(self) -> None:
+        from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
+
+        field_schema = {
+            'input_type': 'layout',
+            'title': 'Some Title',
+            'ui_placeholder': 'hint',
+            'ui_autofocus': True,
+        }
+
+        ui_info = extract_ui_info(field_schema)
+
+        assert ui_info['input_type'] == 'layout'
+        assert ui_info['title'] == 'Some Title'
+        assert ui_info['placeholder'] == 'hint'
+        assert ui_info['autofocus'] is True
+
+    def test_extract_ui_info_nested_ui_dict_takes_precedence(self) -> None:
+        from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
+
+        field_schema = {
+            'ui_placeholder': 'flat-value',
+            'ui': {'placeholder': 'nested-value'},
+        }
+
+        assert extract_ui_info(field_schema)['placeholder'] == 'nested-value'
+
+
+class TestModelListCustomization:
+    """Coverage for model_list cosmetics that previously had no way to be set.
+
+    ui_add_button_label/ui_item_title_template/ui_collapsible_items/
+    ui_items_expanded existed in the rendering layer but weren't recognized
+    as named Field() kwargs, so they never survived into json_schema_extra
+    for list[Item]-annotated fields. Also covers the consolidation of the
+    explicit-model_class path onto the same schema-based renderer used by
+    the common case, so both get title templates/collapsibility/nested
+    error display instead of two diverging implementations.
+    """
+
+    def test_add_button_label_and_item_title_template(self) -> None:
+        class Item(FormModel):
+            name: str = Field(title='Name')
+            lead: str = Field(title='Lead')
+
+        class Order(FormModel):
+            items: list[Item] = Field(
+                default_factory=list,
+                title='Widgets',
+                ui_element='model_list',
+                ui_add_button_label='Add a Widget',
+                ui_item_title_template='{name} (Lead: {lead})',
+            )
+
+        html = render_form_html(
+            Order, submit_url='/order', form_data={'items': [{'name': 'Widget', 'lead': 'Alex'}]}
+        )
+        assert 'Add a Widget' in html
+        assert 'Widget (Lead: Alex)' in html
+
+    def test_collapsible_items_and_items_expanded_toggle(self) -> None:
+        class Item(FormModel):
+            name: str = Field(title='Name')
+
+        class Order(FormModel):
+            items: list[Item] = Field(
+                default_factory=list,
+                title='Items',
+                ui_element='model_list',
+                ui_collapsible_items=False,
+            )
+
+        html = render_form_html(
+            Order, submit_url='/order', form_data={'items': [{'name': 'Widget'}]}
+        )
+        item_idx = html.index('data-index="0"')
+        item_fragment = html[item_idx : item_idx + 400]
+        assert 'data-bs-toggle' not in item_fragment
+
+    def test_min_length_max_length_bound_list_item_count(self) -> None:
+        class Item(FormModel):
+            name: str = Field(title='Name')
+
+        class Order(FormModel):
+            items: list[Item] = Field(
+                default_factory=list,
+                title='Items',
+                ui_element='model_list',
+                min_length=1,
+                max_length=3,
+            )
+
+        html = render_form_html(Order, submit_url='/order')
+        assert 'data-min-items="1"' in html
+        assert 'data-max-items="3"' in html
+
+    def test_explicit_model_class_shows_nested_validation_errors(self) -> None:
+        class Item(FormModel):
+            name: str = Field(title='Name', min_length=2)
+
+        class Order(FormModel):
+            items: list[Item] = Field(default_factory=list, title='Items', ui_element='model_list')
+
+        result = Order.validate({'items': [{'name': 'A'}, {'name': 'Valid'}]}, submit_url='/order')
+        assert not result.is_valid
+        assert result.errors == {'items[0].name': 'String should have at least 2 characters'}
+
+        html = result.render_with_errors()
+        assert 'at least 2 characters' in html

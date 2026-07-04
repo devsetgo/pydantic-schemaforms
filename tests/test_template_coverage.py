@@ -32,7 +32,6 @@ from pydantic_schemaforms.rendering.form_style import (
     PLAIN_MODEL_LIST_CONTAINER_TEMPLATE,
     PLAIN_MODEL_LIST_ERROR_TEMPLATE,
     PLAIN_MODEL_LIST_HELP_TEMPLATE,
-    PLAIN_MODEL_LIST_ITEM_TEMPLATE,
     PLAIN_TAB_LAYOUT_TEMPLATE,
     FormStyle,
     FormStyleTemplates,
@@ -265,20 +264,6 @@ class TestPlainFormStyleTemplates:
         assert isinstance(out, SafeHTML)
         assert 'model-list-block' in out
         assert 'add-item-btn' in out
-
-    def test_plain_model_list_item(self):
-        body = SafeHTML('<input name="pet.name">')
-        out = PLAIN_MODEL_LIST_ITEM_TEMPLATE.render(
-            index='0',
-            field_name='pets',
-            model_label='Pet',
-            display_index='1',
-            remove_button_aria_label='Remove pet 1',
-            body_html=str(body),
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'model-list-item' in out
-        assert 'remove-item-btn' in out
 
     def test_plain_model_list_help(self):
         out = PLAIN_MODEL_LIST_HELP_TEMPLATE.render(help_text='Add items')

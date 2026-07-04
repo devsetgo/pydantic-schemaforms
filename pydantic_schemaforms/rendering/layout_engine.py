@@ -10,6 +10,7 @@ from pydantic_schemaforms.layout_base import BaseLayout
 from pydantic_schemaforms.templates import FormTemplates
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
+from .schema_parser import extract_ui_info
 
 if TYPE_CHECKING:  # pragma: no cover
     from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
@@ -601,7 +602,7 @@ class LayoutEngine:
 
         tabs_payload: list[dict[str, str]] = []
         for field_name, field_schema in layout_fields:
-            ui_info = field_schema.get('ui', {}) or field_schema
+            ui_info = extract_ui_info(field_schema)
             layout_content = self.render_layout_field_content(
                 field_name,
                 field_schema,

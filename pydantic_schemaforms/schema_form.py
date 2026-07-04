@@ -63,6 +63,10 @@ def Field(
     ui_hidden: bool | None = None,
     ui_class: str | None = None,
     ui_style: str | None = None,
+    ui_add_button_label: str | None = None,
+    ui_item_title_template: str | None = None,
+    ui_collapsible_items: bool | None = None,
+    ui_items_expanded: bool | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -84,6 +88,10 @@ def Field(
         'ui_hidden': ui_hidden,
         'ui_class': ui_class,
         'ui_style': ui_style,
+        'ui_add_button_label': ui_add_button_label,
+        'ui_item_title_template': ui_item_title_template,
+        'ui_collapsible_items': ui_collapsible_items,
+        'ui_items_expanded': ui_items_expanded,
     }
 
     # Filter out None values and add to json_schema_extra
@@ -130,6 +138,10 @@ class FormModel(BaseModel):
     Enhanced base class for form models with UI element support.
     Supports UI element specifications through field annotations and generates
     rich schemas for form rendering using a JSON-schema-form style UI vocabulary.
+
+    AI assistants: run `python -m pydantic_schemaforms.ai_instructions <profile>`
+    (claude/copilot/generic) for integration guidance covering CSRF, model_list,
+    as_api_model, and validation patterns before hand-rolling a route.
     """
 
     __runtime_fields__: dict[str, tuple[Any, FieldInfo]] = {}

@@ -16,7 +16,7 @@ from collections.abc import Callable
 from pydantic import create_model
 
 from .enhanced_renderer import EnhancedFormRenderer
-from .rendering.schema_parser import build_schema_metadata, resolve_ui_element
+from .rendering.schema_parser import build_schema_metadata, extract_ui_info, resolve_ui_element
 from .rendering.themes import RendererTheme
 from .schema_form import Field as SchemaField
 from .schema_form import FormModel
@@ -381,7 +381,7 @@ class ModernFormRenderer(EnhancedFormRenderer):
 
         for order, (field_name, field_schema) in enumerate(metadata.fields):
             ui_element = resolve_ui_element(field_schema) or 'text'
-            ui_info = field_schema.get('ui', {}) or field_schema
+            ui_info = extract_ui_info(field_schema)
 
             options = ui_info.get('options')
             if not isinstance(options, list):

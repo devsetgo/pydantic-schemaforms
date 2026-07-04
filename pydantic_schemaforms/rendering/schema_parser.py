@@ -23,10 +23,39 @@ class SchemaMetadata:
     schema_defs: dict[str, Any]
 
 
+def extract_ui_info(field_schema: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a field schema's UI metadata into a single dict.
+
+    Dynamically registered fields (see `_field_info_to_schema`) nest UI
+    metadata under a 'ui' key with the 'ui_' prefix already stripped.
+    Fields declared via normal type annotations go through Pydantic's
+    `model_json_schema()`, which merges `json_schema_extra` straight into
+    the property dict — so keys like `ui_placeholder` appear flat, with
+    the prefix intact, alongside unprefixed keys like `input_type` (from
+    FormField/legacy callers) that callers expect to read as-is.
+
+    The old `field_schema.get('ui', {}) or field_schema` fallback returned
+    the flat schema verbatim when there was no nested 'ui' dict, so
+    unprefixed keys (input_type, title, options, model_class, ...) worked,
+    but prefixed ones (ui_placeholder, ui_autofocus, ui_help_text, ...)
+    were never stripped and so never matched lookups like
+    `ui_info.get('placeholder')`. This keeps the flat schema intact,
+    additionally exposes stripped-prefix aliases for `ui_*` keys, and lets
+    an explicit nested 'ui' dict (if present) take precedence over both.
+    """
+
+    ui_info: dict[str, Any] = dict(field_schema)
+    for key, value in field_schema.items():
+        if key.startswith('ui_'):
+            ui_info.setdefault(key[3:], value)
+    ui_info.update(field_schema.get('ui') or {})
+    return ui_info
+
+
 def resolve_ui_element(field_schema: dict[str, Any]) -> str | None:
     """Return the declared UI element name for a schema field."""
 
-    ui_info = field_schema.get('ui', {}) or field_schema
+    ui_info = extract_ui_info(field_schema)
     return (
         ui_info.get('element')
         or ui_info.get('ui_element')
@@ -62,8 +91,7 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     fields: list[tuple[str, dict[str, Any]]] = list(properties.items())
 
     def order_key(item: tuple[str, dict[str, Any]]) -> int:
-        ui_info = item[1].get('ui', {}) or item[1]
-        return ui_info.get('order', 999)
+        return extract_ui_info(item[1]).get('order', 999)
 
     fields.sort(key=order_key)
 

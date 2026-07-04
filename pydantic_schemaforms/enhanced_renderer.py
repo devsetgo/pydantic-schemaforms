@@ -24,7 +24,12 @@ from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
 from .rendering.layout_engine import LayoutEngine, get_nested_form_data
 from .rendering.material_icons import render_material_icon
-from .rendering.schema_parser import SchemaMetadata, build_schema_metadata, resolve_ui_element
+from .rendering.schema_parser import (
+    SchemaMetadata,
+    build_schema_metadata,
+    extract_ui_info,
+    resolve_ui_element,
+)
 from .rendering.themes import MaterialEmbeddedTheme, RendererTheme, get_theme_for_framework
 from .schema_form import FormModel
 from .templates import FormTemplates, render_template
@@ -922,7 +927,7 @@ class EnhancedFormRenderer:
         all_errors: dict[str, Any] | None = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
-        ui_info = field_schema.get('ui', {}) or field_schema
+        ui_info = extract_ui_info(field_schema)
 
         if ui_info.get('hidden'):
             return (
