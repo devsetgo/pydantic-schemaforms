@@ -10,6 +10,7 @@ from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 from pydantic_schemaforms.inputs import HiddenInput
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.frameworks import get_input_component
+from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
 from .themes import RendererTheme
 
 
@@ -45,7 +46,7 @@ class FieldRenderer:
         if context is None:
             raise ValueError('RenderContext is required for field rendering')
 
-        ui_info = field_schema.get('ui', {}) or field_schema
+        ui_info = extract_ui_info(field_schema)
 
         if ui_info.get('hidden'):
             return self._render_hidden_field(field_name, value)
@@ -203,24 +204,23 @@ class FieldRenderer:
         context: RenderContext,
         all_errors: dict[str, str] | None,
     ) -> str:
-        from pydantic_schemaforms.model_list import ModelListRenderer
+        # The item model is always resolved from the list[ItemModel] type
+        # annotation's $ref — there is no separate model_class override.
+        # A model_class passed via ui_options can never reach here: Field()
+        # serializes ui_options into json_schema_extra (a raw class fails
+        # that), and register_field()'s dynamic-field schema builder only
+        # forwards ui_-prefixed keys. One resolution path, not two.
+        items_ref = field_schema.get('items', {}).get('$ref')
+        if not items_ref:
+            return (
+                f"<!-- Error: model_list field '{field_name}' must be typed as list[ItemModel] -->"
+            )
 
-        list_renderer = ModelListRenderer(framework=self.framework)
-        model_class = ui_info.get('model_class')
-        if model_class and not isinstance(model_class, type):
-            model_class = None
-        schema_def: dict[str, Any] | None = None
-
-        if not model_class:
-            items_ref = field_schema.get('items', {}).get('$ref')
-            if items_ref:
-                model_name = items_ref.split('/')[-1]
-                schema_defs = context.schema_defs or {}
-                schema_def = schema_defs.get(model_name)
-                if not schema_def:
-                    return f"<!-- Error: Could not resolve model reference '{items_ref}' for field '{field_name}' -->"
-            else:
-                return f"<!-- Error: model_class not specified and no items.$ref found for model_list field '{field_name}' -->"
+        model_name = items_ref.split('/')[-1]
+        schema_defs = context.schema_defs or {}
+        schema_def = schema_defs.get(model_name)
+        if not schema_def:
+            return f"<!-- Error: Could not resolve model reference '{items_ref}' for field '{field_name}' -->"
 
         list_values: list[dict[str, Any]] = []
         if value:
@@ -235,31 +235,16 @@ class FieldRenderer:
             elif isinstance(value, dict):
                 list_values = [value]
 
-        nested_errors = self.extract_nested_errors_for_field(field_name, all_errors or {})
-
-        if model_class:
-            return list_renderer.render_model_list(
-                field_name=field_name,
-                label=field_schema.get('title', field_name.replace('_', ' ').title()),
-                model_class=model_class,
-                values=list_values,
-                error=error,
-                nested_errors=nested_errors,
-                help_text=ui_info.get('help_text'),
-                is_required=field_name in (required_fields or []),
-                min_items=ui_info.get('min_items', 0),
-                max_items=ui_info.get('max_items', 10),
-            )
-
         return self.render_model_list_from_schema(
             field_name=field_name,
             field_schema=field_schema,
-            schema_def=schema_def or {},
+            schema_def=schema_def,
             values=list_values,
             error=error,
             ui_info=ui_info,
             required_fields=required_fields or [],
             context=context,
+            all_errors=all_errors,
         )
 
     def _extract_ui_options(
@@ -410,7 +395,9 @@ class FieldRenderer:
         ui_info: dict[str, Any],
         required_fields: list[str],
         context: RenderContext,
+        all_errors: dict[str, str] | None = None,
     ) -> str:
+        nested_errors = self.extract_nested_errors_for_field(field_name, all_errors or {})
         items_parts: list[str] = []
 
         for i, item_data in enumerate(values):
@@ -422,6 +409,7 @@ class FieldRenderer:
                     item_data,
                     context,
                     ui_info,
+                    nested_errors,
                 )
             )
 
@@ -436,6 +424,7 @@ class FieldRenderer:
                         {},
                         context,
                         ui_info,
+                        nested_errors,
                     )
                 )
 
@@ -448,6 +437,7 @@ class FieldRenderer:
                     {},
                     context,
                     ui_info,
+                    nested_errors,
                 )
             )
 
@@ -460,6 +450,7 @@ class FieldRenderer:
             {},
             context,
             ui_info,
+            nested_errors,
         )
         template_html = (
             f'<template class="model-list-item-template">{template_item_html}</template>'
@@ -524,8 +515,10 @@ class FieldRenderer:
         item_data: dict[str, Any],
         context: RenderContext,
         ui_info: dict[str, Any] | None = None,
+        nested_errors: dict[str, str] | None = None,
     ) -> str:
         ui_info = ui_info or {}
+        nested_errors = nested_errors or {}
         collapsible = ui_info.get('collapsible_items', True)
         expanded = ui_info.get('items_expanded', True)
         title_template = ui_info.get('item_title_template', 'Item #{index}')
@@ -603,6 +596,7 @@ class FieldRenderer:
 
             field_value = item_data.get(field_key, '')
             input_name = f'{field_name}[{index}].{field_key}'
+            field_error = nested_errors.get(f'{index}.{field_key}')
 
             field_col_class = col_class
             if nested_schema.get('input_type') == 'model_list':
@@ -615,11 +609,11 @@ class FieldRenderer:
                     input_name,
                     nested_schema,
                     field_value,
-                    None,
+                    field_error,
                     [],
                     context,
                     'vertical',
-                    None,
+                    nested_errors,
                 )
             }
                 </div>"""

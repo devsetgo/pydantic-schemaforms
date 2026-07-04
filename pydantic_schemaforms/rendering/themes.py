@@ -247,26 +247,6 @@ class RendererTheme:
             error_html=error_html,
         )
 
-    def render_model_list_item(
-        self,
-        *,
-        field_name: str,
-        model_label: str,
-        index: int,
-        body_html: str,
-        remove_button_aria_label: str,
-    ) -> str:
-        """Render a single model list item wrapper."""
-        templates = self.form_style.templates
-        return templates.model_list_item.render(
-            field_name=escape(field_name, quote=True),
-            model_label=escape(model_label),
-            index=str(index),
-            display_index=str(index + 1),
-            body_html=body_html,
-            remove_button_aria_label=escape(remove_button_aria_label),
-        )
-
 
 class DefaultTheme(RendererTheme):
     """Default theme used for Bootstrap/plain frameworks."""
@@ -346,23 +326,6 @@ class MaterialTheme(FrameworkTheme):
 
     def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
         super().__init__('material', include_assets=include_assets, asset_mode=asset_mode)
-
-    def render_model_list_item(
-        self,
-        *,
-        field_name: str,
-        model_label: str,
-        index: int,
-        body_html: str,
-        remove_button_aria_label: str,
-    ) -> str:
-        return super().render_model_list_item(
-            field_name=field_name,
-            model_label=model_label,
-            index=index,
-            body_html=body_html,
-            remove_button_aria_label=remove_button_aria_label,
-        )
 
 
 class PlainTheme(FrameworkTheme):
@@ -657,39 +620,6 @@ function toggleAccordion(sectionId, buttonElement) {
 
         parts.append(_CLOSE_SECTION)
         return '\n'.join(parts)
-
-    def render_model_list_item(
-        self,
-        *,
-        field_name: str,
-        model_label: str,
-        index: int,
-        body_html: str,
-        remove_button_aria_label: str,
-    ) -> str:
-        safe_label = escape(model_label)
-        safe_field = escape(field_name, quote=True)
-        safe_remove_label = escape(remove_button_aria_label)
-
-        return '\n'.join(
-            [
-                '<section class="md-model-card" '
-                f'data-index="{index}" data-field-name="{safe_field}">',
-                '  <header class="md-model-card__header">',
-                '    <h6 class="mdc-typography--subtitle2 mb-0">',
-                f'      {safe_label} #{index + 1}',
-                '    </h6>',
-                '    <button type="button" class="md-icon-button remove-item-btn"',
-                f'            data-index="{index}" aria-label="{safe_remove_label}">',
-                f'      {render_material_icon("delete", classes="md-icon")}',
-                '    </button>',
-                '  </header>',
-                '  <div class="md-model-card__body">',
-                f'    {body_html}',
-                _CLOSE_INNER_DIV,
-                _CLOSE_SECTION,
-            ]
-        )
 
     @staticmethod
     def _build_css() -> str:

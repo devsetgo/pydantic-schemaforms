@@ -27,11 +27,11 @@ nav:
       - Application Logging: 'logging.md'
       - Validation Guide: 'validation_guide.md'
       - Plugin Hooks: 'plugin_hooks.md'
+      - AI Assistant Instructions: 'ai_instructions.md'
   - Development:
       - Testing Workflow: 'testing_workflow.md'
       - Contributing: 'contribute.md'
       - Release Notes: 'release-notes.md'
-      - Demo Sync (PAT Setup): 'github_pat_setup.md'
       - Review: 'review.md'
   - About: 'about.md'
     # - QuickStart: 'quickstart.md'

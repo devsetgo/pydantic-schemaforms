@@ -547,44 +547,34 @@
         </div>
     </div>
 
-    <!-- API Documentation -->
+    <!-- AI Assistant Instructions -->
+    <!--
+        Teaching note:
+        Replaces the old API Documentation card — those links (Swagger UI,
+        ReDoc, Health) already live in the "Framework Detection" section at
+        the bottom of this page, so duplicating them up here was redundant.
+    -->
     <div class="col-md-6 col-lg-4">
         <div class="card h-100 demo-card position-relative">
-            <div class="framework-badge">{% if framework == "fastapi" %}API Docs{% else %}Not Available{% endif %}</div>
+            <div class="framework-badge">AI-Ready</div>
             <div class="card-body d-flex flex-column text-center p-4">
                 <div class="feature-icon">
-                    <i class="bi bi-code-slash"></i>
+                    <i class="bi bi-robot"></i>
                 </div>
-                <h5 class="card-title">API Documentation</h5>
+                <h5 class="card-title">AI Assistant Instructions</h5>
                 <p class="card-text flex-grow-1">
-                    Interactive API documentation with Swagger UI
-                    and ReDoc for testing endpoints.
+                    Packaged, verified integration guidance for Claude, Copilot, and
+                    generic assistants — browse what <code>get_app_instructions()</code>
+                    generates for each profile.
                 </p>
                 <div class="mt-auto">
-                    {% if framework == "fastapi" %}
                     <div class="d-grid gap-2">
-                        <a href="/docs" target="_blank" class="btn btn-demo btn-sm">
-                            <i class="bi bi-book me-2"></i>
-                            Swagger UI
+                        <a href="/ai-instructions" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            View Instructions
                         </a>
-                        <div class="btn-group" role="group">
-                            <a href="/redoc" target="_blank" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-file-text me-1"></i>
-                                ReDoc
-                            </a>
-                            <a href="/api/health" target="_blank" class="btn btn-outline-success btn-sm">
-                                <i class="bi bi-heart-pulse me-1"></i>
-                                Health
-                            </a>
-                        </div>
                     </div>
-                    {% else %}
-                    <span class="btn btn-outline-secondary w-100 disabled">
-                        <i class="bi bi-info-circle me-2"></i>
-                        FastAPI Only
-                    </span>
-                    {% endif %}
-                    <small class="text-muted mt-2">Interactive docs</small>
+                    <small class="text-muted mt-2">CLAUDE.md · copilot-instructions.md · AI_INSTRUCTIONS.md</small>
                 </div>
             </div>
         </div>

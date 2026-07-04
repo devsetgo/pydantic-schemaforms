@@ -27,6 +27,7 @@ import secrets
 import sys
 from pathlib import Path
 
+import markdown as _markdown
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -58,8 +59,11 @@ from pydantic_schemaforms import (
     HTMXValidationConfig,
     LiveValidator,
     MinLengthRule,
+    available_instruction_profiles,
+    get_app_instructions,
     parse_nested_form_data,
     render_form_html_async,
+    suggested_instruction_filename,
 )
 from pydantic_schemaforms.assets.runtime import (
     bootstrap_icons_css_content,
@@ -1926,6 +1930,38 @@ async def htmx_validate_field(field_name: str, request: Request):
         feedback = f'<span class="text-danger small"><i class="bi bi-exclamation-circle-fill me-1"></i>{error_text}</span>'
     headers = validation_response_headers(field_name, result.is_valid)
     return HTMLResponse(feedback, headers=headers)
+
+
+# ================================
+# AI ASSISTANT INSTRUCTIONS
+# ================================
+
+
+@app.get('/ai-instructions', response_class=HTMLResponse, tags=['System'])
+async def ai_instructions_page(request: Request):
+    """Render the packaged AI-assistant instructions (one tab per profile)."""
+    profiles = [
+        {
+            'id': profile,
+            'label': profile.title(),
+            'filename': suggested_instruction_filename(profile),
+            'html': _markdown.markdown(
+                get_app_instructions(profile),
+                extensions=['fenced_code', 'tables', 'sane_lists'],
+            ),
+        }
+        for profile in available_instruction_profiles()
+    ]
+
+    return templates.TemplateResponse(
+        request,
+        'ai_instructions.html',
+        {
+            'request': request,
+            'title': 'AI Assistant Instructions',
+            'profiles': profiles,
+        },
+    )
 
 
 # ================================

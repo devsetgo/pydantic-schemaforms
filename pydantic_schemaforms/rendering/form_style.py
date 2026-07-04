@@ -76,35 +76,6 @@ def _default_model_list_container(
 DEFAULT_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(_default_model_list_container)
 
 
-def _default_model_list_item(
-    *,
-    index: str = '',
-    field_name: str = '',
-    model_label: str = '',
-    display_index: str = '',
-    remove_button_aria_label: str = '',
-    body_html: str = '',
-    **_: Any,
-) -> SafeHTML:
-    return html(t'''
-<div class="model-list-item border rounded p-3 mb-2 bg-light" data-index="{index}" data-field-name="{field_name}">
-    <div class="d-flex justify-content-between align-items-start mb-2">
-        <h6 class="mb-0 text-primary">
-            <i class="bi bi-card-list"></i>
-            {model_label} #{display_index}
-        </h6>
-        <button type="button" class="btn btn-outline-danger btn-sm remove-item-btn" data-index="{index}" aria-label="{remove_button_aria_label}">
-            <i class="bi bi-trash"></i>
-        </button>
-    </div>
-    {SafeHTML(body_html)}
-</div>
-''')
-
-
-DEFAULT_MODEL_LIST_ITEM_TEMPLATE = TemplateString(_default_model_list_item)
-
-
 def _default_model_list_help(*, help_text: str = '', **_: Any) -> SafeHTML:
     return html(t'<div class="form-text text-muted model-list-help">{help_text}</div>')
 
@@ -194,30 +165,6 @@ def _plain_model_list_container(
 
 
 PLAIN_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(_plain_model_list_container)
-
-
-def _plain_model_list_item(
-    *,
-    index: str = '',
-    field_name: str = '',
-    model_label: str = '',
-    display_index: str = '',
-    remove_button_aria_label: str = '',
-    body_html: str = '',
-    **_: Any,
-) -> SafeHTML:
-    return html(t'''
-<div class="model-list-item" data-index="{index}" data-field-name="{field_name}">
-    <div class="model-list-header">
-        <span>{model_label} #{display_index}</span>
-        <button type="button" class="remove-item-btn" data-index="{index}" aria-label="{remove_button_aria_label}">Remove</button>
-    </div>
-    {SafeHTML(body_html)}
-</div>
-''')
-
-
-PLAIN_MODEL_LIST_ITEM_TEMPLATE = TemplateString(_plain_model_list_item)
 
 
 def _plain_model_list_help(*, help_text: str = '', **_: Any) -> SafeHTML:
@@ -590,34 +537,6 @@ def _material_model_list_container(
 MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE = TemplateString(_material_model_list_container)
 
 
-def _material_model_list_item(
-    *,
-    index: str = '',
-    field_name: str = '',
-    model_label: str = '',
-    display_index: str = '',
-    remove_button_aria_label: str = '',
-    body_html: str = '',
-    **_: Any,
-) -> SafeHTML:
-    return html(t'''
-<section class="model-list-item md-model-card mdc-card mdc-card--outlined" data-index="{index}" data-field-name="{field_name}">
-    <div class="mdc-card__primary-action">
-        <header class="md-model-card__header">
-            <h6 class="mdc-typography--subtitle2 mb-0">{model_label} #{display_index}</h6>
-            <button type="button" class="md-icon-button mdc-icon-button remove-item-btn" data-index="{index}" aria-label="{remove_button_aria_label}">
-                <span class="material-icons">delete</span>
-            </button>
-        </header>
-        <div class="md-model-card__body">{SafeHTML(body_html)}</div>
-    </div>
-</section>
-''')
-
-
-MATERIAL_MODEL_LIST_ITEM_TEMPLATE = TemplateString(_material_model_list_item)
-
-
 def _material_model_list_help(*, help_text: str = '', **_: Any) -> SafeHTML:
     return html(t'<p class="md-help-text">{help_text}</p>')
 
@@ -671,7 +590,6 @@ class FormStyleTemplates:
     layout_section: TemplateString = DEFAULT_LAYOUT_SECTION_TEMPLATE
     layout_help: TemplateString = DEFAULT_LAYOUT_HELP_TEMPLATE
     model_list_container: TemplateString = DEFAULT_MODEL_LIST_CONTAINER_TEMPLATE
-    model_list_item: TemplateString = DEFAULT_MODEL_LIST_ITEM_TEMPLATE
     model_list_help: TemplateString = DEFAULT_MODEL_LIST_HELP_TEMPLATE
     model_list_error: TemplateString = DEFAULT_MODEL_LIST_ERROR_TEMPLATE
     field_help: TemplateString = DEFAULT_FIELD_HELP_TEMPLATE
@@ -785,7 +703,6 @@ register_form_style(
             accordion_layout=PLAIN_ACCORDION_LAYOUT_TEMPLATE,
             accordion_section=PLAIN_ACCORDION_SECTION_TEMPLATE,
             model_list_container=PLAIN_MODEL_LIST_CONTAINER_TEMPLATE,
-            model_list_item=PLAIN_MODEL_LIST_ITEM_TEMPLATE,
             model_list_help=PLAIN_MODEL_LIST_HELP_TEMPLATE,
             model_list_error=PLAIN_MODEL_LIST_ERROR_TEMPLATE,
             field_help=PLAIN_FIELD_HELP_TEMPLATE,
@@ -804,7 +721,6 @@ _MATERIAL_TEMPLATES = FormStyleTemplates(
     accordion_layout=MATERIAL_ACCORDION_LAYOUT_TEMPLATE,
     accordion_section=MATERIAL_ACCORDION_SECTION_TEMPLATE,
     model_list_container=MATERIAL_MODEL_LIST_CONTAINER_TEMPLATE,
-    model_list_item=MATERIAL_MODEL_LIST_ITEM_TEMPLATE,
     model_list_help=MATERIAL_MODEL_LIST_HELP_TEMPLATE,
     model_list_error=MATERIAL_MODEL_LIST_ERROR_TEMPLATE,
     field_help=MATERIAL_FIELD_HELP_TEMPLATE,

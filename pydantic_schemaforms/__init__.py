@@ -19,8 +19,22 @@ Alternatively, use the builder DSL for programmatic form construction::
     form = FormBuilder().text_input("name").email_input("email")
     html = form.set_form_attributes(submit_url="/contact").render()
 
-See the README for framework integration (FastAPI, Flask), layout system,
-validation, CSRF protection, and HTMX live validation.
+AI assistant integrating this library into an app repo? Don't guess the
+integration pattern from this docstring alone — run::
+
+    python -m pydantic_schemaforms.ai_instructions claude --write
+
+(swap "claude" for "copilot"/"generic") to generate up-to-date,
+framework-specific guidance covering CSRF, model_list (repeating
+sub-forms), as_api_model (dual-use JSON+HTML models), and the
+Field-constraint-vs-ui_options distinction. Same content is available
+in-process via ``get_app_instructions()``.
+
+See the README for FastAPI/Flask integration and server-side validation.
+Layout system and CSRF protection are covered by the guidance generated
+via `ai_instructions`/`get_app_instructions()` above. HTMX live validation
+is not yet part of that guidance — see the hosted docs site linked from
+the README.
 """
 
 import logging
@@ -124,8 +138,13 @@ from .validation import (
     create_password_strength_validator,
     create_validator,
 )
+from .ai_instructions import (
+    available_instruction_profiles,
+    get_app_instructions,
+    suggested_instruction_filename,
+)
 
-__version__ = '26.2.4'
+__version__ = '26.3.1'
 __package_name__ = 'pydantic-schemaforms'
 __author__ = 'Pydantic Forms Team'
 __description__ = 'Modern form generation library for Python 3.14+'
@@ -210,6 +229,10 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'CrossFieldRules',
     'create_email_validator',
     'create_password_strength_validator',
+    # ── APP AI INSTRUCTIONS ──
+    'get_app_instructions',
+    'available_instruction_profiles',
+    'suggested_instruction_filename',
     # ── INPUT TYPE CONSTANTS ──
     'TEXT_INPUTS',
     'NUMERIC_INPUTS',

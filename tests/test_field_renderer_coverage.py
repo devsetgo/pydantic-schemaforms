@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from types import SimpleNamespace
 from pydantic_schemaforms.rendering.field_renderer import FieldRenderer
 from pydantic_schemaforms.rendering.context import RenderContext
 from unittest.mock import Mock, patch
@@ -842,7 +841,7 @@ def test_extract_apply_and_normalize_option_helpers():
     assert field_renderer._is_option_selected('2', '2') is True
 
 
-def test_render_model_list_field_errors_and_model_class_paths():
+def test_render_model_list_field_errors_and_ref_resolution():
     field_renderer = FieldRenderer(_DummyRenderer())
 
     no_ref = field_renderer._render_model_list_field(
@@ -855,7 +854,7 @@ def test_render_model_list_field_errors_and_model_class_paths():
         context=_context(),
         all_errors={},
     )
-    assert 'model_class not specified' in no_ref
+    assert 'must be typed as list[ItemModel]' in no_ref
 
     unresolved_ref = field_renderer._render_model_list_field(
         field_name='items',
@@ -876,35 +875,27 @@ def test_render_model_list_field_errors_and_model_class_paths():
         def model_dump(self):
             return self.payload
 
-    class _FakeModelListRenderer:
-        def __init__(self, framework):
-            self.framework = framework
+    schema_defs = {'Item': {'properties': {'name': {'type': 'string'}}}}
 
-        def render_model_list(self, **kwargs):
-            assert kwargs['is_required'] is True
-            assert kwargs['nested_errors'] == {'0.name': 'required'}
-            assert kwargs['values'][0] == {'name': 'a'}
-            assert kwargs['values'][1] == {'name': 'b'}
-            assert kwargs['values'][2] == {'name': 'c'}
-            return '<div>model-list-rendered</div>'
-
-    with patch('pydantic_schemaforms.model_list.ModelListRenderer', _FakeModelListRenderer):
-        html = field_renderer._render_model_list_field(
-            field_name='items',
-            field_schema={'type': 'array', 'title': 'Items'},
-            value=[_FakeItem({'name': 'a'}), {'name': 'b'}, _FakeItem({'name': 'c'})],
-            error='E',
-            required_fields=['items'],
-            ui_info={
-                'model_class': SimpleNamespace,
-                'help_text': 'help',
-                'min_items': 1,
-                'max_items': 4,
-            },
-            context=_context(),
-            all_errors={'items[0].name': 'required', 'other': 'x'},
-        )
-    assert 'model-list-rendered' in html
+    html = field_renderer._render_model_list_field(
+        field_name='items',
+        field_schema={
+            'type': 'array',
+            'title': 'Items',
+            'items': {'$ref': '#/$defs/Item'},
+        },
+        value=[_FakeItem({'name': 'a'}), {'name': 'b'}, _FakeItem({'name': 'c'})],
+        error='E',
+        required_fields=['items'],
+        ui_info={'help_text': 'help'},
+        context=_context(schema_defs=schema_defs),
+        all_errors={'items[0].name': 'required', 'other': 'x'},
+    )
+    assert 'model-list-item' in html
+    assert 'required' in html
+    assert 'value="a"' in html
+    assert 'value="b"' in html
+    assert 'value="c"' in html
 
 
 def test_render_model_list_field_single_model_dump_value_path():
@@ -915,27 +906,20 @@ def test_render_model_list_field_single_model_dump_value_path():
         def model_dump():
             return {'name': 'single'}
 
-    class _FakeModelListRenderer:
-        def __init__(self, framework):
-            self.framework = framework
+    schema_defs = {'Item': {'properties': {'name': {'type': 'string'}}}}
 
-        def render_model_list(self, **kwargs):
-            assert kwargs['values'] == [{'name': 'single'}]
-            return '<div>single-model</div>'
+    html = field_renderer._render_model_list_field(
+        field_name='items',
+        field_schema={'type': 'array', 'items': {'$ref': '#/$defs/Item'}},
+        value=_SingleItem(),
+        error=None,
+        required_fields=[],
+        ui_info={},
+        context=_context(schema_defs=schema_defs),
+        all_errors={},
+    )
 
-    with patch('pydantic_schemaforms.model_list.ModelListRenderer', _FakeModelListRenderer):
-        html = field_renderer._render_model_list_field(
-            field_name='items',
-            field_schema={'type': 'array'},
-            value=_SingleItem(),
-            error=None,
-            required_fields=[],
-            ui_info={'model_class': SimpleNamespace},
-            context=_context(),
-            all_errors={},
-        )
-
-    assert 'single-model' in html
+    assert 'value="single"' in html
 
 
 def test_render_model_list_field_schema_fallback_and_container_theming(monkeypatch):
@@ -948,7 +932,7 @@ def test_render_model_list_field_schema_fallback_and_container_theming(monkeypat
 
     calls = []
 
-    def _fake_item(field_name, schema_def, index, item_data, context, ui_info):
+    def _fake_item(field_name, schema_def, index, item_data, context, ui_info, nested_errors=None):
         calls.append((field_name, index, dict(item_data)))
         return f"<article data-index='{index}'>item</article>"
 
@@ -1099,20 +1083,8 @@ def test_render_field_radio_enum_branch_and_helpers(monkeypatch):
     assert field_renderer._get_input_class('checkbox') == ''
 
 
-def test_render_model_list_field_non_type_model_and_schema_path(monkeypatch):
+def test_render_model_list_field_single_dict_value_through_schema_path(monkeypatch):
     field_renderer = FieldRenderer(_DummyRenderer())
-
-    non_type_model = field_renderer._render_model_list_field(
-        field_name='items',
-        field_schema={'type': 'array', 'items': {}},
-        value=None,
-        error=None,
-        required_fields=[],
-        ui_info={'model_class': 'not-a-type'},
-        context=_context(),
-        all_errors={},
-    )
-    assert 'model_class not specified' in non_type_model
 
     schema_defs = {'Thing': {'properties': {'name': {'type': 'string'}}}}
 
@@ -1139,7 +1111,7 @@ def test_render_model_list_from_schema_values_path(monkeypatch):
     field_renderer = FieldRenderer(_DummyRenderer())
     call_indexes = []
 
-    def _fake_item(field_name, schema_def, index, item_data, context, ui_info):
+    def _fake_item(field_name, schema_def, index, item_data, context, ui_info, nested_errors=None):
         call_indexes.append(index)
         return f"<item idx='{index}' />"
 

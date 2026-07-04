@@ -303,6 +303,37 @@ nested = parse_nested_form_data(raw)
 result = PersonForm.validate(nested, submit_url="/person")
 ```
 
+### Customizing the list with `Field()`
+
+The item model is resolved automatically from the `list[ItemModel]` type
+annotation — `model_class` is only needed with the `FormField` constructor
+shown above. Using the recommended `Field()` constructor, the same list
+can be customized with these `ui_*` keyword arguments:
+
+```python
+class PersonForm(FormModel):
+    name:   str              = Field(..., title="Full Name", ui_element="text")
+    phones: List[PhoneEntry] = Field(
+        default_factory=list,
+        title="Phone Numbers",
+        ui_element="model_list",
+        ui_add_button_label="Add phone",
+        ui_item_title_template="{label}: {number}",
+        ui_collapsible_items=False,   # render flat cards instead of collapsible ones
+        ui_items_expanded=False,      # start collapsed (only relevant if collapsible)
+        min_length=0,
+        max_length=5,
+    )
+```
+
+- `ui_item_title_template` is formatted against the item's own field values
+  (here `{label}` and `{number}` from `PhoneEntry`), plus `{index}` (1-based).
+- Item-count bounds (`min_length`/`max_length` above) are the same Pydantic
+  constraint used for string length — they are not a separate `ui_options`
+  setting.
+- Nested per-item validation errors (keyed like `phones[0].number` by
+  `FormModel.validate()`) render inline on the matching item automatically.
+
 ---
 
 ## Tabbed layout
