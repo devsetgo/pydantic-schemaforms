@@ -116,6 +116,31 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>Live Validation Fix, Example, and Doc Updates</span> ([26.2.4](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.4))
+
+## Changes
+## Features
+
+- Fix: Live Validation (#167) (@devsetgo)
+
+## Bug Fixes
+
+- Fix: Live Validation (#167) (@devsetgo)
+
+## Documentation
+
+- Fix: Live Validation (#167) (@devsetgo)
+
+## Maintenance
+
+- Fix: Live Validation (#167) (@devsetgo)
+
+## Contributors
+@devsetgo
+
+
+Published Date: 2026 June 28, 14:32
+
 ### <span style='color:blue'>CSRF Feature Release</span> ([26.2.1.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.1.beta))
 
 ## Changes
@@ -230,26 +255,6 @@ Published Date: 2026 February 22, 19:56
 
 Published Date: 2026 February 22, 16:35
 
-### <span style='color:blue'>Additional Work for Self-Contained</span> ([untagged-bfb3bb98aa31ca386d88](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/untagged-bfb3bb98aa31ca386d88))
-
-## Changes
-## Features
-
-- Fix of self-contained and documentation updates (#31) (@devsetgo)
-
-## Bug Fixes
-
-- Fix of self-contained and documentation updates (#31) (@devsetgo)
-- deploy docs (#28) (@devsetgo)
-- working on documentation flow bugs (#27) (@devsetgo)
-- working on issue to fix publishing failure (#26) (@devsetgo)
-
-## Contributors
-@devsetgo
-
-
-Published Date: 2026 January 18, 13:57
-
 ### <span style='color:blue'>Bug fixes and Improvements</span> ([26.1.2.beta](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.2.beta))
 
 ## Changes
@@ -313,3 +318,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+

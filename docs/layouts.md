@@ -43,7 +43,7 @@ Example:
 ```python
 from pydantic_schemaforms.rendering.layout_engine import Layout
 
-layout = Layout.grid(
+layout = Layout.create_grid(
     "<div>Left</div>",
     "<div>Right</div>",
     columns="1fr 2fr",
@@ -52,6 +52,9 @@ layout = Layout.grid(
 
 html = layout.render(framework="bootstrap", renderer=my_renderer, data={}, errors={})
 ```
+
+`LayoutComposer` (aliased as `Layout`) also exposes `create_horizontal()`, `create_vertical()`,
+`responsive_grid()`, `create_tabs()`, and `create_accordion()`.
 
 ## Schema-defined layout fields
 

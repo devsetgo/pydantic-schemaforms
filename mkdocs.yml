@@ -27,6 +27,7 @@ nav:
       - Application Logging: 'logging.md'
       - Validation Guide: 'validation_guide.md'
       - Plugin Hooks: 'plugin_hooks.md'
+      - AI Assistant Instructions: 'ai_instructions.md'
   - Development:
       - Testing Workflow: 'testing_workflow.md'
       - Contributing: 'contribute.md'

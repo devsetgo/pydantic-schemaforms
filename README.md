@@ -700,11 +700,10 @@ The main runnable demo in this repo is the FastAPI example:
 
 See `examples/fastapi_example.py` and `examples/shared_models.py` for the complete implementation.
 
-Logging and timing examples:
-- [Timing Options Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/timing_options_example.py) - Display options for render timing
-- [Timing Demo](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/demo_timing_feature.py) - Complete timing feature demonstration
-- [Logging Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/logging_example.py) - Logging configuration patterns
-- [Logging Control Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/logging_control_example.py) - Fine-grained logging control
+For render timing and logging configuration patterns, see the
+[Render Timing](https://devsetgo.github.io/pydantic-schemaforms/timing/) and
+[Application Logging](https://devsetgo.github.io/pydantic-schemaforms/logging/) docs — the
+standalone timing/logging demo scripts previously linked here have been removed from `examples/`.
 
 ---
 
@@ -801,7 +800,7 @@ Field(
 
 ## Contributing
 
-Contributions are welcome! Please check out the [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please check out the [Contributing Guide](https://github.com/devsetgo/pydantic-schemaforms/blob/main/CONTRIBUTING.md) for details.
 
 **Development Setup:**
 ```bash

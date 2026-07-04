@@ -71,6 +71,31 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 pip install pydantic-schemaforms
 ```
 
+### AI Assistant Bootstrap (for app repositories)
+
+If you are using Copilot or Claude in your application project, you can pull
+packaged instructions directly from the installed library into your app
+repo's instruction file — one command, no manual copy-paste:
+
+```bash
+python -m pydantic_schemaforms.ai_instructions claude --write     # writes ./CLAUDE.md
+python -m pydantic_schemaforms.ai_instructions copilot --write    # writes ./.github/copilot-instructions.md
+python -m pydantic_schemaforms.ai_instructions generic > AI_INSTRUCTIONS.md
+```
+
+Or from Python:
+
+```python
+from pydantic_schemaforms import get_app_instructions, suggested_instruction_filename
+
+assistant = 'copilot'  # or 'claude' / 'generic'
+print(f'Suggested destination: {suggested_instruction_filename(assistant)}')
+print(get_app_instructions(assistant))
+```
+
+This avoids having assistants reverse-engineer internals and keeps generated
+app code aligned with the supported FormModel + render_form_html flow.
+
 ### FastAPI (async / ASGI)
 
 This is the recommended “drop-in HTML” pattern for FastAPI: define a `FormModel` and call `render_form_html()`.
@@ -675,11 +700,10 @@ The main runnable demo in this repo is the FastAPI example:
 
 See `examples/fastapi_example.py` and `examples/shared_models.py` for the complete implementation.
 
-Logging and timing examples:
-- [Timing Options Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/timing_options_example.py) - Display options for render timing
-- [Timing Demo](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/demo_timing_feature.py) - Complete timing feature demonstration
-- [Logging Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/logging_example.py) - Logging configuration patterns
-- [Logging Control Example](https://github.com/devsetgo/pydantic-schemaforms/blob/main/examples/logging_control_example.py) - Fine-grained logging control
+For render timing and logging configuration patterns, see the
+[Render Timing](https://devsetgo.github.io/pydantic-schemaforms/timing/) and
+[Application Logging](https://devsetgo.github.io/pydantic-schemaforms/logging/) docs — the
+standalone timing/logging demo scripts previously linked here have been removed from `examples/`.
 
 ---
 
@@ -776,7 +800,7 @@ Field(
 
 ## Contributing
 
-Contributions are welcome! Please check out the [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please check out the [Contributing Guide](https://github.com/devsetgo/pydantic-schemaforms/blob/main/CONTRIBUTING.md) for details.
 
 **Development Setup:**
 ```bash

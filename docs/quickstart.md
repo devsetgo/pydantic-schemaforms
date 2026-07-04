@@ -186,7 +186,7 @@ async def api_contact(data: ContactSchema):
 `Field(title=...)`, `Field(description=...)`, `Field(examples=[...])`, and all
 validation constraints survive the transform unchanged.
 
-See the full pattern in [tutorial_fastapi.md](tutorial_fastapi.md#dual-use-html-form--json-api-from-one-model).
+See the full pattern in [tutorial_fastapi.md](tutorial_fastapi.md#dual-use-html-form-json-api-from-one-model).
 
 ## Notes
 

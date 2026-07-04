@@ -37,9 +37,9 @@ from pydantic_schemaforms import render_form_html
 
 html = render_form_html(
     MyForm,
-    submit_url=”/submit”,
-    framework=”bootstrap”,
-    asset_mode=”vendored”,
+    submit_url="/submit",
+    framework="bootstrap",
+    asset_mode="vendored",
     include_framework_assets=True,  # inline Bootstrap CSS/JS for self-contained HTML
 )
 ```
@@ -51,7 +51,7 @@ from pydantic_schemaforms.render_form import render_form_html as render_form_htm
 
 html = render_form_html_legacy(
     MyForm,
-    submit_url=”/submit”,
+    submit_url="/submit",
     include_htmx_script=True,  # injects HTMX
     include_imask=True,         # injects IMask for masked inputs
 )
@@ -70,11 +70,11 @@ Use this when you want to render multiple forms with the same configuration, or 
 from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 
 renderer = EnhancedFormRenderer(
-    framework=”bootstrap”,
+    framework="bootstrap",
     include_framework_assets=True,
-    asset_mode=”vendored”,
+    asset_mode="vendored",
 )
-html = renderer.render_form_from_model(MyForm, submit_url=”/submit”)
+html = renderer.render_form_from_model(MyForm, submit_url="/submit")
 ```
 
 ### Modern/builder path: `FormBuilder` + `render_form_page()`
@@ -97,7 +97,7 @@ builder = FormBuilder(
 
 page = render_form_page(
     builder,
-  submit_url="/submit",
+    submit_url="/submit",
     title="Signup",
     include_framework_assets=True,
     asset_mode="vendored",

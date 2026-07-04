@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from importlib import resources
+from pathlib import Path
 
 _PROFILE_ALIASES: dict[str, str] = {
     'generic': 'generic',
@@ -63,6 +64,30 @@ def _normalize_profile(profile: str) -> str:
     )
 
 
+def _resolve_output_path(destination: str, *, base_dir: Path) -> Path:
+    """Resolve a CLI-supplied destination and confirm it stays within base_dir.
+
+    `--output` is free-form text that may come from an LLM-orchestrated
+    invocation of this CLI rather than a trusted human typing a path by hand.
+    Without this check, a value like `--output ../../../etc/cron.d/evil` or
+    an absolute path would let the process write outside the project
+    directory it was invoked in. Resolving (which also follows symlinks) and
+    requiring the result to be a descendant of base_dir closes that off.
+    """
+    base = base_dir.resolve()
+    candidate = Path(destination)
+    if not candidate.is_absolute():
+        candidate = base / candidate
+    candidate = candidate.resolve()
+
+    if candidate != base and base not in candidate.parents:
+        raise ValueError(
+            f'Refusing to write outside the current directory ({base}): '
+            f'{destination!r} resolves to {candidate}'
+        )
+    return candidate
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI: print or write packaged AI-assistant instructions for an app repo.
 
@@ -73,7 +98,6 @@ def main(argv: list[str] | None = None) -> int:
     """
     import argparse
     import sys
-    from pathlib import Path
 
     parser = argparse.ArgumentParser(
         prog='python -m pydantic_schemaforms.ai_instructions',
@@ -110,7 +134,12 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(text)
         return 0
 
-    path = Path(destination)
+    try:
+        path = _resolve_output_path(destination, base_dir=Path.cwd())
+    except ValueError as exc:
+        parser.error(str(exc))
+        return 2
+
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8')
     print(f'Wrote {path}', file=sys.stderr)
