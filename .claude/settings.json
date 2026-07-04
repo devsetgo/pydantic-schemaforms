@@ -8,7 +8,10 @@
       "Bash(git -C /workspaces/pydantic-schemaforms commit -m ' *)",
       "Bash(xargs ls -la)",
       "Bash(pytest tests/playwright/ -v --no-cov -p no:xdist)",
-      "Bash(git -C /workspaces/pydantic-schemaforms add tests/playwright/_server.py)"
+      "Bash(git -C /workspaces/pydantic-schemaforms add tests/playwright/_server.py)",
+      "Bash(ruff check *)",
+      "Bash(ruff format *)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
