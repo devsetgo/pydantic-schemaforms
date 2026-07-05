@@ -22,8 +22,8 @@ from typing import Optional
 import pytest
 from pydantic import BaseModel
 
-import examples.fastapi_example as fastapi_example
-from examples.fastapi_example import app
+import examples.fastapi_routes as fastapi_routes
+from examples.main import app
 from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
 
@@ -60,9 +60,9 @@ def _patch_templates_to_repo_root() -> None:
 
     Also registers the safe_json Jinja2 filter used by the example app.
     """
-    base_dir = Path(fastapi_example.__file__).resolve().parent
-    fastapi_example.templates = Jinja2Templates(directory=base_dir / 'templates')
-    fastapi_example.templates.env.filters['safe_json'] = fastapi_example.safe_json_filter
+    base_dir = Path(fastapi_routes.__file__).resolve().parent
+    fastapi_routes.templates = Jinja2Templates(directory=base_dir / 'templates')
+    fastapi_routes.templates.env.filters['safe_json'] = fastapi_routes.safe_json_filter
 
 
 # ---------------------------------------------------------------------------

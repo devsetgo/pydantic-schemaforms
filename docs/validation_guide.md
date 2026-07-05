@@ -793,4 +793,4 @@ The unified validation engine provides:
 For questions or examples, see:
 - `tests/test_validation.py` — All validation tests (144 tests)
 - `tests/test_layouts.py` — Layout/tab rendering verification including async
-- `examples/fastapi_example.py` — Real-world FastAPI integration
+- `examples/fastapi_routes.py` — Real-world FastAPI integration

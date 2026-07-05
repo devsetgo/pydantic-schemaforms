@@ -698,7 +698,8 @@ The main runnable demo in this repo is the FastAPI example:
 - Visit: http://localhost:8000
 - Self-contained demo: http://localhost:8000/self-contained
 
-See `examples/fastapi_example.py` and `examples/shared_models.py` for the complete implementation.
+See `examples/main.py` (composition root), `examples/fastapi_routes.py` (routes), and
+`examples/shared_models.py` for the complete implementation.
 
 For render timing and logging configuration patterns, see the
 [Render Timing](https://devsetgo.github.io/pydantic-schemaforms/timing/) and

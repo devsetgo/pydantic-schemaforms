@@ -6,7 +6,9 @@ This directory contains runnable examples that demonstrate current pydantic-sche
 
 ### 1) FastAPI demo (async)
 
-File: examples/fastapi_example.py
+Files: examples/main.py (composition root — FastAPI() construction, session
+middleware, static mount, uvicorn entrypoint) and examples/fastapi_routes.py
+(every route/endpoint, attached via `app.include_router(router)`).
 
 What it demonstrates:
 
@@ -20,7 +22,7 @@ What it demonstrates:
 Run:
 
 ```bash
-python examples/fastapi_example.py
+python examples/main.py
 ```
 
 Then open:
