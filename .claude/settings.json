@@ -13,7 +13,8 @@
       "Bash(ruff format *)",
       "Bash(python3 -c ' *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(pytest tests/test_ai_instructions.py -q)"
     ]
   }
 }
