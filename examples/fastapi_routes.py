@@ -36,12 +36,14 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; Pet Forms; Layout Demonstration; Utility functions
+    SHOWCASE_CAPTCHA_SECRET,
     CompanyOrganizationForm,
     CompleteShowcaseForm,
     LayoutDemonstrationForm,
     MinimalLoginForm,
     PetRegistrationForm,
     UserRegistrationForm,
+    WidgetGalleryForm,
     create_sample_nested_data,
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
@@ -62,6 +64,7 @@ from pydantic_schemaforms import (
     parse_nested_form_data,
     render_form_html_async,
     suggested_instruction_filename,
+    verify_captcha,
 )
 from pydantic_schemaforms.assets.runtime import (
     bootstrap_icons_css_content,
@@ -199,6 +202,28 @@ def issue_register_csrf_token(request: Request) -> str:
 def verify_register_csrf_token(request: Request, submitted_token) -> bool:
     """Verify a submitted registration token using constant-time compare."""
     expected_token = request.session.get(REGISTER_CSRF_SESSION_KEY)
+    if not expected_token or not submitted_token:
+        return False
+    return hmac.compare_digest(str(expected_token), str(submitted_token))
+
+
+# List[str]-typed fields on CompleteShowcaseForm -- see showcase_post()'s
+# form-data parsing for why these need special handling.
+_SHOWCASE_LIST_FIELDS = {'multiselect_field', 'checkbox_group_field'}
+
+SHOWCASE_CSRF_SESSION_KEY = 'showcase_csrf_token'
+
+
+def issue_showcase_csrf_token(request: Request) -> str:
+    """Issue and persist a CSRF token for the showcase demo flow."""
+    token = secrets.token_urlsafe(32)
+    request.session[SHOWCASE_CSRF_SESSION_KEY] = token
+    return token
+
+
+def verify_showcase_csrf_token(request: Request, submitted_token) -> bool:
+    """Verify a submitted showcase token using constant-time compare."""
+    expected_token = request.session.get(SHOWCASE_CSRF_SESSION_KEY)
     if not expected_token or not submitted_token:
         return False
     return hmac.compare_digest(str(expected_token), str(submitted_token))
@@ -521,6 +546,7 @@ async def register_get(
             'confirm_password': 'SecurePass123!',
             'age': 28,
             'role': 'user',
+            'accept_terms': True,
         }
 
     form_html = await render_form_html_async(
@@ -677,6 +703,8 @@ async def showcase_get(
     show_timing: bool = True,
 ):
     """Complex form example - All features and field types (GET)."""
+    csrf_token = issue_showcase_csrf_token(request)
+
     # Parse optional pre-fill data or use demo data
     form_data = {}
     if data:
@@ -695,12 +723,30 @@ async def showcase_get(
             'bio': 'This is a demo biography showcasing the textarea field with rich content. It demonstrates how longer text content appears in the form.',
             'age': 32,
             'birth_date': '1991-08-15',
-            'phone': '+1 (555) 123-4567',
+            'phone': '(555) 123-4567',
             'country': 'US',
             'favorite_color': '#3498db',
             'experience_level': 'advanced',
             'newsletter_subscription': True,
             'newsletter': True,
+            'rating': 8,
+            'ssn_field': '123-45-6789',
+            'credit_card_field': '4111 1111 1111 1111',
+            'currency_field': '$1,234.56',
+            'tags_field': 'python,fastapi,pydantic',
+            'percentage_field': 75.0,
+            'decimal_field': 3.14159,
+            'integer_only_field': 42,
+            'quantity_field': 3,
+            'score_field': 85,
+            'star_rating_field': 4,
+            'slider_field': 60,
+            'temperature_field': 20.0,
+            'combobox_field': 'New York',
+            'shipping_speed': 'express',
+            'checkbox_group_field': ['email', 'push'],
+            'month_field': '2024-06',
+            'week_field': '2024-W24',
         }
 
     form_html = await render_form_html_async(
@@ -708,6 +754,9 @@ async def showcase_get(
         framework=style,
         form_data=form_data,
         submit_url=f'/showcase?style={style}',
+        csrf_mode='required-provider',
+        csrf_token_provider=csrf_token,
+        csrf_field_name='csrf_token',
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
@@ -720,6 +769,8 @@ async def showcase_get(
             'request': request,
             'title': 'Complete Showcase - Complex Form',
             'description': 'Demonstrates ALL library features: model lists, sections, all input types',
+            'security_highlight': 'CSRF, honeypot spam-trap, and a self-hosted CAPTCHA are all '
+            'enabled on this form -- see showcase_post() for the verification logic.',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -733,22 +784,135 @@ async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Complex form example - All features submission (async)."""
-    # Get form data asynchronously
+    # Get form data asynchronously. Unlike every other route in this file,
+    # CompleteShowcaseForm has genuinely multi-value fields (multiselect_field,
+    # checkbox_group_field), so a plain dict(form_data) would silently keep
+    # only the last submitted value per key. Use getlist() per key instead so
+    # repeated keys collect into a real list for parse_nested_form_data.
+    # These two are List[str]-typed, so they must stay lists even when only
+    # one option is checked/selected -- len(values) > 1 alone would collapse
+    # a single selection back down to a bare string and fail validation.
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = {}
+    for key in dict.fromkeys(form_data.keys()):
+        values = form_data.getlist(key)
+        if key in _SHOWCASE_LIST_FIELDS or len(values) > 1:
+            form_dict[key] = values
+        else:
+            form_dict[key] = values[0]
+
+    full_referer_path = create_refer_path(request)
+
+    # Honeypot: real users never see or fill this field in (it's hidden and
+    # styled off-screen). A non-empty value means a bot filled every input it
+    # could find. Pretend success rather than revealing that it was caught.
+    if form_dict.get('honeypot_field'):
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Showcase Form Submitted Successfully',
+                'message': 'All form data processed successfully!',
+                'data': {},
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': full_referer_path,
+            },
+        )
+
+    submitted_csrf_token = form_dict.pop('csrf_token', None)
+    if not verify_showcase_csrf_token(request, submitted_csrf_token):
+        csrf_error = 'CSRF verification failed. Refresh the page and submit again.'
+        csrf_token = issue_showcase_csrf_token(request)
+        parsed_data = parse_nested_form_data(form_dict)
+
+        form_html = await render_form_html_async(
+            CompleteShowcaseForm,
+            framework=style,
+            form_data=parsed_data,
+            errors={'form': csrf_error},
+            submit_url=f'/showcase?style={style}',
+            csrf_mode='required-provider',
+            csrf_token_provider=csrf_token,
+            csrf_field_name='csrf_token',
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=True,
+        )
+        return templates.TemplateResponse(
+            request,
+            'form.html',
+            {
+                'request': request,
+                'title': 'Complete Showcase - Complex Form',
+                'description': 'Demonstrates ALL library features: model lists, sections, all input types',
+                'form_html': form_html,
+                'errors': {'form': csrf_error},
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'framework_type': style,
+            },
+            status_code=403,
+        )
+
+    # CAPTCHA: the visible answer field is 'captcha_answer'; CaptchaInput
+    # names its companion hidden token '{field_name}_token' -- see
+    # CaptchaInput's docstring for why this is checked here rather than via
+    # a @model_validator (the token only exists in the raw POST body, never
+    # as a declared model attribute).
+    captcha_token = form_dict.pop('captcha_answer_token', None)
+    if not verify_captcha(
+        token=captcha_token,
+        answer=form_dict.get('captcha_answer', ''),
+        secret_key=SHOWCASE_CAPTCHA_SECRET,
+    ):
+        captcha_error = 'Incorrect answer to the verification question. Please try again.'
+        csrf_token = issue_showcase_csrf_token(request)
+        parsed_data = parse_nested_form_data(form_dict)
+
+        form_html = await render_form_html_async(
+            CompleteShowcaseForm,
+            framework=style,
+            form_data=parsed_data,
+            errors={'captcha_answer': captcha_error},
+            submit_url=f'/showcase?style={style}',
+            csrf_mode='required-provider',
+            csrf_token_provider=csrf_token,
+            csrf_field_name='csrf_token',
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=True,
+        )
+        return templates.TemplateResponse(
+            request,
+            'form.html',
+            {
+                'request': request,
+                'title': 'Complete Showcase - Complex Form',
+                'description': 'Demonstrates ALL library features: model lists, sections, all input types',
+                'form_html': form_html,
+                'errors': {'captcha_answer': captcha_error},
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'framework_type': style,
+            },
+        )
 
     parsed_data = parse_nested_form_data(form_dict)
     validation = CompleteShowcaseForm.validate(
         parsed_data,
         submit_url=f'/showcase?style={style}',
         framework=style,
+        csrf_mode='required-provider',
+        csrf_field_name='csrf_token',
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
     )
 
-    full_referer_path = create_refer_path(request)
     if validation.is_valid:
+        request.session.pop(SHOWCASE_CSRF_SESSION_KEY, None)
         return templates.TemplateResponse(
             request,
             'success.html',
@@ -771,6 +935,192 @@ async def showcase_post(
                 'request': request,
                 'title': 'Complete Showcase - Complex Form',
                 'description': 'Demonstrates ALL library features: model lists, sections, all input types',
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'framework_type': style,
+                'form_html': form_html,
+                'errors': validation.errors,
+            },
+        )
+
+
+# ================================
+# WIDGET GALLERY - TABBED BY INPUT-TYPE CATEGORY
+# ================================
+
+# List[str]-typed fields across WidgetGalleryForm's tabs -- see gallery_post()'s
+# form-data parsing for why these need special handling.
+_GALLERY_LIST_FIELDS = {'multiselect_input', 'checkbox_group_stacked', 'checkbox_group_buttons'}
+
+
+@router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
+async def gallery_get(
+    request: Request,
+    style: str = 'bootstrap',
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+    show_timing: bool = True,
+):
+    """Tabbed widget gallery - every input type grouped by category (GET).
+
+    Demo data must be flat (no top-level 'gallery' key): WidgetGalleryForm has
+    a single ui_element='layout' field, and supplying a dict under that exact
+    field's own name would get accepted as the field's literal value (its
+    Pydantic schema is deliberately permissive so layout classes can be used
+    as field types at all) instead of the default WidgetGalleryTabs instance,
+    breaking the isinstance(value, BaseLayout) check the renderer relies on.
+    Flat keys let the renderer's own nested-data reconstruction find each
+    tab's fields by name, the same way POST submissions are matched up.
+    """
+    form_data = {}
+    if data:
+        try:
+            import json
+
+            form_data = json.loads(data)
+        except Exception:
+            pass  # Ignore invalid JSON
+    elif demo:
+        # Rendering only ever pre-fills fields explicitly present here -- it
+        # never falls back to a field's own Pydantic default for display (that's
+        # true of every FormModel in this library, not specific to tabbed/layout
+        # fields). Every field gets a value below so the demo doesn't mix
+        # populated and blank-looking fields, which reads as broken/scrambled
+        # data even though each field is rendering correctly on its own.
+        form_data = {
+            # Text Inputs
+            'text_input': 'Hello, world!',
+            'textarea_input': 'This textarea supports\nmultiple lines of text.',
+            'password_input': 'demo-password',
+            'email_input': 'demo@example.com',
+            'search_input': 'pydantic schemaforms',
+            'url_input': 'https://example.com',
+            'tel_input': '5551234567',
+            'phone_input': '(555) 123-4567',
+            'ssn_input': '123-45-6789',
+            'credit_card_input': '4111 1111 1111 1111',
+            'currency_input': '$1,234.56',
+            'tags_input': 'python,fastapi,pydantic',
+            # Checkboxes & Toggles
+            'checkbox_unchecked': False,
+            'checkbox_checked': True,
+            'toggle_off': False,
+            'toggle_on': True,
+            'checkbox_group_stacked': ['email', 'push'],
+            'checkbox_group_buttons': ['sms'],
+            # Numeric Inputs
+            'number_input': 42,
+            'range_input': 65,
+            'percentage_input': 82.5,
+            'decimal_input': 3.14,
+            'integer_input': 7,
+            'age_input': 34,
+            'quantity_input': 3,
+            'score_input': 91.0,
+            'rating_input': 8,
+            'star_rating_input': 4,
+            'slider_input': 55,
+            'temperature_input': 21.5,
+            # Selection Inputs
+            'select_input': 'medium',
+            'multiselect_input': ['python', 'rust'],
+            'radio_stacked': 'large',
+            'radio_segmented': 'express',
+            'combobox_input': 'New York',
+            # Date & Time
+            'date_input': '2024-06-15',
+            'time_input': '14:30',
+            'datetime_input': '2024-06-15T14:30',
+            'month_input': '2024-06',
+            'week_input': '2024-W24',
+            'birthdate_input': '1990-01-01',
+            # Files & Specialized
+            'color_input': '#3498db',
+            'hidden_input': 'hidden-demo-value',
+        }
+
+    form_html = await render_form_html_async(
+        WidgetGalleryForm,
+        framework=style,
+        form_data=form_data,
+        submit_url=f'/gallery?style={style}',
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Widget Gallery - Tabbed by Category',
+            'description': 'Every input type grouped into tabs: Text, Checkboxes & Toggles, '
+            'Numeric, Selection, Date & Time, and Files & Specialized',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.post('/gallery', response_class=HTMLResponse, tags=['Showcase'])
+async def gallery_post(
+    request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
+):
+    """Tabbed widget gallery submission (async)."""
+    # Several tabs have genuinely multi-value fields (multiselect_input,
+    # checkbox_group_stacked, checkbox_group_buttons) -- dict(form_data) would
+    # silently keep only the last value per repeated key, so use getlist()
+    # per key instead (same fix as showcase_post()). These three are
+    # List[str]-typed, so they must stay lists even with only one value
+    # checked/selected -- len(values) > 1 alone would collapse a single
+    # selection back down to a bare string and fail validation.
+    form_data = await request.form()
+    form_dict = {}
+    for key in dict.fromkeys(form_data.keys()):
+        values = form_data.getlist(key)
+        if key in _GALLERY_LIST_FIELDS or len(values) > 1:
+            form_dict[key] = values
+        else:
+            form_dict[key] = values[0]
+
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = WidgetGalleryForm.validate(
+        parsed_data,
+        submit_url=f'/gallery?style={style}',
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    full_referer_path = create_refer_path(request)
+    if validation.is_valid:
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Widget Gallery Submitted Successfully',
+                'message': 'All tabs processed successfully!',
+                'data': validation.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': full_referer_path,
+            },
+        )
+    else:
+        form_html = await validation.render_with_errors_async()
+        return templates.TemplateResponse(
+            request,
+            'form.html',
+            {
+                'request': request,
+                'title': 'Widget Gallery - Tabbed by Category',
+                'description': 'Every input type grouped into tabs by category',
                 'framework': 'fastapi',
                 'framework_name': 'FastAPI (Async)',
                 'framework_type': style,
@@ -1416,7 +1766,7 @@ async def self_contained(
             'confirm_password': 'DemoPass123!',
             'full_name': 'Self Contained Demo',
             'age': 25,
-            'agree_terms': True,
+            'accept_terms': True,
             'newsletter': False,
         }
 

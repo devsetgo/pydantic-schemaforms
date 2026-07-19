@@ -100,14 +100,15 @@ review. When unsure, use the closest match below or ask rather than guess.
 |---|---|
 | Text | `text`, `password`, `email`, `search`, `url`, `tel`, `textarea` |
 | Formatted text | `ssn`, `phone`, `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
+| Text collection | `tags` (chip/tag input for a list of short values) |
 | Numeric | `number`, `range` |
-| Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity`, `score`, `rating` (alias `rating_stars`), `slider`, `temperature` |
-| Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox` |
+| Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity` (ships +/- stepper buttons by default), `score`, `rating` (alias `rating_stars`; range-slider based), `star_rating` (individually clickable stars — a distinct widget from `rating`, not an alias of it), `slider`, `temperature` |
+| Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox`, `checkbox_group` |
 | Boolean toggle | `toggle` (alias `toggle_switch`/`checkbox_toggle`) — a styled on/off switch; functionally a checkbox |
 | Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week` |
 | Specialized date | `birthdate` (adds a computed age display) |
 | File/color | `file`, `color` |
-| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty on purpose) |
+| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty on purpose), `captcha` (self-hosted arithmetic challenge; the answer is verified server-side via `verify_captcha()` and never sent to the client) |
 | Structural (not a widget) | `model_list` (repeating sub-forms, see below), `layout` (composed layout primitives) |
 
 Most forms only need the Text/Numeric/Selection/Date rows above. The

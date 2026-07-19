@@ -266,6 +266,46 @@ class TestSelectionInputs:
         assert 'multiple' in html
         assert 'name="tags"' in html
 
+    def test_multi_select_input_enhanced_layers_over_native_select(self):
+        """Enhanced mode still renders the real native select as the fallback."""
+        options = [{'value': 'a', 'label': 'A'}, {'value': 'b', 'label': 'B'}]
+        input_field = MultiSelectInput()
+
+        enhanced_html = input_field.render(name='tags', id='tags', options=options)
+        assert '<select' in enhanced_html
+        assert 'multiselect-enhanced' in enhanced_html
+        assert 'multiselect-chips' in enhanced_html
+        assert '<script>' in enhanced_html
+
+        plain_html = input_field.render(name='tags', id='tags', options=options, enhanced=False)
+        assert 'multiselect-enhanced' not in plain_html
+        assert '<script>' not in plain_html
+        assert '<select' in plain_html
+
+    def test_multi_select_ships_css_to_hide_the_native_select_it_layers_over(self):
+        """Regression test: the enhancement script marks the real <select> with
+        a 'multiselect-native-hidden' class once the chips/search/dropdown UI
+        has built, but no CSS anywhere ever defined that class -- so the class
+        was purely cosmetic and the raw multi-row native listbox stayed fully
+        visible (with the browser's own selected-option highlighting), instead
+        of being replaced by the chips + search + dropdown UI. It rendered
+        differently per framework only because each framework's select CSS
+        class (or lack of one) happened to size/position that unhidden native
+        control differently -- not because the enhanced UI itself differed.
+        """
+        options = [{'value': 'a', 'label': 'A'}, {'value': 'b', 'label': 'B'}]
+        input_field = MultiSelectInput()
+
+        html = input_field.render(name='tags', id='tags', options=options)
+        style_start = html.find('<style>')
+        style_end = html.find('</style>')
+        assert style_start != -1 and style_end != -1
+        style_block = html[style_start:style_end]
+        assert '.multiselect-native-hidden' in style_block
+        assert 'display: none' in style_block
+        assert '.multiselect-dropdown' in style_block
+        assert '.multiselect-search' in style_block
+
 
 # ---------------------------------------------------------------------------
 # Datetime inputs
@@ -906,6 +946,26 @@ class TestFileInput:
 
         assert 'multiple' in result
 
+    def test_file_input_drag_and_drop_on_by_default(self):
+        file_input = FileInput()
+        result = file_input.render(name='doc', id='doc')
+
+        assert 'file-drop-zone' in result
+        assert 'dragenter' in result
+        assert 'dataTransfer' in result
+
+    def test_file_input_drag_and_drop_disabled_matches_old_output(self):
+        file_input = FileInput()
+        no_dnd = file_input.render(name='doc', id='doc', enable_drag_drop=False)
+        both_off = file_input.render(
+            name='doc', id='doc', enable_drag_drop=False, show_preview=False
+        )
+
+        assert 'file-drop-zone' not in no_dnd
+        assert 'file-preview' in no_dnd
+
+        assert both_off == '<input name="doc" id="doc" type="file" />'
+
 
 # ---------------------------------------------------------------------------
 # ColorInput detailed tests (from test_input_types_coverage.py)
@@ -1118,6 +1178,38 @@ class TestCheckboxGroup:
         html = group.render(options=options, group_name='test', **{'class': 'custom-class'})
         assert 'custom-class' in html or 'class' in html
 
+    def test_checkbox_group_button_group_variant(self):
+        group = CheckboxGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+
+        stacked = group.render(options=options, group_name='test')
+        assert 'checkbox-group-button-group' not in stacked
+        fieldset_tag = stacked.split('>', 1)[0]
+        assert fieldset_tag.count('class=') == 1  # no duplicate class attrs on <fieldset>
+
+        button_group = group.render(options=options, group_name='test', variant='button_group')
+        assert 'checkbox-group-button-group' in button_group
+        assert 'checkbox-item-button-group' in button_group
+
+    def test_checkbox_group_does_not_leak_field_class_onto_fieldset(self):
+        """Regression test: field_renderer.py passes class='form-check-input' (the
+        per-item checkbox class) as a kwarg to CheckboxGroup.render(). That class
+        must reach each individual <input>, but NOT the <fieldset> itself --
+        Bootstrap's form-check-input is sized 1em x 1em, so applying it to the
+        fieldset collapses the whole group's box and its content overflows onto
+        whatever renders after it.
+        """
+        group = CheckboxGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='test', **{'class': 'form-check-input'})
+
+        fieldset_tag = html.split('>', 1)[0]
+        assert 'form-check-input' not in fieldset_tag
+        assert 'class="checkbox-group"' in fieldset_tag
+
+        checkbox_tag = html[html.find('<input') : html.find('/>') + 2]
+        assert 'form-check-input' in checkbox_tag
+
 
 # ---------------------------------------------------------------------------
 # RadioGroup tests (from test_input_types_coverage.py)
@@ -1164,6 +1256,36 @@ class TestRadioGroup:
         options = [{'value': 'opt1', 'label': 'Option 1'}]
         html = group.render(options=options, group_name='test', legend='Choose One')
         assert 'Choose One' in html
+
+    def test_radio_group_segmented_variant(self):
+        group = RadioGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+
+        stacked = group.render(options=options, group_name='test')
+        assert 'radio-group-segmented' not in stacked
+        fieldset_tag = stacked.split('>', 1)[0]
+        assert fieldset_tag.count('class=') == 1  # no duplicate class attrs on <fieldset>
+
+        segmented = group.render(options=options, group_name='test', variant='segmented')
+        assert 'radio-group-segmented' in segmented
+        assert 'radio-item-segmented' in segmented
+
+    def test_radio_group_does_not_leak_field_class_onto_fieldset(self):
+        """Regression test: same issue as CheckboxGroup -- field_renderer.py passes
+        class='form-check-input' (the per-item radio class) as a kwarg; it must
+        reach each individual <input> but not the <fieldset>, or the fieldset's
+        box collapses to 1em x 1em and its content overflows onto later fields.
+        """
+        group = RadioGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='test', **{'class': 'form-check-input'})
+
+        fieldset_tag = html.split('>', 1)[0]
+        assert 'form-check-input' not in fieldset_tag
+        assert 'class="radio-group"' in fieldset_tag
+
+        radio_tag = html[html.find('<input') : html.find('/>') + 2]
+        assert 'form-check-input' in radio_tag
 
 
 # ---------------------------------------------------------------------------

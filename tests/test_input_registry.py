@@ -31,7 +31,14 @@ from pydantic_schemaforms.inputs.registry import (
     _iter_input_classes,
     get_input_component_map,
 )
-from pydantic_schemaforms.inputs.specialized_inputs import HiddenInput, HoneypotInput
+from pydantic_schemaforms.inputs.selection_inputs import CheckboxGroup
+from pydantic_schemaforms.inputs.specialized_inputs import (
+    CaptchaInput,
+    HiddenInput,
+    HoneypotInput,
+    RatingStarsInput,
+    TagsInput,
+)
 
 
 def test_no_ui_element_collisions() -> None:
@@ -67,3 +74,15 @@ def test_specialized_numeric_and_date_elements_are_individually_addressable() ->
     assert mapping['rating_stars'] is RatingInput
     assert mapping['slider'] is SliderInput
     assert mapping['temperature'] is TemperatureInput
+
+
+def test_tier2_widgets_are_individually_addressable() -> None:
+    """Widgets fixed/wired up as part of the Tier-2 modernization pass."""
+    mapping = get_input_component_map()
+    assert mapping['checkbox_group'] is CheckboxGroup
+    assert mapping['star_rating'] is RatingStarsInput
+    assert mapping['tags'] is TagsInput
+    assert mapping['captcha'] is CaptchaInput
+    # 'rating'/'rating_stars' must still point at the range-slider RatingInput,
+    # not the new clickable-star widget -- they are deliberately different widgets.
+    assert mapping['rating_stars'] is not RatingStarsInput

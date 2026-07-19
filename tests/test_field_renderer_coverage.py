@@ -219,6 +219,226 @@ class TestFieldRendererCheckboxHandling:
 
         assert 'checked' in result
 
+    def test_render_toggle_gets_same_checked_value_handling_as_checkbox(self):
+        """Regression test: ui_element='toggle' must be treated as checkbox-family.
+
+        Previously only ui_element == 'checkbox' got the True/on/'1' -> checked
+        handling; a `toggle` field's raw Python bool `value` fell through to
+        `field_attrs['value'] = value` and got mangled by _format_attribute_value
+        (which treats any bool as an HTML presence-attribute), producing
+        `value="value"` and never setting `checked` at all.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _ToggleModel(FormModel):
+            switched: bool = Field(True, title='Switched', ui_element='toggle')
+
+        html = render_form_html(
+            _ToggleModel, submit_url='/x', framework='bootstrap', form_data={'switched': True}
+        )
+        assert 'value="value"' not in html
+        assert 'checked="checked"' in html
+        assert 'value="1"' in html
+        assert 'type="checkbox"' in html
+
+    def test_render_toggle_under_material_framework_uses_switch_template(self):
+        """Regression test: Material's separate rendering pipeline (enhanced_renderer
+        ._render_material_field) only special-cased input_type == 'checkbox'; a
+        'toggle' field fell through to the generic outlined-text-field renderer,
+        producing invalid markup like `<input type="toggle" ... value="True">`
+        styled as a Material text field. It now renders via a dedicated
+        Material switch template (md-toggle-*), not the plain checkbox one.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _ToggleModel(FormModel):
+            switched: bool = Field(True, title='Switched', ui_element='toggle')
+
+        html = render_form_html(
+            _ToggleModel, submit_url='/x', framework='material', form_data={'switched': True}
+        )
+        assert 'type="toggle"' not in html
+        assert 'md-toggle-wrapper' in html
+        assert 'md-toggle-slider' in html
+        assert 'type="checkbox"' in html
+        assert 'checked="checked"' in html
+
+    def test_radio_and_checkbox_group_get_checkbox_class_not_select_class(self):
+        """Regression test: 'radio' and 'checkbox_group' used to be grouped with
+        'select'/'multiselect' for CSS class purposes (field_renderer.py's
+        _get_input_class and themes.py's RendererTheme.input_class), so their
+        individual <input>s got Bootstrap's select_class (form-select, which
+        paints a dropdown chevron) instead of checkbox_class (form-check-input)
+        -- radio buttons rendered looking like broken dropdown arrows. Fixing
+        that also required NOT propagating the (now correct) per-item class
+        onto the <fieldset> itself, since form-check-input is sized 1em x 1em
+        and collapses a fieldset's box if applied there (see the CheckboxGroup/
+        RadioGroup tests in test_inputs.py for that half of the fix).
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _GroupModel(FormModel):
+            plan: str = Field(
+                'medium',
+                title='Plan',
+                ui_element='radio',
+                ui_options={'choices': ['small', 'medium']},
+            )
+            channels: list[str] = Field(
+                default_factory=list,
+                title='Channels',
+                ui_element='checkbox_group',
+                ui_options={'choices': ['email', 'sms']},
+            )
+
+        html = render_form_html(_GroupModel, submit_url='/x', framework='bootstrap')
+
+        radio_start = html.find('<input name="plan"')
+        radio_tag = html[radio_start : html.find('/>', radio_start) + 2]
+        assert 'form-check-input' in radio_tag
+        assert 'form-select' not in radio_tag
+
+        checkbox_start = html.find('<input name="channels"')
+        checkbox_tag = html[checkbox_start : html.find('/>', checkbox_start) + 2]
+        assert 'form-check-input' in checkbox_tag
+        assert 'form-control' not in checkbox_tag
+
+        # Neither fieldset should have the per-item class, or its box collapses.
+        assert '<fieldset class="radio-group">' in html
+        assert '<fieldset class="checkbox-group">' in html
+
+    def test_material_falls_back_to_shared_registry_for_widgets_it_has_no_template_for(self):
+        """Regression test: enhanced_renderer.py's Material dispatch (_render_material_field)
+        has no widget-class registry of its own -- only a small hardcoded set of
+        native HTML5-ish types plus checkbox/toggle/textarea/select have bespoke
+        templates. Everything else (radio, checkbox_group, multiselect, rating,
+        star_rating, slider, quantity's stepper, phone's mask, ...) used to fall
+        through to _render_material_outlined_field, which just does
+        html.escape(str(value)) into a plain text box -- for list-valued fields
+        (checkbox_group/multiselect) that showed the raw Python repr
+        (e.g. "['email', 'push']") as literal text, and radio/select-like widgets
+        lost the ability to pick a different option entirely. These now delegate
+        to the same widget-registry rendering Bootstrap uses instead.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _MaterialFallbackModel(FormModel):
+            channels: list[str] = Field(
+                default_factory=lambda: ['email'],
+                title='Channels',
+                ui_element='checkbox_group',
+                ui_options={'choices': ['email', 'sms']},
+            )
+            plan: str = Field(
+                'small',
+                title='Plan',
+                ui_element='radio',
+                ui_options={'choices': ['small', 'large']},
+            )
+            quantity: int = Field(1, title='Quantity', ui_element='quantity')
+
+        html = render_form_html(
+            _MaterialFallbackModel,
+            submit_url='/x',
+            framework='material',
+            form_data={'channels': ['email', 'sms']},
+        )
+
+        # The old bug: raw Python list repr leaking into the page as text.
+        assert '&#x27;email&#x27;' not in html
+        assert "['email'" not in html
+
+        assert 'checkbox-item' in html
+        assert 'type="radio"' in html
+        assert 'number-stepper' in html  # quantity's +/- stepper, Material has no template for it
+
+    def test_radio_and_checkbox_group_do_not_duplicate_their_label(self):
+        """Regression test: field_renderer.py used to pass the field's title as
+        both the fieldset's <legend> AND an outer <label> pointing at the same
+        field -- redundant under any framework, and under Material's floating
+        -label CSS the duplicate outer label sat absolutely positioned right on
+        top of the fieldset, visually overlapping the legend and every option.
+        The fieldset's own <legend> is the group's accessible label; no outer
+        <label> should be emitted alongside it.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _GroupLabelModel(FormModel):
+            plan: str = Field(
+                'small',
+                title='Pick a plan',
+                ui_element='radio',
+                ui_options={'choices': ['small', 'large']},
+            )
+            channels: list[str] = Field(
+                default_factory=lambda: ['email'],
+                title='Notify via',
+                ui_element='checkbox_group',
+                ui_options={'choices': ['email', 'sms']},
+            )
+
+        for framework in ('bootstrap', 'material'):
+            html = render_form_html(_GroupLabelModel, submit_url='/x', framework=framework)
+            assert html.count('Pick a plan') == 1, framework
+            assert html.count('Notify via') == 1, framework
+            assert '<legend>Pick a plan</legend>' in html, framework
+            assert '<legend>Notify via</legend>' in html, framework
+
+    def test_material_select_renders_choices_from_ui_options_dict(self):
+        """Regression test: _build_material_select_options only handled a raw
+        options list (or an enum fallback) -- ui_options={'choices': [...]}
+        (the documented way to declare select options) lands in ui_info as a
+        dict, and iterating a dict directly yields its key names, not its
+        values. That rendered a single bogus '<option value="choices">
+        choices</option>' instead of the real choices.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _SelectChoicesModel(FormModel):
+            size: str = Field(
+                'medium',
+                title='Size',
+                ui_element='select',
+                ui_options={'choices': ['small', 'medium', 'large']},
+            )
+
+        html = render_form_html(
+            _SelectChoicesModel,
+            submit_url='/x',
+            framework='material',
+            form_data={'size': 'medium'},
+        )
+        assert '<option value="choices">choices</option>' not in html
+        assert '<option value="small">small</option>' in html
+        assert '<option value="medium" selected="selected">medium</option>' in html
+        assert '<option value="large">large</option>' in html
+
+    def test_material_multiselect_label_is_static_not_overlapping_floating_label(self):
+        """Regression test: SelectInputBase.render_with_label's material branch
+        rendered every label as an absolutely-positioned .md-floating-label,
+        designed to pair with Material's own .md-select/.md-input classes and
+        animate out of the way on focus/non-empty. Widgets Material has no
+        bespoke template for (multiselect, combobox) reach this same method
+        via the shared registry fallback, but their controls carry none of
+        those classes, so the label never animated away -- it sat frozen on
+        top of the control. Such labels should use the static .md-field-label
+        style instead.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+        from typing import List
+
+        class _MultiSelectModel(FormModel):
+            tags: List[str] = Field(
+                default_factory=lambda: ['python'],
+                title='Tags',
+                ui_element='multiselect',
+                ui_options={'choices': ['python', 'rust']},
+            )
+
+        html = render_form_html(_MultiSelectModel, submit_url='/x', framework='material')
+        assert 'class="md-floating-label"' not in html
+        assert '<label class="md-field-label" for="tags">Tags</label>' in html
+
 
 class TestFieldRendererPasswordFields:
     """Test password field rendering."""
@@ -763,6 +983,53 @@ def test_render_field_selection_paths_multiselect_and_no_options(monkeypatch):
         context=_context(),
     )
     assert 'Warning: No options provided' in no_options_html
+
+
+def test_render_field_selection_paths_combobox_and_checkbox_group(monkeypatch):
+    """Regression test: combobox/checkbox_group must receive options like select/radio do.
+
+    Previously these two ui_element values were missing from the options-dispatch
+    tuple, so their render() never received `options=` and silently fell back to
+    a bare empty <select></select> via SelectInputBase.render_with_label.
+    """
+    renderer = _DummyRenderer()
+    field_renderer = FieldRenderer(renderer)
+
+    monkeypatch.setattr(
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
+        lambda _ui_element: _CaptureInput,
+    )
+
+    html = field_renderer.render_field(
+        field_name='fav_color',
+        field_schema={
+            'type': 'string',
+            'enum': ['red', 'green', 'blue'],
+            'ui': {'element': 'combobox'},
+        },
+        value='green',
+        context=_context(),
+    )
+    assert 'captured' in html
+    captured = _CaptureInput.last_kwargs
+    assert len(captured['options']) == 3
+    assert any(opt['value'] == 'green' and opt['selected'] for opt in captured['options'])
+
+    html = field_renderer.render_field(
+        field_name='prefs',
+        field_schema={
+            'type': 'array',
+            'items': {'enum': ['a', 'b']},
+            'ui': {'element': 'checkbox_group'},
+        },
+        value=['a'],
+        context=_context(),
+    )
+    assert 'captured' in html
+    captured = _CaptureInput.last_kwargs
+    assert captured['group_name'] == 'prefs'
+    assert captured['legend'] == 'Prefs'
+    assert len(captured['options']) == 2
 
 
 def test_render_field_handles_none_from_component(monkeypatch):

@@ -3,7 +3,13 @@ Specialized input components using Python 3.14 template strings.
 Includes FileInput, ColorInput, HiddenInput, ImageInput, ButtonInput, etc.
 """
 
+import hashlib
+import hmac
+import json
+import random
 from typing import Any
+
+from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .base import FileInputBase, FormInput, _render_input_tag
 
@@ -22,9 +28,10 @@ class FileInput(FileInputBase):
         multiple: bool = False,
         capture: str | None = None,
         show_preview: bool = True,
+        enable_drag_drop: bool = True,
         **kwargs: Any,
     ) -> str:
-        """Render file input with optional preview functionality."""
+        """Render file input with optional preview and drag-and-drop support."""
 
         if accept:
             kwargs['accept'] = accept
@@ -43,10 +50,19 @@ class FileInput(FileInputBase):
         # Render the input
         file_html = f'<input {attributes_str} />'
 
-        if show_preview:
-            field_name = kwargs.get('name', '')
-            field_id = kwargs.get('id', field_name)
+        field_name = kwargs.get('name', '')
+        field_id = kwargs.get('id', field_name)
 
+        if enable_drag_drop:
+            file_html = f"""
+            <div class="file-drop-zone" id="{field_id}_dropzone">
+                {file_html}
+                <div class="file-drop-zone-hint">Drag and drop files here, or click to browse</div>
+            </div>
+            """
+
+        preview_html = ''
+        if show_preview:
             preview_html = f"""
             <div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>
             <script>
@@ -88,9 +104,44 @@ class FileInput(FileInputBase):
             }});
             </script>
             """
-            return f'<div class="file-input-group">{file_html}{preview_html}</div>'
 
-        return file_html
+        drag_drop_script = ''
+        if enable_drag_drop:
+            drag_drop_script = f"""
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                const dropzone = document.getElementById('{field_id}_dropzone');
+                const fileInput = document.getElementById('{field_id}');
+                if (!dropzone || !fileInput) return;
+
+                ['dragenter', 'dragover'].forEach(function(evt) {{
+                    dropzone.addEventListener(evt, function(e) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.add('file-drop-zone-active');
+                    }});
+                }});
+                ['dragleave', 'drop'].forEach(function(evt) {{
+                    dropzone.addEventListener(evt, function(e) {{
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropzone.classList.remove('file-drop-zone-active');
+                    }});
+                }});
+                dropzone.addEventListener('drop', function(e) {{
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {{
+                        fileInput.files = e.dataTransfer.files;
+                        fileInput.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    }}
+                }});
+            }});
+            </script>
+            """
+
+        if not (show_preview or enable_drag_drop):
+            return file_html
+
+        return f'<div class="file-input-group">{file_html}{preview_html}{drag_drop_script}</div>'
 
 
 class ImageInput(FormInput):
@@ -276,94 +327,158 @@ class HoneypotInput(HiddenInput):
         return super().render(**kwargs)
 
 
-class CaptchaInput:
-    """Simple math captcha input for spam protection."""
+def _sign_captcha_challenge(num1: int, num2: int, secret_key: str) -> str:
+    payload = f'{num1}:{num2}'
+    signature = hmac.new(secret_key.encode(), payload.encode(), hashlib.sha256).hexdigest()
+    return f'{payload}:{signature}'
 
-    def __init__(self):
-        import random
 
+def verify_captcha(*, token: str, answer: str, secret_key: str) -> bool:
+    """Verify a CaptchaInput challenge server-side.
+
+    The correct sum is never sent to the browser -- only num1/num2 (the
+    human-readable question) and an HMAC-signed token are. This recomputes
+    and constant-time-compares the signature before checking the arithmetic,
+    so a hand-edited num1/num2 in a tampered token is rejected before the sum
+    is even evaluated.
+    """
+    try:
+        num1_str, num2_str, signature = token.split(':', 2)
+        num1, num2 = int(num1_str), int(num2_str)
+    except ValueError, AttributeError:
+        return False
+
+    expected_token = _sign_captcha_challenge(num1, num2, secret_key)
+    _, _, expected_signature = expected_token.split(':', 2)
+    if not hmac.compare_digest(signature, expected_signature):
+        return False
+
+    try:
+        return int(answer) == num1 + num2
+    except TypeError, ValueError:
+        return False
+
+
+class CaptchaInput(FormInput):
+    """Self-hosted arithmetic CAPTCHA. The correct answer is never sent to the client.
+
+    render() emits both the visible answer input (named `{field_name}`) and a
+    signed hidden token (named `{field_name}_token`) as part of one composite
+    HTML block. Only declare the visible answer as a FormModel field -- do NOT
+    also declare a separate `{field_name}_token` field for it: FormModel uses
+    Pydantic's `extra='ignore'` on submission, and this widget re-renders (and
+    re-signs) a brand new challenge on every render call, so a second,
+    independently-declared field would just add its own unrelated, stale
+    hidden input rather than carrying the real token through.
+
+    Verify the submission server-side with `verify_captcha()` at the route
+    level, mirroring how CSRF is checked in this library -- pop the token from
+    the raw submitted form data before validation, not from the model::
+
+        from pydantic_schemaforms.inputs.specialized_inputs import verify_captcha
+
+        class MyForm(FormModel):
+            captcha_answer: str = Field(
+                ..., ui_element='captcha', ui_options={'secret_key': SECRET}
+            )
+
+        # in the POST route, before calling MyForm.validate(...):
+        form_dict = dict(await request.form())
+        token = form_dict.pop('captcha_answer_token', None)
+        if not verify_captcha(token=token, answer=form_dict.get('captcha_answer'), secret_key=SECRET):
+            # re-render with a form-level error; a fresh challenge is
+            # generated automatically since a new CaptchaInput() is
+            # instantiated on every render
+            ...
+
+    This is a route-level check like CSRF (not a `@model_validator`) because
+    the token only exists in the raw POST body, never as a model attribute.
+    """
+
+    ui_element: str = 'captcha'
+
+    def __init__(self) -> None:
         self.num1: int = random.randint(1, 10)
         self.num2: int = random.randint(1, 10)
-        self.answer: int = self.num1 + self.num2
 
-    def render(self, name: str = 'captcha', **kwargs: Any) -> str:
-        """Render math captcha with validation."""
-        field_id = kwargs.get('id', name)
+    def get_input_type(self) -> str:
+        return 'text'
 
-        # Create hidden input with the answer
-        hidden_input = HiddenInput()
-        hidden_html = hidden_input.render(name=f'{name}_answer', value=str(self.answer))
+    def render(self, *, secret_key: str, name: str = 'captcha', **kwargs: Any) -> str:
+        """Render the CAPTCHA question, answer input, and a signed challenge token.
 
-        # Create text input for user answer
-        text_input = FormInput()
-        text_attrs = {
-            'name': name,
-            'id': field_id,
-            'type': 'text',
-            'required': True,
-            'placeholder': 'Enter the answer',
-            'autocomplete': 'off',
-            **kwargs,
-        }
-        text_html = text_input.render(**text_attrs)
-
-        # Create the complete captcha
-        captcha_html = f"""
-        <div class="captcha-input">
-            <label for="{field_id}">What is {self.num1} + {self.num2}?</label>
-            {text_html}
-            {hidden_html}
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {{
-                const form = document.querySelector('form');
-                if (form) {{
-                    form.addEventListener('submit', function(e) {{
-                        const captchaInput = document.getElementById('{field_id}');
-                        const answerInput = document.querySelector('input[name="{name}_answer"]');
-
-                        if (captchaInput && answerInput) {{
-                            if (parseInt(captchaInput.value) !== parseInt(answerInput.value)) {{
-                                e.preventDefault();
-                                alert('Incorrect captcha answer. Please try again.');
-                                captchaInput.focus();
-                                return false;
-                            }}
-                        }}
-                    }});
-                }}
-            }});
-            </script>
-        </div>
+        `secret_key` is required (no default) so a misconfigured app fails
+        loudly instead of silently falling back to an insecure key.
         """
-
-        return captcha_html
-
-
-class RatingStarsInput:
-    """Star rating input widget."""
-
-    def render(self, name: str, max_stars: int = 5, current_rating: int = 0, **kwargs: Any) -> str:
-        """Render star rating input."""
         field_id = kwargs.get('id', name)
+        token = _sign_captcha_challenge(self.num1, self.num2, secret_key)
 
-        # Create hidden input to store the rating value
+        kwargs['name'] = name
+        kwargs['id'] = field_id
+        kwargs.setdefault('placeholder', 'Enter the answer')
+        kwargs.setdefault('autocomplete', 'off')
+        kwargs.setdefault('required', True)
+        attrs = self.validate_attributes(**kwargs)
+        attrs['type'] = self.get_input_type()
+        text_input_html = SafeHTML(_render_input_tag(self._build_attributes_string(attrs)))
+
         hidden_input = HiddenInput()
-        hidden_html = hidden_input.render(
-            name=name, id=f'{field_id}_value', value=str(current_rating)
+        token_html = SafeHTML(hidden_input.render(name=f'{name}_token', value=token))
+
+        num1, num2 = self.num1, self.num2
+        return html(t'''
+        <div class="captcha-input">
+            <label for="{field_id}">What is {num1} + {num2}?</label>
+            {text_input_html}
+            {token_html}
+        </div>
+        ''')
+
+
+class RatingStarsInput(FormInput):
+    """Star rating input: individually clickable stars, not a slider (contrast with RatingInput)."""
+
+    ui_element: str = 'star_rating'
+
+    def get_input_type(self) -> str:
+        return 'star-rating'  # not a real HTML input type, used for identification only
+
+    def render(
+        self,
+        name: str = '',
+        max_stars: int = 5,
+        value: int | str | None = None,
+        current_rating: int | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """Render star rating input.
+
+        Accepts both `value` (the name field_renderer.py passes for a model's
+        current value) and `current_rating` (this widget's original direct-call
+        parameter name) -- current_rating wins if both are given, so existing
+        direct callers are unaffected.
+        """
+        field_id = kwargs.get('id', name)
+        rating_source = current_rating if current_rating is not None else value
+        try:
+            rating = int(rating_source) if rating_source not in (None, '') else 0
+        except TypeError, ValueError:
+            rating = 0
+
+        hidden_input = HiddenInput()
+        hidden_html = SafeHTML(
+            hidden_input.render(name=name, id=f'{field_id}_value', value=str(rating))
         )
 
-        # Create star display
-        stars_html = []
+        star_parts: list[str] = []
         for i in range(1, max_stars + 1):
-            star_class = 'star-filled' if i <= current_rating else 'star-empty'
-            stars_html.append(f'<span class="rating-star {star_class}" data-rating="{i}">★</span>')
+            star_class = 'star-filled' if i <= rating else 'star-empty'
+            star_parts.append(
+                html(t'<span class="rating-star {star_class}" data-rating="{i}">★</span>')
+            )
+        stars_html = SafeHTML(''.join(star_parts))
 
-        rating_html = f"""
-        <div class="star-rating-input" data-name="{name}">
-            <div class="stars" id="{field_id}_stars">
-                {''.join(stars_html)}
-            </div>
-            {hidden_html}
+        assets = SafeHTML(f"""
             <style>
             .star-rating-input .stars {{
                 font-size: 24px;
@@ -409,42 +524,51 @@ class RatingStarsInput:
                 }});
             }});
             </script>
+        """)
+
+        return html(t'''
+        <div class="star-rating-input" data-name="{name}">
+            <div class="stars" id="{field_id}_stars">
+                {stars_html}
+            </div>
+            {hidden_html}
+            {assets}
         </div>
-        """
-
-        return rating_html
+        ''')
 
 
-class TagsInput:
-    """Tags input widget for entering multiple tags."""
+class TagsInput(FormInput):
+    """Tags/chips input: hidden input stores the joined value; text input adds/removes chips."""
+
+    ui_element: str = 'tags'
+
+    def get_input_type(self) -> str:
+        return 'text'
 
     def render(
-        self, name: str, placeholder: str = 'Enter tags...', separator: str = ',', **kwargs: Any
+        self,
+        name: str = '',
+        placeholder: str = 'Enter tags...',
+        separator: str = ',',
+        **kwargs: Any,
     ) -> str:
         """Render tags input widget."""
         field_id = kwargs.get('id', name)
-        initial_tags = kwargs.get('value', '')
+        initial_tags = kwargs.get('value', '') or ''
 
-        # Create hidden input to store tag values
         hidden_input = HiddenInput()
-        hidden_html = hidden_input.render(name=name, id=f'{field_id}_value', value=initial_tags)
+        hidden_html = SafeHTML(
+            hidden_input.render(name=name, id=f'{field_id}_value', value=initial_tags)
+        )
 
-        # Create visible input for typing
-        text_attrs = {
-            'type': 'text',
-            'id': f'{field_id}_input',
-            'placeholder': placeholder,
-            'autocomplete': 'off',
-        }
+        text_attrs = self.validate_attributes(
+            id=f'{field_id}_input', placeholder=placeholder, autocomplete='off'
+        )
+        text_attrs['type'] = 'text'
+        text_input_html = SafeHTML(_render_input_tag(self._build_attributes_string(text_attrs)))
 
-        text_input = FormInput()
-        text_html = text_input.render(**text_attrs)
-
-        tags_html = f"""
-        <div class="tags-input" data-name="{name}">
-            <div class="tags-container" id="{field_id}_container"></div>
-            {text_html}
-            {hidden_html}
+        separator_js = json.dumps(separator)
+        assets = SafeHTML(f"""
             <style>
             .tags-input {{
                 border: 1px solid #ccc;
@@ -484,9 +608,8 @@ class TagsInput:
                 const hiddenInput = document.getElementById('{field_id}_value');
                 let tags = [];
 
-                // Initialize with existing tags
                 if (hiddenInput.value) {{
-                    tags = hiddenInput.value.split('{separator}').filter(Boolean);
+                    tags = hiddenInput.value.split({separator_js}).filter(Boolean);
                     renderTags();
                 }}
 
@@ -495,19 +618,25 @@ class TagsInput:
                     tags.forEach(function(tag, index) {{
                         const tagEl = document.createElement('span');
                         tagEl.className = 'tag';
-                        tagEl.innerHTML = `${{tag}} <span class="remove" onclick="removeTag(${{index}})">×</span>`;
+                        const label = document.createTextNode(tag + ' ');
+                        const remove = document.createElement('span');
+                        remove.className = 'remove';
+                        remove.textContent = '×';
+                        remove.addEventListener('click', function() {{ removeTag(index); }});
+                        tagEl.appendChild(label);
+                        tagEl.appendChild(remove);
                         container.appendChild(tagEl);
                     }});
-                    hiddenInput.value = tags.join('{separator}');
+                    hiddenInput.value = tags.join({separator_js});
                 }}
 
-                window.removeTag = function(index) {{
+                function removeTag(index) {{
                     tags.splice(index, 1);
                     renderTags();
-                }};
+                }}
 
                 input.addEventListener('keydown', function(e) {{
-                    if (e.key === 'Enter' || e.key === '{separator}') {{
+                    if (e.key === 'Enter' || e.key === {separator_js}) {{
                         e.preventDefault();
                         const value = this.value.trim();
                         if (value && !tags.includes(value)) {{
@@ -522,7 +651,13 @@ class TagsInput:
                 }});
             }});
             </script>
-        </div>
-        """
+        """)
 
-        return tags_html
+        return html(t'''
+        <div class="tags-input" data-name="{name}">
+            <div class="tags-container" id="{field_id}_container"></div>
+            {text_input_html}
+            {hidden_html}
+            {assets}
+        </div>
+        ''')

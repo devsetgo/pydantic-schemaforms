@@ -18,7 +18,7 @@ class NumberInput(NumericInput):
     def get_input_type(self) -> str:
         return 'number'
 
-    def render(self, **kwargs: Any) -> str:
+    def render(self, show_stepper: bool = False, **kwargs: Any) -> str:
         # Add input mode for mobile keyboards
         if 'inputmode' not in kwargs:
             kwargs['inputmode'] = 'numeric'
@@ -27,7 +27,49 @@ class NumberInput(NumericInput):
         if 'step' not in kwargs:
             kwargs['step'] = '1'
 
-        return super().render(**kwargs)
+        input_html = super().render(**kwargs)
+
+        field_id = kwargs.get('id', kwargs.get('name', ''))
+        if not show_stepper or not field_id:
+            return input_html
+
+        return f"""
+<div class="number-stepper">
+    <button type="button" class="number-stepper-decrement" data-target="{field_id}" aria-label="Decrease">&minus;</button>
+    {input_html}
+    <button type="button" class="number-stepper-increment" data-target="{field_id}" aria-label="Increase">+</button>
+</div>
+<style>
+.number-stepper {{
+    display: inline-flex;
+    align-items: stretch;
+    gap: 4px;
+}}
+.number-stepper input {{
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+}}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+    const el = document.getElementById('{field_id}');
+    if (!el) return;
+    document.querySelectorAll('button[data-target="{field_id}"]').forEach(function(btn) {{
+        btn.addEventListener('click', function() {{
+            const step = parseFloat(el.step) || 1;
+            const min = el.min !== '' ? parseFloat(el.min) : -Infinity;
+            const max = el.max !== '' ? parseFloat(el.max) : Infinity;
+            let value = (parseFloat(el.value) || 0) + (btn.classList.contains('number-stepper-increment') ? step : -step);
+            value = Math.min(max, Math.max(min, value));
+            el.value = value;
+            el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+        }});
+    }});
+}});
+</script>
+"""
 
 
 class RangeInput(NumericInput):
@@ -137,6 +179,7 @@ class QuantityInput(IntegerInput):
         # Set quantity-appropriate constraints
         kwargs['min'] = kwargs.get('min', '1')
         kwargs['placeholder'] = kwargs.get('placeholder', '1')
+        kwargs.setdefault('show_stepper', True)
 
         return super().render(**kwargs)
 

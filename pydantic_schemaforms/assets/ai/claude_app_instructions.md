@@ -99,14 +99,15 @@ guessing at a plausible-sounding name.
 |---|---|
 | Text | `text`, `password`, `email`, `search`, `url`, `tel`, `textarea` |
 | Formatted text | `ssn`, `phone`, `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
+| Text collection | `tags` (chip/tag input for a list of short values) |
 | Numeric | `number`, `range` |
-| Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity`, `score`, `rating` (alias `rating_stars`), `slider`, `temperature` |
-| Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox` |
+| Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity` (ships +/- stepper buttons by default), `score`, `rating` (alias `rating_stars`; range-slider based), `star_rating` (individually clickable stars — a distinct widget from `rating`, not an alias of it), `slider`, `temperature` |
+| Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox`, `checkbox_group` |
 | Boolean toggle | `toggle` (alias `toggle_switch`/`checkbox_toggle`) — styled on/off switch, functionally a checkbox |
 | Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week` |
 | Specialized date | `birthdate` (adds a computed age display) |
 | File/color | `file`, `color` |
-| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design) |
+| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design), `captcha` (self-hosted arithmetic challenge; the answer is verified server-side via `verify_captcha()` and never sent to the client) |
 | Structural (not a real widget) | `model_list` (repeating sub-forms), `layout` (composed layout primitives) |
 
 Most forms only need Text/Numeric/Selection/Date. Specialized numeric/date
@@ -139,11 +140,13 @@ If the source has missing constraints, keep conversion conservative and do not f
 - Use ui_element to pick controls:
 	- text-like: text, email, password, search, tel, url
 	- long text: textarea
+	- multi-value text: tags (chip input)
 	- numeric: number, range
-	- choice: select, multiselect, radio, combobox
+	- choice: select, multiselect, radio, combobox, checkbox_group
+	- rating: rating (range-slider based), star_rating (clickable stars — a distinct widget, not an alias)
 	- boolean: checkbox, toggle
 	- temporal: date, time, datetime, month, week
-	- specialized: file, color, hidden
+	- specialized: file, color, hidden, captcha
 - min_length/max_length/pattern/ge/le/gt/lt are Field constraints, not
   ui_options. Set them on Field(...) directly — the renderer derives
   minlength/maxlength/pattern/min/max attributes from them AND Pydantic
