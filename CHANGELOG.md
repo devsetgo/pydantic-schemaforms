@@ -116,6 +116,45 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>America 250 Release: Adding AI Help Instructions and Clean Up.</span> ([26.3.1](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.1))
+
+## Changes
+
+Happy 250th Birthday USA!!!!
+
+## Features
+
+- Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)
+- Fix: Live Validation (#167) (@devsetgo)
+
+## Bug Fixes
+
+- Fix: Live Validation (#167) (@devsetgo)
+
+## Documentation
+
+- Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)
+- Documentation Fix (#168) (@devsetgo)
+- Fix: Live Validation (#167) (@devsetgo)
+- Production Release - Final Edits (#166) (@devsetgo)
+
+## GitHub Actions
+
+- Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)
+- Documentation Fix (#168) (@devsetgo)
+
+## Maintenance
+
+- Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)
+- Fix: Live Validation (#167) (@devsetgo)
+- Production Release - Final Edits (#166) (@devsetgo)
+
+## Contributors
+@devsetgo
+
+
+Published Date: 2026 July 03, 23:12
+
 ### <span style='color:blue'>Live Validation Fix, Example, and Doc Updates</span> ([26.2.4](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.4))
 
 ## Changes
@@ -318,3 +357,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+
