@@ -263,6 +263,8 @@ class CSRFInput(HiddenInput):
 class HoneypotInput(HiddenInput):
     """Honeypot input for spam protection."""
 
+    ui_element: str = 'honeypot'
+
     def render(self, **kwargs: Any) -> str:
         """Render honeypot input that should remain empty."""
         # Use a name that looks like a real field but is actually a trap

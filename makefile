@@ -152,14 +152,14 @@ ruff: ## Format Python code with Ruff
 
 
 ex-run: ## Run the FastAPI example (async implementation)
-	cd examples && $(PYTHON) -m uvicorn fastapi_example:app --port $(PORT) --reload --reload-dir .. --log-level debug
+	cd examples && $(PYTHON) -m uvicorn main:app --port $(PORT) --reload --reload-dir .. --log-level debug
 
 ex-test: ## Test that the FastAPI example can be imported successfully
-	cd examples && $(PYTHON) -c "import fastapi_example; print('✅ FastAPI example imports correctly')"
+	cd examples && $(PYTHON) -c "import main; print('✅ FastAPI example imports correctly')"
 	@echo "🎉 FastAPI example is ready to run!"
 
 kill:  # Kill any process running on the app port
 	@echo "Stopping any process running on port ${PORT}..."
-	@pids=$$(pgrep -f "uvicor[n] fastapi_example:app.*--port ${PORT}" || true); \
+	@pids=$$(pgrep -f "uvicor[n] main:app.*--port ${PORT}" || true); \
 	if [ -n "$$pids" ]; then echo "$$pids" | xargs kill -9; else echo "No process found running on port ${PORT}"; fi
 	@echo "Port ${PORT} is now free"

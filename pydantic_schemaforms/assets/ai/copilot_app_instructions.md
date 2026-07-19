@@ -23,6 +23,100 @@ Do not return partial snippets unless user explicitly asks for partial output.
 5. Convert ValidationError to a dictionary of field errors.
 6. Re-render with submitted values and errors.
 
+## Complete worked example (FastAPI)
+
+Verified end-to-end (GET renders, invalid POST re-renders with errors, valid
+POST succeeds). Use this as the template for new form endpoints instead of
+inventing a different model/route shape:
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from pydantic import EmailStr
+
+from pydantic_schemaforms import Field, FormModel
+
+app = FastAPI()
+
+
+class EventRegistration(FormModel):
+    full_name: str = Field(..., min_length=2, max_length=80, title='Full Name', ui_element='text')
+    email: EmailStr = Field(..., title='Email Address', ui_element='email')
+    age: int = Field(..., ge=13, le=120, title='Age', ui_element='number')
+    ticket_type: str = Field(
+        ...,
+        title='Ticket Type',
+        ui_element='select',
+        ui_options={'choices': ['standard', 'vip', 'student']},
+    )
+    dietary_notes: str = Field(
+        '', title='Dietary Notes', ui_element='textarea', ui_options={'rows': 3}
+    )
+    newsletter_opt_in: bool = Field(False, title='Subscribe to newsletter', ui_element='checkbox')
+
+
+@app.get('/register', response_class=HTMLResponse)
+async def register_get():
+    form_html = await EventRegistration.render_form_async(
+        submit_url='/register', framework='bootstrap'
+    )
+    return f'<html><body>{form_html}</body></html>'
+
+
+@app.post('/register', response_class=HTMLResponse)
+async def register_post(request: Request):
+    submitted = dict(await request.form())
+    result = EventRegistration.validate(submitted, submit_url='/register', framework='bootstrap')
+    if result.is_valid:
+        return HTMLResponse(f"<h1>Thanks, {result.data['full_name']}!</h1>")
+    form_html = await result.render_with_errors_async()
+    return HTMLResponse(f'<html><body>{form_html}</body></html>')
+```
+
+Notes on this example:
+
+- `FormModel` subclasses `pydantic.BaseModel` directly — no separate
+  "form model" abstraction to design; the model *is* the schema, validator,
+  and render target.
+- `ui_element` only controls which HTML widget renders and hints browsers
+  (e.g. `type="email"`). It does **not** add server-side format validation.
+  Use the matching Pydantic type for that (`EmailStr` for email addresses,
+  `AnyUrl`/`HttpUrl` for URLs) — `Field()` constraints (`min_length`, `ge`,
+  `le`, `pattern`, ...) are what's actually enforced on `.validate()`.
+- `EventRegistration.validate(data, submit_url=...)` returns a
+  `ValidationResult`; `result.render_with_errors_async()` re-renders the
+  same form with field errors and the submitted values preserved. Do not
+  hand-roll a `try/except ValidationError` block when this exists.
+
+## Supported ui_element values (authoritative)
+
+This is the complete, current list. **Do not invent a `ui_element` value not
+on this list** (for example "toggle" — real, but names like "switch" or
+"chips" are not). An unrecognized `ui_element` string does not raise an
+error — it silently renders a plain text input, which is easy to miss in
+review. When unsure, use the closest match below or ask rather than guess.
+
+| Category | Values |
+|---|---|
+| Text | `text`, `password`, `email`, `search`, `url`, `tel`, `textarea` |
+| Formatted text | `ssn`, `phone`, `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
+| Numeric | `number`, `range` |
+| Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity`, `score`, `rating` (alias `rating_stars`), `slider`, `temperature` |
+| Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox` |
+| Boolean toggle | `toggle` (alias `toggle_switch`/`checkbox_toggle`) — a styled on/off switch; functionally a checkbox |
+| Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week` |
+| Specialized date | `birthdate` (adds a computed age display) |
+| File/color | `file`, `color` |
+| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty on purpose) |
+| Structural (not a widget) | `model_list` (repeating sub-forms, see below), `layout` (composed layout primitives) |
+
+Most forms only need the Text/Numeric/Selection/Date rows above. The
+"Specialized numeric" and "Specialized date" rows add presentation behavior
+(e.g. `percentage` adds a `%` placeholder and 0–100 bounds hint, `rating`
+renders a star widget) on top of the base widget — they do not change what
+Pydantic validates; validation still comes entirely from `Field()`
+constraints.
+
 ## Intake modes
 
 Copilot must support converting from:
@@ -61,14 +155,8 @@ Use layout="tabbed" by default when at least one applies:
 ## UI metadata strategy
 
 - Select input widgets with ui_element, not custom HTML.
-- Prefer these ui_element choices:
-	- text, email, password, search, tel, url
-	- textarea
-	- number, range
-	- select, multiselect, radio, combobox
-	- checkbox, toggle
-	- date, time, datetime, month, week
-	- file, color, hidden
+- See "Supported ui_element values (authoritative)" above for the full list
+  — do not use a value that isn't on that list.
 - min_length/max_length/pattern/ge/le/gt/lt are Field constraints, not
   ui_options. Set them on Field(...) directly so the renderer emits
   minlength/maxlength/pattern/min/max AND Pydantic actually enforces

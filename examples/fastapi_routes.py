@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
-FastAPI Example - Async Implementation
-=====================================
+FastAPI Example - Routes
+========================
 
-This example demonstrates ALL Pydantic SchemaForms capabilities in an asynchronous FastAPI application.
-It showcases simple, medium, and complex forms with various layouts.
+All routes/endpoints for the FastAPI showcase app: forms, dual-use JSON APIs,
+live validation, AI instructions, etc. App bootstrapping (FastAPI() construction,
+session middleware, static mount, the uvicorn entrypoint) lives in main.py,
+which mounts this module's `router` via `app.include_router(router)`.
+
+This module is imported, never run directly — see main.py for the entrypoint
+(`python examples/main.py` or `uvicorn main:app` from within examples/).
 
 Forms demonstrated:
 - Simple: MinimalLoginForm (basic fields, validation)
@@ -21,21 +26,14 @@ Layouts demonstrated:
 - API-first design with JSON schemas and OpenAPI documentation
 """
 
-import os
 import hmac
 import secrets
-import sys
 from pathlib import Path
 
 import markdown as _markdown
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
-
-# Add the parent directory to the path to import our library
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; Pet Forms; Layout Demonstration; Utility functions
     CompanyOrganizationForm,
@@ -70,6 +68,8 @@ from pydantic_schemaforms.assets.runtime import (
     read_asset_text,
 )
 from pydantic_schemaforms.live_validation import validation_response_headers
+
+router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
@@ -170,63 +170,6 @@ _contact_live_validator.register_field_validator(_mv)
 
 _LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
 
-_openapi_tags = [
-    {
-        'name': 'Simple Forms',
-        'description': 'Minimal login form — basic fields, CSRF protection, and two CSS frameworks.',
-    },
-    {
-        'name': 'Registration',
-        'description': 'Medium-complexity registration form with role selection and responsive design.',
-    },
-    {
-        'name': 'Dynamic Lists',
-        'description': 'Pet registration — repeating sub-forms (model-list fields) with add/remove controls.',
-    },
-    {
-        'name': 'Showcase',
-        'description': 'Complete field showcase and complex layout compositions (tabs, accordions, grids).',
-    },
-    {
-        'name': 'Advanced Nested',
-        'description': 'Five-level nested organization hierarchy — the stress test for the rendering engine.',
-    },
-    {
-        'name': 'Self-Contained',
-        'description': 'Forms rendered with inline Bootstrap assets — no CDN required.',
-    },
-    {
-        'name': 'Dual-Use: Form + JSON API',
-        'description': (
-            'One `FormModel` serves both an HTML browser form and a typed JSON endpoint. '
-            '`as_api_model()` strips `ui_*` keys so the schema here looks hand-written, '
-            'with all validation constraints intact.'
-        ),
-    },
-    {
-        'name': 'Generic Form API',
-        'description': 'JSON endpoints for schema introspection, server-side rendering, and headless submission.',
-    },
-    {
-        'name': 'System',
-        'description': 'Health check and static asset endpoints.',
-    },
-]
-
-app = FastAPI(
-    title='Pydantic SchemaForms - FastAPI Example',
-    description='Comprehensive showcase of pydantic-schemaforms capabilities in async FastAPI',
-    version=_psf_version,
-    openapi_tags=_openapi_tags,
-)
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv('SCHEMAFORMS_EXAMPLE_SESSION_SECRET', 'dev-only-change-me'),
-    same_site='lax',
-    https_only=False,
-)
-
 LOGIN_CSRF_SESSION_KEY = 'login_csrf_token'
 REGISTER_CSRF_SESSION_KEY = 'register_csrf_token'
 
@@ -304,18 +247,14 @@ def safe_json_filter(obj):
 templates.env.filters['safe_json'] = safe_json_filter
 
 
-# Mount /static to serve images (for favicon, etc.)
-app.mount('/static', StaticFiles(directory=_base_dir / 'img'), name='static')
-
-
-@app.get('/vendor/bootstrap-icons.css', tags=['System'])
+@router.get('/vendor/bootstrap-icons.css', tags=['System'])
 async def vendor_bootstrap_icons_css():
     """Serve the vendored Bootstrap Icons CSS with the woff2 font embedded as a data URI."""
     css = bootstrap_icons_css_content()
     return Response(content=css, media_type='text/css')
 
 
-@app.get('/vendor/htmx.min.js', tags=['System'])
+@router.get('/vendor/htmx.min.js', tags=['System'])
 async def vendor_htmx_js():
     """Serve the vendored HTMX JavaScript."""
     js = read_asset_text('assets/vendor/htmx/htmx.min.js')
@@ -376,7 +315,7 @@ def render_self_contained_demo_page(selected_style: str, form_html: str, rendere
 # ================================
 
 
-@app.get('/', response_class=HTMLResponse, tags=['System'])
+@router.get('/', response_class=HTMLResponse, tags=['System'])
 async def home(request: Request):
     """Home page showcasing all form examples."""
     return templates.TemplateResponse(
@@ -396,7 +335,7 @@ async def home(request: Request):
 # ================================
 
 
-@app.get('/login', response_class=HTMLResponse, tags=['Simple Forms'])
+@router.get('/login', response_class=HTMLResponse, tags=['Simple Forms'])
 async def login_get(
     request: Request,
     style: str = 'bootstrap',
@@ -450,7 +389,7 @@ async def login_get(
     )
 
 
-@app.post('/login', response_class=HTMLResponse, tags=['Simple Forms'])
+@router.post('/login', response_class=HTMLResponse, tags=['Simple Forms'])
 async def login_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -552,7 +491,7 @@ async def login_post(
 # ================================
 
 
-@app.get('/register', response_class=HTMLResponse, tags=['Registration'])
+@router.get('/register', response_class=HTMLResponse, tags=['Registration'])
 async def register_get(
     request: Request,
     style: str = 'bootstrap',
@@ -614,7 +553,7 @@ async def register_get(
 
 
 # Alias for /user route (used in templates)
-@app.get('/user', response_class=HTMLResponse, include_in_schema=False)
+@router.get('/user', response_class=HTMLResponse, include_in_schema=False)
 async def user_get(
     request: Request,
     style: str = 'bootstrap',
@@ -627,7 +566,7 @@ async def user_get(
     return await register_get(request, style, data, demo, debug, show_timing)
 
 
-@app.post('/register', response_class=HTMLResponse, tags=['Registration'])
+@router.post('/register', response_class=HTMLResponse, tags=['Registration'])
 async def register_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -728,7 +667,7 @@ async def register_post(
 # ================================
 
 
-@app.get('/showcase', response_class=HTMLResponse, tags=['Showcase'])
+@router.get('/showcase', response_class=HTMLResponse, tags=['Showcase'])
 async def showcase_get(
     request: Request,
     style: str = 'bootstrap',
@@ -789,7 +728,7 @@ async def showcase_get(
     )
 
 
-@app.post('/showcase', response_class=HTMLResponse, tags=['Showcase'])
+@router.post('/showcase', response_class=HTMLResponse, tags=['Showcase'])
 async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -847,7 +786,7 @@ async def showcase_post(
 
 
 # Alias routes for template compatibility
-@app.get('/pets', response_class=HTMLResponse, tags=['Dynamic Lists'])
+@router.get('/pets', response_class=HTMLResponse, tags=['Dynamic Lists'])
 async def pets_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1004,7 +943,7 @@ async def pets_get(
     )
 
 
-@app.post('/pets', response_class=HTMLResponse, tags=['Dynamic Lists'])
+@router.post('/pets', response_class=HTMLResponse, tags=['Dynamic Lists'])
 async def pets_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -1064,7 +1003,7 @@ async def pets_post(
 # ================================
 
 
-@app.get('/organization', response_class=HTMLResponse, tags=['Advanced Nested'])
+@router.get('/organization', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1132,7 +1071,7 @@ async def organization_get(
     )
 
 
-@app.post('/organization', response_class=HTMLResponse, tags=['Advanced Nested'])
+@router.post('/organization', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -1190,7 +1129,7 @@ async def organization_post(
         )
 
 
-@app.get('/organization-shared', response_class=HTMLResponse, tags=['Advanced Nested'])
+@router.get('/organization-shared', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_shared_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1242,7 +1181,7 @@ async def organization_shared_get(
     )
 
 
-@app.post('/organization-shared', response_class=HTMLResponse, tags=['Advanced Nested'])
+@router.post('/organization-shared', response_class=HTMLResponse, tags=['Advanced Nested'])
 async def organization_shared_post(
     request: Request,
     style: str = 'bootstrap',
@@ -1300,7 +1239,7 @@ async def organization_shared_post(
     )
 
 
-@app.get('/layouts', response_class=HTMLResponse, tags=['Showcase'])
+@router.get('/layouts', response_class=HTMLResponse, tags=['Showcase'])
 async def layouts_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1385,7 +1324,7 @@ async def layouts_get(
     )
 
 
-@app.post('/layouts', response_class=HTMLResponse, tags=['Showcase'])
+@router.post('/layouts', response_class=HTMLResponse, tags=['Showcase'])
 async def layouts_post(
     request: Request,
     style: str = 'bootstrap',
@@ -1446,7 +1385,7 @@ async def layouts_post(
     )
 
 
-@app.get('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
+@router.get('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
 async def self_contained(
     style: str = 'material',
     demo: bool = True,
@@ -1495,7 +1434,7 @@ async def self_contained(
     return render_self_contained_demo_page(selected_style, form_html, renderer_name)
 
 
-@app.post('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
+@router.post('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
 async def self_contained_post(
     request: Request,
     style: str = 'material',
@@ -1571,7 +1510,7 @@ FORM_REGISTRY = {
 }
 
 
-@app.get('/api/forms/{form_type}/schema', tags=['Generic Form API'])
+@router.get('/api/forms/{form_type}/schema', tags=['Generic Form API'])
 async def api_form_schema(form_type: str):
     """
     Return JSON Schema for a form model.
@@ -1589,7 +1528,7 @@ async def api_form_schema(form_type: str):
     return {'form_type': form_type, 'schema': schema, 'framework': 'fastapi'}
 
 
-@app.post('/api/forms/{form_type}/submit', tags=['Generic Form API'])
+@router.post('/api/forms/{form_type}/submit', tags=['Generic Form API'])
 async def api_submit_form(form_type: str, request: Request):
     """
     Validate JSON form submissions against a selected Pydantic form model.
@@ -1615,7 +1554,7 @@ async def api_submit_form(form_type: str, request: Request):
     }
 
 
-@app.get('/api/forms/{form_type}/render', tags=['Generic Form API'])
+@router.get('/api/forms/{form_type}/render', tags=['Generic Form API'])
 async def api_render_form(
     form_type: str, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
@@ -1651,7 +1590,7 @@ async def api_render_form(
 # all validation constraints and Field(examples=[...]) preserved.
 
 
-@app.get('/contact', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+@router.get('/contact', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
 async def contact_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1689,7 +1628,7 @@ async def contact_get(
     )
 
 
-@app.post('/contact', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+@router.post('/contact', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
 async def contact_post(
     request: Request,
     style: str = 'bootstrap',
@@ -1727,7 +1666,7 @@ async def contact_post(
     )
 
 
-@app.post('/api/contact', response_model=ContactSchema, tags=['Dual-Use: Form + JSON API'])
+@router.post('/api/contact', response_model=ContactSchema, tags=['Dual-Use: Form + JSON API'])
 async def api_contact(data: ContactSchema):
     """
     Accept a JSON body validated against the same model as the HTML form.
@@ -1744,7 +1683,7 @@ async def api_contact(data: ContactSchema):
     return data
 
 
-@app.get('/api/contact/schema', tags=['Dual-Use: Form + JSON API'])
+@router.get('/api/contact/schema', tags=['Dual-Use: Form + JSON API'])
 async def api_contact_schema():
     """Return the clean JSON Schema used by the /api/contact endpoint."""
     return ContactSchema.model_json_schema()
@@ -1755,7 +1694,7 @@ async def api_contact_schema():
 # ================================
 
 
-@app.get('/feedback', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+@router.get('/feedback', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
 async def feedback_get(
     request: Request,
     style: str = 'bootstrap',
@@ -1793,7 +1732,7 @@ async def feedback_get(
     )
 
 
-@app.post('/feedback', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
+@router.post('/feedback', response_class=HTMLResponse, tags=['Dual-Use: Form + JSON API'])
 async def feedback_post(
     request: Request,
     style: str = 'bootstrap',
@@ -1831,7 +1770,7 @@ async def feedback_post(
     )
 
 
-@app.post('/api/feedback', response_model=FeedbackSchema, tags=['Dual-Use: Form + JSON API'])
+@router.post('/api/feedback', response_model=FeedbackSchema, tags=['Dual-Use: Form + JSON API'])
 async def api_feedback(data: FeedbackSchema):
     """
     Accept a JSON body validated against the same model as the HTML feedback form.
@@ -1847,7 +1786,7 @@ async def api_feedback(data: FeedbackSchema):
     return data
 
 
-@app.get('/api/feedback/schema', tags=['Dual-Use: Form + JSON API'])
+@router.get('/api/feedback/schema', tags=['Dual-Use: Form + JSON API'])
 async def api_feedback_schema():
     """Return the clean JSON Schema used by the /api/feedback endpoint."""
     return FeedbackSchema.model_json_schema()
@@ -1858,7 +1797,7 @@ async def api_feedback_schema():
 # ================================
 
 
-@app.get('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
+@router.get('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
 async def live_validation_get(request: Request, style: str = 'bootstrap'):
     """Demonstrate real-time HTMX field validation on blur."""
     return templates.TemplateResponse(
@@ -1878,7 +1817,7 @@ async def live_validation_get(request: Request, style: str = 'bootstrap'):
     )
 
 
-@app.post('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
+@router.post('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
 async def live_validation_post(request: Request, style: str = 'bootstrap'):
     """Handle contact form submission for the live-validation demo."""
     raw = await request.form()
@@ -1917,7 +1856,7 @@ async def live_validation_post(request: Request, style: str = 'bootstrap'):
     )
 
 
-@app.post('/validate/{field_name}', response_class=HTMLResponse, tags=['Live Validation'])
+@router.post('/validate/{field_name}', response_class=HTMLResponse, tags=['Live Validation'])
 async def htmx_validate_field(field_name: str, request: Request):
     """HTMX endpoint: validate a single contact form field and return feedback HTML."""
     raw = await request.form()
@@ -1937,7 +1876,7 @@ async def htmx_validate_field(field_name: str, request: Request):
 # ================================
 
 
-@app.get('/ai-instructions', response_class=HTMLResponse, tags=['System'])
+@router.get('/ai-instructions', response_class=HTMLResponse, tags=['System'])
 async def ai_instructions_page(request: Request):
     """Render the packaged AI-assistant instructions (one tab per profile)."""
     profiles = [
@@ -1969,7 +1908,7 @@ async def ai_instructions_page(request: Request):
 # ================================
 
 
-@app.get('/api/health', tags=['System'])
+@router.get('/api/health', tags=['System'])
 async def health_check():
     """Health check endpoint."""
     return {'status': 'healthy', 'framework': 'fastapi', 'version': _psf_version}
@@ -1987,62 +1926,3 @@ def create_refer_path(request: Request) -> str:
         full_referer_path = f'{referer_path}?{referer_query}' if referer_query else referer_path
         return full_referer_path
     return '/'
-
-
-# ================================
-# RUN APPLICATION
-# ================================
-
-if __name__ == '__main__':
-    print('🚀 Starting FastAPI Example (Async)')
-    print('=' * 60)
-    print('📋 Available Examples:')
-    print('   • Simple:    http://localhost:8000/login')
-    print('   • Medium:    http://localhost:8000/register')
-    print('   • Complex:   http://localhost:8000/showcase')
-    print('   • Layouts:   http://localhost:8000/layouts')
-    print('   • 🚀 STRESS TEST (5 levels deep!): http://localhost:8000/organization')
-    print('   • 🏢 Reusable Organization:         http://localhost:8000/organization-shared')
-    print('')
-    print('🎨 Style Variants (add ?style= to any form):')
-    print('   • Bootstrap:       ?style=bootstrap')
-    print('   • Material Design: ?style=material')
-    print('   • Plain HTML:      ?style=none')
-    print('   • Debug Panel:     add ?debug=1')
-    print('   • Show Timing:     add ?show_timing=1')
-    print('')
-    print('🎯 Special Demos:')
-    print('   • Live HTMX Validation: http://localhost:8000/live-validation')
-    print('   • Self-Contained:       http://localhost:8000/self-contained')
-    print('   • API Docs:             http://localhost:8000/docs')
-    print('   • Home Page:            http://localhost:8000/')
-    print('')
-    print('🔗 Dual-Use Demos (form + JSON API from one FormModel):')
-    print('   Contact form (str fields):')
-    print('   • HTML Form:  http://localhost:8000/contact')
-    print('   • JSON API:   POST http://localhost:8000/api/contact')
-    print('   • API Schema: http://localhost:8000/api/contact/schema')
-    print('   Feedback form (int rating with ge/le constraints):')
-    print('   • HTML Form:  http://localhost:8000/feedback')
-    print('   • JSON API:   POST http://localhost:8000/api/feedback')
-    print('   • API Schema: http://localhost:8000/api/feedback/schema')
-    print('')
-    print('🔧 API Endpoints:')
-    print('   • Schema:              http://localhost:8000/api/forms/register/schema')
-    print('   • Pet Schema:          http://localhost:8000/api/forms/pets/schema')
-    print('   • Layout Schema:       http://localhost:8000/api/forms/layouts/schema')
-    print('   • Organization Schema: http://localhost:8000/api/forms/organization/schema')
-    print('   • Org Shared Schema:   http://localhost:8000/api/forms/organization-shared/schema')
-    print('   • Render:              http://localhost:8000/api/forms/register/render')
-    print('   • Pet Render:          http://localhost:8000/api/forms/pets/render')
-    print('   • Layout Render:       http://localhost:8000/api/forms/layouts/render')
-    print('   • Organization Render: http://localhost:8000/api/forms/organization/render')
-    print('   • Org Shared Render:   http://localhost:8000/api/forms/organization-shared/render')
-    print('   • Submit:              POST http://localhost:8000/api/forms/register/submit')
-    print('   • Health:              http://localhost:8000/api/health')
-    print('=' * 60)
-    print('💡 To run this example:')
-    print('   make ex-run')
-    print('   # OR')
-    print('   uvicorn fastapi_example:app --port 8000 --reload')
-    print('=' * 60)

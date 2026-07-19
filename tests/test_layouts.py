@@ -19,8 +19,8 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-import examples.fastapi_example as fastapi_example
-from examples.fastapi_example import app
+import examples.fastapi_routes as fastapi_routes
+from examples.main import app
 from examples.shared_models import LayoutDemonstrationForm
 from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
@@ -1550,8 +1550,8 @@ class TestAsyncFormRendering:
 def _patch_templates_to_repo_root() -> None:
     """Ensure templates resolve when running tests from repo root."""
 
-    base_dir = Path(fastapi_example.__file__).resolve().parent
-    fastapi_example.templates = Jinja2Templates(directory=base_dir / 'templates')
+    base_dir = Path(fastapi_routes.__file__).resolve().parent
+    fastapi_routes.templates = Jinja2Templates(directory=base_dir / 'templates')
 
 
 def _client() -> TestClient:

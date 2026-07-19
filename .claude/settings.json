@@ -11,7 +11,10 @@
       "Bash(git -C /workspaces/pydantic-schemaforms add tests/playwright/_server.py)",
       "Bash(ruff check *)",
       "Bash(ruff format *)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(pytest tests/test_ai_instructions.py -q)"
     ]
   }
 }

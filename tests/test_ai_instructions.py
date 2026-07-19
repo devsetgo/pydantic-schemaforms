@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from pydantic_schemaforms import (
@@ -8,6 +10,19 @@ from pydantic_schemaforms import (
     suggested_instruction_filename,
 )
 from pydantic_schemaforms.ai_instructions import main
+from pydantic_schemaforms.inputs.registry import get_input_component_map
+
+# ui_element values that are handled outside the input registry (special-cased
+# in the field renderer) rather than backed by a BaseInput subclass.
+_STRUCTURAL_UI_ELEMENTS = {'model_list', 'layout'}
+
+
+def _authoritative_table_tokens(instructions: str) -> set[str]:
+    """Extract every backticked token from the "Supported ui_element values" table."""
+    section = instructions.split('## Supported ui_element values (authoritative)', 1)[1]
+    section = section.split('\n## ', 1)[0]
+    tokens = set(re.findall(r'`([a-z0-9_-]+)`', section))
+    return tokens - {'ui_element'}
 
 
 def test_available_instruction_profiles_contains_expected_profiles() -> None:
@@ -87,9 +102,10 @@ def test_cli_output_flag_rejects_absolute_path_outside_cwd(tmp_path, monkeypatch
     outside.mkdir(exist_ok=True)
     escape_target = outside / 'escaped.md'
     escape_target.unlink(missing_ok=True)
+    escape_target_arg = str(escape_target)
 
     with pytest.raises(SystemExit) as exc_info:
-        main(['generic', '--output', str(escape_target)])
+        main(['generic', '--output', escape_target_arg])
     assert exc_info.value.code == 2
     assert not escape_target.exists()
 
@@ -103,12 +119,31 @@ def test_cli_output_flag_allows_dotdot_that_stays_inside_cwd(tmp_path, monkeypat
     assert (tmp_path / 'ALLOWED.md').read_text(encoding='utf-8') == get_app_instructions('generic')
 
 
+@pytest.mark.parametrize('profile', ['claude', 'copilot', 'generic'])
+def test_authoritative_ui_element_table_matches_registry(profile: str) -> None:
+    """Every ui_element/alias claimed in the docs must actually be registered.
+
+    This is the guard the packaged docs promise in docs/ai_instructions.md's
+    "Keeping this feature honest" section: the table is checked against the
+    real registry, not just written once and left to drift.
+    """
+    instructions = get_app_instructions(profile)
+    documented = _authoritative_table_tokens(instructions)
+    registered = set(get_input_component_map()) | _STRUCTURAL_UI_ELEMENTS
+
+    undocumented_but_real = documented - registered
+    assert undocumented_but_real == set(), (
+        f'{profile} doc claims ui_element values that do not exist: {undocumented_but_real}'
+    )
+
+
 def test_resolve_output_path_rejects_sibling_directory_with_shared_prefix(tmp_path) -> None:
     from pydantic_schemaforms.ai_instructions import _resolve_output_path
 
     base = tmp_path / 'project'
     base.mkdir()
     sibling = tmp_path / 'project-evil' / 'file.md'
+    sibling_arg = str(sibling)
 
     with pytest.raises(ValueError, match='Refusing to write outside'):
-        _resolve_output_path(str(sibling), base_dir=base)
+        _resolve_output_path(sibling_arg, base_dir=base)
