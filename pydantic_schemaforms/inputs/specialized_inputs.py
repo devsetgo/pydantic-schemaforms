@@ -424,9 +424,9 @@ class CaptchaInput(FormInput):
         # interpolation in the t-string return statement -- Sonar's Python
         # analyzer doesn't parse PEP 750 t-strings yet, so it can't see the
         # reference and flags a false-positive "unused local variable".
-        text_input_html = SafeHTML(
+        text_input_html = SafeHTML(  # NOSONAR
             _render_input_tag(self._build_attributes_string(attrs))
-        )  # NOSONAR
+        )
 
         hidden_input = HiddenInput()
         token_html = SafeHTML(hidden_input.render(name=f'{name}_token', value=token))  # NOSONAR
