@@ -254,6 +254,8 @@ Notes:
 
 - `number`
 - `range`
+- `percentage`, `decimal`, `integer`, `age`, `quantity`, `score`, `temperature` (see [Specialized numeric elements](#specialized-numeric-elements))
+- `rating` (alias: `rating_stars`), `star_rating`, `slider` (see [Rating & sliders](#rating--sliders))
 
 #### number
 
@@ -264,7 +266,7 @@ Required:
 Optional:
 
 - Pydantic constraints: ge, le, gt, lt, multiple_of
-- ui_options: min, max, step, inputmode
+- ui_options: min, max, step, inputmode, show_stepper
 
 ```python
 class NumberExample(FormModel):
@@ -276,6 +278,11 @@ class NumberExample(FormModel):
         ui_options={"step": 1, "inputmode": "numeric"},
     )
 ```
+
+Set `ui_options={"show_stepper": True}` to render +/- buttons on either side of
+the input instead of relying on the browser's native number spinner. The
+buttons dispatch real `input`/`change` events, so they work with any other
+JS listening on the field. `quantity` (below) turns this on by default.
 
 #### range
 
@@ -298,11 +305,57 @@ class RangeExample(FormModel):
     )
 ```
 
+### Specialized numeric elements
+
+These all build on `number` and accept the same `ui_options` (min, max, step,
+show_stepper) plus their own defaults/kwargs listed below.
+
+| `ui_element` | Purpose | Extra `ui_options` |
+| --- | --- | --- |
+| `percentage` | Adds a `%` placeholder, defaults min/max/step to 0-100/0.1 | -- |
+| `decimal` | Step derived from `decimal_places` | `decimal_places` (int, default 2) |
+| `integer` | Forces step=1, numeric keyboard | -- |
+| `age` | Integer with min/max defaulted to 0-150 | -- |
+| `quantity` | Integer with min=1 and `show_stepper=True` by default | -- |
+| `score` | Free min/max range (defaults 0-100) | `min_score`, `max_score` |
+| `temperature` | Unit-aware placeholder/min/max | `unit` ("celsius" \| "fahrenheit" \| "kelvin") |
+
+```python
+class SpecializedNumericExample(FormModel):
+    discount: float = Field(..., ui_element="percentage")
+    price: float = Field(..., ui_element="decimal", ui_options={"decimal_places": 2})
+    attendees: int = Field(..., ui_element="integer")
+    applicant_age: int = Field(..., ui_element="age")
+    cart_quantity: int = Field(1, ui_element="quantity")  # ships the +/- stepper by default
+    exam_score: float = Field(..., ui_element="score", ui_options={"min_score": 0, "max_score": 100})
+    room_temp: float = Field(..., ui_element="temperature", ui_options={"unit": "fahrenheit"})
+```
+
+### Rating & sliders
+
+- `rating` (alias: `rating_stars`): a range slider that also renders a live
+  `★★★☆☆`-style text readout. Accepts `ui_options={"max_rating": 5}`
+  (defaults to 5). Good for a compact, keyboard/touch-friendly rating input.
+- `star_rating`: individually clickable stars (not a slider) -- contrast with
+  `rating` above. Accepts `ui_options={"max_stars": 5}` (note the different
+  option name from `rating`'s `max_rating`).
+- `slider`: `range` with min/max value labels shown below the track.
+  Accepts `ui_options={"show_labels": True}` (default) plus the usual
+  min/max/step.
+
+```python
+class RatingAndSliderExample(FormModel):
+    satisfaction: int = Field(3, ui_element="rating", ui_options={"max_rating": 5})
+    quality_stars: int = Field(4, ui_element="star_rating", ui_options={"max_stars": 5})
+    volume: int = Field(50, ui_element="slider", ui_options={"min": 0, "max": 100, "step": 5})
+```
+
 ### Selection
 
 - `select`
 - `multiselect`
 - `checkbox`
+- `checkbox_group`
 - `radio`
 - `toggle` (aliases: `toggle_switch`, `checkbox_toggle`)
 - `combobox`
@@ -342,7 +395,7 @@ Required:
 
 Optional:
 
-- ui_options: options, choices, size
+- ui_options: options, choices, size, enhanced (default True), searchable (default True), search_placeholder
 
 ```python
 class MultiSelectExample(FormModel):
@@ -359,6 +412,15 @@ class MultiSelectExample(FormModel):
         },
     )
 ```
+
+The real `<select multiple>` is always rendered -- it's what the form
+actually submits, JS or not. By default (`enhanced=True`) it's layered with a
+chips + search UI that reads its option data straight off the `<select>`,
+and only hides the native control once the enhanced UI has built
+successfully, so a JS load failure never leaves the field invisible. Set
+`ui_options={"enhanced": False}` to render the plain native multi-select
+instead, or `ui_options={"searchable": False}` to keep the chips UI without
+the search box.
 
 #### checkbox
 
@@ -380,6 +442,41 @@ class CheckboxExample(FormModel):
     )
 ```
 
+#### checkbox_group
+
+Required:
+
+- list field type + ui_element="checkbox_group"
+- ui_options with choices/options list, or schema enum
+
+Optional:
+
+- ui_options: options, choices, legend, variant ("stacked" default, or "button_group")
+
+```python
+class CheckboxGroupExample(FormModel):
+    notify_via: list[str] = Field(
+        default_factory=list,
+        ui_element="checkbox_group",
+        ui_options={
+            "choices": [
+                {"value": "email", "label": "Email"},
+                {"value": "sms", "label": "SMS"},
+                {"value": "push", "label": "Push"},
+            ],
+            "legend": "Notify me via",
+        },
+    )
+```
+
+Use this instead of `multiselect` when you want independent on/off
+checkboxes laid out directly on the page rather than a dropdown -- both
+submit a list of selected values. `variant="button_group"` adds
+`checkbox-group-button-group`/`checkbox-item-button-group` modifier classes
+for styling the options as an adjacent button row; it's presentation only,
+your app's CSS still does the actual visual styling (removing borders
+between items, etc.).
+
 #### radio
 
 Required:
@@ -389,7 +486,7 @@ Required:
 
 Optional:
 
-- ui_options: options, choices, legend, class, style
+- ui_options: options, choices, legend, variant ("stacked" default, or "segmented"), class, style
 
 ```python
 class RadioExample(FormModel):
@@ -405,6 +502,11 @@ class RadioExample(FormModel):
         },
     )
 ```
+
+`variant="segmented"` adds `radio-group-segmented`/`radio-item-segmented`
+modifier classes for styling the options as adjacent buttons instead of
+stacked radios -- presentation only, same caveat as `checkbox_group`'s
+`button_group` variant above.
 
 #### toggle (aliases: toggle_switch, checkbox_toggle)
 
@@ -435,7 +537,7 @@ Required:
 Optional:
 
 - ui_placeholder
-- ui_options: options, choices
+- ui_options: options, choices, filter_mode ("contains" default, or "startswith"), min_chars
 
 ```python
 class ComboBoxExample(FormModel):
@@ -453,6 +555,12 @@ class ComboBoxExample(FormModel):
     )
 ```
 
+Renders a text input backed by a native `<datalist>` (the no-JS fallback)
+plus a JS-filtered dropdown listbox with arrow-key navigation and
+click-to-select, built from the same option data as the datalist -- nothing
+to keep in sync. `filter_mode="startswith"` restricts matches to the
+beginning of each option's label instead of matching anywhere in it.
+
 Selection note:
 
 - Provide choices via ui_options={"options": [...]} or ui_options={"choices": [...]}.
@@ -465,6 +573,7 @@ Selection note:
 - `datetime` (alias: `datetime-local`)
 - `month`
 - `week`
+- `birthdate`
 
 #### date
 
@@ -570,6 +679,29 @@ class WeekExample(FormModel):
     )
 ```
 
+#### birthdate
+
+Required:
+
+- date-like field + ui_element="birthdate"
+
+Optional:
+
+- ui_options: min, max (defaults to today and 150 years ago), show_age (default True)
+
+```python
+from datetime import date
+
+
+class BirthdateExample(FormModel):
+    date_of_birth: date = Field(..., ui_element="birthdate")
+```
+
+`show_age` renders a live "You are N years old" readout below the field,
+computed client-side and updated as the date changes. Set
+`ui_options={"show_age": False}` to render a plain date input with
+birthdate-appropriate min/max defaults but no age display.
+
 ### Specialized
 
 - `file`
@@ -579,6 +711,7 @@ class WeekExample(FormModel):
 - `phone` (alias: `phone_number`)
 - `credit_card` (aliases: `card`, `cc_number`)
 - `currency` (alias: `money`)
+- `tags`
 
 #### file
 
@@ -588,7 +721,7 @@ Required:
 
 Optional:
 
-- ui_options: accept, multiple, capture, show_preview
+- ui_options: accept, multiple, capture, show_preview, enable_drag_drop (default True)
 
 ```python
 class FileExample(FormModel):
@@ -602,6 +735,11 @@ class FileExample(FormModel):
         },
     )
 ```
+
+Drag-and-drop is on by default: the input renders inside a drop zone that
+accepts dragged files and feeds them into the same `change`/preview handling
+as a click-selected file, so no extra wiring is needed. Set
+`ui_options={"enable_drag_drop": False}` to render a plain file input.
 
 #### color
 
@@ -669,7 +807,7 @@ Required:
 Optional:
 
 - ui_placeholder
-- ui_options: country_code, autocomplete
+- ui_options: country_code, autocomplete, phone_format, live_format (default True)
 
 ```python
 class PhoneExample(FormModel):
@@ -680,6 +818,12 @@ class PhoneExample(FormModel):
         ui_options={"country_code": "+1", "autocomplete": "tel"},
     )
 ```
+
+Set `ui_options={"phone_format": "(###) ###-####"}` to get a live-formatting
+mask -- `#` marks each digit position, and any other character is inserted
+literally as the user types. Without `phone_format`, the field renders
+exactly as before (no mask). This is display formatting only; it is not a
+substitute for server-side validation of the submitted value.
 
 #### credit_card (aliases: card, cc_number)
 
@@ -708,7 +852,7 @@ Required:
 
 Optional:
 
-- ui_options: currency_symbol
+- ui_options: currency_symbol, live_format (default True)
 
 ```python
 class CurrencyExample(FormModel):
@@ -719,8 +863,110 @@ class CurrencyExample(FormModel):
     )
 ```
 
+`live_format` inserts thousands separators as the user types (on by default).
+Set `ui_options={"live_format": False}` to disable it. As with `phone`, this
+is display formatting only -- validate the submitted value server-side.
+
+#### tags
+
+Required:
+
+- string field + ui_element="tags"
+
+Optional:
+
+- ui_options: placeholder, separator (default ",")
+
+```python
+class TagsExample(FormModel):
+    skills: str = Field(
+        "",
+        title="Skills",
+        ui_element="tags",
+        ui_options={"placeholder": "Add a skill and press Enter", "separator": ","},
+    )
+```
+
+Renders a chip-style tags editor backed by a single hidden input that stores
+the joined, separator-delimited string -- so the field type stays a plain
+`str`, not a `list[str]`. Typing a separator character or pressing Enter
+turns the current text into a chip; Backspace on an empty input removes the
+last chip.
+
 These specialized elements are opt-in and will not override normal `text` fields.
 Use them explicitly when you want built-in formatting/pattern behavior.
+
+## Security / anti-spam elements
+
+### captcha
+
+Required:
+
+- string field + ui_element="captcha"
+- ui_options with a `secret_key`
+
+```python
+from pydantic_schemaforms.inputs.specialized_inputs import verify_captcha
+
+SECRET = "change-me-and-load-from-your-app-config"
+
+
+class SignupForm(FormModel):
+    captcha_answer: str = Field(
+        "",
+        title="Verify you are human",
+        ui_element="captcha",
+        ui_options={"secret_key": SECRET},
+    )
+```
+
+`captcha` renders a small arithmetic question ("What is 4 + 7?") plus a
+hidden, HMAC-signed challenge token -- the correct sum is never sent to the
+browser. Verify it at the route level, before model validation, since the
+token only exists in the raw submitted form data:
+
+```python
+form_dict = dict(await request.form())
+token = form_dict.pop("captcha_answer_token", None)
+if not verify_captcha(token=token, answer=form_dict.get("captcha_answer"), secret_key=SECRET):
+    # re-render with a form-level error; a fresh challenge is generated
+    # automatically since the widget re-renders on every request
+    ...
+```
+
+Only declare the visible answer field on your model -- do not also declare a
+separate `..._token` field for it. A new question/token pair is generated on
+every render, so the token in the page always matches the question shown.
+
+### honeypot
+
+Required:
+
+- string field + ui_element="honeypot"
+
+```python
+class SignupForm(FormModel):
+    website_url: str = Field("", ui_element="honeypot")
+```
+
+Renders a field that is hidden from real users (`display: none`, `tabindex="-1"`)
+but still visible to bots that fill in every input they find. If the
+submitted value is non-empty, treat the submission as spam -- most apps fake
+a success response rather than revealing that a trap caught it:
+
+```python
+if form_dict.get("website_url"):
+    return success_response()  # pretend it worked; don't process the submission
+```
+
+### csrf
+
+`csrf` is rendered by the library's own CSRF handling rather than declared
+directly as a model field -- pass `csrf_mode="required-provider"` (or
+`"field-only"` for local debugging) and a `csrf_token_provider` to
+`render_form_html()`/`render_form_from_model()`. See
+[docs/csrf.md](csrf.md) for the full guide, including how tokens are
+generated, stored, and verified.
 
 ## Complete Example (All Documented UI Elements)
 
@@ -730,6 +976,9 @@ Use this model if you want one copy-paste block that exercises every documented 
 from datetime import date, datetime, time
 
 from pydantic_schemaforms import Field, FormModel
+
+# Load from app config in real code -- never hardcode a captcha secret.
+ALL_UI_ELEMENTS_CAPTCHA_SECRET = "change-me"
 
 
 class AllUiElementsExample(FormModel):
@@ -810,6 +1059,49 @@ class AllUiElementsExample(FormModel):
         ui_element="range",
         ui_options={"min": 0, "max": 10, "step": 1, "value": 5, "show_value": True},
     )
+    number_stepper_quantity: int = Field(
+        1,
+        title="Cart quantity",
+        description="Ships a +/- stepper by default",
+        ge=1,
+        ui_element="quantity",
+    )
+    number_percentage: float = Field(
+        ...,
+        title="Discount",
+        description="Percentage discount to apply",
+        ge=0,
+        le=100,
+        ui_element="percentage",
+    )
+    number_temperature: float = Field(
+        ...,
+        title="Room temperature",
+        ui_element="temperature",
+        ui_options={"unit": "fahrenheit"},
+    )
+
+    # Rating & sliders
+    rating_satisfaction: int = Field(
+        3,
+        title="Satisfaction rating",
+        description="Slider-based rating with a live star readout",
+        ui_element="rating",
+        ui_options={"max_rating": 5},
+    )
+    rating_stars: int = Field(
+        4,
+        title="Quality",
+        description="Individually clickable stars",
+        ui_element="star_rating",
+        ui_options={"max_stars": 5},
+    )
+    slider_volume: int = Field(
+        50,
+        title="Volume",
+        ui_element="slider",
+        ui_options={"min": 0, "max": 100, "step": 5},
+    )
 
     # Selection
     select_region: str = Field(
@@ -846,6 +1138,19 @@ class AllUiElementsExample(FormModel):
         ui_element="checkbox",
         ui_help_text="I agree to the terms",
         ui_options={"value": "1", "checked": False},
+    )
+    select_notify_via: list[str] = Field(
+        default_factory=list,
+        title="Notify me via",
+        description="Independent checkboxes laid out on the page",
+        ui_element="checkbox_group",
+        ui_options={
+            "choices": [
+                {"value": "email", "label": "Email"},
+                {"value": "sms", "label": "SMS"},
+                {"value": "push", "label": "Push"},
+            ]
+        },
     )
     select_plan: str = Field(
         ...,
@@ -920,6 +1225,12 @@ class AllUiElementsExample(FormModel):
         ui_element="week",
         ui_options={"value": "2026-W17"},
     )
+    dt_birthdate: date = Field(
+        ...,
+        title="Date of birth",
+        description="Shows a live computed-age readout",
+        ui_element="birthdate",
+    )
 
     # Specialized
     sp_file: str = Field(
@@ -974,7 +1285,31 @@ class AllUiElementsExample(FormModel):
         ui_element="currency",
         ui_options={"currency_symbol": "$"},
     )
+    sp_tags: str = Field(
+        "",
+        title="Skills",
+        description="Chip-style tags editor; stores a separator-joined string",
+        ui_element="tags",
+        ui_options={"placeholder": "Add a skill and press Enter"},
+    )
+
+    # Security / anti-spam
+    sec_honeypot: str = Field(
+        "",
+        title="Website",
+        ui_element="honeypot",
+    )
+    sec_captcha: str = Field(
+        "",
+        title="Verify you are human",
+        ui_element="captcha",
+        ui_options={"secret_key": ALL_UI_ELEMENTS_CAPTCHA_SECRET},
+    )
 ```
+
+`ALL_UI_ELEMENTS_CAPTCHA_SECRET` must be a module-level constant you load
+from app config (not hardcoded) -- see the [captcha](#captcha) section above
+for the full verification flow this field needs at the route level.
 
 Alias note:
 
@@ -984,6 +1319,8 @@ Alias note:
 - phone_number is an alias for phone
 - card and cc_number are aliases for credit_card
 - money is an alias for currency
+- rating_stars is an alias for rating (the slider-based widget -- not the
+  same as the separate `star_rating` element, which is clickable stars)
 
 ## Pseudo elements
 
