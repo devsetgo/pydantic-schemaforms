@@ -1,8 +1,15 @@
 """Text input components: TextInput, PasswordInput, EmailInput, TextArea, SearchInput, and specialised variants."""
 
+import json
+import re
 from typing import Any
 
 from .base import FormInput, _render_input_tag
+
+
+def _mask_to_pattern(mask: str) -> str:
+    """Turn a '#'-placeholder mask (e.g. '(###) ###-####') into a matching regex."""
+    return ''.join(r'\d' if ch == '#' else re.escape(ch) for ch in mask)
 
 
 class TextInput(FormInput):
@@ -146,18 +153,61 @@ class SSNInput(TextInput):
 
 
 class PhoneInput(TelInput):
-    """Phone number input with country code support."""
+    """Phone number input with country code support and an optional formatting mask."""
 
     ui_element: str = 'phone'
     ui_element_aliases: tuple[str, ...] = ('phone_number',)
 
-    def render(self, country_code: str | None = None, **kwargs: Any) -> str:
+    def render(
+        self,
+        country_code: str | None = None,
+        phone_format: str | None = None,
+        live_format: bool = True,
+        **kwargs: Any,
+    ) -> str:
         if country_code:
             if 'value' in kwargs and not kwargs['value'].startswith(country_code):
                 kwargs['value'] = f'{country_code} {kwargs["value"]}'
             elif 'placeholder' in kwargs and not kwargs['placeholder'].startswith(country_code):
                 kwargs['placeholder'] = f'{country_code} {kwargs["placeholder"]}'
-        return super().render(**kwargs)
+
+        if phone_format is None:
+            return super().render(**kwargs)
+
+        kwargs.setdefault('maxlength', str(len(phone_format)))
+        kwargs.setdefault('pattern', _mask_to_pattern(phone_format))
+        kwargs.setdefault('placeholder', phone_format.replace('#', '0'))
+        field_id = kwargs.get('id', kwargs.get('name', ''))
+        input_html = super().render(**kwargs)
+
+        if not live_format or not field_id:
+            return input_html
+
+        script = rf"""
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+    const el = document.getElementById('{field_id}');
+    const mask = {json.dumps(phone_format)};
+    if (el) {{
+        el.addEventListener('input', function() {{
+            const digits = el.value.replace(/\D/g, '');
+            let out = '';
+            let di = 0;
+            for (let i = 0; i < mask.length && di < digits.length; i++) {{
+                if (mask[i] === '#') {{
+                    out += digits[di];
+                    di++;
+                }} else {{
+                    out += mask[i];
+                }}
+            }}
+            el.value = out;
+        }});
+    }}
+}});
+</script>
+"""
+        return input_html + script
 
 
 class CreditCardInput(TextInput):
@@ -178,15 +228,42 @@ class CreditCardInput(TextInput):
 
 
 class CurrencyInput(TextInput):
-    """Currency input with formatting."""
+    """Currency input with live thousands-separator formatting."""
 
     ui_element: str = 'currency'
     ui_element_aliases: tuple[str, ...] = ('money',)
 
-    def render(self, currency_symbol: str = '$', **kwargs: Any) -> str:
-        kwargs['pattern'] = rf'^\{currency_symbol}?\d+(\.\d{{2}})?$'
+    def render(self, currency_symbol: str = '$', live_format: bool = True, **kwargs: Any) -> str:
+        kwargs['pattern'] = rf'^\{currency_symbol}?[\d,]*(\.\d{{2}})?$'
         kwargs['placeholder'] = kwargs.get('placeholder', f'{currency_symbol}0.00')
         kwargs['inputmode'] = 'decimal'
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-        return _render_input_tag(self._build_attributes_string(attrs))
+        input_html = _render_input_tag(self._build_attributes_string(attrs))
+
+        field_id = kwargs.get('id', kwargs.get('name', ''))
+        if not live_format or not field_id:
+            return input_html
+
+        script = rf"""
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+    const el = document.getElementById('{field_id}');
+    const symbol = {json.dumps(currency_symbol)};
+    if (el) {{
+        el.addEventListener('input', function() {{
+            const caretFromEnd = el.value.length - (el.selectionEnd || 0);
+            const raw = el.value.replace(/[^0-9.]/g, '');
+            const parts = raw.split('.');
+            let whole = parts[0].replace(/^0+(?=\d)/, '');
+            const cents = parts.length > 1 ? '.' + parts[1].slice(0, 2) : '';
+            whole = whole.replace(/\B(?=(\d{{3}})+(?!\d))/g, ',');
+            el.value = whole || cents ? symbol + whole + cents : '';
+            const pos = Math.max(0, el.value.length - caretFromEnd);
+            el.setSelectionRange(pos, pos);
+        }});
+    }}
+}});
+</script>
+"""
+        return input_html + script

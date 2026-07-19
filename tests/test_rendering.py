@@ -1117,6 +1117,24 @@ def test_numeric_specialized_renderers_cover_branches() -> None:
     assert 'min="1"' in QuantityInput().render(name='qty')
     assert 'step="0.1"' in ScoreInput().render(name='score', min_score=0.0, max_score=10.0)
 
+
+def test_number_stepper_opt_in_and_default() -> None:
+    from pydantic_schemaforms.inputs.numeric_inputs import NumberInput, QuantityInput
+
+    plain_html = NumberInput().render(name='x', id='x')
+    assert 'number-stepper' not in plain_html
+
+    stepper_html = NumberInput().render(name='x', id='x', show_stepper=True)
+    assert 'number-stepper-increment' in stepper_html
+    assert 'number-stepper-decrement' in stepper_html
+    assert 'data-target="x"' in stepper_html
+
+    # QuantityInput defaults show_stepper=True since it's the whole point of that widget.
+    quantity_html = QuantityInput().render(name='qty', id='qty')
+    assert 'number-stepper' in quantity_html
+    quantity_no_stepper_html = QuantityInput().render(name='qty', id='qty', show_stepper=False)
+    assert 'number-stepper' not in quantity_no_stepper_html
+
     rating_html = RatingInput().render(name='rating', max_rating=7, value='4')
     assert 'star-rating' in rating_html
     assert '☆☆☆' in rating_html
@@ -1130,6 +1148,27 @@ def test_numeric_specialized_renderers_cover_branches() -> None:
     assert '-459.67' in temp_html
 
 
+def test_number_stepper_ships_layout_css_so_framework_classes_cant_stack_it() -> None:
+    """Regression test: the stepper's +/- buttons and <input> had no layout CSS
+    of their own, relying on the browser's default flow. That "worked" only
+    by accident when the input carried no width-affecting class (e.g. under
+    Material's registry-fallback path, which assigns no class at all) -- any
+    framework whose input class sets `display: block; width: 100%` (like
+    Bootstrap's .form-control) forced a line break before and after the
+    input, stacking the buttons above/below it instead of beside it.
+    """
+    from pydantic_schemaforms.inputs.numeric_inputs import NumberInput
+
+    html = NumberInput().render(name='x', id='x', show_stepper=True)
+    style_start = html.find('<style>')
+    style_end = html.find('</style>')
+    assert style_start != -1 and style_end != -1
+    style_block = html[style_start:style_end]
+    assert 'display: inline-flex' in style_block
+    assert '.number-stepper input' in style_block
+    assert 'width: auto' in style_block
+
+
 def test_text_specialized_renderers_cover_patterns() -> None:
     ssn_html = SSNInput().render(name='ssn')
     cc_html = CreditCardInput().render(name='cc')
@@ -1140,6 +1179,17 @@ def test_text_specialized_renderers_cover_patterns() -> None:
     assert '1234 5678 9012 3456' in cc_html
     assert 'cc-number' in cc_html
     assert '$0.00' in currency_html
+    assert '<script>' in currency_html
+
+
+def test_currency_live_format_toggle() -> None:
+    live_html = CurrencyInput().render(name='amount', id='amount', currency_symbol='$')
+    static_html = CurrencyInput().render(
+        name='amount', id='amount', currency_symbol='$', live_format=False
+    )
+    assert '<script>' in live_html
+    assert '<script>' not in static_html
+    assert '[\\d,]' in static_html  # pattern tolerates thousands separators
 
 
 def test_selection_toggle_and_combobox_and_radio_fallback() -> None:
@@ -1160,6 +1210,30 @@ def test_selection_toggle_and_combobox_and_radio_fallback() -> None:
     assert 'radio-group' in radio_html
     assert 'Legend' in radio_html
 
+
+def test_combobox_real_js_filtering_and_field_dispatch() -> None:
+    combo_html = ComboBoxInput().render(
+        name='city', id='city', options=[{'value': 'LA', 'label': 'Los Angeles'}]
+    )
+    assert 'combobox-listbox' in combo_html
+    assert '<script>' in combo_html
+    assert 'city_listbox' in combo_html
+
+    # Through the normal Field(ui_element='combobox') -> render_form_html() path,
+    # this used to silently fall back to a bare empty <select></select> because
+    # field_renderer.py's options-dispatch tuple omitted 'combobox'.
+    from pydantic_schemaforms import Field, FormModel, render_form_html
+
+    class _ComboModel(FormModel):
+        fav: str = Field(
+            '', title='Favorite', ui_element='combobox', ui_options={'choices': ['red', 'green']}
+        )
+
+    html = render_form_html(_ComboModel, submit_url='/x', framework='bootstrap')
+    assert 'combobox-wrapper' in html
+    assert '<option value="red">red</option>' in html
+    assert '<select name="fav" id="fav" class="form-control"></select>' not in html
+
     checkbox_html = CheckboxGroup().render(
         group_name='g2',
         options=[{'value': 'v1', 'label': 'Value 1', 'disabled': True}],
@@ -1169,17 +1243,14 @@ def test_selection_toggle_and_combobox_and_radio_fallback() -> None:
     assert 'Legend 2' in checkbox_html
 
 
-def test_specialized_widget_renderers_cover_extended_blocks(monkeypatch) -> None:
-    class _ConcreteFormInput:
-        def render(self, **kwargs):
-            attrs = ' '.join(f'{k}="{v}"' for k, v in kwargs.items())
-            return f'<input {attrs} />'
-
-    monkeypatch.setattr(specialized_inputs, 'FormInput', _ConcreteFormInput)
-
-    captcha_html = specialized_inputs.CaptchaInput().render(name='captcha_code')
+def test_specialized_widget_renderers_cover_extended_blocks() -> None:
+    captcha = specialized_inputs.CaptchaInput()
+    captcha_html = captcha.render(secret_key='s3cret', name='captcha_code')
     assert 'What is' in captcha_html
-    assert 'captcha_code_answer' in captcha_html
+    assert 'captcha_code_token' in captcha_html
+    # The correct sum must never be transmitted to the client in any form.
+    assert 'captcha_code_answer' not in captcha_html
+    assert f'value="{captcha.num1 + captcha.num2}"' not in captcha_html
 
     stars_html = specialized_inputs.RatingStarsInput().render(
         name='rating',
@@ -1199,6 +1270,33 @@ def test_specialized_widget_renderers_cover_extended_blocks(monkeypatch) -> None
     assert 'tags-input' in tags_html
     assert 'alpha;beta' in tags_html
     assert 'removeTag' in tags_html
+
+
+def test_captcha_requires_secret_key() -> None:
+    with pytest.raises(TypeError):
+        specialized_inputs.CaptchaInput().render(name='captcha_code')
+
+
+def test_verify_captcha_round_trip() -> None:
+    from pydantic_schemaforms.inputs.specialized_inputs import (
+        _sign_captcha_challenge,
+        verify_captcha,
+    )
+
+    token = _sign_captcha_challenge(3, 4, 's3cret')
+    assert verify_captcha(token=token, answer='7', secret_key='s3cret') is True
+    assert verify_captcha(token=token, answer='8', secret_key='s3cret') is False
+    assert verify_captcha(token=token, answer='7', secret_key='wrong-secret') is False
+
+    tampered = _sign_captcha_challenge(3, 400, 'wrong-secret')  # signed with the wrong key
+    assert verify_captcha(token=tampered, answer='403', secret_key='s3cret') is False
+    assert verify_captcha(token='not-a-valid-token', answer='7', secret_key='s3cret') is False
+
+
+def test_rating_stars_input_reads_schema_value_kwarg() -> None:
+    """Regression test: the schema-driven render path passes value=, not current_rating=."""
+    stars_html = specialized_inputs.RatingStarsInput().render(name='rating', max_stars=5, value=3)
+    assert stars_html.count('class="rating-star star-filled"') == 3
 
 
 def test_live_validator_model_schema_and_render_paths() -> None:

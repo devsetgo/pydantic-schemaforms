@@ -295,9 +295,24 @@ class FrameworkTheme(RendererTheme):
         return self.config.get('field_wrapper_class', '')
 
     def input_class(self, ui_element: str) -> str:
-        if ui_element == 'checkbox':
+        # 'toggle'/aliases render as an HTML checkbox under the hood, and
+        # radio/checkbox_group are groups of checkbox-family <input>s -- all
+        # need checkbox_class, not select_class (Bootstrap's .form-select
+        # paints a dropdown chevron; applying it to a radio/checkbox <input>
+        # makes it look like a broken dropdown arrow instead of a radio
+        # button). See field_renderer._CHECKBOX_FAMILY_ELEMENTS -- duplicated
+        # here rather than imported to avoid a circular import between the
+        # two modules.
+        if ui_element in {
+            'checkbox',
+            'toggle',
+            'toggle_switch',
+            'checkbox_toggle',
+            'radio',
+            'checkbox_group',
+        }:
             return self.config.get('checkbox_class', '')
-        if ui_element in {'select', 'radio', 'multiselect'}:
+        if ui_element in {'select', 'multiselect'}:
             return self.config.get('select_class', '')
         return self.config.get('input_class', '')
 
@@ -967,11 +982,21 @@ function toggleAccordion(sectionId, buttonElement) {
     padding: 15px 39px 15px 15px; /* Adjust for thicker border */
 }
 
-.md-select:focus + .md-floating-label {
+/* Unlike a text input, a <select> always displays visible content (a real
+   option or the blank placeholder option) -- it never has an empty,
+   :placeholder-shown-style state to key the floating label off of, so its
+   label stays permanently floated above the control instead of only
+   floating on :focus (which would otherwise leave it overlapping the
+   selected option's text whenever the control isn't focused). */
+.md-select + .md-floating-label {
     transform: translateY(-28px) scale(0.75);
-    color: #6750a4;
+    color: #49454f;
     background: #ffffff;
     padding: 0 4px;
+}
+
+.md-select:focus + .md-floating-label {
+    color: #6750a4;
 }
 
 /* Material Design Textarea */

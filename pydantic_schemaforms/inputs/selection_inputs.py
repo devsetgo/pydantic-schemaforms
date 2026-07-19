@@ -3,6 +3,7 @@ Selection input components using Python 3.14 template strings.
 Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
+import json
 from html import escape
 from typing import Any
 
@@ -77,10 +78,178 @@ class MultiSelectInput(SelectInput):
 
     ui_element: str = 'multiselect'
 
-    def render(self, options: list[dict[str, Any]], **kwargs: Any) -> str:
-        """Render multi-select with multiple attribute set."""
+    def render(
+        self,
+        options: list[dict[str, Any]],
+        enhanced: bool = True,
+        searchable: bool = True,
+        search_placeholder: str = 'Search...',
+        **kwargs: Any,
+    ) -> str:
+        """Render multi-select with multiple attribute set.
+
+        The real <select multiple> is always rendered and is what the form
+        submits, JS or not. When `enhanced`, it's wrapped with a chips/search
+        UI that reads its option data straight off the <select> (single
+        source of truth) and only hides the native control after the
+        enhanced UI has successfully built, so a JS load failure never
+        leaves the field invisible or unusable.
+        """
         kwargs['multiple'] = True
-        return super().render(options, **kwargs)
+        select_html = super().render(options, **kwargs)
+
+        if not enhanced:
+            return select_html
+
+        field_id = kwargs.get('id', kwargs.get('name', ''))
+        if not field_id:
+            return select_html
+
+        search_html = (
+            f'<input type="text" class="multiselect-search" '
+            f'placeholder="{escape(search_placeholder)}" />'
+            if searchable
+            else ''
+        )
+
+        return f"""
+<div class="multiselect-enhanced" data-target="{field_id}">
+    <div class="multiselect-chips" id="{field_id}_chips"></div>
+    {search_html}
+    <ul class="multiselect-dropdown" id="{field_id}_dropdown" hidden></ul>
+    {select_html}
+</div>
+<style>
+.multiselect-enhanced {{
+    position: relative;
+}}
+.multiselect-chips {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}}
+.multiselect-chips:not(:empty) {{
+    margin-bottom: 6px;
+}}
+.multiselect-chip {{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e2e8f0;
+    color: #1c1b1f;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.875rem;
+}}
+.multiselect-chip-remove {{
+    cursor: pointer;
+    font-weight: bold;
+}}
+.multiselect-search {{
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    border: 1px solid #79747e;
+    border-radius: 4px;
+}}
+.multiselect-dropdown {{
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #79747e;
+    border-radius: 4px;
+}}
+.multiselect-option {{
+    padding: 6px 10px;
+    cursor: pointer;
+}}
+.multiselect-option:hover {{
+    background: #f1f5f9;
+}}
+.multiselect-option-selected {{
+    background: #e0e7ff;
+    font-weight: 600;
+}}
+/* Applied by the enhancement script once the chips/search/dropdown UI has
+   successfully built -- the real <select> stays the form's source of truth
+   and in the DOM, just visually replaced by the UI above it. */
+.multiselect-native-hidden {{
+    display: none !important;
+}}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+    const select = document.getElementById('{field_id}');
+    const chipsEl = document.getElementById('{field_id}_chips');
+    const dropdownEl = document.getElementById('{field_id}_dropdown');
+    const searchEl = document.querySelector('[data-target="{field_id}"] .multiselect-search');
+    if (!select || !chipsEl || !dropdownEl) return;
+
+    function renderChips() {{
+        chipsEl.innerHTML = '';
+        Array.from(select.selectedOptions).forEach(function(opt) {{
+            const chip = document.createElement('span');
+            chip.className = 'multiselect-chip';
+            chip.textContent = opt.textContent;
+            const remove = document.createElement('span');
+            remove.className = 'multiselect-chip-remove';
+            remove.textContent = '\\u00d7';
+            remove.addEventListener('click', function() {{
+                opt.selected = false;
+                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            }});
+            chip.appendChild(remove);
+            chipsEl.appendChild(chip);
+        }});
+    }}
+
+    function renderDropdown(filterText) {{
+        dropdownEl.innerHTML = '';
+        const filter = (filterText || '').toLowerCase();
+        Array.from(select.options).forEach(function(opt) {{
+            if (filter && !opt.textContent.toLowerCase().includes(filter)) return;
+            const item = document.createElement('li');
+            item.textContent = opt.textContent;
+            item.className = opt.selected
+                ? 'multiselect-option multiselect-option-selected'
+                : 'multiselect-option';
+            item.addEventListener('click', function() {{
+                opt.selected = !opt.selected;
+                select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            }});
+            dropdownEl.appendChild(item);
+        }});
+    }}
+
+    select.addEventListener('change', function() {{
+        renderChips();
+        renderDropdown(searchEl ? searchEl.value : '');
+    }});
+
+    if (searchEl) {{
+        searchEl.addEventListener('focus', function() {{
+            dropdownEl.hidden = false;
+            renderDropdown(searchEl.value);
+        }});
+        searchEl.addEventListener('input', function() {{
+            renderDropdown(searchEl.value);
+        }});
+        document.addEventListener('click', function(e) {{
+            if (!e.target.closest('[data-target="{field_id}"]')) {{
+                dropdownEl.hidden = true;
+            }}
+        }});
+    }}
+
+    renderChips();
+    renderDropdown('');
+    select.classList.add('multiselect-native-hidden');
+}});
+</script>
+"""
 
 
 class CheckboxInput(FormInput):
@@ -122,7 +291,9 @@ class CheckboxInput(FormInput):
 class CheckboxGroup(SelectInputBase):
     """Group of checkbox inputs for multiple selections."""
 
-    template = """<fieldset class="checkbox-group" ${fieldset_attributes}>
+    ui_element: str = 'checkbox_group'
+
+    template = """<fieldset ${fieldset_attributes}>
     <legend>${legend}</legend>
     ${checkboxes}
 </fieldset>"""
@@ -135,9 +306,21 @@ class CheckboxGroup(SelectInputBase):
         options: list[dict[str, Any]],
         group_name: str,
         legend: str | None = None,
+        variant: str = 'stacked',
         **kwargs: Any,
     ) -> str:
-        """Render group of checkboxes."""
+        """Render group of checkboxes.
+
+        variant='button_group' styles items as an adjacent button row instead
+        of stacked checkboxes -- presentation only, no change to the
+        underlying independent-selection semantics. Actual visual styling
+        (removing borders between adjacent items, etc.) is left to the app's
+        CSS, same as every other framework-styling concern in this library.
+        """
+        item_class = 'checkbox-item'
+        if variant == 'button_group':
+            item_class += ' checkbox-item-button-group'
+
         checkboxes = []
 
         for i, option in enumerate(options):
@@ -169,7 +352,7 @@ class CheckboxGroup(SelectInputBase):
 
             # Wrap in label
             checkbox_item = f"""
-            <div class="checkbox-item">
+            <div class="{item_class}">
                 <label for="{checkbox_id}">
                     {checkbox_html}
                     <span class="checkbox-label">{escape(label)}</span>
@@ -178,9 +361,19 @@ class CheckboxGroup(SelectInputBase):
             """
             checkboxes.append(checkbox_item)
 
-        # Build fieldset attributes
-        fieldset_attrs = {}
-        for attr in ['class', 'style', 'disabled']:
+        # Build fieldset attributes -- class always includes just the base +
+        # variant modifier, deliberately NOT kwargs['class']: field_renderer.py
+        # sets that to the per-item checkbox_class (e.g. Bootstrap's
+        # form-check-input, sized 1em x 1em) so each individual checkbox
+        # renders correctly (see the per-item loop above) -- applying that
+        # same class to the *fieldset* forces the whole group's box down to
+        # 1em x 1em too, and its content overflows onto whatever follows it.
+        fieldset_class = 'checkbox-group'
+        if variant == 'button_group':
+            fieldset_class += ' checkbox-group-button-group'
+
+        fieldset_attrs: dict[str, Any] = {'class': fieldset_class}
+        for attr in ['style', 'disabled']:
             if attr in kwargs:
                 fieldset_attrs[attr] = kwargs[attr]
 
@@ -220,7 +413,7 @@ class RadioGroup(SelectInputBase):
 
     ui_element: str = 'radio'
 
-    template = """<fieldset class="radio-group" ${fieldset_attributes}>
+    template = """<fieldset ${fieldset_attributes}>
     <legend>${legend}</legend>
     ${radio_buttons}
 </fieldset>"""
@@ -233,9 +426,21 @@ class RadioGroup(SelectInputBase):
         options: list[dict[str, Any]],
         group_name: str,
         legend: str | None = None,
+        variant: str = 'stacked',
         **kwargs: Any,
     ) -> str:
-        """Render group of radio buttons."""
+        """Render group of radio buttons.
+
+        variant='segmented' styles items as adjacent buttons instead of
+        stacked radios -- presentation only, no change to the underlying
+        exclusive-choice semantics. Actual visual styling (removing borders
+        between adjacent options, etc.) is left to the app's CSS, same as
+        every other framework-styling concern in this library.
+        """
+        item_class = 'radio-item'
+        if variant == 'segmented':
+            item_class += ' radio-item-segmented'
+
         radio_buttons = []
 
         for i, option in enumerate(options):
@@ -262,7 +467,7 @@ class RadioGroup(SelectInputBase):
 
             # Wrap in label
             radio_item = f"""
-            <div class="radio-item">
+            <div class="{item_class}">
                 <label for="{radio_id}">
                     {radio_html}
                     <span class="radio-label">{escape(label)}</span>
@@ -271,9 +476,19 @@ class RadioGroup(SelectInputBase):
             """
             radio_buttons.append(radio_item)
 
-        # Build fieldset attributes
-        fieldset_attrs = {}
-        for attr in ['class', 'style', 'disabled']:
+        # Build fieldset attributes -- class always includes just the base +
+        # variant modifier, deliberately NOT kwargs['class']: field_renderer.py
+        # sets that to the per-item checkbox_class (e.g. Bootstrap's
+        # form-check-input, sized 1em x 1em) so each individual radio renders
+        # correctly (see the per-item loop above) -- applying that same class
+        # to the *fieldset* forces the whole group's box down to 1em x 1em
+        # too, and its content overflows onto whatever follows it.
+        fieldset_class = 'radio-group'
+        if variant == 'segmented':
+            fieldset_class += ' radio-group-segmented'
+
+        fieldset_attrs: dict[str, Any] = {'class': fieldset_class}
+        for attr in ['style', 'disabled']:
             if attr in kwargs:
                 fieldset_attrs[attr] = kwargs[attr]
 
@@ -290,35 +505,93 @@ class RadioGroup(SelectInputBase):
 
 
 class ToggleSwitch(CheckboxInput):
-    """Toggle switch styled as a modern switch instead of checkbox."""
+    """Toggle switch styled as a modern switch instead of checkbox.
+
+    The checkbox and its slider <span> must be direct siblings for the CSS
+    `input:checked + .toggle-switch-slider` selector to match -- both live
+    directly inside the wrapping <label> (clicking anywhere in the label
+    toggles the underlying checkbox, same as the classic W3Schools pattern).
+    """
 
     ui_element: str = 'toggle'
     ui_element_aliases: tuple[str, ...] = ('toggle_switch', 'checkbox_toggle')
 
     def render(self, **kwargs: Any) -> str:
-        """Render toggle switch with custom styling."""
+        """Render toggle switch with self-contained CSS -- no app-supplied stylesheet needed."""
         # Add toggle-specific classes
         current_class = kwargs.get('class', '')
         kwargs['class'] = f'{current_class} toggle-switch'.strip()
 
-        # Add toggle switch wrapper
         field_name = kwargs.get('name', '')
         field_id = kwargs.get('id', field_name)
         label = kwargs.pop('label', None)
 
         checkbox_html = super().render(**kwargs)
 
-        toggle_html = f"""
-        <div class="toggle-switch-wrapper">
+        return f"""
+        <label class="toggle-switch-wrapper toggle-switch-label" for="{field_id}">
             {checkbox_html}
-            <label for="{field_id}" class="toggle-switch-label">
-                <span class="toggle-switch-slider"></span>
-                {f'<span class="toggle-switch-text">{escape(label)}</span>' if label else ''}
-            </label>
-        </div>
+            <span class="toggle-switch-slider"></span>
+            {f'<span class="toggle-switch-text">{escape(label)}</span>' if label else ''}
+        </label>
+        <style>
+        .toggle-switch-wrapper {{
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+            vertical-align: middle;
+            cursor: pointer;
+        }}
+        .toggle-switch-wrapper input[type="checkbox"] {{
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }}
+        .toggle-switch-slider {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }}
+        .toggle-switch-slider::before {{
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }}
+        .toggle-switch-wrapper input:checked + .toggle-switch-slider {{
+            background-color: #2196F3;
+        }}
+        .toggle-switch-wrapper input:focus + .toggle-switch-slider {{
+            box-shadow: 0 0 1px #2196F3;
+        }}
+        .toggle-switch-wrapper input:checked + .toggle-switch-slider::before {{
+            transform: translateX(22px);
+        }}
+        .toggle-switch-wrapper input:disabled + .toggle-switch-slider {{
+            opacity: .5;
+            cursor: not-allowed;
+        }}
+        .toggle-switch-wrapper input:disabled {{
+            cursor: not-allowed;
+        }}
+        .toggle-switch-text {{
+            margin-left: 8px;
+            vertical-align: middle;
+            cursor: pointer;
+        }}
+        </style>
         """
-
-        return toggle_html
 
 
 class ComboBoxInput(SelectInput):
@@ -331,12 +604,27 @@ class ComboBoxInput(SelectInput):
     <datalist id="${datalist_id}">
         ${options}
     </datalist>
+    <ul class="combobox-listbox" id="${listbox_id}" role="listbox" hidden></ul>
 </div>"""
 
-    def render(self, options: list[dict[str, Any]], **kwargs: Any) -> str:
-        """Render combo box with datalist."""
+    def render(
+        self,
+        options: list[dict[str, Any]],
+        filter_mode: str = 'contains',
+        min_chars: int = 0,
+        **kwargs: Any,
+    ) -> str:
+        """Render combo box with a native datalist fallback plus a JS-filtered listbox.
+
+        The <input list=...> + <datalist> pair stays exactly as before (the no-JS
+        fallback). The listbox reads its option data straight from the sibling
+        <datalist> — no duplicated option list to keep in sync.
+        """
         field_name = kwargs.get('name', '')
+        field_id = kwargs.get('id', field_name)
+        kwargs.setdefault('id', field_id)
         datalist_id = f'{field_name}_datalist'
+        listbox_id = f'{field_name}_listbox'
 
         # Build options for datalist
         options_html = ''
@@ -354,9 +642,86 @@ class ComboBoxInput(SelectInput):
             del input_attrs['type']
         input_attributes_str = self._build_attributes_string(input_attrs)
 
-        return substitute(
+        combo_html = substitute(
             self.template,
             input_attributes=input_attributes_str,
             datalist_id=datalist_id,
             options=options_html,
+            listbox_id=listbox_id,
         )
+
+        if not field_id:
+            return combo_html
+
+        script = f"""
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+    const input = document.getElementById('{field_id}');
+    const datalist = document.getElementById('{datalist_id}');
+    const listbox = document.getElementById('{listbox_id}');
+    if (!input || !datalist || !listbox) return;
+
+    const filterMode = {json.dumps(filter_mode)};
+    const minChars = {min_chars};
+    let activeIndex = -1;
+
+    function renderListbox() {{
+        const query = input.value.trim().toLowerCase();
+        listbox.innerHTML = '';
+        activeIndex = -1;
+        if (query.length < minChars) {{
+            listbox.hidden = true;
+            return;
+        }}
+        Array.from(datalist.options).forEach(function(opt) {{
+            const label = (opt.textContent || opt.value).toLowerCase();
+            const matches = filterMode === 'startswith' ? label.startsWith(query) : label.includes(query);
+            if (query && !matches) return;
+            const li = document.createElement('li');
+            li.textContent = opt.textContent || opt.value;
+            li.dataset.value = opt.value;
+            li.setAttribute('role', 'option');
+            li.addEventListener('mousedown', function(e) {{
+                e.preventDefault();
+                input.value = opt.value;
+                listbox.hidden = true;
+            }});
+            listbox.appendChild(li);
+        }});
+        listbox.hidden = listbox.children.length === 0;
+    }}
+
+    function setActive(index) {{
+        Array.from(listbox.children).forEach(function(li, i) {{
+            li.classList.toggle('combobox-option-active', i === index);
+        }});
+        activeIndex = index;
+    }}
+
+    input.addEventListener('input', renderListbox);
+    input.addEventListener('focus', renderListbox);
+    input.addEventListener('keydown', function(e) {{
+        const opts = Array.from(listbox.children);
+        if (e.key === 'ArrowDown') {{
+            e.preventDefault();
+            if (opts.length) setActive((activeIndex + 1) % opts.length);
+        }} else if (e.key === 'ArrowUp') {{
+            e.preventDefault();
+            if (opts.length) setActive((activeIndex - 1 + opts.length) % opts.length);
+        }} else if (e.key === 'Enter' && activeIndex >= 0 && opts[activeIndex]) {{
+            e.preventDefault();
+            input.value = opts[activeIndex].dataset.value;
+            listbox.hidden = true;
+        }} else if (e.key === 'Escape') {{
+            listbox.hidden = true;
+        }}
+    }});
+    document.addEventListener('click', function(e) {{
+        if (e.target !== input) {{
+            listbox.hidden = true;
+        }}
+    }});
+}});
+</script>
+"""
+        return combo_html + script

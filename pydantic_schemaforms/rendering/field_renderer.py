@@ -13,6 +13,24 @@ from pydantic_schemaforms.rendering.frameworks import get_input_component
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
 from .themes import RendererTheme
 
+# ui_element values that render as an HTML checkbox under the hood and so
+# need the same boolean checked/value handling ('toggle' is CheckboxInput's
+# styled-as-a-switch subclass -- functionally a checkbox, see ToggleSwitch's
+# docstring).
+_CHECKBOX_LIKE_ELEMENTS = {'checkbox', 'toggle', 'toggle_switch', 'checkbox_toggle'}
+
+# ui_element values whose individual <input> elements are checkboxes/radios
+# under the hood, regardless of whether the widget is a single boolean
+# (checkbox/toggle) or a group of options (radio/checkbox_group). This is
+# broader than _CHECKBOX_LIKE_ELEMENTS above (which is only for the
+# single-boolean checked/value coercion) -- radio/checkbox_group don't have a
+# single boolean value, but their per-item <input>s still need the
+# checkbox-family CSS class, not the dropdown-styled select_class (applying
+# select_class -- e.g. Bootstrap's .form-select, which paints a dropdown
+# chevron -- directly onto a radio/checkbox <input> makes it look like a
+# broken dropdown arrow instead of a radio button).
+_CHECKBOX_FAMILY_ELEMENTS = _CHECKBOX_LIKE_ELEMENTS | {'radio', 'checkbox_group'}
+
 
 class FieldRenderer:
     """Encapsulates the heavy lifting of turning schema fields into HTML."""
@@ -89,7 +107,7 @@ class FieldRenderer:
         }
 
         if value is not None and ui_element != 'password':
-            if ui_element == 'checkbox':
+            if ui_element in _CHECKBOX_LIKE_ELEMENTS:
                 if value is True or value == 'true' or value == '1' or value == 'on':
                     field_attrs['checked'] = True
                 field_attrs['value'] = '1'
@@ -137,7 +155,7 @@ class FieldRenderer:
             icon = map_icon_for_framework(icon, self.framework)
 
         try:
-            if ui_element in ('select', 'radio', 'multiselect'):
+            if ui_element in ('select', 'radio', 'multiselect', 'combobox', 'checkbox_group'):
                 selection_options = ui_options_list or []
                 if not selection_options and 'enum' in field_schema:
                     selection_options = field_schema['enum']
@@ -154,14 +172,21 @@ class FieldRenderer:
                     input_html = f"<!-- Warning: No options provided for {ui_element} field '{field_name}' -->"
                 else:
                     field_attrs.pop('value', None)
-                    if ui_element == 'radio':
+                    # radio/checkbox_group already show their title as the
+                    # <fieldset><legend>; passing the same text as an outer
+                    # label too duplicates it (and under Material's floating
+                    # -label CSS the duplicate sits absolutely positioned on
+                    # top of the fieldset, visually overlapping it).
+                    outer_label = label_text
+                    if ui_element in ('radio', 'checkbox_group'):
                         field_attrs.setdefault('group_name', field_name)
                         field_attrs.setdefault('legend', label_text)
+                        outer_label = None
                     if ui_element == 'multiselect':
                         field_attrs['multiple'] = True
 
                     input_html = input_component.render_with_label(  # type: ignore[union-attr]
-                        label=label_text,
+                        label=outer_label,
                         help_text=help_text,
                         error=error,
                         icon=icon,
@@ -379,9 +404,9 @@ class FieldRenderer:
             themed_class = self.theme.input_class(ui_element)
         if themed_class:
             return themed_class
-        if ui_element == 'checkbox':
+        if ui_element in _CHECKBOX_FAMILY_ELEMENTS:
             return self.config.get('checkbox_class', '')
-        if ui_element in ('select', 'radio', 'multiselect'):
+        if ui_element in ('select', 'multiselect'):
             return self.config.get('select_class', '')
         return self.config.get('input_class', '')
 

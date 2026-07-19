@@ -22,6 +22,7 @@ from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
+from .inputs.registry import get_input_component_map
 from .rendering.layout_engine import LayoutEngine, get_nested_form_data
 from .rendering.material_icons import render_material_icon
 from .rendering.schema_parser import (
@@ -50,6 +51,40 @@ CSRF_MODE_REQUIRED_PROVIDER = CSRFMode.REQUIRED_PROVIDER.value
 CSRF_MODES = {mode.value for mode in CSRFMode}
 
 _ERROR_CLASS = ' error'
+
+# ui_element values Material has genuine bespoke rendering for as a plain
+# outlined text-like field (real HTML5 types that need nothing beyond a
+# scalar value and str() -- no options list, no list-valued value, no
+# custom JS/CSS widget behavior). Anything else falls back to the shared
+# widget-registry rendering instead of _render_material_outlined_field's
+# generic text box (see _render_material_field).
+_MATERIAL_NATIVE_SCALAR_TYPES = frozenset(
+    {
+        'text',
+        'email',
+        'password',
+        'search',
+        'url',
+        'tel',
+        'number',
+        'date',
+        'month',
+        'week',
+        'datetime',
+        'datetime-local',
+        'color',
+        'time',
+        'hidden',
+        # 'select' has a genuine bespoke Material template
+        # (_render_material_select_input) with a working .md-select +
+        # .md-floating-label pairing -- delegating it to the shared registry
+        # pipeline instead loses that CSS pairing (the generic <select> it
+        # renders has none of Material's classes), leaving the floating
+        # label permanently overlapping the control instead of animating out
+        # of the way.
+        'select',
+    }
+)
 
 
 class SchemaFormValidationError(Exception):
@@ -741,6 +776,12 @@ class EnhancedFormRenderer:
         self, ui_info: dict[str, Any], field_schema: dict[str, Any]
     ) -> list[list[str]]:
         options = ui_info.get('options', [])
+        # ui_options={'choices': [...]} (the documented way to declare select
+        # options) lands here as a dict, not a list -- iterating it directly
+        # would treat its key name ("choices") as a single bogus option, same
+        # shape as FieldRenderer._extract_ui_options already guards against.
+        if isinstance(options, dict):
+            options = options.get('choices') or options.get('options') or []
         if not options and 'enum' in field_schema:
             options = [{'value': v, 'label': v} for v in field_schema['enum']]
         normalized: list[list[str]] = []
@@ -873,6 +914,34 @@ class EnhancedFormRenderer:
             error_text=self._render_material_error_block(error),
         )
 
+    def _render_material_toggle_field(
+        self,
+        field_name: str,
+        label: str,
+        value: Any,
+        error: str | None,
+        help_text: str | None,
+        is_required: bool,
+    ) -> str:
+        required_text = ' *' if is_required else ''
+        checked_attr = (
+            'checked="checked"'
+            if value is True or str(value).lower() in {'true', '1', 'on'}
+            else ''
+        )
+        required_attr = self._MATERIAL_REQUIRED if is_required else ''
+        return render_template(
+            FormTemplates.MATERIAL_TOGGLE_FIELD,
+            name=self._attr(field_name),
+            field_id=self._attr(field_name),
+            label=label,
+            required_indicator=required_text,
+            checked=checked_attr,
+            required=required_attr,
+            help_text=self._render_material_help_block(help_text),
+            error_text=self._render_material_error_block(error),
+        )
+
     def _render_material_outlined_field(
         self,
         field_name: str,
@@ -955,6 +1024,48 @@ class EnhancedFormRenderer:
         if input_type == 'checkbox':
             return self._render_material_checkbox_field(
                 field_name, label, value, error, help_text, is_required
+            )
+
+        if input_type in ('toggle', 'toggle_switch', 'checkbox_toggle'):
+            # The Material renderer has no widget-class registry of its own
+            # (unlike Bootstrap, which dispatches through get_input_component()),
+            # so this mirrors Bootstrap's ToggleSwitch with a dedicated
+            # Material-styled switch instead of just reusing the plain checkbox.
+            return self._render_material_toggle_field(
+                field_name, label, value, error, help_text, is_required
+            )
+
+        if (
+            input_type not in _MATERIAL_NATIVE_SCALAR_TYPES
+            and input_type in get_input_component_map()
+        ):
+            # No bespoke Material template exists for this widget (radio,
+            # checkbox_group, multiselect, combobox, tags, rating, star_rating,
+            # slider, phone, currency, ssn, credit_card, percentage, decimal,
+            # integer, age, quantity, score, temperature, birthdate, captcha,
+            # honeypot, csrf, file, ...). Previously these all fell through to
+            # _render_material_outlined_field below, which just stringifies
+            # `value` into a plain text box -- for list-valued fields (radio
+            # groups' selected list, multiselect, checkbox_group) that shows
+            # the raw Python repr (e.g. "['email', 'push']") as literal text,
+            # and single-choice widgets like radio/select lose the ability to
+            # pick a different option entirely. Reuse the same widget-registry
+            # rendering Bootstrap uses instead -- MaterialEmbeddedTheme's
+            # input_class()/select_class() are empty for anything outside its
+            # own small config, so no wrong framework class gets injected; the
+            # widget's own CSS/JS (if any, e.g. the toggle switch's or tags
+            # input's self-contained <style>) still applies. It won't have full
+            # Material Design polish, but it renders and functions correctly
+            # instead of silently breaking.
+            return self._field_renderer.render_field(
+                field_name,
+                field_schema,
+                value,
+                error,
+                required_fields,
+                context,
+                _layout,
+                all_errors,
             )
 
         return self._render_material_outlined_field(

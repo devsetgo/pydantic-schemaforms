@@ -370,12 +370,21 @@ class SelectInputBase(BaseInput):
                 field_parts.append(f'<span class="md-icon material-icons">{icon}</span>')
                 field_parts.append('<div class="md-input-wrapper">')
 
-            field_parts.append(input_html)
-
+            # A floating label (.md-floating-label, absolutely positioned on
+            # top of the control until CSS ":not(:placeholder-shown)"/":focus"
+            # animates it out of the way) only works when paired with
+            # Material's own bespoke .md-select/.md-input classes -- this
+            # method is also reached for widgets without a bespoke Material
+            # template (multiselect, combobox) whose controls carry none of
+            # those classes, so the label would sit frozen on top of the
+            # control forever. Use the static .md-field-label style instead
+            # (already used for the same purpose by model-list containers).
             if label:
                 field_parts.append(
-                    f'<label class="md-floating-label" for="{kwargs.get("id", "")}">{escape(label)}</label>'
+                    f'<label class="md-field-label" for="{kwargs.get("id", "")}">{escape(label)}</label>'
                 )
+
+            field_parts.append(input_html)
 
             if icon:
                 field_parts.append(_CLOSE_DIV)

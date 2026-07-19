@@ -73,10 +73,13 @@ BASE_CLASSES = ['BaseInput', 'FormInput', 'NumericInput', 'FileInputBase', 'Sele
 
 UTILITIES = ['build_label', 'build_error_message', 'build_help_text']
 
+# Server-side helper functions (not input classes) exported alongside their widget.
+SPECIALIZED_UTILITIES = ['verify_captcha']
+
 # All available inputs
 ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS + SPECIALIZED_INPUTS
 
-__all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES  # pyright: ignore[reportUnsupportedDunderAll]
+__all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES + SPECIALIZED_UTILITIES  # pyright: ignore[reportUnsupportedDunderAll]
 
 _MODULE_MAP: dict[str, str] = {}
 
@@ -89,14 +92,14 @@ for _name in NUMERIC_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.numeric_inputs'
 for _name in SELECTION_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.selection_inputs'
-for _name in SPECIALIZED_INPUTS:
+for _name in SPECIALIZED_INPUTS + SPECIALIZED_UTILITIES:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.specialized_inputs'
 for _name in TEXT_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.text_inputs'
 
 
-def __getattr__(name: str) -> type:
-    """Lazily import concrete input classes on first access."""
+def __getattr__(name: str) -> object:
+    """Lazily import concrete input classes (or helper functions) on first access."""
 
     if name not in _MODULE_MAP:
         raise AttributeError(f"module 'pydantic_schemaforms.inputs' has no attribute '{name}'")

@@ -18,11 +18,15 @@ from pydantic import EmailStr, field_validator
 
 from pydantic_schemaforms.form_field import FormField
 from pydantic_schemaforms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
-from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms.schema_form import Field, FormModel
 
 # ============================================================================
 # ENUMS AND CONSTANTS
 # ============================================================================
+
+# Demo-only secret for the CompleteShowcaseForm CAPTCHA field. A real app must
+# use a properly generated, environment-supplied secret -- never hardcode one.
+SHOWCASE_CAPTCHA_SECRET = 'demo-only-showcase-captcha-secret-do-not-use-in-production'
 
 
 class Priority(str, Enum):
@@ -264,6 +268,20 @@ class UserRegistrationForm(FormModel):
         icon='shield',
     )
 
+    # validate_default=True is required here: an unchecked HTML checkbox/toggle
+    # is simply omitted from submitted form data, so Pydantic falls back to the
+    # `False` default -- and by default (validate_default=False) it does NOT
+    # run field validators against a defaulted value, which would otherwise
+    # let an unaccepted submission silently pass.
+    accept_terms: bool = FormField(
+        False,
+        title='Accept Terms of Service',
+        input_type='toggle',
+        help_text='You must accept the Terms of Service to register',
+        icon='file-earmark-check',
+        validate_default=True,
+    )
+
     @field_validator('username')
     @classmethod
     def validate_username(cls, v):
@@ -278,6 +296,13 @@ class UserRegistrationForm(FormModel):
     def validate_passwords_match(cls, v, info):
         if 'password' in info.data and v != info.data['password']:
             raise ValueError('Passwords do not match')
+        return v
+
+    @field_validator('accept_terms')
+    @classmethod
+    def validate_accept_terms(cls, v):
+        if not v:
+            raise ValueError('You must accept the Terms of Service to register')
         return v
 
 
@@ -573,28 +598,32 @@ class CompleteShowcaseForm(FormModel):
         icon='envelope',
     )
 
-    phone: Optional[str] = FormField(
+    # Uses the modern Field(ui_element=..., ui_options=...) API instead of the
+    # legacy FormField(input_type=...) used elsewhere in this model, because
+    # phone_format is a widget-specific kwarg -- legacy FormField's **kwargs
+    # land flat in json_schema_extra and never reach the ui_options merge path,
+    # so widget-specific config like this only works through modern Field().
+    phone: Optional[str] = Field(
         None,
         title='Phone Number',
-        input_type='tel',
-        placeholder='+1 (555) 123-4567',
-        help_text='Include country code for international numbers',
-        icon='telephone',
-        pattern=r'^[\+]?[1-9][\d]{0,15}$',
+        ui_element='phone',
+        ui_help_text='Live-formats as you type using the (###) ###-#### mask',
+        ui_options={'phone_format': '(###) ###-####'},
+        json_schema_extra={'icon': 'telephone'},
     )
 
     birth_date: Optional[date] = FormField(
         None,
         title='Date of Birth',
-        input_type='date',
-        help_text='Used to verify age requirements (optional)',
+        input_type='birthdate',
+        help_text='Used to verify age requirements (optional) -- shows a computed age display',
         icon='calendar-date',
     )
 
     age: Optional[int] = FormField(
         None,
         title='Age',
-        input_type='number',
+        input_type='age',
         placeholder='25',
         help_text='Your current age in years',
         icon='hash',
@@ -632,14 +661,16 @@ class CompleteShowcaseForm(FormModel):
         icon='mailbox',
     )
 
-    rating: Optional[int] = FormField(
+    # max_rating is a widget-specific kwarg (RatingInput hardcodes min/max/step
+    # from it, overriding any Pydantic ge/le), so this needs modern Field()
+    # rather than legacy FormField() -- same reason as `phone` above.
+    rating: Optional[int] = Field(
         None,
         title='Rate Your Interest (1-10)',
-        input_type='range',
-        help_text='How interested are you in our services?',
-        icon='star',
-        min_value=1,
-        max_value=10,
+        ui_element='rating',
+        ui_help_text='How interested are you in our services? (range-slider based; contrast with star_rating below)',
+        ui_options={'max_rating': 10},
+        json_schema_extra={'icon': 'star'},
     )
 
     # ======== ADDRESS INFORMATION ========
@@ -727,12 +758,17 @@ class CompleteShowcaseForm(FormModel):
         max_length=1000,
     )
 
+    # validate_default=True: an unchecked checkbox is omitted from submitted
+    # form data entirely, so without this the field_validator below never
+    # runs against the `False` default and an unaccepted submission would
+    # silently pass (see accept_terms on UserRegistrationForm for the same fix).
     terms_accepted: bool = FormField(
         False,
         title='I accept the Terms and Conditions',
         input_type='checkbox',
         help_text='You must accept the terms to proceed',
         icon='check-square',
+        validate_default=True,
     )
 
     @field_validator('terms_accepted')
@@ -856,9 +892,9 @@ class CompleteShowcaseForm(FormModel):
     multiselect_field: List[str] = FormField(
         [],
         title='Multiple Selection',
-        input_type='select',
+        input_type='multiselect',
         options=['JavaScript', 'Python', 'Java', 'C++', 'Go', 'Rust'],
-        help_text='Select multiple programming languages',
+        help_text='Select multiple programming languages (chips + search UI layered over a real <select multiple>)',
         icon='list-check',
     )
 
@@ -874,8 +910,8 @@ class CompleteShowcaseForm(FormModel):
     switch_field: bool = FormField(
         True,
         title='Switch Toggle',
-        input_type='checkbox',
-        help_text='Toggle this switch',
+        input_type='toggle',
+        help_text='A styled on/off switch (functionally a checkbox)',
         icon='toggle-on',
     )
 
@@ -916,6 +952,174 @@ class CompleteShowcaseForm(FormModel):
         title='Hidden Field',
         input_type='hidden',
         help_text='This field is hidden from users',
+    )
+
+    honeypot_field: str = FormField(
+        '',
+        title='Website',
+        input_type='honeypot',
+        help_text='Spam-trap field: always renders empty/hidden. Real users never fill it '
+        'in; a bot that does gets rejected server-side (see showcase_post()).',
+    )
+
+    # === MODERNIZED / TIER-2 INPUT TYPES ===
+    ssn_field: Optional[str] = FormField(
+        None,
+        title='Social Security Number',
+        input_type='ssn',
+        help_text='Formatted and masked as ###-##-####',
+        icon='shield-lock',
+    )
+
+    credit_card_field: Optional[str] = FormField(
+        None,
+        title='Credit Card Number',
+        input_type='credit_card',
+        help_text='Formatted in groups of 4 digits',
+        icon='credit-card',
+    )
+
+    currency_field: Optional[str] = FormField(
+        None,
+        title='Price',
+        input_type='currency',
+        help_text='Live thousands-separator formatting as you type',
+        icon='cash-coin',
+    )
+
+    tags_field: str = FormField(
+        'python,fastapi,pydantic',
+        title='Tags',
+        input_type='tags',
+        help_text='Type a value and press Enter (or comma) to add a chip; Backspace removes the last one',
+        icon='tags',
+    )
+
+    percentage_field: Optional[float] = FormField(
+        None,
+        title='Completion Percentage',
+        input_type='percentage',
+        help_text='0-100 with a % placeholder',
+        icon='percent',
+    )
+
+    decimal_field: Optional[float] = FormField(
+        None,
+        title='Precise Measurement',
+        input_type='decimal',
+        help_text='Decimal number input with configurable precision',
+        icon='calculator',
+    )
+
+    integer_only_field: Optional[int] = FormField(
+        None,
+        title='Whole Number',
+        input_type='integer',
+        help_text='Integer-only input (step forced to 1)',
+        icon='123',
+    )
+
+    quantity_field: int = FormField(
+        1,
+        title='Quantity',
+        input_type='quantity',
+        help_text='Ships with +/- stepper buttons by default',
+        icon='basket',
+        min_value=1,
+    )
+
+    score_field: Optional[float] = FormField(
+        None,
+        title='Score',
+        input_type='score',
+        help_text='Configurable min/max numeric score',
+        icon='award',
+    )
+
+    # max_stars is a widget-specific kwarg, same reason `phone`/`rating` above use modern Field().
+    star_rating_field: int = Field(
+        3,
+        title='Star Rating',
+        ui_element='star_rating',
+        ui_help_text='Individually clickable stars -- a distinct widget from the range-slider `rating` field above',
+        ui_options={'max_stars': 5},
+        json_schema_extra={'icon': 'star-fill'},
+    )
+
+    slider_field: int = FormField(
+        50,
+        title='Enhanced Slider',
+        input_type='slider',
+        help_text='A RangeInput variant with min/max labels shown below the track',
+        icon='sliders2',
+        min_value=0,
+        max_value=100,
+    )
+
+    temperature_field: Optional[float] = FormField(
+        None,
+        title='Temperature',
+        input_type='temperature',
+        help_text='Unit-aware placeholder/bounds (defaults to Celsius)',
+        icon='thermometer-half',
+    )
+
+    combobox_field: Optional[str] = FormField(
+        None,
+        title='City (type to search)',
+        input_type='combobox',
+        options=['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'],
+        help_text='Native datalist fallback plus JS-filtered dropdown with arrow-key navigation',
+        icon='geo-alt',
+    )
+
+    # variant is a widget-specific kwarg (see radio_field/checkbox_field above for the
+    # plain stacked versions of these two widgets) -- needs modern Field().
+    shipping_speed: str = Field(
+        'standard',
+        title='Shipping Speed',
+        ui_element='radio',
+        ui_help_text='Segmented-control presentation of a plain radio group -- same exclusive-choice semantics',
+        ui_options={'choices': ['standard', 'express', 'overnight'], 'variant': 'segmented'},
+        json_schema_extra={'icon': 'truck'},
+    )
+
+    checkbox_group_field: List[str] = Field(
+        default_factory=list,
+        title='Notification Channels',
+        ui_element='checkbox_group',
+        ui_help_text='Button-group presentation of a plain checkbox group -- same independent-selection semantics',
+        ui_options={'choices': ['email', 'sms', 'push', 'slack'], 'variant': 'button_group'},
+        json_schema_extra={'icon': 'bell-fill'},
+    )
+
+    month_field: Optional[str] = FormField(
+        None,
+        title='Billing Month',
+        input_type='month',
+        help_text='Native month picker (e.g. for credit cards, billing periods)',
+        icon='calendar3',
+    )
+
+    week_field: Optional[str] = FormField(
+        None,
+        title='Target Week',
+        input_type='week',
+        help_text='Native week picker',
+        icon='calendar-week',
+    )
+
+    # secret_key is a widget-specific kwarg, so this needs modern Field(). See
+    # CaptchaInput's docstring (pydantic_schemaforms/inputs/specialized_inputs.py)
+    # for why verification happens at the route level in showcase_post(),
+    # not via a @model_validator here.
+    captcha_answer: str = Field(
+        '',
+        title='Verify you are human',
+        ui_element='captcha',
+        ui_help_text='Self-hosted arithmetic challenge -- the answer is signed and verified '
+        'server-side; the sum itself is never sent to the browser',
+        ui_options={'secret_key': SHOWCASE_CAPTCHA_SECRET},
     )
 
     # === USER PROFILE SECTION ===
@@ -2104,6 +2308,20 @@ __all__ = [
     'AppearanceTabLayout',
     'TabbedFormLayout',
     'ListFormLayout',
+    # Widget Gallery (tabbed showcase by input-type category)
+    'TextInputsGalleryForm',
+    'CheckboxTogglesGalleryForm',
+    'NumericGalleryForm',
+    'SelectionGalleryForm',
+    'DateTimeGalleryForm',
+    'SpecializedGalleryForm',
+    'TextInputsTabLayout',
+    'CheckboxTogglesTabLayout',
+    'NumericTabLayout',
+    'SelectionTabLayout',
+    'DateTimeTabLayout',
+    'SpecializedTabLayout',
+    'WidgetGalleryForm',
     # Helper Functions
     'create_sample_nested_data',
 ]
@@ -2457,4 +2675,253 @@ class LayoutDemonstrationForm(FormModel):
         title='Task List',
         input_type='layout',
         help_text='List layout demonstration',
+    )
+
+
+# ============================================================================
+# WIDGET GALLERY — tabbed showcase of every ui_element, grouped by category
+# ============================================================================
+#
+# Each tab below is its own FormModel wrapped in a VerticalLayout and declared
+# as a separate ui_element='layout' field on WidgetGalleryForm. Multiple
+# layout fields on one FormModel is what triggers automatic tab rendering
+# (enhanced_renderer.py's _render_layout_fields_as_tabs), and each field's own
+# title= becomes that tab's label. This preserves Pydantic field declaration
+# order for the tabs -- unlike TabbedLayout (see TabbedFormLayout above),
+# which introspects dir(self) alphabetically unless _get_layouts() is
+# overridden.
+
+
+class TextInputsGalleryForm(FormModel):
+    """Every text-family widget: plain, multi-line, masked, and formatted."""
+
+    text_input: str = Field('', title='Text', ui_element='text', ui_placeholder='Plain text input')
+    textarea_input: str = Field(
+        '',
+        title='Textarea',
+        ui_element='textarea',
+        ui_placeholder='Multiple lines of text...',
+        ui_options={'rows': 3},
+    )
+    password_input: str = Field('', title='Password', ui_element='password')
+    email_input: str = Field(
+        '', title='Email', ui_element='email', ui_placeholder='you@example.com'
+    )
+    search_input: str = Field('', title='Search', ui_element='search', ui_placeholder='Search...')
+    url_input: str = Field('', title='URL', ui_element='url', ui_placeholder='https://example.com')
+    tel_input: str = Field('', title='Telephone (plain)', ui_element='tel')
+    phone_input: str = Field(
+        '',
+        title='Phone (formatted as you type)',
+        ui_element='phone',
+        ui_options={'phone_format': '(###) ###-####'},
+    )
+    ssn_input: str = Field('', title='Social Security Number', ui_element='ssn')
+    credit_card_input: str = Field('', title='Credit Card Number', ui_element='credit_card')
+    currency_input: str = Field('', title='Currency', ui_element='currency')
+    tags_input: str = Field(
+        'python,fastapi,pydantic',
+        title='Tags',
+        ui_element='tags',
+        ui_help_text='Press Enter or comma to add a chip; Backspace removes the last one',
+    )
+
+
+class CheckboxTogglesGalleryForm(FormModel):
+    """Every boolean/multi-boolean widget: plain checkbox, styled switch, and grouped variants."""
+
+    checkbox_unchecked: bool = Field(False, title='Checkbox (unchecked)', ui_element='checkbox')
+    checkbox_checked: bool = Field(True, title='Checkbox (checked)', ui_element='checkbox')
+    toggle_off: bool = Field(False, title='Toggle Switch (off)', ui_element='toggle')
+    toggle_on: bool = Field(True, title='Toggle Switch (on)', ui_element='toggle')
+    checkbox_group_stacked: List[str] = Field(
+        default_factory=lambda: ['email'],
+        title='Checkbox Group (stacked)',
+        ui_element='checkbox_group',
+        ui_options={'choices': ['email', 'sms', 'push']},
+    )
+    checkbox_group_buttons: List[str] = Field(
+        default_factory=lambda: ['sms'],
+        title='Checkbox Group (button-group variant)',
+        ui_element='checkbox_group',
+        ui_options={'choices': ['email', 'sms', 'push'], 'variant': 'button_group'},
+    )
+
+
+class NumericGalleryForm(FormModel):
+    """Every numeric widget, from a plain number box to specialized presentations."""
+
+    number_input: int = Field(0, title='Number', ui_element='number')
+    range_input: int = Field(50, title='Range', ui_element='range', ge=0, le=100)
+    percentage_input: float = Field(50.0, title='Percentage', ui_element='percentage')
+    decimal_input: float = Field(1.5, title='Decimal', ui_element='decimal')
+    integer_input: int = Field(10, title='Integer', ui_element='integer')
+    age_input: int = Field(25, title='Age', ui_element='age')
+    quantity_input: int = Field(1, title='Quantity (ships a +/- stepper)', ui_element='quantity')
+    score_input: float = Field(75.0, title='Score', ui_element='score')
+    rating_input: int = Field(
+        6,
+        title='Rating (range-slider based)',
+        ui_element='rating',
+        ui_options={'max_rating': 10},
+    )
+    star_rating_input: int = Field(
+        3,
+        title='Star Rating (clickable stars)',
+        ui_element='star_rating',
+        ui_options={'max_stars': 5},
+    )
+    slider_input: int = Field(
+        40, title='Slider (with min/max labels)', ui_element='slider', ge=0, le=100
+    )
+    temperature_input: float = Field(20.0, title='Temperature', ui_element='temperature')
+
+
+class SelectionGalleryForm(FormModel):
+    """Every choose-from-options widget, including presentation variants."""
+
+    select_input: str = Field(
+        'medium',
+        title='Select (dropdown)',
+        ui_element='select',
+        ui_options={'choices': ['small', 'medium', 'large']},
+    )
+    multiselect_input: List[str] = Field(
+        default_factory=lambda: ['python'],
+        title='Multi-Select (chips + search)',
+        ui_element='multiselect',
+        ui_options={'choices': ['python', 'javascript', 'go', 'rust']},
+    )
+    radio_stacked: str = Field(
+        'medium',
+        title='Radio (stacked)',
+        ui_element='radio',
+        ui_options={'choices': ['small', 'medium', 'large']},
+    )
+    radio_segmented: str = Field(
+        'standard',
+        title='Radio (segmented variant)',
+        ui_element='radio',
+        ui_options={'choices': ['standard', 'express', 'overnight'], 'variant': 'segmented'},
+    )
+    combobox_input: str = Field(
+        '',
+        title='Combobox (type to filter)',
+        ui_element='combobox',
+        ui_options={'choices': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix']},
+    )
+
+
+class DateTimeGalleryForm(FormModel):
+    """Every temporal widget, including the age-calculating birthdate variant."""
+
+    date_input: date = Field(date(2024, 6, 15), title='Date', ui_element='date')
+    time_input: str = Field('14:30', title='Time', ui_element='time')
+    datetime_input: datetime = Field(
+        datetime(2024, 6, 15, 14, 30), title='Date & Time', ui_element='datetime'
+    )
+    month_input: str = Field('2024-06', title='Month', ui_element='month')
+    week_input: str = Field('2024-W24', title='Week', ui_element='week')
+    birthdate_input: date = Field(
+        date(1990, 1, 1),
+        title='Birthdate (shows a computed age)',
+        ui_element='birthdate',
+    )
+
+
+class SpecializedGalleryForm(FormModel):
+    """Files and other specialized, non-text/numeric/date widgets."""
+
+    file_input: str = Field('', title='File Upload (drag-and-drop enabled)', ui_element='file')
+    color_input: str = Field('#3498db', title='Color Picker', ui_element='color')
+    hidden_input: str = Field('hidden-value', title='Hidden Field', ui_element='hidden')
+
+
+class TextInputsTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Text Inputs gallery tab."""
+
+    form = TextInputsGalleryForm
+
+
+class CheckboxTogglesTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Checkboxes & Toggles gallery tab."""
+
+    form = CheckboxTogglesGalleryForm
+
+
+class NumericTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Numeric Inputs gallery tab."""
+
+    form = NumericGalleryForm
+
+
+class SelectionTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Selection Inputs gallery tab."""
+
+    form = SelectionGalleryForm
+
+
+class DateTimeTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Date & Time gallery tab."""
+
+    form = DateTimeGalleryForm
+
+
+class SpecializedTabLayout(VerticalLayout):
+    """Vertical layout wrapper for the Files & Specialized gallery tab."""
+
+    form = SpecializedGalleryForm
+
+
+class WidgetGalleryTabs(TabbedLayout):
+    """Combines every widget-category tab into one TabbedLayout, in declaration order.
+
+    Uses the single-TabbedLayout-field pattern (like ComprehensiveTabbedForm in
+    nested_forms_example.py) rather than multiple separate ui_element='layout'
+    fields (like LayoutDemonstrationForm above): TabbedLayout.validate() passes
+    the flat submitted data straight to each tab's VerticalLayout.validate(),
+    which constructs its sub-form via `form_cls(**form_data)` -- Pydantic's own
+    extra='ignore' picks out just that tab's fields from the shared flat dict.
+    This works for *any* tab names. The multiple-layout-fields pattern instead
+    depends on a fallback in validation.py/layout_engine.py that only knows
+    LayoutDemonstrationForm's specific field names (vertical_tab, horizontal_tab,
+    tabbed_tab, list_tab) -- fine for that one example, not a generic mechanism.
+    """
+
+    def __init__(self, form_config=None):
+        super().__init__(form_config=form_config)
+        self.text_inputs = TextInputsTabLayout()
+        self.checkboxes_toggles = CheckboxTogglesTabLayout()
+        self.numeric_inputs = NumericTabLayout()
+        self.selection_inputs = SelectionTabLayout()
+        self.date_time = DateTimeTabLayout()
+        self.files_specialized = SpecializedTabLayout()
+
+    def _get_layouts(self):
+        # Explicit order -- TabbedLayout's default _get_layouts() scans dir(self),
+        # which comes back alphabetical, not declaration order.
+        return [
+            ('text_inputs', self.text_inputs),
+            ('checkboxes_toggles', self.checkboxes_toggles),
+            ('numeric_inputs', self.numeric_inputs),
+            ('selection_inputs', self.selection_inputs),
+            ('date_time', self.date_time),
+            ('files_specialized', self.files_specialized),
+        ]
+
+
+class WidgetGalleryForm(FormModel):
+    """Tabbed gallery of every registered ui_element, grouped by input-type category.
+
+    CSRF/honeypot/CAPTCHA are deliberately not included here -- they're
+    route-level/security-flow concerns already demonstrated end-to-end on
+    CompleteShowcaseForm's /showcase route, not "just another input type".
+    model_list is likewise covered elsewhere (PetRegistrationForm/TaskListForm)
+    since it's a composition mechanism, not a discrete widget.
+    """
+
+    gallery: WidgetGalleryTabs = Field(
+        default_factory=WidgetGalleryTabs,
+        title='Widget Gallery',
+        ui_element='layout',
     )

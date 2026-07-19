@@ -877,6 +877,96 @@ def _material_checkbox_field(
 ''')
 
 
+def _material_toggle_field(
+    *,
+    name: str = '',
+    field_id: str = '',
+    label: str = '',
+    required_indicator: str = '',
+    checked: str = '',
+    required: str = '',
+    help_text: str = '',
+    error_text: str = '',
+) -> SafeHTML:
+    """Material toggle switch. Input and slider must be adjacent siblings inside
+    the wrapping <label> for the `input:checked + .md-toggle-slider` CSS to match
+    (same requirement as the Bootstrap ToggleSwitch widget)."""
+    _required_indicator = SafeHTML(required_indicator)
+    _checked = SafeHTML(checked)
+    _required = SafeHTML(required)
+    _help_text = SafeHTML(help_text)
+    _error_text = SafeHTML(error_text)
+    return html(t'''
+<div class="md-field">
+    <label class="md-toggle-wrapper" for="{field_id}">
+        <input type="checkbox"
+               name="{name}"
+               id="{field_id}"
+               class="md-toggle-input"
+               value="true"
+             {_checked} {_required}>
+        <span class="md-toggle-slider"></span>
+        <span class="md-toggle-label">{label}{_required_indicator}</span>
+    </label>
+    {_help_text}
+    {_error_text}
+    <style>
+    .md-toggle-wrapper {{
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+    }}
+    .md-toggle-wrapper .md-toggle-input {{
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }}
+    .md-toggle-slider {{
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 24px;
+        background: #79747e;
+        border-radius: 12px;
+        transition: background .2s;
+        flex-shrink: 0;
+    }}
+    .md-toggle-slider::before {{
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform .2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    }}
+    .md-toggle-wrapper input:checked + .md-toggle-slider {{
+        background: #6750a4;
+    }}
+    .md-toggle-wrapper input:checked + .md-toggle-slider::before {{
+        transform: translateX(16px);
+    }}
+    .md-toggle-wrapper input:focus + .md-toggle-slider {{
+        box-shadow: 0 0 0 2px rgba(103, 80, 164, .3);
+    }}
+    .md-toggle-wrapper input:disabled + .md-toggle-slider {{
+        opacity: .5;
+        cursor: not-allowed;
+    }}
+    .md-toggle-label {{
+        color: #1c1b1f;
+        font-size: 16px;
+    }}
+    </style>
+</div>
+''')
+
+
 def _material_submit_button(*, label: str = '') -> SafeHTML:
     return html(t"""
 <div class="md-field">
@@ -945,6 +1035,7 @@ class FormTemplates:
     MATERIAL_HELP_TEXT = TemplateString(_material_help_text)
     MATERIAL_ERROR_TEXT = TemplateString(_material_error_text)
     MATERIAL_CHECKBOX_FIELD = TemplateString(_material_checkbox_field)
+    MATERIAL_TOGGLE_FIELD = TemplateString(_material_toggle_field)
     MATERIAL_SUBMIT_BUTTON = TemplateString(_material_submit_button)
     MATERIAL_MODEL_LIST_WRAPPER = TemplateString(_material_model_list_wrapper)
 

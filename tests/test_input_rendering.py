@@ -655,6 +655,31 @@ class TestTextInputsUncovered:
         html = inp.render(name='ph', country_code='+1', value='+1 5551234')
         assert '+1' in html
 
+    def test_phone_default_output_unchanged_without_phone_format(self):
+        """No phone_format kwarg -> byte-identical to the pre-mask-feature output."""
+        from pydantic_schemaforms.inputs.text_inputs import PhoneInput
+
+        inp = PhoneInput()
+        html = inp.render(name='ph', id='ph', country_code='+1', value='5551234')
+        assert '<script>' not in html
+
+    def test_phone_with_format_mask_adds_pattern_and_script(self):
+        from pydantic_schemaforms.inputs.text_inputs import PhoneInput
+
+        inp = PhoneInput()
+        html = inp.render(name='ph', id='ph', phone_format='(###) ###-####')
+        assert 'maxlength="14"' in html
+        assert '<script>' in html
+        assert '(###) ###-####' in html
+
+    def test_phone_format_mask_without_live_format_has_no_script(self):
+        from pydantic_schemaforms.inputs.text_inputs import PhoneInput
+
+        inp = PhoneInput()
+        html = inp.render(name='ph', id='ph', phone_format='###-####', live_format=False)
+        assert '<script>' not in html
+        assert 'maxlength="8"' in html
+
     def test_textarea_none_value(self):
         from pydantic_schemaforms.inputs.text_inputs import TextArea
 
