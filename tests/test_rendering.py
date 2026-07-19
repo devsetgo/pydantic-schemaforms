@@ -1273,8 +1273,9 @@ def test_specialized_widget_renderers_cover_extended_blocks() -> None:
 
 
 def test_captcha_requires_secret_key() -> None:
+    captcha_input = specialized_inputs.CaptchaInput()
     with pytest.raises(TypeError):
-        specialized_inputs.CaptchaInput().render(name='captcha_code')
+        captcha_input.render(name='captcha_code')
 
 
 def test_verify_captcha_round_trip() -> None:

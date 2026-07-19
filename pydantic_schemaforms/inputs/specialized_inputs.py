@@ -420,12 +420,18 @@ class CaptchaInput(FormInput):
         kwargs.setdefault('required', True)
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-        text_input_html = SafeHTML(_render_input_tag(self._build_attributes_string(attrs)))
+        # NOSONAR comments below: each variable is read via {expr}
+        # interpolation in the t-string return statement -- Sonar's Python
+        # analyzer doesn't parse PEP 750 t-strings yet, so it can't see the
+        # reference and flags a false-positive "unused local variable".
+        text_input_html = SafeHTML(
+            _render_input_tag(self._build_attributes_string(attrs))
+        )  # NOSONAR
 
         hidden_input = HiddenInput()
-        token_html = SafeHTML(hidden_input.render(name=f'{name}_token', value=token))
+        token_html = SafeHTML(hidden_input.render(name=f'{name}_token', value=token))  # NOSONAR
 
-        num1, num2 = self.num1, self.num2
+        num1, num2 = self.num1, self.num2  # NOSONAR
         return html(t'''
         <div class="captcha-input">
             <label for="{field_id}">What is {num1} + {num2}?</label>
@@ -465,20 +471,24 @@ class RatingStarsInput(FormInput):
         except TypeError, ValueError:
             rating = 0
 
+        # NOSONAR comments below: each variable is read via {expr}
+        # interpolation in the t-string return statement -- Sonar's Python
+        # analyzer doesn't parse PEP 750 t-strings yet, so it can't see the
+        # reference and flags a false-positive "unused local variable".
         hidden_input = HiddenInput()
-        hidden_html = SafeHTML(
+        hidden_html = SafeHTML(  # NOSONAR
             hidden_input.render(name=name, id=f'{field_id}_value', value=str(rating))
         )
 
         star_parts: list[str] = []
         for i in range(1, max_stars + 1):
-            star_class = 'star-filled' if i <= rating else 'star-empty'
+            star_class = 'star-filled' if i <= rating else 'star-empty'  # NOSONAR
             star_parts.append(
                 html(t'<span class="rating-star {star_class}" data-rating="{i}">★</span>')
             )
-        stars_html = SafeHTML(''.join(star_parts))
+        stars_html = SafeHTML(''.join(star_parts))  # NOSONAR
 
-        assets = SafeHTML(f"""
+        _star_rating_assets_markup = f"""
             <style>
             .star-rating-input .stars {{
                 font-size: 24px;
@@ -524,7 +534,8 @@ class RatingStarsInput(FormInput):
                 }});
             }});
             </script>
-        """)
+        """
+        assets = SafeHTML(_star_rating_assets_markup)  # NOSONAR
 
         return html(t'''
         <div class="star-rating-input" data-name="{name}">
@@ -556,8 +567,12 @@ class TagsInput(FormInput):
         field_id = kwargs.get('id', name)
         initial_tags = kwargs.get('value', '') or ''
 
+        # NOSONAR comments below: each variable is read via {expr}
+        # interpolation in the t-string return statement -- Sonar's Python
+        # analyzer doesn't parse PEP 750 t-strings yet, so it can't see the
+        # reference and flags a false-positive "unused local variable".
         hidden_input = HiddenInput()
-        hidden_html = SafeHTML(
+        hidden_html = SafeHTML(  # NOSONAR
             hidden_input.render(name=name, id=f'{field_id}_value', value=initial_tags)
         )
 
@@ -565,10 +580,12 @@ class TagsInput(FormInput):
             id=f'{field_id}_input', placeholder=placeholder, autocomplete='off'
         )
         text_attrs['type'] = 'text'
-        text_input_html = SafeHTML(_render_input_tag(self._build_attributes_string(text_attrs)))
+        text_input_html = SafeHTML(  # NOSONAR
+            _render_input_tag(self._build_attributes_string(text_attrs))
+        )
 
         separator_js = json.dumps(separator)
-        assets = SafeHTML(f"""
+        _tags_assets_markup = f"""
             <style>
             .tags-input {{
                 border: 1px solid #ccc;
@@ -651,7 +668,8 @@ class TagsInput(FormInput):
                 }});
             }});
             </script>
-        """)
+        """
+        assets = SafeHTML(_tags_assets_markup)  # NOSONAR
 
         return html(t'''
         <div class="tags-input" data-name="{name}">
