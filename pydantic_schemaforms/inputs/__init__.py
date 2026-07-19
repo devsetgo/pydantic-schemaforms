@@ -1,7 +1,7 @@
 """Lazy-loading facade for pydantic-schemaforms input components."""
 
 from importlib import import_module
-from typing import Dict
+from typing import Any, Dict
 
 # Organized exports by category
 TEXT_INPUTS = [
@@ -98,8 +98,16 @@ for _name in TEXT_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.text_inputs'
 
 
-def __getattr__(name: str) -> object:
-    """Lazily import concrete input classes (or helper functions) on first access."""
+def __getattr__(name: str) -> Any:
+    """Lazily import concrete input classes (or helper functions) on first access.
+
+    Typed as returning Any (not `type`) since this also serves function
+    exports like verify_captcha -- pyright otherwise treats every import
+    through this facade (e.g. `from pydantic_schemaforms.inputs import
+    HiddenInput`) as the narrower annotated type, which breaks callers that
+    rely on it being `type[BaseInput]` (e.g. `UI_ELEMENT_MAPPING.get(el,
+    TextInput)`) or an instantiable class (`HiddenInput()`).
+    """
 
     if name not in _MODULE_MAP:
         raise AttributeError(f"module 'pydantic_schemaforms.inputs' has no attribute '{name}'")
@@ -107,7 +115,7 @@ def __getattr__(name: str) -> object:
     module = import_module(_MODULE_MAP[name])
     attr = getattr(module, name)
     globals()[name] = attr
-    return attr  # type: ignore[return-value]
+    return attr
 
 
 def __dir__() -> list[str]:  # pragma: no cover - aids interactive discovery

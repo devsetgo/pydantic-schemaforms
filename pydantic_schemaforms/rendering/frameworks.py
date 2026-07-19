@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 
-from pydantic_schemaforms.inputs import TextInput
+from pydantic_schemaforms.inputs import TextInput as _TextInput
 from pydantic_schemaforms.inputs.base import BaseInput
 from pydantic_schemaforms.inputs.registry import get_input_component_map
+
+# TextInput is imported through the inputs package's lazy-loading __getattr__
+# facade, which (necessarily) returns Any -- annotate the fallback explicitly
+# so get_input_component's return type stays type[BaseInput], not
+# type[BaseInput] | None.
+_DEFAULT_INPUT: type[BaseInput] = _TextInput
 
 # Framework configurations extracted from the enhanced renderer to keep the class slim.
 FRAMEWORKS: dict[str, dict[str, str]] = {
@@ -63,4 +69,4 @@ def get_framework_config(framework: str) -> dict[str, str]:
 
 def get_input_component(element: str) -> type[BaseInput]:
     """Return the input component class for the given UI element key."""
-    return UI_ELEMENT_MAPPING.get(element, TextInput)
+    return UI_ELEMENT_MAPPING.get(element, _DEFAULT_INPUT)
