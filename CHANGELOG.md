@@ -116,6 +116,44 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>New Input Types and Bug Fixes</span> ([26.3.2](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.2))
+
+## Changes
+## Bug Fixes
+
+- Feature: Fix ui\_element registry collisions; expand AI assistant docs with a verified example (#180) (@devsetgo)
+
+## Documentation
+
+- Dev (#183) (@devsetgo)
+- Add Tier-2 input widgets and Widget Gallery example, fix Material bugs (#181) (@devsetgo)
+- Feature: Fix ui\_element registry collisions; expand AI assistant docs with a verified example (#180) (@devsetgo)
+
+## GitHub Actions
+
+- github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.1.0 to 8.2.0 (#172) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/checkout from 5 to 7 (#169) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump release-drafter/release-drafter from 7.3.1 to 7.5.1 (#170) (@[dependabot[bot]](https://github.com/apps/dependabot))
+
+## Maintenance
+
+- Dev (#183) (@devsetgo)
+- Dev (#182) (@devsetgo)
+- Add Tier-2 input widgets and Widget Gallery example, fix Material bugs (#181) (@devsetgo)
+- Feature: Fix ui\_element registry collisions; expand AI assistant docs with a verified example (#180) (@devsetgo)
+- github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.1.0 to 8.2.0 (#172) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pytest-asyncio from 1.3.0 to 1.4.0 (#173) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump fastapi from 0.138.1 to 0.139.0 (#171) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump pytest from 9.0.3 to 9.1.1 (#174) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/checkout from 5 to 7 (#169) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump release-drafter/release-drafter from 7.3.1 to 7.5.1 (#170) (@[dependabot[bot]](https://github.com/apps/dependabot))
+
+## Contributors
+@dependabot[bot], @devsetgo and [dependabot[bot]](https://github.com/apps/dependabot)
+
+
+Published Date: 2026 July 19, 18:46
+
 ### <span style='color:blue'>America 250 Release: Adding AI Help Instructions and Clean Up.</span> ([26.3.1](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.1))
 
 ## Changes

@@ -63,8 +63,6 @@ create-docs: ## Build and publish versioned docs with mike (make create-docs VER
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
 	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
-	cp /workspaces/$(REPONAME)/pydantic-schemaform-logo.png /workspaces/$(REPONAME)/docs/pydantic-schemaform-logo.png
-	cp /workspaces/$(REPONAME)/favicon.png /workspaces/$(REPONAME)/docs/favicon.png
 	python3 scripts/deploy_docs.py deploy \
 		--version "$(VERSION)" \
 		--aliases $(ALIASES) \
