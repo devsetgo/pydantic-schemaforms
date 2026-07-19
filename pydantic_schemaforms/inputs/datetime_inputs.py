@@ -391,6 +391,8 @@ class TimeRangeInput:
 class BirthdateInput(DateInput):
     """Specialized date input for birthdays with age calculation."""
 
+    ui_element: str = 'birthdate'
+
     def render(self, show_age: bool = True, **kwargs: Any) -> str:
         """Render birthdate input with optional age display."""
         # Set reasonable constraints for birthdates

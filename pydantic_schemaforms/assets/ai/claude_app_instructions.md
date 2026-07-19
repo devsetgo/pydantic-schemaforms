@@ -23,6 +23,97 @@ Do not stop at model generation only unless explicitly requested.
 - Validate by constructing the model and mapping ValidationError to field errors.
 - Choose framework and layout explicitly for predictable output.
 
+## Complete worked example (FastAPI)
+
+Verified end-to-end (GET renders, invalid POST re-renders with errors, valid
+POST succeeds). Use this as the template rather than designing a new
+form-model abstraction:
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from pydantic import EmailStr
+
+from pydantic_schemaforms import Field, FormModel
+
+app = FastAPI()
+
+
+class EventRegistration(FormModel):
+    full_name: str = Field(..., min_length=2, max_length=80, title='Full Name', ui_element='text')
+    email: EmailStr = Field(..., title='Email Address', ui_element='email')
+    age: int = Field(..., ge=13, le=120, title='Age', ui_element='number')
+    ticket_type: str = Field(
+        ...,
+        title='Ticket Type',
+        ui_element='select',
+        ui_options={'choices': ['standard', 'vip', 'student']},
+    )
+    dietary_notes: str = Field(
+        '', title='Dietary Notes', ui_element='textarea', ui_options={'rows': 3}
+    )
+    newsletter_opt_in: bool = Field(False, title='Subscribe to newsletter', ui_element='checkbox')
+
+
+@app.get('/register', response_class=HTMLResponse)
+async def register_get():
+    form_html = await EventRegistration.render_form_async(
+        submit_url='/register', framework='bootstrap'
+    )
+    return f'<html><body>{form_html}</body></html>'
+
+
+@app.post('/register', response_class=HTMLResponse)
+async def register_post(request: Request):
+    submitted = dict(await request.form())
+    result = EventRegistration.validate(submitted, submit_url='/register', framework='bootstrap')
+    if result.is_valid:
+        return HTMLResponse(f"<h1>Thanks, {result.data['full_name']}!</h1>")
+    form_html = await result.render_with_errors_async()
+    return HTMLResponse(f'<html><body>{form_html}</body></html>')
+```
+
+Notes:
+
+- `FormModel` subclasses `pydantic.BaseModel` directly — it is the schema,
+  validator, and render target in one. Do not build a separate form-model
+  wrapper or DTO around it.
+- `ui_element` selects the widget and browser hint (`type="email"`, etc.)
+  only — it adds no server-side format validation on its own. Use the
+  matching Pydantic type for that (`EmailStr`, `AnyUrl`/`HttpUrl`);
+  `Field()` constraints (`min_length`, `ge`, `le`, `pattern`, ...) are what
+  `.validate()` actually enforces.
+- `FormModel.validate(data, submit_url=...)` returns a `ValidationResult`;
+  `result.render_with_errors_async()` re-renders with field errors and the
+  submitted values preserved.
+
+## Supported ui_element values (authoritative)
+
+This is the complete, current list. **Never use a ui_element value not on
+this list** (e.g. "toggle" is real; "switch" or "chips" are not). An
+unrecognized value does not error — it silently renders a plain text input,
+which is easy to miss in review. Prefer the closest listed primitive over
+guessing at a plausible-sounding name.
+
+| Category | Values |
+|---|---|
+| Text | `text`, `password`, `email`, `search`, `url`, `tel`, `textarea` |
+| Formatted text | `ssn`, `phone`, `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
+| Numeric | `number`, `range` |
+| Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity`, `score`, `rating` (alias `rating_stars`), `slider`, `temperature` |
+| Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox` |
+| Boolean toggle | `toggle` (alias `toggle_switch`/`checkbox_toggle`) — styled on/off switch, functionally a checkbox |
+| Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week` |
+| Specialized date | `birthdate` (adds a computed age display) |
+| File/color | `file`, `color` |
+| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design) |
+| Structural (not a real widget) | `model_list` (repeating sub-forms), `layout` (composed layout primitives) |
+
+Most forms only need Text/Numeric/Selection/Date. Specialized numeric/date
+rows add presentation behavior only (e.g. `percentage` shows a `%`
+placeholder, `rating` renders stars) — validation still comes entirely from
+`Field()` constraints, never from the widget choice.
+
 ## Input intake contract
 
 Claude should support source input as:

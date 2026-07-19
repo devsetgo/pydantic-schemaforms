@@ -18,6 +18,13 @@ Two things make this different from a normal docs page copied into a prompt:
 
 Each profile documents the same underlying integration contract:
 
+- A complete, verified worked example: a `FormModel` + FastAPI GET/POST route pair that
+  renders, re-renders with errors on invalid submission, and succeeds on valid submission
+  — checked end-to-end with a `TestClient`, not just read from source.
+- An authoritative table of every valid `ui_element` string (grouped by category, aliases
+  included), so an assistant never has to guess at or invent a plausible-sounding widget
+  name. Each profile calls out explicitly that an unrecognized `ui_element` does **not**
+  raise an error — it silently falls back to a plain text input.
 - The `FormModel` + `Field()` + `render_form_html()` pattern, and the lower-boilerplate
   `FormModel.validate()` / `render_with_errors()` alternative.
 - CSRF protection (`csrf_mode`, `csrf_token_provider`, verification before validation).
@@ -29,6 +36,9 @@ Each profile documents the same underlying integration contract:
   — enforced server-side and reflected in HTML automatically) and `ui_options` (UI-only
   knobs with no constraint equivalent) — getting this wrong produces a form that *looks*
   validated but isn't.
+- The distinction between `ui_element` (which widget renders) and the field's Pydantic
+  type (what's actually validated) — e.g. `ui_element="email"` only picks the HTML5 email
+  input; `EmailStr` is what makes the address format actually enforced on `.validate()`.
 - Deterministic field-mapping rules (Python type → `ui_element`) so repeated runs converge
   on the same output instead of drifting between requests.
 
@@ -113,3 +123,12 @@ just written once and left to drift — every claim in them (which `ui_*` kwargs
 what `model_list` options do, how CSRF verification works) has been verified by running
 the corresponding code, not just read from source. If you add a Field kwarg or change
 `model_list` behavior, update `pydantic_schemaforms/assets/ai/*.md` in the same change.
+
+The "Supported ui_element values (authoritative)" table in each profile doc is checked
+automatically: `tests/test_ai_instructions.py::test_authoritative_ui_element_table_matches_registry`
+parses every backticked token out of that section and asserts it exists in
+`get_input_component_map()`. If you add a new input class, give it its own `ui_element`
+(see `tests/test_input_registry.py` — the registry rejects two classes silently sharing
+one `ui_element`, which previously caused `ui_element="hidden"`/`"date"`/`"number"`/`"range"`
+to resolve to the wrong widget) and add it to the three doc tables in the same change, or
+this test will fail.
