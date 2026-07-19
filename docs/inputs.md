@@ -255,7 +255,7 @@ Notes:
 - `number`
 - `range`
 - `percentage`, `decimal`, `integer`, `age`, `quantity`, `score`, `temperature` (see [Specialized numeric elements](#specialized-numeric-elements))
-- `rating` (alias: `rating_stars`), `star_rating`, `slider` (see [Rating & sliders](#rating--sliders))
+- `rating` (alias: `rating_stars`), `star_rating`, `slider` (see [Rating & sliders](#rating-sliders))
 
 #### number
 
