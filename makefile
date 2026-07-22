@@ -1,6 +1,10 @@
 # Variables
 REPONAME = pydantic-schemaforms
 APP_VERSION = 26.3.2
+# Override on the command line, e.g. `make create-docs VERSION=26.4.0`
+VERSION ?= $(APP_VERSION)
+ALIASES ?= latest stable
+DOCS_BRANCH ?= gh-pages
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 PYTEST = $(PYTHON) -m pytest
@@ -52,17 +56,21 @@ bump-undo: ## Undo the last version bump
 
 cleanup: isort ruff autoflake ## Run isort, ruff, autoflake
 
-create-docs: ## Build and deploy the project's documentation
+create-docs: ## Build and publish versioned docs with mike (make create-docs VERSION=26.4.0)
 
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
 	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
-	cp /workspaces/$(REPONAME)/pydantic-schemaform-logo.png /workspaces/$(REPONAME)/docs/pydantic-schemaform-logo.png
-	cp /workspaces/$(REPONAME)/favicon.png /workspaces/$(REPONAME)/docs/favicon.png
-	mkdocs build
-	mkdocs gh-deploy
+	python3 scripts/deploy_docs.py deploy \
+		--version "$(VERSION)" \
+		--aliases $(ALIASES) \
+		--title "Release $(VERSION)" \
+		--branch "$(DOCS_BRANCH)" \
+		--ignore-remote-status \
+		--push
+	mike set-default stable --branch "$(DOCS_BRANCH)" --push
 
 create-docs-local: ## Build and deploy the project's documentation
 
