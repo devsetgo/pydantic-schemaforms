@@ -648,58 +648,8 @@ class LayoutEngine:
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
-        form_mapping = {
-            'personal_info': 'PersonalInfoForm',
-            'contact_info': 'ContactInfoForm',
-            'preferences': 'NotificationsForm',
-            'task_list': 'TaskListForm',
-        }
-
-        form_name = form_mapping.get(field_name)
-        if form_name:
-            try:
-                if form_name == 'PersonalInfoForm':
-                    from examples.shared_models import (
-                        PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'ContactInfoForm':
-                    from examples.shared_models import (
-                        ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'NotificationsForm':
-                    from examples.shared_models import (
-                        NotificationsForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'TaskListForm':
-                    from examples.shared_models import (
-                        TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                else:  # pragma: no cover - exhaustive safety
-                    raise ImportError(f'Unknown form: {form_name}')
-
-                nested_data = get_nested_form_data(field_name, context.form_data)
-                nested_renderer = self._renderer.__class__(framework=self._renderer.framework)
-                return nested_renderer.render_form_fields_only(
-                    FormClass,
-                    data=nested_data,
-                    errors={},
-                    layout='vertical',
-                )
-            except Exception as exc:  # pragma: no cover - fallback messaging
-                return f"""
-                <div class="layout-field-placeholder alert alert-info">
-                    <p>Layout demonstration: {escape(form_name)}</p>
-                    <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
-                    <small class="text-danger d-block">Could not render: {escape(str(exc))}</small>
-                </div>
-                """
-
-        return f"""
-            <div class="layout-field-unknown alert alert-secondary">
-                <p>Unknown layout field type</p>
-                <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
-            </div>
-            """
+        """Same fallback resolution as render_layout_field_fallback()."""
+        return self.render_layout_field_fallback(field_name, ui_info, context)
 
     def render_side_by_side_layout(
         self,
