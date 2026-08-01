@@ -979,11 +979,13 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
 
         list_type = next((t for t in non_none_types if get_origin(t) is list), None)
         list_item_type = get_args(list_type)[0] if list_type and get_args(list_type) else None
-        list_item_is_model = isinstance(list_item_type, type) and issubclass(
-            list_item_type, BaseModel
+        list_item_model = (
+            list_item_type
+            if isinstance(list_item_type, type) and issubclass(list_item_type, BaseModel)
+            else None
         )
 
-        if list_type is not None and not list_item_is_model:
+        if list_type is not None and list_item_model is None:
             if value not in (None, '') and not isinstance(value, list):
                 result[field_name] = [value]
             continue
@@ -996,8 +998,8 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
             continue
 
         if isinstance(value, list):
-            if list_item_is_model:
-                item_fields = list_item_type.model_fields
+            if list_item_model is not None:
+                item_fields = list_item_model.model_fields
                 result[field_name] = [
                     _coerce_html_form_values(item, item_fields) if isinstance(item, dict) else item
                     for item in value
