@@ -14,6 +14,33 @@ ruff check pydantic_schemaforms tests          # lint
 ruff format --check pydantic_schemaforms tests # format check
 ```
 
+## Documentation pipeline — generated files, never hand-edit
+
+Three files under `docs/` are **build artifacts**, copied verbatim from
+repo-root source files by `scripts/changelog.py` + `make create-docs` /
+`make create-docs-local` (and by `.github/workflows/deploy-docs.yml` on
+release). Any hand edit made directly to the `docs/` copy is silently
+overwritten the next time docs are built:
+
+| Generated (`docs/…`, don't edit) | Source of truth (edit this instead) |
+|---|---|
+| `docs/index.md`         | `README.md` |
+| `docs/contribute.md`    | `CONTRIBUTING.md` |
+| `docs/release-notes.md` | `CHANGELOG.md` (its `## Latest Changes` section is further regenerated from GitHub Releases by `scripts/changelog.py` — don't hand-edit that section either; edit the static part above the sentinel if you need a permanent entry) |
+
+Everything else under `docs/` (`recipes.md`, `validation_guide.md`,
+`quickstart.md`, `tutorial_fastapi.md`, etc.) is genuinely hand-maintained —
+edit those directly.
+
+To verify a doc change (including regenerating the three copies above from
+their sources) without touching the deploy pipeline: `make create-docs-local`
+(runs `scripts/changelog.py`, copies the three files, then `mkdocs build`).
+Cross-links between `README.md`/`docs/index.md` and other `docs/*.md` files
+can't use a single relative path that resolves correctly in both GitHub's
+README rendering and mkdocs' site (the same file serves both), so prefer
+plain-text references (e.g. "see `docs/recipes.md`") over `[text](path)`
+links there.
+
 ## Repository layout
 
 ```

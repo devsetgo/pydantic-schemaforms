@@ -45,6 +45,8 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
 - 🔀 **Dual-use form + JSON API**: `as_api_model()` returns a clean Pydantic `BaseModel` — one model class drives both the HTML form and a typed JSON API, with UI metadata stripped from OpenAPI docs
+- 🧬 **Standard JSON Schema output**: `get_pydantic_json_schema()` returns spec-compliant JSON Schema (`$defs`/`$ref`) for the underlying Pydantic model, including nested `BaseModel`/`List[BaseModel]` fields
+- 🪆 **Nested by default, flat by choice**: `validate()` output/input mirrors the Pydantic model's nested shape by default; pass `flatten=True` for bracket+dot flat keys instead
 
 > **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
 
@@ -775,6 +777,28 @@ async def api_contact(data: ContactSchema):
 ```
 
 `Field(title=...)`, `Field(examples=[...])`, descriptions, and all validation constraints (`min_length`, `ge`, `pattern`, …) are fully preserved in the API model. Only `ui_*` keys are removed.
+
+#### `get_pydantic_json_schema()` — standard JSON Schema output
+
+Returns the standard JSON Schema (`$defs`/`$ref` and all) of the form's underlying Pydantic model, built on `as_api_model()`. Use this — not `get_json_schema()`, which returns a flattened, UI-oriented shape for the renderer and does not represent nested fields — whenever you need a spec-compliant schema for OpenAPI tooling, a JSON Schema validator, or a code generator:
+
+```python
+schema = ContactForm.get_pydantic_json_schema()
+# schema["properties"], and schema["$defs"] for any nested BaseModel/List[BaseModel] fields
+
+schema = ContactForm.get_pydantic_json_schema(ref_template="#/components/schemas/{model}")
+```
+
+#### Nested vs. flat form data — `validate(..., flatten=True)`
+
+`FormModel.validate()` returns `result.data` shaped exactly like the underlying Pydantic model by default — nested `BaseModel`/`List[BaseModel]` fields come back nested, matching `model_dump()`. Pass `flatten=True` to accept and return bracket+dot flat keys instead (`"pets[0].name"`, the same notation used for `model_list` field names):
+
+```python
+result = PersonForm.validate(data, submit_url="/people", flatten=True)
+# result.data uses flat "field[0].sub" keys instead of nested dicts/lists
+```
+
+See "Nested vs. flat form data" in the recipes guide (`docs/recipes.md`) for a full example.
 
 ### Field Function
 

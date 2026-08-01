@@ -903,7 +903,7 @@ def test_render_layout_field_content_fallback_success_error_and_unknown(monkeypa
         lambda self, *_args, **_kwargs: '<div>nested-content-ok</div>',
     )
     success = engine.render_layout_field_content_fallback(
-        'vertical_tab',
+        'personal_info',
         {'help_text': 'vertical help'},
         context,
     )
@@ -913,7 +913,7 @@ def test_render_layout_field_content_fallback_success_error_and_unknown(monkeypa
 
     monkeypatch.setattr(EnhancedFormRenderer, 'render_form_fields_only', _raise_render)
     failed = engine.render_layout_field_content_fallback(
-        'vertical_tab',
+        'personal_info',
         {'help_text': 'vertical help'},
         context,
     )
@@ -939,7 +939,7 @@ def test_render_layout_field_fallback_success_error_and_unknown(monkeypatch):
         renderer, 'render_form_fields_only', lambda *_args, **_kwargs: '<div>ok</div>'
     )
     success = engine.render_layout_field_fallback(
-        'vertical_tab',
+        'personal_info',
         {'help_text': 'vertical help'},
         context,
     )
@@ -950,7 +950,7 @@ def test_render_layout_field_fallback_success_error_and_unknown(monkeypatch):
         lambda *_args, **_kwargs: (_ for _ in ()).throw(ValueError('render exploded')),
     )
     failed = engine.render_layout_field_fallback(
-        'vertical_tab',
+        'personal_info',
         {'help_text': 'help <b>unsafe</b>'},
         context,
     )
@@ -1063,14 +1063,14 @@ def test_helper_extractors_cover_success_and_exception_paths():
     assert nested_from_layout['profile'] == {'pre': 'nested'}
     assert 'broken' not in nested_from_layout
 
-    fallback = _extract_fallback_mapped_data('vertical_tab', main_data)
+    fallback = _extract_fallback_mapped_data('personal_info', main_data)
     assert fallback == {'first_name': 'Ada', 'email': 'ada@example.com'}
 
     assert get_nested_form_data('profile', main_data) == {'pre': 'nested'}
     assert get_nested_form_data('tabs', {'alpha': 1, 'beta': 2}, LayoutWithTabs(content='')) == {
         'profile': {'alpha': 1, 'beta': 2}
     }
-    assert get_nested_form_data('vertical_tab', main_data, None) == fallback
+    assert get_nested_form_data('personal_info', main_data, None) == fallback
 
 
 # ===========================================================================
@@ -1234,25 +1234,25 @@ class TestLayoutDemonstrationFormRendering:
         """Verify layout form renders all tab sections."""
         renderer = EnhancedFormRenderer(framework='bootstrap')
         form_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'John',
                 'last_name': 'Doe',
                 'email': 'john@example.com',
                 'birth_date': '1990-01-01',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'phone': '+1-555-0000',
                 'address': '123 Main St',
                 'city': 'Springfield',
                 'postal_code': '12345',
             },
-            'tabbed_tab': {
+            'preferences': {
                 'notification_email': True,
                 'notification_sms': False,
                 'theme': 'light',
                 'language': 'en',
             },
-            'list_tab': {
+            'task_list': {
                 'project_name': 'Demo',
                 'tasks': [
                     {
@@ -1280,20 +1280,20 @@ class TestLayoutDemonstrationFormRendering:
         """Verify nested form content renders in layout fields."""
         renderer = EnhancedFormRenderer(framework='bootstrap')
         form_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'Alice',
                 'last_name': 'Smith',
                 'email': 'alice@example.com',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'address': '456 Oak Ave',
                 'city': 'Metropolis',
             },
-            'tabbed_tab': {
+            'preferences': {
                 'notification_email': True,
                 'theme': 'dark',
             },
-            'list_tab': {
+            'task_list': {
                 'project_name': 'Project X',
                 'tasks': [],
             },
@@ -1320,17 +1320,17 @@ class TestLayoutDemonstrationFormRendering:
         """Verify model_list field renders correctly within layout."""
         renderer = EnhancedFormRenderer(framework='bootstrap')
         form_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'Bob',
                 'last_name': 'Builder',
                 'email': 'bob@example.com',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'address': '789 Work St',
                 'city': 'Construction City',
             },
-            'tabbed_tab': {'theme': 'light'},
-            'list_tab': {
+            'preferences': {'theme': 'light'},
+            'task_list': {
                 'project_name': 'Build It',
                 'tasks': [
                     {
@@ -1370,22 +1370,22 @@ class TestTabLayoutIntegration:
         renderer = EnhancedFormRenderer(framework='bootstrap')
 
         form_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'Tab',
                 'last_name': 'Tester',
                 'email': 'tabs@example.com',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'address': 'Tab Street',
                 'city': 'Tabville',
             },
-            'tabbed_tab': {
+            'preferences': {
                 'notification_email': True,
                 'notification_sms': True,
                 'theme': 'auto',
                 'language': 'es',
             },
-            'list_tab': {
+            'task_list': {
                 'project_name': 'Tab Project',
                 'tasks': [
                     {
@@ -1415,17 +1415,17 @@ class TestAsyncFormRendering:
         """Verify async rendering produces identical output to sync."""
         renderer = EnhancedFormRenderer(framework='bootstrap')
         form_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'Async',
                 'last_name': 'Test',
                 'email': 'async@example.com',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'address': '123 Async St',
                 'city': 'Asyncville',
             },
-            'tabbed_tab': {'theme': 'light'},
-            'list_tab': {
+            'preferences': {'theme': 'light'},
+            'task_list': {
                 'project_name': 'Async Project',
                 'tasks': [
                     {
@@ -1463,17 +1463,17 @@ class TestAsyncFormRendering:
 
         # Invalid data: empty tasks list (min_length=1)
         invalid_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'Invalid',
                 'last_name': 'User',
                 'email': 'invalid@example.com',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'address': 'Bad St',
                 'city': 'Badville',
             },
-            'tabbed_tab': {'theme': 'dark'},
-            'list_tab': {
+            'preferences': {'theme': 'dark'},
+            'task_list': {
                 'project_name': 'Bad Project',
                 'tasks': [],  # Invalid: min_length=1 required
             },
@@ -1500,17 +1500,17 @@ class TestAsyncFormRendering:
 
         async def render_form_variant(name: str, theme: str):
             data = {
-                'vertical_tab': {
+                'personal_info': {
                     'first_name': name,
                     'last_name': 'Concurrent',
                     'email': f'{name}@example.com',
                 },
-                'horizontal_tab': {
+                'contact_info': {
                     'address': 'Concurrent St',
                     'city': 'CityC',
                 },
-                'tabbed_tab': {'theme': theme},
-                'list_tab': {
+                'preferences': {'theme': theme},
+                'task_list': {
                     'project_name': f'{name} Project',
                     'tasks': [
                         {

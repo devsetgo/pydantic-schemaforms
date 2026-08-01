@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any
+from typing import Any, Literal
 from collections.abc import Callable
 
 from pydantic import BaseModel
@@ -208,6 +208,23 @@ class FormModel(BaseModel):
         }
 
     @classmethod
+    def get_pydantic_json_schema(
+        cls,
+        *,
+        by_alias: bool = True,
+        ref_template: str = '#/$defs/{model}',
+        mode: Literal['validation', 'serialization'] = 'validation',
+    ) -> dict[str, Any]:
+        """Standard, nested-aware JSON Schema (with $defs/$ref) for this form's
+        underlying Pydantic model — unlike get_json_schema(), which is a
+        flattened, UI-oriented shape used for rendering.
+        """
+        cls.ensure_dynamic_fields()
+        return cls.as_api_model().model_json_schema(
+            by_alias=by_alias, ref_template=ref_template, mode=mode
+        )
+
+    @classmethod
     def _extract_ui_info(cls, field_info: FieldInfo) -> dict[str, Any]:
         """Extract UI-specific information from field annotations."""
         ui_info = {}
@@ -304,12 +321,18 @@ class FormModel(BaseModel):
         *,
         submit_url: str | None = None,
         framework: str = 'bootstrap',
+        flatten: bool = False,
         **render_kwargs: Any,
     ) -> 'ValidationResult':
         """Validate form data and return a result that can re-render itself on failure.
 
         The submit_url and framework are stored on the result so that
         result.render_with_errors() requires no arguments in the common case.
+
+        When ``flatten`` is True, ``data`` may use bracket+dot flat keys
+        (e.g. ``"pets[0].name"``, already-nested data is also accepted) and
+        ``result.data`` will use flat bracket+dot keys instead of nested
+        dicts/lists.
 
         Example::
 
@@ -320,7 +343,7 @@ class FormModel(BaseModel):
         """
         from .validation import validate_form_data
 
-        result = validate_form_data(cls, data)
+        result = validate_form_data(cls, data, flatten=flatten)
         result._submit_url = submit_url
         result._framework = framework
         result._render_kwargs = render_kwargs

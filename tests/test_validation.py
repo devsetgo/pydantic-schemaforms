@@ -1482,25 +1482,25 @@ class EmptyDataValidateLayout(VerticalLayout):
 
 
 class WrapperRaising(FormModel):
-    vertical_tab: RaisingValidateLayout = FormField(
+    personal_info: RaisingValidateLayout = FormField(
         default_factory=RaisingValidateLayout, input_type='layout'
     )
 
 
 class WrapperBadGetForms(FormModel):
-    vertical_tab: BadGetFormsLayout = FormField(
+    personal_info: BadGetFormsLayout = FormField(
         default_factory=BadGetFormsLayout, input_type='layout'
     )
 
 
 class WrapperNoCallableGetForms(FormModel):
-    vertical_tab: NoCallableGetFormsLayout = FormField(
+    personal_info: NoCallableGetFormsLayout = FormField(
         default_factory=NoCallableGetFormsLayout, input_type='layout'
     )
 
 
 class WrapperEmptyData(FormModel):
-    vertical_tab: EmptyDataValidateLayout = FormField(
+    personal_info: EmptyDataValidateLayout = FormField(
         default_factory=EmptyDataValidateLayout, input_type='layout'
     )
 
@@ -1545,13 +1545,13 @@ def test_layout_validate_raises_falls_back_to_get_forms_and_reports_errors():
 def test_layout_get_forms_raises_is_safely_ignored():
     result = validate_form_data(WrapperBadGetForms, {'first_name': 'A'})
     assert result.is_valid is True
-    assert result.data.get('vertical_tab') == {'first_name': 'A'}
+    assert result.data.get('personal_info') == {'first_name': 'A'}
 
 
 def test_layout_get_forms_not_callable_skips_fallback():
     result = validate_form_data(WrapperNoCallableGetForms, {'first_name': 'A'})
     assert result.is_valid is True
-    assert result.data.get('vertical_tab') == {'first_name': 'A'}
+    assert result.data.get('personal_info') == {'first_name': 'A'}
 
 
 def test_layout_validate_returns_empty_data_does_not_replace_payload():
@@ -1559,7 +1559,7 @@ def test_layout_validate_returns_empty_data_does_not_replace_payload():
     result = validate_form_data(WrapperEmptyData, payload)
     assert result.is_valid is True
     # Because validate() returned empty data, validate_form_data keeps nested payload.
-    assert result.data.get('vertical_tab') == {'first_name': 'Ok'}
+    assert result.data.get('personal_info') == {'first_name': 'Ok'}
 
 
 def test_layout_payload_removed_when_no_nested_data_extracted():

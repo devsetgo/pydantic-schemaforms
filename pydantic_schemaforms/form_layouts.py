@@ -318,27 +318,19 @@ class VerticalLayout(FormLayoutBase):
         self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         """Validate all forms in the vertical layout."""
-        all_data = {}
-        all_errors = {}
+        from .validation import validate_form_data
+
+        all_data: dict[str, Any] = {}
+        all_errors: dict[str, str] = {}
         is_valid = True
 
         forms = self._get_forms()
         for form_cls in forms:
-            try:
-                # Attempt to validate each form
-                instance = form_cls(**form_data)
-                form_data_dict = instance.model_dump()
-                all_data.update(form_data_dict)
-            except Exception as e:
+            result = validate_form_data(form_cls, form_data)
+            all_data.update(result.data)
+            all_errors.update(result.errors)
+            if not result.is_valid:
                 is_valid = False
-                # Extract field errors from validation error
-                if hasattr(e, 'errors'):
-                    for error in e.errors():  # type: ignore[union-attr]
-                        field_name = error.get('loc', [''])[0]
-                        error_msg = error.get('msg', str(e))
-                        all_errors[field_name] = error_msg
-                else:
-                    all_errors['_form'] = str(e)
 
         return ValidationResult(
             is_valid=is_valid,
@@ -391,25 +383,19 @@ class HorizontalLayout(FormLayoutBase):
     ) -> ValidationResult:
         """Validate all forms in the horizontal layout."""
         # Same validation logic as VerticalLayout
-        all_data = {}
-        all_errors = {}
+        from .validation import validate_form_data
+
+        all_data: dict[str, Any] = {}
+        all_errors: dict[str, str] = {}
         is_valid = True
 
         forms = self._get_forms()
         for form_cls in forms:
-            try:
-                instance = form_cls(**form_data)
-                form_data_dict = instance.model_dump()
-                all_data.update(form_data_dict)
-            except Exception as e:
+            result = validate_form_data(form_cls, form_data)
+            all_data.update(result.data)
+            all_errors.update(result.errors)
+            if not result.is_valid:
                 is_valid = False
-                if hasattr(e, 'errors'):
-                    for error in e.errors():  # type: ignore[union-attr]
-                        field_name = error.get('loc', [''])[0]
-                        error_msg = error.get('msg', str(e))
-                        all_errors[field_name] = error_msg
-                else:
-                    all_errors['_form'] = str(e)
 
         return ValidationResult(
             is_valid=is_valid,
