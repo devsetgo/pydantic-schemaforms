@@ -26,7 +26,7 @@ LOG_LEVEL = debug
 REQUIREMENTS_PATH = requirements.txt
 # DEV_REQUIREMENTS_PATH = requirements/dev.txt
 
-.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test ex-run ex-test
+.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 git-cleanup help install isort rebase run-example run-example-dev speedtest test ex-run ex-test
 
 .PHONY: vendor-update-htmx vendor-verify
 
@@ -104,6 +104,13 @@ reinstall: ## Install the project's dependencie
 rebase: ## Rebase current branch from origin/main
 	git fetch origin
 	git rebase origin/main
+
+git-cleanup: ## Fetch + prune from origin, then delete local branches whose upstream is gone
+	@echo "Fetching from origin and pruning stale remote-tracking branches..."
+	git fetch origin --prune
+	@echo "Removing local branches whose upstream branch no longer exists..."
+	@git branch -vv | grep ': gone\]' | sed 's/^\*//' | awk '{print $$1}' | grep -vE '^(main|master|dev)$$' | xargs -r git branch -D
+	@echo "git-cleanup complete."
 
 isort: ## Sort imports in Python code
 	$(PYTHON) -m isort $(SERVICE_PATH)
