@@ -48,6 +48,8 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
 
+from pydantic import EmailStr
+
 from pydantic_schemaforms import (
     __version__ as _psf_version,
     EnhancedFormRenderer,
@@ -59,6 +61,7 @@ from pydantic_schemaforms import (
     HTMXValidationConfig,
     LiveValidator,
     MinLengthRule,
+    RequiredRule,
     available_instruction_profiles,
     get_app_instructions,
     parse_nested_form_data,
@@ -92,7 +95,7 @@ class ContactForm(FormModel):
         ui_element='text',
         ui_placeholder='Enter your full name',
     )
-    email: str = Field(
+    email: EmailStr = Field(
         ...,
         title='Email Address',
         description='We will never share your email',
@@ -164,6 +167,7 @@ _nv.add_rule(MinLengthRule(2, message='Name must be at least 2 characters'))
 _contact_live_validator.register_field_validator(_nv)
 
 _ev = FieldValidator('email')
+_ev.add_rule(RequiredRule(message='Email is required'))
 _ev.add_rule(EmailRule())
 _contact_live_validator.register_field_validator(_ev)
 
