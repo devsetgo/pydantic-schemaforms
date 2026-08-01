@@ -880,7 +880,7 @@ class KitchenSinkForm(FormModel):
     toggle_input: bool = FormField(
         False,
         title='Toggle Switch',
-        input_type='checkbox',
+        input_type='toggle',
         help_text='Boolean toggle switch',
         icon='toggle-on',
     )
