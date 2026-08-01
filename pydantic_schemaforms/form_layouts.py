@@ -275,6 +275,34 @@ class FormLayoutBase(SharedBaseLayout, ABC):
                 forms.append(attr)
         return forms
 
+    def _validate_forms(self, form_data: dict[str, Any]) -> ValidationResult:
+        """Validate ``form_data`` against every form in this layout.
+
+        Shared by VerticalLayout/HorizontalLayout, which differ only in how
+        they render, not how they validate.
+        """
+        from .validation import validate_form_data
+
+        all_data: dict[str, Any] = {}
+        all_errors: dict[str, str] = {}
+        is_valid = True
+
+        forms = self._get_forms()
+        for form_cls in forms:
+            result = validate_form_data(form_cls, form_data)
+            all_data.update(result.data)
+            all_errors.update(result.errors)
+            if not result.is_valid:
+                is_valid = False
+
+        return ValidationResult(
+            is_valid=is_valid,
+            data=all_data,
+            errors=all_errors,
+            form_model_cls=forms[0] if forms else None,
+            original_data=form_data,
+        )
+
 
 # Backwards compatibility: historical name exported from this module
 BaseLayout = FormLayoutBase
@@ -318,27 +346,7 @@ class VerticalLayout(FormLayoutBase):
         self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
         """Validate all forms in the vertical layout."""
-        from .validation import validate_form_data
-
-        all_data: dict[str, Any] = {}
-        all_errors: dict[str, str] = {}
-        is_valid = True
-
-        forms = self._get_forms()
-        for form_cls in forms:
-            result = validate_form_data(form_cls, form_data)
-            all_data.update(result.data)
-            all_errors.update(result.errors)
-            if not result.is_valid:
-                is_valid = False
-
-        return ValidationResult(
-            is_valid=is_valid,
-            data=all_data,
-            errors=all_errors,
-            form_model_cls=forms[0] if forms else None,
-            original_data=form_data,
-        )
+        return self._validate_forms(form_data)
 
 
 class HorizontalLayout(FormLayoutBase):
@@ -381,29 +389,8 @@ class HorizontalLayout(FormLayoutBase):
     def validate(
         self, form_data: dict[str, Any], files: dict[str, Any] | None = None
     ) -> ValidationResult:
-        """Validate all forms in the horizontal layout."""
-        # Same validation logic as VerticalLayout
-        from .validation import validate_form_data
-
-        all_data: dict[str, Any] = {}
-        all_errors: dict[str, str] = {}
-        is_valid = True
-
-        forms = self._get_forms()
-        for form_cls in forms:
-            result = validate_form_data(form_cls, form_data)
-            all_data.update(result.data)
-            all_errors.update(result.errors)
-            if not result.is_valid:
-                is_valid = False
-
-        return ValidationResult(
-            is_valid=is_valid,
-            data=all_data,
-            errors=all_errors,
-            form_model_cls=forms[0] if forms else None,
-            original_data=form_data,
-        )
+        """Validate all forms in the horizontal layout (same logic as VerticalLayout)."""
+        return self._validate_forms(form_data)
 
 
 class TabbedLayout(FormLayoutBase):
