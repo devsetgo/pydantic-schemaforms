@@ -649,10 +649,10 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         form_mapping = {
-            'vertical_tab': 'PersonalInfoForm',
-            'horizontal_tab': 'ContactInfoForm',
-            'tabbed_tab': 'NotificationsForm',
-            'list_tab': 'TaskListForm',
+            'personal_info': 'PersonalInfoForm',
+            'contact_info': 'ContactInfoForm',
+            'preferences': 'NotificationsForm',
+            'task_list': 'TaskListForm',
         }
 
         form_name = form_mapping.get(field_name)
@@ -812,10 +812,10 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         form_mapping = {
-            'vertical_tab': 'PersonalInfoForm',
-            'horizontal_tab': 'ContactInfoForm',
-            'tabbed_tab': 'NotificationsForm',
-            'list_tab': 'TaskListForm',
+            'personal_info': 'PersonalInfoForm',
+            'contact_info': 'ContactInfoForm',
+            'preferences': 'NotificationsForm',
+            'task_list': 'TaskListForm',
         }
 
         form_name = form_mapping.get(field_name)
@@ -999,15 +999,15 @@ def _extract_layout_nested_data(layout_value: Any, main_data: dict[str, Any]) ->
 
 def _extract_fallback_mapped_data(field_name: str, main_data: dict[str, Any]) -> dict[str, Any]:
     field_data_mapping = {
-        'vertical_tab': ['first_name', 'last_name', 'email', 'birth_date'],
-        'horizontal_tab': ['phone', 'address', 'city', 'postal_code'],
-        'tabbed_tab': [
+        'personal_info': ['first_name', 'last_name', 'email', 'birth_date'],
+        'contact_info': ['phone', 'address', 'city', 'postal_code'],
+        'preferences': [
             'notification_email',
             'notification_sms',
             'notification_push',
             'digest_frequency',
         ],
-        'list_tab': ['project_name', 'tasks'],
+        'task_list': ['project_name', 'tasks'],
     }
 
     nested_data: dict[str, Any] = {}

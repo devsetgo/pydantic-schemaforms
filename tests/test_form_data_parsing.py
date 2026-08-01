@@ -5,6 +5,7 @@ from pydantic_schemaforms.form_data import (
     _coerce_to_list,
     _ensure_list_index,
     _new_container,
+    flatten_nested_data,
     parse_nested_form_data,
 )
 
@@ -164,3 +165,75 @@ def test_assign_list_token_uses_reparented_list_for_non_list_current() -> None:
     _assign_nested(container, ['node', 0, 'name'], 'Neo')
 
     assert container == {'node': {'node': [{'name': 'Neo'}]}}
+
+
+def test_flatten_nested_data_simple_dict() -> None:
+    assert flatten_nested_data({'owner': 'Casey'}) == {'owner': 'Casey'}
+
+
+def test_flatten_nested_data_nested_dict_and_list() -> None:
+    nested = {
+        'owner': 'Casey',
+        'pets': [
+            {'name': 'Fido', 'is_active': True},
+            {'name': 'Mochi'},
+        ],
+    }
+
+    assert flatten_nested_data(nested) == {
+        'owner': 'Casey',
+        'pets[0].name': 'Fido',
+        'pets[0].is_active': True,
+        'pets[1].name': 'Mochi',
+    }
+
+
+def test_flatten_nested_data_list_of_scalars() -> None:
+    assert flatten_nested_data({'tags': ['a', 'b', 'c']}) == {
+        'tags[0]': 'a',
+        'tags[1]': 'b',
+        'tags[2]': 'c',
+    }
+
+
+def test_flatten_nested_data_empty_list_and_dict_preserved() -> None:
+    nested = {'tags': [], 'meta': {}}
+
+    flat = flatten_nested_data(nested)
+
+    assert flat == {'tags': [], 'meta': {}}
+    assert parse_nested_form_data(flat, coerce_values=False) == nested
+
+
+def test_flatten_nested_data_none_values_preserved() -> None:
+    nested = {'name': None, 'pets': [{'name': None}]}
+
+    flat = flatten_nested_data(nested)
+
+    assert flat == {'name': None, 'pets[0].name': None}
+    assert parse_nested_form_data(flat, coerce_values=False) == nested
+
+
+def test_flatten_then_parse_round_trips() -> None:
+    nested = {
+        'owner': 'Casey',
+        'pets': [
+            {'name': 'Fido', 'is_active': True},
+            {'name': 'Mochi'},
+        ],
+    }
+
+    flat = flatten_nested_data(nested)
+
+    assert parse_nested_form_data(flat, coerce_values=False) == nested
+
+
+def test_flatten_nested_data_deeply_nested_shared_models() -> None:
+    from examples.shared_models import create_sample_nested_data
+
+    nested = create_sample_nested_data()
+
+    flat = flatten_nested_data(nested)
+
+    assert flat['departments[0].teams[0].members[0].name'] == 'Bob Wilson'
+    assert parse_nested_form_data(flat, coerce_values=False) == nested

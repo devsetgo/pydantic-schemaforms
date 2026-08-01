@@ -267,8 +267,15 @@ class EnhancedFormRenderer:
         styles = self._render_layout_support_styles() if inject_layout_styles else ''
         output_parts = [styles, form_markup] if styles else [form_markup]
 
-        has_model_list_fields = any(
-            resolve_ui_element(field_schema) == 'model_list' for _name, field_schema in fields
+        # Direct top-level fields cover the common case, but a form composed
+        # entirely of layout/tab fields (e.g. a tabbed wrapper) never lists
+        # 'model_list' among its own fields even when a nested sub-form
+        # rendered inside one of its tabs does -- so also check the actual
+        # rendered markup for the add-item button that model_list fields
+        # always emit, regardless of nesting depth or framework.
+        has_model_list_fields = (
+            any(resolve_ui_element(field_schema) == 'model_list' for _name, field_schema in fields)
+            or 'add-item-btn' in form_markup
         )
         if has_model_list_fields:
             from .model_list import ModelListRenderer

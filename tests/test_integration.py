@@ -1700,18 +1700,18 @@ def _valid_layout_post_payload() -> dict:
     # Note: LayoutDemonstrationForm renders nested layout fields without prefixes,
     # and model_list items use bracketed indices (parsed by parse_nested_form_data).
     return {
-        # PersonalInfoForm (vertical_tab)
+        # PersonalInfoForm (personal_info)
         'first_name': 'Alex',
         'last_name': 'Johnson',
         'email': 'alex.johnson@example.com',
-        # ContactInfoForm (horizontal_tab)
+        # ContactInfoForm (contact_info)
         'address': '456 Demo Street',
         'city': 'San Francisco',
-        # PreferencesForm (tabbed_tab) - defaults exist, but include one to ensure tab renders
+        # PreferencesForm (preferences) - defaults exist, but include one to ensure tab renders
         'notification_email': 'true',
         'theme': 'dark',
         'language': 'en',
-        # TaskListForm (list_tab) - must include at least one task
+        # TaskListForm (task_list) - must include at least one task
         'project_name': 'Demo Project',
         'tasks[0].task_name': 'Complete project setup',
         'tasks[0].priority': 'high',
@@ -1796,3 +1796,71 @@ def test_render_form_page_wrapped_by_default() -> None:
     html = render_form_page(create_login_form(), title='Login')
     assert html.splitlines()[0] == '<!--- Start Pydantic-SchemaForms -->'
     assert html.splitlines()[-1] == '<!--- End Pydantic-SchemaForms -->'
+
+
+# ===========================================================================
+# Section 24 – FastAPI example: pydantic-schema + flatten submit endpoints
+# ===========================================================================
+
+
+def test_api_form_pydantic_schema_flat_model(client: TestClient) -> None:
+    resp = client.get('/api/forms/login/pydantic-schema')
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body['form_type'] == 'login'
+    assert '$defs' not in body['schema']
+
+
+def test_api_form_pydantic_schema_nested_model_has_defs(client: TestClient) -> None:
+    resp = client.get('/api/forms/organization/pydantic-schema')
+    assert resp.status_code == 200
+    schema = resp.json()['schema']
+    assert 'Department' in schema['$defs']
+    assert 'Team' in schema['$defs']
+    assert 'TeamMember' in schema['$defs']
+
+
+def test_api_form_pydantic_schema_unknown_form_type_404(client: TestClient) -> None:
+    resp = client.get('/api/forms/does-not-exist/pydantic-schema')
+    assert resp.status_code == 404
+
+
+def test_api_submit_form_default_returns_nested_data(client: TestClient) -> None:
+    payload = {
+        'owner_name': 'Casey Jordan',
+        'email': 'casey@example.com',
+        'pets': [{'name': 'Fido', 'species': 'dog'}],
+    }
+    resp = client.post('/api/forms/pets/submit', json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body['success'] is True
+    assert body['data']['pets'] == [
+        {
+            'name': 'Fido',
+            'species': 'dog',
+            'age': None,
+            'weight': None,
+            'is_vaccinated': False,
+            'microchipped': False,
+            'breed': None,
+            'color': None,
+            'last_vet_visit': None,
+            'special_needs': None,
+        }
+    ]
+
+
+def test_api_submit_form_flatten_true_returns_flat_data(client: TestClient) -> None:
+    payload = {
+        'owner_name': 'Casey Jordan',
+        'email': 'casey@example.com',
+        'pets': [{'name': 'Fido', 'species': 'dog'}],
+    }
+    resp = client.post('/api/forms/pets/submit?flatten=true', json=payload)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body['success'] is True
+    assert body['data']['pets[0].name'] == 'Fido'
+    assert body['data']['pets[0].species'] == 'dog'
+    assert 'pets' not in body['data']

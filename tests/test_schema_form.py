@@ -249,6 +249,69 @@ class TestFormModelValidate:
             result.render_with_errors()
 
 
+class TestFormModelValidateFlatten:
+    """Test FormModel.validate(..., flatten=True)."""
+
+    def _make_nested_form(self):
+        class Pet(FormModel):
+            name: str = Field(..., min_length=1)
+            is_active: bool = False
+
+        class OwnerForm(FormModel):
+            owner: str = Field(..., min_length=1)
+            pets: list[Pet] = Field(default_factory=list)
+
+        return OwnerForm
+
+    def test_flatten_false_is_default_and_returns_nested_data(self):
+        OwnerForm = self._make_nested_form()
+        nested = {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
+
+        result = OwnerForm.validate(nested)
+
+        assert result.is_valid
+        assert result.data == nested
+
+    def test_flatten_true_returns_flat_bracket_dot_data(self):
+        OwnerForm = self._make_nested_form()
+        nested = {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
+
+        result = OwnerForm.validate(nested, flatten=True)
+
+        assert result.is_valid
+        assert result.data == {
+            'owner': 'Casey',
+            'pets[0].name': 'Fido',
+            'pets[0].is_active': True,
+        }
+
+    def test_flatten_true_accepts_pre_flattened_input(self):
+        OwnerForm = self._make_nested_form()
+        flat_input = {
+            'owner': 'Casey',
+            'pets[0].name': 'Fido',
+            'pets[0].is_active': True,
+        }
+
+        result = OwnerForm.validate(flat_input, flatten=True)
+
+        assert result.is_valid
+        assert result.data == flat_input
+
+    def test_flatten_true_is_idempotent_with_already_nested_input(self):
+        OwnerForm = self._make_nested_form()
+        nested = {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
+
+        result = OwnerForm.validate(nested, flatten=True)
+
+        assert result.is_valid
+        assert result.data == {
+            'owner': 'Casey',
+            'pets[0].name': 'Fido',
+            'pets[0].is_active': True,
+        }
+
+
 class TestFormModelIntegration:
     """Test FormModel integration with the rendering system."""
 
@@ -408,3 +471,97 @@ class TestAsApiModel:
         original_schema = ContactForm.model_json_schema()
         props = original_schema.get('properties', {})
         assert 'ui_element' in props['name']
+
+
+class TestGetPydanticJsonSchema:
+    """Tests for FormModel.get_pydantic_json_schema()."""
+
+    def _make_flat_form(self):
+        class ContactForm(FormModel):
+            name: str = Field(..., min_length=2, ui_element='text')
+            age: int = Field(..., ge=0, le=120)
+
+        return ContactForm
+
+    def _make_nested_form(self):
+        class Address(FormModel):
+            street: str = Field(..., min_length=1)
+            city: str = Field(..., min_length=1)
+
+        class Pet(FormModel):
+            name: str = Field(..., min_length=1)
+
+        class PersonForm(FormModel):
+            name: str = Field(..., min_length=1, ui_element='text')
+            address: Address
+            pets: list[Pet] = Field(default_factory=list)
+
+        return PersonForm, Address, Pet
+
+    def test_flat_model_schema_has_no_defs(self):
+        ContactForm = self._make_flat_form()
+        schema = ContactForm.get_pydantic_json_schema()
+
+        assert '$defs' not in schema
+        assert set(schema['properties']) == {'name', 'age'}
+
+    def test_flat_model_schema_has_no_ui_keys(self):
+        ContactForm = self._make_flat_form()
+        schema = ContactForm.get_pydantic_json_schema()
+
+        for prop in schema['properties'].values():
+            for key in prop:
+                assert not key.startswith('ui_'), f'UI key {key!r} leaked into schema'
+
+    def test_nested_basemodel_field_produces_ref_and_defs(self):
+        PersonForm, Address, _Pet = self._make_nested_form()
+        schema = PersonForm.get_pydantic_json_schema()
+
+        assert 'Address' in schema['$defs']
+        address_prop = schema['properties']['address']
+        assert '$ref' in address_prop or 'allOf' in address_prop
+
+    def test_list_of_basemodel_field_produces_array_of_ref(self):
+        PersonForm, _Address, _Pet = self._make_nested_form()
+        schema = PersonForm.get_pydantic_json_schema()
+
+        assert 'Pet' in schema['$defs']
+        pets_prop = schema['properties']['pets']
+        assert pets_prop['type'] == 'array'
+        assert '$ref' in pets_prop['items']
+
+    def test_get_json_schema_unaffected_by_new_method(self):
+        PersonForm, _Address, _Pet = self._make_nested_form()
+
+        # get_json_schema() keeps its existing flattened/UI-oriented shape,
+        # including the historical fallback to 'string' for nested fields.
+        ui_schema = PersonForm.get_json_schema()
+
+        assert ui_schema['properties']['address']['type'] == 'string'
+
+    def test_deeply_nested_shared_models_example(self):
+        from examples.shared_models import CompanyOrganizationForm
+
+        schema = CompanyOrganizationForm.get_pydantic_json_schema()
+
+        assert 'Department' in schema['$defs']
+        assert 'Team' in schema['$defs']
+        assert 'TeamMember' in schema['$defs']
+
+    def test_ref_template_passthrough(self):
+        PersonForm, _Address, _Pet = self._make_nested_form()
+        schema = PersonForm.get_pydantic_json_schema(ref_template='#/components/schemas/{model}')
+
+        address_prop = schema['properties']['address']
+        ref = address_prop.get('$ref') or address_prop['allOf'][0]['$ref']
+        assert ref.startswith('#/components/schemas/')
+
+    def test_by_alias_passthrough(self):
+        class AliasForm(FormModel):
+            full_name: str = Field(..., alias='fullName', min_length=1)
+
+        schema_aliased = AliasForm.get_pydantic_json_schema(by_alias=True)
+        schema_plain = AliasForm.get_pydantic_json_schema(by_alias=False)
+
+        assert 'fullName' in schema_aliased['properties']
+        assert 'full_name' in schema_plain['properties']

@@ -177,6 +177,30 @@ LOGIN_CSRF_SESSION_KEY = 'login_csrf_token'
 REGISTER_CSRF_SESSION_KEY = 'register_csrf_token'
 
 
+def _group_form_data(form_data) -> dict:
+    """Build a dict from Starlette FormData without losing repeated keys.
+
+    ``dict(form_data)`` keeps only the last value for a repeated key, which
+    silently drops all but one selection from a native ``<select multiple>``
+    or several checkboxes sharing one ``name``. Iterating
+    ``form_data.multi_items()`` instead preserves every value, grouping
+    repeats into a list so parse_nested_form_data() (and the schema-aware
+    coercion in validate_form_data()) can turn a single selection back into
+    a one-item list and a multi-selection into the full list.
+    """
+    grouped: dict = {}
+    for key, value in form_data.multi_items():
+        if key in grouped:
+            existing = grouped[key]
+            if isinstance(existing, list):
+                existing.append(value)
+            else:
+                grouped[key] = [existing, value]
+        else:
+            grouped[key] = value
+    return grouped
+
+
 def issue_login_csrf_token(request: Request) -> str:
     """Issue and persist a CSRF token for the login demo flow."""
     token = secrets.token_urlsafe(32)
@@ -206,10 +230,6 @@ def verify_register_csrf_token(request: Request, submitted_token) -> bool:
         return False
     return hmac.compare_digest(str(expected_token), str(submitted_token))
 
-
-# List[str]-typed fields on CompleteShowcaseForm -- see showcase_post()'s
-# form-data parsing for why these need special handling.
-_SHOWCASE_LIST_FIELDS = {'multiselect_field', 'checkbox_group_field'}
 
 SHOWCASE_CSRF_SESSION_KEY = 'showcase_csrf_token'
 
@@ -421,7 +441,7 @@ async def login_post(
     """Simple form example - Login form submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
 
     submitted_csrf_token = form_dict.pop('csrf_token', None)
     csrf_error = 'CSRF verification failed. Refresh the page and submit again.'
@@ -599,7 +619,7 @@ async def register_post(
     """Medium complexity form - User registration submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
 
     submitted_csrf_token = form_dict.pop('csrf_token', None)
     csrf_error = 'CSRF verification failed. Refresh the page and submit again.'
@@ -784,22 +804,13 @@ async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Complex form example - All features submission (async)."""
-    # Get form data asynchronously. Unlike every other route in this file,
     # CompleteShowcaseForm has genuinely multi-value fields (multiselect_field,
-    # checkbox_group_field), so a plain dict(form_data) would silently keep
-    # only the last submitted value per key. Use getlist() per key instead so
-    # repeated keys collect into a real list for parse_nested_form_data.
-    # These two are List[str]-typed, so they must stay lists even when only
-    # one option is checked/selected -- len(values) > 1 alone would collapse
-    # a single selection back down to a bare string and fail validation.
+    # checkbox_group_field). _group_form_data() preserves repeated keys as a
+    # list; validate_form_data()'s schema-aware coercion wraps a lone
+    # selection back into a single-item list for any List[<scalar>] field,
+    # so no per-field allowlist is needed here.
     form_data = await request.form()
-    form_dict = {}
-    for key in dict.fromkeys(form_data.keys()):
-        values = form_data.getlist(key)
-        if key in _SHOWCASE_LIST_FIELDS or len(values) > 1:
-            form_dict[key] = values
-        else:
-            form_dict[key] = values[0]
+    form_dict = _group_form_data(form_data)
 
     full_referer_path = create_refer_path(request)
 
@@ -948,10 +959,6 @@ async def showcase_post(
 # WIDGET GALLERY - TABBED BY INPUT-TYPE CATEGORY
 # ================================
 
-# List[str]-typed fields across WidgetGalleryForm's tabs -- see gallery_post()'s
-# form-data parsing for why these need special handling.
-_GALLERY_LIST_FIELDS = {'multiselect_input', 'checkbox_group_stacked', 'checkbox_group_buttons'}
-
 
 @router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_get(
@@ -1072,20 +1079,12 @@ async def gallery_post(
 ):
     """Tabbed widget gallery submission (async)."""
     # Several tabs have genuinely multi-value fields (multiselect_input,
-    # checkbox_group_stacked, checkbox_group_buttons) -- dict(form_data) would
-    # silently keep only the last value per repeated key, so use getlist()
-    # per key instead (same fix as showcase_post()). These three are
-    # List[str]-typed, so they must stay lists even with only one value
-    # checked/selected -- len(values) > 1 alone would collapse a single
-    # selection back down to a bare string and fail validation.
+    # checkbox_group_stacked, checkbox_group_buttons). _group_form_data()
+    # preserves repeated keys as a list; validate_form_data()'s schema-aware
+    # coercion wraps a lone selection back into a single-item list for any
+    # List[<scalar>] field, so no per-field allowlist is needed here.
     form_data = await request.form()
-    form_dict = {}
-    for key in dict.fromkeys(form_data.keys()):
-        values = form_data.getlist(key)
-        if key in _GALLERY_LIST_FIELDS or len(values) > 1:
-            form_dict[key] = values
-        else:
-            form_dict[key] = values[0]
+    form_dict = _group_form_data(form_data)
 
     parsed_data = parse_nested_form_data(form_dict)
     validation = WidgetGalleryForm.validate(
@@ -1300,7 +1299,7 @@ async def pets_post(
     """Pet registration form submission."""
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
 
     parsed_data = parse_nested_form_data(form_dict)
     validation = PetRegistrationForm.validate(
@@ -1433,7 +1432,7 @@ async def organization_post(
     """
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
 
     from examples.nested_forms_example import ComprehensiveTabbedForm
 
@@ -1545,7 +1544,7 @@ async def organization_shared_post(
     model can power multiple framework routes and API endpoints.
     """
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
 
     parsed_data = parse_nested_form_data(form_dict)
     validation = CompanyOrganizationForm.validate(
@@ -1611,25 +1610,25 @@ async def layouts_get(
     elif demo or not data:
         # Add demo data for easier testing of all layout types
         form_data = {
-            'vertical_tab': {
+            'personal_info': {
                 'first_name': 'Alex',
                 'last_name': 'Johnson',
                 'email': 'alex.johnson@example.com',
                 'birth_date': '1990-05-15',
             },
-            'horizontal_tab': {
+            'contact_info': {
                 'phone': '+1 (555) 987-6543',
                 'address': '456 Demo Street',
                 'city': 'San Francisco',
                 'postal_code': '94102',
             },
-            'tabbed_tab': {
+            'preferences': {
                 'notification_email': True,
                 'notification_sms': False,
                 'theme': 'dark',
                 'language': 'en',
             },
-            'list_tab': {
+            'task_list': {
                 'project_name': 'Demo Project',
                 'tasks': [
                     {
@@ -1683,7 +1682,7 @@ async def layouts_post(
 ):
     """Handle comprehensive layout demonstration form submission."""
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
     full_referer_path = create_refer_path(request)
 
     parsed_data = parse_nested_form_data(form_dict)
@@ -1805,7 +1804,7 @@ async def self_contained_post(
         selected_style = 'material'
 
     form_data = await request.form()
-    form_dict = dict(form_data)
+    form_dict = _group_form_data(form_data)
     parsed_data = parse_nested_form_data(form_dict)
     _submit_url = f'/self-contained?style={selected_style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}'
     validation = UserRegistrationForm.validate(
@@ -1878,13 +1877,42 @@ async def api_form_schema(form_type: str):
     return {'form_type': form_type, 'schema': schema, 'framework': 'fastapi'}
 
 
+@router.get('/api/forms/{form_type}/pydantic-schema', tags=['Generic Form API'])
+async def api_form_pydantic_schema(form_type: str):
+    """
+    Return the standard, nested-aware JSON Schema for the form's underlying
+    Pydantic model, via ``get_pydantic_json_schema()``.
+
+    Unlike ``/schema`` above (a flattened, UI-oriented shape used for
+    rendering), this includes real ``$defs``/``$ref`` for nested BaseModel
+    and List[BaseModel] fields — e.g. try `form_type=organization` to see
+    Department/Team/TeamMember/Certification each get their own `$defs`
+    entry instead of being collapsed to a generic `string`/`object` type.
+    """
+
+    if form_type not in FORM_REGISTRY:
+        raise HTTPException(status_code=404, detail='Form type not found')
+
+    form_class = FORM_REGISTRY[form_type]
+    schema = form_class.get_pydantic_json_schema()
+
+    return {'form_type': form_type, 'schema': schema, 'framework': 'fastapi'}
+
+
 @router.post('/api/forms/{form_type}/submit', tags=['Generic Form API'])
-async def api_submit_form(form_type: str, request: Request):
+async def api_submit_form(form_type: str, request: Request, flatten: bool = False):
     """
     Validate JSON form submissions against a selected Pydantic form model.
 
     This shows the API workflow behind the HTML examples:
     request payload -> model validation -> normalized data/errors response.
+
+    By default, nested models (e.g. the `organization` form's
+    departments -> teams -> members) round-trip as nested JSON, matching the
+    shape of the underlying Pydantic model. Pass ``?flatten=true`` to submit
+    and receive bracket+dot flat keys instead (e.g.
+    ``"departments[0].teams[0].members[0].name"``), which some form-building
+    clients prefer.
     """
 
     if form_type not in FORM_REGISTRY:
@@ -1894,7 +1922,7 @@ async def api_submit_form(form_type: str, request: Request):
 
     json_data = await request.json()
 
-    validation = form_class.validate(json_data)
+    validation = form_class.validate(json_data, flatten=flatten)
 
     return {
         'success': validation.is_valid,
@@ -1987,7 +2015,7 @@ async def contact_post(
 ):
     """Accept and validate a browser form submission (multipart/form-data)."""
     raw = await request.form()
-    data = parse_nested_form_data(raw)
+    data = parse_nested_form_data(raw.multi_items())
     result = ContactForm.validate(data, submit_url=f'/contact?style={style}', framework=style)
     if result.is_valid:
         return templates.TemplateResponse(
@@ -2091,7 +2119,7 @@ async def feedback_post(
 ):
     """Accept and validate a browser feedback submission."""
     raw = await request.form()
-    data = parse_nested_form_data(raw)
+    data = parse_nested_form_data(raw.multi_items())
     result = FeedbackForm.validate(data, submit_url=f'/feedback?style={style}', framework=style)
     if result.is_valid:
         return templates.TemplateResponse(
@@ -2171,7 +2199,7 @@ async def live_validation_get(request: Request, style: str = 'bootstrap'):
 async def live_validation_post(request: Request, style: str = 'bootstrap'):
     """Handle contact form submission for the live-validation demo."""
     raw = await request.form()
-    data = parse_nested_form_data(raw)
+    data = parse_nested_form_data(raw.multi_items())
     result = ContactForm.validate(
         data, submit_url=f'/live-validation?style={style}', framework=style
     )
