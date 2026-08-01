@@ -142,6 +142,24 @@ else:
 
 `result` always exposes `.is_valid`, `.data`, and `.errors` regardless of the path.
 
+By default `.data` mirrors the underlying Pydantic model's shape — nested
+`BaseModel`/`List[BaseModel]` fields come back as nested dicts/lists, matching
+`model_dump()`. Pass `flatten=True` to get (and accept) bracket+dot flat keys
+instead (e.g. `"pets[0].name"`), the same notation used for `model_list` HTML
+field names:
+
+```python
+result = RegistrationForm.validate(data, submit_url="/register", flatten=True)
+# result.data uses flat "field[0].sub" keys instead of nested dicts/lists
+```
+
+See [Nested vs. flat form data](recipes.md#nested-vs-flat-form-data) in the
+recipes guide for a full nested-model example, and
+[JSON Schema output](recipes.md#json-schema-output) for
+`get_pydantic_json_schema()`, which returns the standard, `$defs`-aware JSON
+Schema of the form's underlying Pydantic model (as opposed to
+`get_json_schema()`'s flattened UI shape).
+
 ### Using validate_form_data() directly
 
 `validate_form_data()` is the lower-level function used by `FormModel.validate()`. It is

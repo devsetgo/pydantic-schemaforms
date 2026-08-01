@@ -1758,7 +1758,9 @@ def test_form_layouts_vertical_horizontal_header_and_exception_branches(
 
     monkeypatch.setattr(vertical, '_get_forms', lambda: [_BadForm])
     result_v = vertical.validate({'a': 1})
-    assert result_v.errors.get('_form') == 'boom'
+    # Delegates to validate_form_data(), whose generic-exception fallback
+    # uses the 'general' error key (not layout-specific '_form').
+    assert result_v.errors.get('general') == 'boom'
 
     from pydantic_schemaforms.form_layouts import HorizontalLayout
 
@@ -1769,7 +1771,7 @@ def test_form_layouts_vertical_horizontal_header_and_exception_branches(
 
     monkeypatch.setattr(horizontal, '_get_forms', lambda: [_BadForm])
     result_h = horizontal.validate({'a': 1})
-    assert result_h.errors.get('_form') == 'boom'
+    assert result_h.errors.get('general') == 'boom'
 
 
 @pytest.mark.filterwarnings(

@@ -448,6 +448,82 @@ async def contact_api(data: ContactSchema):
 
 ---
 
+## JSON Schema output
+
+`get_pydantic_json_schema()` returns the standard JSON Schema of the form's
+underlying Pydantic model — with real `$defs`/`$ref` for nested `BaseModel`
+and `List[BaseModel]` fields. Use this instead of `get_json_schema()`
+(a flattened, UI-oriented shape meant for the renderer, which does not
+represent nested fields) whenever you need a spec-compliant schema for an
+external consumer (OpenAPI tooling, a JSON Schema validator, a code
+generator, etc.):
+
+```python
+from typing import List
+from pydantic_schemaforms import Field, FormModel
+
+class Address(FormModel):
+    street: str = Field(..., title="Street")
+    city:   str = Field(..., title="City")
+
+class PersonForm(FormModel):
+    name:    str          = Field(..., title="Full Name", ui_element="text")
+    address: Address      = Field(..., title="Address")
+    aliases: List[str]    = Field(default_factory=list)
+
+schema = PersonForm.get_pydantic_json_schema()
+# schema["$defs"]["Address"] exists; schema["properties"]["address"] is a $ref
+
+# Pass through Pydantic's own model_json_schema() options as needed:
+openapi_schema = PersonForm.get_pydantic_json_schema(
+    ref_template="#/components/schemas/{model}"
+)
+```
+
+`get_pydantic_json_schema()` is built on `as_api_model()` (same UI-key
+stripping as the dual-use pattern above), so it is always additive and safe
+to call regardless of what UI metadata the form declares.
+
+---
+
+## Nested vs. flat form data
+
+By default, `FormModel.validate()` returns `result.data` shaped exactly
+like the underlying (possibly nested) Pydantic model — a `List[BaseModel]`
+field like `pets` above comes back as a nested list of dicts, matching
+`model_dump()`. Pass `flatten=True` to opt into bracket+dot flat keys
+instead (the same notation used for `model_list` HTML field names and for
+`parse_nested_form_data()`), for both the accepted input and the returned
+`result.data`:
+
+```python
+nested = {"owner": "Casey", "pets": [{"name": "Fido", "is_active": True}]}
+
+# Default: nested in, nested out — mirrors the Pydantic model shape.
+result = PersonForm.validate(nested, submit_url="/people")
+# result.data == {"owner": "Casey", "pets": [{"name": "Fido", "is_active": True}]}
+
+# flatten=True: flat in (nested input is also accepted), flat out.
+result = PersonForm.validate(nested, submit_url="/people", flatten=True)
+# result.data == {"owner": "Casey", "pets[0].name": "Fido", "pets[0].is_active": True}
+
+flat_input = {"owner": "Casey", "pets[0].name": "Fido", "pets[0].is_active": True}
+result = PersonForm.validate(flat_input, submit_url="/people", flatten=True)
+# same result — flatten=True un-flattens bracket+dot input before validating
+```
+
+`flatten_nested_data()` (the inverse of `parse_nested_form_data()`) is
+available directly if you need to flatten data outside of `.validate()`:
+
+```python
+from pydantic_schemaforms import flatten_nested_data
+
+flatten_nested_data({"pets": [{"name": "Fido"}]})
+# {"pets[0].name": "Fido"}
+```
+
+---
+
 ## Live HTMX validation
 
 Validate individual fields on blur without a page reload. Requires HTMX loaded in the page.

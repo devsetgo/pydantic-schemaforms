@@ -161,20 +161,45 @@ def parse_nested_form_data(
     Accepts either a mapping (``dict``/Starlette ``FormData``/etc.) or an
     iterable of ``(key, value)`` pairs.
 
+    A key that repeats -- e.g. a native ``<select multiple>`` or several
+    checkboxes sharing one ``name`` -- collects into a list of values
+    instead of the last one silently winning. This only works if *form_data*
+    actually carries the duplicates: pass ``form_data.multi_items()`` (not
+    ``dict(form_data)``, and not a plain ``Mapping``, whose ``.items()``
+    can only ever hold one value per key) when the source is a Starlette
+    ``FormData``/multidict.
+
     Example:
         ``{"pets[0].name": "Fido"}`` -> ``{"pets": [{"name": "Fido"}]}``
+        ``[("colors", "red"), ("colors", "blue")]`` -> ``{"colors": ["red", "blue"]}``
     """
 
     items = form_data.items() if isinstance(form_data, Mapping) else form_data
 
+    grouped: dict[str, list[Any]] = {}
+    order: list[str] = []
+    for key, raw_value in items:
+        key = str(key)
+        if key not in grouped:
+            grouped[key] = []
+            order.append(key)
+        grouped[key].append(raw_value)
+
     result: dict[str, Any] = {}
 
-    for key, raw_value in items:
-        value = coerce_form_value(raw_value) if coerce_values else raw_value
-        tokens = _tokenize_form_path(str(key))
+    for key in order:
+        raw_values = grouped[key]
+        if len(raw_values) == 1:
+            value = coerce_form_value(raw_values[0]) if coerce_values else raw_values[0]
+        else:
+            value = (
+                [coerce_form_value(v) for v in raw_values] if coerce_values else list(raw_values)
+            )
+
+        tokens = _tokenize_form_path(key)
 
         if not tokens:
-            result[str(key)] = value
+            result[key] = value
             continue
 
         if len(tokens) == 1 and isinstance(tokens[0], str):
@@ -186,4 +211,39 @@ def parse_nested_form_data(
     return result
 
 
-__all__ = ['parse_nested_form_data', 'coerce_form_value']
+def flatten_nested_data(data: Any, *, _prefix: str = '') -> dict[str, Any]:
+    """Convert a nested dict/list structure into flat bracket+dot keys.
+
+    Inverse of ``parse_nested_form_data``:
+    ``{"pets": [{"name": "Fido"}]}`` -> ``{"pets[0].name": "Fido"}``
+
+    Empty dicts/lists are preserved as literal container values under their
+    parent key (e.g. ``{"tags": []}`` -> ``{"tags": []}``) since bracket+dot
+    notation has no way to express "empty" via leaf keys alone; the result is
+    still ``parse_nested_form_data``-round-trippable, but not every value in
+    the returned mapping is guaranteed to be a scalar.
+    """
+    result: dict[str, Any] = {}
+
+    if isinstance(data, Mapping):
+        if not data and _prefix:
+            result[_prefix] = {}
+            return result
+        for key, value in data.items():
+            child_prefix = f'{_prefix}.{key}' if _prefix else str(key)
+            result.update(flatten_nested_data(value, _prefix=child_prefix))
+        return result
+
+    if isinstance(data, list):
+        if not data and _prefix:
+            result[_prefix] = []
+            return result
+        for index, item in enumerate(data):
+            result.update(flatten_nested_data(item, _prefix=f'{_prefix}[{index}]'))
+        return result
+
+    result[_prefix] = data
+    return result
+
+
+__all__ = ['parse_nested_form_data', 'flatten_nested_data', 'coerce_form_value']

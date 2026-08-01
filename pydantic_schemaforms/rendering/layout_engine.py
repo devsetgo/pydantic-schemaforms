@@ -648,58 +648,8 @@ class LayoutEngine:
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
-        form_mapping = {
-            'vertical_tab': 'PersonalInfoForm',
-            'horizontal_tab': 'ContactInfoForm',
-            'tabbed_tab': 'NotificationsForm',
-            'list_tab': 'TaskListForm',
-        }
-
-        form_name = form_mapping.get(field_name)
-        if form_name:
-            try:
-                if form_name == 'PersonalInfoForm':
-                    from examples.shared_models import (
-                        PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'ContactInfoForm':
-                    from examples.shared_models import (
-                        ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'NotificationsForm':
-                    from examples.shared_models import (
-                        NotificationsForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'TaskListForm':
-                    from examples.shared_models import (
-                        TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                else:  # pragma: no cover - exhaustive safety
-                    raise ImportError(f'Unknown form: {form_name}')
-
-                nested_data = get_nested_form_data(field_name, context.form_data)
-                nested_renderer = self._renderer.__class__(framework=self._renderer.framework)
-                return nested_renderer.render_form_fields_only(
-                    FormClass,
-                    data=nested_data,
-                    errors={},
-                    layout='vertical',
-                )
-            except Exception as exc:  # pragma: no cover - fallback messaging
-                return f"""
-                <div class="layout-field-placeholder alert alert-info">
-                    <p>Layout demonstration: {escape(form_name)}</p>
-                    <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
-                    <small class="text-danger d-block">Could not render: {escape(str(exc))}</small>
-                </div>
-                """
-
-        return f"""
-            <div class="layout-field-unknown alert alert-secondary">
-                <p>Unknown layout field type</p>
-                <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
-            </div>
-            """
+        """Same fallback resolution as render_layout_field_fallback()."""
+        return self.render_layout_field_fallback(field_name, ui_info, context)
 
     def render_side_by_side_layout(
         self,
@@ -812,10 +762,10 @@ class LayoutEngine:
         context: RenderContext,
     ) -> str:
         form_mapping = {
-            'vertical_tab': 'PersonalInfoForm',
-            'horizontal_tab': 'ContactInfoForm',
-            'tabbed_tab': 'NotificationsForm',
-            'list_tab': 'TaskListForm',
+            'personal_info': 'PersonalInfoForm',
+            'contact_info': 'ContactInfoForm',
+            'preferences': 'NotificationsForm',
+            'task_list': 'TaskListForm',
         }
 
         form_name = form_mapping.get(field_name)
@@ -999,15 +949,15 @@ def _extract_layout_nested_data(layout_value: Any, main_data: dict[str, Any]) ->
 
 def _extract_fallback_mapped_data(field_name: str, main_data: dict[str, Any]) -> dict[str, Any]:
     field_data_mapping = {
-        'vertical_tab': ['first_name', 'last_name', 'email', 'birth_date'],
-        'horizontal_tab': ['phone', 'address', 'city', 'postal_code'],
-        'tabbed_tab': [
+        'personal_info': ['first_name', 'last_name', 'email', 'birth_date'],
+        'contact_info': ['phone', 'address', 'city', 'postal_code'],
+        'preferences': [
             'notification_email',
             'notification_sms',
             'notification_push',
             'digest_frequency',
         ],
-        'list_tab': ['project_name', 'tasks'],
+        'task_list': ['project_name', 'tasks'],
     }
 
     nested_data: dict[str, Any] = {}

@@ -100,7 +100,7 @@ from .live_validation import HTMXValidationConfig, LiveValidator
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
 from .enhanced_renderer import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
-from .form_data import coerce_form_value, parse_nested_form_data
+from .form_data import coerce_form_value, flatten_nested_data, parse_nested_form_data
 
 from .rendering.layout_engine import (
     AccordionLayout,
@@ -245,6 +245,7 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'handle_form_async',
     # ── FORM DATA UTILITIES ──
     'parse_nested_form_data',
+    'flatten_nested_data',
     'coerce_form_value',
     # ── T-STRING SAFETY: structural XSS protection ──
     'SafeHTML',

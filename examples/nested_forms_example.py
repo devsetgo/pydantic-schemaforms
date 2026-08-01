@@ -855,7 +855,7 @@ class KitchenSinkForm(FormModel):
     multiselect_input: List[str] = FormField(
         ['python', 'javascript'],
         title='Multiple Selection',
-        input_type='select',
+        input_type='multiselect',
         options=[
             {'value': 'python', 'label': '🐍 Python'},
             {'value': 'javascript', 'label': '📜 JavaScript'},
@@ -880,7 +880,7 @@ class KitchenSinkForm(FormModel):
     toggle_input: bool = FormField(
         False,
         title='Toggle Switch',
-        input_type='checkbox',
+        input_type='toggle',
         help_text='Boolean toggle switch',
         icon='toggle-on',
     )
@@ -1301,7 +1301,7 @@ class SchedulingForm(FormModel):
     weekend_days: List[str] = FormField(
         ['saturday', 'sunday'],
         title='Weekend Days',
-        input_type='select',
+        input_type='multiselect',
         options=[
             {'value': 'sunday', 'label': 'Sunday'},
             {'value': 'monday', 'label': 'Monday'},

@@ -11,10 +11,10 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Union, get_args, get_origin
 from collections.abc import Callable
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 # Import version check to ensure compatibility
 
@@ -947,13 +947,91 @@ class ValidationResult:
         return f'ValidationResult(valid=False, errors={self.errors})'
 
 
-def validate_form_data(form_model_class: type[Any], data: dict[str, Any]) -> ValidationResult:
+def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any]) -> dict[str, Any]:
+    """Recursively repair two HTML-form-submission quirks Pydantic won't:
+
+    1. A blank date/datetime/time/number input submits the empty string, not
+       an absent key. Pydantic never coerces "" to None for a type like
+       ``date | None``, so an intentionally-blank optional field (e.g. a
+       certification with no expiry date) fails validation with a confusing
+       "input is too short" error instead of being accepted as absent. Fields
+       that accept ``str`` (e.g. ``Optional[str]``) are left untouched, since
+       "" is a legitimate value for those.
+    2. A ``List[<scalar>]`` field (multiselect, checkbox group) submits a
+       bare scalar -- not a single-item list -- when exactly one option is
+       selected; only two-or-more selections naturally group into a list.
+       Wrap a lone scalar back into a single-item list so it validates the
+       same way regardless of how many options were chosen.
+    """
+    result = dict(data)
+
+    for field_name, field_info in model_fields.items():
+        if field_name not in result:
+            continue
+
+        value = result[field_name]
+        annotation = field_info.annotation
+        union_args = get_args(annotation) if get_origin(annotation) is Union else ()
+        non_none_types = (
+            [t for t in union_args if t is not type(None)] if union_args else [annotation]
+        )
+        is_optional = bool(union_args) and type(None) in union_args
+
+        list_type = next((t for t in non_none_types if get_origin(t) is list), None)
+        list_item_type = get_args(list_type)[0] if list_type and get_args(list_type) else None
+        list_item_model = (
+            list_item_type
+            if isinstance(list_item_type, type) and issubclass(list_item_type, BaseModel)
+            else None
+        )
+
+        if list_type is not None and list_item_model is None:
+            if value not in (None, '') and not isinstance(value, list):
+                result[field_name] = [value]
+            continue
+
+        if isinstance(value, dict):
+            for candidate in non_none_types:
+                if isinstance(candidate, type) and issubclass(candidate, BaseModel):
+                    result[field_name] = _coerce_html_form_values(value, candidate.model_fields)
+                    break
+            continue
+
+        if isinstance(value, list):
+            if list_item_model is not None:
+                item_fields = list_item_model.model_fields
+                result[field_name] = [
+                    _coerce_html_form_values(item, item_fields) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            continue
+
+        if value == '' and is_optional:
+            allows_string = any(
+                isinstance(candidate, type) and issubclass(candidate, str)
+                for candidate in non_none_types
+            )
+            if not allows_string:
+                result[field_name] = None
+
+    return result
+
+
+def validate_form_data(
+    form_model_class: type[Any], data: dict[str, Any], *, flatten: bool = False
+) -> ValidationResult:
     """
     Validate form data against a Pydantic model.
 
     Args:
         form_model_class: The Pydantic model class to validate against
-        data: Dictionary of form data to validate
+        data: Dictionary of form data to validate. If ``flatten`` is True,
+            this may use bracket+dot flat keys (e.g. ``"pets[0].name"``);
+            already-nested data is also accepted (a no-op passthrough).
+        flatten: When True, ``data`` is un-flattened via
+            ``parse_nested_form_data`` before validation, and the returned
+            ``ValidationResult.data`` uses flat bracket+dot keys instead of
+            nested dicts/lists.
 
     Returns:
         ValidationResult with is_valid, data, and errors
@@ -964,6 +1042,11 @@ def validate_form_data(form_model_class: type[Any], data: dict[str, Any]) -> Val
         ``extra='ignore'`` behaviour and is intentional for HTML form submissions,
         which may include browser-injected fields (CSRF tokens, honeypots, etc.).
     """
+    from .form_data import flatten_nested_data, parse_nested_form_data
+
+    if flatten:
+        data = parse_nested_form_data(data, coerce_values=False)
+
     runtime_model = (
         form_model_class.get_runtime_model()
         if hasattr(form_model_class, 'get_runtime_model')
@@ -972,7 +1055,10 @@ def validate_form_data(form_model_class: type[Any], data: dict[str, Any]) -> Val
 
     try:
         # Create instance to validate
-        validated_instance = runtime_model(**data)
+        coerced_data = _coerce_html_form_values(
+            data, getattr(runtime_model, 'model_fields', {}) or {}
+        )
+        validated_instance = runtime_model(**coerced_data)
 
         # Convert to dict for consistent return format
         validated_data = validated_instance.model_dump()
@@ -1058,7 +1144,7 @@ def validate_form_data(form_model_class: type[Any], data: dict[str, Any]) -> Val
             if layout_errors:
                 return ValidationResult(
                     is_valid=False,
-                    data=validated_data,
+                    data=flatten_nested_data(validated_data) if flatten else validated_data,
                     errors=layout_errors,
                     form_model_cls=form_model_class,
                     original_data=data,
@@ -1066,7 +1152,7 @@ def validate_form_data(form_model_class: type[Any], data: dict[str, Any]) -> Val
 
         return ValidationResult(
             is_valid=True,
-            data=validated_data,
+            data=flatten_nested_data(validated_data) if flatten else validated_data,
             form_model_cls=form_model_class,
             original_data=data,
         )
