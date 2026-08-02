@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 
 from pydantic_schemaforms.templates import TemplateString
+from pydantic_schemaforms.tstring import SafeHTML, html
 from pydantic_schemaforms.assets.runtime import (
     bootstrap_icons_css_tag,
     framework_css_tag,
@@ -135,14 +136,20 @@ class RendererTheme:
         # Add timing display if requested
         timing_display = ''
         if render_time is not None:
-            timing_display = f'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #6c757d; text-align: right;">Rendered in {render_time:.3f}s</div>'
+            render_time_str = f'{render_time:.3f}'
+            timing_display = html(
+                t'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #6c757d; '
+                t'text-align: right;">Rendered in {render_time_str}s</div>'
+            )
 
         wrapper = template.render(
-            form_id=escape(str(form_id)) if form_id else '',
-            form_class=escape(str(form_class)) if form_class else '',
-            form_style=escape(str(form_style)) if form_style else '',
-            method=escape(str(method)) if method else 'POST',
-            action=escape(str(action)) if action else '',
+            # form_wrapper's t-string template already HTML-escapes these --
+            # escaping again here would double-escape (e.g. '&' -> '&amp;amp;').
+            form_id=str(form_id) if form_id else '',
+            form_class=str(form_class) if form_class else '',
+            form_style=str(form_style) if form_style else '',
+            method=str(method) if method else 'POST',
+            action=str(action) if action else '',
             form_attributes=' '.join(extra_attrs),
             csrf_token=csrf_token,
             form_content=form_content,
@@ -156,10 +163,11 @@ class RendererTheme:
 
     def render_submit_button(self, button_class: str) -> str:
         """Return HTML for the submit button."""
+        # submit_button's t-string template already HTML-escapes these.
         template = self.form_style.templates.submit_button
         return template.render(
-            submit_label=escape(self.submit_label),
-            button_class=escape(button_class) if button_class else '',
+            submit_label=self.submit_label,
+            button_class=button_class or '',
         )
 
     # --- Framework-specific extension hooks -------------------------------------------------
@@ -227,22 +235,22 @@ class RendererTheme:
         add_button_label: str,
     ) -> str:
         """Render framework-aware markup for schema-driven model lists."""
+        # All the model_list_* t-string templates below already HTML-escape
+        # their string params -- escaping again here would double-escape.
         templates = self.form_style.templates
         required_indicator = ' <span class="text-danger">*</span>' if is_required else ''
-        help_html = (
-            templates.model_list_help.render(help_text=escape(help_text)) if help_text else ''
-        )
-        error_html = templates.model_list_error.render(error_text=escape(error)) if error else ''
+        help_html = templates.model_list_help.render(help_text=help_text) if help_text else ''
+        error_html = templates.model_list_error.render(error_text=error) if error else ''
 
         return templates.model_list_container.render(
-            field_name=escape(field_name, quote=True),
-            label=escape(label) if label else '',
+            field_name=field_name,
+            label=label or '',
             required_indicator=required_indicator,
             min_items=str(min_items),
             max_items=str(max_items),
-            items_id=escape(f'{field_name}-items', quote=True),
+            items_id=f'{field_name}-items',
             items_html=items_html,
-            add_button_label=escape(add_button_label),
+            add_button_label=add_button_label,
             help_html=help_html,
             error_html=error_html,
         )
@@ -433,28 +441,30 @@ class MaterialEmbeddedTheme(RendererTheme):
         classes = 'md-button md-button-filled'
         if button_class:
             classes = f'{classes} {button_class}'.strip()
+        button_html = html(
+            t'    <button type="submit" class="{classes}">{self.submit_label}</button>'
+        )
         return '\n'.join(
             [
                 '<div class="md-field">',
-                f'    <button type="submit" class="{classes}">{escape(self.submit_label)}</button>',
+                button_html,
                 '</div>',
             ]
         )
 
     def render_layout_section(self, title: str, body_html: str, help_text: str) -> str:
-        help_markup = (
-            f'<p class="md-layout-card__help">{escape(help_text)}</p>' if help_text else ''
-        )
+        help_markup = html(t'<p class="md-layout-card__help">{help_text}</p>') if help_text else ''
+        _body_html = SafeHTML(str(body_html))
         return '\n'.join(
             [
                 '<section class="md-layout-card">',
                 '  <header class="md-layout-card__header">',
-                f'    <span class="md-layout-card__title">{escape(title)}</span>',
+                html(t'    <span class="md-layout-card__title">{title}</span>'),
                 '  </header>',
                 '  <div class="md-layout-card__body">',
-                f'    {help_markup}',
+                html(t'    {help_markup}'),
                 '    <div class="md-layout-card__content">',
-                f'      {body_html}',
+                html(t'      {_body_html}'),
                 '    </div>',
                 _CLOSE_INNER_DIV,
                 _CLOSE_SECTION,
@@ -599,29 +609,38 @@ function toggleAccordion(sectionId, buttonElement) {
         add_button_label: str,
     ) -> str:
         required_class = ' required' if is_required else ''
-        help_block = f'<p class="md-help-text">{escape(help_text)}</p>' if help_text else ''
-        error_block = f'<p class="md-error-text">{escape(error)}</p>' if error else ''
+        help_block = html(t'<p class="md-help-text">{help_text}</p>') if help_text else ''
+        error_block = html(t'<p class="md-error-text">{error}</p>') if error else ''
+        add_icon = SafeHTML(str(render_material_icon('add', classes='md-button__icon')))
 
         parts = [
             '<section class="md-model-list-wrapper">',
-            f'  <label class="md-field-label{required_class}">{escape(label)}</label>',
-            f'  <div class="model-list-container md-model-list-container" data-field-name="{field_name}" '
-            f'       data-min-items="{min_items}" data-max-items="{max_items}">',
-            '    <div class="model-list-items md-model-list-items" '
-            f'         id="{field_name}-items">',
+            html(t'  <label class="md-field-label{required_class}">{label}</label>'),
+            html(
+                t'  <div class="model-list-container md-model-list-container" '
+                t'data-field-name="{field_name}" '
+                t'       data-min-items="{min_items}" data-max-items="{max_items}">'
+            ),
+            html(
+                t'    <div class="model-list-items md-model-list-items" '
+                t'         id="{field_name}-items">'
+            ),
         ]
 
         if items_html:
-            parts.append(f'      {items_html}')
+            _items_html = SafeHTML(str(items_html))
+            parts.append(html(t'      {_items_html}'))
 
         parts.extend(
             [
                 '    </div>',
                 '    <div class="md-model-list-actions">',
-                f'      <button type="button" class="md-button md-button-tonal add-item-btn" '
-                f'              data-target="{field_name}">',
-                f'        {render_material_icon("add", classes="md-button__icon")}',
-                f'        <span class="md-button__label">{escape(add_button_label)}</span>',
+                html(
+                    t'      <button type="button" class="md-button md-button-tonal add-item-btn" '
+                    t'              data-target="{field_name}">'
+                ),
+                html(t'        {add_icon}'),
+                html(t'        <span class="md-button__label">{add_button_label}</span>'),
                 '      </button>',
                 '    </div>',
                 _CLOSE_INNER_DIV,
@@ -629,9 +648,9 @@ function toggleAccordion(sectionId, buttonElement) {
         )
 
         if help_block:
-            parts.append(f'  {help_block}')
+            parts.append(html(t'  {help_block}'))
         if error_block:
-            parts.append(f'  {error_block}')
+            parts.append(html(t'  {error_block}'))
 
         parts.append(_CLOSE_SECTION)
         return '\n'.join(parts)

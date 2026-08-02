@@ -8,6 +8,7 @@ from collections.abc import Callable
 
 from pydantic_schemaforms.layout_base import BaseLayout
 from pydantic_schemaforms.templates import FormTemplates
+from pydantic_schemaforms.tstring import SafeHTML, html
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
 from .schema_parser import extract_ui_info
@@ -21,6 +22,11 @@ _DEFAULT_FORM_STYLE = get_form_style('default', 'default')
 LayoutRenderer = Callable[
     [str, dict[str, Any], Any, dict[str, Any], RenderContext, 'LayoutEngine'], str
 ]
+
+
+def _wrap_side_by_side_column(col: str) -> str:
+    _col = SafeHTML(str(col))
+    return html(t'<div class="side-by-side-column">{_col}</div>')
 
 
 class HorizontalLayout(BaseLayout):
@@ -389,9 +395,8 @@ document.addEventListener('keydown', function(e) {
         self, modal_id: str, title: str, content: str, footer: str = '', **kwargs: Any
     ) -> None:
         safe_modal_id = ''.join(c if c.isalnum() or c in '_-' else '_' for c in modal_id)
-        default_footer = (
-            footer or f'<button onclick="closeModal(\'{safe_modal_id}\')">Close</button>'
-        )
+        onclick = f"closeModal('{safe_modal_id}')"
+        default_footer = footer or html(t'<button onclick="{onclick}">Close</button>')
         super().__init__(
             content=content,
             modal_id=modal_id,
@@ -696,8 +701,9 @@ class LayoutEngine:
                     )
                 )
 
+            wrapped_columns = [_wrap_side_by_side_column(col) for col in columns]
             layout = HorizontalLayout(
-                content=[f'<div class="side-by-side-column">{col}</div>' for col in columns],
+                content=wrapped_columns,
                 class_='side-by-side-row',
                 gap='1.5rem',
                 align_items='flex-start',
@@ -799,20 +805,23 @@ class LayoutEngine:
                 )
                 return form_html
             except Exception as exc:  # pragma: no cover
-                return f"""
+                help_text = ui_info.get('help_text', '')
+                error_message = str(exc)
+                return html(t"""
                 <div class="layout-field-placeholder alert alert-info">
-                    <p>Layout demonstration: {escape(form_name)}</p>
-                    <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
-                    <small class="text-danger d-block">Could not render: {escape(str(exc))}</small>
+                    <p>Layout demonstration: {form_name}</p>
+                    <small class="text-muted">{help_text}</small>
+                    <small class="text-danger d-block">Could not render: {error_message}</small>
                 </div>
-                """
+                """)
 
-        return f"""
+        help_text = ui_info.get('help_text', '')
+        return html(t"""
             <div class="layout-field-unknown alert alert-secondary">
                 <p>Unknown layout field type</p>
-                <small class="text-muted">{escape(ui_info.get('help_text', ''))}</small>
+                <small class="text-muted">{help_text}</small>
             </div>
-            """
+            """)
 
     def _render_layout_card(self, title: str, body_html: str, help_text: str) -> str:
         theme = getattr(self._renderer, 'theme', None)
@@ -851,12 +860,14 @@ class LayoutEngine:
     ) -> str:
         title = field_schema.get('title', field_name.replace('_', ' ').title())
         help_text = ui_info.get('help_text', '')
-        return f"""
+        error_message = str(exc)
+        help_html = html(t'<small class="text-muted">{help_text}</small>') if help_text else ''
+        return html(t'''
         <div class="layout-field-error alert alert-warning">
-            <p>Error rendering layout field "{escape(title)}": {escape(str(exc))}</p>
-            {f'<small class="text-muted">{escape(help_text)}</small>' if help_text else ''}
+            <p>Error rendering layout field "{title}": {error_message}</p>
+            {help_html}
         </div>
-        """
+        ''')
 
     # ------------------------------------------------------------------
     # Internal helpers

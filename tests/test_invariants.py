@@ -15,10 +15,13 @@ Invariants enforced here:
   1. No source file in pydantic_schemaforms/ may import string.Template.
   2. The ruff banned-api config in pyproject.toml must still name string.Template.
   3. This file itself must not be gutted (checked by tests/test_meta_invariants.py).
+  4. No source file may build an HTML/script tag from a raw f-string outside
+     of an explicit SafeHTML(...) wrapper — see "T-string rule" in CLAUDE.md.
 """
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 
@@ -93,7 +96,101 @@ def test_tstring_ruff_config_present() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Invariant 3: self-integrity — key test functions must still exist here
+# Invariant 3: no raw f-string HTML construction outside SafeHTML(...)
+# ---------------------------------------------------------------------------
+#
+# The t-string rule's actual safety property, established across the
+# pydantic_schemaforms/ codebase, is: an f-string whose literal content opens
+# an HTML tag (e.g. '<div ...', '<script>', '<!DOCTYPE') must either be
+# converted to a t-string with the html() processor (which auto-escapes every
+# interpolation), or — for the narrow "JS/CSS generation inside a <script>/
+# <style> block" exception in CLAUDE.md's t-string rule #4 — be passed
+# directly as the sole argument to SafeHTML(...) at its definition site, so a
+# human reviewer has explicitly marked it as reviewed, trusted content rather
+# than an unescaped user-data path. An f-string matching the tag-opening
+# heuristic that is NOT wrapped this way is exactly the pattern this whole
+# invariant exists to catch.
+
+# Files allowed to contain such f-strings unwrapped (empty on purpose — keep
+# it that way; if you must add an entry, first ask whether the code should
+# be converted to a t-string or wrapped in SafeHTML(...) instead).
+_HTML_FSTRING_ALLOWLIST: set[str] = set()
+
+
+def _looks_like_html_open(text: str) -> bool:
+    stripped = text.lstrip()
+    if not stripped.startswith('<'):
+        return False
+    return len(stripped) > 1 and (stripped[1].isalpha() or stripped[1] in '/!')
+
+
+class _ParentTrackingVisitor(ast.NodeVisitor):
+    """Records each node's parent so JoinedStr nodes can check their call site."""
+
+    def __init__(self) -> None:
+        self.parents: dict[int, ast.AST] = {}
+
+    def generic_visit(self, node: ast.AST) -> None:
+        for child in ast.iter_child_nodes(node):
+            self.parents[id(child)] = node
+        super().generic_visit(node)
+
+
+def _find_unsafe_html_fstrings(path: Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+    visitor = _ParentTrackingVisitor()
+    visitor.visit(tree)
+
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.JoinedStr) or not node.values:
+            continue
+        first = node.values[0]
+        if not isinstance(first, ast.Constant) or not isinstance(first.value, str):
+            continue
+        if not _looks_like_html_open(first.value):
+            continue
+
+        parent = visitor.parents.get(id(node))
+        wrapped_in_safe_html = (
+            isinstance(parent, ast.Call)
+            and isinstance(parent.func, ast.Name)
+            and parent.func.id == 'SafeHTML'
+        )
+        if wrapped_in_safe_html:
+            continue
+
+        rel = path.relative_to(_SRC_ROOT.parent)
+        violations.append(f'{rel}:{node.lineno}')
+    return violations
+
+
+def test_no_unwrapped_html_fstrings_in_source() -> None:
+    """f-strings that open an HTML tag must be t-strings or SafeHTML(...)-wrapped.
+
+    This is the guard against exactly the drift this invariant was added to
+    stop: raw f-string HTML construction creeping back into
+    pydantic_schemaforms/ instead of using html(t'...') (auto-escaped) or an
+    explicit, reviewed SafeHTML(...) wrap for the narrow JS/CSS-in-<script>
+    exception. See CLAUDE.md §"T-string rule" rule 4.
+    """
+    violations: list[str] = []
+    for path in sorted(_SRC_ROOT.rglob('*.py')):
+        if path.name in _HTML_FSTRING_ALLOWLIST:
+            continue
+        violations.extend(_find_unsafe_html_fstrings(path))
+
+    assert not violations, (
+        'Raw f-string HTML construction found outside SafeHTML(...) — convert to a '
+        "t-string with html(t'...') (auto-escapes interpolations), or if this is "
+        'genuinely trusted JS/CSS content inside a <script>/<style> block (CLAUDE.md '
+        "T-string rule #4), wrap it directly in SafeHTML(f'...') at its definition:\n"
+        + '\n'.join(f'  {v}' for v in violations)
+    )
+
+
+# ---------------------------------------------------------------------------
+# Invariant 4: self-integrity — key test functions must still exist here
 # ---------------------------------------------------------------------------
 
 
@@ -107,6 +204,7 @@ def test_invariant_self_integrity() -> None:
     required = [
         'test_no_string_template_in_source',
         'test_tstring_ruff_config_present',
+        'test_no_unwrapped_html_fstrings_in_source',
         'test_meta_guard_present',
     ]
     missing = [name for name in required if name not in own_text]

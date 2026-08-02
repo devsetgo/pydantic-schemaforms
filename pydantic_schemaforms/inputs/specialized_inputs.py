@@ -44,27 +44,29 @@ class FileInput(FileInputBase):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
         # Render the input
-        file_html = f'<input {attributes_str} />'
+        file_html: SafeHTML = SafeHTML(_render_input_tag(self._build_attributes_string(attrs)))
 
         field_name = kwargs.get('name', '')
         field_id = kwargs.get('id', field_name)
 
         if enable_drag_drop:
-            file_html = f"""
+            file_html = html(t'''
             <div class="file-drop-zone" id="{field_id}_dropzone">
                 {file_html}
                 <div class="file-drop-zone-hint">Drag and drop files here, or click to browse</div>
             </div>
-            """
+            ''')
 
-        preview_html = ''
+        preview_html: SafeHTML = SafeHTML('')
         if show_preview:
-            preview_html = f"""
-            <div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>
+            preview_div = html(
+                t'<div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>'
+            )
+            # JS-only content below (rule 4 exception) -- field_id/field_name are
+            # embedded as JS string literals inside getElementById(...), not HTML
+            # attribute values, so they stay in an f-string.
+            preview_script = SafeHTML(f"""
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 const fileInput = document.getElementById('{field_id}');
@@ -103,11 +105,12 @@ class FileInput(FileInputBase):
                 }}
             }});
             </script>
-            """
+            """)
+            preview_html = SafeHTML(preview_div + preview_script)
 
-        drag_drop_script = ''
+        drag_drop_script: SafeHTML = SafeHTML('')
         if enable_drag_drop:
-            drag_drop_script = f"""
+            drag_drop_script = SafeHTML(f"""
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 const dropzone = document.getElementById('{field_id}_dropzone');
@@ -136,12 +139,14 @@ class FileInput(FileInputBase):
                 }});
             }});
             </script>
-            """
+            """)
 
         if not (show_preview or enable_drag_drop):
             return file_html
 
-        return f'<div class="file-input-group">{file_html}{preview_html}{drag_drop_script}</div>'
+        return html(
+            t'<div class="file-input-group">{file_html}{preview_html}{drag_drop_script}</div>'
+        )
 
 
 class ImageInput(FormInput):
@@ -171,11 +176,8 @@ class ImageInput(FormInput):
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
 
-        # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
-
         # Render the input
-        return f'<input {attributes_str} />'
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class ColorInput(FormInput):
@@ -199,11 +201,15 @@ class ColorInput(FormInput):
             field_id = kwargs.get('id', field_name)
             current_value = kwargs.get('value', '#000000')
 
-            value_display = f"""
+            value_div = html(t'''
             <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
                 <span id="{field_name}_value" style="font-family: monospace;">{current_value}</span>
                 <div id="{field_name}_swatch" style="width: 20px; height: 20px; background-color: {current_value}; border: 1px solid #ccc; margin-left: 5px;"></div>
             </div>
+            ''')
+            # JS-only content below (rule 4 exception) -- field_id/field_name
+            # are embedded as JS string literals, not HTML attribute values.
+            value_script = SafeHTML(f"""
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 const colorInput = document.getElementById('{field_id}');
@@ -218,8 +224,9 @@ class ColorInput(FormInput):
                 }}
             }});
             </script>
-            """
-            return f'<div class="color-input-group">{color_html}{value_display}</div>'
+            """)
+            value_display = SafeHTML(value_div + value_script)
+            return html(t'<div class="color-input-group">{color_html}{value_display}</div>')
 
         return color_html
 
@@ -488,7 +495,7 @@ class RatingStarsInput(FormInput):
             )
         stars_html = SafeHTML(''.join(star_parts))  # NOSONAR
 
-        _star_rating_assets_markup = f"""
+        assets = SafeHTML(f"""
             <style>
             .star-rating-input .stars {{
                 font-size: 24px;
@@ -534,8 +541,7 @@ class RatingStarsInput(FormInput):
                 }});
             }});
             </script>
-        """
-        assets = SafeHTML(_star_rating_assets_markup)  # NOSONAR
+        """)  # NOSONAR
 
         return html(t'''
         <div class="star-rating-input" data-name="{name}">
@@ -585,7 +591,7 @@ class TagsInput(FormInput):
         )
 
         separator_js = json.dumps(separator)
-        _tags_assets_markup = f"""
+        assets = SafeHTML(f"""
             <style>
             .tags-input {{
                 border: 1px solid #ccc;
@@ -668,8 +674,7 @@ class TagsInput(FormInput):
                 }});
             }});
             </script>
-        """
-        assets = SafeHTML(_tags_assets_markup)  # NOSONAR
+        """)  # NOSONAR
 
         return html(t'''
         <div class="tags-input" data-name="{name}">

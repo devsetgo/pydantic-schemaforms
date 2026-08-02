@@ -5,6 +5,8 @@ Includes NumberInput, RangeInput, and specialized numeric inputs.
 
 from typing import Any
 
+from pydantic_schemaforms.tstring import SafeHTML, html
+
 from .base import NumericInput
 
 
@@ -33,12 +35,18 @@ class NumberInput(NumericInput):
         if not show_stepper or not field_id:
             return input_html
 
-        return f"""
+        _input_html = SafeHTML(str(input_html))
+        wrapper = html(t'''
 <div class="number-stepper">
     <button type="button" class="number-stepper-decrement" data-target="{field_id}" aria-label="Decrease">&minus;</button>
-    {input_html}
+    {_input_html}
     <button type="button" class="number-stepper-increment" data-target="{field_id}" aria-label="Increase">+</button>
 </div>
+''')
+        # JS/CSS-only below (rule 4 exception) -- field_id is embedded as a
+        # JS string literal / CSS attribute selector value, not an HTML
+        # attribute value.
+        assets = SafeHTML(f"""
 <style>
 .number-stepper {{
     display: inline-flex;
@@ -69,7 +77,8 @@ document.addEventListener('DOMContentLoaded', function() {{
     }});
 }});
 </script>
-"""
+""")
+        return SafeHTML(wrapper + assets)
 
 
 class RangeInput(NumericInput):
@@ -91,8 +100,11 @@ class RangeInput(NumericInput):
             value = kwargs.get('value', kwargs.get('min', '0'))
 
             # Add value display and JavaScript to update it
-            value_display = f"""
-            <output for="{field_name}" id="{field_name}-value">{value}</output>
+            output_html = html(
+                t'<output for="{field_name}" id="{field_name}-value">{value}</output>'
+            )
+            # JS-only below (rule 4 exception).
+            script_html = SafeHTML(f"""
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 const range = document.getElementById('{field_name}');
@@ -104,7 +116,8 @@ class RangeInput(NumericInput):
                 }}
             }});
             </script>
-            """
+            """)
+            value_display = SafeHTML(output_html + script_html)
             return range_html + value_display
 
         return range_html
@@ -220,10 +233,11 @@ class RatingInput(RangeInput):
         range_html = super().render(show_value=False, **kwargs)
 
         # Add star rating display
-        stars_html = f"""
-        <div class="star-rating" id="{field_name}-stars">
-            {'★' * int(kwargs.get('value', '3'))}{'☆' * (max_rating - int(kwargs.get('value', '3')))}
-        </div>
+        current_rating = int(kwargs.get('value', '3'))
+        stars_text = '★' * current_rating + '☆' * (max_rating - current_rating)
+        stars_div = html(t'<div class="star-rating" id="{field_name}-stars">{stars_text}</div>')
+        # JS-only below (rule 4 exception).
+        stars_script = SafeHTML(f"""
         <script>
         document.addEventListener('DOMContentLoaded', function() {{
             const range = document.getElementById('{field_name}');
@@ -237,7 +251,8 @@ class RatingInput(RangeInput):
             }}
         }});
         </script>
-        """
+        """)
+        stars_html = SafeHTML(stars_div + stars_script)
 
         return range_html + stars_html
 
@@ -255,12 +270,12 @@ class SliderInput(RangeInput):
             min_val = kwargs.get('min', '0')
             max_val = kwargs.get('max', '100')
 
-            labels_html = f"""
+            labels_html = html(t"""
             <div class="slider-labels" style="display: flex; justify-content: space-between; margin-top: 5px;">
                 <span class="slider-min">{min_val}</span>
                 <span class="slider-max">{max_val}</span>
             </div>
-            """
+            """)
             return slider_html + labels_html
 
         return slider_html

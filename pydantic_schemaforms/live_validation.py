@@ -388,10 +388,12 @@ async def validate_field(field_name: str, request: ValidationRequest):
         if validation_endpoint is None:
             validation_endpoint = f'/validate/{field_name}'
 
-        # Build validation attributes
+        # Build validation attributes -- these feed into field_template's
+        # `validation_attributes` param, which is passed through as SafeHTML
+        # (not re-escaped), so values must be escaped here.
         validation_attrs = [
-            f'hx-post="{validation_endpoint}"',
-            f'hx-target="#{field_name}-feedback"',
+            f'hx-post="{_html_escape(validation_endpoint, quote=True)}"',
+            f'hx-target="#{_html_escape(field_name, quote=True)}-feedback"',
             'hx-swap="innerHTML"',
             'data-validate-endpoint="true"',
         ]

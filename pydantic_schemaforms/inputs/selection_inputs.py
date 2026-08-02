@@ -7,7 +7,7 @@ import json
 from html import escape
 from typing import Any
 
-from pydantic_schemaforms.tstring import substitute
+from pydantic_schemaforms.tstring import SafeHTML, html, substitute
 from .base import FormInput, SelectInputBase
 
 
@@ -55,20 +55,13 @@ class SelectInput(SelectInputBase):
                 selected = option.get('selected', False)
                 disabled = option.get('disabled', False)
 
-                attrs = [f'value="{escape(str(value))}"']
-
-                if selected:
-                    attrs.append('selected')
-                if disabled:
-                    attrs.append('disabled')
-
-                attrs_str = ' '.join(attrs)
-                option_parts.append(f'<option {attrs_str}>{escape(label)}</option>')
+                extra = SafeHTML(
+                    (' selected' if selected else '') + (' disabled' if disabled else '')
+                )
+                option_parts.append(html(t'<option value="{value}"{extra}>{label}</option>'))
             else:
                 # Simple string option
-                option_parts.append(
-                    f'<option value="{escape(str(option))}">{escape(str(option))}</option>'
-                )
+                option_parts.append(html(t'<option value="{option}">{option}</option>'))
 
         return '\n'.join(option_parts)
 
@@ -105,20 +98,31 @@ class MultiSelectInput(SelectInput):
         if not field_id:
             return select_html
 
-        search_html = (
-            f'<input type="text" class="multiselect-search" '
-            f'placeholder="{escape(search_placeholder)}" />'
+        search_html: SafeHTML = (
+            html(
+                t'<input type="text" class="multiselect-search" '
+                t'placeholder="{search_placeholder}" />'
+            )
             if searchable
-            else ''
+            else SafeHTML('')
         )
 
-        return f"""
+        _select_html = SafeHTML(str(select_html))
+        wrapper = html(t'''
 <div class="multiselect-enhanced" data-target="{field_id}">
     <div class="multiselect-chips" id="{field_id}_chips"></div>
     {search_html}
     <ul class="multiselect-dropdown" id="{field_id}_dropdown" hidden></ul>
-    {select_html}
+    {_select_html}
 </div>
+''')
+
+        # The CSS/style rules below are static and the JS interpolates only
+        # `field_id` into JS string literals / CSS selectors, not into an
+        # HTML attribute position -- per the t-string rule, JS generation may
+        # stay an f-string; the surrounding <style>/<script> tags are marked
+        # SafeHTML since this whole block is developer-authored, not user data.
+        style_and_script = SafeHTML(f"""
 <style>
 .multiselect-enhanced {{
     position: relative;
@@ -249,7 +253,9 @@ document.addEventListener('DOMContentLoaded', function() {{
     select.classList.add('multiselect-native-hidden');
 }});
 </script>
-"""
+""")
+
+        return wrapper + style_and_script
 
 
 class CheckboxInput(FormInput):
@@ -275,15 +281,15 @@ class CheckboxInput(FormInput):
         attrs['type'] = self.get_input_type()
 
         # Build the attributes string
-        attributes_str = self._build_attributes_string(attrs)
+        _attrs = SafeHTML(self._build_attributes_string(attrs))
 
         # Render checkbox
-        checkbox_html = f'<input {attributes_str} />'
+        checkbox_html: SafeHTML = html(t'<input {_attrs} />')
 
         if label:
             field_name = kwargs.get('name', '')
             field_id = kwargs.get('id', field_name)
-            checkbox_html = f'<label for="{field_id}">{checkbox_html} {escape(label)}</label>'
+            checkbox_html = html(t'<label for="{field_id}">{checkbox_html} {label}</label>')
 
         return checkbox_html
 
@@ -348,17 +354,17 @@ class CheckboxGroup(SelectInputBase):
                     checkbox_attrs[attr] = kwargs[attr]
 
             checkbox_input = CheckboxInput()
-            checkbox_html = checkbox_input.render(**checkbox_attrs)
+            checkbox_html = SafeHTML(str(checkbox_input.render(**checkbox_attrs)))
 
             # Wrap in label
-            checkbox_item = f"""
+            checkbox_item = html(t'''
             <div class="{item_class}">
                 <label for="{checkbox_id}">
                     {checkbox_html}
-                    <span class="checkbox-label">{escape(label)}</span>
+                    <span class="checkbox-label">{label}</span>
                 </label>
             </div>
-            """
+            ''')
             checkboxes.append(checkbox_item)
 
         # Build fieldset attributes -- class always includes just the base +
@@ -404,8 +410,8 @@ class RadioInput(FormInput):
 
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-        attributes_str = self._build_attributes_string(attrs)
-        return f'<input {attributes_str} />'
+        _attrs = SafeHTML(self._build_attributes_string(attrs))
+        return html(t'<input {_attrs} />')
 
 
 class RadioGroup(SelectInputBase):
@@ -463,17 +469,17 @@ class RadioGroup(SelectInputBase):
                     radio_attrs[attr] = kwargs[attr]
 
             radio_input = RadioInput()
-            radio_html = radio_input.render(**radio_attrs)
+            radio_html = SafeHTML(str(radio_input.render(**radio_attrs)))
 
             # Wrap in label
-            radio_item = f"""
+            radio_item = html(t'''
             <div class="{item_class}">
                 <label for="{radio_id}">
                     {radio_html}
-                    <span class="radio-label">{escape(label)}</span>
+                    <span class="radio-label">{label}</span>
                 </label>
             </div>
-            """
+            ''')
             radio_buttons.append(radio_item)
 
         # Build fieldset attributes -- class always includes just the base +
@@ -526,29 +532,37 @@ class ToggleSwitch(CheckboxInput):
         field_id = kwargs.get('id', field_name)
         label = kwargs.pop('label', None)
 
-        checkbox_html = super().render(**kwargs)
+        _checkbox_html = SafeHTML(str(super().render(**kwargs)))
+        _label_html = (
+            html(t'<span class="toggle-switch-text">{label}</span>') if label else SafeHTML('')
+        )
 
-        return f"""
+        label_wrapper = html(t'''
         <label class="toggle-switch-wrapper toggle-switch-label" for="{field_id}">
-            {checkbox_html}
+            {_checkbox_html}
             <span class="toggle-switch-slider"></span>
-            {f'<span class="toggle-switch-text">{escape(label)}</span>' if label else ''}
+            {_label_html}
         </label>
+        ''')
+
+        # Static CSS -- no interpolation, so it stays a plain (non-f) string
+        # and is appended as trusted, developer-authored markup.
+        style_block = SafeHTML("""
         <style>
-        .toggle-switch-wrapper {{
+        .toggle-switch-wrapper {
             position: relative;
             display: inline-block;
             width: 46px;
             height: 24px;
             vertical-align: middle;
             cursor: pointer;
-        }}
-        .toggle-switch-wrapper input[type="checkbox"] {{
+        }
+        .toggle-switch-wrapper input[type="checkbox"] {
             opacity: 0;
             width: 0;
             height: 0;
-        }}
-        .toggle-switch-slider {{
+        }
+        .toggle-switch-slider {
             position: absolute;
             top: 0;
             left: 0;
@@ -557,8 +571,8 @@ class ToggleSwitch(CheckboxInput):
             background-color: #ccc;
             transition: .3s;
             border-radius: 24px;
-        }}
-        .toggle-switch-slider::before {{
+        }
+        .toggle-switch-slider::before {
             position: absolute;
             content: "";
             height: 18px;
@@ -568,30 +582,32 @@ class ToggleSwitch(CheckboxInput):
             background-color: white;
             transition: .3s;
             border-radius: 50%;
-        }}
-        .toggle-switch-wrapper input:checked + .toggle-switch-slider {{
+        }
+        .toggle-switch-wrapper input:checked + .toggle-switch-slider {
             background-color: #2196F3;
-        }}
-        .toggle-switch-wrapper input:focus + .toggle-switch-slider {{
+        }
+        .toggle-switch-wrapper input:focus + .toggle-switch-slider {
             box-shadow: 0 0 1px #2196F3;
-        }}
-        .toggle-switch-wrapper input:checked + .toggle-switch-slider::before {{
+        }
+        .toggle-switch-wrapper input:checked + .toggle-switch-slider::before {
             transform: translateX(22px);
-        }}
-        .toggle-switch-wrapper input:disabled + .toggle-switch-slider {{
+        }
+        .toggle-switch-wrapper input:disabled + .toggle-switch-slider {
             opacity: .5;
             cursor: not-allowed;
-        }}
-        .toggle-switch-wrapper input:disabled {{
+        }
+        .toggle-switch-wrapper input:disabled {
             cursor: not-allowed;
-        }}
-        .toggle-switch-text {{
+        }
+        .toggle-switch-text {
             margin-left: 8px;
             vertical-align: middle;
             cursor: pointer;
-        }}
+        }
         </style>
-        """
+        """)
+
+        return label_wrapper + style_block
 
 
 class ComboBoxInput(SelectInput):
@@ -627,14 +643,15 @@ class ComboBoxInput(SelectInput):
         listbox_id = f'{field_name}_listbox'
 
         # Build options for datalist
-        options_html = ''
+        option_parts: list[str] = []
         for option in options:
             if isinstance(option, dict):
                 value = option.get('value', '')
                 label = option.get('label', str(value))
-                options_html += f'<option value="{escape(str(value))}">{escape(label)}</option>\n'
+                option_parts.append(html(t'<option value="{value}">{label}</option>'))
             else:
-                options_html += f'<option value="{escape(str(option))}"></option>\n'
+                option_parts.append(html(t'<option value="{option}"></option>'))
+        options_html = SafeHTML(''.join(f'{part}\n' for part in option_parts))
 
         # Build input attributes
         input_attrs = self.validate_attributes(**kwargs)
@@ -653,7 +670,7 @@ class ComboBoxInput(SelectInput):
         if not field_id:
             return combo_html
 
-        script = f"""
+        script = SafeHTML(f"""
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
     const input = document.getElementById('{field_id}');
@@ -723,5 +740,5 @@ document.addEventListener('DOMContentLoaded', function() {{
     }});
 }});
 </script>
-"""
+""")
         return combo_html + script

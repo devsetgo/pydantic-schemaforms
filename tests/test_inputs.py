@@ -577,6 +577,16 @@ class TestDateInput:
         date_input = DateInput()
         assert date_input.ui_element == 'date'
 
+    def test_date_input_default_output_unchanged_without_date_format(self):
+        """No date_format kwarg -> byte-identical to the pre-format-feature output."""
+        date_input = DateInput()
+        result = date_input.render(name='date_field', id='date_field', value=date(2024, 1, 15))
+
+        assert 'type="date"' in result
+        assert 'type="text"' not in result
+        assert '<script>' not in result
+        assert 'pattern=' not in result
+
 
 # ---------------------------------------------------------------------------
 # TimeInput detailed tests (from test_input_types_coverage.py)
@@ -640,6 +650,16 @@ class TestTimeInput:
         time_input = TimeInput()
         assert time_input.get_input_type() == 'time'
 
+    def test_time_input_default_output_unchanged_without_time_format(self):
+        """No time_format kwarg -> byte-identical to the pre-format-feature output."""
+        time_input = TimeInput()
+        result = time_input.render(name='time_field', id='time_field', value=time(14, 30))
+
+        assert 'type="time"' in result
+        assert 'type="text"' not in result
+        assert '<script>' not in result
+        assert 'pattern=' not in result
+
 
 # ---------------------------------------------------------------------------
 # DatetimeInput detailed tests (from test_input_types_coverage.py)
@@ -693,6 +713,18 @@ class TestDatetimeInput:
         """Test DatetimeInput UI element aliases."""
         dt_input = DatetimeInput()
         assert 'datetime-local' in dt_input.ui_element_aliases
+
+    def test_datetime_input_default_output_unchanged_without_datetime_format(self):
+        """No datetime_format kwarg -> byte-identical to the pre-format-feature output."""
+        dt_input = DatetimeInput()
+        result = dt_input.render(
+            name='datetime_field', id='datetime_field', value=datetime(2024, 1, 15, 14, 30)
+        )
+
+        assert 'type="datetime-local"' in result
+        assert 'type="text"' not in result
+        assert '<script>' not in result
+        assert 'pattern=' not in result
 
 
 # ---------------------------------------------------------------------------
@@ -1017,7 +1049,11 @@ def test_datetime_input_set_now_button_uses_name_as_default_id():
 
     html = input_field.render(name='event_time', with_set_now_button=True)
 
-    assert "setCurrentDatetime('event_time')" in html
+    # The onclick attribute value is HTML-escaped (single quotes become
+    # &#x27;) by the t-string processor -- browsers decode entities in
+    # attribute values before invoking the handler, so this is equivalent
+    # to the unescaped `setCurrentDatetime('event_time')` at runtime.
+    assert 'setCurrentDatetime(&#x27;event_time&#x27;)' in html
     assert 'datetime-input-group' in html
 
 

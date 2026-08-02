@@ -10,11 +10,13 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Any, Union, get_args, get_origin
 from collections.abc import Callable
 
 from pydantic import BaseModel, ValidationError
+
+from .tstring import SafeHTML
 
 # Import version check to ensure compatibility
 
@@ -643,7 +645,10 @@ class FormValidator:
 
         fn_block = '\n\n'.join(field_functions)
         validators_block = ',\n'.join(field_validations)
-        return f"""<script>
+        # JS/CSS-only content below (rule 4 exception): fn_block/validators_block
+        # are built from model field names (developer-controlled identifiers)
+        # and validator-generated JS, not user input.
+        return SafeHTML(f"""<script>
 {fn_block}
 
 const formValidators = {{
@@ -733,7 +738,7 @@ document.addEventListener('DOMContentLoaded', function() {{
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }}
-</style>"""
+</style>""")
 
 
 # Common cross-field validation rules
@@ -962,6 +967,14 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
        selected; only two-or-more selections naturally group into a list.
        Wrap a lone scalar back into a single-item list so it validates the
        same way regardless of how many options were chosen.
+    3. A date/time/datetime field rendered with a custom ``date_format``/
+       ``time_format``/``datetime_format`` (see ``inputs/datetime_inputs.py``)
+       submits a string in that custom shape, not ISO 8601 -- Pydantic's
+       native parser only understands ISO. Try ``strptime`` against the
+       configured format first; on failure, leave the value untouched so
+       Pydantic's own ISO parser still gets a try (keeping JSON/API callers
+       that submit plain ISO strings working regardless of what display
+       format the HTML form uses).
     """
     result = dict(data)
 
@@ -1013,6 +1026,43 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
             )
             if not allows_string:
                 result[field_name] = None
+            continue
+
+        if isinstance(value, str) and value != '':
+            # time is NOT a subclass of date (only datetime is) -- must check
+            # both roots explicitly, then disambiguate datetime (a date
+            # subclass) from plain date below.
+            date_type = next(
+                (t for t in non_none_types if isinstance(t, type) and issubclass(t, (date, time))),
+                None,
+            )
+            if date_type is not None:
+                extra = getattr(field_info, 'json_schema_extra', None) or {}
+                ui_options = extra.get('ui_options', {}) if isinstance(extra, dict) else {}
+                is_datetime = issubclass(date_type, datetime)
+                fmt_key = (
+                    'datetime_format'
+                    if is_datetime
+                    else 'time_format'
+                    if issubclass(date_type, time)
+                    else 'date_format'
+                )
+                # fmt_key must match the *_format kwarg names in
+                # inputs/datetime_inputs.py's DateInput/TimeInput/DatetimeInput.
+                fmt = ui_options.get(fmt_key) if isinstance(ui_options, dict) else None
+                if fmt:
+                    try:
+                        parsed = datetime.strptime(value, fmt)
+                    except ValueError, TypeError:
+                        pass  # leave value unchanged -- Pydantic's ISO parser tries next
+                    else:
+                        result[field_name] = (
+                            parsed
+                            if is_datetime
+                            else parsed.time()
+                            if issubclass(date_type, time)
+                            else parsed.date()
+                        )
 
     return result
 
