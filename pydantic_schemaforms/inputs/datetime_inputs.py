@@ -17,6 +17,9 @@ _DATETIME_FMT = '%Y-%m-%dT%H:%M'
 
 _STRFTIME_DIRECTIVE_RE = re.compile(r'(%.)')
 
+# Reserves room for the picker-toggle icon button (see _wrap_with_picker_toggle).
+_PICKER_TOGGLE_PADDING_STYLE = 'padding-right: 2.25rem;'
+
 # Directives that map to a fixed-width run of digits -- safe for live
 # character-by-character mask-driven input, using the same '#'-per-digit
 # convention PhoneInput/_mask_to_pattern already use in text_inputs.py.
@@ -229,7 +232,7 @@ def _render_set_now_button(field_id: str, fmt: str) -> str:
     if js_expr is None:
         return ''
 
-    fn_name = f'setCurrentDatetime_{re.sub(r"[^a-zA-Z0-9_]", "_", field_id)}'
+    fn_name = f'setCurrentDatetime_{re.sub(r"\W", "_", field_id, flags=re.ASCII)}'
     onclick = f"{fn_name}('{field_id}')"
 
     button_html = html(t'''
@@ -409,7 +412,7 @@ class DateInput(FormInput):
         )
         if show_picker_toggle:
             kwargs['style'] = _append_inline_style(
-                str(kwargs.get('style', '')), 'padding-right: 2.25rem;'
+                str(kwargs.get('style', '')), _PICKER_TOGGLE_PADDING_STYLE
             )
 
         attrs = self.validate_attributes(**kwargs)
@@ -485,7 +488,7 @@ class TimeInput(FormInput):
         )
         if show_picker_toggle:
             kwargs['style'] = _append_inline_style(
-                str(kwargs.get('style', '')), 'padding-right: 2.25rem;'
+                str(kwargs.get('style', '')), _PICKER_TOGGLE_PADDING_STYLE
             )
 
         attrs = self.validate_attributes(**kwargs)
@@ -609,7 +612,7 @@ class DatetimeInput(FormInput):
         )
         if show_picker_toggle:
             kwargs['style'] = _append_inline_style(
-                str(kwargs.get('style', '')), 'padding-right: 2.25rem;'
+                str(kwargs.get('style', '')), _PICKER_TOGGLE_PADDING_STYLE
             )
 
         attrs = self.validate_attributes(**kwargs)

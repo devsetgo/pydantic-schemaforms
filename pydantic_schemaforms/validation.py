@@ -1040,13 +1040,13 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
                 extra = getattr(field_info, 'json_schema_extra', None) or {}
                 ui_options = extra.get('ui_options', {}) if isinstance(extra, dict) else {}
                 is_datetime = issubclass(date_type, datetime)
-                fmt_key = (
-                    'datetime_format'
-                    if is_datetime
-                    else 'time_format'
-                    if issubclass(date_type, time)
-                    else 'date_format'
-                )
+                is_time = issubclass(date_type, time)
+                if is_datetime:
+                    fmt_key = 'datetime_format'
+                elif is_time:
+                    fmt_key = 'time_format'
+                else:
+                    fmt_key = 'date_format'
                 # fmt_key must match the *_format kwarg names in
                 # inputs/datetime_inputs.py's DateInput/TimeInput/DatetimeInput.
                 fmt = ui_options.get(fmt_key) if isinstance(ui_options, dict) else None
@@ -1056,13 +1056,12 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
                     except ValueError, TypeError:
                         pass  # leave value unchanged -- Pydantic's ISO parser tries next
                     else:
-                        result[field_name] = (
-                            parsed
-                            if is_datetime
-                            else parsed.time()
-                            if issubclass(date_type, time)
-                            else parsed.date()
-                        )
+                        if is_datetime:
+                            result[field_name] = parsed
+                        elif is_time:
+                            result[field_name] = parsed.time()
+                        else:
+                            result[field_name] = parsed.date()
 
     return result
 

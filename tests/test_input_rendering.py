@@ -757,7 +757,8 @@ class TestDatetimeInputsCustomFormat:
         html = inp.render(name='d', id='d', date_format='%Y %B %d')
         assert 'schemaforms-picker-toggle' in html
         assert 'aria-label="Open date picker"' in html
-        assert '"January"' in html and '"December"' in html
+        assert '"January"' in html
+        assert '"December"' in html
         assert 'replace(/\\D/g' not in html
 
     def test_time_input_with_format_includes_toggle(self):
@@ -826,7 +827,8 @@ class TestDatetimeInputsCustomFormat:
         html = inp.render(name='t', id='t', time_format='%H:%M', value=time(23, 30))
         assert 'type="text"' in html
         assert 'value="23:30"' in html
-        assert 'AM' not in html and 'PM' not in html
+        assert 'AM' not in html
+        assert 'PM' not in html
         assert 'step=' not in html
 
     def test_time_input_with_12h_format_includes_ampm_pattern_and_toggle_but_no_mask_script(self):
