@@ -14,7 +14,7 @@ isort==8.0.1 # Vulnerabilities: None
 mike==2.2.0 # Vulnerabilities: None
 mkdocs-material==9.7.6 # Vulnerabilities: None
 mkdocs-print-site-plugin==2.8 # Vulnerabilities: None
-mkdocstrings[python]==1.0.4 # Vulnerabilities: None
+mkdocstrings[python]==1.0.6 # Vulnerabilities: None
 packaging==26.2 # Vulnerabilities: None
 pre-commit==4.6.0 # Vulnerabilities: None
 pydantic-extra-types[all]==2.11.1 # Vulnerabilities: None
