@@ -116,13 +116,27 @@ The FastAPI example app renders all three profiles as tabs at `/ai-instructions`
 from the "AI Assistant Instructions" card on the home page) — the same content
 `get_app_instructions()` returns, rendered from the packaged markdown files.
 
+## Authoring the packaged instructions
+
+The 3 files under `pydantic_schemaforms/assets/ai/` (`generic_app_instructions.md`,
+`copilot_app_instructions.md`, `claude_app_instructions.md`) are **generated** — never
+hand-edit them directly, the same rule CLAUDE.md documents for `docs/index.md` etc. Edit
+`pydantic_schemaforms/assets/ai/_shared_instructions.md` (the ~90% common body — contract,
+library boundary, worked example, ui_element table, field cookbook, mapping, layout, CSRF,
+model_list, live validation, common mistakes) or `_profile_{generic,copilot,claude}.md` (the
+small per-profile title/intro and closing prompt-starter, containing an
+`<!-- INCLUDE: _shared_instructions.md -->` marker) instead, then run `make ai-instructions`
+(`scripts/build_ai_instructions.py`) to regenerate the 3 packaged files. This also runs as part
+of `make create-docs`/`create-docs-local`.
+
 ## Keeping this feature honest
 
 The packaged instructions are cross-checked against the library's actual behavior, not
 just written once and left to drift — every claim in them (which `ui_*` kwargs exist,
 what `model_list` options do, how CSRF verification works) has been verified by running
 the corresponding code, not just read from source. If you add a Field kwarg or change
-`model_list` behavior, update `pydantic_schemaforms/assets/ai/*.md` in the same change.
+`model_list` behavior, update `pydantic_schemaforms/assets/ai/_shared_instructions.md` (or
+the relevant `_profile_*.md`) and re-run `make ai-instructions` in the same change.
 
 The "Supported ui_element values (authoritative)" table in each profile doc is checked
 automatically: `tests/test_ai_instructions.py::test_authoritative_ui_element_table_matches_registry`

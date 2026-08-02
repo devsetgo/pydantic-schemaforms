@@ -30,6 +30,8 @@ from pydantic_schemaforms.inputs.registry import (
     _declared_aliases,
     _iter_input_classes,
     get_input_component_map,
+    register_input_class,
+    reset_input_registry,
 )
 from pydantic_schemaforms.inputs.selection_inputs import CheckboxGroup
 from pydantic_schemaforms.inputs.specialized_inputs import (
@@ -86,3 +88,39 @@ def test_tier2_widgets_are_individually_addressable() -> None:
     # 'rating'/'rating_stars' must still point at the range-slider RatingInput,
     # not the new clickable-star widget -- they are deliberately different widgets.
     assert mapping['rating_stars'] is not RatingStarsInput
+
+
+def test_register_input_class_is_used_by_actual_rendering() -> None:
+    """Regression guard: registering a custom BaseInput subclass at runtime must
+    actually be picked up by the real render path (not just get_input_component_map()
+    in isolation) -- this is the library's documented escape hatch for a genuinely
+    custom widget (docs/inputs.md's "Unknown elements" section), and it silently did
+    nothing end-to-end because pydantic_schemaforms/rendering/frameworks.py cached a
+    snapshot of the registry at import time, which is always before any app code gets
+    a chance to register anything (pydantic_schemaforms/__init__.py eagerly imports
+    frameworks.py transitively)."""
+    from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+    from pydantic_schemaforms.inputs.base import FormInput
+    from pydantic_schemaforms.schema_form import Field, FormModel
+    from pydantic_schemaforms.tstring import html
+
+    class _CustomProbeInput(FormInput):
+        ui_element = '_test_custom_probe_widget'
+
+        def get_input_type(self) -> str:
+            return 'text'
+
+        def render(self, **kwargs: object) -> str:
+            return html(t'<div class="custom-probe-widget"></div>')
+
+    try:
+        register_input_class(_CustomProbeInput, aliases=['_test_custom_probe_widget'])
+
+        class _ProbeForm(FormModel):
+            field: str = Field(..., ui_element='_test_custom_probe_widget')
+
+        renderer = EnhancedFormRenderer(framework='bootstrap')
+        html_out = renderer.render_form_from_model(_ProbeForm, data={'field': 'x'}, submit_url='/x')
+        assert 'custom-probe-widget' in html_out
+    finally:
+        reset_input_registry()
