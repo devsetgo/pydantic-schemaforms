@@ -105,7 +105,7 @@ def __getattr__(name: str) -> Any:
     exports like verify_captcha -- pyright otherwise treats every import
     through this facade (e.g. `from pydantic_schemaforms.inputs import
     HiddenInput`) as the narrower annotated type, which breaks callers that
-    rely on it being `type[BaseInput]` (e.g. `UI_ELEMENT_MAPPING.get(el,
+    rely on it being `type[BaseInput]` (e.g. `get_input_component_map().get(el,
     TextInput)`) or an instantiable class (`HiddenInput()`).
     """
 
