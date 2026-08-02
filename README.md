@@ -47,6 +47,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🔀 **Dual-use form + JSON API**: `as_api_model()` returns a clean Pydantic `BaseModel` — one model class drives both the HTML form and a typed JSON API, with UI metadata stripped from OpenAPI docs
 - 🧬 **Standard JSON Schema output**: `get_pydantic_json_schema()` returns spec-compliant JSON Schema (`$defs`/`$ref`) for the underlying Pydantic model, including nested `BaseModel`/`List[BaseModel]` fields
 - 🪆 **Nested by default, flat by choice**: `validate()` output/input mirrors the Pydantic model's nested shape by default; pass `flatten=True` for bracket+dot flat keys instead
+- 🕐 **Custom date/time display formats**: `date`/`time`/`datetime` fields default to the browser's own locale-controlled display; set `date_format`/`time_format`/`datetime_format` in `ui_options` (e.g. 24-hour "military" time) to opt into any `strftime`-defined shape instead
 
 > **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
 

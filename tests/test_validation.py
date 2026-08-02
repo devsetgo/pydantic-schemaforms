@@ -12,7 +12,7 @@ Merged from:
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, datetime, time
 from typing import Optional
 
 import pytest
@@ -1161,6 +1161,148 @@ def test_validate_form_data_error_message_paths_and_general_and_exception():
     exception_result = validate_form_data(_ExplodingRuntimeProvider, {})
     assert exception_result.is_valid is False
     assert exception_result.errors == {'general': 'boom'}
+
+
+# ---------------------------------------------------------------------------
+# Custom date/time/datetime format coercion (_coerce_html_form_values)
+# ---------------------------------------------------------------------------
+
+
+class _CustomDateTimeFormatForm(FormModel):
+    start_date: date = Field(json_schema_extra={'ui_options': {'date_format': '%d/%m/%Y'}})
+    military_time: time = Field(json_schema_extra={'ui_options': {'time_format': '%H:%M'}})
+    combo: datetime = Field(json_schema_extra={'ui_options': {'datetime_format': '%Y%m%d%H%M%S'}})
+    end_date: Optional[date] = Field(
+        default=None, json_schema_extra={'ui_options': {'date_format': '%d/%m/%Y'}}
+    )
+
+
+class TestCustomDateTimeFormatCoercion:
+    """Test the custom date/time/datetime format branch in _coerce_html_form_values."""
+
+    def test_custom_format_roundtrip(self):
+        result = validate_form_data(
+            _CustomDateTimeFormatForm,
+            {
+                'start_date': '05/03/2026',
+                'military_time': '23:15',
+                'combo': '20260801143005',
+            },
+        )
+        assert result.is_valid is True
+        assert result.data['start_date'] == date(2026, 3, 5)
+        assert result.data['military_time'] == time(23, 15)
+        assert result.data['combo'] == datetime(2026, 8, 1, 14, 30, 5)
+
+    def test_military_time_has_no_am_pm(self):
+        """time_format='%H:%M' is 24-hour by construction -- no AM/PM anywhere."""
+        result = validate_form_data(
+            _CustomDateTimeFormatForm,
+            {
+                'start_date': '05/03/2026',
+                'military_time': '23:15',
+                'combo': '20260801143005',
+            },
+        )
+        assert result.is_valid is True
+        assert result.data['military_time'] == time(23, 15)
+
+    def test_pure_time_field_with_non_iso_compatible_format(self):
+        """Regression guard: `time` is NOT a subclass of `date` in Python, so
+        a naive `issubclass(t, date)` type-detection check silently skips
+        every plain `time` field. Use a format ('%I:%M %p') whose output
+        ('11:15 PM') Pydantic's own native ISO time parser would also reject,
+        so this test only passes if the custom-format branch itself actually
+        ran -- unlike '23:15'-style values, which happen to parse via
+        Pydantic's native fallback regardless of whether the branch fired."""
+
+        class _PureTimeForm(FormModel):
+            meeting_time: time = Field(
+                json_schema_extra={'ui_options': {'time_format': '%I:%M %p'}}
+            )
+
+        result = validate_form_data(_PureTimeForm, {'meeting_time': '11:15 PM'})
+        assert result.is_valid is True
+        assert result.data['meeting_time'] == time(23, 15)
+
+    def test_custom_format_still_accepts_plain_iso_string(self):
+        """A JSON API caller submitting plain ISO strings still validates,
+        regardless of what display format the HTML form is configured with."""
+        result = validate_form_data(
+            _CustomDateTimeFormatForm,
+            {
+                'start_date': '2026-03-05',
+                'military_time': '23:15:00',
+                'combo': '2026-08-01T14:30:05',
+            },
+        )
+        assert result.is_valid is True
+        assert result.data['start_date'] == date(2026, 3, 5)
+        assert result.data['military_time'] == time(23, 15)
+        assert result.data['combo'] == datetime(2026, 8, 1, 14, 30, 5)
+
+    def test_invalid_custom_format_string_produces_field_error(self):
+        """A string matching neither the custom format nor ISO fails cleanly,
+        attributed to the correct field (not a generic/'general' error)."""
+        result = validate_form_data(
+            _CustomDateTimeFormatForm,
+            {
+                'start_date': 'not-a-date',
+                'military_time': '23:15',
+                'combo': '20260801143005',
+            },
+        )
+        assert result.is_valid is False
+        assert 'start_date' in result.errors
+        assert 'general' not in result.errors
+
+    def test_optional_custom_format_field_empty_string_becomes_none(self):
+        """Empty-optional-scalar coercion still wins over the new branch --
+        an empty string never reaches strptime and correctly becomes None."""
+        result = validate_form_data(
+            _CustomDateTimeFormatForm,
+            {
+                'start_date': '05/03/2026',
+                'military_time': '23:15',
+                'combo': '20260801143005',
+                'end_date': '',
+            },
+        )
+        assert result.is_valid is True
+        assert result.data['end_date'] is None
+
+    def test_nested_model_field_with_custom_date_format(self):
+        """The new branch composes correctly with the existing nested-model
+        recursion in _coerce_html_form_values."""
+
+        class _Event(FormModel):
+            name: str
+            starts_on: date = Field(json_schema_extra={'ui_options': {'date_format': '%d/%m/%Y'}})
+
+        class _Schedule(FormModel):
+            events: list[_Event]
+
+        result = validate_form_data(
+            _Schedule,
+            {'events': [{'name': 'Launch', 'starts_on': '05/03/2026'}]},
+        )
+        assert result.is_valid is True
+        assert result.data['events'][0]['starts_on'] == date(2026, 3, 5)
+
+    def test_nested_model_field_with_invalid_custom_date_format(self):
+        class _Event(FormModel):
+            name: str
+            starts_on: date = Field(json_schema_extra={'ui_options': {'date_format': '%d/%m/%Y'}})
+
+        class _Schedule(FormModel):
+            events: list[_Event]
+
+        result = validate_form_data(
+            _Schedule,
+            {'events': [{'name': 'Launch', 'starts_on': 'nope'}]},
+        )
+        assert result.is_valid is False
+        assert 'events[0].starts_on' in result.errors
 
 
 # ---------------------------------------------------------------------------

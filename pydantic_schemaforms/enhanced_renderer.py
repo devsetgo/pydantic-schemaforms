@@ -34,6 +34,8 @@ from .rendering.schema_parser import (
 from .rendering.themes import MaterialEmbeddedTheme, RendererTheme, get_theme_for_framework
 from .schema_form import FormModel
 from .templates import FormTemplates, render_template
+from .tstring import SafeHTML
+from .tstring import html as render_html
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -85,6 +87,18 @@ _MATERIAL_NATIVE_SCALAR_TYPES = frozenset(
         'select',
     }
 )
+
+# date/time/datetime ui_element values that get routed through the shared
+# widget registry (instead of the plain Material text box) specifically when
+# a custom display format is configured -- see DateInput/TimeInput/
+# DatetimeInput's *_format kwargs in inputs/datetime_inputs.py. Default
+# (no format) Material rendering for these types is completely unaffected.
+_MATERIAL_DATE_TIME_FORMAT_KEYS = {
+    'date': 'date_format',
+    'time': 'time_format',
+    'datetime': 'datetime_format',
+    'datetime-local': 'datetime_format',
+}
 
 
 class SchemaFormValidationError(Exception):
@@ -601,27 +615,26 @@ class EnhancedFormRenderer:
         if not flattened:
             return ''
 
-        items_html = '\n'.join(
-            f'<li><strong>{html.escape(self._humanize_error_field(field))}:</strong> {html.escape(message)}</li>'
-            for field, message in flattened
-        )
+        item_parts = []
+        for field, message in flattened:
+            humanized_field = self._humanize_error_field(field)
+            item_parts.append(
+                render_html(t'<li><strong>{humanized_field}:</strong> {message}</li>')
+            )
+        items_html = SafeHTML('\n'.join(item_parts))
 
         if self.framework == 'material':
-            return (
-                '<section class="md-field">'
-                '<div class="md-error-summary" role="alert" aria-live="polite">'
-                '<div class="md-error-summary__title">Submission failed. Please correct the following:</div>'
-                f'<ul class="md-error-summary__list">{items_html}</ul>'
-                '</div>'
-                '</section>'
-            )
+            return render_html(t"""<section class="md-field">
+<div class="md-error-summary" role="alert" aria-live="polite">
+<div class="md-error-summary__title">Submission failed. Please correct the following:</div>
+<ul class="md-error-summary__list">{items_html}</ul>
+</div>
+</section>""")
 
-        return (
-            '<div class="alert alert-danger schemaforms-error-summary" role="alert" aria-live="polite">'
-            '<strong>Submission failed.</strong> Please correct the following:'
-            f'<ul class="mb-0 mt-2">{items_html}</ul>'
-            '</div>'
-        )
+        return render_html(t"""<div class="alert alert-danger schemaforms-error-summary" role="alert" aria-live="polite">
+<strong>Submission failed.</strong> Please correct the following:
+<ul class="mb-0 mt-2">{items_html}</ul>
+</div>""")
 
     def _resolve_csrf_mode(
         self, *, include_csrf: bool, csrf_mode: CSRFMode | str, debug: bool
@@ -689,8 +702,7 @@ class EnhancedFormRenderer:
         from .inputs.specialized_inputs import CSRFInput
 
         csrf_input = CSRFInput()
-        safe_token = html.escape(token, quote=True) if token else ''
-        return csrf_input.render(token=safe_token, name=csrf_field_name)
+        return csrf_input.render(token=token or '', name=csrf_field_name)
 
     def _render_layout_field(
         self,
@@ -1006,9 +1018,8 @@ class EnhancedFormRenderer:
         ui_info = extract_ui_info(field_schema)
 
         if ui_info.get('hidden'):
-            return (
-                f'<input type="hidden" name="{field_name}" value="{html.escape(str(value or ""))}">'
-            )
+            display_value = str(value or '')
+            return render_html(t'<input type="hidden" name="{field_name}" value="{display_value}">')
 
         input_type = (
             ui_info.get('input_type')
@@ -1042,10 +1053,18 @@ class EnhancedFormRenderer:
                 field_name, label, value, error, help_text, is_required
             )
 
+        fmt_key = _MATERIAL_DATE_TIME_FORMAT_KEYS.get(input_type)
+        ui_opts = (
+            ui_info.get('options') or ui_info.get('ui_options') or field_schema.get('ui_options')
+        )
+        has_custom_date_time_format = bool(
+            fmt_key and isinstance(ui_opts, dict) and ui_opts.get(fmt_key)
+        )
+
         if (
             input_type not in _MATERIAL_NATIVE_SCALAR_TYPES
             and input_type in get_input_component_map()
-        ):
+        ) or has_custom_date_time_format:
             # No bespoke Material template exists for this widget (radio,
             # checkbox_group, multiselect, combobox, tags, rating, star_rating,
             # slider, phone, currency, ssn, credit_card, percentage, decimal,
@@ -1168,7 +1187,17 @@ class EnhancedFormRenderer:
         # Format render time for display
         time_display = f' — {render_time:.3f}s render' if render_time > 0 else ''
 
-        panel = f"""
+        # rendered_tab/source_tab/schema_tab/validation_tab/live_tab are
+        # already html.escape()'d above -- they're rendered *as visible text*
+        # inside <pre> (showing the raw HTML/JSON as a string, not executing
+        # it), so they're wrapped in SafeHTML here to avoid double-escaping.
+        _rendered_tab = SafeHTML(rendered_tab)
+        _source_tab = SafeHTML(source_tab)
+        _schema_tab = SafeHTML(schema_tab)
+        _validation_tab = SafeHTML(validation_tab)
+        _live_tab = SafeHTML(live_tab)
+
+        panel_body = render_html(t"""
 <div class="pf-debug-panel">
     <details>
         <summary class="pf-debug-summary">Debug panel (development only){time_display}</summary>
@@ -1179,95 +1208,101 @@ class EnhancedFormRenderer:
                 <button type="button" class="pf-debug-tab-btn" data-pf-tab="schema">Schema / validation</button>
                 <button type="button" class="pf-debug-tab-btn" data-pf-tab="live">Live payload</button>
             </div>
-            <div class="pf-debug-tab pf-active" data-pf-pane="rendered"><pre>{rendered_tab}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="source"><pre>{source_tab}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="schema"><pre>{schema_tab}</pre><pre>{validation_tab}</pre></div>
-            <div class="pf-debug-tab" data-pf-pane="live"><pre class="pf-debug-live-output">{live_tab}</pre></div>
+            <div class="pf-debug-tab pf-active" data-pf-pane="rendered"><pre>{_rendered_tab}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="source"><pre>{_source_tab}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="schema"><pre>{_schema_tab}</pre><pre>{_validation_tab}</pre></div>
+            <div class="pf-debug-tab" data-pf-pane="live"><pre class="pf-debug-live-output">{_live_tab}</pre></div>
         </div>
     </details>
 </div>
+""")
+
+        # Static CSS/JS below (rule 4 exception) -- no user data is
+        # interpolated, so it stays a plain string appended as trusted,
+        # developer-authored markup.
+        panel_assets = SafeHTML("""
 <style>
-.pf-debug-panel {{ margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }}
-.pf-debug-summary {{ cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }}
-.pf-debug-tabs {{ padding: 0.35rem 0.85rem 0.75rem; }}
-.pf-debug-tablist {{ display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }}
-.pf-debug-tab-btn {{ border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }}
-.pf-debug-tab-btn.pf-active {{ background: #0d6efd; color: #ffffff; border-color: #0d6efd; }}
-.pf-debug-tab {{ display: none; }}
-.pf-debug-tab.pf-active {{ display: block; }}
-.pf-debug-tab pre {{ white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }}
+.pf-debug-panel { margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+.pf-debug-summary { cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+.pf-debug-tabs { padding: 0.35rem 0.85rem 0.75rem; }
+.pf-debug-tablist { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+.pf-debug-tab-btn { border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+.pf-debug-tab-btn.pf-active { background: #0d6efd; color: #ffffff; border-color: #0d6efd; }
+.pf-debug-tab { display: none; }
+.pf-debug-tab.pf-active { display: block; }
+.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
 </style>
 <script>
-(function() {{
-    document.querySelectorAll('.pf-debug-panel').forEach(function(panel) {{
+(function() {
+    document.querySelectorAll('.pf-debug-panel').forEach(function(panel) {
         var buttons = panel.querySelectorAll('[data-pf-tab]');
         var panes = panel.querySelectorAll('[data-pf-pane]');
-        buttons.forEach(function(btn) {{
-            btn.addEventListener('click', function() {{
+        buttons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
                 var target = btn.getAttribute('data-pf-tab');
-                buttons.forEach(function(b) {{ b.classList.remove('pf-active'); }});
-                panes.forEach(function(p) {{ p.classList.remove('pf-active'); }});
+                buttons.forEach(function(b) { b.classList.remove('pf-active'); });
+                panes.forEach(function(p) { p.classList.remove('pf-active'); });
                 btn.classList.add('pf-active');
                 var pane = panel.querySelector('[data-pf-pane="' + target + '"]');
-                if (pane) {{ pane.classList.add('pf-active'); }}
-            }});
-        }});
+                if (pane) { pane.classList.add('pf-active'); }
+            });
+        });
 
         // Live payload updater
         var form = document.querySelector('form');
         var liveOutput = panel.querySelector('.pf-debug-live-output');
-        if (form && liveOutput) {{
-            function updateLivePayload() {{
+        if (form && liveOutput) {
+            function updateLivePayload() {
                 var formData = new FormData(form);
-                var data = {{}};
-                var seen = {{}};
+                var data = {};
+                var seen = {};
 
                 // Parse form data including arrays (pets[0].name, etc.)
-                for (var pair of formData.entries()) {{
+                for (var pair of formData.entries()) {
                     var key = pair[0];
                     var value = pair[1];
 
                     // Handle array notation like pets[0].name
                     var arrayMatch = key.match(/^(\\w+)\\[(\\d+)\\]\\.(\\w+)$/);
-                    if (arrayMatch) {{
+                    if (arrayMatch) {
                         var arrayName = arrayMatch[1];
                         var index = parseInt(arrayMatch[2]);
                         var fieldName = arrayMatch[3];
 
-                        if (!data[arrayName]) {{
+                        if (!data[arrayName]) {
                             data[arrayName] = [];
-                        }}
-                        if (!data[arrayName][index]) {{
-                            data[arrayName][index] = {{}};
-                        }}
+                        }
+                        if (!data[arrayName][index]) {
+                            data[arrayName][index] = {};
+                        }
                         data[arrayName][index][fieldName] = value;
                         seen[key] = true;
-                    }} else if (key in seen) {{
+                    } else if (key in seen) {
                         // Multiple values for same key - convert to array
-                        if (!Array.isArray(data[key])) {{
+                        if (!Array.isArray(data[key])) {
                             data[key] = [data[key]];
-                        }}
+                        }
                         data[key].push(value);
-                    }} else {{
+                    } else {
                         data[key] = value;
                         seen[key] = true;
-                    }}
-                }}
+                    }
+                }
 
                 // Handle checkboxes (unchecked = not in FormData)
                 var checkboxes = form.querySelectorAll('input[type=\"checkbox\"]');
-                checkboxes.forEach(function(cb) {{
+                checkboxes.forEach(function(cb) {
                     if (!cb.name) return;
-                    if (!(cb.name in data)) {{
+                    if (!(cb.name in data)) {
                         data[cb.name] = false;
-                    }} else if (data[cb.name] === 'on') {{
+                    } else if (data[cb.name] === 'on') {
                         data[cb.name] = true;
-                    }}
-                }});
+                    }
+                });
 
-                var payload = {{ data: data, errors: {{}} }};
+                var payload = { data: data, errors: {} };
                 liveOutput.textContent = JSON.stringify(payload, null, 2);
-            }}
+            }
 
             // Update on any input change
             form.addEventListener('input', updateLivePayload);
@@ -1275,13 +1310,13 @@ class EnhancedFormRenderer:
 
             // Initial update after a brief delay to catch dynamic content
             setTimeout(updateLivePayload, 100);
-        }}
-    }});
-}})();
+        }
+    });
+})();
 </script>
-"""
+""")
 
-        return panel
+        return panel_body + panel_assets
 
 
 def render_form_html(

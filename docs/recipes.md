@@ -524,6 +524,68 @@ flatten_nested_data({"pets": [{"name": "Fido"}]})
 
 ---
 
+## Custom date/time display formats
+
+By default, `date`/`time`/`datetime` fields render as native HTML5 inputs
+(`<input type="date">`, etc.) whose display is entirely controlled by the
+browser's own locale — there's no way to force a custom display format on a
+native control. Set `date_format`/`time_format`/`datetime_format` in
+`ui_options` (standard `strftime`/`strptime` directives) to opt into a
+custom shape instead — the field falls back to a live-formatted text input
+so the display truly matches what you asked for:
+
+```python
+from datetime import date, datetime, time
+from pydantic_schemaforms import Field, FormModel
+
+class ShiftForm(FormModel):
+    shift_date: date = Field(
+        ..., title="Date", ui_element="date",
+        ui_options={"date_format": "%d/%m/%Y"},       # 05/03/2026
+    )
+    start_time: time = Field(
+        ..., title="Start Time", ui_element="time",
+        ui_options={"time_format": "%H:%M"},           # 23:30 -- 24-hour ("military") time
+    )
+    logged_at: datetime = Field(
+        ..., title="Logged At", ui_element="datetime",
+        ui_options={"datetime_format": "%Y%m%d%H%M%S"},  # year-month-day-hour(24)-minute-second
+    )
+```
+
+Without a `*_format` option, a field renders exactly as it always has. With
+one set, the server still round-trips correctly either way: a submission in
+the configured custom shape parses via that format first, and a plain ISO
+string (e.g. from a JSON API client bypassing the HTML form entirely) still
+validates too, since the custom-format parse attempt fails silently and
+falls through to Pydantic's own ISO parser.
+
+Switching to a text input doesn't lose the browser's native calendar/clock
+picker UI — the field stays a single box with a small picker icon inside it
+(`live_format=True`, the default) for any format a JS `Date` object can
+supply a value for, which includes `%Y %y %m %d %H %I %M %S` as well as
+`%p` (AM/PM) and `%B %b %A %a` (month/weekday names, via a hardcoded
+English name table): clicking the icon opens the browser's own native
+picker (via `showPicker()` on a hidden, non-submitting companion input) and
+writes the selected value into the visible field, already converted to the
+custom format. Only the rarer, non-`Date`-derivable directives (`%Z`, `%j`,
+`%f`, week numbers, ...) omit the icon. Separately, live per-character
+typing auto-punctuation only works for formats built *entirely* from
+fixed-width numeric directives — `%p`/weekday/month-name formats still get
+the picker icon, just not live-typing assistance.
+
+This behavior is the same across every framework, including `material` — a
+custom-formatted date/time/datetime field always uses this single-box
+icon-toggle control, not a framework-specific widget.
+
+For a much larger, live-runnable reference covering USA/Europe/Asia date
+conventions, military (24-hour) time, and compact year-month-day-hour-
+minute-second shapes — 21 formats across a 3-tab Date/Time/Datetime demo —
+see `examples/date_time_formats_example.py` (`DateTimeFormatsShowcaseForm`),
+wired up at the `/date-time-formats` route in `examples/fastapi_routes.py`.
+
+---
+
 ## Live HTMX validation
 
 Validate individual fields on blur without a page reload. Requires HTMX loaded in the page.

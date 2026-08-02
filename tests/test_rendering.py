@@ -16,7 +16,6 @@ from __future__ import annotations
 import asyncio
 import importlib
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Annotated, Optional
@@ -47,8 +46,6 @@ from pydantic_schemaforms.inputs.base import (
     BaseInput,
     SelectInputBase,
     build_label,
-    render_template,
-    t,
 )
 from pydantic_schemaforms.inputs.numeric_inputs import (
     AgeInput,
@@ -792,16 +789,6 @@ class TestInputTypeDetection:
 
 
 def test_inputs_base_helpers_cover_fallback_and_attribute_branches() -> None:
-    # t() fallback and render_template() string/Template-object behavior
-    assert t('abc') == 'abc'
-
-    class _TemplateObj:
-        strings = ['<b>', '</b>']
-        values = ['x']
-
-    assert render_template(_TemplateObj()) == '<b>x</b>'
-    assert render_template('already') == 'already'
-
     inp = _DummyBaseInput()
     attrs = inp.validate_attributes(
         name='n',
@@ -1080,17 +1067,6 @@ def test_enhanced_renderer_humanize_indexed_and_plural_fields() -> None:
     assert renderer._humanize_error_field('pets[7].name') == 'Pet #8 — Name'
     assert renderer._humanize_error_field('companies[1].tax_id') == 'Company #2 — Tax Id'
     assert renderer._humanize_error_field('form') == 'Form'
-
-
-def test_base_render_template_handles_template_like_objects() -> None:
-    @dataclass
-    class _TemplateLike:
-        strings: tuple[str, ...]
-        values: tuple[str, ...]
-
-    template = _TemplateLike(strings=('<b>', '</b>'), values=('ok',))
-    assert render_template(template) == '<b>ok</b>'
-    assert render_template('plain') == 'plain'
 
 
 def test_select_input_base_render_with_label_plain_framework_branch() -> None:

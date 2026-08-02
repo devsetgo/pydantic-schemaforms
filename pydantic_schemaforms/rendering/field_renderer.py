@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from html import escape
 import re
 from typing import Any
 
@@ -11,6 +10,7 @@ from pydantic_schemaforms.inputs import HiddenInput
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.frameworks import get_input_component
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
+from pydantic_schemaforms.tstring import SafeHTML, html
 from .themes import RendererTheme
 
 # ui_element values that render as an HTML checkbox under the hood and so
@@ -169,7 +169,10 @@ class FieldRenderer:
                 formatted_options = self._normalize_options(selection_options, value)
 
                 if not formatted_options:
-                    input_html = f"<!-- Warning: No options provided for {ui_element} field '{field_name}' -->"
+                    input_html = html(
+                        t'<!-- Warning: No options provided for {ui_element} field '
+                        t"'{field_name}' -->"
+                    )
                 else:
                     field_attrs.pop('value', None)
                     # radio/checkbox_group already show their title as the
@@ -205,9 +208,10 @@ class FieldRenderer:
                 )
 
             if input_html is None:
-                input_html = f'<!-- Error: {ui_element} input returned None -->'
+                input_html = html(t'<!-- Error: {ui_element} input returned None -->')
         except Exception as exc:  # pragma: no cover - defensive fallback
-            input_html = f'<!-- Error rendering {ui_element}: {str(exc)} -->'
+            error_message = str(exc)
+            input_html = html(t'<!-- Error rendering {ui_element}: {error_message} -->')
 
         wrapper_class = ''
         if self.theme:
@@ -215,7 +219,8 @@ class FieldRenderer:
         if not wrapper_class:
             wrapper_class = self.config.get('field_wrapper_class', '')
         if wrapper_class:
-            return f'<div class="{wrapper_class}">{input_html}</div>'
+            _input_html = SafeHTML(str(input_html))
+            return html(t'<div class="{wrapper_class}">{_input_html}</div>')
         return input_html
 
     def _render_model_list_field(
@@ -237,15 +242,18 @@ class FieldRenderer:
         # forwards ui_-prefixed keys. One resolution path, not two.
         items_ref = field_schema.get('items', {}).get('$ref')
         if not items_ref:
-            return (
-                f"<!-- Error: model_list field '{field_name}' must be typed as list[ItemModel] -->"
+            return html(
+                t"<!-- Error: model_list field '{field_name}' must be typed as list[ItemModel] -->"
             )
 
         model_name = items_ref.split('/')[-1]
         schema_defs = context.schema_defs or {}
         schema_def = schema_defs.get(model_name)
         if not schema_def:
-            return f"<!-- Error: Could not resolve model reference '{items_ref}' for field '{field_name}' -->"
+            return html(
+                t"<!-- Error: Could not resolve model reference '{items_ref}' "
+                t"for field '{field_name}' -->"
+            )
 
         list_values: list[dict[str, Any]] = []
         if value:
@@ -477,8 +485,9 @@ class FieldRenderer:
             ui_info,
             nested_errors,
         )
-        template_html = (
-            f'<template class="model-list-item-template">{template_item_html}</template>'
+        _template_item_html = SafeHTML(str(template_item_html))
+        template_html = html(
+            t'<template class="model-list-item-template">{_template_item_html}</template>'
         )
 
         items_html = template_html + ''.join(items_parts)
@@ -557,54 +566,56 @@ class FieldRenderer:
         safe_field_name = re.sub(r'[^a-zA-Z0-9_-]', '_', field_name)
         collapse_id = f'{safe_field_name}_item_{index}_content'
 
-        html = f"""
+        item_html = html(t'''
         <div class="model-list-item card border mb-3"
              data-index="{index}"
-             data-title-template="{escape(title_template)}"
-             data-field-name="{escape(field_name, quote=True)}">
+             data-title-template="{title_template}"
+             data-field-name="{field_name}">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">"""
+                <h6 class="mb-0">''')
 
         if collapsible:
-            html += f"""
+            chevron_class = 'down' if expanded else 'right'
+            expanded_attr = str(expanded).lower()
+            item_html += html(t'''
                     <button class="btn btn-link text-decoration-none p-0 text-start"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#{collapse_id}"
-                            aria-expanded="{str(expanded).lower()}"
+                            aria-expanded="{expanded_attr}"
                             aria-controls="{collapse_id}">
-                        <i class="bi bi-chevron-{'down' if expanded else 'right'} me-2"></i>
+                        <i class="bi bi-chevron-{chevron_class} me-2"></i>
                         <i class="bi bi-card-list me-2"></i>
-                        {escape(item_title)}
-                    </button>"""
+                        {item_title}
+                    </button>''')
         else:
-            html += f"""
+            item_html += html(t"""
                     <span>
                         <i class="bi bi-card-list me-2"></i>
-                        {escape(item_title)}
-                    </span>"""
+                        {item_title}
+                    </span>""")
 
-        html += f"""
+        item_html += html(t'''
                 </h6>
                 <button type="button"
                         class="btn btn-outline-danger btn-sm remove-item-btn"
                         data-index="{index}"
-                        data-field-name="{escape(field_name, quote=True)}"
+                        data-field-name="{field_name}"
                         title="Remove this item">
                     <i class="bi bi-trash"></i>
                 </button>
-            </div>"""
+            </div>''')
 
         if collapsible:
             show_class = 'show' if expanded else ''
-            html += f"""
+            item_html += html(t'''
             <div class="collapse {show_class}" id="{collapse_id}">
-                <div class="card-body">"""
+                <div class="card-body">''')
         else:
-            html += """
+            item_html += """
             <div class="card-body">"""
 
-        html += '<div class="row">'
+        item_html += '<div class="row">'
         properties = schema_def.get('properties', {})
         field_count = len([key for key in properties.keys() if not key.startswith('_')])
 
@@ -627,32 +638,35 @@ class FieldRenderer:
             if nested_schema.get('input_type') == 'model_list':
                 field_col_class = 'col-12'
 
-            html += f"""
-                <div class="{field_col_class}">
-                    {
-                self.render_field(
-                    input_name,
-                    nested_schema,
-                    field_value,
-                    field_error,
-                    [],
-                    context,
-                    'vertical',
-                    nested_errors,
+            nested_field_html = SafeHTML(
+                str(
+                    self.render_field(
+                        input_name,
+                        nested_schema,
+                        field_value,
+                        field_error,
+                        [],
+                        context,
+                        'vertical',
+                        nested_errors,
+                    )
                 )
-            }
-                </div>"""
+            )
+            item_html += html(t'''
+                <div class="{field_col_class}">
+                    {nested_field_html}
+                </div>''')
 
-        html += '</div>'
+        item_html += '</div>'
 
         if collapsible:
-            html += """
+            item_html += """
                 </div>
             </div>"""
         else:
-            html += """
+            item_html += """
             </div>"""
 
-        html += """
+        item_html += """
         </div>"""
-        return html
+        return item_html

@@ -4,6 +4,8 @@ import json
 import re
 from typing import Any
 
+from pydantic_schemaforms.tstring import SafeHTML, html
+
 from .base import FormInput, _render_input_tag
 
 
@@ -23,7 +25,7 @@ class TextInput(FormInput):
     def render(self, **kwargs: Any) -> str:
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-        return f'<input {self._build_attributes_string(attrs)} />'
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class PasswordInput(FormInput):
@@ -89,11 +91,9 @@ class TextArea(FormInput):
         attrs = self.validate_attributes(**kwargs)
         if 'type' in attrs:
             del attrs['type']  # <textarea> has no type attribute.
-        attributes_str = self._build_attributes_string(attrs)
-        from html import escape
-
-        escaped_value = escape(str(value)) if value is not None else ''
-        return f'<textarea {attributes_str}>{escaped_value}</textarea>'
+        _attrs = SafeHTML(self._build_attributes_string(attrs))
+        display_value = str(value) if value is not None else ''
+        return html(t'<textarea {_attrs}>{display_value}</textarea>')
 
 
 class URLInput(FormInput):
@@ -183,7 +183,7 @@ class PhoneInput(TelInput):
         if not live_format or not field_id:
             return input_html
 
-        script = rf"""
+        script = SafeHTML(rf"""
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {{
     }}
 }});
 </script>
-"""
+""")
         return input_html + script
 
 
@@ -245,7 +245,7 @@ class CurrencyInput(TextInput):
         if not live_format or not field_id:
             return input_html
 
-        script = rf"""
+        script = SafeHTML(rf"""
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
@@ -265,5 +265,5 @@ document.addEventListener('DOMContentLoaded', function() {{
     }}
 }});
 </script>
-"""
+""")
         return input_html + script

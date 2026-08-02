@@ -12,6 +12,12 @@ from .rendering.layout_engine import HorizontalLayout as FlexHorizontalLayout
 from .rendering.layout_engine import TabLayout as ComponentTabLayout
 from .rendering.layout_engine import VerticalLayout as FlexVerticalLayout
 from .schema_form import FormModel, ValidationResult
+from .tstring import SafeHTML, html
+
+
+def _wrap_horizontal_column(form_html: str) -> str:
+    _form_html = SafeHTML(str(form_html))
+    return html(t'<div class="horizontal-layout-column">{_form_html}</div>')
 
 
 class SectionDesign:
@@ -42,22 +48,22 @@ class SectionDesign:
 
     def render_header(self, framework: str = 'bootstrap') -> str:
         """Render the section header HTML."""
-        icon_html = ''
+        icon_html: SafeHTML = SafeHTML('')
         if self.icon:
             if framework == 'bootstrap':
-                icon_html = f'<i class="bi bi-{self.icon}"></i> '
+                icon_html = html(t'<i class="bi bi-{self.icon}"></i> ')
             elif framework == 'material':
-                icon_html = f'<i class="material-icons">{self.icon}</i> '
+                icon_html = html(t'<i class="material-icons">{self.icon}</i> ')
 
         header_class = 'section-header'
         if self.collapsible:
             header_class += ' collapsible'
 
-        header_html = f'<div class="{header_class}">'
-        header_html += f'<h3>{icon_html}{self.section_title}</h3>'
+        header_html = html(t'<div class="{header_class}">')
+        header_html += html(t'<h3>{icon_html}{self.section_title}</h3>')
 
         if self.section_description:
-            header_html += f'<p class="section-description">{self.section_description}</p>'
+            header_html += html(t'<p class="section-description">{self.section_description}</p>')
 
         header_html += '</div>'
 
@@ -366,8 +372,10 @@ class HorizontalLayout(FormLayoutBase):
         header_html = self._section_header(framework)
 
         column_content = [
-            f'<div class="horizontal-layout-column">{html}</div>'
-            for html in self._render_form_instances(data=data, errors=errors, framework=framework)
+            _wrap_horizontal_column(form_html)
+            for form_html in self._render_form_instances(
+                data=data, errors=errors, framework=framework
+            )
         ]
 
         layout = FlexHorizontalLayout(
@@ -437,8 +445,9 @@ class TabbedLayout(FormLayoutBase):
         tabs_html = tab_component.render(framework=framework)
 
         if self.form_config:
-            form_title = f'<h2 class="form-title">{self.form_config.form_name}</h2>'
-            tabs_html = f'{form_title}{tabs_html}'
+            form_title = html(t'<h2 class="form-title">{self.form_config.form_name}</h2>')
+            _tabs_html = SafeHTML(str(tabs_html))
+            tabs_html = html(t'{form_title}{_tabs_html}')
             return self._render_complete_page(tabs_html)
 
         return tabs_html
@@ -506,20 +515,27 @@ class TabbedLayout(FormLayoutBase):
 
         # Get form attributes
         form_attrs = self.form_config.get_form_attributes()
-        form_attrs_str = ' '.join([f'{k}="{v}"' for k, v in form_attrs.items()])
+        form_attrs_str = SafeHTML(' '.join(html(t'{k}="{v}"') for k, v in form_attrs.items()))
 
-        return f"""<!DOCTYPE html>
+        form_name = self.form_config.form_name
+        form_width = self.form_config.form_width
+        _css_tag = SafeHTML(str(css_tag))
+        _icons_tag = SafeHTML(str(icons_tag))
+        _js_tag = SafeHTML(str(js_tag))
+        _form_html = SafeHTML(str(form_html))
+
+        return html(t"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{self.form_config.form_name}</title>
-    {css_tag}
-    {icons_tag}
+    <title>{form_name}</title>
+    {_css_tag}
+    {_icons_tag}
     <style>
         body {{ background-color: #f8f9fa; }}
         .form-container {{
-            max-width: {self.form_config.form_width};
+            max-width: {form_width};
             margin: 2rem auto;
             background: white;
             padding: 2rem;
@@ -537,14 +553,14 @@ class TabbedLayout(FormLayoutBase):
     <div class="container">
         <div class="form-container">
             <form {form_attrs_str}>
-                {form_html}
+                {_form_html}
             </form>
         </div>
     </div>
 
-    {js_tag}
+    {_js_tag}
 </body>
-</html>"""
+</html>""")
 
 
 class ListLayout(FormLayoutBase):
@@ -709,13 +725,15 @@ class ListLayout(FormLayoutBase):
         if header_html:
             layout_content.append(header_html)
 
+        _items_html = SafeHTML(str(items_html))
+        _add_button_html = SafeHTML(str(add_button_html))
         layout_content.append(
-            f"""
+            html(t'''
             <div class="list-items-container" id="{list_id}-container">
-                {items_html}
+                {_items_html}
             </div>
-            {add_button_html}
-            """
+            {_add_button_html}
+            ''')
         )
 
         layout = FlexVerticalLayout(
@@ -730,10 +748,12 @@ class ListLayout(FormLayoutBase):
             framework=framework,
         )
 
-        return f"""
-        {layout_html}
-        {js_html}
-        """
+        _layout_html = SafeHTML(str(layout_html))
+        _js_html = SafeHTML(str(js_html))
+        return html(t"""
+        {_layout_html}
+        {_js_html}
+        """)
 
     def _render_list_item(
         self,
@@ -763,7 +783,8 @@ class ListLayout(FormLayoutBase):
         # Add error messages if any
         error_html = ''
         if errors and f'item_{index}' in errors:
-            error_html = f'<div class="alert alert-danger">{errors[f"item_{index}"]}</div>'
+            item_error = errors[f'item_{index}']
+            error_html = html(t'<div class="alert alert-danger">{item_error}</div>')
 
         # Render remove button (only if we can remove items)
         remove_button_html = ''
@@ -786,15 +807,18 @@ class ListLayout(FormLayoutBase):
             )
         else:
             # Render standard item
-            return f"""
+            _error_html = SafeHTML(str(error_html))
+            _form_html = SafeHTML(str(form_html))
+            _remove_button_html = SafeHTML(str(remove_button_html))
+            return html(t'''
             <div class="{item_class}" data-item-index="{index}">
-                {error_html}
+                {_error_html}
                 <div class="list-item-content">
-                    {form_html}
+                    {_form_html}
                 </div>
-                {remove_button_html}
+                {_remove_button_html}
             </div>
-            """
+            ''')
 
     def _render_collapsible_item(
         self,
@@ -818,30 +842,35 @@ class ListLayout(FormLayoutBase):
         # Create a summary for the card header (first few non-empty field values)
         summary = self._create_item_summary(item_data, index)
 
+        _error_html = SafeHTML(str(error_html))
+        _form_html = SafeHTML(str(form_html))
+        _remove_button_html = SafeHTML(str(remove_button_html))
+
         if framework == 'material':
-            return f"""
+            onclick = f"toggleCollapse('{collapse_id}')"
+            return html(t'''
             <div class="{item_class} collapsible-item" data-item-index="{index}">
-                {error_html}
-                <div class="collapsible-header" onclick="toggleCollapse('{collapse_id}')">
+                {_error_html}
+                <div class="collapsible-header" onclick="{onclick}">
                     <div class="collapsible-title">
                         <i class="material-icons expand-icon">expand_more</i>
                         <span class="item-summary">{summary}</span>
                     </div>
                     <div class="collapsible-actions">
-                        {remove_button_html}
+                        {_remove_button_html}
                     </div>
                 </div>
                 <div class="collapsible-content collapse {expanded_class}" id="{collapse_id}">
                     <div class="list-item-content">
-                        {form_html}
+                        {_form_html}
                     </div>
                 </div>
             </div>
-            """
+            ''')
         else:  # bootstrap
-            return f"""
+            return html(t'''
             <div class="{item_class} collapsible-item" data-item-index="{index}">
-                {error_html}
+                {_error_html}
                 <div class="collapsible-header" data-bs-toggle="collapse" data-bs-target="#{collapse_id}"
                      aria-expanded="{expanded_attr}" aria-controls="{collapse_id}">
                     <div class="collapsible-title">
@@ -849,16 +878,16 @@ class ListLayout(FormLayoutBase):
                         <span class="item-summary">{summary}</span>
                     </div>
                     <div class="collapsible-actions">
-                        {remove_button_html}
+                        {_remove_button_html}
                     </div>
                 </div>
                 <div class="collapse {expanded_class}" id="{collapse_id}">
                     <div class="list-item-content">
-                        {form_html}
+                        {_form_html}
                     </div>
                 </div>
             </div>
-            """
+            ''')
 
     def _create_item_summary(self, item_data: dict[str, Any], index: int) -> str:
         """Create a summary string for the collapsible item header."""
@@ -895,43 +924,47 @@ class ListLayout(FormLayoutBase):
 
     def _render_add_button(self, list_id: str, framework: str) -> str:
         """Render the add button for creating new list items."""
+        onclick = f"addListItem('{list_id}')"
+        add_button_text = self.add_button_text
         if framework == 'material':
-            return f"""
+            return html(t'''
             <button type="button" class="mdc-button mdc-button--raised list-add-btn"
-                    data-list-id="{list_id}" onclick="addListItem('{list_id}')">
+                    data-list-id="{list_id}" onclick="{onclick}">
                 <span class="mdc-button__label">
-                    <i class="material-icons">add</i> {self.add_button_text}
+                    <i class="material-icons">add</i> {add_button_text}
                 </span>
             </button>
-            """
+            ''')
         else:  # bootstrap
-            return f"""
+            return html(t'''
             <button type="button" class="btn btn-primary list-add-btn"
-                    data-list-id="{list_id}" onclick="addListItem('{list_id}')">
-                <i class="bi bi-plus"></i> {self.add_button_text}
+                    data-list-id="{list_id}" onclick="{onclick}">
+                <i class="bi bi-plus"></i> {add_button_text}
             </button>
-            """
+            ''')
 
     def _render_remove_button(self, index: int, list_id: str, framework: str) -> str:
         """Render the remove button for deleting list items."""
+        onclick = f"removeListItem('{list_id}', {index})"
+        remove_button_text = self.remove_button_text
         if framework == 'material':
-            return f"""
+            return html(t'''
             <button type="button" class="mdc-button mdc-button--outlined list-remove-btn"
                     data-item-index="{index}" data-list-id="{list_id}"
-                    onclick="removeListItem('{list_id}', {index})">
+                    onclick="{onclick}">
                 <span class="mdc-button__label">
-                    <i class="material-icons">remove</i> {self.remove_button_text}
+                    <i class="material-icons">remove</i> {remove_button_text}
                 </span>
             </button>
-            """
+            ''')
         else:  # bootstrap
-            return f"""
+            return html(t'''
             <button type="button" class="btn btn-outline-danger btn-sm list-remove-btn"
                     data-item-index="{index}" data-list-id="{list_id}"
-                    onclick="removeListItem('{list_id}', {index})">
-                <i class="bi bi-trash"></i> {self.remove_button_text}
+                    onclick="{onclick}">
+                <i class="bi bi-trash"></i> {remove_button_text}
             </button>
-            """
+            ''')
 
     def _render_javascript(self, list_id: str, framework: str) -> str:
         """Render JavaScript for dynamic add/remove functionality."""
@@ -955,7 +988,7 @@ class ListLayout(FormLayoutBase):
         }
         """
 
-        return f"""
+        return SafeHTML(f"""
         <script>
         {collapsible_js}
 
@@ -1100,7 +1133,7 @@ class ListLayout(FormLayoutBase):
             }}
         }}
         </script>
-        """
+        """)
 
     def _render_collapsible_update_js(self, list_id: str) -> str:
         """Generate JavaScript for updating collapsible IDs when adding items."""

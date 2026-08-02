@@ -6,37 +6,15 @@ from abc import ABC, abstractmethod
 from html import escape
 from typing import Any
 
-
-# Add t() fallback for Python <3.14 compatibility
-def t(template: str) -> str:
-    """Fallback for Python 3.14 template strings."""
-    return template
+from pydantic_schemaforms.tstring import SafeHTML, html
 
 
 _CLOSE_DIV = '</div>'
 
 
-def render_template(template_obj: Any) -> str:
-    """Render a Python 3.14 template string to final HTML."""
-    if hasattr(template_obj, 'strings') and hasattr(template_obj, 'values'):
-        # This is a Template object from t'...' syntax
-        result = ''
-        strings = template_obj.strings
-        values = template_obj.values
-
-        for i, string_part in enumerate(strings):
-            result += string_part
-            if i < len(values):
-                result += str(values[i])
-
-        return result
-    else:
-        # This is already a string
-        return str(template_obj)
-
-
 def _render_input_tag(attributes_str: str) -> str:
-    return f'<input {attributes_str} />'
+    _attrs = SafeHTML(attributes_str)
+    return html(t'<input {_attrs} />')
 
 
 class BaseInput(ABC):
@@ -81,11 +59,11 @@ class BaseInput(ABC):
 
         name = kwargs.get('name')
         if name:
-            validated['name'] = escape(str(name))
+            validated['name'] = str(name)
 
         element_id = kwargs.get('id', name)
         if element_id:
-            validated['id'] = escape(str(element_id))
+            validated['id'] = str(element_id)
 
         for attr, value in kwargs.items():
             if attr in {'name', 'id'}:
@@ -101,7 +79,7 @@ class BaseInput(ABC):
                     validated[attr] = formatted
             else:
                 if value is not None:
-                    validated[attr] = escape(str(value))
+                    validated[attr] = str(value)
 
         return validated
 
@@ -121,7 +99,7 @@ class BaseInput(ABC):
                 if value:
                     parts.append(key)
             elif value not in (None, ''):
-                escaped_value = str(value).replace('"', '&quot;')
+                escaped_value = escape(str(value), quote=True)
                 parts.append(f'{key}="{escaped_value}"')
         return ' '.join(parts)
 
@@ -192,10 +170,10 @@ class FormInput(BaseInput):
             attrs = self.validate_attributes(**kwargs)
             input_type = getattr(self, 'get_input_type', lambda: 'text')()
             attrs['type'] = input_type
-            attributes_str = self._build_attributes_string(attrs)
-            input_html = f'<input {attributes_str} />'
+            input_html = _render_input_tag(self._build_attributes_string(attrs))
 
-        field_parts = []
+        _input_html = SafeHTML(str(input_html))
+        field_parts: list[str] = []
 
         if framework == 'bootstrap':
             if label:
@@ -208,13 +186,13 @@ class FormInput(BaseInput):
                 )
                 field_parts.append(label_html)
 
-            field_parts.append(input_html)
+            field_parts.append(_input_html)
 
             if help_text:
-                field_parts.append(f'<div class="form-text">{escape(help_text)}</div>')
+                field_parts.append(html(t'<div class="form-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
+                field_parts.append(html(t'<div class="invalid-feedback d-block">{error}</div>'))
         else:
             if label:
                 label_html = build_label(
@@ -226,13 +204,13 @@ class FormInput(BaseInput):
                 )
                 field_parts.append(label_html)
 
-            field_parts.append(input_html)
+            field_parts.append(_input_html)
 
             if help_text:
-                field_parts.append(f'<div class="help-text">{escape(help_text)}</div>')
+                field_parts.append(html(t'<div class="help-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(f'<div class="error-text">{escape(error)}</div>')
+                field_parts.append(html(t'<div class="error-text">{error}</div>'))
 
         return '\n'.join(field_parts)
 
@@ -247,28 +225,28 @@ def build_label(
     """Build label element with optional icon support."""
     display_label = label or field_name.replace('_', ' ').title()
     required_indicator = ' *' if required else ''
-    icon_html = ''
+    icon_html: SafeHTML = SafeHTML('')
     if icon:
         if framework == 'bootstrap':
             icon_class = icon if icon.startswith('bi bi-') else f'bi bi-{icon}'
-            icon_html = f'<i class="{icon_class}"></i> '
+            icon_html = html(t'<i class="{icon_class}"></i> ')
         elif framework == 'material':
-            icon_html = f'<i class="material-icons">{icon}</i> '
+            icon_html = html(t'<i class="material-icons">{icon}</i> ')
         elif framework == 'fontawesome':
             icon_class = icon if icon.startswith('fas fa-') else f'fas fa-{icon}'
-            icon_html = f'<i class="{icon_class}"></i> '
+            icon_html = html(t'<i class="{icon_class}"></i> ')
 
-    return f'<label for="{escape(field_name)}">{icon_html}{escape(display_label)}{required_indicator}</label>'
+    return html(t'<label for="{field_name}">{icon_html}{display_label}{required_indicator}</label>')
 
 
 def build_error_message(field_name: str, error: str) -> str:
     """Build error message element."""
-    return f'<div id="{escape(field_name)}-error" class="error-message" role="alert">{escape(error)}</div>'
+    return html(t'<div id="{field_name}-error" class="error-message" role="alert">{error}</div>')
 
 
 def build_help_text(field_name: str, help_text: str) -> str:
     """Build help text element."""
-    return f'<div id="{escape(field_name)}-help" class="help-text">{escape(help_text)}</div>'
+    return html(t'<div id="{field_name}-help" class="help-text">{help_text}</div>')
 
 
 class NumericInput(FormInput):
@@ -281,7 +259,7 @@ class NumericInput(FormInput):
     def render(self, **kwargs: Any) -> str:
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-        return f'<input {self._build_attributes_string(attrs)} />'
+        return _render_input_tag(self._build_attributes_string(attrs))
 
 
 class FileInputBase(FormInput):
@@ -328,26 +306,27 @@ class SelectInputBase(BaseInput):
             icon = map_icon_for_framework(icon, framework)
 
         if hasattr(self, 'render') and options is not None:
-            input_html = self.render(options=options, **kwargs)
+            input_html = SafeHTML(str(self.render(options=options, **kwargs)))
         else:
             attrs = self.validate_attributes(**kwargs)
-            attributes_str = self._build_attributes_string(attrs)
-            input_html = f'<select {attributes_str}></select>'
+            _attrs = SafeHTML(self._build_attributes_string(attrs))
+            input_html = html(t'<select {_attrs}></select>')
 
-        field_parts = []
+        field_id = kwargs.get('id', '')
+        field_parts: list[str] = []
 
         if framework == 'bootstrap':
             field_parts.append('<div class="mb-3">')
 
             if label:
                 field_parts.append(
-                    f'<label for="{kwargs.get("id", "")}" class="form-label">{escape(label)}</label>'
+                    html(t'<label for="{field_id}" class="form-label">{label}</label>')
                 )
 
             if icon:
                 field_parts.append('<div class="input-group">')
                 field_parts.append(
-                    f'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>'
+                    html(t'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>')
                 )
                 field_parts.append(input_html)
                 field_parts.append(_CLOSE_DIV)
@@ -355,10 +334,10 @@ class SelectInputBase(BaseInput):
                 field_parts.append(input_html)
 
             if help_text:
-                field_parts.append(f'<div class="form-text">{escape(help_text)}</div>')
+                field_parts.append(html(t'<div class="form-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(f'<div class="invalid-feedback d-block">{escape(error)}</div>')
+                field_parts.append(html(t'<div class="invalid-feedback d-block">{error}</div>'))
 
             field_parts.append(_CLOSE_DIV)
 
@@ -367,7 +346,7 @@ class SelectInputBase(BaseInput):
 
             if icon:
                 field_parts.append('<div class="md-field-with-icon">')
-                field_parts.append(f'<span class="md-icon material-icons">{icon}</span>')
+                field_parts.append(html(t'<span class="md-icon material-icons">{icon}</span>'))
                 field_parts.append('<div class="md-input-wrapper">')
 
             # A floating label (.md-floating-label, absolutely positioned on
@@ -381,7 +360,7 @@ class SelectInputBase(BaseInput):
             # (already used for the same purpose by model-list containers).
             if label:
                 field_parts.append(
-                    f'<label class="md-field-label" for="{kwargs.get("id", "")}">{escape(label)}</label>'
+                    html(t'<label class="md-field-label" for="{field_id}">{label}</label>')
                 )
 
             field_parts.append(input_html)
@@ -391,10 +370,10 @@ class SelectInputBase(BaseInput):
                 field_parts.append(_CLOSE_DIV)
 
             if help_text:
-                field_parts.append(f'<div class="md-help-text">{escape(help_text)}</div>')
+                field_parts.append(html(t'<div class="md-help-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(f'<div class="md-error-text">{escape(error)}</div>')
+                field_parts.append(html(t'<div class="md-error-text">{error}</div>'))
 
             field_parts.append(_CLOSE_DIV)
 
@@ -402,11 +381,11 @@ class SelectInputBase(BaseInput):
             field_parts.append('<div class="field">')
 
             if label:
-                field_parts.append(f'<label for="{kwargs.get("id", "")}">{escape(label)}</label>')
+                field_parts.append(html(t'<label for="{field_id}">{label}</label>'))
 
             if icon:
                 field_parts.append(
-                    f'<div class="input-with-icon"><span class="input-icon">{icon}</span>'
+                    html(t'<div class="input-with-icon"><span class="input-icon">{icon}</span>')
                 )
                 field_parts.append(input_html)
                 field_parts.append(_CLOSE_DIV)
@@ -414,10 +393,10 @@ class SelectInputBase(BaseInput):
                 field_parts.append(input_html)
 
             if help_text:
-                field_parts.append(f'<div class="help-text">{escape(help_text)}</div>')
+                field_parts.append(html(t'<div class="help-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(f'<div class="error-message">{escape(error)}</div>')
+                field_parts.append(html(t'<div class="error-message">{error}</div>'))
 
             field_parts.append(_CLOSE_DIV)
 

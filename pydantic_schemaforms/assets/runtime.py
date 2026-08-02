@@ -6,6 +6,8 @@ import re
 from functools import lru_cache
 from importlib import resources
 
+from pydantic_schemaforms.tstring import SafeHTML, html
+
 
 @lru_cache(maxsize=32)
 def read_asset_text(relative_path: str) -> str:
@@ -25,19 +27,24 @@ def read_asset_bytes(relative_path: str) -> bytes:
 
 
 def script_tag_inline(js: str) -> str:
-    return f'<script>\n{js}\n</script>'
+    # js is raw <script> element content, not an HTML context -- html-escaping it
+    # here would corrupt the JS (e.g. turn `<` into `&lt;`), so it's passed through
+    # via SafeHTML rather than escaped like a normal interpolation.
+    _js = SafeHTML(js)
+    return html(t'<script>\n{_js}\n</script>')
 
 
 def script_tag_src(src: str) -> str:
-    return f'<script src="{src}"></script>'
+    return html(t'<script src="{src}"></script>')
 
 
 def style_tag_inline(css: str) -> str:
-    return f'<style>\n{css}\n</style>'
+    _css = SafeHTML(css)
+    return html(t'<style>\n{_css}\n</style>')
 
 
 def style_tag_href(href: str) -> str:
-    return f'<link rel="stylesheet" href="{href}" />'
+    return html(t'<link rel="stylesheet" href="{href}" />')
 
 
 @lru_cache(maxsize=8)

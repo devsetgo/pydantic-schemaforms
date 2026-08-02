@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import warnings
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Annotated, Optional
 from unittest import mock
 
@@ -687,6 +687,244 @@ class TestTextInputsUncovered:
         html = inp.render(name='msg', value=None)
         assert '<textarea' in html
         assert html.count('<textarea') == 1
+
+
+# ---------------------------------------------------------------------------
+# inputs/datetime_inputs.py -- custom date/time/datetime display formats
+# ---------------------------------------------------------------------------
+
+
+class TestDatetimeInputsCustomFormat:
+    def test_date_input_with_format_renders_text_type_and_pattern(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DateInput
+
+        inp = DateInput()
+        html = inp.render(
+            name='d', id='d', date_format='%d/%m/%Y', value=date(2026, 3, 5), live_format=False
+        )
+        assert 'type="text"' in html
+        assert 'type="date"' not in html
+        assert 'value="05/03/2026"' in html
+        assert r'pattern="\d{2}/\d{2}/\d{4}"' in html
+        assert 'inputmode="numeric"' in html
+
+    def test_date_input_with_format_and_live_format_adds_script(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DateInput
+
+        inp = DateInput()
+        html = inp.render(name='d', id='d', date_format='%d/%m/%Y')
+        assert '<script>' in html
+        assert '"##/##/####"' in html
+
+    def test_date_input_format_without_live_format_has_no_script(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DateInput
+
+        inp = DateInput()
+        html = inp.render(name='d', id='d', date_format='%d/%m/%Y', live_format=False)
+        assert '<script>' not in html
+        assert 'schemaforms-picker-toggle' not in html
+
+    def test_date_input_with_format_includes_single_visible_box_and_toggle(self):
+        """A custom-format date field stays a single visible input -- the
+        browser's calendar picker is reachable via a small toggle button
+        (backed by a visually-hidden native <input type="date">, opened via
+        showPicker()), not a second visible box."""
+        from pydantic_schemaforms.inputs.datetime_inputs import DateInput
+
+        inp = DateInput()
+        html = inp.render(name='d', id='d', date_format='%d/%m/%Y')
+        # Exactly one visible text input carrying the field's name/value.
+        assert html.count('name="d"') == 1
+        assert 'schemaforms-picker-toggle' in html
+        assert 'aria-label="Open date picker"' in html
+        # The hidden native picker is excluded from tab order / AT and never submits.
+        assert 'type="date" id="d__picker" tabindex="-1" aria-hidden="true"' in html
+        assert 'opacity: 0' in html
+        assert 'showPicker' in html
+        # The picker's onchange handler must build the SAME %d/%m/%Y order.
+        assert 'getDate()).padStart(2, \'0\') + "/"' in html
+        assert 'getMonth() + 1).padStart(2, \'0\') + "/"' in html
+        assert 'getFullYear()' in html
+
+    def test_date_input_with_month_name_format_includes_toggle(self):
+        """%B (full month name) has no fixed digit width, so the live-typing
+        mask is unavailable, but the picker toggle IS available -- it builds
+        the whole value from a Date at once via a hardcoded month-name array,
+        not by live-typing character by character."""
+        from pydantic_schemaforms.inputs.datetime_inputs import DateInput
+
+        inp = DateInput()
+        html = inp.render(name='d', id='d', date_format='%Y %B %d')
+        assert 'schemaforms-picker-toggle' in html
+        assert 'aria-label="Open date picker"' in html
+        assert '"January"' in html and '"December"' in html
+        assert 'replace(/\\D/g' not in html
+
+    def test_time_input_with_format_includes_toggle(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import TimeInput
+
+        inp = TimeInput()
+        html = inp.render(name='t', id='t', time_format='%H:%M')
+        assert html.count('name="t"') == 1
+        assert 'type="time" id="t__picker" tabindex="-1"' in html
+        assert 'aria-label="Open time picker"' in html
+        assert "new Date('1970-01-01T' + this.value)" in html
+
+    def test_datetime_input_with_format_includes_toggle(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
+
+        inp = DatetimeInput()
+        html = inp.render(name='dt', id='dt', datetime_format='%Y%m%d%H%M%S')
+        assert html.count('name="dt"') == 1
+        assert 'type="datetime-local" id="dt__picker" tabindex="-1"' in html
+        assert 'aria-label="Open date and time picker"' in html
+        assert 'new Date(this.value)' in html
+
+    def test_datetime_input_with_ampm_format_includes_toggle(self):
+        """%I:%M %p is a common USA datetime format -- confirms it gets a
+        working picker toggle despite %p being unsupported by the live mask."""
+        from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
+
+        inp = DatetimeInput()
+        html = inp.render(name='dt', id='dt', datetime_format='%m/%d/%Y %I:%M %p')
+        assert 'schemaforms-picker-toggle' in html
+        assert 'aria-label="Open date and time picker"' in html
+        assert 'replace(/\\D/g' not in html
+
+    def test_picker_toggle_omitted_for_unsupported_format(self):
+        """%f (microseconds) has no JS Date equivalent, so it's excluded from
+        the directive set the picker toggle's JS can build from -- the toggle
+        should be silently omitted, not emit broken JS."""
+        from pydantic_schemaforms.inputs.datetime_inputs import TimeInput
+
+        inp = TimeInput()
+        html = inp.render(name='t', id='t', time_format='%H:%M:%f')
+        assert 'schemaforms-picker-toggle' not in html
+
+    def test_picker_toggle_included_for_ampm_format(self):
+        """%p (AM/PM) IS derivable from a JS Date (fixed 2-char output), so
+        unlike the live-typing mask (still disabled, see
+        test_time_input_with_12h_format_includes_ampm_pattern_and_toggle_but_no_mask_script),
+        the picker toggle is available for this format."""
+        from pydantic_schemaforms.inputs.datetime_inputs import TimeInput
+
+        inp = TimeInput()
+        html = inp.render(name='t', id='t', time_format='%I:%M %p')
+        assert 'schemaforms-picker-toggle' in html
+
+    def test_picker_toggle_omitted_without_live_format(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DateInput
+
+        inp = DateInput()
+        html = inp.render(name='d', id='d', date_format='%d/%m/%Y', live_format=False)
+        assert 'schemaforms-picker-toggle' not in html
+
+    def test_time_input_with_military_format_no_ampm(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import TimeInput
+
+        inp = TimeInput()
+        html = inp.render(name='t', id='t', time_format='%H:%M', value=time(23, 30))
+        assert 'type="text"' in html
+        assert 'value="23:30"' in html
+        assert 'AM' not in html and 'PM' not in html
+        assert 'step=' not in html
+
+    def test_time_input_with_12h_format_includes_ampm_pattern_and_toggle_but_no_mask_script(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import TimeInput
+
+        inp = TimeInput()
+        html = inp.render(name='t', id='t', time_format='%I:%M %p', value=time(23, 30))
+        assert 'value="11:30 PM"' in html
+        assert 'AM|PM' in html
+        # The picker toggle works (whole value built at once from a Date)...
+        assert 'schemaforms-picker-toggle' in html
+        # ...but %p has no fixed digit width, so live per-character-typing
+        # masking is still disabled for this format.
+        assert 'replace(/\\D/g' not in html
+
+    def test_datetime_input_with_custom_format_renders_and_masks(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
+
+        inp = DatetimeInput()
+        html = inp.render(
+            name='dt',
+            id='dt',
+            datetime_format='%d-%m-%Y %H:%M:%S',
+            value=datetime(2026, 3, 5, 23, 30, 15),
+        )
+        assert 'type="text"' in html
+        assert 'value="05-03-2026 23:30:15"' in html
+        assert '<script>' in html
+
+    def test_datetime_input_set_now_button_with_supported_format(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
+
+        inp = DatetimeInput()
+        html = inp.render(
+            name='dt', id='dt', datetime_format='%Y%m%d%H%M%S', with_set_now_button=True
+        )
+        assert 'Set Now' in html
+        assert 'setCurrentDatetime_dt(' in html
+        # Must not collide with the default (unformatted) global function name.
+        assert 'function setCurrentDatetime(' not in html
+
+    def test_datetime_input_set_now_button_omitted_for_unsupported_format(self):
+        from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
+
+        inp = DatetimeInput()
+        html = inp.render(
+            name='dt',
+            id='dt',
+            datetime_format='%Y-%m-%d %H:%M:%S.%f',
+            with_set_now_button=True,
+        )
+        assert 'Set Now' not in html
+        assert 'datetime-input-group' not in html
+
+    def test_datetime_input_set_now_button_with_ampm_and_month_name_format(self):
+        """%B/%p are both JS-derivable (see _JS_DATE_PART_EXPR), so the Set
+        Now button works for this format even though the live-typing mask
+        does not."""
+        from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
+
+        inp = DatetimeInput()
+        html = inp.render(
+            name='dt',
+            id='dt',
+            datetime_format='%B %d, %Y %I:%M %p',
+            with_set_now_button=True,
+        )
+        assert 'Set Now' in html
+        assert 'datetime-input-group' in html
+
+    def test_material_date_field_with_custom_format_uses_widget_registry(self):
+        from pydantic_schemaforms.schema_form import Field, FormModel
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+
+        class _MaterialDateForm(FormModel):
+            start_date: date = Field(..., ui_element='date', ui_options={'date_format': '%d/%m/%Y'})
+
+        renderer = EnhancedFormRenderer(framework='material')
+        html = renderer.render_form_from_model(
+            _MaterialDateForm, data={'start_date': date(2026, 3, 5)}, submit_url='/x'
+        )
+        assert 'value="05/03/2026"' in html
+        assert r'pattern="\d{2}/\d{2}/\d{4}"' in html
+
+    def test_material_date_field_default_rendering_unchanged(self):
+        from pydantic_schemaforms.schema_form import Field, FormModel
+        from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+
+        class _MaterialDateForm(FormModel):
+            plain_date: date = Field(..., ui_element='date')
+
+        renderer = EnhancedFormRenderer(framework='material')
+        html = renderer.render_form_from_model(
+            _MaterialDateForm, data={'plain_date': date(2026, 3, 5)}, submit_url='/x'
+        )
+        assert 'type="date"' in html
+        assert 'value="2026-03-05"' in html
+        assert 'pattern=' not in html
 
 
 # ---------------------------------------------------------------------------

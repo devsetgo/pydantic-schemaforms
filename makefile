@@ -175,6 +175,32 @@ ex-test: ## Test that the FastAPI example can be imported successfully
 
 kill:  # Kill any process running on the app port
 	@echo "Stopping any process running on port ${PORT}..."
-	@pids=$$(pgrep -f "uvicor[n] main:app.*--port ${PORT}" || true); \
-	if [ -n "$$pids" ]; then echo "$$pids" | xargs kill -9; else echo "No process found running on port ${PORT}"; fi
+	@set -e; \
+	# Prefer lsof, then fuser, then ss/netstat, then fallback to pgrep pattern
+	if command -v lsof >/dev/null 2>&1; then \
+		pids=$$(lsof -ti tcp:${PORT} 2>/dev/null || true); \
+	elif command -v fuser >/dev/null 2>&1; then \
+		pids=$$(fuser -n tcp ${PORT} 2>/dev/null || true); \
+	elif command -v ss >/dev/null 2>&1; then \
+		pids=$$(ss -ltnp 2>/dev/null | grep -F ":${PORT}" || true | grep -o 'pid=[0-9]*' | sed 's/pid=//' | sort -u || true); \
+	else \
+		pids=$$(pgrep -f "uvicor[n] main:app.*--port ${PORT}" || true); \
+	fi; \
+	# Normalize and deduplicate
+	pids=$$(echo "$$pids" | tr ' ' '\n' | sed '/^$$/d' | sort -u || true); \
+	if [ -n "$$pids" ]; then \
+		echo "Found PIDs using port ${PORT}: $$pids"; \
+		# Try graceful shutdown first
+		echo "Sending TERM to $$pids"; echo "$$pids" | xargs -r kill -TERM || true; \
+		sleep 1; \
+		# Kill any remaining
+		still=$$(echo "$$pids" | xargs -r ps -o pid= -p 2>/dev/null || true); \
+		if [ -n "$$still" ]; then \
+			echo "Forcing kill for: $$still"; echo "$$still" | xargs -r kill -9 || true; \
+		else \
+			echo "Processes terminated."; \
+		fi; \
+	else \
+		echo "No process found running on port ${PORT}"; \
+	fi; \
 	@echo "Port ${PORT} is now free"

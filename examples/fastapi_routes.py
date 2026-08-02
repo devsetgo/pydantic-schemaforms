@@ -47,6 +47,10 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     create_sample_nested_data,
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
+from examples.date_time_formats_example import (
+    DateTimeFormatsShowcaseForm,
+    create_sample_date_time_format_data,
+)
 
 from pydantic import EmailStr
 
@@ -1124,6 +1128,118 @@ async def gallery_post(
                 'request': request,
                 'title': 'Widget Gallery - Tabbed by Category',
                 'description': 'Every input type grouped into tabs by category',
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'framework_type': style,
+                'form_html': form_html,
+                'errors': validation.errors,
+            },
+        )
+
+
+# ================================
+# DATE/TIME FORMAT SHOWCASE
+# ================================
+
+
+@router.get('/date-time-formats', response_class=HTMLResponse, tags=['Showcase'])
+async def date_time_formats_get(
+    request: Request,
+    style: str = 'bootstrap',
+    data: str = None,
+    demo: bool = True,
+    debug: bool = False,
+    show_timing: bool = True,
+):
+    """Custom date/time/datetime display format showcase (GET).
+
+    Demo data must be flat (no top-level 'formats' key) -- same reasoning as
+    WidgetGalleryForm's demo route: DateTimeFormatsShowcaseForm has a single
+    ui_element='layout' field, so flat keys let the renderer's own nested-data
+    reconstruction find each tab's fields by name.
+    """
+    form_data = {}
+    if data:
+        try:
+            import json
+
+            form_data = json.loads(data)
+        except Exception:
+            pass  # Ignore invalid JSON
+    elif demo:
+        form_data = create_sample_date_time_format_data()
+
+    form_html = await render_form_html_async(
+        DateTimeFormatsShowcaseForm,
+        framework=style,
+        form_data=form_data,
+        submit_url=f'/date-time-formats?style={style}',
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Date/Time Format Showcase',
+            'description': (
+                'Custom date_format/time_format/datetime_format ui_options: USA, '
+                'Europe, Asia, military (24-hour) time, and compact year-month-day '
+                'shapes, grouped into Date/Time/Datetime tabs'
+            ),
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.post('/date-time-formats', response_class=HTMLResponse, tags=['Showcase'])
+async def date_time_formats_post(
+    request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
+):
+    """Date/time/datetime format showcase submission (async)."""
+    form_data = await request.form()
+    form_dict = _group_form_data(form_data)
+
+    parsed_data = parse_nested_form_data(form_dict)
+    validation = DateTimeFormatsShowcaseForm.validate(
+        parsed_data,
+        submit_url=f'/date-time-formats?style={style}',
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    full_referer_path = create_refer_path(request)
+    if validation.is_valid:
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Date/Time Formats Submitted Successfully',
+                'message': 'Every date/time/datetime format parsed and validated correctly!',
+                'data': validation.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': full_referer_path,
+            },
+        )
+    else:
+        form_html = await validation.render_with_errors_async()
+        return templates.TemplateResponse(
+            request,
+            'form.html',
+            {
+                'request': request,
+                'title': 'Date/Time Format Showcase',
+                'description': 'Please fix the highlighted fields',
                 'framework': 'fastapi',
                 'framework_name': 'FastAPI (Async)',
                 'framework_type': style,

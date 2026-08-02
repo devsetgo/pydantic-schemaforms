@@ -10,8 +10,9 @@ ligature markup (which requires the font to be available).
 
 from __future__ import annotations
 
-from html import escape
 from typing import Final
+
+from pydantic_schemaforms.tstring import SafeHTML, html
 
 
 # Minimal set of SVG paths for common Material icon names used by the demo.
@@ -44,18 +45,16 @@ def render_material_icon(
     For unknown names, it falls back to ligature markup.
     """
 
-    safe_name = escape(icon_name)
     class_attr = ' '.join(part for part in ['material-icons', classes.strip()] if part).strip()
-    safe_class = escape(class_attr, quote=True)
 
     path_d = _MATERIAL_ICON_PATHS.get(icon_name)
     if not path_d:
-        return f'<span class="{safe_class}">{safe_name}</span>'
+        return html(t'<span class="{class_attr}">{icon_name}</span>')
 
-    aria = ' aria-hidden="true"' if aria_hidden else ''
-    title_tag = f'<title>{escape(title)}</title>' if title else ''
+    _aria = SafeHTML(' aria-hidden="true"') if aria_hidden else SafeHTML('')
+    _title_tag = html(t'<title>{title}</title>') if title else SafeHTML('')
 
-    return (
-        f'<svg class="{safe_class}" viewBox="0 0 24 24" focusable="false"{aria}>'
-        f'{title_tag}<path d="{escape(path_d, quote=True)}" /></svg>'
+    return html(
+        t'<svg class="{class_attr}" viewBox="0 0 24 24" focusable="false"{_aria}>'
+        t'{_title_tag}<path d="{path_d}" /></svg>'
     )
