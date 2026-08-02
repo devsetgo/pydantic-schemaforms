@@ -583,7 +583,7 @@ Required:
 
 Optional:
 
-- ui_options: min, max, value
+- ui_options: min, max, value, date_format
 
 ```python
 from datetime import date
@@ -597,6 +597,36 @@ class DateExample(FormModel):
     )
 ```
 
+Set `ui_options={"date_format": "%d/%m/%Y"}` to display and submit the field
+in a custom shape using standard `strftime`/`strptime` directives, instead of
+the browser's own locale-controlled date picker. This renders as a
+live-formatted text input (native `<input type="date">` can't show a custom
+display format -- the browser always controls it). Without `date_format`,
+the field renders exactly as before. The server still parses and validates
+the submitted value; a plain ISO `YYYY-MM-DD` string (e.g. from a JSON API
+caller bypassing the HTML form) is still accepted regardless of the
+configured display format. `BirthdateInput` (`ui_element="birthdate"`)
+inherits `date_format` support the same way.
+
+A custom-format field stays a single visible box (`live_format=True`, the
+default). Two independent capabilities layer on top of it:
+
+- **Picker icon button**: for any format built from directives a JS `Date`
+  object can supply a value for (`%Y %y %m %d %H %I %M %S %p %B %b %A %a`),
+  a small calendar icon button appears inside the field -- clicking it calls
+  the browser's native `showPicker()` on a visually-hidden, non-submitting
+  companion `<input type="date">` behind the scenes, and selecting a date
+  writes it into the visible field already converted to the custom format
+  (including AM/PM and month/weekday names, via a hardcoded English name
+  table). Only truly exotic directives (`%Z`, `%j`, `%f`, week numbers, ...)
+  omit the icon entirely.
+- **Live per-character typing mask**: for formats built *entirely* from
+  fixed-width numeric directives (`%Y %y %m %d %H %I %M %S`), digits are
+  auto-punctuated as the user types. Formats using a variable-width
+  directive (`%p`, weekday/month names, ...) don't get this -- there's no
+  safe way to live-mask "AM"/"PM" or a month name character by character --
+  but the picker icon above still works for them.
+
 #### time
 
 Required:
@@ -605,7 +635,7 @@ Required:
 
 Optional:
 
-- ui_options: min, max, step, value
+- ui_options: min, max, step, value, time_format
 
 ```python
 from datetime import time
@@ -619,6 +649,13 @@ class TimeExample(FormModel):
     )
 ```
 
+Set `ui_options={"time_format": "%H:%M"}` for 24-hour ("military") time, or
+any other `strftime` shape -- same mechanism as `date_format` above (falls
+back to a live-formatted text input with a picker icon button; native
+`<input type="time">` can't be forced into a custom display format).
+`step` only applies to the native time picker and is not used once a
+custom `time_format` is set.
+
 #### datetime (alias: datetime-local)
 
 Required:
@@ -627,7 +664,7 @@ Required:
 
 Optional:
 
-- ui_options: min, max, value, auto_set_current, with_set_now_button
+- ui_options: min, max, value, auto_set_current, with_set_now_button, datetime_format
 
 ```python
 from datetime import datetime
@@ -640,6 +677,27 @@ class DatetimeExample(FormModel):
         ui_options={"auto_set_current": True, "with_set_now_button": True},
     )
 ```
+
+Set `ui_options={"datetime_format": "%Y%m%d%H%M%S"}` for an arbitrary custom
+shape (e.g. year-month-day-hour(24)-minute-second) -- same mechanism as
+`date_format`/`time_format`, including the picker icon button (also
+available for `%p`/`%B`/etc., see above). When both `datetime_format` and
+`with_set_now_button` are set, the Set Now button writes a value matching
+the custom format instead of the default ISO-ish shape, using the same
+JS-Date-derivable directive set as the picker icon -- omitted entirely only
+for the rarer directives that set omits too (`%Z`, `%j`, `%f`, ...).
+
+> **Known limitation**: the standalone `FieldValidator(...).date_range()`
+> rule (as opposed to `ui_options={"min": ..., "max": ...}` above) always
+> expects ISO `YYYY-MM-DD` values and is not aware of `date_format`/
+> `time_format`/`datetime_format`. Use the `min`/`max` `ui_options` shown
+> above for range constraints on a custom-formatted field -- they're
+> already format-aware.
+
+See `examples/date_time_formats_example.py` for a live-runnable showcase of
+21 date/time/datetime formats (USA, Europe, Asia, military time, and
+compact year-month-day-hour-minute-second shapes) across all three input
+types, wired up at the `/date-time-formats` route in the FastAPI example app.
 
 #### month
 

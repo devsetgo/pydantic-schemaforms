@@ -30,6 +30,7 @@ def test_invariant_tests_not_removed() -> None:
     required = [
         'test_no_string_template_in_source',
         'test_tstring_ruff_config_present',
+        'test_no_unwrapped_html_fstrings_in_source',
         'test_invariant_self_integrity',
         'test_meta_guard_present',
     ]

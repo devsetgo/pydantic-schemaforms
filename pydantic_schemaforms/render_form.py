@@ -14,6 +14,7 @@ from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
 from .assets.runtime import htmx_script_tag, imask_script_tag
 from .schema_form import FormModel
+from .tstring import SafeHTML, html
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -91,16 +92,16 @@ def render_form_html(
 
     if include_htmx_response_container:
         container_id = f'form-response-{form_model_cls.__name__.lower()}'
-        form_html += f'\n<div id="{container_id}"></div>'
+        form_html += '\n' + html(t'<div id="{container_id}"></div>')
     if include_htmx_script:
         htmx_tag = htmx_script_tag(asset_mode=asset_mode)
         if htmx_tag:
-            form_html += f'\n{htmx_tag}'
+            form_html += '\n' + SafeHTML(str(htmx_tag))
 
     if include_imask:
         imask_tag = imask_script_tag(asset_mode=asset_mode)
         if imask_tag:
-            form_html += f'\n{imask_tag}'
+            form_html += '\n' + SafeHTML(str(imask_tag))
 
     # Calculate and log render time
     render_time = time.perf_counter() - start_time

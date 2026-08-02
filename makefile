@@ -26,7 +26,7 @@ LOG_LEVEL = debug
 REQUIREMENTS_PATH = requirements.txt
 # DEV_REQUIREMENTS_PATH = requirements/dev.txt
 
-.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 help install isort run-example run-example-dev speedtest test ex-run ex-test
+.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 git-cleanup help install isort rebase run-example run-example-dev speedtest test ex-run ex-test
 
 .PHONY: vendor-update-htmx vendor-verify
 
@@ -105,6 +105,13 @@ rebase: ## Rebase current branch from origin/main
 	git fetch origin
 	git rebase origin/main
 
+git-cleanup: ## Fetch + prune from origin, then delete local branches whose upstream is gone
+	@echo "Fetching from origin and pruning stale remote-tracking branches..."
+	git fetch origin --prune
+	@echo "Removing local branches whose upstream branch no longer exists..."
+	@git branch -vv | grep ': gone\]' | sed 's/^\*//' | awk '{print $$1}' | grep -vE '^(main|master|dev)$$' | xargs -r git branch -D
+	@echo "git-cleanup complete."
+
 isort: ## Sort imports in Python code
 	$(PYTHON) -m isort $(SERVICE_PATH)
 	$(PYTHON) -m isort $(TESTS_PATH)
@@ -167,7 +174,5 @@ ex-test: ## Test that the FastAPI example can be imported successfully
 	@echo "🎉 FastAPI example is ready to run!"
 
 kill:  # Kill any process running on the app port
-	@echo "Stopping any process running on port ${PORT}..."
-	@pids=$$(pgrep -f "uvicor[n] main:app.*--port ${PORT}" || true); \
-	if [ -n "$$pids" ]; then echo "$$pids" | xargs kill -9; else echo "No process found running on port ${PORT}"; fi
-	@echo "Port ${PORT} is now free"
+	@chmod +x scripts/kill_by_port.sh || true
+	@scripts/kill_by_port.sh ${PORT}
