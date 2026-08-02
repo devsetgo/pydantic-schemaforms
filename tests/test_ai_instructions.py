@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib.util
 import re
+from pathlib import Path
 
 import pytest
 
@@ -11,6 +13,18 @@ from pydantic_schemaforms import (
 )
 from pydantic_schemaforms.ai_instructions import main
 from pydantic_schemaforms.inputs.registry import get_input_component_map
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _load_build_script():
+    spec = importlib.util.spec_from_file_location(
+        'build_ai_instructions', _REPO_ROOT / 'scripts' / 'build_ai_instructions.py'
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 
 # ui_element values that are handled outside the input registry (special-cased
 # in the field renderer) rather than backed by a BaseInput subclass.
@@ -147,3 +161,21 @@ def test_resolve_output_path_rejects_sibling_directory_with_shared_prefix(tmp_pa
 
     with pytest.raises(ValueError, match='Refusing to write outside'):
         _resolve_output_path(sibling_arg, base_dir=base)
+
+
+@pytest.mark.parametrize('profile', ['claude', 'copilot', 'generic'])
+def test_packaged_instructions_match_generated_output(profile: str) -> None:
+    """The 3 packaged assets/ai/*_app_instructions.md files are build artifacts
+    (see CLAUDE.md's "Documentation pipeline" section and docs/ai_instructions.md's
+    "Authoring the packaged instructions" section) generated from
+    assets/ai/_shared_instructions.md + _profile_{profile}.md by
+    scripts/build_ai_instructions.py. This catches the case where someone hand-edits
+    a packaged file directly (or edits a source file and forgets to re-run
+    `make ai-instructions`) instead of going through the generator."""
+    build_script = _load_build_script()
+    committed = get_app_instructions(profile)
+    freshly_built = build_script.build_profile(profile)
+    assert committed == freshly_built, (
+        f'{profile}_app_instructions.md is out of sync with its sources -- '
+        'run `make ai-instructions` and commit the result'
+    )

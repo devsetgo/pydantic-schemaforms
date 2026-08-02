@@ -35,6 +35,17 @@ edit those directly.
 To verify a doc change (including regenerating the three copies above from
 their sources) without touching the deploy pipeline: `make create-docs-local`
 (runs `scripts/changelog.py`, copies the three files, then `mkdocs build`).
+
+The 3 packaged AI-assistant instruction files under
+`pydantic_schemaforms/assets/ai/` (`generic_app_instructions.md`,
+`copilot_app_instructions.md`, `claude_app_instructions.md` — read by
+`pydantic_schemaforms/ai_instructions.py`'s `get_app_instructions()`/CLI) are
+**also build artifacts**, same rule: never hand-edit them directly. Edit
+`pydantic_schemaforms/assets/ai/_shared_instructions.md` (the common body) or
+`_profile_{generic,copilot,claude}.md` (the small per-profile intro/outro,
+each containing an `<!-- INCLUDE: _shared_instructions.md -->` marker)
+instead, then run `make ai-instructions` (`scripts/build_ai_instructions.py`
+— also runs automatically as part of `make create-docs`/`create-docs-local`).
 Cross-links between `README.md`/`docs/index.md` and other `docs/*.md` files
 can't use a single relative path that resolves correctly in both GitHub's
 README rendering and mkdocs' site (the same file serves both), so prefer

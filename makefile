@@ -26,7 +26,7 @@ LOG_LEVEL = debug
 REQUIREMENTS_PATH = requirements.txt
 # DEV_REQUIREMENTS_PATH = requirements/dev.txt
 
-.PHONY: autoflake black bump bump-beta bump-undo cleanup create-docs flake8 git-cleanup help install isort rebase run-example run-example-dev speedtest test ex-run ex-test
+.PHONY: ai-instructions autoflake black bump bump-beta bump-undo cleanup create-docs flake8 git-cleanup help install isort rebase run-example run-example-dev speedtest test ex-run ex-test
 
 .PHONY: vendor-update-htmx vendor-verify
 
@@ -56,10 +56,14 @@ bump-undo: ## Undo the last version bump
 
 cleanup: isort ruff autoflake ## Run isort, ruff, autoflake
 
+ai-instructions: ## Regenerate the packaged AI-assistant instruction files from shared sources
+	python3 scripts/build_ai_instructions.py
+
 create-docs: ## Build and publish versioned docs with mike (make create-docs VERSION=26.4.0)
 
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
+	python3 scripts/build_ai_instructions.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
 	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
@@ -76,6 +80,7 @@ create-docs-local: ## Build and deploy the project's documentation
 
 	python3 scripts/changelog.py
 	python3 scripts/update_docs.py
+	python3 scripts/build_ai_instructions.py
 	cp /workspaces/$(REPONAME)/README.md /workspaces/$(REPONAME)/docs/index.md
 	cp /workspaces/$(REPONAME)/CONTRIBUTING.md /workspaces/$(REPONAME)/docs/contribute.md
 	cp /workspaces/$(REPONAME)/CHANGELOG.md /workspaces/$(REPONAME)/docs/release-notes.md
