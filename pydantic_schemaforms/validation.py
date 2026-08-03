@@ -23,6 +23,7 @@ from .tstring import SafeHTML
 
 _INVALID_VALUE_MSG = 'Invalid value'
 _INVALID_EMAIL_MSG = 'Please enter a valid email address'
+_INVALID_EMAIL_DNS_MSG = "This email domain doesn't appear to accept mail"
 _INVALID_DATE_MSG = 'Invalid date format'
 
 
@@ -228,6 +229,63 @@ class EmailRule(RegexRule):
     def __init__(self, message: str = _INVALID_EMAIL_MSG):
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         super().__init__(pattern, message)
+
+
+class EmailDeliverabilityRule(ValidationRule):
+    """Checks that an email's domain has valid DNS/MX records.
+
+    Unlike ``EmailRule`` (a pure regex format check), this performs a real
+    DNS lookup via the optional ``email-validator`` package, so it catches
+    typo'd or non-existent domains (``user@gmial.com``) and domains with no
+    mail server at all. Requires network access and is therefore always
+    ``client_side=False`` — there is no way to run a DNS/MX lookup from
+    browser JavaScript, so this only ever runs server-side (e.g. behind a
+    ``LiveValidator`` HTMX endpoint for point-of-typing feedback, or in a
+    form-submit handler).
+
+    Unless a fixed ``message`` is supplied, the error returned by
+    ``validate()`` is ``email-validator``'s own specific reason for the
+    failure (e.g. "The domain name X does not exist.", "The domain name X
+    does not accept email.", or "...is a special-use or reserved name...")
+    rather than one generic string — so the caller can tell a typo'd/missing
+    domain apart from a reserved TLD apart from a domain with no MX record.
+
+    Install the dependency with ``pip install pydantic-schemaforms[email-dns]``
+    (or plain ``pip install email-validator``).
+    """
+
+    rule_name = 'email_deliverability'
+
+    def __init__(self, message: str | None = None, timeout: int | None = None):
+        super().__init__(message or _INVALID_EMAIL_DNS_MSG, client_side=False)
+        self._explicit_message = message is not None
+        self.timeout = timeout
+
+    def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
+        if value is None or value == '':
+            return True, ''  # Let RequiredRule handle empty values
+
+        try:
+            from email_validator import EmailNotValidError, validate_email
+        except ImportError as e:
+            raise ImportError(
+                'DNS/MX email deliverability checks require the "email-validator" package. '
+                'Install it with `pip install pydantic-schemaforms[email-dns]` '
+                'or `pip install email-validator`.'
+            ) from e
+
+        try:
+            validate_email(str(value), check_deliverability=True, timeout=self.timeout)
+        except EmailNotValidError as e:
+            # A caller-supplied message is fixed and always wins; otherwise
+            # surface email-validator's own specific reason (bad TLD vs. no
+            # DNS record vs. no MX record all say something different).
+            return False, self.message if self._explicit_message else str(e)
+
+        return True, ''
+
+    def _descriptor_params(self) -> dict[str, Any]:
+        return {'timeout': self.timeout}
 
 
 class PhoneRule(RegexRule):
@@ -448,9 +506,33 @@ class FieldValidator:
         """Add maximum length validation."""
         return self.add_rule(MaxLengthRule(length, message))
 
-    def email(self, message: str | None = None) -> 'FieldValidator':
-        """Add email validation."""
-        return self.add_rule(EmailRule(message or _INVALID_EMAIL_MSG))
+    def email(
+        self,
+        message: str | None = None,
+        *,
+        check_deliverability: bool = False,
+        dns_timeout: int | None = None,
+    ) -> 'FieldValidator':
+        """Add email validation.
+
+        Args:
+            message: Custom message for the format check.
+            check_deliverability: Also verify the domain has valid DNS/MX
+                records (a real DNS lookup — requires the optional
+                ``email-validator`` package, see ``EmailDeliverabilityRule``).
+            dns_timeout: DNS lookup timeout in seconds, used only when
+                check_deliverability is True.
+        """
+        self.add_rule(EmailRule(message or _INVALID_EMAIL_MSG))
+        if check_deliverability:
+            self.email_deliverability(dns_timeout=dns_timeout)
+        return self
+
+    def email_deliverability(
+        self, message: str | None = None, dns_timeout: int | None = None
+    ) -> 'FieldValidator':
+        """Add a DNS/MX deliverability check (server-side only, real DNS lookup)."""
+        return self.add_rule(EmailDeliverabilityRule(message, timeout=dns_timeout))
 
     def phone(self, message: str | None = None) -> 'FieldValidator':
         """Add phone validation."""
@@ -798,8 +880,18 @@ def create_validator() -> FormValidator:
 
 
 # Convenience functions for common validation patterns
-def create_email_validator() -> Callable[[str], ValidationResponse]:
-    """Create a validator for email fields."""
+def create_email_validator(
+    *, check_deliverability: bool = False, dns_timeout: int | None = None
+) -> Callable[[str], ValidationResponse]:
+    """Create a validator for email fields.
+
+    Args:
+        check_deliverability: Also verify the domain has valid DNS/MX
+            records (a real DNS lookup — requires the optional
+            ``email-validator`` package; see ``EmailDeliverabilityRule``).
+        dns_timeout: DNS lookup timeout in seconds, used only when
+            check_deliverability is True.
+    """
 
     def validate_email(value: str) -> ValidationResponse:
         if not value:
@@ -816,6 +908,13 @@ def create_email_validator() -> Callable[[str], ValidationResponse]:
                 suggestions=['Example: user@example.com'],
                 value=value,
             )
+
+        if check_deliverability:
+            is_valid, error = EmailDeliverabilityRule(timeout=dns_timeout).validate(value)
+            if not is_valid:
+                return ValidationResponse(
+                    field_name='email', is_valid=False, errors=[error], value=value
+                )
 
         return ValidationResponse(
             field_name='email', is_valid=True, value=value, formatted_value=value.lower()
@@ -1276,6 +1375,7 @@ __all__ = [
     'MaxLengthRule',
     'RegexRule',
     'EmailRule',
+    'EmailDeliverabilityRule',
     'PhoneRule',
     'NumericRangeRule',
     'DateRangeRule',
