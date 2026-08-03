@@ -413,6 +413,33 @@ class TestFieldRendererCheckboxHandling:
         assert '<option value="medium" selected="selected">medium</option>' in html
         assert '<option value="large">large</option>' in html
 
+    def test_material_text_input_applies_arbitrary_ui_options_attributes(self):
+        """Regression test: _build_material_text_input_attributes only read a
+        nested ui_options={'attributes': {...}} dict, while every other
+        framework (Bootstrap, plain HTML) treats ui_options itself as a flat
+        dict of extra HTML attributes (FieldRenderer._apply_ui_option_attributes).
+        Live-validation wiring (hx-post/hx-trigger/data-validate-endpoint set
+        via ui_options for HTMX) silently disappeared under Material only.
+        """
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _HxEmailModel(FormModel):
+            email: str = Field(
+                '',
+                title='Email',
+                ui_element='email',
+                ui_options={
+                    'hx-post': '/validate/email',
+                    'hx-trigger': 'blur',
+                    'data-validate-endpoint': 'true',
+                },
+            )
+
+        html = render_form_html(_HxEmailModel, submit_url='/x', framework='material')
+        assert 'hx-post="/validate/email"' in html
+        assert 'hx-trigger="blur"' in html
+        assert 'data-validate-endpoint="true"' in html
+
     def test_material_multiselect_label_is_static_not_overlapping_floating_label(self):
         """Regression test: SelectInputBase.render_with_label's material branch
         rendered every label as an absolutely-positioned .md-floating-label,

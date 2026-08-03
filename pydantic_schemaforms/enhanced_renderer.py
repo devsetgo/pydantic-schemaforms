@@ -773,6 +773,17 @@ class EnhancedFormRenderer:
             input_wrapper=input_wrapper,
         )
 
+    # Keys inside a ui_options dict that mean something else (select choices,
+    # async-select config, the legacy nested 'attributes' dict already
+    # handled above) rather than a literal HTML attribute to emit.
+    _MATERIAL_UI_OPTION_SKIP_KEYS = {
+        'choices',
+        'options',
+        'async_options',
+        'fetch_url',
+        'attributes',
+    }
+
     def _build_material_text_input_attributes(self, ui_info: dict[str, Any]) -> str:
         attrs = []
         for source, attr_name in (
@@ -787,6 +798,21 @@ class EnhancedFormRenderer:
         extra = ui_info.get('attributes')
         if isinstance(extra, dict):
             for attr_name, attr_value in extra.items():
+                if attr_value is not None:
+                    attrs.append(f'{attr_name}="{html.escape(str(attr_value))}"')
+        # ui_options (the documented, framework-agnostic way to attach extra
+        # HTML attributes -- see FieldRenderer._apply_ui_option_attributes,
+        # the Bootstrap/plain equivalent) strips its `ui_` prefix down to
+        # 'options'. Mirror that flat-dict convention here so e.g. hx-post/
+        # data-* attributes used for live-validation wiring work identically
+        # under Material instead of silently being dropped.
+        ui_options = ui_info.get('options')
+        if isinstance(ui_options, dict):
+            for attr_name, attr_value in ui_options.items():
+                if attr_name in self._MATERIAL_UI_OPTION_SKIP_KEYS or isinstance(
+                    attr_value, (list, dict)
+                ):
+                    continue
                 if attr_value is not None:
                     attrs.append(f'{attr_name}="{html.escape(str(attr_value))}"')
         return ' '.join(attrs)
