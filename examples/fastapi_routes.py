@@ -52,11 +52,12 @@ from examples.date_time_formats_example import (
     create_sample_date_time_format_data,
 )
 
-from pydantic import EmailStr
+from pydantic import EmailStr, field_validator
 
 from pydantic_schemaforms import (
     __version__ as _psf_version,
     EnhancedFormRenderer,
+    EmailDeliverabilityRule,
     EmailRule,
     Field,
     FieldValidator,
@@ -179,7 +180,77 @@ _mv = FieldValidator('message')
 _mv.add_rule(MinLengthRule(10, message='Message must be at least 10 characters'))
 _contact_live_validator.register_field_validator(_mv)
 
+# "With vs without DNS/MX check" demo (/email-dns-validation): two fields
+# registered on the same live validator/endpoint so the page can show, side
+# by side, that a well-formed-but-nonexistent domain passes format-only
+# checking (EmailRule) but fails once EmailDeliverabilityRule's real DNS/MX
+# lookup is added.
+_ev_format_only = FieldValidator('email_format_only')
+_ev_format_only.add_rule(RequiredRule(message='Email is required'))
+_ev_format_only.add_rule(EmailRule())
+_contact_live_validator.register_field_validator(_ev_format_only)
+
+_ev_with_dns = FieldValidator('email_with_dns')
+_ev_with_dns.add_rule(RequiredRule(message='Email is required'))
+_ev_with_dns.add_rule(EmailRule())
+_ev_with_dns.add_rule(EmailDeliverabilityRule(timeout=5))
+_contact_live_validator.register_field_validator(_ev_with_dns)
+
 _LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
+
+_DNS_HX_ATTRS = {
+    'hx-trigger': 'blur',
+    'hx-swap': 'innerHTML',
+    'data-validate-endpoint': 'true',
+}
+
+
+class EmailDnsComparisonForm(FormModel):
+    """Two email fields, otherwise identical, that differ only in whether
+    EmailDeliverabilityRule's DNS/MX lookup is enforced — for the
+    /email-dns-validation "with vs. without" demo.
+
+    ``ui_options`` attaches the same ``hx-post``/``hx-target`` attributes the
+    hand-written /live-validation demo uses, so both fields validate on blur
+    through the standard FormModel-rendered inputs (no custom HTML needed).
+    The ``email_with_dns`` field_validator mirrors that check at submit time
+    too, so a domain that fails the live DNS check also fails on submit
+    rather than silently passing.
+    """
+
+    email_format_only: EmailStr = Field(
+        ...,
+        title='Without DNS/MX Check',
+        description='EmailRule format check only.',
+        examples=['someone@gmail.com'],
+        ui_element='email',
+        ui_options={
+            **_DNS_HX_ATTRS,
+            'hx-post': '/validate/email_format_only',
+            'hx-target': '#email_format_only-feedback',
+        },
+    )
+    email_with_dns: EmailStr = Field(
+        ...,
+        title='With DNS/MX Check',
+        description="Format check, plus a real DNS lookup for the domain's MX records.",
+        examples=['someone@gmail.com'],
+        ui_element='email',
+        ui_options={
+            **_DNS_HX_ATTRS,
+            'hx-post': '/validate/email_with_dns',
+            'hx-target': '#email_with_dns-feedback',
+        },
+    )
+
+    @field_validator('email_with_dns')
+    @classmethod
+    def _check_deliverability(cls, value: str) -> str:
+        is_valid, error = EmailDeliverabilityRule().validate(value)
+        if not is_valid:
+            raise ValueError(error)
+        return value
+
 
 LOGIN_CSRF_SESSION_KEY = 'login_csrf_token'
 REGISTER_CSRF_SESSION_KEY = 'register_csrf_token'
@@ -2359,7 +2430,14 @@ async def htmx_validate_field(field_name: str, request: Request):
     """HTMX endpoint: validate a single contact form field and return feedback HTML."""
     raw = await request.form()
     value = raw.get(field_name, '')
-    result = _contact_live_validator.validate_field(field_name, str(value))
+    try:
+        result = _contact_live_validator.validate_field(field_name, str(value))
+    except ImportError as e:
+        # EmailDeliverabilityRule's DNS/MX check needs the optional
+        # email-validator package — surface that as feedback instead of a 500.
+        feedback = f'<span class="text-warning small"><i class="bi bi-exclamation-triangle-fill me-1"></i>{e}</span>'
+        headers = validation_response_headers(field_name, False)
+        return HTMLResponse(feedback, headers=headers)
     if result.is_valid:
         feedback = '<span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Looks good!</span>'
     else:
@@ -2367,6 +2445,97 @@ async def htmx_validate_field(field_name: str, request: Request):
         feedback = f'<span class="text-danger small"><i class="bi bi-exclamation-circle-fill me-1"></i>{error_text}</span>'
     headers = validation_response_headers(field_name, result.is_valid)
     return HTMLResponse(feedback, headers=headers)
+
+
+@router.get('/email-dns-validation', response_class=HTMLResponse, tags=['Live Validation'])
+async def email_dns_validation_get(
+    request: Request,
+    style: str = 'bootstrap',
+    debug: bool = False,
+    show_timing: bool = True,
+):
+    """Side-by-side demo: email format validation with and without a DNS/MX check."""
+    form_html = await render_form_html_async(
+        EmailDnsComparisonForm,
+        framework=style,
+        submit_url=f'/email-dns-validation?style={style}',
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    return templates.TemplateResponse(
+        request,
+        'email_dns_validation.html',
+        {
+            'request': request,
+            'title': 'Email DNS/MX Validation',
+            'description': 'Same field type, two rule sets: format-only vs. format + a real DNS/MX lookup.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+        },
+    )
+
+
+@router.post('/email-dns-validation', response_class=HTMLResponse, tags=['Live Validation'])
+async def email_dns_validation_post(
+    request: Request,
+    style: str = 'bootstrap',
+    debug: bool = False,
+    show_timing: bool = True,
+):
+    """Submit-time validation for the DNS/MX comparison demo.
+
+    email_with_dns's field_validator runs the same EmailDeliverabilityRule
+    check the live HTMX endpoint uses, so a domain that fails on blur also
+    fails here rather than silently passing on submit.
+    """
+    raw = await request.form()
+    parsed_data = parse_nested_form_data(_group_form_data(raw))
+    validation = EmailDnsComparisonForm.validate(
+        parsed_data,
+        submit_url=f'/email-dns-validation?style={style}',
+        framework=style,
+        debug=debug,
+        show_timing=show_timing,
+        enable_logging=True,
+    )
+
+    full_referer_path = create_refer_path(request)
+    if validation.is_valid:
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Both Emails Passed Validation',
+                'message': 'Both fields — including the DNS/MX check — passed.',
+                'data': validation.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': full_referer_path,
+            },
+        )
+
+    form_html = await validation.render_with_errors_async()
+    return templates.TemplateResponse(
+        request,
+        'email_dns_validation.html',
+        {
+            'request': request,
+            'title': 'Email DNS/MX Validation',
+            'description': 'Same field type, two rule sets: format-only vs. format + a real DNS/MX lookup.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'errors': validation.errors,
+        },
+    )
 
 
 # ================================

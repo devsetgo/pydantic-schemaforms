@@ -74,10 +74,27 @@ class FormBuilder:
         return self.add_field(field)
 
     def email_input(
-        self, name: str = 'email', label: str = 'Email', **kwargs: Any
+        self,
+        name: str = 'email',
+        label: str = 'Email',
+        *,
+        check_deliverability: bool = False,
+        dns_timeout: int | None = None,
+        **kwargs: Any,
     ) -> 'FormBuilder':
+        """Add an email field.
+
+        check_deliverability=True additionally verifies the domain has valid
+        DNS/MX records (a real DNS lookup, requires the optional
+        ``email-validator`` package — install with
+        ``pip install pydantic-schemaforms[email-dns]``). This check only
+        ever runs server-side; wire it up to a live-validation endpoint (see
+        ``LiveValidator``) for point-of-typing feedback.
+        """
         field = FormField(name=name, label=label, input_type='email', **kwargs)
-        self.validator.field(name).email()
+        self.validator.field(name).email(
+            check_deliverability=check_deliverability, dns_timeout=dns_timeout
+        )
         return self.add_field(field)
 
     def password_input(

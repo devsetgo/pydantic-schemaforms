@@ -18,6 +18,7 @@ from pydantic import BaseModel, ValidationError
 from .templates import TemplateString
 from .tstring import SafeHTML, html as _html_proc
 from .validation import (
+    EmailDeliverabilityRule,
     ValidationResponse,
     create_email_validator,
     create_password_strength_validator,
@@ -118,7 +119,15 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     document.addEventListener('htmx:afterRequest', function(event) {{
         const element = event.detail.elt;
-        if (element.hasAttribute('data-validate-endpoint')) hideValidationLoading(element);
+        if (!element.hasAttribute('data-validate-endpoint')) return;
+        hideValidationLoading(element);
+        // Mirror the swapped feedback text into a native title attribute, so
+        // hovering the input (or its is-invalid/is-valid icon, where the
+        // framework draws one) surfaces *why* -- without requiring the
+        // feedback element to sit visually right next to the field.
+        const targetSelector = element.getAttribute('hx-target');
+        const feedbackElement = targetSelector ? document.querySelector(targetSelector) : null;
+        element.title = feedbackElement ? feedbackElement.textContent.trim() : '';
     }});
 }});
 </script>
@@ -485,4 +494,5 @@ __all__ = [
     'validation_response_headers',
     'create_email_validator',
     'create_password_strength_validator',
+    'EmailDeliverabilityRule',
 ]

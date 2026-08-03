@@ -44,6 +44,8 @@
                 <!-- Form -->
                 {{ form_html|safe }}
 
+                {% block extra_info_top %}{% endblock %}
+
                 <!-- Navigation -->
                 <div class="text-center mt-4">
                     <a href="/" class="btn btn-outline-secondary">
@@ -73,6 +75,8 @@
                         </a>
                     </div>
                 </div>
+
+                {% block extra_info %}{% endblock %}
 
                 {% if api_endpoint %}
                 <!-- Dual-Use API callout — shown when the route passes api_endpoint context -->

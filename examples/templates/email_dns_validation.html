@@ -1,0 +1,119 @@
+{% extends "form.html" %}
+
+{% block extra_styles %}
+<style>
+    .validation-feedback {
+        font-size: 0.9em;
+        min-height: 1.4em;
+    }
+    .validation-feedback:empty::before {
+        content: "Type an address above, then click away (blur) to check it here.";
+        color: #6c757d;
+        font-style: italic;
+    }
+    .is-validating {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3e%3cpath d='M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(.375em + .1875rem) center;
+        background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+    }
+    .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+    .htmx-request .htmx-indicator { opacity: 1; }
+    /* LiveValidator's JS toggles is-valid/is-invalid on every input regardless
+       of framework, but only Bootstrap's own .form-control.is-invalid CSS
+       paints a border+icon for it -- Material's inputs (.md-input) and plain
+       HTML inputs (no framework class at all) would otherwise show no visual
+       change at all, or (previously) a colored border with no icon, unlike
+       Bootstrap's checkmark/exclamation. Reuse Bootstrap's own SVG icons here
+       so every "Try Different Styles" option gets the identical indicator;
+       specificity/!important is bumped to win over Material's own
+       heavily-!important'd .md-input border/padding/background rules. */
+    input.is-invalid, .md-input.is-invalid {
+        border-color: #dc3545 !important;
+        border-width: 2px !important;
+        padding-right: calc(1.5em + 0.75rem) !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e") !important;
+        background-repeat: no-repeat !important;
+        background-position: right calc(0.375em + 0.1875rem) center !important;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) !important;
+    }
+    input.is-valid, .md-input.is-valid {
+        border-color: #198754 !important;
+        border-width: 2px !important;
+        padding-right: calc(1.5em + 0.75rem) !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e") !important;
+        background-repeat: no-repeat !important;
+        background-position: right calc(0.375em + 0.1875rem) center !important;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_info_top %}
+<div class="mt-3 p-3 border rounded">
+    <h6 class="text-muted mb-2">
+        <i class="bi bi-broadcast me-2"></i>Live check results
+        <span class="badge bg-secondary fw-normal ms-1">updates on blur</span>
+    </h6>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="small fw-semibold mb-1">
+                <i class="bi bi-envelope me-1"></i>Without DNS/MX
+            </div>
+            <div id="email_format_only-feedback" class="validation-feedback"></div>
+        </div>
+        <div class="col-md-6">
+            <div class="small fw-semibold mb-1">
+                <i class="bi bi-hdd-network-fill me-1"></i>With DNS/MX
+            </div>
+            <div id="email_with_dns-feedback" class="validation-feedback"></div>
+        </div>
+    </div>
+    <div class="small text-muted mt-2 mb-0">
+        <i class="bi bi-info-circle me-1"></i>
+        Hovering the field itself also shows this text as a tooltip — handy if
+        this results box ever scrolls out of view.
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_info %}
+<div class="alert alert-secondary small mt-3">
+    <i class="bi bi-lightbulb-fill me-1"></i>
+    Try <code>someone@gmail.com</code> in both fields (a real domain with mail
+    servers — both pass, live and on submit). Then try a domain that doesn't
+    exist, e.g. <code>someone@zzzqqqxxx12345-totally-made-up-domain.com</code>
+    — it's a normal, well-formed address, so the format-only field accepts it
+    both live and on submit, but the DNS/MX field rejects it both times,
+    since no such domain can actually receive mail.
+    <br>
+    <strong>Note:</strong> <code>someone@example.com</code> and addresses on
+    <code>.invalid</code>/<code>.test</code> are rejected by <em>both</em>
+    fields regardless of the DNS/MX check — Pydantic's <code>EmailStr</code>
+    itself treats those reserved placeholder domains (RFC&nbsp;2606) as
+    invalid syntax, so they're not useful for seeing the DNS/MX difference.
+</div>
+
+<div class="mt-4 p-3 bg-light rounded">
+    <h6 class="text-muted mb-2">
+        <i class="bi bi-info-circle me-1"></i>How it works
+    </h6>
+    <ul class="small mb-3 text-muted">
+        <li>Both fields render from the same <code>FormModel</code> and validate on blur via the same <code>LiveValidator</code>/HTMX wiring as the <a href="/live-validation">Live HTMX Validation</a> demo — only the registered rules differ.</li>
+        <li>The DNS/MX lookup is a real network call, so it always runs server-side (<code>EmailDeliverabilityRule.client_side</code> is <code>False</code>) — there's no way to check MX records from browser JavaScript.</li>
+        <li>The right-hand field enforces the same check again on submit, so a domain that fails live also fails validation — it's not just cosmetic.</li>
+        <li>The specific reason (bad TLD, no such domain, domain has no mail server, ...) comes straight from <code>email-validator</code> — it's shown in the results box above, on the input's hover tooltip, and in the submit-time error.</li>
+    </ul>
+    <p class="small text-muted mb-1">Add it to your own email field in a few lines:</p>
+    <pre class="small bg-white border rounded p-2 mb-0"><code>from pydantic_schemaforms import FieldValidator
+
+email_validator = FieldValidator("email").required().email(
+    check_deliverability=True,
+)</code></pre>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/vendor/htmx.min.js"></script>
+{{ validator_script | safe }}
+{% endblock %}

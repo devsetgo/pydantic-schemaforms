@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from datetime import date, datetime, time
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
 from pydantic import Field, model_validator
@@ -27,6 +28,7 @@ from pydantic_schemaforms.validation import (
     CrossFieldRules,
     CustomRule,
     DateRangeRule,
+    EmailDeliverabilityRule,
     EmailRule,
     FieldValidator,
     FormValidator,
@@ -529,6 +531,102 @@ class TestEmailRule:
         assert descriptor['message'] == 'Invalid email format'
 
 
+class TestEmailDeliverabilityRule:
+    """Test EmailDeliverabilityRule (DNS/MX check). Mocks email_validator so
+    the suite never makes real network calls."""
+
+    def test_client_side_always_false(self):
+        """DNS lookups can't run in browser JS — must never emit client validation."""
+        rule = EmailDeliverabilityRule()
+        assert rule.client_side is False
+        assert rule.get_client_validation('email') == ''
+
+    def test_empty_value_is_valid(self):
+        """Emptiness is RequiredRule's job, not this rule's."""
+        rule = EmailDeliverabilityRule()
+        is_valid, _ = rule.validate('')
+        assert is_valid is True
+
+    def test_valid_domain(self):
+        """A domain with valid MX records passes."""
+        rule = EmailDeliverabilityRule()
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.return_value = object()
+            is_valid, error = rule.validate('user@example.com')
+        assert is_valid is True
+        assert error == ''
+        mock_validate.assert_called_once()
+        _, kwargs = mock_validate.call_args
+        assert kwargs['check_deliverability'] is True
+
+    def test_domain_with_no_mx_records(self):
+        """A syntactically valid address whose domain can't receive mail fails
+        with email-validator's own specific reason, not a generic message —
+        so a caller can tell "no such domain" apart from "no MX record"."""
+        from email_validator import EmailNotValidError
+
+        rule = EmailDeliverabilityRule()
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.side_effect = EmailNotValidError('The domain name does not exist.')
+            is_valid, error = rule.validate('user@this-domain-does-not-exist-xyz.invalid')
+        assert is_valid is False
+        assert error == 'The domain name does not exist.'
+
+    def test_different_failure_reasons_surface_distinct_messages(self):
+        """Different underlying DNS/MX/TLD failures should produce different
+        error text, not a single one-size-fits-all message."""
+        from email_validator import EmailNotValidError
+
+        rule = EmailDeliverabilityRule()
+        reasons = [
+            'The domain name example.zzz does not exist.',
+            'The domain name example.com does not accept email.',
+            'The part after the @-sign is a special-use or reserved name that cannot be used with email.',
+        ]
+        seen_errors = set()
+        for reason in reasons:
+            with patch('email_validator.validate_email') as mock_validate:
+                mock_validate.side_effect = EmailNotValidError(reason)
+                is_valid, error = rule.validate('user@example.zzz')
+            assert is_valid is False
+            assert error == reason
+            seen_errors.add(error)
+        assert len(seen_errors) == len(reasons)
+
+    def test_custom_message_used_on_failure(self):
+        from email_validator import EmailNotValidError
+
+        rule = EmailDeliverabilityRule(message='Custom DNS error')
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.side_effect = EmailNotValidError('boom')
+            is_valid, error = rule.validate('user@example.com')
+        assert is_valid is False
+        assert error == 'Custom DNS error'
+
+    def test_timeout_passed_through(self):
+        rule = EmailDeliverabilityRule(timeout=5)
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.return_value = object()
+            rule.validate('user@example.com')
+        _, kwargs = mock_validate.call_args
+        assert kwargs['timeout'] == 5
+
+    def test_descriptor(self):
+        rule = EmailDeliverabilityRule(timeout=3)
+        descriptor = rule.to_descriptor()
+        assert descriptor['type'] == 'email_deliverability'
+        assert descriptor['client'] is False
+        assert descriptor['timeout'] == 3
+
+    def test_missing_dependency_raises_helpful_error(self):
+        """If email-validator isn't installed, fail loudly with install instructions
+        rather than silently treating every address as valid or invalid."""
+        rule = EmailDeliverabilityRule()
+        with patch.dict('sys.modules', {'email_validator': None}):
+            with pytest.raises(ImportError, match='email-dns'):
+                rule.validate('user@example.com')
+
+
 # ---------------------------------------------------------------------------
 # DateRangeRule
 # (merged from test_validation_rules.py and test_validation_extended.py)
@@ -727,6 +825,34 @@ class TestConvenienceValidators:
         result = validator('not-an-email')
         assert isinstance(result, ValidationResponse)
         assert result.is_valid is False
+
+    def test_create_email_validator_check_deliverability_valid(self):
+        """DNS/MX check is skipped by default, opt-in via check_deliverability."""
+        validator = create_email_validator(check_deliverability=True)
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.return_value = object()
+            result = validator('user@example.com')
+        assert result.is_valid is True
+        mock_validate.assert_called_once()
+
+    def test_create_email_validator_check_deliverability_invalid_domain(self):
+        """A well-formed address with no valid MX record fails when opted in."""
+        from email_validator import EmailNotValidError
+
+        validator = create_email_validator(check_deliverability=True)
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.side_effect = EmailNotValidError('no MX record')
+            result = validator('user@this-domain-does-not-exist-xyz.invalid')
+        assert result.is_valid is False
+        assert result.errors
+
+    def test_create_email_validator_skips_dns_when_format_invalid(self):
+        """Malformed addresses fail on the regex check before any DNS lookup happens."""
+        validator = create_email_validator(check_deliverability=True)
+        with patch('email_validator.validate_email') as mock_validate:
+            result = validator('not-an-email')
+        assert result.is_valid is False
+        mock_validate.assert_not_called()
 
     def test_create_password_strength_validator(self):
         """Test password strength validator factory."""
@@ -1469,6 +1595,33 @@ class TestConsolidatedValidationEngine:
         assert valid.is_valid
         assert valid.formatted_value == 'user@example.com'
 
+    def test_field_validator_email_check_deliverability_adds_dns_rule(self):
+        """FieldValidator.email(check_deliverability=True) appends an
+        EmailDeliverabilityRule alongside the regular EmailRule."""
+        fv = FieldValidator('email').email(check_deliverability=True, dns_timeout=5)
+        rule_types = [type(r) for r in fv.rules]
+        assert EmailRule in rule_types
+        assert EmailDeliverabilityRule in rule_types
+        dns_rule = next(r for r in fv.rules if isinstance(r, EmailDeliverabilityRule))
+        assert dns_rule.timeout == 5
+
+    def test_field_validator_email_default_skips_dns_rule(self):
+        """Default behavior is unchanged — no DNS rule unless opted in."""
+        fv = FieldValidator('email').email()
+        assert not any(isinstance(r, EmailDeliverabilityRule) for r in fv.rules)
+
+    def test_field_validator_email_check_deliverability_end_to_end(self):
+        """A field validator with check_deliverability=True rejects a
+        well-formed address whose domain has no MX record."""
+        from email_validator import EmailNotValidError
+
+        fv = FieldValidator('email').email(check_deliverability=True)
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.side_effect = EmailNotValidError('no MX record')
+            is_valid, errors = fv.validate('user@this-domain-does-not-exist-xyz.invalid')
+        assert is_valid is False
+        assert errors
+
     def test_password_validator_from_validation_module(self):
         """Password validator should be in validation.py."""
         validator = create_password_strength_validator(min_length=8)
@@ -1500,6 +1653,28 @@ class TestConsolidatedValidationEngine:
 
         response = live_validator.validate_field('username', 'john')
         assert response.is_valid
+
+    def test_live_validator_dns_check_for_point_of_typing_feedback(self):
+        """A field validator with an email(check_deliverability=True) rule works
+        through LiveValidator — this is the wiring an HTMX endpoint would use to
+        give DNS/MX feedback as the user types/blurs the email field."""
+        from email_validator import EmailNotValidError
+
+        field_validator = FieldValidator('email').required().email(check_deliverability=True)
+        live_validator = LiveValidator()
+        live_validator.register_field_validator(field_validator)
+
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.side_effect = EmailNotValidError('no MX record')
+            response = live_validator.validate_field(
+                'email', 'user@this-domain-does-not-exist-xyz.invalid'
+            )
+        assert response.is_valid is False
+
+        with patch('email_validator.validate_email') as mock_validate:
+            mock_validate.return_value = object()
+            response = live_validator.validate_field('email', 'user@example.com')
+        assert response.is_valid is True
 
     def test_validation_schema_build_live_validator(self):
         """ValidationSchema.build_live_validator() should create working LiveValidator."""

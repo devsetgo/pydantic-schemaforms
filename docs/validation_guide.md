@@ -327,6 +327,99 @@ schema.add_field(email_fv)
 live_validator = schema.build_live_validator()
 ```
 
+### Email DNS/MX Deliverability Checks
+
+`EmailRule` is a pure regex format check — `user@thisdomaindoesnotexist.zzz` passes it.
+`EmailDeliverabilityRule` additionally performs a real DNS lookup for the domain's MX
+records, catching typo'd or non-existent domains before you send mail to them (useful,
+for example, when onboarding a client account and you want to know the domain can
+actually receive mail). It requires the optional [`email-validator`](https://pypi.org/project/email-validator/)
+package:
+
+```bash
+pip install pydantic-schemaforms[email-dns]
+# or: pip install email-validator
+```
+
+Because it's a real network call, `EmailDeliverabilityRule` always has
+`client_side=False` — there's no way to run a DNS/MX lookup from browser JavaScript, so
+it never generates client-side JS and only ever runs on the server. The convenient way
+to add it is via `FieldValidator.email(check_deliverability=True)`, which appends both
+the format check and the DNS check:
+
+```python
+from pydantic_schemaforms import FieldValidator
+
+email_fv = FieldValidator("email").required().email(
+    check_deliverability=True,
+    dns_timeout=5,   # seconds; passed through to email-validator
+)
+```
+
+Registering that `FieldValidator` with a `LiveValidator` (see above) gives you DNS/MX
+feedback at the point of entering the address — the existing HTMX wiring calls your
+`/validate/{field_name}` endpoint, which now runs the DNS check server-side, without a
+page reload. Because DNS lookups are much slower than a regex check (tens to hundreds of
+milliseconds, sometimes more), prefer `validate_on_blur=True` (the default) over
+`validate_on_input`; if you do want feedback while the user is still typing, pair
+`validate_on_input=True` with a generous `debounce_ms` (600–1000) so you're not issuing
+a DNS query per keystroke.
+
+Unless you pass a fixed `message`, the error text is `email-validator`'s own specific
+reason for the failure rather than one generic string, so the user sees *why* the
+address didn't pass — a typo'd/non-existent domain, a domain with no mail server, and a
+reserved TLD all produce different text:
+
+```text
+The domain name gmial.con does not exist.
+The domain name example.com does not accept email.
+The part after the @-sign is a special-use or reserved name that cannot be used with email.
+```
+
+Pass `message=` if you'd rather show your own fixed copy instead (e.g. for a
+consistent tone across all validation errors):
+
+```python
+from pydantic_schemaforms.validation import EmailDeliverabilityRule
+
+EmailDeliverabilityRule(message="We couldn't verify that domain accepts mail.")
+```
+
+`FormBuilder.email_input()` exposes the same option:
+
+```python
+from pydantic_schemaforms import FormBuilder
+
+form = FormBuilder().email_input("email", check_deliverability=True, dns_timeout=5)
+```
+
+You can also use the rule directly, or via the `create_email_validator()` convenience
+factory:
+
+```python
+from pydantic_schemaforms.validation import EmailDeliverabilityRule, create_email_validator
+
+is_valid, error = EmailDeliverabilityRule(timeout=5).validate("someone@gmail.com")
+
+validate_email = create_email_validator(check_deliverability=True, dns_timeout=5)
+result = validate_email("someone@gmail.com")  # ValidationResponse
+```
+
+> **Careful with `example.com`/`example.org` in your own tests** — those RFC 2606
+> reserved placeholder domains (used everywhere else in this guide) have no MX record,
+> so `check_deliverability=True` correctly *rejects* them. Use a real domain (like
+> `gmail.com`) or a domain you control when trying this out.
+
+See a runnable side-by-side comparison in the FastAPI example app at
+`GET /email-dns-validation` (`examples/fastapi_routes.py` /
+`examples/templates/email_dns_validation.html`) — two live email fields, one with
+`EmailRule` only and one with `EmailRule` + `EmailDeliverabilityRule`, so you can see
+the same address pass one and fail the other.
+
+If `email-validator` isn't installed, `EmailDeliverabilityRule.validate()` raises
+`ImportError` with install instructions rather than silently skipping the check or
+treating every address as valid.
+
 ### Validating Pydantic Model Fields
 
 `register_model_validator()` registers a validator for every field in a Pydantic model.

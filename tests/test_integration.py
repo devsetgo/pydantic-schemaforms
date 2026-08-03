@@ -689,6 +689,29 @@ class TestFormBuilderValidation:
 
         assert result is builder
 
+    def test_email_input_check_deliverability_registers_dns_rule(self):
+        """email_input(check_deliverability=True) should wire an
+        EmailDeliverabilityRule onto the field's validator."""
+        from pydantic_schemaforms.validation import EmailDeliverabilityRule
+
+        builder = FormBuilder()
+        result = builder.email_input('email', check_deliverability=True, dns_timeout=5)
+
+        assert result is builder
+        rules = builder.validator.field('email').rules
+        dns_rule = next(r for r in rules if isinstance(r, EmailDeliverabilityRule))
+        assert dns_rule.timeout == 5
+
+    def test_email_input_default_has_no_dns_rule(self):
+        """Default email_input() behavior is unchanged (no DNS check)."""
+        from pydantic_schemaforms.validation import EmailDeliverabilityRule
+
+        builder = FormBuilder()
+        builder.email_input('email')
+
+        rules = builder.validator.field('email').rules
+        assert not any(isinstance(r, EmailDeliverabilityRule) for r in rules)
+
 
 # ===========================================================================
 # Section 10 – FormBuilder configuration methods
