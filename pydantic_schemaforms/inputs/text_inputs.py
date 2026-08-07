@@ -372,9 +372,16 @@ class TextArea(FormInput):
         **kwargs: Any,
     ) -> str:
         value = kwargs.pop('value', '')
+        resize = kwargs.pop('resize', None)
         attrs = self.validate_attributes(**kwargs)
         if 'type' in attrs:
             del attrs['type']  # <textarea> has no type attribute.
+        if resize:
+            # 'resize' is a CSS property, not an HTML attribute -- merge it into
+            # `style` rather than emitting it as a bare (invalid) attribute.
+            existing_style = str(attrs.get('style') or '').strip().rstrip(';')
+            resize_style = f'resize: {resize}'
+            attrs['style'] = f'{existing_style}; {resize_style}' if existing_style else resize_style
         _attrs = SafeHTML(self._build_attributes_string(attrs))
         display_value = str(value) if value is not None else ''
         textarea_html = html(t'<textarea {_attrs}>{display_value}</textarea>')

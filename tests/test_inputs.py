@@ -114,6 +114,18 @@ class TestTextInputs:
         assert 'cols="40"' in html
         assert 'Long text content</textarea>' in html
 
+    def test_textarea_resize_becomes_a_style_not_a_raw_attribute(self):
+        """`resize` is a CSS property, not an HTML attribute -- it must be merged
+        into `style`, not emitted as a bare (invalid) `resize="..."` attribute."""
+        input_field = TextArea()
+
+        html = input_field.render(name='notes', resize='vertical')
+        assert 'style="resize: vertical"' in html
+        assert 'resize="vertical"' not in html
+
+        html_with_style = input_field.render(name='notes', resize='vertical', style='color: red')
+        assert 'style="color: red; resize: vertical"' in html_with_style
+
     def test_textarea_language_none_is_unaffected(self):
         """No `language` set -> byte-identical to today's plain textarea path."""
         input_field = TextArea()
