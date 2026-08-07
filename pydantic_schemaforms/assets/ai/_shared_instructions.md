@@ -450,12 +450,16 @@ Use this only when asked for inline "validates as you type/blur" feedback withou
 reload. It is a separate rendering path layered on top of the normal form, not a replacement for
 POST validation:
 
-- Build `validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True, ...))`.
-- Prefer `validator.register_model_validator(MyForm)` to derive per-field checks straight from
-  the FormModel's own Field constraints (no duplicated rules). Use
-  `validator.register_field_validator(...)` — optionally with a `CustomRule(func)` from the
-  "Library boundary" section above for logic the model constraints can't express — only for
-  custom messages/logic beyond what the model already enforces.
+- Build `validator = LiveValidator.for_model(MyForm, debounce_ms=600)` — one call that derives
+  every field's live check straight from the FormModel's own Field constraints/types (no
+  duplicated rules) and checks as-you-type (debounced) rather than only on blur. Pass more than
+  one model class to serve several forms' fields from one validator/endpoint:
+  `LiveValidator.for_model(FormA, FormB, debounce_ms=600)`. Use
+  `validator.register_field_validator(...)` on the returned validator — optionally with a
+  `CustomRule(func)` from the "Library boundary" section above for logic the model constraints
+  can't express — only for custom messages/logic beyond what the model already enforces. Pass
+  `config=HTMXValidationConfig(...)` instead of `debounce_ms=` for anything beyond the debounce
+  interval, e.g. blur-only checking.
 - Embed `validator.render_htmx_script()` once per page.
 - Render fields that need live feedback with
   `validator.render_field_with_live_validation(field_name, field_type=..., value=..., label=...)`.
@@ -467,9 +471,92 @@ POST validation:
   validation is UX sugar; it never replaces server-side validation on submit (JS can be disabled
   or bypassed).
 - For an email field, add a DNS/MX deliverability check (catches typo'd/non-existent domains, not
-  just format) with `FieldValidator("email").required().email(check_deliverability=True)`. This
-  needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`) and
-  always runs server-side only — there is no way to do a real DNS lookup from browser JS.
+  just format) by typing the field `DeliverableEmailStr` instead of `EmailStr` — it's a drop-in
+  type, so `LiveValidator.for_model(MyForm)` above picks it up automatically with no extra
+  FieldValidator code. Reach for `FieldValidator("email").required().email(check_deliverability=True)`
+  instead only if you're building a validator imperatively (FormBuilder, no typed model). Either
+  way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`)
+  and always runs server-side only — there is no way to do a real DNS lookup from browser JS.
+
+### Complete worked example (FastAPI, live validation)
+
+Verified end-to-end (GET renders with the HTMX wiring in place, POST /validate/{field} returns
+correct pass/fail HTML for both a plain constraint and a DNS/MX check). Use this as the template
+instead of inventing a different validator/endpoint shape:
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+
+from pydantic_schemaforms import (
+    DeliverableEmailStr,
+    Field,
+    FormModel,
+    LiveValidator,
+    render_form_html_async,
+)
+from pydantic_schemaforms.live_validation import validation_response_headers
+
+app = FastAPI()
+
+
+class SignupForm(FormModel):
+    name: str = Field(..., min_length=2, title='Full Name', ui_element='text')
+    email: DeliverableEmailStr = Field(  # EmailStr + a real DNS/MX lookup, both live-checked below
+        ...,
+        title='Email',
+        ui_element='email',
+        ui_options={
+            'hx-post': '/validate/email',
+            'hx-trigger': 'blur, input delay:600ms',
+            'hx-target': '#email-feedback',
+            'hx-swap': 'innerHTML',
+            'data-validate-endpoint': 'true',
+        },
+    )
+
+
+# Module scope, built once: derives a live check for every field on SignupForm
+# straight from its Field() constraints/types -- no FieldValidator to hand-write.
+live_validator = LiveValidator.for_model(SignupForm, debounce_ms=600)
+VALIDATOR_SCRIPT = live_validator.render_htmx_script()  # embed once per page
+
+
+@app.get('/signup', response_class=HTMLResponse)
+async def signup_get():
+    form_html = await render_form_html_async(SignupForm, submit_url='/signup')
+    return f'<html><body>{form_html}{VALIDATOR_SCRIPT}</body></html>'
+
+
+@app.post('/validate/{field_name}', response_class=HTMLResponse)
+async def validate_field(field_name: str, request: Request):
+    # One route serves every field on the model -- validate_field() dispatches
+    # by name, so adding a field to SignupForm needs no new route here.
+    raw = await request.form()
+    value = str(raw.get(field_name, ''))
+    result = live_validator.validate_field(field_name, value)
+    feedback = (
+        '<span class="text-success">Looks good!</span>'
+        if result.is_valid
+        else f'<span class="text-danger">{result.errors[0]}</span>'
+    )
+    return HTMLResponse(feedback, headers=validation_response_headers(field_name, result.is_valid))
+
+
+@app.post('/signup', response_class=HTMLResponse)
+async def signup_post(request: Request):
+    data = dict(await request.form())
+    result = SignupForm.validate(data, submit_url='/signup')  # the real safety net -- always runs
+    if result.is_valid:
+        return '<p>Signed up!</p>'
+    return await result.render_with_errors_async()
+```
+
+The `email` field needs an empty `<div id="email-feedback"></div>` on the page for the response
+to swap into (it does not have to sit immediately next to the input — hovering the input itself
+also shows the same text as a tooltip, since the bundled JS mirrors the swapped feedback into the
+input's `title` attribute). `name` has no `ui_options` here, so it has no live feedback target;
+add the same `ui_options` block (with its own `hx-target`) to give it one too.
 
 ## Conversion workflows (JSON or Pydantic -> FormModel)
 

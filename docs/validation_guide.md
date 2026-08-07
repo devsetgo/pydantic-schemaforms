@@ -329,41 +329,33 @@ live_validator = schema.build_live_validator()
 
 ### Email DNS/MX Deliverability Checks
 
-`EmailRule` is a pure regex format check — `user@thisdomaindoesnotexist.zzz` passes it.
-`EmailDeliverabilityRule` additionally performs a real DNS lookup for the domain's MX
-records, catching typo'd or non-existent domains before you send mail to them (useful,
-for example, when onboarding a client account and you want to know the domain can
-actually receive mail). It requires the optional [`email-validator`](https://pypi.org/project/email-validator/)
-package:
+Pydantic's own `EmailStr` is a format check — `user@thisdomaindoesnotexist.zzz` passes
+it. `DeliverableEmailStr` is a drop-in replacement that additionally performs a real DNS
+lookup for the domain's MX records, catching typo'd or non-existent domains before you
+send mail to them (useful, for example, when onboarding a client account and you want to
+know the domain can actually receive mail). It requires the optional
+[`email-validator`](https://pypi.org/project/email-validator/) package:
 
 ```bash
 pip install pydantic-schemaforms[email-dns]
 # or: pip install email-validator
 ```
 
-Because it's a real network call, `EmailDeliverabilityRule` always has
-`client_side=False` — there's no way to run a DNS/MX lookup from browser JavaScript, so
-it never generates client-side JS and only ever runs on the server. The convenient way
-to add it is via `FieldValidator.email(check_deliverability=True)`, which appends both
-the format check and the DNS check:
+Use it exactly like `EmailStr` — it's just a type, so there's no validator to construct,
+register, or keep in sync with the field:
 
 ```python
-from pydantic_schemaforms import FieldValidator
+from pydantic_schemaforms import DeliverableEmailStr, Field, FormModel
 
-email_fv = FieldValidator("email").required().email(
-    check_deliverability=True,
-    dns_timeout=5,   # seconds; passed through to email-validator
-)
+class SignupForm(FormModel):
+    email: DeliverableEmailStr = Field(..., title="Email")
 ```
 
-Registering that `FieldValidator` with a `LiveValidator` (see above) gives you DNS/MX
-feedback at the point of entering the address — the existing HTMX wiring calls your
-`/validate/{field_name}` endpoint, which now runs the DNS check server-side, without a
-page reload. Because DNS lookups are much slower than a regex check (tens to hundreds of
-milliseconds, sometimes more), prefer `validate_on_blur=True` (the default) over
-`validate_on_input`; if you do want feedback while the user is still typing, pair
-`validate_on_input=True` with a generous `debounce_ms` (600–1000) so you're not issuing
-a DNS query per keystroke.
+That one line is enough for `FormModel.validate()`, `as_api_model()`'s JSON endpoint, and
+`LiveValidator.for_model()` (next section) to all enforce and live-check the DNS/MX rule
+identically, since it's now part of the field's own type rather than a separate rule you
+register by hand. Because it's a real network call, the check always runs server-side —
+there's no way to do a DNS/MX lookup from browser JavaScript.
 
 Unless you pass a fixed `message`, the error text is `email-validator`'s own specific
 reason for the failure rather than one generic string, so the user sees *why* the
@@ -376,55 +368,71 @@ The domain name example.com does not accept email.
 The part after the @-sign is a special-use or reserved name that cannot be used with email.
 ```
 
-Pass `message=` if you'd rather show your own fixed copy instead (e.g. for a
-consistent tone across all validation errors):
-
-```python
-from pydantic_schemaforms.validation import EmailDeliverabilityRule
-
-EmailDeliverabilityRule(message="We couldn't verify that domain accepts mail.")
-```
-
-`FormBuilder.email_input()` exposes the same option:
-
-```python
-from pydantic_schemaforms import FormBuilder
-
-form = FormBuilder().email_input("email", check_deliverability=True, dns_timeout=5)
-```
-
-You can also use the rule directly, or via the `create_email_validator()` convenience
-factory:
-
-```python
-from pydantic_schemaforms.validation import EmailDeliverabilityRule, create_email_validator
-
-is_valid, error = EmailDeliverabilityRule(timeout=5).validate("someone@gmail.com")
-
-validate_email = create_email_validator(check_deliverability=True, dns_timeout=5)
-result = validate_email("someone@gmail.com")  # ValidationResponse
-```
-
 > **Careful with `example.com`/`example.org` in your own tests** — those RFC 2606
 > reserved placeholder domains (used everywhere else in this guide) have no MX record,
-> so `check_deliverability=True` correctly *rejects* them. Use a real domain (like
+> so `DeliverableEmailStr` correctly *rejects* them. Use a real domain (like
 > `gmail.com`) or a domain you control when trying this out.
 
 See a runnable side-by-side comparison in the FastAPI example app at
 `GET /email-dns-validation` (`examples/fastapi_routes.py` /
-`examples/templates/email_dns_validation.html`) — two live email fields, one with
-`EmailRule` only and one with `EmailRule` + `EmailDeliverabilityRule`, so you can see
-the same address pass one and fail the other.
+`examples/templates/email_dns_validation.html`) — two live email fields, one plain
+`EmailStr` and one `DeliverableEmailStr`, so you can see the same address pass one and
+fail the other.
 
-If `email-validator` isn't installed, `EmailDeliverabilityRule.validate()` raises
-`ImportError` with install instructions rather than silently skipping the check or
-treating every address as valid.
+#### Lower-level building blocks
+
+`DeliverableEmailStr` is built on `EmailDeliverabilityRule`, which you can reach for
+directly if you need a custom `timeout`, a fixed error `message`, or you're building a
+field imperatively rather than through a typed model:
+
+```python
+from pydantic_schemaforms.validation import EmailDeliverabilityRule
+
+EmailDeliverabilityRule(message="We couldn't verify that domain accepts mail.", timeout=5)
+```
+
+`FieldValidator.email(check_deliverability=True)`, `FormBuilder.email_input(check_deliverability=True)`,
+and `create_email_validator(check_deliverability=True)` all expose the same rule for the
+`FieldValidator`/`FormBuilder`/factory-function styles of building validation instead of
+a `FormModel` type annotation:
+
+```python
+from pydantic_schemaforms import FieldValidator
+
+email_fv = FieldValidator("email").required().email(check_deliverability=True, dns_timeout=5)
+```
+
+If `email-validator` isn't installed, `EmailDeliverabilityRule.validate()` (and so
+`DeliverableEmailStr`) raises `ImportError` with install instructions rather than
+silently skipping the check or treating every address as valid.
 
 ### Validating Pydantic Model Fields
 
-`register_model_validator()` registers a validator for every field in a Pydantic model.
-Each field is validated in isolation using `validate_assignment`, so valid fields are never
-marked invalid just because other required fields are absent:
+`LiveValidator.for_model()` is the recommended way to wire up live validation for a whole
+`FormModel` (or plain `BaseModel`) at once instead of building a `FieldValidator` per
+field by hand — one call derives every field's live check straight from the model's own
+`Field()` constraints and types (`min_length`, `EmailStr`, `DeliverableEmailStr`'s DNS/MX
+lookup, ...), checking as-you-type (debounced) instead of only on blur:
+
+```python
+class ContactForm(FormModel):
+    name: str = Field(..., min_length=2)
+    email: DeliverableEmailStr = Field(...)
+
+live_validator = LiveValidator.for_model(ContactForm, debounce_ms=600)  # the whole setup
+```
+
+Pass more than one model to serve several forms' fields from a single validator/endpoint:
+`LiveValidator.for_model(ContactForm, SignupForm, debounce_ms=600)`. Pass `config=` instead
+of `debounce_ms=` for anything beyond the debounce interval — e.g.
+`config=HTMXValidationConfig(validate_on_input=False)` to go back to blur-only checking.
+
+Under the hood, `for_model()` is `LiveValidator(HTMXValidationConfig(validate_on_input=True,
+debounce_ms=...))` plus a `register_model_validator(YourModel)` call per model — reach for
+`register_model_validator()` directly if you're assembling a `LiveValidator` with a mix of
+model-derived fields and hand-built `FieldValidator`s. Each field is validated in isolation
+using `validate_assignment`, so valid fields are never marked invalid just because other
+required fields are absent:
 
 ```python
 from pydantic import BaseModel

@@ -52,21 +52,16 @@ from examples.date_time_formats_example import (
     create_sample_date_time_format_data,
 )
 
-from pydantic import EmailStr, field_validator
+from pydantic import EmailStr
 
 from pydantic_schemaforms import (
     __version__ as _psf_version,
     EnhancedFormRenderer,
-    EmailDeliverabilityRule,
-    EmailRule,
+    DeliverableEmailStr,
     Field,
-    FieldValidator,
     FormLayoutBase,
     FormModel,
-    HTMXValidationConfig,
     LiveValidator,
-    MinLengthRule,
-    RequiredRule,
     available_instruction_profiles,
     get_app_instructions,
     parse_nested_form_data,
@@ -159,63 +154,29 @@ class FeedbackForm(FormModel):
 # ge/le constraints (minimum/maximum) are preserved in the API schema.
 FeedbackSchema = FeedbackForm.as_api_model()
 
-# ---------------------------------------------------------------------------
-# Live-validation: field-level validators for the /live-validation demo
-# ---------------------------------------------------------------------------
-
-_contact_live_validator = LiveValidator(
-    HTMXValidationConfig(validate_on_blur=True, validate_on_input=False, validate_on_change=False)
-)
-
-_nv = FieldValidator('name')
-_nv.add_rule(MinLengthRule(2, message='Name must be at least 2 characters'))
-_contact_live_validator.register_field_validator(_nv)
-
-_ev = FieldValidator('email')
-_ev.add_rule(RequiredRule(message='Email is required'))
-_ev.add_rule(EmailRule())
-_contact_live_validator.register_field_validator(_ev)
-
-_mv = FieldValidator('message')
-_mv.add_rule(MinLengthRule(10, message='Message must be at least 10 characters'))
-_contact_live_validator.register_field_validator(_mv)
-
-# "With vs without DNS/MX check" demo (/email-dns-validation): two fields
-# registered on the same live validator/endpoint so the page can show, side
-# by side, that a well-formed-but-nonexistent domain passes format-only
-# checking (EmailRule) but fails once EmailDeliverabilityRule's real DNS/MX
-# lookup is added.
-_ev_format_only = FieldValidator('email_format_only')
-_ev_format_only.add_rule(RequiredRule(message='Email is required'))
-_ev_format_only.add_rule(EmailRule())
-_contact_live_validator.register_field_validator(_ev_format_only)
-
-_ev_with_dns = FieldValidator('email_with_dns')
-_ev_with_dns.add_rule(RequiredRule(message='Email is required'))
-_ev_with_dns.add_rule(EmailRule())
-_ev_with_dns.add_rule(EmailDeliverabilityRule(timeout=5))
-_contact_live_validator.register_field_validator(_ev_with_dns)
-
-_LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
+# Shared by both LiveValidator.for_model() below and the hx-trigger built
+# here -- keeps the JS-side debounce and the HTMX trigger's delay in sync.
+LIVE_VALIDATION_DEBOUNCE_MS = 600
 
 _DNS_HX_ATTRS = {
-    'hx-trigger': 'blur',
+    'hx-trigger': f'blur, input delay:{LIVE_VALIDATION_DEBOUNCE_MS}ms',
     'hx-swap': 'innerHTML',
     'data-validate-endpoint': 'true',
 }
 
 
 class EmailDnsComparisonForm(FormModel):
-    """Two email fields, otherwise identical, that differ only in whether
-    EmailDeliverabilityRule's DNS/MX lookup is enforced — for the
-    /email-dns-validation "with vs. without" demo.
+    """Two email fields, otherwise identical, that differ only in their type:
+    plain ``EmailStr`` (format only) vs. ``DeliverableEmailStr`` (format + a
+    real DNS/MX lookup) — for the /email-dns-validation "with vs. without"
+    demo. Because the DNS/MX check lives on the type itself, there's no
+    per-model validator to write: ``FormModel.validate()``,
+    ``as_api_model()``, and this module's ``register_model_validator()`` call
+    below all enforce/live-check it identically, for free.
 
     ``ui_options`` attaches the same ``hx-post``/``hx-target`` attributes the
     hand-written /live-validation demo uses, so both fields validate on blur
     through the standard FormModel-rendered inputs (no custom HTML needed).
-    The ``email_with_dns`` field_validator mirrors that check at submit time
-    too, so a domain that fails the live DNS check also fails on submit
-    rather than silently passing.
     """
 
     email_format_only: EmailStr = Field(
@@ -230,7 +191,7 @@ class EmailDnsComparisonForm(FormModel):
             'hx-target': '#email_format_only-feedback',
         },
     )
-    email_with_dns: EmailStr = Field(
+    email_with_dns: DeliverableEmailStr = Field(
         ...,
         title='With DNS/MX Check',
         description="Format check, plus a real DNS lookup for the domain's MX records.",
@@ -243,13 +204,20 @@ class EmailDnsComparisonForm(FormModel):
         },
     )
 
-    @field_validator('email_with_dns')
-    @classmethod
-    def _check_deliverability(cls, value: str) -> str:
-        is_valid, error = EmailDeliverabilityRule().validate(value)
-        if not is_valid:
-            raise ValueError(error)
-        return value
+
+# ---------------------------------------------------------------------------
+# Live-validation for the /live-validation and /email-dns-validation demos.
+# LiveValidator.for_model() derives every field's live check straight from
+# each FormModel's own Field constraints/types (min_length, EmailStr,
+# DeliverableEmailStr's DNS/MX lookup, ...) and checks as-you-type (debounced)
+# rather than only on blur -- no separate FieldValidator to hand-write or
+# keep in sync with the model.
+# ---------------------------------------------------------------------------
+
+_contact_live_validator = LiveValidator.for_model(
+    ContactForm, EmailDnsComparisonForm, debounce_ms=LIVE_VALIDATION_DEBOUNCE_MS
+)
+_LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
 
 
 LOGIN_CSRF_SESSION_KEY = 'login_csrf_token'
@@ -2368,18 +2336,19 @@ async def api_feedback_schema():
 
 @router.get('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
 async def live_validation_get(request: Request, style: str = 'bootstrap'):
-    """Demonstrate real-time HTMX field validation on blur."""
+    """Demonstrate real-time HTMX field validation as-you-type (debounced)."""
     return templates.TemplateResponse(
         request,
         'live_validation.html',
         {
             'request': request,
             'title': 'Live HTMX Validation',
-            'description': 'Fields validate on blur via HTMX — no page reload required.',
+            'description': 'Fields validate as you type (debounced) via HTMX — no page reload required.',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
             'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
             'form_data': {},
             'errors': {},
         },
@@ -2414,11 +2383,12 @@ async def live_validation_post(request: Request, style: str = 'bootstrap'):
         {
             'request': request,
             'title': 'Live HTMX Validation',
-            'description': 'Fields validate on blur via HTMX — no page reload required.',
+            'description': 'Fields validate as you type (debounced) via HTMX — no page reload required.',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
             'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
             'form_data': data,
             'errors': result.errors,
         },
@@ -2470,7 +2440,7 @@ async def email_dns_validation_get(
         {
             'request': request,
             'title': 'Email DNS/MX Validation',
-            'description': 'Same field type, two rule sets: format-only vs. format + a real DNS/MX lookup.',
+            'description': 'Two field types, same demo: EmailStr (format-only) vs. DeliverableEmailStr (format + a real DNS/MX lookup).',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -2489,9 +2459,9 @@ async def email_dns_validation_post(
 ):
     """Submit-time validation for the DNS/MX comparison demo.
 
-    email_with_dns's field_validator runs the same EmailDeliverabilityRule
-    check the live HTMX endpoint uses, so a domain that fails on blur also
-    fails here rather than silently passing on submit.
+    email_with_dns's DeliverableEmailStr type runs the same DNS/MX lookup the
+    live HTMX endpoint uses, so a domain that fails on blur also fails here
+    rather than silently passing on submit.
     """
     raw = await request.form()
     parsed_data = parse_nested_form_data(_group_form_data(raw))
@@ -2527,7 +2497,7 @@ async def email_dns_validation_post(
         {
             'request': request,
             'title': 'Email DNS/MX Validation',
-            'description': 'Same field type, two rule sets: format-only vs. format + a real DNS/MX lookup.',
+            'description': 'Two field types, same demo: EmailStr (format-only) vs. DeliverableEmailStr (format + a real DNS/MX lookup).',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,

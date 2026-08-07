@@ -113,6 +113,73 @@ class TestLiveValidatorInit:
         assert validator.field_template is not None
 
 
+class TestLiveValidatorForModel:
+    """LiveValidator.for_model(): the one-call entry point that builds a
+    debounced-by-default validator for one or more models, replacing
+    LiveValidator(HTMXValidationConfig(...)) + register_model_validator(...)
+    written out by hand."""
+
+    def test_defaults_to_debounced_input_validation(self):
+        """for_model()'s whole point is checking as-you-type, not just on
+        blur -- validate_on_input must be on by default."""
+        from pydantic import BaseModel
+
+        class _Model(BaseModel):
+            name: str
+
+        validator = LiveValidator.for_model(_Model)
+        assert validator.config.validate_on_input is True
+        assert validator.config.debounce_ms == 600
+
+    def test_debounce_ms_is_configurable(self):
+        from pydantic import BaseModel
+
+        class _Model(BaseModel):
+            name: str
+
+        validator = LiveValidator.for_model(_Model, debounce_ms=1200)
+        assert validator.config.debounce_ms == 1200
+
+    def test_registers_the_model_fields(self):
+        from pydantic import BaseModel
+
+        class _Model(BaseModel):
+            name: str
+
+        validator = LiveValidator.for_model(_Model)
+        assert 'name' in validator.validators
+        ok = validator.validate_field('name', 'Alice')
+        assert ok.is_valid is True
+
+    def test_accepts_multiple_models_in_one_call(self):
+        """A single LiveValidator can serve fields from several unrelated
+        models at once, e.g. a contact form and a separate demo form sharing
+        one /validate/{field_name} endpoint."""
+        from pydantic import BaseModel
+
+        class _ModelA(BaseModel):
+            first_field: str
+
+        class _ModelB(BaseModel):
+            second_field: str
+
+        validator = LiveValidator.for_model(_ModelA, _ModelB, debounce_ms=600)
+        assert {'first_field', 'second_field'} <= validator.validators.keys()
+
+    def test_explicit_config_overrides_the_debounced_default(self):
+        """Passing config= opts fully out of the debounced default (e.g. back
+        to blur-only), rather than being merged/layered with it."""
+        from pydantic import BaseModel
+
+        class _Model(BaseModel):
+            name: str
+
+        custom_config = HTMXValidationConfig(validate_on_blur=True, validate_on_input=False)
+        validator = LiveValidator.for_model(_Model, config=custom_config)
+        assert validator.config is custom_config
+        assert validator.config.validate_on_input is False
+
+
 class TestLiveValidatorValidators:
     """Test LiveValidator validator registration."""
 

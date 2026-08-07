@@ -283,6 +283,37 @@ class LiveValidator:
 
             self.validators[field_name] = create_model_validator(field_name, field_info)
 
+    @classmethod
+    def for_model(
+        cls,
+        *model_classes: type[BaseModel],
+        debounce_ms: int = 600,
+        config: HTMXValidationConfig | None = None,
+    ) -> 'LiveValidator':
+        """One call, fully wired: a LiveValidator for every field on one or
+        more Pydantic/FormModel classes, checking as the user types
+        (debounced) instead of only on blur.
+
+            validator = LiveValidator.for_model(MyForm, debounce_ms=600)
+
+        Equivalent to building the config and registering each model
+        yourself:
+
+            validator = LiveValidator(HTMXValidationConfig(validate_on_input=True, debounce_ms=600))
+            validator.register_model_validator(MyForm)
+
+        Pass `config=` for anything beyond the debounce interval -- e.g.
+        `HTMXValidationConfig(validate_on_input=False)` to go back to
+        blur-only checking.
+        """
+        resolved_config = config or HTMXValidationConfig(
+            validate_on_input=True, debounce_ms=debounce_ms
+        )
+        validator = cls(resolved_config)
+        for model_class in model_classes:
+            validator.register_model_validator(model_class)
+        return validator
+
     def validate_field(self, field_name: str, value: Any) -> ValidationResponse:
         """
         Validate a single field value.
@@ -417,10 +448,13 @@ async def validate_field(field_name: str, request: ValidationRequest):
         if triggers:
             validation_attrs.append(f'hx-trigger="{", ".join(triggers)}"')
 
-        # Build other attributes
+        # Build other attributes. 'label' is consumed below to build the
+        # <label> text, not a real <input> attribute -- without excluding it
+        # here it leaked onto the input a second time as a bogus
+        # label="..." HTML attribute.
         other_attrs = []
         for key, val in kwargs.items():
-            if key not in ['class', 'id', 'name']:
+            if key not in ['class', 'id', 'name', 'label']:
                 other_attrs.append(f'{key}="{_html_escape(str(val))}"')
 
         # Render field

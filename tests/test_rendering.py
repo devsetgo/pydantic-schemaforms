@@ -1310,6 +1310,10 @@ def test_live_validator_trigger_variants_and_htmx_script() -> None:
     )
     blur_html = blur_validator.render_field_with_live_validation('username', label='User')
     assert 'hx-trigger="blur"' in blur_html
+    # Regression: 'label' must build the <label> text only, not also leak as a
+    # bogus label="User" attribute on the <input> itself.
+    assert '<label for="username">User</label>' in blur_html
+    assert 'label="User"' not in blur_html
 
     # input only — all enabled: blur + input + change → combined trigger
     input_validator = LiveValidator(

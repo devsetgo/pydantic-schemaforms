@@ -11,10 +11,11 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
-from typing import Any, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 from collections.abc import Callable
 
-from pydantic import BaseModel, ValidationError
+from pydantic import AfterValidator, BaseModel, EmailStr, ValidationError
+from pydantic_core import PydanticCustomError
 
 from .tstring import SafeHTML
 
@@ -286,6 +287,36 @@ class EmailDeliverabilityRule(ValidationRule):
 
     def _descriptor_params(self) -> dict[str, Any]:
         return {'timeout': self.timeout}
+
+
+def _check_email_deliverability(value: str) -> str:
+    """AfterValidator backing DeliverableEmailStr."""
+    is_valid, error = EmailDeliverabilityRule().validate(value)
+    if not is_valid:
+        # PydanticCustomError (rather than a plain ValueError) keeps the
+        # message exactly what EmailDeliverabilityRule/email-validator said --
+        # a bare ValueError gets a "Value error, " prefix stitched on by
+        # Pydantic, which is noise a form field's error text doesn't want.
+        raise PydanticCustomError('email_not_deliverable', '{error}', {'error': error})
+    return value
+
+
+DeliverableEmailStr = Annotated[EmailStr, AfterValidator(_check_email_deliverability)]
+"""An ``EmailStr`` that also runs a real DNS/MX lookup as an ordinary part of
+Pydantic validation -- no ``FieldValidator``/``EmailDeliverabilityRule``
+wiring required in your own code:
+
+    class SignupForm(FormModel):
+        email: DeliverableEmailStr = Field(..., title="Email")
+
+That one line is enough for ``FormModel.validate()``, ``as_api_model()``, and
+``LiveValidator.register_model_validator()`` (see live_validation.py) to all
+enforce and live-check the same DNS/MX rule, since it's now part of the
+field's own type rather than a separate validator you have to register by
+hand. Needs the optional ``email-validator`` package (``pip install
+pydantic-schemaforms[email-dns]``); reach for ``EmailDeliverabilityRule``
+directly instead if you need a custom ``timeout`` or a fixed error message.
+"""
 
 
 class PhoneRule(RegexRule):

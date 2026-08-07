@@ -586,104 +586,261 @@ wired up at the `/date-time-formats` route in `examples/fastapi_routes.py`.
 
 ---
 
-## Live HTMX validation
+## Live Validation
 
-Validate individual fields on blur without a page reload. Requires HTMX loaded in the page.
+"Live validation" means a field is checked server-side the moment the user
+blurs it or pauses typing — no page reload, no full form submit. It's built
+on three pieces that always work together the same way:
 
-**Server setup:**
+1. **`LiveValidator`** holds a dict of `{field_name: check_function}` and a
+   `HTMXValidationConfig` (which triggers fire, how long to debounce, which
+   CSS classes to toggle).
+2. **HTMX attributes** on the `<input>` (`hx-post`, `hx-trigger`,
+   `hx-target`) POST the field's current value to a small endpoint whenever
+   a trigger fires, and swap the endpoint's HTML response into a feedback
+   element — all without JavaScript you have to write.
+3. **A tiny endpoint** (one per app, not one per field — see below) calls
+   `validator.validate_field(name, value)` and turns the `ValidationResponse`
+   into an HTML fragment.
+
+The end-to-end request cycle: user blurs the field (or pauses typing for
+`debounce_ms`) → HTMX POSTs the value → the endpoint calls
+`validate_field()` → the response HTML is swapped into `#{field}-feedback`
+→ an `HX-Trigger: validationResult` header tells the bundled JS to add
+`is-valid`/`is-invalid` to the input and mirror the feedback text into the
+input's `title` attribute (a native tooltip — see "Showing *why* it failed"
+below). The real POST submit route still calls `FormModel.validate()`
+independently; live validation is UX sugar layered on top, not a
+replacement — JavaScript can be disabled or bypassed.
+
+### Quickest start: `LiveValidator.for_model()`
+
+For a `FormModel` (or plain `BaseModel`), one call derives a live check for
+*every* field straight from the model's own `Field()` constraints and
+types — nothing to duplicate, checking as-you-type (debounced) rather than
+only on blur:
 
 ```python
-from pydantic_schemaforms import (
-    EmailRule, FieldValidator, HTMXValidationConfig, LiveValidator, MinLengthRule,
-)
+from pydantic_schemaforms import DeliverableEmailStr, Field, FormModel, LiveValidator
 from pydantic_schemaforms.live_validation import validation_response_headers
 from fastapi.responses import HTMLResponse
 
-# Build once at module level.
-validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True))
+class ContactForm(FormModel):
+    name: str = Field(..., min_length=2, title="Full Name")
+    email: DeliverableEmailStr = Field(..., title="Email")  # real DNS/MX check, see below
 
-fv_name = FieldValidator("name")
-fv_name.add_rule(MinLengthRule(2, message="At least 2 characters"))
-validator.register_field_validator(fv_name)
-
-fv_email = FieldValidator("email")
-fv_email.add_rule(EmailRule())
-validator.register_field_validator(fv_email)
-
-VALIDATOR_SCRIPT = validator.render_htmx_script()
+live_validator = LiveValidator.for_model(ContactForm, debounce_ms=600)
+VALIDATOR_SCRIPT = live_validator.render_htmx_script()  # embed once per page
 
 @app.post("/validate/{field_name}", response_class=HTMLResponse)
 async def validate_field(field_name: str, request: Request):
-    raw   = await request.form()
+    raw = await request.form()
     value = str(raw.get(field_name, ""))
-    result = validator.validate_field(field_name, value)
+    result = live_validator.validate_field(field_name, value)
 
-    if result.is_valid:
-        feedback = '<span class="text-success">Looks good!</span>'
-    else:
-        errors   = "; ".join(result.errors)
-        feedback = f'<span class="text-danger">{errors}</span>'
-
+    feedback = (
+        '<span class="text-success">✓ Looks good!</span>'
+        if result.is_valid
+        else f'<span class="text-danger">{result.errors[0]}</span>'
+    )
     return HTMLResponse(feedback, headers=validation_response_headers(field_name, result.is_valid))
 ```
 
-**Template (Jinja2 / plain HTML):**
+That single `/validate/{field_name}` route serves every field on the model —
+`validate_field()` dispatches by name against whatever was registered, so
+adding a field to the model is enough; there's no per-field route to add.
+Passing an unregistered name returns `is_valid=True` with a warning rather
+than a 404/500, so a stray field on the page never breaks the endpoint.
+
+### Rendering the field: two ways
+
+**A. `render_field_with_live_validation()`** — builds a complete
+`<input>` + `<label>` + feedback `<div>`, with the `hx-trigger` string
+computed for you from the config (e.g. `"blur, input delay:600ms"`):
+
+```python
+field_html = live_validator.render_field_with_live_validation(
+    "email", field_type="email", label="Email", value=""
+)
+```
 
 ```html
-<!-- Load HTMX -->
 <script src="/vendor/htmx.min.js"></script>
+{{ validator_script | safe }}   {# the string from render_htmx_script() #}
 
-<!-- Inline the LiveValidator JS (applies is-valid / is-invalid classes) -->
-{{ validator_script | safe }}
-
-<!-- Field with live validation -->
-<input
-  type="text" name="name" id="name"
-  hx-post="/validate/name"
-  hx-trigger="blur"
-  hx-target="#name-feedback"
-  hx-swap="innerHTML"
-/>
-<div id="name-feedback"></div>
+{{ field_html | safe }}
 ```
 
-Pass `validator_script=VALIDATOR_SCRIPT` in the template context.
-
----
-
-## Multiple triggers (blur + debounced input)
-
-Enable several triggers together; they are combined into one `hx-trigger` attribute.
+**B. `ui_options` on a `Field()`** — when the field is rendered through the
+normal `render_form_html_async(MyForm, framework=...)` pipeline (so it gets
+Bootstrap/Material/Plain HTML styling, debug panel, timing, etc. — see the
+[Bootstrap vs Material Design](#bootstrap-vs-material-design) recipe),
+attach the same HTMX attributes directly via `ui_options`; any key that
+isn't a recognized layout option (`choices`, `options`, ...) passes through
+as a literal HTML attribute on the rendered `<input>`, identically across
+every framework:
 
 ```python
-validator = LiveValidator(HTMXValidationConfig(
-    validate_on_blur=True,
-    validate_on_input=True,
-    validate_on_change=False,
-    debounce_ms=400,          # wait 400 ms after typing stops
+class ContactForm(FormModel):
+    email: DeliverableEmailStr = Field(
+        ..., title="Email", ui_element="email",
+        ui_options={
+            "hx-post": "/validate/email",
+            "hx-trigger": "blur, input delay:600ms",
+            "hx-target": "#email-feedback",
+            "hx-swap": "innerHTML",
+            "data-validate-endpoint": "true",
+        },
+    )
+```
+
+You then need one empty `<div id="email-feedback"></div>` somewhere on the
+page for the response to swap into — it doesn't have to sit immediately
+next to the input (see the tooltip note below).
+
+### Deriving checks from the model vs. hand-built rules
+
+`register_model_validator()` (what `for_model()` calls internally) reads a
+model's own `Field()` constraints — `min_length`, `EmailStr`,
+`DeliverableEmailStr`'s DNS/MX lookup, any `@field_validator` — so there's
+one source of truth. Reach for `FieldValidator` + `register_field_validator()`
+instead when the check isn't expressible as a model constraint, or you want
+different wording than Pydantic's own error text:
+
+```python
+from pydantic_schemaforms import CustomRule, FieldValidator
+
+fv = FieldValidator("username")
+fv.min_length(3, message="At least 3 characters")
+fv.add_rule(CustomRule(
+    lambda v: not v.lower().startswith("admin"),
+    message="Usernames can't start with 'admin'",
 ))
+live_validator.register_field_validator(fv)  # overrides the model-derived check for this field only
 ```
 
-This generates `hx-trigger="blur, input delay:400ms"` on each field.
+Both live on the same `LiveValidator` instance without conflict — the last
+`register_*` call for a given field name wins, so you can call
+`for_model(MyForm)` first for the bulk of your fields and then override just
+the one or two that need custom logic/messages.
 
----
+### Live DNS/MX email checks with `DeliverableEmailStr`
 
-## Validate a full Pydantic model field-by-field
-
-Use `register_model_validator` when your validation rules live inside the Pydantic model itself rather than explicit `FieldValidator` rules. Each field is validated in isolation (other required fields are not needed).
+`DeliverableEmailStr` (see the [Validation Guide](validation_guide.md#email-dnsmx-deliverability-checks)
+for the full writeup) is a drop-in `EmailStr` replacement that performs a
+real DNS lookup for the domain's MX records — `for_model()` live-checks it
+automatically, no extra registration:
 
 ```python
-from pydantic import BaseModel
+class SignupForm(FormModel):
+    email: DeliverableEmailStr = Field(..., title="Email")
+
+live_validator = LiveValidator.for_model(SignupForm, debounce_ms=600)
+# /validate/email now rejects typo'd/non-existent domains, not just malformed syntax
+```
+
+Because it's a real network call, this check always runs server-side —
+there is no way to do a DNS/MX lookup from browser JavaScript. The error
+text is `email-validator`'s own specific reason (`"The domain name X does
+not exist."`, `"...does not accept email."`, a reserved-TLD message, ...),
+so the user sees *why*, not one generic string. 600ms is a reasonable
+default debounce for a field that triggers a network call per check; if
+your DNS resolution is slow, either raise `debounce_ms` for the whole form:
+
+```python
+live_validator = LiveValidator.for_model(SignupForm, debounce_ms=1500)
+```
+
+or drop that one field back to blur-only by overriding its rendered
+`hx-trigger` directly — `register_field_validator`/`for_model` control which
+checks run, not the HTML trigger, which lives on the field's own
+`ui_options` (see "Rendering the field" above) or a
+`render_field_with_live_validation()` call:
+
+```python
+email: DeliverableEmailStr = Field(
+    ..., ui_element="email", ui_options={"hx-trigger": "blur", ...},
+)
+```
+
+### Multiple forms, one validator
+
+`for_model()` accepts more than one model class, so several forms on the
+same app (or several fields of a comparison demo) can share a single
+validator and a single `/validate/{field_name}` endpoint:
+
+```python
+live_validator = LiveValidator.for_model(ContactForm, SignupForm, debounce_ms=600)
+```
+
+Field names must be unique across the combined set of models — the
+validators dict is keyed by name only, so two different models both using a
+field called `email` would collide (the later `for_model`/`register_*` call
+wins).
+
+### Tuning triggers and debounce
+
+`HTMXValidationConfig`'s three boolean triggers combine into one
+`hx-trigger` attribute; `debounce_ms` only applies to `validate_on_input`:
+
+```python
 from pydantic_schemaforms import HTMXValidationConfig, LiveValidator
 
-class OrderForm(BaseModel):
-    quantity: int
-    sku: str
-
-validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True))
-validator.register_model_validator(OrderForm)
-# Now /validate/quantity and /validate/sku both work via validator.validate_field(...)
+config = HTMXValidationConfig(
+    validate_on_blur=True,     # -> "blur"
+    validate_on_input=True,    # -> "input delay:400ms"
+    validate_on_change=False,
+    debounce_ms=400,
+)
+live_validator = LiveValidator.for_model(ContactForm, config=config)
+# hx-trigger="blur, input delay:400ms"
 ```
+
+Passing `config=` opts fully out of `for_model()`'s debounced-by-default
+config rather than layering on top of it — use it to go back to blur-only
+(`HTMXValidationConfig(validate_on_input=False)`) for expensive checks like
+DNS lookups, or to disable a trigger entirely.
+
+### Showing *why* it failed
+
+The bundled JS (`render_htmx_script()`) already does two things beyond
+toggling `is-valid`/`is-invalid` on the input: it mirrors the swapped
+feedback text into the input's `title` attribute, so hovering the field (or
+its validity icon, where the framework draws one) shows a native tooltip
+with the exact reason — useful when the visible feedback element isn't
+immediately next to the input, or the page is narrow. Two things to be
+aware of when styling the result yourself:
+
+- **Framework CSS scope**: `is-valid`/`is-invalid` are plain CSS classes
+  the JS adds to the raw `<input>`; only Bootstrap's own CSS paints a
+  border+icon for them out of the box, and only when the input also has
+  Bootstrap's `.form-control` class (i.e. rendered with `framework="bootstrap"`).
+  Under Material or Plain HTML rendering, add your own rule if you want a
+  visual indicator:
+
+  ```css
+  input.is-invalid { border-color: #dc3545; }
+  input.is-valid   { border-color: #198754; }
+  ```
+
+- **Custom `message=`**: passing a fixed `message` to a rule (e.g.
+  `EmailDeliverabilityRule(message="...")`) always shows that text instead
+  of the specific reason — useful for consistent tone, at the cost of the
+  detail.
+
+### Full runnable examples
+
+Two complete, live demos ship in the example app:
+
+- `GET /live-validation` — a 3-field contact form, `LiveValidator.for_model(ContactForm, debounce_ms=600)`.
+- `GET /email-dns-validation` — two email fields side by side, one
+  `EmailStr` and one `DeliverableEmailStr`, so you can watch the same
+  address pass one and fail the other.
+
+See `examples/fastapi_routes.py` (routes + model definitions) and
+`examples/templates/live_validation.html` / `email_dns_validation.html`
+(templates) for the full wiring, including the debug panel/timing/style-
+switcher/submit handling every other demo in the app has.
 
 ---
 
