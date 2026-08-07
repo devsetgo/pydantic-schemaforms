@@ -627,6 +627,69 @@ class TestEmailDeliverabilityRule:
                 rule.validate('user@example.com')
 
 
+class TestDeliverableEmailStr:
+    """DeliverableEmailStr: the DNS/MX check as a type annotation, so a
+    FormModel field gets it with zero FieldValidator/EmailDeliverabilityRule
+    wiring -- just `email: DeliverableEmailStr = Field(...)`. Patches
+    EmailDeliverabilityRule.validate() (not the lower-level
+    email_validator.validate_email) so the suite never makes real network
+    calls, while leaving EmailStr's own real (network-free) syntax check
+    alone -- DeliverableEmailStr layers the DNS/MX check on top of EmailStr,
+    so both run for every value."""
+
+    @staticmethod
+    def _model():
+        from pydantic import BaseModel
+
+        from pydantic_schemaforms.validation import DeliverableEmailStr
+
+        class _Model(BaseModel):
+            email: DeliverableEmailStr
+
+        return _Model
+
+    def test_deliverable_domain_passes(self):
+        model_cls = self._model()
+        with patch.object(EmailDeliverabilityRule, 'validate', return_value=(True, '')):
+            instance = model_cls(email='user@example.com')
+        assert instance.email == 'user@example.com'
+
+    def test_non_deliverable_domain_raises_with_clean_message(self):
+        """The validation error text must be exactly EmailDeliverabilityRule's
+        reason, with no "Value error, " prefix stitched on -- that prefix is
+        what a bare `raise ValueError(...)` AfterValidator would produce;
+        DeliverableEmailStr uses PydanticCustomError specifically to avoid it.
+        """
+        from pydantic import ValidationError
+
+        model_cls = self._model()
+        reason = 'The domain name example.com does not exist.'
+        with patch.object(EmailDeliverabilityRule, 'validate', return_value=(False, reason)):
+            with pytest.raises(ValidationError) as exc_info:
+                model_cls(email='user@example.com')
+        (error,) = exc_info.value.errors()
+        assert error['msg'] == reason
+        assert 'Value error' not in error['msg']
+
+    def test_register_model_validator_live_checks_dns_for_free(self):
+        """LiveValidator.register_model_validator() derives the DNS/MX live
+        check straight from the field's DeliverableEmailStr type -- no
+        FieldValidator/EmailDeliverabilityRule registered by hand."""
+        model_cls = self._model()
+        live_validator = LiveValidator()
+        live_validator.register_model_validator(model_cls)
+
+        with patch.object(EmailDeliverabilityRule, 'validate', return_value=(True, '')):
+            ok = live_validator.validate_field('email', 'user@example.com')
+        assert ok.is_valid is True
+
+        reason = 'The domain does not accept email.'
+        with patch.object(EmailDeliverabilityRule, 'validate', return_value=(False, reason)):
+            bad = live_validator.validate_field('email', 'user@example.com')
+        assert bad.is_valid is False
+        assert bad.errors == [reason]
+
+
 # ---------------------------------------------------------------------------
 # DateRangeRule
 # (merged from test_validation_rules.py and test_validation_extended.py)

@@ -467,9 +467,12 @@ POST validation:
   validation is UX sugar; it never replaces server-side validation on submit (JS can be disabled
   or bypassed).
 - For an email field, add a DNS/MX deliverability check (catches typo'd/non-existent domains, not
-  just format) with `FieldValidator("email").required().email(check_deliverability=True)`. This
-  needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`) and
-  always runs server-side only — there is no way to do a real DNS lookup from browser JS.
+  just format) by typing the field `DeliverableEmailStr` instead of `EmailStr` — it's a drop-in
+  type, so `register_model_validator(MyForm)` above picks it up automatically with no extra
+  FieldValidator code. Reach for `FieldValidator("email").required().email(check_deliverability=True)`
+  instead only if you're building a validator imperatively (FormBuilder, no typed model). Either
+  way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`)
+  and always runs server-side only — there is no way to do a real DNS lookup from browser JS.
 
 ## Conversion workflows (JSON or Pydantic -> FormModel)
 

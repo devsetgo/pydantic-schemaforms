@@ -99,17 +99,17 @@
         <i class="bi bi-info-circle me-1"></i>How it works
     </h6>
     <ul class="small mb-3 text-muted">
-        <li>Both fields render from the same <code>FormModel</code> and validate on blur via the same <code>LiveValidator</code>/HTMX wiring as the <a href="/live-validation">Live HTMX Validation</a> demo — only the registered rules differ.</li>
-        <li>The DNS/MX lookup is a real network call, so it always runs server-side (<code>EmailDeliverabilityRule.client_side</code> is <code>False</code>) — there's no way to check MX records from browser JavaScript.</li>
-        <li>The right-hand field enforces the same check again on submit, so a domain that fails live also fails validation — it's not just cosmetic.</li>
+        <li>The two fields differ only in <em>type</em> — <code>EmailStr</code> vs. <code>DeliverableEmailStr</code> — nothing else in this form's code changes between them.</li>
+        <li>Both fields render from the same <code>FormModel</code> and validate on blur via the same <code>LiveValidator</code>/HTMX wiring as the <a href="/live-validation">Live HTMX Validation</a> demo — this page's whole live-validation setup is one <code>register_model_validator(EmailDnsComparisonForm)</code> call, deriving the check straight from the model instead of hand-building a validator per field.</li>
+        <li>The DNS/MX lookup is a real network call, so it always runs server-side — there's no way to check MX records from browser JavaScript.</li>
+        <li>Because it's part of the type, submit-time validation enforces the same check automatically — a domain that fails live also fails on submit, with no separate rule to keep in sync.</li>
         <li>The specific reason (bad TLD, no such domain, domain has no mail server, ...) comes straight from <code>email-validator</code> — it's shown in the results box above, on the input's hover tooltip, and in the submit-time error.</li>
     </ul>
-    <p class="small text-muted mb-1">Add it to your own email field in a few lines:</p>
-    <pre class="small bg-white border rounded p-2 mb-0"><code>from pydantic_schemaforms import FieldValidator
+    <p class="small text-muted mb-1">Add it to your own form in one line — no validator to build or register:</p>
+    <pre class="small bg-white border rounded p-2 mb-0"><code>from pydantic_schemaforms import DeliverableEmailStr, Field, FormModel
 
-email_validator = FieldValidator("email").required().email(
-    check_deliverability=True,
-)</code></pre>
+class SignupForm(FormModel):
+    email: DeliverableEmailStr = Field(..., title="Email")</code></pre>
 </div>
 {% endblock %}
 
