@@ -352,10 +352,10 @@ class SignupForm(FormModel):
 ```
 
 That one line is enough for `FormModel.validate()`, `as_api_model()`'s JSON endpoint, and
-`LiveValidator.register_model_validator()` (next section) to all enforce and live-check
-the DNS/MX rule identically, since it's now part of the field's own type rather than a
-separate rule you register by hand. Because it's a real network call, the check always
-runs server-side — there's no way to do a DNS/MX lookup from browser JavaScript.
+`LiveValidator.for_model()` (next section) to all enforce and live-check the DNS/MX rule
+identically, since it's now part of the field's own type rather than a separate rule you
+register by hand. Because it's a real network call, the check always runs server-side —
+there's no way to do a DNS/MX lookup from browser JavaScript.
 
 Unless you pass a fixed `message`, the error text is `email-validator`'s own specific
 reason for the failure rather than one generic string, so the user sees *why* the
@@ -408,9 +408,31 @@ silently skipping the check or treating every address as valid.
 
 ### Validating Pydantic Model Fields
 
-`register_model_validator()` registers a validator for every field in a Pydantic model.
-Each field is validated in isolation using `validate_assignment`, so valid fields are never
-marked invalid just because other required fields are absent:
+`LiveValidator.for_model()` is the recommended way to wire up live validation for a whole
+`FormModel` (or plain `BaseModel`) at once instead of building a `FieldValidator` per
+field by hand — one call derives every field's live check straight from the model's own
+`Field()` constraints and types (`min_length`, `EmailStr`, `DeliverableEmailStr`'s DNS/MX
+lookup, ...), checking as-you-type (debounced) instead of only on blur:
+
+```python
+class ContactForm(FormModel):
+    name: str = Field(..., min_length=2)
+    email: DeliverableEmailStr = Field(...)
+
+live_validator = LiveValidator.for_model(ContactForm, debounce_ms=600)  # the whole setup
+```
+
+Pass more than one model to serve several forms' fields from a single validator/endpoint:
+`LiveValidator.for_model(ContactForm, SignupForm, debounce_ms=600)`. Pass `config=` instead
+of `debounce_ms=` for anything beyond the debounce interval — e.g.
+`config=HTMXValidationConfig(validate_on_input=False)` to go back to blur-only checking.
+
+Under the hood, `for_model()` is `LiveValidator(HTMXValidationConfig(validate_on_input=True,
+debounce_ms=...))` plus a `register_model_validator(YourModel)` call per model — reach for
+`register_model_validator()` directly if you're assembling a `LiveValidator` with a mix of
+model-derived fields and hand-built `FieldValidator`s. Each field is validated in isolation
+using `validate_assignment`, so valid fields are never marked invalid just because other
+required fields are absent:
 
 ```python
 from pydantic import BaseModel
@@ -429,22 +451,6 @@ result = live_validator.validate_field("age", "not-a-number")
 
 result = live_validator.validate_field("age", 25)
 # result.is_valid == True
-```
-
-This is also the recommended way to wire up live validation for a whole `FormModel` at
-once instead of building a `FieldValidator` per field by hand — one
-`register_model_validator(MyForm)` call derives every field's live check straight from
-the model's own `Field()` constraints and types (`min_length`, `EmailStr`,
-`DeliverableEmailStr`'s DNS/MX lookup, ...), so there's nothing to duplicate or keep in
-sync:
-
-```python
-class ContactForm(FormModel):
-    name: str = Field(..., min_length=2)
-    email: DeliverableEmailStr = Field(...)
-
-live_validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True))
-live_validator.register_model_validator(ContactForm)  # that's the whole setup
 ```
 
 ---

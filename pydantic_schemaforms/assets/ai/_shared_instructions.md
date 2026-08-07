@@ -450,12 +450,16 @@ Use this only when asked for inline "validates as you type/blur" feedback withou
 reload. It is a separate rendering path layered on top of the normal form, not a replacement for
 POST validation:
 
-- Build `validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True, ...))`.
-- Prefer `validator.register_model_validator(MyForm)` to derive per-field checks straight from
-  the FormModel's own Field constraints (no duplicated rules). Use
-  `validator.register_field_validator(...)` — optionally with a `CustomRule(func)` from the
-  "Library boundary" section above for logic the model constraints can't express — only for
-  custom messages/logic beyond what the model already enforces.
+- Build `validator = LiveValidator.for_model(MyForm, debounce_ms=600)` — one call that derives
+  every field's live check straight from the FormModel's own Field constraints/types (no
+  duplicated rules) and checks as-you-type (debounced) rather than only on blur. Pass more than
+  one model class to serve several forms' fields from one validator/endpoint:
+  `LiveValidator.for_model(FormA, FormB, debounce_ms=600)`. Use
+  `validator.register_field_validator(...)` on the returned validator — optionally with a
+  `CustomRule(func)` from the "Library boundary" section above for logic the model constraints
+  can't express — only for custom messages/logic beyond what the model already enforces. Pass
+  `config=HTMXValidationConfig(...)` instead of `debounce_ms=` for anything beyond the debounce
+  interval, e.g. blur-only checking.
 - Embed `validator.render_htmx_script()` once per page.
 - Render fields that need live feedback with
   `validator.render_field_with_live_validation(field_name, field_type=..., value=..., label=...)`.
@@ -468,7 +472,7 @@ POST validation:
   or bypassed).
 - For an email field, add a DNS/MX deliverability check (catches typo'd/non-existent domains, not
   just format) by typing the field `DeliverableEmailStr` instead of `EmailStr` — it's a drop-in
-  type, so `register_model_validator(MyForm)` above picks it up automatically with no extra
+  type, so `LiveValidator.for_model(MyForm)` above picks it up automatically with no extra
   FieldValidator code. Reach for `FieldValidator("email").required().email(check_deliverability=True)`
   instead only if you're building a validator imperatively (FormBuilder, no typed model). Either
   way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`)

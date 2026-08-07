@@ -48,7 +48,7 @@
                             placeholder="Your name"
                             value="{{ form_data.get('name', '') }}"
                             hx-post="/validate/name"
-                            hx-trigger="blur"
+                            hx-trigger="blur, input delay:{{ debounce_ms }}ms"
                             hx-target="#name-feedback"
                             hx-swap="innerHTML"
                             data-validate-endpoint="true"
@@ -75,7 +75,7 @@
                             placeholder="you@example.com"
                             value="{{ form_data.get('email', '') }}"
                             hx-post="/validate/email"
-                            hx-trigger="blur"
+                            hx-trigger="blur, input delay:{{ debounce_ms }}ms"
                             hx-target="#email-feedback"
                             hx-swap="innerHTML"
                             data-validate-endpoint="true"
@@ -101,7 +101,7 @@
                             placeholder="Your message (at least 10 characters)…"
                             rows="4"
                             hx-post="/validate/message"
-                            hx-trigger="blur"
+                            hx-trigger="blur, input delay:{{ debounce_ms }}ms"
                             hx-target="#message-feedback"
                             hx-swap="innerHTML"
                             data-validate-endpoint="true"
@@ -131,8 +131,8 @@
                         <i class="bi bi-info-circle me-1"></i>How it works
                     </h6>
                     <ul class="small mb-0 text-muted">
-                        <li>Each input has <code>hx-post="/validate/{field}"</code>, <code>hx-trigger="blur"</code>, and <code>hx-target</code> pointing to its feedback div.</li>
-                        <li>On blur, HTMX POSTs the field value to the server and swaps the feedback div with the returned HTML fragment.</li>
+                        <li>Each input has <code>hx-post="/validate/{field}"</code>, <code>hx-trigger="blur, input delay:{{ debounce_ms }}ms"</code>, and <code>hx-target</code> pointing to its feedback div.</li>
+                        <li>HTMX POSTs the field value to the server on blur, and again after {{ debounce_ms }}ms of no typing — the whole server setup for this is one call, <code>LiveValidator.for_model(ContactForm, debounce_ms={{ debounce_ms }})</code>, deriving every field's check straight from the model instead of a hand-built validator per field.</li>
                         <li>The server returns an <code>HX-Trigger: validationResult</code> header; the <code>LiveValidator</code> JS listens for it and applies <code>is-valid</code> / <code>is-invalid</code> classes to the input.</li>
                         <li>The final submit still uses standard server-side Pydantic validation as a safety net.</li>
                     </ul>

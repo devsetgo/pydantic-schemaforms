@@ -61,7 +61,6 @@ from pydantic_schemaforms import (
     Field,
     FormLayoutBase,
     FormModel,
-    HTMXValidationConfig,
     LiveValidator,
     available_instruction_profiles,
     get_app_instructions,
@@ -155,8 +154,12 @@ class FeedbackForm(FormModel):
 # ge/le constraints (minimum/maximum) are preserved in the API schema.
 FeedbackSchema = FeedbackForm.as_api_model()
 
+# Shared by both LiveValidator.for_model() below and the hx-trigger built
+# here -- keeps the JS-side debounce and the HTMX trigger's delay in sync.
+LIVE_VALIDATION_DEBOUNCE_MS = 600
+
 _DNS_HX_ATTRS = {
-    'hx-trigger': 'blur',
+    'hx-trigger': f'blur, input delay:{LIVE_VALIDATION_DEBOUNCE_MS}ms',
     'hx-swap': 'innerHTML',
     'data-validate-endpoint': 'true',
 }
@@ -204,17 +207,16 @@ class EmailDnsComparisonForm(FormModel):
 
 # ---------------------------------------------------------------------------
 # Live-validation for the /live-validation and /email-dns-validation demos.
-# register_model_validator() derives each field's live check straight from
-# the FormModel's own Field constraints/types (min_length, EmailStr,
-# DeliverableEmailStr's DNS/MX lookup, ...) -- no separate FieldValidator to
-# hand-write or keep in sync with the model.
+# LiveValidator.for_model() derives every field's live check straight from
+# each FormModel's own Field constraints/types (min_length, EmailStr,
+# DeliverableEmailStr's DNS/MX lookup, ...) and checks as-you-type (debounced)
+# rather than only on blur -- no separate FieldValidator to hand-write or
+# keep in sync with the model.
 # ---------------------------------------------------------------------------
 
-_contact_live_validator = LiveValidator(
-    HTMXValidationConfig(validate_on_blur=True, validate_on_input=False, validate_on_change=False)
+_contact_live_validator = LiveValidator.for_model(
+    ContactForm, EmailDnsComparisonForm, debounce_ms=LIVE_VALIDATION_DEBOUNCE_MS
 )
-_contact_live_validator.register_model_validator(ContactForm)
-_contact_live_validator.register_model_validator(EmailDnsComparisonForm)
 _LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
 
 
@@ -2334,18 +2336,19 @@ async def api_feedback_schema():
 
 @router.get('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])
 async def live_validation_get(request: Request, style: str = 'bootstrap'):
-    """Demonstrate real-time HTMX field validation on blur."""
+    """Demonstrate real-time HTMX field validation as-you-type (debounced)."""
     return templates.TemplateResponse(
         request,
         'live_validation.html',
         {
             'request': request,
             'title': 'Live HTMX Validation',
-            'description': 'Fields validate on blur via HTMX — no page reload required.',
+            'description': 'Fields validate as you type (debounced) via HTMX — no page reload required.',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
             'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
             'form_data': {},
             'errors': {},
         },
@@ -2380,11 +2383,12 @@ async def live_validation_post(request: Request, style: str = 'bootstrap'):
         {
             'request': request,
             'title': 'Live HTMX Validation',
-            'description': 'Fields validate on blur via HTMX — no page reload required.',
+            'description': 'Fields validate as you type (debounced) via HTMX — no page reload required.',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
             'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
             'form_data': data,
             'errors': result.errors,
         },
@@ -2436,7 +2440,7 @@ async def email_dns_validation_get(
         {
             'request': request,
             'title': 'Email DNS/MX Validation',
-            'description': 'Same field type, two rule sets: format-only vs. format + a real DNS/MX lookup.',
+            'description': 'Two field types, same demo: EmailStr (format-only) vs. DeliverableEmailStr (format + a real DNS/MX lookup).',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -2493,7 +2497,7 @@ async def email_dns_validation_post(
         {
             'request': request,
             'title': 'Email DNS/MX Validation',
-            'description': 'Same field type, two rule sets: format-only vs. format + a real DNS/MX lookup.',
+            'description': 'Two field types, same demo: EmailStr (format-only) vs. DeliverableEmailStr (format + a real DNS/MX lookup).',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
