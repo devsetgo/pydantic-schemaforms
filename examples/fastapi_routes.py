@@ -1046,6 +1046,7 @@ async def gallery_get(
             # Text Inputs
             'text_input': 'Hello, world!',
             'textarea_input': 'This textarea supports\nmultiple lines of text.',
+            'code_input': '{\n  "name": "demo",\n  "enabled": true\n}',
             'password_input': 'demo-password',
             'email_input': 'demo@example.com',
             'search_input': 'pydantic schemaforms',

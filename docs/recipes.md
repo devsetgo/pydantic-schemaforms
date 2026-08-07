@@ -152,6 +152,74 @@ class AllFieldsExample(FormModel):
 
 ---
 
+## Code and structured-data fields (JSON, YAML, TOML, Bash, Python)
+
+A `textarea` field can opt into a "Format" button, Tab-key indentation, and
+light syntax highlighting for a specific language — still a plain
+`<textarea>` under the hood (not an embedded code-editor component), and
+fully functional with JavaScript disabled.
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+class ServiceConfigForm(FormModel):
+    name: str = Field(..., ui_element="text")
+    config: str = Field(
+        "{}",
+        title="Config (JSON)",
+        ui_element="textarea",
+        ui_options={"language": "json", "rows": 10},
+    )
+```
+
+`language` accepts `"json"`, `"yaml"`, `"toml"`, `"bash"`, or `"python"`.
+Three more `ui_options` toggle the pieces independently — all default `True`
+and only take effect once `language` is set:
+
+| Option              | Effect when `False`                          |
+|---------------------|-----------------------------------------------|
+| `code_format`        | Hides the Format button                        |
+| `code_highlight`      | Hides the syntax-highlight overlay              |
+| `code_tab_indent`      | Tab moves focus instead of inserting indentation |
+
+`indent_size` (default `2`) controls both the indent width used by the
+formatter and the textarea's `tab-size`.
+
+**What "Format" actually does per language** — this varies, and the button's
+label reflects it:
+
+- **JSON** — real reserialization via the browser's native `JSON.parse`/
+  `JSON.stringify`, no extra download.
+- **YAML** / **TOML** — real parse-and-reserialize, using `js-yaml` /
+  `smol-toml` respectively (vendored, loaded only for fields using that
+  language — see `docs/index.md`'s offline-assets notes for the general
+  vendoring policy).
+- **Bash** / **Python** — whitespace-only cleanup (tabs → spaces, trailing
+  whitespace trimmed, extra blank lines collapsed). The button reads "Clean
+  up whitespace," not "Format" — there's no small, dependency-free
+  JavaScript equivalent to `black`/`shfmt` for real reformatting, so don't
+  expect syntax-aware reindentation for these two.
+
+Invalid input on Format (e.g. malformed JSON) never throws — the field gets
+a `code-invalid` CSS class plus an inline error message, and the textarea's
+content is left untouched until it's edited again.
+
+```python
+# All five languages, with highlighting off for the two whitespace-only ones
+class ScriptsForm(FormModel):
+    settings: str = Field("{}", ui_element="textarea", ui_options={"language": "json"})
+    manifest: str = Field("", ui_element="textarea", ui_options={"language": "yaml"})
+    pyproject: str = Field("", ui_element="textarea", ui_options={"language": "toml"})
+    setup_sh: str = Field(
+        "", ui_element="textarea", ui_options={"language": "bash", "code_highlight": False}
+    )
+    hook_py: str = Field(
+        "", ui_element="textarea", ui_options={"language": "python", "code_highlight": False}
+    )
+```
+
+---
+
 ## Optional fields
 
 Use `Optional[T]` with a default of `None`. Pydantic won't require these; the form renders them without a `*` marker.

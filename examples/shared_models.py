@@ -2703,6 +2703,13 @@ class TextInputsGalleryForm(FormModel):
         ui_placeholder='Multiple lines of text...',
         ui_options={'rows': 3},
     )
+    code_input: str = Field(
+        '',
+        title='Code (JSON, with Format button + syntax highlighting)',
+        ui_element='textarea',
+        ui_options={'language': 'json', 'rows': 6},
+        ui_help_text='language= also accepts yaml, toml, bash, python',
+    )
     password_input: str = Field('', title='Password', ui_element='password')
     email_input: str = Field(
         '', title='Email', ui_element='email', ui_placeholder='you@example.com'
