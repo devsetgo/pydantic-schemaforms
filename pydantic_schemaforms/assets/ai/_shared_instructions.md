@@ -478,6 +478,86 @@ POST validation:
   way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`)
   and always runs server-side only — there is no way to do a real DNS lookup from browser JS.
 
+### Complete worked example (FastAPI, live validation)
+
+Verified end-to-end (GET renders with the HTMX wiring in place, POST /validate/{field} returns
+correct pass/fail HTML for both a plain constraint and a DNS/MX check). Use this as the template
+instead of inventing a different validator/endpoint shape:
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+
+from pydantic_schemaforms import (
+    DeliverableEmailStr,
+    Field,
+    FormModel,
+    LiveValidator,
+    render_form_html_async,
+)
+from pydantic_schemaforms.live_validation import validation_response_headers
+
+app = FastAPI()
+
+
+class SignupForm(FormModel):
+    name: str = Field(..., min_length=2, title='Full Name', ui_element='text')
+    email: DeliverableEmailStr = Field(  # EmailStr + a real DNS/MX lookup, both live-checked below
+        ...,
+        title='Email',
+        ui_element='email',
+        ui_options={
+            'hx-post': '/validate/email',
+            'hx-trigger': 'blur, input delay:600ms',
+            'hx-target': '#email-feedback',
+            'hx-swap': 'innerHTML',
+            'data-validate-endpoint': 'true',
+        },
+    )
+
+
+# Module scope, built once: derives a live check for every field on SignupForm
+# straight from its Field() constraints/types -- no FieldValidator to hand-write.
+live_validator = LiveValidator.for_model(SignupForm, debounce_ms=600)
+VALIDATOR_SCRIPT = live_validator.render_htmx_script()  # embed once per page
+
+
+@app.get('/signup', response_class=HTMLResponse)
+async def signup_get():
+    form_html = await render_form_html_async(SignupForm, submit_url='/signup')
+    return f'<html><body>{form_html}{VALIDATOR_SCRIPT}</body></html>'
+
+
+@app.post('/validate/{field_name}', response_class=HTMLResponse)
+async def validate_field(field_name: str, request: Request):
+    # One route serves every field on the model -- validate_field() dispatches
+    # by name, so adding a field to SignupForm needs no new route here.
+    raw = await request.form()
+    value = str(raw.get(field_name, ''))
+    result = live_validator.validate_field(field_name, value)
+    feedback = (
+        '<span class="text-success">Looks good!</span>'
+        if result.is_valid
+        else f'<span class="text-danger">{result.errors[0]}</span>'
+    )
+    return HTMLResponse(feedback, headers=validation_response_headers(field_name, result.is_valid))
+
+
+@app.post('/signup', response_class=HTMLResponse)
+async def signup_post(request: Request):
+    data = dict(await request.form())
+    result = SignupForm.validate(data, submit_url='/signup')  # the real safety net -- always runs
+    if result.is_valid:
+        return '<p>Signed up!</p>'
+    return await result.render_with_errors_async()
+```
+
+The `email` field needs an empty `<div id="email-feedback"></div>` on the page for the response
+to swap into (it does not have to sit immediately next to the input — hovering the input itself
+also shows the same text as a tooltip, since the bundled JS mirrors the swapped feedback into the
+input's `title` attribute). `name` has no `ui_options` here, so it has no live feedback target;
+add the same `ui_options` block (with its own `hx-target`) to give it one too.
+
 ## Conversion workflows (JSON or Pydantic -> FormModel)
 
 You can provide either a JSON payload/schema or an existing Pydantic model and ask the assistant

@@ -448,10 +448,13 @@ async def validate_field(field_name: str, request: ValidationRequest):
         if triggers:
             validation_attrs.append(f'hx-trigger="{", ".join(triggers)}"')
 
-        # Build other attributes
+        # Build other attributes. 'label' is consumed below to build the
+        # <label> text, not a real <input> attribute -- without excluding it
+        # here it leaked onto the input a second time as a bogus
+        # label="..." HTML attribute.
         other_attrs = []
         for key, val in kwargs.items():
-            if key not in ['class', 'id', 'name']:
+            if key not in ['class', 'id', 'name', 'label']:
                 other_attrs.append(f'{key}="{_html_escape(str(val))}"')
 
         # Render field
