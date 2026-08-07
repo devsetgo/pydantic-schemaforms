@@ -1046,7 +1046,12 @@ async def gallery_get(
             # Text Inputs
             'text_input': 'Hello, world!',
             'textarea_input': 'This textarea supports\nmultiple lines of text.',
-            'code_input': '{\n  "name": "demo",\n  "enabled": true\n}',
+            'code_json_input': '{\n  "name": "demo",\n  "enabled": true\n}',
+            'code_yaml_input': 'name: demo\nenabled: true\n',
+            'code_toml_input': 'name = "demo"\nenabled = true\n',
+            'code_bash_input': '#!/usr/bin/env bash\necho "hello, demo"\n',
+            'code_python_input': 'def hello():\n    print("hello, demo")\n',
+            'code_no_highlight_input': '{\n  "highlighting": "off"\n}',
             'password_input': 'demo-password',
             'email_input': 'demo@example.com',
             'search_input': 'pydantic schemaforms',

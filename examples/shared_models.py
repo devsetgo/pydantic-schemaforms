@@ -2703,12 +2703,41 @@ class TextInputsGalleryForm(FormModel):
         ui_placeholder='Multiple lines of text...',
         ui_options={'rows': 3},
     )
-    code_input: str = Field(
+    code_json_input: str = Field(
         '',
-        title='Code (JSON, with Format button + syntax highlighting)',
+        title='Code: JSON (real format + syntax highlighting)',
         ui_element='textarea',
         ui_options={'language': 'json', 'rows': 6},
-        ui_help_text='language= also accepts yaml, toml, bash, python',
+    )
+    code_yaml_input: str = Field(
+        '',
+        title='Code: YAML (real format + syntax highlighting)',
+        ui_element='textarea',
+        ui_options={'language': 'yaml', 'rows': 6},
+    )
+    code_toml_input: str = Field(
+        '',
+        title='Code: TOML (real format + syntax highlighting)',
+        ui_element='textarea',
+        ui_options={'language': 'toml', 'rows': 6},
+    )
+    code_bash_input: str = Field(
+        '',
+        title='Code: Bash (whitespace cleanup + syntax highlighting)',
+        ui_element='textarea',
+        ui_options={'language': 'bash', 'rows': 6},
+    )
+    code_python_input: str = Field(
+        '',
+        title='Code: Python (whitespace cleanup + syntax highlighting)',
+        ui_element='textarea',
+        ui_options={'language': 'python', 'rows': 6},
+    )
+    code_no_highlight_input: str = Field(
+        '',
+        title='Code: JSON, highlighting disabled (code_highlight=False)',
+        ui_element='textarea',
+        ui_options={'language': 'json', 'rows': 4, 'code_highlight': False},
     )
     password_input: str = Field('', title='Password', ui_element='password')
     email_input: str = Field(
