@@ -47,6 +47,9 @@ from pydantic_schemaforms.vendor_assets import (
     vendor_imask,
     vendor_materialize,
     vendor_bootstrap,
+    vendor_js_yaml,
+    vendor_smol_toml,
+    vendor_prismjs,
     verify_manifest_files,
     write_manifest,
 )
@@ -1131,6 +1134,341 @@ class TestVendorBootstrap:
         mock_load.return_value = {}  # No schema_version
 
         vendor_bootstrap(version='5.3.0')
+
+        saved_manifest = mock_save.call_args[0][0]
+        assert saved_manifest['schema_version'] == 1
+
+
+class TestVendorJsYaml:
+    """Test vendor_js_yaml function with mocking."""
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.latest_npm_version')
+    def test_vendor_js_yaml_with_explicit_version(
+        self,
+        mock_latest,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_js_yaml with explicit version."""
+        mock_tarball_url.return_value = 'https://registry.npmjs.org/js-yaml/-/js-yaml-5.2.3.tgz'
+        mock_http.return_value = b'tarball content'
+        mock_extract.side_effect = [b'js content', b'license content']
+        mock_write.side_effect = [
+            {'path': 'js-yaml/js-yaml.umd.min.js', 'sha256': 'abc', 'source_url': 'url1'},
+            {'path': 'js-yaml/LICENSE', 'sha256': 'def', 'source_url': 'url2'},
+        ]
+        mock_load.return_value = {'schema_version': 1}
+
+        result = vendor_js_yaml(version='5.2.3')
+
+        assert result.path == 'js-yaml/js-yaml.umd.min.js'
+        assert result.sha256 == 'abc'
+        mock_latest.assert_not_called()
+        mock_tarball_url.assert_called_once_with('js-yaml', '5.2.3')
+        mock_extract.assert_any_call(b'tarball content', 'dist/browser/js-yaml.umd.min.js')
+        mock_extract.assert_any_call(b'tarball content', 'LICENSE')
+        assert mock_write.call_count == 2
+        mock_upsert.assert_called_once()
+        mock_save.assert_called_once()
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.latest_npm_version')
+    def test_vendor_js_yaml_without_version_fetches_latest(
+        self,
+        mock_latest,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_js_yaml without version fetches latest."""
+        mock_latest.return_value = '5.2.3'
+        mock_tarball_url.return_value = 'https://url'
+        mock_http.return_value = b'tgz'
+        mock_extract.side_effect = [b'js', b'lic']
+        mock_write.side_effect = [
+            {'path': 'a', 'sha256': 'b', 'source_url': 'c'},
+            {'path': 'd', 'sha256': 'e', 'source_url': 'f'},
+        ]
+        mock_load.return_value = {'schema_version': 1}
+
+        vendor_js_yaml()
+
+        mock_latest.assert_called_once_with('js-yaml')
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    def test_vendor_js_yaml_sets_schema_version(
+        self,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_js_yaml sets schema_version if missing."""
+        mock_tarball_url.return_value = 'url'
+        mock_http.return_value = b'tgz'
+        mock_extract.side_effect = [b'js', b'lic']
+        mock_write.side_effect = [
+            {'path': 'a', 'sha256': 'b', 'source_url': 'c'},
+            {'path': 'd', 'sha256': 'e', 'source_url': 'f'},
+        ]
+        mock_load.return_value = {}  # No schema_version
+
+        vendor_js_yaml(version='5.2.3')
+
+        saved_manifest = mock_save.call_args[0][0]
+        assert saved_manifest['schema_version'] == 1
+
+
+class TestVendorSmolToml:
+    """Test vendor_smol_toml function with mocking."""
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.latest_npm_version')
+    def test_vendor_smol_toml_with_explicit_version(
+        self,
+        mock_latest,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_smol_toml with explicit version."""
+        mock_tarball_url.return_value = 'https://registry.npmjs.org/smol-toml/-/smol-toml-1.7.1.tgz'
+        mock_http.return_value = b'tarball content'
+        mock_extract.side_effect = [b'js content', b'license content']
+        mock_write.side_effect = [
+            {'path': 'smol-toml/smol-toml.min.js', 'sha256': 'abc', 'source_url': 'url1'},
+            {'path': 'smol-toml/LICENSE', 'sha256': 'def', 'source_url': 'url2'},
+        ]
+        mock_load.return_value = {'schema_version': 1}
+
+        result = vendor_smol_toml(version='1.7.1')
+
+        assert result.path == 'smol-toml/smol-toml.min.js'
+        assert result.sha256 == 'abc'
+        mock_latest.assert_not_called()
+        mock_tarball_url.assert_called_once_with('smol-toml', '1.7.1')
+        mock_extract.assert_any_call(b'tarball content', 'dist/index.cjs')
+        mock_extract.assert_any_call(b'tarball content', 'LICENSE')
+        assert mock_write.call_count == 2
+        mock_upsert.assert_called_once()
+        mock_save.assert_called_once()
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.latest_npm_version')
+    def test_vendor_smol_toml_without_version_fetches_latest(
+        self,
+        mock_latest,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_smol_toml without version fetches latest."""
+        mock_latest.return_value = '1.7.1'
+        mock_tarball_url.return_value = 'https://url'
+        mock_http.return_value = b'tgz'
+        mock_extract.side_effect = [b'js', b'lic']
+        mock_write.side_effect = [
+            {'path': 'a', 'sha256': 'b', 'source_url': 'c'},
+            {'path': 'd', 'sha256': 'e', 'source_url': 'f'},
+        ]
+        mock_load.return_value = {'schema_version': 1}
+
+        vendor_smol_toml()
+
+        mock_latest.assert_called_once_with('smol-toml')
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    def test_vendor_smol_toml_sets_schema_version(
+        self,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_smol_toml sets schema_version if missing."""
+        mock_tarball_url.return_value = 'url'
+        mock_http.return_value = b'tgz'
+        mock_extract.side_effect = [b'js', b'lic']
+        mock_write.side_effect = [
+            {'path': 'a', 'sha256': 'b', 'source_url': 'c'},
+            {'path': 'd', 'sha256': 'e', 'source_url': 'f'},
+        ]
+        mock_load.return_value = {}  # No schema_version
+
+        vendor_smol_toml(version='1.7.1')
+
+        saved_manifest = mock_save.call_args[0][0]
+        assert saved_manifest['schema_version'] == 1
+
+
+class TestVendorPrismjs:
+    """Test vendor_prismjs function with mocking."""
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.latest_npm_version')
+    def test_vendor_prismjs_with_explicit_version(
+        self,
+        mock_latest,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_prismjs extracts core + all 5 language grammars + theme + license."""
+        mock_tarball_url.return_value = 'https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz'
+        mock_http.return_value = b'tarball content'
+        # core, json, yaml, toml, bash, python, theme, license = 8 files
+        mock_extract.side_effect = [b'content'] * 8
+        mock_write.side_effect = [
+            {'path': f'prismjs/file{i}', 'sha256': f'hash{i}', 'source_url': 'url'}
+            for i in range(8)
+        ]
+        mock_load.return_value = {'schema_version': 1}
+
+        result = vendor_prismjs(version='1.30.0')
+
+        assert result.path == 'prismjs/file0'  # core is always entries[0]
+        assert result.sha256 == 'hash0'
+        mock_latest.assert_not_called()
+        mock_tarball_url.assert_called_once_with('prismjs', '1.30.0')
+        mock_extract.assert_any_call(b'tarball content', 'components/prism-core.min.js')
+        for language in ('json', 'yaml', 'toml', 'bash', 'python'):
+            mock_extract.assert_any_call(b'tarball content', f'components/prism-{language}.min.js')
+        mock_extract.assert_any_call(b'tarball content', 'themes/prism-okaidia.min.css')
+        mock_extract.assert_any_call(b'tarball content', 'LICENSE')
+        assert mock_write.call_count == 8
+        mock_upsert.assert_called_once()
+        mock_save.assert_called_once()
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    @patch('pydantic_schemaforms.vendor_assets.latest_npm_version')
+    def test_vendor_prismjs_without_version_fetches_latest(
+        self,
+        mock_latest,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_prismjs without version fetches latest."""
+        mock_latest.return_value = '1.30.0'
+        mock_tarball_url.return_value = 'https://url'
+        mock_http.return_value = b'tgz'
+        mock_extract.side_effect = [b'content'] * 8
+        mock_write.side_effect = [
+            {'path': f'file{i}', 'sha256': f'h{i}', 'source_url': 'url'} for i in range(8)
+        ]
+        mock_load.return_value = {'schema_version': 1}
+
+        vendor_prismjs()
+
+        mock_latest.assert_called_once_with('prismjs')
+
+    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
+    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
+    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
+    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
+    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
+    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
+    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
+    def test_vendor_prismjs_sets_schema_version(
+        self,
+        mock_tarball_url,
+        mock_http,
+        mock_extract,
+        mock_write,
+        mock_load,
+        mock_upsert,
+        mock_save,
+    ):
+        """Test vendor_prismjs sets schema_version if missing."""
+        mock_tarball_url.return_value = 'url'
+        mock_http.return_value = b'tgz'
+        mock_extract.side_effect = [b'content'] * 8
+        mock_write.side_effect = [
+            {'path': f'file{i}', 'sha256': f'h{i}', 'source_url': 'url'} for i in range(8)
+        ]
+        mock_load.return_value = {}  # No schema_version
+
+        vendor_prismjs(version='1.30.0')
 
         saved_manifest = mock_save.call_args[0][0]
         assert saved_manifest['schema_version'] == 1

@@ -302,6 +302,27 @@ class TestTextInputs:
         assert '<script>' in html
         assert 'code_format_btn' in html
 
+    def test_textarea_code_mode_degrades_gracefully_when_assets_not_vendored(self, monkeypatch):
+        """If the vendored js-yaml/smol-toml/prismjs files are missing (e.g. a
+        checkout before `vendor_*()` has been run), format/highlight for
+        yaml/toml/highlighting silently drop rather than crashing or emitting
+        a broken reference to an undefined library."""
+        import pydantic_schemaforms.inputs.text_inputs as text_inputs_module
+
+        def _always_missing(_relative_path):
+            raise FileNotFoundError
+
+        monkeypatch.setattr(text_inputs_module, 'read_asset_text', _always_missing)
+
+        input_field = TextArea()
+        for language in ('yaml', 'toml', 'json'):
+            html = input_field.render(name='cfg', id='cfg', value='{}', language=language)
+            assert '<textarea' in html
+            assert 'NOT_RESOLVED' not in html  # js-yaml source never embedded
+            assert 'TomlError' not in html  # smol-toml source never embedded
+            assert '<pre class="code-highlight-layer"' not in html  # no Prism overlay element
+            assert 'window.Prism' not in html  # no Prism core embedded
+
     def test_url_input(self):
         """Test URLInput functionality."""
         input_field = URLInput()
