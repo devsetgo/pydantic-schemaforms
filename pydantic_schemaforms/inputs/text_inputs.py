@@ -117,9 +117,16 @@ def _code_area_enhancement(
 
     _error_el = html(t'<div class="code-format-error" id="{field_id}_code_error"></div>')
 
-    wrapper = html(
-        t'<div class="code-textarea-wrap">{_toolbar}{_highlight_layer}{_textarea}{_error_el}</div>'
-    )
+    # The highlight layer is `position: absolute; inset: 0` relative to its
+    # nearest positioned ancestor -- if that ancestor also contained the
+    # toolbar/error elements, the dark overlay would paint over the Format
+    # button (positioned elements always paint above static-flow siblings,
+    # regardless of z-index). Scoping `position: relative` to a dedicated
+    # stack that holds only the highlight layer + textarea keeps `inset: 0`
+    # matched to the textarea's own box.
+    _stack = html(t'<div class="code-textarea-stack">{_highlight_layer}{_textarea}</div>')
+
+    wrapper = html(t'<div class="code-textarea-wrap">{_toolbar}{_stack}{_error_el}</div>')
 
     tab_js = ''
     if code_tab_indent:
@@ -233,8 +240,8 @@ def _code_area_enhancement(
     highlight_js_block = f'\n    {highlight_js}' if highlight_js else ''
 
     css = f"""
-.code-textarea-wrap {{ position: relative; }}
-.code-textarea-wrap textarea, .code-highlight-layer {{
+.code-textarea-stack {{ position: relative; }}
+.code-textarea-stack textarea, .code-highlight-layer {{
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.875rem;
     line-height: 1.5;
@@ -254,7 +261,7 @@ def _code_area_enhancement(
     z-index: 0;
     border-color: transparent;
 }}
-.code-textarea-wrap textarea.code-highlight-active {{
+.code-textarea-stack textarea.code-highlight-active {{
     position: relative;
     z-index: 1;
     background: transparent;

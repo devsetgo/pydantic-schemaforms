@@ -168,3 +168,19 @@ class TestHighlightOverlay:
         expect(page.locator('#json_code_layer_inner')).to_be_attached()
         # sanity: a field with no matching id never gets a highlight layer
         assert page.locator('#does-not-exist_code_layer_inner').count() == 0
+
+    def test_highlight_layer_does_not_cover_the_format_button(
+        self, page: Page, code_area_server_url: str
+    ) -> None:
+        """Regression test: the highlight <pre> is `position: absolute; inset: 0`
+        relative to its nearest positioned ancestor. If that ancestor also
+        contained the toolbar, the dark overlay would paint over the Format
+        button (positioned elements paint above static-flow siblings
+        regardless of z-index), making it invisible/unclickable even though
+        it's still present and clickable in the accessibility tree."""
+        page.goto(code_area_server_url)
+        btn_box = page.locator('#json_code_format_btn').bounding_box()
+        layer_box = page.locator('#json_code_layer').bounding_box()
+        assert btn_box is not None
+        assert layer_box is not None
+        assert btn_box['y'] + btn_box['height'] <= layer_box['y'] + 1  # 1px rounding slack
