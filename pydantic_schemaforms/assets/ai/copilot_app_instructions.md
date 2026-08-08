@@ -166,6 +166,12 @@ Notes:
   server-side format validation. Use the matching Pydantic type for that (`EmailStr`,
   `AnyUrl`/`HttpUrl`); `Field()` constraints (`min_length`, `ge`, `le`, `pattern`, ...) are what
   `.validate()` actually enforces.
+- `EmailStr` (used above, and in every email field in this document) requires the optional
+  `email-validator` package **just to define the model class**, not only to validate a value —
+  a `FormModel` with an `EmailStr` field raises `ImportError` at class-definition time without
+  it. If the app you're generating has any email field, add
+  `pydantic-schemaforms[email]` to its dependencies (or plain `email-validator`) rather than
+  assuming the base `pydantic-schemaforms` install covers it.
 - `FormModel.validate(data, submit_url=...)` returns a `ValidationResult`;
   `result.render_with_errors_async()` re-renders with field errors and the submitted values
   preserved — don't hand-roll try/except ValidationError when this exists.
@@ -478,7 +484,7 @@ POST validation:
   type, so `LiveValidator.for_model(MyForm)` above picks it up automatically with no extra
   FieldValidator code. Reach for `FieldValidator("email").required().email(check_deliverability=True)`
   instead only if you're building a validator imperatively (FormBuilder, no typed model). Either
-  way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email-dns]`)
+  way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email]`)
   and always runs server-side only — there is no way to do a real DNS lookup from browser JS.
 
 ### Complete worked example (FastAPI, live validation)

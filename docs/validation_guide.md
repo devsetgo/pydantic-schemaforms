@@ -337,9 +337,19 @@ know the domain can actually receive mail). It requires the optional
 [`email-validator`](https://pypi.org/project/email-validator/) package:
 
 ```bash
-pip install pydantic-schemaforms[email-dns]
+pip install pydantic-schemaforms[email]
 # or: pip install email-validator
 ```
+
+> **This isn't only a `DeliverableEmailStr` thing.** Pydantic's own `EmailStr` requires
+> `email-validator` too — not just to run a check, but simply to *define* a model field
+> with that type. A `FormModel` with an `email: EmailStr` field raises `ImportError` the
+> moment the class body is evaluated if `email-validator` isn't installed, regardless of
+> whether you ever use `DeliverableEmailStr` or `check_deliverability`. Since `EmailStr`
+> is this library's own recommended type for email fields (see the examples throughout
+> this guide and the README), install `pydantic-schemaforms[email]` for any app with an
+> email field, DNS checking or not. `[email-dns]` is kept as an alias for the same
+> package, for anyone who found it via this section specifically.
 
 Use it exactly like `EmailStr` — it's just a type, so there's no validator to construct,
 register, or keep in sync with the field:

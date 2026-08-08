@@ -87,7 +87,7 @@ class FormBuilder:
         check_deliverability=True additionally verifies the domain has valid
         DNS/MX records (a real DNS lookup, requires the optional
         ``email-validator`` package — install with
-        ``pip install pydantic-schemaforms[email-dns]``). This check only
+        ``pip install pydantic-schemaforms[email]``). This check only
         ever runs server-side; wire it up to a live-validation endpoint (see
         ``LiveValidator``) for point-of-typing feedback.
         """
