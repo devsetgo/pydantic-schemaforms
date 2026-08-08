@@ -1,0 +1,3268 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Server-rendered form components and layout helpers for Pydantic models">
+      
+      
+        <meta name="author" content="Mike Ryan">
+      
+      
+      
+        <link rel="prev" href="../csrf/">
+      
+      
+        <link rel="next" href="../layouts/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Inputs (UI Elements) - Pydantic SchemaForms</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../css/print-site.css">
+    
+      <link rel="stylesheet" href="../css/print-site-material.css">
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#inputs-ui-elements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Pydantic SchemaForms" class="md-header__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  <img src="../favicon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pydantic SchemaForms
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Inputs (UI Elements)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://pydantic-schemaforms.devsetgo.com/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Live Demo ↗
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorial_fastapi/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../testing_workflow/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../about/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  About
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../release-notes/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Release Notes
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../print_page/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Print Site
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Pydantic SchemaForms" class="md-nav__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  <img src="../favicon.png" alt="logo">
+
+    </a>
+    Pydantic SchemaForms
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://pydantic-schemaforms.devsetgo.com/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Demo ↗
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial_fastapi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FastAPI Project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../csrf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSRF Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs (UI Elements)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs (UI Elements)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#common-field-metadata-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Field Metadata (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pydantic-field-options-are-also-supported" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pydantic Field Options Are Also Supported
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copy-paste-examples-by-ui_element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copy-Paste Examples By ui_element
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-ui_element-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported ui_element values
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported ui_element values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Text">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        password
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        email
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#textarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        textarea
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#url" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        url
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Numbers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Numbers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        number
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        range
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specialized-numeric-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Specialized numeric elements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rating-sliders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rating &amp; sliders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#select" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        select
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiselect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        multiselect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        checkbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkbox_group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        checkbox_group
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#radio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        radio
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toggle-aliases-toggle_switch-checkbox_toggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        toggle (aliases: toggle_switch, checkbox_toggle)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combobox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        combobox
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Date/time
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Date/time">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        date
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-alias-datetime-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        datetime (alias: datetime-local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#month" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        month
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        week
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#birthdate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        birthdate
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specialized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Specialized
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Specialized">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#color" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        color
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hidden" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hidden
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssn-alias-social_security_number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ssn (alias: social_security_number)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phone-alias-phone_number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        phone (alias: phone_number)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#credit_card-aliases-card-cc_number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        credit_card (aliases: card, cc_number)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#currency-alias-money" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        currency (alias: money)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-anti-spam-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security / anti-spam elements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security / anti-spam elements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#captcha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        captcha
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#honeypot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        honeypot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csrf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        csrf
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example-all-documented-ui-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example (All Documented UI Elements)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pseudo-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pseudo elements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unknown-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unknown elements
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Render Timing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Application Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validation_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugin_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai_instructions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Assistant Instructions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../print_page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Print Site
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="inputs-ui-elements">Inputs (UI Elements)<a class="headerlink" href="#inputs-ui-elements" title="Permanent link">&para;</a></h1>
+<p>This page documents the supported ui_element values and gives copy-paste examples.
+Each element includes:</p>
+<ul>
+<li>Required: minimum setup to render that element</li>
+<li>Optional: supported field metadata and ui_options values</li>
+</ul>
+<p>Where you set these:</p>
+<ul>
+<li>Preferred: <code>pydantic_schemaforms.Field(..., ui_element="...")</code></li>
+<li>Or directly via <code>json_schema_extra={"ui_element": "..."}</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">FormModel</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Example</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="common-field-metadata-optional">Common Field Metadata (Optional)<a class="headerlink" href="#common-field-metadata-optional" title="Permanent link">&para;</a></h2>
+<p>These are available on any element type:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_help_text</li>
+<li>ui_disabled</li>
+<li>ui_readonly</li>
+<li>ui_hidden</li>
+<li>ui_autofocus</li>
+<li>ui_class</li>
+<li>ui_style</li>
+<li>ui_order</li>
+<li>ui_options (widget-specific attributes)</li>
+</ul>
+<h2 id="pydantic-field-options-are-also-supported">Pydantic Field Options Are Also Supported<a class="headerlink" href="#pydantic-field-options-are-also-supported" title="Permanent link">&para;</a></h2>
+<p>UI metadata is additive. You can use standard Pydantic Field options together with ui_element.</p>
+<p>Common Pydantic options you can combine with UI elements:</p>
+<ul>
+<li>title, description, examples</li>
+<li>default, default_factory</li>
+<li>alias</li>
+<li>min_length, max_length, pattern</li>
+<li>gt, ge, lt, le, multiple_of, strict</li>
+<li>validate_default, exclude, frozen</li>
+<li>any additional supported Field kwargs via passthrough</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">FormModel</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PydanticAndUiExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Username&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Public handle shown on profile&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^[a-zA-Z0-9_]+$&quot;</span><span class="p">,</span>
+        <span class="n">examples</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;jane_doe&quot;</span><span class="p">],</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;jane_doe&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;username&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="n">age</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">18</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+        <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">validate_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;number&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h2 id="copy-paste-examples-by-ui_element">Copy-Paste Examples By ui_element<a class="headerlink" href="#copy-paste-examples-by-ui_element" title="Permanent link">&para;</a></h2>
+<p>Use this import block for the examples below:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">FormModel</span>
+</code></pre></div>
+<h2 id="supported-ui_element-values">Supported <code>ui_element</code> values<a class="headerlink" href="#supported-ui_element-values" title="Permanent link">&para;</a></h2>
+<p>These map to concrete input components in pydantic_schemaforms.inputs.*.</p>
+<h3 id="text">Text<a class="headerlink" href="#text" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>text</code> (default)</li>
+<li><code>password</code></li>
+<li><code>email</code></li>
+<li><code>search</code></li>
+<li><code>textarea</code></li>
+<li><code>url</code></li>
+<li><code>tel</code></li>
+</ul>
+<h4 id="text_1">text<a class="headerlink" href="#text_1" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="text"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: minlength, maxlength, pattern, autocomplete, inputmode</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TextExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;jane_doe&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;minlength&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;username&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="password">password<a class="headerlink" href="#password" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="password"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: minlength, maxlength, autocomplete (defaults to new-password)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PasswordExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Enter a strong password&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;minlength&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;new-password&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="email">email<a class="headerlink" href="#email" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="email"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: autocomplete, pattern, maxlength</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">EmailExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;email&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;name@company.com&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">254</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="search">search<a class="headerlink" href="#search" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="search"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: maxlength, autocomplete</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SearchExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;search&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Search products&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">120</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;off&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="textarea">textarea<a class="headerlink" href="#textarea" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="textarea"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: rows, cols, wrap, resize, minlength, maxlength</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TextAreaExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">bio</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;textarea&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Tell us about yourself&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;cols&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">&quot;wrap&quot;</span><span class="p">:</span> <span class="s2">&quot;soft&quot;</span><span class="p">,</span> <span class="s2">&quot;resize&quot;</span><span class="p">:</span> <span class="s2">&quot;vertical&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="url">url<a class="headerlink" href="#url" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="url"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: pattern, autocomplete</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">UrlExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">website</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;url&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;https://example.com&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;https?://.+&quot;</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;url&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="tel">tel<a class="headerlink" href="#tel" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Field type + ui_element="tel"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: pattern, autocomplete, maxlength</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TelExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">phone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;tel&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;+1 555 123 4567&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;tel&quot;</span><span class="p">,</span> <span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Notes:</p>
+<ul>
+<li>Long string fields may auto-infer to textarea.</li>
+<li>password preserves the value if you supply one (use with care).</li>
+</ul>
+<h3 id="numbers">Numbers<a class="headerlink" href="#numbers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>number</code></li>
+<li><code>range</code></li>
+<li><code>percentage</code>, <code>decimal</code>, <code>integer</code>, <code>age</code>, <code>quantity</code>, <code>score</code>, <code>temperature</code> (see <a href="#specialized-numeric-elements">Specialized numeric elements</a>)</li>
+<li><code>rating</code> (alias: <code>rating_stars</code>), <code>star_rating</code>, <code>slider</code> (see <a href="#rating-sliders">Rating &amp; sliders</a>)</li>
+</ul>
+<h4 id="number">number<a class="headerlink" href="#number" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Numeric field type + ui_element="number"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>Pydantic constraints: ge, le, gt, lt, multiple_of</li>
+<li>ui_options: min, max, step, inputmode, show_stepper</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">NumberExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;number&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;inputmode&quot;</span><span class="p">:</span> <span class="s2">&quot;numeric&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Set <code>ui_options={"show_stepper": True}</code> to render +/- buttons on either side of
+the input instead of relying on the browser's native number spinner. The
+buttons dispatch real <code>input</code>/<code>change</code> events, so they work with any other
+JS listening on the field. <code>quantity</code> (below) turns this on by default.</p>
+<h4 id="range">range<a class="headerlink" href="#range" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>Numeric field type + ui_element="range"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: min, max, step, value, show_value</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RangeExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">satisfaction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;range&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;show_value&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h3 id="specialized-numeric-elements">Specialized numeric elements<a class="headerlink" href="#specialized-numeric-elements" title="Permanent link">&para;</a></h3>
+<p>These all build on <code>number</code> and accept the same <code>ui_options</code> (min, max, step,
+show_stepper) plus their own defaults/kwargs listed below.</p>
+<table>
+<thead>
+<tr>
+<th><code>ui_element</code></th>
+<th>Purpose</th>
+<th>Extra <code>ui_options</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>percentage</code></td>
+<td>Adds a <code>%</code> placeholder, defaults min/max/step to 0-100/0.1</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>decimal</code></td>
+<td>Step derived from <code>decimal_places</code></td>
+<td><code>decimal_places</code> (int, default 2)</td>
+</tr>
+<tr>
+<td><code>integer</code></td>
+<td>Forces step=1, numeric keyboard</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>age</code></td>
+<td>Integer with min/max defaulted to 0-150</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>quantity</code></td>
+<td>Integer with min=1 and <code>show_stepper=True</code> by default</td>
+<td>--</td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td>Free min/max range (defaults 0-100)</td>
+<td><code>min_score</code>, <code>max_score</code></td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>Unit-aware placeholder/min/max</td>
+<td><code>unit</code> ("celsius" | "fahrenheit" | "kelvin")</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SpecializedNumericExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">discount</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;percentage&quot;</span><span class="p">)</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;decimal&quot;</span><span class="p">,</span> <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;decimal_places&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
+    <span class="n">attendees</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;integer&quot;</span><span class="p">)</span>
+    <span class="n">applicant_age</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;age&quot;</span><span class="p">)</span>
+    <span class="n">cart_quantity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;quantity&quot;</span><span class="p">)</span>  <span class="c1"># ships the +/- stepper by default</span>
+    <span class="n">exam_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min_score&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max_score&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
+    <span class="n">room_temp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;fahrenheit&quot;</span><span class="p">})</span>
+</code></pre></div>
+<h3 id="rating-sliders">Rating &amp; sliders<a class="headerlink" href="#rating-sliders" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>rating</code> (alias: <code>rating_stars</code>): a range slider that also renders a live
+  <code>★★★☆☆</code>-style text readout. Accepts <code>ui_options={"max_rating": 5}</code>
+  (defaults to 5). Good for a compact, keyboard/touch-friendly rating input.</li>
+<li><code>star_rating</code>: individually clickable stars (not a slider) -- contrast with
+  <code>rating</code> above. Accepts <code>ui_options={"max_stars": 5}</code> (note the different
+  option name from <code>rating</code>'s <code>max_rating</code>).</li>
+<li><code>slider</code>: <code>range</code> with min/max value labels shown below the track.
+  Accepts <code>ui_options={"show_labels": True}</code> (default) plus the usual
+  min/max/step.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RatingAndSliderExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">satisfaction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;rating&quot;</span><span class="p">,</span> <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_rating&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+    <span class="n">quality_stars</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;star_rating&quot;</span><span class="p">,</span> <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_stars&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+    <span class="n">volume</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;slider&quot;</span><span class="p">,</span> <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+</code></pre></div>
+<h3 id="selection">Selection<a class="headerlink" href="#selection" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>select</code></li>
+<li><code>multiselect</code></li>
+<li><code>checkbox</code></li>
+<li><code>checkbox_group</code></li>
+<li><code>radio</code></li>
+<li><code>toggle</code> (aliases: <code>toggle_switch</code>, <code>checkbox_toggle</code>)</li>
+<li><code>combobox</code></li>
+</ul>
+<h4 id="select">select<a class="headerlink" href="#select" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>ui_element="select"</li>
+<li>ui_options with choices/options list, or schema enum</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: options, choices, size, class, style</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SelectExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">region</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;select&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;na&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;North America&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;eu&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Europe&quot;</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="multiselect">multiselect<a class="headerlink" href="#multiselect" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>ui_element="multiselect"</li>
+<li>ui_options with choices/options list, or schema enum</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: options, choices, size, enhanced (default True), searchable (default True), search_placeholder</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MultiSelectExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;multiselect&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Backend&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Frontend&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;infra&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Infra&quot;</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>The real <code>&lt;select multiple&gt;</code> is always rendered -- it's what the form
+actually submits, JS or not. By default (<code>enhanced=True</code>) it's layered with a
+chips + search UI that reads its option data straight off the <code>&lt;select&gt;</code>,
+and only hides the native control once the enhanced UI has built
+successfully, so a JS load failure never leaves the field invisible. Set
+<code>ui_options={"enhanced": False}</code> to render the plain native multi-select
+instead, or <code>ui_options={"searchable": False}</code> to keep the chips UI without
+the search box.</p>
+<h4 id="checkbox">checkbox<a class="headerlink" href="#checkbox" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>bool field type + ui_element="checkbox"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: value, checked, label</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CheckboxExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">terms_accepted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;checkbox&quot;</span><span class="p">,</span>
+        <span class="n">ui_help_text</span><span class="o">=</span><span class="s2">&quot;I agree to the terms and privacy policy&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;checked&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="checkbox_group">checkbox_group<a class="headerlink" href="#checkbox_group" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>list field type + ui_element="checkbox_group"</li>
+<li>ui_options with choices/options list, or schema enum</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: options, choices, legend, variant ("stacked" default, or "button_group")</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CheckboxGroupExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">notify_via</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;checkbox_group&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Email&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;sms&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;SMS&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;push&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Push&quot;</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;legend&quot;</span><span class="p">:</span> <span class="s2">&quot;Notify me via&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Use this instead of <code>multiselect</code> when you want independent on/off
+checkboxes laid out directly on the page rather than a dropdown -- both
+submit a list of selected values. <code>variant="button_group"</code> adds
+<code>checkbox-group-button-group</code>/<code>checkbox-item-button-group</code> modifier classes
+for styling the options as an adjacent button row; it's presentation only,
+your app's CSS still does the actual visual styling (removing borders
+between items, etc.).</p>
+<h4 id="radio">radio<a class="headerlink" href="#radio" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>ui_element="radio"</li>
+<li>ui_options with choices/options list, or schema enum</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: options, choices, legend, variant ("stacked" default, or "segmented"), class, style</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RadioExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">plan</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;radio&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;free&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Free&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;pro&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Pro&quot;</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;legend&quot;</span><span class="p">:</span> <span class="s2">&quot;Subscription plan&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><code>variant="segmented"</code> adds <code>radio-group-segmented</code>/<code>radio-item-segmented</code>
+modifier classes for styling the options as adjacent buttons instead of
+stacked radios -- presentation only, same caveat as <code>checkbox_group</code>'s
+<code>button_group</code> variant above.</p>
+<h4 id="toggle-aliases-toggle_switch-checkbox_toggle">toggle (aliases: toggle_switch, checkbox_toggle)<a class="headerlink" href="#toggle-aliases-toggle_switch-checkbox_toggle" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>bool field type + ui_element="toggle"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: label, checked, class</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ToggleExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">marketing_opt_in</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;toggle&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Receive product updates&quot;</span><span class="p">,</span> <span class="s2">&quot;checked&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="combobox">combobox<a class="headerlink" href="#combobox" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>ui_element="combobox"</li>
+<li>ui_options with choices/options list, or schema enum</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: options, choices, filter_mode ("contains" default, or "startswith"), min_chars</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ComboBoxExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">city</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;combobox&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Select or type a city&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;nyc&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;New York&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;ldn&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;London&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;tky&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Tokyo&quot;</span><span class="p">},</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Renders a text input backed by a native <code>&lt;datalist&gt;</code> (the no-JS fallback)
+plus a JS-filtered dropdown listbox with arrow-key navigation and
+click-to-select, built from the same option data as the datalist -- nothing
+to keep in sync. <code>filter_mode="startswith"</code> restricts matches to the
+beginning of each option's label instead of matching anywhere in it.</p>
+<p>Selection note:</p>
+<ul>
+<li>Provide choices via ui_options={"options": [...]} or ui_options={"choices": [...]}.</li>
+<li>Or use JSON Schema enums (for example Literal[...] or Enum) and options are inferred.</li>
+</ul>
+<h3 id="datetime">Date/time<a class="headerlink" href="#datetime" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>date</code></li>
+<li><code>time</code></li>
+<li><code>datetime</code> (alias: <code>datetime-local</code>)</li>
+<li><code>month</code></li>
+<li><code>week</code></li>
+<li><code>birthdate</code></li>
+</ul>
+<h4 id="date">date<a class="headerlink" href="#date" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>date-like field + ui_element="date"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: min, max, value, date_format</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DateExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">start_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">)},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Set <code>ui_options={"date_format": "%d/%m/%Y"}</code> to display and submit the field
+in a custom shape using standard <code>strftime</code>/<code>strptime</code> directives, instead of
+the browser's own locale-controlled date picker. This renders as a
+live-formatted text input (native <code>&lt;input type="date"&gt;</code> can't show a custom
+display format -- the browser always controls it). Without <code>date_format</code>,
+the field renders exactly as before. The server still parses and validates
+the submitted value; a plain ISO <code>YYYY-MM-DD</code> string (e.g. from a JSON API
+caller bypassing the HTML form) is still accepted regardless of the
+configured display format. <code>BirthdateInput</code> (<code>ui_element="birthdate"</code>)
+inherits <code>date_format</code> support the same way.</p>
+<p>A custom-format field stays a single visible box (<code>live_format=True</code>, the
+default). Two independent capabilities layer on top of it:</p>
+<ul>
+<li><strong>Picker icon button</strong>: for any format built from directives a JS <code>Date</code>
+  object can supply a value for (<code>%Y %y %m %d %H %I %M %S %p %B %b %A %a</code>),
+  a small calendar icon button appears inside the field -- clicking it calls
+  the browser's native <code>showPicker()</code> on a visually-hidden, non-submitting
+  companion <code>&lt;input type="date"&gt;</code> behind the scenes, and selecting a date
+  writes it into the visible field already converted to the custom format
+  (including AM/PM and month/weekday names, via a hardcoded English name
+  table). Only truly exotic directives (<code>%Z</code>, <code>%j</code>, <code>%f</code>, week numbers, ...)
+  omit the icon entirely.</li>
+<li><strong>Live per-character typing mask</strong>: for formats built <em>entirely</em> from
+  fixed-width numeric directives (<code>%Y %y %m %d %H %I %M %S</code>), digits are
+  auto-punctuated as the user types. Formats using a variable-width
+  directive (<code>%p</code>, weekday/month names, ...) don't get this -- there's no
+  safe way to live-mask "AM"/"PM" or a month name character by character --
+  but the picker icon above still works for them.</li>
+</ul>
+<h4 id="time">time<a class="headerlink" href="#time" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>time-like field + ui_element="time"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: min, max, step, value, time_format</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TimeExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">start_time</span><span class="p">:</span> <span class="n">time</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">900</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Set <code>ui_options={"time_format": "%H:%M"}</code> for 24-hour ("military") time, or
+any other <code>strftime</code> shape -- same mechanism as <code>date_format</code> above (falls
+back to a live-formatted text input with a picker icon button; native
+<code>&lt;input type="time"&gt;</code> can't be forced into a custom display format).
+<code>step</code> only applies to the native time picker and is not used once a
+custom <code>time_format</code> is set.</p>
+<h4 id="datetime-alias-datetime-local">datetime (alias: datetime-local)<a class="headerlink" href="#datetime-alias-datetime-local" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>datetime-like field + ui_element="datetime"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: min, max, value, auto_set_current, with_set_now_button, datetime_format</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DatetimeExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">appointment_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;auto_set_current&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;with_set_now_button&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Set <code>ui_options={"datetime_format": "%Y%m%d%H%M%S"}</code> for an arbitrary custom
+shape (e.g. year-month-day-hour(24)-minute-second) -- same mechanism as
+<code>date_format</code>/<code>time_format</code>, including the picker icon button (also
+available for <code>%p</code>/<code>%B</code>/etc., see above). When both <code>datetime_format</code> and
+<code>with_set_now_button</code> are set, the Set Now button writes a value matching
+the custom format instead of the default ISO-ish shape, using the same
+JS-Date-derivable directive set as the picker icon -- omitted entirely only
+for the rarer directives that set omits too (<code>%Z</code>, <code>%j</code>, <code>%f</code>, ...).</p>
+<blockquote>
+<p><strong>Known limitation</strong>: the standalone <code>FieldValidator(...).date_range()</code>
+rule (as opposed to <code>ui_options={"min": ..., "max": ...}</code> above) always
+expects ISO <code>YYYY-MM-DD</code> values and is not aware of <code>date_format</code>/
+<code>time_format</code>/<code>datetime_format</code>. Use the <code>min</code>/<code>max</code> <code>ui_options</code> shown
+above for range constraints on a custom-formatted field -- they're
+already format-aware.</p>
+</blockquote>
+<p>See <code>examples/date_time_formats_example.py</code> for a live-runnable showcase of
+21 date/time/datetime formats (USA, Europe, Asia, military time, and
+compact year-month-day-hour-minute-second shapes) across all three input
+types, wired up at the <code>/date-time-formats</code> route in the FastAPI example app.</p>
+<h4 id="month">month<a class="headerlink" href="#month" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>date/datetime/string field + ui_element="month"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: min, max, value (YYYY-MM)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MonthExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">billing_month</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;month&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-01&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-12&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-04&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="week">week<a class="headerlink" href="#week" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>date/datetime/string field + ui_element="week"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: value (YYYY-W##)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WeekExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">sprint_week</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;week&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-W17&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="birthdate">birthdate<a class="headerlink" href="#birthdate" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>date-like field + ui_element="birthdate"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: min, max (defaults to today and 150 years ago), show_age (default True)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BirthdateExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">date_of_birth</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;birthdate&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><code>show_age</code> renders a live "You are N years old" readout below the field,
+computed client-side and updated as the date changes. Set
+<code>ui_options={"show_age": False}</code> to render a plain date input with
+birthdate-appropriate min/max defaults but no age display.</p>
+<h3 id="specialized">Specialized<a class="headerlink" href="#specialized" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>file</code></li>
+<li><code>color</code></li>
+<li><code>hidden</code></li>
+<li><code>ssn</code> (alias: <code>social_security_number</code>)</li>
+<li><code>phone</code> (alias: <code>phone_number</code>)</li>
+<li><code>credit_card</code> (aliases: <code>card</code>, <code>cc_number</code>)</li>
+<li><code>currency</code> (alias: <code>money</code>)</li>
+<li><code>tags</code></li>
+</ul>
+<h4 id="file">file<a class="headerlink" href="#file" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="file"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: accept, multiple, capture, show_preview, enable_drag_drop (default True)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FileExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">attachments</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;file&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;accept&quot;</span><span class="p">:</span> <span class="s2">&quot;.pdf,.docx,image/*&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;multiple&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;show_preview&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Drag-and-drop is on by default: the input renders inside a drop zone that
+accepts dragged files and feeds them into the same <code>change</code>/preview handling
+as a click-selected file, so no extra wiring is needed. Set
+<code>ui_options={"enable_drag_drop": False}</code> to render a plain file input.</p>
+<h4 id="color">color<a class="headerlink" href="#color" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="color"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>default value (for initial color)</li>
+<li>ui_options: show_value</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ColorExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">accent_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;#0EA5E9&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;color&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;show_value&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="hidden">hidden<a class="headerlink" href="#hidden" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>field + ui_element="hidden"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>default value</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">HiddenExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">account_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;acct_123&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;hidden&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="ssn-alias-social_security_number">ssn (alias: social_security_number)<a class="headerlink" href="#ssn-alias-social_security_number" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="ssn"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder override</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SsnExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">ssn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;ssn&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;123-45-6789&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="phone-alias-phone_number">phone (alias: phone_number)<a class="headerlink" href="#phone-alias-phone_number" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="phone"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder</li>
+<li>ui_options: country_code, autocomplete, phone_format, live_format (default True)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">PhoneExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">contact_phone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;phone&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;555 123 4567&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;country_code&quot;</span><span class="p">:</span> <span class="s2">&quot;+1&quot;</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;tel&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Set <code>ui_options={"phone_format": "(###) ###-####"}</code> to get a live-formatting
+mask -- <code>#</code> marks each digit position, and any other character is inserted
+literally as the user types. Without <code>phone_format</code>, the field renders
+exactly as before (no mask). This is display formatting only; it is not a
+substitute for server-side validation of the submitted value.</p>
+<h4 id="credit_card-aliases-card-cc_number">credit_card (aliases: card, cc_number)<a class="headerlink" href="#credit_card-aliases-card-cc_number" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="credit_card"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_placeholder override</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CreditCardExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">card_number</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;credit_card&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;1234 5678 9012 3456&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+<h4 id="currency-alias-money">currency (alias: money)<a class="headerlink" href="#currency-alias-money" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string/decimal-like field + ui_element="currency"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: currency_symbol, live_format (default True)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CurrencyExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">budget</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;currency&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;currency_symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;$&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><code>live_format</code> inserts thousands separators as the user types (on by default).
+Set <code>ui_options={"live_format": False}</code> to disable it. As with <code>phone</code>, this
+is display formatting only -- validate the submitted value server-side.</p>
+<h4 id="tags">tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h4>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="tags"</li>
+</ul>
+<p>Optional:</p>
+<ul>
+<li>ui_options: placeholder, separator (default ",")</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TagsExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">skills</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Skills&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;tags&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;placeholder&quot;</span><span class="p">:</span> <span class="s2">&quot;Add a skill and press Enter&quot;</span><span class="p">,</span> <span class="s2">&quot;separator&quot;</span><span class="p">:</span> <span class="s2">&quot;,&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Renders a chip-style tags editor backed by a single hidden input that stores
+the joined, separator-delimited string -- so the field type stays a plain
+<code>str</code>, not a <code>list[str]</code>. Typing a separator character or pressing Enter
+turns the current text into a chip; Backspace on an empty input removes the
+last chip.</p>
+<p>These specialized elements are opt-in and will not override normal <code>text</code> fields.
+Use them explicitly when you want built-in formatting/pattern behavior.</p>
+<h2 id="security-anti-spam-elements">Security / anti-spam elements<a class="headerlink" href="#security-anti-spam-elements" title="Permanent link">&para;</a></h2>
+<h3 id="captcha">captcha<a class="headerlink" href="#captcha" title="Permanent link">&para;</a></h3>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="captcha"</li>
+<li>ui_options with a <code>secret_key</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms.inputs.specialized_inputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">verify_captcha</span>
+
+<span class="n">SECRET</span> <span class="o">=</span> <span class="s2">&quot;change-me-and-load-from-your-app-config&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SignupForm</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">captcha_answer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Verify you are human&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;captcha&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;secret_key&quot;</span><span class="p">:</span> <span class="n">SECRET</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><code>captcha</code> renders a small arithmetic question ("What is 4 + 7?") plus a
+hidden, HMAC-signed challenge token -- the correct sum is never sent to the
+browser. Verify it at the route level, before model validation, since the
+token only exists in the raw submitted form data:</p>
+<div class="highlight"><pre><span></span><code><span class="n">form_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">())</span>
+<span class="n">token</span> <span class="o">=</span> <span class="n">form_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;captcha_answer_token&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">verify_captcha</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">answer</span><span class="o">=</span><span class="n">form_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;captcha_answer&quot;</span><span class="p">),</span> <span class="n">secret_key</span><span class="o">=</span><span class="n">SECRET</span><span class="p">):</span>
+    <span class="c1"># re-render with a form-level error; a fresh challenge is generated</span>
+    <span class="c1"># automatically since the widget re-renders on every request</span>
+    <span class="o">...</span>
+</code></pre></div>
+<p>Only declare the visible answer field on your model -- do not also declare a
+separate <code>..._token</code> field for it. A new question/token pair is generated on
+every render, so the token in the page always matches the question shown.</p>
+<h3 id="honeypot">honeypot<a class="headerlink" href="#honeypot" title="Permanent link">&para;</a></h3>
+<p>Required:</p>
+<ul>
+<li>string field + ui_element="honeypot"</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SignupForm</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">website_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;honeypot&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Renders a field that is hidden from real users (<code>display: none</code>, <code>tabindex="-1"</code>)
+but still visible to bots that fill in every input they find. If the
+submitted value is non-empty, treat the submission as spam -- most apps fake
+a success response rather than revealing that a trap caught it:</p>
+<div class="highlight"><pre><span></span><code><span class="k">if</span> <span class="n">form_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;website_url&quot;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">success_response</span><span class="p">()</span>  <span class="c1"># pretend it worked; don&#39;t process the submission</span>
+</code></pre></div>
+<h3 id="csrf">csrf<a class="headerlink" href="#csrf" title="Permanent link">&para;</a></h3>
+<p><code>csrf</code> is rendered by the library's own CSRF handling rather than declared
+directly as a model field -- pass <code>csrf_mode="required-provider"</code> (or
+<code>"field-only"</code> for local debugging) and a <code>csrf_token_provider</code> to
+<code>render_form_html()</code>/<code>render_form_from_model()</code>. See
+<a href="../csrf/">docs/csrf.md</a> for the full guide, including how tokens are
+generated, stored, and verified.</p>
+<h2 id="complete-example-all-documented-ui-elements">Complete Example (All Documented UI Elements)<a class="headerlink" href="#complete-example-all-documented-ui-elements" title="Permanent link">&para;</a></h2>
+<p>Use this model if you want one copy-paste block that exercises every documented ui_element.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">time</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">FormModel</span>
+
+<span class="c1"># Load from app config in real code -- never hardcode a captcha secret.</span>
+<span class="n">ALL_UI_ELEMENTS_CAPTCHA_SECRET</span> <span class="o">=</span> <span class="s2">&quot;change-me&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AllUiElementsExample</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="c1"># Text</span>
+    <span class="n">text_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Full name&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Customer display name&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+        <span class="n">examples</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Jane Doe&quot;</span><span class="p">],</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Jane Doe&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;minlength&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">text_password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Password&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Must contain at least 12 characters&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Choose a password&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;minlength&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;new-password&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">text_email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Email&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Primary account email&quot;</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">254</span><span class="p">,</span>
+        <span class="n">examples</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;jane@example.com&quot;</span><span class="p">],</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;email&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;jane@example.com&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">254</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;email&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">text_search</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;search&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Search products&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">120</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">text_area</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;textarea&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Write notes&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;cols&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> <span class="s2">&quot;wrap&quot;</span><span class="p">:</span> <span class="s2">&quot;soft&quot;</span><span class="p">,</span> <span class="s2">&quot;resize&quot;</span><span class="p">:</span> <span class="s2">&quot;vertical&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">text_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;url&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;https://example.com&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;https?://.+&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">text_tel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;tel&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;+1 555 123 4567&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;tel&quot;</span><span class="p">,</span> <span class="s2">&quot;maxlength&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Numbers</span>
+    <span class="n">number_quantity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Quantity&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Order quantity&quot;</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;number&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;inputmode&quot;</span><span class="p">:</span> <span class="s2">&quot;numeric&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">number_range</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Satisfaction&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Satisfaction score from 0 to 10&quot;</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">multiple_of</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;range&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;show_value&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">number_stepper_quantity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Cart quantity&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Ships a +/- stepper by default&quot;</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;quantity&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">number_percentage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Discount&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Percentage discount to apply&quot;</span><span class="p">,</span>
+        <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;percentage&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">number_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Room temperature&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;fahrenheit&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Rating &amp; sliders</span>
+    <span class="n">rating_satisfaction</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">3</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Satisfaction rating&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Slider-based rating with a live star readout&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;rating&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_rating&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">rating_stars</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">4</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Quality&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Individually clickable stars&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;star_rating&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_stars&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">slider_volume</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="mi">50</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Volume&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;slider&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selection</span>
+    <span class="n">select_region</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Region&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Primary operating region&quot;</span><span class="p">,</span>
+        <span class="n">examples</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;na&quot;</span><span class="p">],</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;select&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;na&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;North America&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;eu&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Europe&quot;</span><span class="p">},</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">select_tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Tags&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Select one or more team tags&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;multiselect&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Backend&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Frontend&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;infra&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Infra&quot;</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">select_terms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Terms accepted&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Must be accepted before submit&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;checkbox&quot;</span><span class="p">,</span>
+        <span class="n">ui_help_text</span><span class="o">=</span><span class="s2">&quot;I agree to the terms&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;checked&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">select_notify_via</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Notify me via&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Independent checkboxes laid out on the page&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;checkbox_group&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Email&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;sms&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;SMS&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;push&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Push&quot;</span><span class="p">},</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">select_plan</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Plan&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Choose a subscription plan&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;radio&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;free&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Free&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;pro&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Pro&quot;</span><span class="p">},</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;legend&quot;</span><span class="p">:</span> <span class="s2">&quot;Plan&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">select_toggle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Enable alerts&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Turn notifications on or off&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;toggle&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Enable alerts&quot;</span><span class="p">,</span> <span class="s2">&quot;checked&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">select_city</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;City&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Choose from known cities or type your own&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;combobox&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;Select or type a city&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;nyc&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;New York&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;ldn&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;London&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;tky&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Tokyo&quot;</span><span class="p">},</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Date/time</span>
+    <span class="n">dt_date</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Start date&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Project start date&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;date&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">date</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">)},</span>
+    <span class="p">)</span>
+    <span class="n">dt_time</span><span class="p">:</span> <span class="n">time</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Start time&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Daily start time&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;step&quot;</span><span class="p">:</span> <span class="mi">900</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">dt_datetime</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Appointment&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Appointment date and time&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;auto_set_current&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;with_set_now_button&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">dt_month</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Billing month&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Month in YYYY-MM format&quot;</span><span class="p">,</span>
+        <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;month&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-01&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-12&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-04&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">dt_week</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Sprint week&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ISO week in YYYY-W## format&quot;</span><span class="p">,</span>
+        <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">-W\d</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;week&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;2026-W17&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">dt_birthdate</span><span class="p">:</span> <span class="n">date</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Date of birth&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Shows a live computed-age readout&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;birthdate&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Specialized</span>
+    <span class="n">sp_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Attachments&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Upload one or more files&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;file&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;accept&quot;</span><span class="p">:</span> <span class="s2">&quot;.pdf,.docx,image/*&quot;</span><span class="p">,</span> <span class="s2">&quot;multiple&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;show_preview&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">sp_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;#0EA5E9&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Accent color&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Primary UI accent color&quot;</span><span class="p">,</span>
+        <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^#[0-9A-Fa-f]</span><span class="si">{6}</span><span class="s2">$&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;color&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;show_value&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">sp_hidden</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;acct_123&quot;</span><span class="p">,</span>
+        <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;hidden&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sp_ssn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Social security number&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;US SSN format&quot;</span><span class="p">,</span>
+        <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{3}</span><span class="s2">-\d</span><span class="si">{2}</span><span class="s2">-\d</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;ssn&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;123-45-6789&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sp_phone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Phone&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Primary contact number&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;phone&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;555 123 4567&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;country_code&quot;</span><span class="p">:</span> <span class="s2">&quot;+1&quot;</span><span class="p">,</span> <span class="s2">&quot;autocomplete&quot;</span><span class="p">:</span> <span class="s2">&quot;tel&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">sp_credit_card</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Card number&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Card number with spaces&quot;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">19</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;credit_card&quot;</span><span class="p">,</span>
+        <span class="n">ui_placeholder</span><span class="o">=</span><span class="s2">&quot;1234 5678 9012 3456&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sp_currency</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Budget&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Amount in selected currency&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;currency&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;currency_symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;$&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">sp_tags</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Skills&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Chip-style tags editor; stores a separator-joined string&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;tags&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;placeholder&quot;</span><span class="p">:</span> <span class="s2">&quot;Add a skill and press Enter&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Security / anti-spam</span>
+    <span class="n">sec_honeypot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Website&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;honeypot&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sec_captcha</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Verify you are human&quot;</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s2">&quot;captcha&quot;</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;secret_key&quot;</span><span class="p">:</span> <span class="n">ALL_UI_ELEMENTS_CAPTCHA_SECRET</span><span class="p">},</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><code>ALL_UI_ELEMENTS_CAPTCHA_SECRET</code> must be a module-level constant you load
+from app config (not hardcoded) -- see the <a href="#captcha">captcha</a> section above
+for the full verification flow this field needs at the route level.</p>
+<p>Alias note:</p>
+<ul>
+<li>datetime-local is an alias for datetime</li>
+<li>toggle_switch and checkbox_toggle are aliases for toggle</li>
+<li>social_security_number is an alias for ssn</li>
+<li>phone_number is an alias for phone</li>
+<li>card and cc_number are aliases for credit_card</li>
+<li>money is an alias for currency</li>
+<li>rating_stars is an alias for rating (the slider-based widget -- not the
+  same as the separate <code>star_rating</code> element, which is clickable stars)</li>
+</ul>
+<h2 id="pseudo-elements">Pseudo elements<a class="headerlink" href="#pseudo-elements" title="Permanent link">&para;</a></h2>
+<p>These are handled specially by the renderer (not standard inputs):</p>
+<ul>
+<li><code>layout</code>: layout-only schema fields (see <a href="../layouts/">docs/layouts.md</a>)</li>
+<li><code>model_list</code>: repeatable nested model items</li>
+</ul>
+<h2 id="unknown-elements">Unknown elements<a class="headerlink" href="#unknown-elements" title="Permanent link">&para;</a></h2>
+<p>If you set <code>ui_element</code> to an unsupported value, the renderer falls back to a basic text input.</p>
+<p>If you need a custom widget:</p>
+<ul>
+<li>Implement a <code>BaseInput</code> subclass</li>
+<li>Register it at runtime via <code>pydantic_schemaforms.inputs.registry.register_input_class()</code></li>
+</ul>
+<p>(Then you can use your custom <code>ui_element</code> key in schemas.)</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 - 2026 Mike Ryan
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://pydantic-schemaforms.devsetgo.com/" target="_blank" rel="noopener" title="Live Demo" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/devsetgo" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/_devsetgo" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.instant", "navigation.tabs.sticky", "toc.integrate", "toc.follow", "navigation.top"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../js/print-site.js"></script>
+      
+        <script src="../js/demo-link.js"></script>
+      
+    
+  </body>
+</html>
