@@ -51,6 +51,7 @@ from examples.date_time_formats_example import (
     DateTimeFormatsShowcaseForm,
     create_sample_date_time_format_data,
 )
+from examples.input_type_reference import INPUT_TYPE_CATEGORIES
 
 from pydantic import EmailStr
 
@@ -1046,6 +1047,12 @@ async def gallery_get(
             # Text Inputs
             'text_input': 'Hello, world!',
             'textarea_input': 'This textarea supports\nmultiple lines of text.',
+            'code_json_input': '{\n  "name": "demo",\n  "enabled": true\n}',
+            'code_yaml_input': 'name: demo\nenabled: true\n',
+            'code_toml_input': 'name = "demo"\nenabled = true\n',
+            'code_bash_input': '#!/usr/bin/env bash\necho "hello, demo"\n',
+            'code_python_input': 'def hello():\n    print("hello, demo")\n',
+            'code_no_highlight_input': '{\n  "highlighting": "off"\n}',
             'password_input': 'demo-password',
             'email_input': 'demo@example.com',
             'search_input': 'pydantic schemaforms',
@@ -2536,6 +2543,29 @@ async def ai_instructions_page(request: Request):
             'request': request,
             'title': 'AI Assistant Instructions',
             'profiles': profiles,
+        },
+    )
+
+
+# ================================
+# INPUT TYPE REFERENCE
+# ================================
+
+
+@router.get('/input-types', response_class=HTMLResponse, tags=['System'])
+async def input_type_reference_page(request: Request):
+    """Plain documentation page: every ui_element with a code example.
+
+    Static reference data only -- nothing here goes through the form
+    renderer. See /gallery for the live-rendered version.
+    """
+    return templates.TemplateResponse(
+        request,
+        'input_type_reference.html',
+        {
+            'request': request,
+            'title': 'Input Type Reference',
+            'categories': INPUT_TYPE_CATEGORIES,
         },
     )
 

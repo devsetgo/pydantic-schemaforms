@@ -1,0 +1,76 @@
+{% extends "shared_base.html" %}
+
+{% block title %}Input Type Reference{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .input-type-entry {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .input-type-entry h5 {
+        margin-bottom: 0.25rem;
+    }
+    .input-type-entry .text-muted.small {
+        margin-bottom: 0.5rem;
+    }
+    .input-type-entry pre {
+        background: #f1f3f5;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0;
+        overflow-x: auto;
+        font-size: 0.85rem;
+    }
+    .input-type-entry code {
+        background: none;
+        padding: 0;
+    }
+    .input-type-alias {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-card">
+    <div class="form-header">
+        <h2 class="mb-2">
+            <i class="bi bi-code-square me-2"></i>
+            Input Type Reference
+        </h2>
+        <p class="mb-0">
+            Every registered <code>ui_element</code>, with a copy-pasteable <code>Field(...)</code>
+            example. Documentation only -- nothing on this page is rendered by the form
+            library; see the <a href="/gallery">Widget Gallery</a> for that.
+        </p>
+    </div>
+
+    <div class="p-4">
+        {% for category_name, entries in categories %}
+        <h4 class="mt-4 mb-3">{{ category_name }}</h4>
+        {% for entry in entries %}
+        <div class="input-type-entry">
+            <h5><code>ui_element="{{ entry.ui_element }}"</code></h5>
+            {% if entry.aliases %}
+            <div class="input-type-alias">
+                also accepts: {% for alias in entry.aliases %}<code>{{ alias }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
+            </div>
+            {% endif %}
+            <p class="text-muted small">{{ entry.description }}</p>
+            <pre><code>{{ entry.example }}</code></pre>
+        </div>
+        {% endfor %}
+        {% endfor %}
+
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-2"></i>Back to Examples
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

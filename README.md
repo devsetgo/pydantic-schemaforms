@@ -434,6 +434,21 @@ Because everything flows through Enhanced, fixes to layout, validation, or frame
 
 ## Advanced Examples
 
+### Configuration Form (code/data field)
+```python
+class ServiceConfigForm(FormModel):
+    name: str = Field(..., description="Service name")
+    config: str = Field(
+        "{}",
+        description="Service configuration (JSON)",
+        ui_element="textarea",
+        ui_options={"language": "json", "rows": 10}
+    )
+```
+Renders a plain `<textarea>` with a Format button, Tab-key indentation, and syntax
+highlighting layered on top — `language` also accepts `yaml`, `toml`, `bash`, and `python`.
+See `docs/recipes.md` for the full option list and per-language formatting behavior.
+
 ### File Upload Form
 ```python
 class FileUploadForm(FormModel):
@@ -716,7 +731,9 @@ standalone timing/logging demo scripts previously linked here have been removed 
 **Text Inputs:**
 - `text` (default), `email`, `password`, `search`
 - `tel`, `url`
-- `textarea`
+- `textarea` — with an opt-in code/data mode (`ui_options={"language": "json"}`, also
+  `yaml`/`toml`/`bash`/`python`) adding a client-side Format button, Tab-key indentation, and
+  light syntax highlighting; see `docs/recipes.md`
 
 **Numeric Inputs:**
 - `number`, `range`

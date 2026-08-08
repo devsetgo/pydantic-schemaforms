@@ -152,6 +152,329 @@ class AllFieldsExample(FormModel):
 
 ---
 
+## Code and structured-data fields (JSON, YAML, TOML, Bash, Python)
+
+A `textarea` field can opt into a "Format" button, Tab-key indentation, and
+light syntax highlighting for a specific language — still a plain
+`<textarea>` under the hood (not an embedded code-editor component), and
+fully functional with JavaScript disabled.
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+class ServiceConfigForm(FormModel):
+    name: str = Field(..., ui_element="text")
+    config: str = Field(
+        "{}",
+        title="Config (JSON)",
+        ui_element="textarea",
+        ui_options={"language": "json", "rows": 10},
+    )
+```
+
+`language` accepts `"json"`, `"yaml"`, `"toml"`, `"bash"`, or `"python"`.
+Three more `ui_options` toggle the pieces independently — all default `True`
+and only take effect once `language` is set:
+
+| Option              | Effect when `False`                          |
+|---------------------|-----------------------------------------------|
+| `code_format`        | Hides the Format button                        |
+| `code_highlight`      | Hides the syntax-highlight overlay              |
+| `code_tab_indent`      | Tab moves focus instead of inserting indentation |
+
+`indent_size` (default `2`) controls both the indent width used by the
+formatter and the textarea's `tab-size`.
+
+**What "Format" actually does per language** — this varies, and the button's
+label reflects it:
+
+- **JSON** — real reserialization via the browser's native `JSON.parse`/
+  `JSON.stringify`, no extra download.
+- **YAML** / **TOML** — real parse-and-reserialize, using `js-yaml` /
+  `smol-toml` respectively (vendored, loaded only for fields using that
+  language — see `docs/index.md`'s offline-assets notes for the general
+  vendoring policy).
+- **Bash** / **Python** — whitespace-only cleanup (tabs → spaces, trailing
+  whitespace trimmed, extra blank lines collapsed). The button reads "Clean
+  up whitespace," not "Format" — there's no small, dependency-free
+  JavaScript equivalent to `black`/`shfmt` for real reformatting, so don't
+  expect syntax-aware reindentation for these two.
+
+Invalid input on Format (e.g. malformed JSON) never throws — the field gets
+a `code-invalid` CSS class plus an inline error message, and the textarea's
+content is left untouched until it's edited again.
+
+```python
+# All five languages, with highlighting off for the two whitespace-only ones
+class ScriptsForm(FormModel):
+    settings: str = Field("{}", ui_element="textarea", ui_options={"language": "json"})
+    manifest: str = Field("", ui_element="textarea", ui_options={"language": "yaml"})
+    pyproject: str = Field("", ui_element="textarea", ui_options={"language": "toml"})
+    setup_sh: str = Field(
+        "", ui_element="textarea", ui_options={"language": "bash", "code_highlight": False}
+    )
+    hook_py: str = Field(
+        "", ui_element="textarea", ui_options={"language": "python", "code_highlight": False}
+    )
+```
+
+---
+
+<!-- BEGIN GENERATED: input-type-reference (scripts/generate_input_type_reference.py) -->
+
+## Every input type
+
+Every registered `ui_element`, generated from `examples/input_type_reference.py` (the same data backing the FastAPI demo's `/input-types` page). Run `python scripts/generate_input_type_reference.py` after changing that file to regenerate this section.
+
+### Text Inputs
+
+**`text`** — Single-line free text. The default when no ui_element is given.
+```python
+name: str = Field(..., ui_element='text', ui_placeholder='Full name')
+```
+
+**`textarea`** — Multi-line free text. Add language= for a Format button, Tab-key indentation, and syntax highlighting (json/yaml/toml/bash/python).
+```python
+bio: str = Field('', ui_element='textarea', ui_options={'rows': 4})
+config: str = Field('{}', ui_element='textarea',
+                    ui_options={'language': 'json', 'rows': 8})
+```
+
+**`email`** — Email input with built-in browser validation and a numeric-friendly mobile keyboard.
+```python
+email: str = Field(..., ui_element='email', ui_placeholder='you@example.com')
+```
+
+**`password`** — Password input; autocomplete defaults to 'new-password' so browsers don't offer to autofill a saved password.
+```python
+password: str = Field(..., ui_element='password')
+```
+
+**`search`** — Search input with a search-oriented mobile keyboard.
+```python
+query: str = Field('', ui_element='search', ui_placeholder='Search...')
+```
+
+**`url`** — URL input with browser validation and a default http(s):// pattern.
+```python
+website: str = Field('', ui_element='url', ui_placeholder='https://example.com')
+```
+
+**`tel`** — Plain telephone input, no formatting applied.
+```python
+phone: str = Field('', ui_element='tel')
+```
+
+**`phone`** (also accepts: `phone_number`) — Telephone input with a live-formatting mask as the user types.
+```python
+phone: str = Field('', ui_element='phone',
+                   ui_options={'phone_format': '(###) ###-####'})
+```
+
+**`ssn`** (also accepts: `social_security_number`) — Social Security Number input, formatted 123-45-6789 with a numeric keyboard.
+```python
+ssn: str = Field('', ui_element='ssn')
+```
+
+**`credit_card`** (also accepts: `card`, `cc_number`) — Credit card number input, grouped 1234 5678 9012 3456.
+```python
+card_number: str = Field('', ui_element='credit_card')
+```
+
+**`currency`** (also accepts: `money`) — Currency input with live thousands-separator formatting as the user types.
+```python
+price: str = Field('', ui_element='currency',
+                   ui_options={'currency_symbol': '$'})
+```
+
+### Numeric Inputs
+
+**`number`** — Plain HTML number input.
+```python
+count: int = Field(0, ui_element='number')
+```
+
+**`integer`** — Number input constrained to whole numbers (step=1).
+```python
+quantity: int = Field(1, ui_element='integer')
+```
+
+**`decimal`** — Number input with a configurable decimal precision (sets step from it).
+```python
+price: float = Field(0.0, ui_element='decimal',
+                     ui_options={'decimal_places': 2})
+```
+
+**`percentage`** — Number input clamped to 0-100 by default.
+```python
+discount: float = Field(0, ui_element='percentage')
+```
+
+**`age`** — Integer input with sensible age bounds (0-150) pre-filled.
+```python
+age: int = Field(..., ui_element='age')
+```
+
+**`quantity`** — Integer input for carts/inventory: min=1, placeholder '1'.
+```python
+qty: int = Field(1, ui_element='quantity')
+```
+
+**`score`** — Number input with a configurable min/max range (default 0-100).
+```python
+score: float = Field(0, ui_element='score',
+                     ui_options={'min_score': 0, 'max_score': 10})
+```
+
+**`range`** — Native HTML range slider.
+```python
+volume: int = Field(50, ui_element='range', ge=0, le=100)
+```
+
+**`slider`** — Range slider with min/max value labels shown alongside it.
+```python
+opacity: int = Field(100, ui_element='slider', ge=0, le=100)
+```
+
+**`rating`** (also accepts: `rating_stars`) — Range slider styled to show a 1-N star rating (default max 5).
+```python
+rating: int = Field(3, ui_element='rating', ui_options={'max_rating': 5})
+```
+
+**`temperature`** — Number input with a unit indicator (celsius/fahrenheit).
+```python
+temp: float = Field(20.0, ui_element='temperature',
+                    ui_options={'unit': 'celsius'})
+```
+
+### Date/Time Inputs
+
+**`date`** — Native HTML date picker (YYYY-MM-DD).
+```python
+birth_date: date = Field(..., ui_element='date')
+```
+
+**`time`** — Native HTML time picker.
+```python
+appt_time: time = Field(..., ui_element='time')
+```
+
+**`datetime`** (also accepts: `datetime-local`) — Native HTML datetime-local picker.
+```python
+starts_at: datetime = Field(..., ui_element='datetime')
+```
+
+**`month`** — Native HTML month picker (YYYY-MM).
+```python
+billing_month: str = Field(..., ui_element='month')
+```
+
+**`week`** — Native HTML week picker (YYYY-Www).
+```python
+sprint_week: str = Field(..., ui_element='week')
+```
+
+**`birthdate`** — Date input pre-configured with sane birthdate bounds.
+```python
+dob: date = Field(..., ui_element='birthdate')
+```
+
+### Selection Inputs
+
+**`checkbox`** — Single boolean checkbox.
+```python
+agree: bool = Field(False, ui_element='checkbox', title='I accept the terms')
+```
+
+**`toggle`** (also accepts: `toggle_switch`, `checkbox_toggle`) — Single boolean rendered as a modern switch instead of a checkbox.
+```python
+enabled: bool = Field(True, ui_element='toggle')
+```
+
+**`checkbox_group`** — Multiple booleans from one field, rendered as a group of checkboxes.
+```python
+channels: list[str] = Field(default_factory=list, ui_element='checkbox_group',
+                            ui_options={'choices': ['email', 'sms', 'push']})
+```
+
+**`radio`** — Single choice from a set of mutually-exclusive options.
+```python
+size: str = Field('medium', ui_element='radio',
+                  ui_options={'choices': ['small', 'medium', 'large']})
+```
+
+**`select`** — Native HTML <select> dropdown, single choice.
+```python
+plan: str = Field('free', ui_element='select',
+                  ui_options={'choices': [
+                      {'value': 'free', 'label': 'Free'},
+                      {'value': 'pro', 'label': 'Pro'},
+                  ]})
+```
+
+**`multiselect`** — Multi-choice dropdown, enhanced with a searchable chips UI over the real <select multiple>.
+```python
+tags: list[str] = Field(default_factory=list, ui_element='multiselect',
+                        ui_options={'options': [
+                            {'value': 'py', 'label': 'Python'},
+                            {'value': 'rs', 'label': 'Rust'},
+                        ]})
+```
+
+**`combobox`** — Text input with a suggestion dropdown (native <datalist>) -- free text is still allowed, unlike select.
+```python
+city: str = Field('', ui_element='combobox',
+                  ui_options={'choices': ['New York', 'London', 'Tokyo']})
+```
+
+### Files & Specialized Inputs
+
+**`file`** — File upload input.
+```python
+files: str = Field(..., ui_element='file',
+                   ui_options={'accept': '.pdf,.docx', 'multiple': True})
+```
+
+**`color`** — Native HTML color picker.
+```python
+theme_color: str = Field('#3498db', ui_element='color')
+```
+
+**`hidden`** — Hidden input, not shown to the user but submitted with the form.
+```python
+session_id: str = Field(..., ui_element='hidden')
+```
+
+**`tags`** — Chip/tag entry: press Enter or comma to add a tag, Backspace to remove the last one; a hidden input carries the joined value.
+```python
+keywords: str = Field('', ui_element='tags',
+                      ui_help_text='Press Enter or comma to add a tag')
+```
+
+**`star_rating`** — Individually clickable stars (contrast with rating, which is a slider).
+```python
+stars: int = Field(0, ui_element='star_rating', ui_options={'max_rating': 5})
+```
+
+**`captcha`** — Simple math-challenge CAPTCHA for spam resistance without a third-party service.
+```python
+captcha: str = Field('', ui_element='captcha')
+```
+
+**`honeypot`** — Invisible trap field for bots -- real users never see or fill it; a filled honeypot means reject the submission.
+```python
+website_url: str = Field('', ui_element='honeypot')
+```
+
+**`csrf`** — Hidden CSRF token field -- typically added by the framework integration, not hand-declared per form.
+```python
+csrf_token: str = Field(..., ui_element='csrf')
+```
+
+<!-- END GENERATED: input-type-reference -->
+
+---
+
 ## Optional fields
 
 Use `Optional[T]` with a default of `None`. Pydantic won't require these; the form renders them without a `*` marker.

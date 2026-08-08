@@ -688,6 +688,15 @@ class TestTextInputsUncovered:
         assert '<textarea' in html
         assert html.count('<textarea') == 1
 
+    def test_textarea_code_mode_none_value(self):
+        from pydantic_schemaforms.inputs.text_inputs import TextArea
+
+        inp = TextArea()
+        html = inp.render(name='msg', id='msg', value=None, language='json')
+        assert '<textarea' in html
+        assert html.count('<textarea') == 1
+        assert '<script>' in html
+
 
 # ---------------------------------------------------------------------------
 # inputs/datetime_inputs.py -- custom date/time/datetime display formats
