@@ -1,6 +1,6 @@
 # Variables
 REPONAME = pydantic-schemaforms
-APP_VERSION = 26.3.2
+APP_VERSION = 26.3.3
 # Override on the command line, e.g. `make create-docs VERSION=26.4.0`
 VERSION ?= $(APP_VERSION)
 ALIASES ?= latest stable
