@@ -387,6 +387,148 @@ def vendor_bootstrap(*, version: str = '5.3.0') -> VendoredFile:
     return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=zip_url)
 
 
+def vendor_js_yaml(*, version: str | None = None) -> VendoredFile:
+    """Download and vendor js-yaml (npm) into the package assets folder.
+
+    Used for real YAML parse/reserialize in TextArea's code-format mode.
+    """
+    package = 'js-yaml'
+    resolved_version = version or latest_npm_version(package)
+    tarball_url = npm_tarball_url(package, resolved_version)
+    tgz = http_get_bytes(tarball_url)
+
+    js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/browser/js-yaml.umd.min.js')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/js-yaml/js-yaml.umd.min.js')
+    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
+
+    license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/js-yaml/LICENSE')
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=tarball_url
+    )
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'js-yaml',
+        'version': resolved_version,
+        'files': [
+            js_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='js-yaml', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=tarball_url)
+
+
+def vendor_smol_toml(*, version: str | None = None) -> VendoredFile:
+    """Download and vendor smol-toml (npm) into the package assets folder.
+
+    Used for real TOML parse/reserialize in TextArea's code-format mode.
+    `dist/index.cjs` is vendored verbatim (self-contained CommonJS, no
+    cross-file requires); the CJS-to-browser-global shim lives in
+    inputs/text_inputs.py at render time, not in the vendored bytes.
+    """
+    package = 'smol-toml'
+    resolved_version = version or latest_npm_version(package)
+    tarball_url = npm_tarball_url(package, resolved_version)
+    tgz = http_get_bytes(tarball_url)
+
+    js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/index.cjs')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/smol-toml/smol-toml.min.js')
+    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
+
+    license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/smol-toml/LICENSE')
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=tarball_url
+    )
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'smol-toml',
+        'version': resolved_version,
+        'files': [
+            js_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='smol-toml', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=tarball_url)
+
+
+_PRISM_LANGUAGE_COMPONENTS: tuple[str, ...] = ('json', 'yaml', 'toml', 'bash', 'python')
+
+
+def vendor_prismjs(*, version: str | None = None) -> VendoredFile:
+    """Download and vendor Prism.js core + language grammars + a theme (npm).
+
+    Used for light, editable-textarea syntax highlighting in TextArea's
+    code-highlight mode -- not a full editor component.
+    """
+    package = 'prismjs'
+    resolved_version = version or latest_npm_version(package)
+    tarball_url = npm_tarball_url(package, resolved_version)
+    tgz = http_get_bytes(tarball_url)
+
+    entries: list[dict[str, str]] = []
+
+    core_bytes = _safe_member_bytes_from_tgz(tgz, 'components/prism-core.min.js')
+    core_rel_path = Path('pydantic_schemaforms/assets/vendor/prismjs/prism-core.min.js')
+    entries.append(
+        _write_vendored_file(rel_path=core_rel_path, data=core_bytes, source_url=tarball_url)
+    )
+
+    for language in _PRISM_LANGUAGE_COMPONENTS:
+        grammar_bytes = _safe_member_bytes_from_tgz(tgz, f'components/prism-{language}.min.js')
+        grammar_rel_path = Path(
+            f'pydantic_schemaforms/assets/vendor/prismjs/prism-{language}.min.js'
+        )
+        entries.append(
+            _write_vendored_file(
+                rel_path=grammar_rel_path, data=grammar_bytes, source_url=tarball_url
+            )
+        )
+
+    theme_bytes = _safe_member_bytes_from_tgz(tgz, 'themes/prism-okaidia.min.css')
+    theme_rel_path = Path('pydantic_schemaforms/assets/vendor/prismjs/prism-theme.min.css')
+    entries.append(
+        _write_vendored_file(rel_path=theme_rel_path, data=theme_bytes, source_url=tarball_url)
+    )
+
+    license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/prismjs/LICENSE')
+    entries.append(
+        _write_vendored_file(rel_path=license_rel_path, data=license_bytes, source_url=tarball_url)
+    )
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'prismjs',
+        'version': resolved_version,
+        'files': entries,
+    }
+    upsert_asset_entry(manifest, name='prismjs', entry=entry)
+    write_manifest(manifest)
+
+    core_entry = entries[0]
+    return VendoredFile(
+        path=core_entry['path'], sha256=core_entry['sha256'], source_url=tarball_url
+    )
+
+
 def verify_manifest_files(*, require_nonempty: bool = False) -> None:
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):

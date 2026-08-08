@@ -114,6 +114,215 @@ class TestTextInputs:
         assert 'cols="40"' in html
         assert 'Long text content</textarea>' in html
 
+    def test_textarea_resize_becomes_a_style_not_a_raw_attribute(self):
+        """`resize` is a CSS property, not an HTML attribute -- it must be merged
+        into `style`, not emitted as a bare (invalid) `resize="..."` attribute."""
+        input_field = TextArea()
+
+        html = input_field.render(name='notes', resize='vertical')
+        assert 'style="resize: vertical"' in html
+        assert 'resize="vertical"' not in html
+
+        html_with_style = input_field.render(name='notes', resize='vertical', style='color: red')
+        assert 'style="color: red; resize: vertical"' in html_with_style
+
+    def test_textarea_language_none_is_unaffected(self):
+        """No `language` set -> byte-identical to today's plain textarea path."""
+        input_field = TextArea()
+
+        html = input_field.render(name='description', value='plain text', rows=5)
+
+        assert '<script>' not in html
+        assert '<textarea' in html
+        assert 'plain text</textarea>' in html
+
+    def test_textarea_unknown_language_degrades_to_plain(self):
+        """An unrecognized `language` value never crashes -- falls back to a plain textarea."""
+        input_field = TextArea()
+
+        html = input_field.render(name='description', id='description', value='x', language='cobol')
+
+        assert '<script>' not in html
+        assert '<textarea' in html
+
+    def test_textarea_code_mode_without_field_id_degrades_to_plain(self):
+        """Code mode requires a field id (for getElementById); without one, stay plain."""
+        input_field = TextArea()
+
+        html = input_field.render(value='{"a": 1}', language='json')
+
+        assert '<script>' not in html
+        assert '<textarea' in html
+
+    def test_textarea_code_mode_still_renders_native_textarea(self):
+        """The real <textarea> is always present and is what the form submits."""
+        input_field = TextArea()
+
+        html = input_field.render(name='cfg', id='cfg', value='{"a": 1}', language='json')
+
+        assert '<textarea name="cfg" id="cfg">' in html
+        assert '{&quot;a&quot;: 1}</textarea>' in html
+
+    def test_textarea_code_mode_json_wires_format_button_and_tab_indent(self):
+        """JSON needs no vendored library -- native JSON.parse/stringify."""
+        input_field = TextArea()
+
+        html = input_field.render(name='cfg', id='cfg', value='{}', language='json')
+
+        assert '<script>' in html
+        assert 'cfg_code_format_btn' in html
+        assert '>Format<' in html
+        assert "e.key !== 'Tab'" in html
+        assert 'NOT_RESOLVED' not in html  # js-yaml source shouldn't leak in for json
+        assert 'TomlError' not in html  # smol-toml source shouldn't leak in for json
+
+    def test_textarea_code_mode_yaml_embeds_js_yaml(self):
+        """YAML gets real parse/reserialize via the vendored js-yaml library."""
+        input_field = TextArea()
+
+        html = input_field.render(name='cfg', id='cfg', value='a: 1', language='yaml')
+
+        assert 'window.jsyaml' in html
+        assert 'NOT_RESOLVED' in html  # distinctive symbol from the vendored js-yaml source
+        assert 'TomlError' not in html
+
+    def test_textarea_code_mode_toml_embeds_smol_toml(self):
+        """TOML gets real parse/reserialize via the vendored smol-toml library."""
+        input_field = TextArea()
+
+        html = input_field.render(name='cfg', id='cfg', value='a = 1', language='toml')
+
+        assert 'window.TOML' in html
+        assert 'TomlError' in html  # distinctive symbol from the vendored smol-toml source
+        assert 'NOT_RESOLVED' not in html
+
+    def test_textarea_code_mode_bash_and_python_use_indent_only_normalizer(self):
+        """Bash/Python get whitespace-only cleanup, not a real formatter -- and the
+        button label says so rather than implying black/shfmt-grade output."""
+        input_field = TextArea()
+
+        bash_html = input_field.render(name='s', id='s', value='x', language='bash')
+        python_html = input_field.render(name='p', id='p', value='x', language='python')
+
+        for html in (bash_html, python_html):
+            assert '>Clean up whitespace<' in html
+            assert "language === 'bash' || language === 'python'" in html
+            assert 'NOT_RESOLVED' not in html  # js-yaml source not embedded
+            assert 'TomlError' not in html  # smol-toml source not embedded
+
+    def test_textarea_code_highlight_layers_prism_over_native_textarea(self):
+        """Highlighting is an optional overlay; native textarea stays first/functional."""
+        input_field = TextArea()
+
+        html = input_field.render(name='cfg', id='cfg', value='{}', language='json')
+
+        assert '<pre class="code-highlight-layer" id="cfg_code_layer"' in html
+        assert 'id="cfg_code_layer_inner" class="language-json"' in html
+        assert 'window.Prism' in html
+        # the native control appears before the highlight-activation logic
+        assert html.index('<textarea') < html.index('window.Prism')
+
+    def test_textarea_code_highlight_false_omits_prism_and_overlay(self):
+        """code_highlight=False -> no Prism source, no <pre> overlay element."""
+        input_field = TextArea()
+
+        html = input_field.render(
+            name='cfg', id='cfg', value='{}', language='json', code_highlight=False
+        )
+
+        assert '<pre class="code-highlight-layer"' not in html
+        assert 'window.Prism' not in html
+        assert '<script>' in html  # format button/tab-indent script still present
+
+    def test_textarea_code_format_false_omits_format_button(self):
+        """code_format=False -> no Format button, no formatCode() wiring."""
+        input_field = TextArea()
+
+        html = input_field.render(
+            name='cfg', id='cfg', value='{}', language='json', code_format=False
+        )
+
+        assert 'code_format_btn' not in html
+        assert 'formatCode' not in html
+        assert '<script>' in html  # highlight/tab-indent script still present
+
+    def test_textarea_code_mode_all_enhancements_disabled_yields_no_script(self):
+        """Mirrors MultiSelectInput's `enhanced=False` toggle test: every enhancement
+        off -> plain textarea, no <script> at all."""
+        input_field = TextArea()
+
+        html = input_field.render(
+            name='cfg',
+            id='cfg',
+            value='{}',
+            language='json',
+            code_format=False,
+            code_highlight=False,
+            code_tab_indent=False,
+        )
+
+        assert '<script>' not in html
+        assert '<textarea' in html
+
+    def test_textarea_code_mode_tab_indent_toggle(self):
+        """code_tab_indent=False omits the Tab-key handler specifically."""
+        input_field = TextArea()
+
+        html = input_field.render(
+            name='cfg', id='cfg', value='{}', language='json', code_tab_indent=False
+        )
+
+        assert "e.key !== 'Tab'" not in html
+        assert '<script>' in html  # format/highlight script still present
+
+    def test_textarea_code_mode_custom_indent_size(self):
+        """indent_size flows into both the JS closure and the CSS tab-size."""
+        input_field = TextArea()
+
+        html = input_field.render(name='cfg', id='cfg', value='{}', language='json', indent_size=4)
+
+        assert 'const indentSize = 4;' in html
+        assert 'tab-size: 4;' in html
+
+    def test_textarea_code_mode_via_ui_options_passthrough(self):
+        """The `language`/`code_format` kwargs flow through Field(ui_options={...})
+        the same way `rows` already does (tests/test_inputs.py:493,510-513)."""
+        from pydantic_schemaforms.schema_form import Field, FormModel
+
+        class TestForm(FormModel):
+            config: str = Field(
+                '', ui_element='textarea', ui_options={'language': 'json', 'code_format': True}
+            )
+
+        input_field = TextArea()
+        html = input_field.render(
+            name='config', id='config', value='{}', language='json', code_format=True
+        )
+
+        assert '<script>' in html
+        assert 'code_format_btn' in html
+
+    def test_textarea_code_mode_degrades_gracefully_when_assets_not_vendored(self, monkeypatch):
+        """If the vendored js-yaml/smol-toml/prismjs files are missing (e.g. a
+        checkout before `vendor_*()` has been run), format/highlight for
+        yaml/toml/highlighting silently drop rather than crashing or emitting
+        a broken reference to an undefined library."""
+        import pydantic_schemaforms.inputs.text_inputs as text_inputs_module
+
+        def _always_missing(_relative_path):
+            raise FileNotFoundError
+
+        monkeypatch.setattr(text_inputs_module, 'read_asset_text', _always_missing)
+
+        input_field = TextArea()
+        for language in ('yaml', 'toml', 'json'):
+            html = input_field.render(name='cfg', id='cfg', value='{}', language=language)
+            assert '<textarea' in html
+            assert 'NOT_RESOLVED' not in html  # js-yaml source never embedded
+            assert 'TomlError' not in html  # smol-toml source never embedded
+            assert '<pre class="code-highlight-layer"' not in html  # no Prism overlay element
+            assert 'window.Prism' not in html  # no Prism core embedded
+
     def test_url_input(self):
         """Test URLInput functionality."""
         input_field = URLInput()

@@ -95,6 +95,84 @@
           "source_url": "https://registry.npmjs.org/imask/-/imask-7.6.1.tgz"
         }
       ]
+    },
+    {
+      "name": "js-yaml",
+      "version": "5.2.3",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/js-yaml/js-yaml.umd.min.js",
+          "sha256": "2e92e942b8f6633431c15fa3e4d3d8acac92bc90590f2c90c42e68d158f7d229",
+          "source_url": "https://registry.npmjs.org/js-yaml/-/js-yaml-5.2.3.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/js-yaml/LICENSE",
+          "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+          "source_url": "https://registry.npmjs.org/js-yaml/-/js-yaml-5.2.3.tgz"
+        }
+      ]
+    },
+    {
+      "name": "smol-toml",
+      "version": "1.7.1",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/smol-toml/smol-toml.min.js",
+          "sha256": "806ae52a10cec0107b9b60a17713d8bee9d48ff51911e93156718821caebf98c",
+          "source_url": "https://registry.npmjs.org/smol-toml/-/smol-toml-1.7.1.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/smol-toml/LICENSE",
+          "sha256": "fa5659948374d4f555594f47f6da073b40dc503e921aeeece30df4362b3051a5",
+          "source_url": "https://registry.npmjs.org/smol-toml/-/smol-toml-1.7.1.tgz"
+        }
+      ]
+    },
+    {
+      "name": "prismjs",
+      "version": "1.30.0",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-core.min.js",
+          "sha256": "6caad316dd991f24f8004e0b9c19c055cb5829ff65e973fbee406f96d81b8e7e",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-json.min.js",
+          "sha256": "956d86baa5ae7ec4106758f354ac2d140bdcd7fc103dece02f73ed12b8d663e4",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-yaml.min.js",
+          "sha256": "719c8e8b8c344dc9de510c729f65ba840b1502a0a8e7e25e2ad19ee715f65c02",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-toml.min.js",
+          "sha256": "bc71428fec2670d59cda5ad3359615c91892f914f526cf6bfe316fc2ad55aff2",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-bash.min.js",
+          "sha256": "6260814110e5182f2956e3bd257429548d9dbf2a9b66a63719b26cf9fac966a7",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-python.min.js",
+          "sha256": "ed4385685bcf2d4935c8dbbab4bde16603da1329e092d2bf36c3dadd67e9a85c",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/prism-theme.min.css",
+          "sha256": "cf31d510ed313a8566d08e9b4fdbf94a0a51b35718372bc4bc75d6ff5c8282a5",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/prismjs/LICENSE",
+          "sha256": "2b947f0901a7ffcf08a89957da9783c0e9c6e72cb6ce8e959f501ab5409e4d2b",
+          "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
+        }
+      ]
     }
   ]
 }
