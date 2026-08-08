@@ -30,7 +30,13 @@ overwritten the next time docs are built:
 
 Everything else under `docs/` (`recipes.md`, `validation_guide.md`,
 `quickstart.md`, `tutorial_fastapi.md`, etc.) is genuinely hand-maintained —
-edit those directly.
+edit those directly. One exception: `docs/recipes.md`'s "Every input type"
+section (between the `<!-- BEGIN/END GENERATED: input-type-reference -->`
+markers) is generated from `examples/input_type_reference.py` — the same
+data backing the FastAPI demo's `/input-types` page — by
+`scripts/generate_input_type_reference.py`; edit that Python file and rerun
+the script, don't hand-edit the generated markdown. `tests/test_docs_generated_sections.py`
+fails the suite if the two drift out of sync.
 
 To verify a doc change (including regenerating the three copies above from
 their sources) without touching the deploy pipeline: `make create-docs-local`
