@@ -27,6 +27,7 @@ Layouts demonstrated:
 """
 
 import hmac
+import os
 import secrets
 from pathlib import Path
 
@@ -338,6 +339,8 @@ def safe_json_filter(obj):
 
 # Register the custom filter
 templates.env.filters['safe_json'] = safe_json_filter
+templates.env.globals['library_version'] = _psf_version
+templates.env.globals['container_version'] = os.getenv('SCHEMAFORMS_DEMO_IMAGE_VERSION', 'dev')
 
 
 @router.get('/vendor/bootstrap-icons.css', tags=['System'])

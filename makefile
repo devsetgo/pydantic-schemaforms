@@ -26,7 +26,24 @@ LOG_LEVEL = debug
 REQUIREMENTS_PATH = requirements.txt
 # DEV_REQUIREMENTS_PATH = requirements/dev.txt
 
+# Demo container settings (monorepo rollout)
+DEMO_APP_DIR ?= demo_app
+DEMO_IMAGE_NAME ?= pydantic-schemaforms-demo
+DEMO_DOCKER_REGISTRY ?= docker.io
+DEMO_DOCKER_REPO ?= mikeryan56/$(DEMO_IMAGE_NAME)
+DEMO_IMAGE_PORT ?= 8000
+DEMO_TAG_TZ ?= America/New_York
+
+# Manual release orchestration settings
+RELEASE_VERSION ?= $(APP_VERSION)
+ALLOW_DIRTY ?= 0
+CONFIRM_RELEASE ?= 0
+PUBLISH_LATEST ?= 0
+PUBLISH_STABLE ?= 0
+
 .PHONY: ai-instructions autoflake black bump bump-beta bump-undo cleanup create-docs flake8 git-cleanup help install isort rebase run-example run-example-dev speedtest test ex-run ex-test
+
+.PHONY: release-prepare release-docs release-demo-image release-package release-verify release-manual release-docs-retry release-demo-image-retry demo-requirements
 
 .PHONY: vendor-update-htmx vendor-verify
 
@@ -181,3 +198,111 @@ ex-test: ## Test that the FastAPI example can be imported successfully
 kill:  # Kill any process running on the app port
 	@chmod +x scripts/kill_by_port.sh || true
 	@scripts/kill_by_port.sh ${PORT}
+
+release-prepare: ## Validate release prerequisites (version alignment + clean git state)
+	@set -e; \
+	echo "Preparing manual release for version: $(RELEASE_VERSION)"; \
+	if [ "$(ALLOW_DIRTY)" != "1" ] && [ -n "$$(git status --porcelain)" ]; then \
+		echo "ERROR: Working tree is not clean. Commit/stash changes or run with ALLOW_DIRTY=1"; \
+		exit 2; \
+	fi; \
+	py_ver=$$(awk -F\" '/^version = / {print $$2; exit}' pyproject.toml); \
+	mk_ver=$$(awk -F= '/^APP_VERSION[[:space:]]*=/ {gsub(/[[:space:]]/,"",$$2); print $$2; exit}' makefile); \
+	mod_ver=$$(awk -F\' '/^__version__[[:space:]]*=/ {print $$2; exit}' pydantic_schemaforms/__init__.py); \
+	if [ "$$py_ver" != "$(RELEASE_VERSION)" ] || [ "$$mk_ver" != "$(RELEASE_VERSION)" ] || [ "$$mod_ver" != "$(RELEASE_VERSION)" ]; then \
+		echo "ERROR: Version mismatch detected"; \
+		echo "  pyproject.toml: $$py_ver"; \
+		echo "  makefile: $$mk_ver"; \
+		echo "  package module: $$mod_ver"; \
+		echo "  expected RELEASE_VERSION: $(RELEASE_VERSION)"; \
+		exit 3; \
+	fi; \
+	echo "Release preflight checks passed."
+
+release-docs: ## Deploy versioned docs for RELEASE_VERSION
+	$(MAKE) create-docs VERSION=$(RELEASE_VERSION)
+
+release-package: ## Build package artifacts for RELEASE_VERSION
+	@set -e; \
+	rm -rf dist; \
+	$(PYTHON) -m build --sdist --wheel; \
+	echo "Package artifacts built in dist/"
+
+demo-requirements: ## Render demo_app/requirements.txt with RELEASE_VERSION pin
+	@set -e; \
+	if [ ! -f "$(DEMO_APP_DIR)/requirements.template.txt" ]; then \
+		echo "ERROR: Missing $(DEMO_APP_DIR)/requirements.template.txt"; \
+		exit 7; \
+	fi; \
+	sed "s/__APP_VERSION__/$(RELEASE_VERSION)/g" "$(DEMO_APP_DIR)/requirements.template.txt" > "$(DEMO_APP_DIR)/requirements.txt"; \
+	echo "Rendered $(DEMO_APP_DIR)/requirements.txt for version $(RELEASE_VERSION)"
+
+release-demo-image: ## Build and push demo image for RELEASE_VERSION
+	@set -e; \
+	if [ ! -f "$(DEMO_APP_DIR)/requirements.template.txt" ]; then \
+		echo "ERROR: Missing $(DEMO_APP_DIR)/requirements.template.txt"; \
+		exit 7; \
+	fi; \
+	sed "s/__APP_VERSION__/$(RELEASE_VERSION)/g" "$(DEMO_APP_DIR)/requirements.template.txt" > "$(DEMO_APP_DIR)/requirements.txt"; \
+	echo "Rendered $(DEMO_APP_DIR)/requirements.txt for version $(RELEASE_VERSION)"; \
+	if [ "$(CONFIRM_RELEASE)" != "1" ]; then \
+		echo "ERROR: Refusing to push image without CONFIRM_RELEASE=1"; \
+		exit 4; \
+	fi; \
+	if [ ! -f "$(DEMO_APP_DIR)/Dockerfile" ]; then \
+		echo "ERROR: Missing $(DEMO_APP_DIR)/Dockerfile"; \
+		exit 5; \
+	fi; \
+	demo_image_version=$$(TZ="$(DEMO_TAG_TZ)" date +%y.%m.%d.%H%M); \
+	local_tag="$(DEMO_IMAGE_NAME):$$demo_image_version"; \
+	remote_base="$(DEMO_DOCKER_REGISTRY)/$(DEMO_DOCKER_REPO)"; \
+	remote_tag="$$remote_base:$$demo_image_version"; \
+	echo "Computed demo image version $$demo_image_version (tz=$(DEMO_TAG_TZ))"; \
+	echo "Building $$local_tag from $(DEMO_APP_DIR)/Dockerfile"; \
+	docker build -f "$(DEMO_APP_DIR)/Dockerfile" --build-arg SCHEMAFORMS_DEMO_IMAGE_VERSION="$$demo_image_version" -t "$$local_tag" .; \
+	echo "Running container smoke test (import examples.main) before push"; \
+	docker run --rm "$$local_tag" python -c "import examples.main; print('smoke-ok')"; \
+	docker tag "$$local_tag" "$$remote_tag"; \
+	docker push "$$remote_tag"; \
+	if [ "$(PUBLISH_LATEST)" = "1" ]; then \
+		docker tag "$$local_tag" "$$remote_base:latest"; \
+		docker push "$$remote_base:latest"; \
+	fi; \
+	if [ "$(PUBLISH_STABLE)" = "1" ]; then \
+		docker tag "$$local_tag" "$$remote_base:stable"; \
+		docker push "$$remote_base:stable"; \
+	fi; \
+	echo "Demo image publish complete: $$remote_tag"
+
+release-verify: ## Verify local version alignment after manual release steps
+	@set -e; \
+	py_ver=$$(awk -F\" '/^version = / {print $$2; exit}' pyproject.toml); \
+	mk_ver=$$(awk -F= '/^APP_VERSION[[:space:]]*=/ {gsub(/[[:space:]]/,"",$$2); print $$2; exit}' makefile); \
+	mod_ver=$$(awk -F\' '/^__version__[[:space:]]*=/ {print $$2; exit}' pydantic_schemaforms/__init__.py); \
+	demo_req_ver=$$(awk -F'==' '/^pydantic-schemaforms\[fastapi,email\]==/ {gsub(/[[:space:]]/,"",$$2); print $$2; exit}' "$(DEMO_APP_DIR)/requirements.txt" 2>/dev/null || true); \
+	echo "Version check:"; \
+	echo "  RELEASE_VERSION=$(RELEASE_VERSION)"; \
+	echo "  pyproject.toml=$$py_ver"; \
+	echo "  makefile=$$mk_ver"; \
+	echo "  package module=$$mod_ver"; \
+	echo "  demo requirements pin=$${demo_req_ver:-<not rendered>}"; \
+	if [ "$$py_ver" != "$(RELEASE_VERSION)" ] || [ "$$mk_ver" != "$(RELEASE_VERSION)" ] || [ "$$mod_ver" != "$(RELEASE_VERSION)" ] || [ "$$demo_req_ver" != "$(RELEASE_VERSION)" ]; then \
+		echo "ERROR: release verification failed"; \
+		exit 6; \
+	fi; \
+	echo "release-verify passed."
+
+release-manual: ## Run manual release orchestration with independent docs/image outcomes
+	@chmod +x scripts/release_manual.sh
+	@RELEASE_VERSION="$(RELEASE_VERSION)" \
+	ALLOW_DIRTY="$(ALLOW_DIRTY)" \
+	CONFIRM_RELEASE="$(CONFIRM_RELEASE)" \
+	PUBLISH_LATEST="$(PUBLISH_LATEST)" \
+	PUBLISH_STABLE="$(PUBLISH_STABLE)" \
+	bash scripts/release_manual.sh
+
+release-docs-retry: ## Retry only docs deployment for RELEASE_VERSION
+	$(MAKE) release-docs RELEASE_VERSION=$(RELEASE_VERSION)
+
+release-demo-image-retry: ## Retry only demo image publish for RELEASE_VERSION
+	$(MAKE) release-demo-image RELEASE_VERSION=$(RELEASE_VERSION) CONFIRM_RELEASE=$(CONFIRM_RELEASE) PUBLISH_LATEST=$(PUBLISH_LATEST) PUBLISH_STABLE=$(PUBLISH_STABLE)
