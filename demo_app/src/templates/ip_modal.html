@@ -1,0 +1,45 @@
+<div>
+    <div class="card" style="margin-bottom:10px;">
+        <div class="row" style="justify-content: space-between; align-items: baseline;">
+            <div>
+                <div class="muted">Client IP</div>
+                <div style="font-size: 20px; font-weight: 700;">{{ row.get('client_ip', '') or '(unknown)' }}</div>
+            </div>
+            <div class="muted">Seen at: <code>{{ row.get('ts', '') or '' }}</code></div>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-top:0;">
+        <div class="card">
+            <div class="muted">Location</div>
+            <div><strong>{{ row.get('location', '') or '(none)' }}</strong></div>
+            <div class="muted" style="margin-top:6px;">Country: <code>{{ row.get('country', '') or '' }}</code> ({{ row.get('country_code', '') or '' }})</div>
+            <div class="muted">Region: <code>{{ row.get('region', '') or '' }}</code> · City: <code>{{ row.get('city', '') or '' }}</code></div>
+            <div class="muted">Coordinates: <code>{{ row.get('latitude', '') or '' }}</code>, <code>{{ row.get('longitude', '') or '' }}</code></div>
+        </div>
+
+        <div class="card">
+            <div class="muted">Request Context</div>
+            <div>Method: <code>{{ row.get('method', '') or '' }}</code></div>
+            <div>Path: <code>{{ row.get('path', '') or '' }}</code></div>
+            <div>Status: <code>{{ row.get('status_code', '') or '' }}</code></div>
+            <div class="muted" style="margin-top:6px;">Request ID: <code>{{ row.get('request_id', '') or '' }}</code></div>
+        </div>
+
+        <div class="card">
+            <div class="muted">Geo Cache Metadata</div>
+            <div>Provider: <code>{{ row.get('ip_geo_provider', '') or '(none)' }}</code></div>
+            <div>Fetched: <code>{{ row.get('ip_geo_fetched_at', '') or '(none)' }}</code></div>
+            <div>Expires: <code>{{ row.get('ip_geo_expires_at', '') or '(none)' }}</code></div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:10px;">
+        <div class="muted" style="margin-bottom:8px;">Raw Geo JSON</div>
+        {% if row.get('ip_geo_raw_json') %}
+            <pre class="json-block">{{ row.get('ip_geo_raw_json') }}</pre>
+        {% else %}
+            <div class="muted">No raw geo payload available for this request.</div>
+        {% endif %}
+    </div>
+</div>

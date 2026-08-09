@@ -1,0 +1,14 @@
+alembic==1.19.0 # From 1.18.5 | Vulnerabilities: None
+bumpcalver==2026.7.25.1 # From 2026.5.24.1 | Vulnerabilities: None
+devsetgo-lib==2026.7.23.1 # From 2026.7.4.1 | Vulnerabilities: None
+fastapi[all]==0.141.1 # From 0.139.2 | Vulnerabilities: None
+httpx2==2.9.1 # From 2.7.0 | Vulnerabilities: None
+lack==23.3.0.6 # Vulnerabilities: None
+Markdown==3.10.3 # From 3.10.2 | Vulnerabilities: None
+pre-commit==4.6.1 # From 4.6.0 | Vulnerabilities: None
+pydantic-schemaforms==26.3.3 # Vulnerabilities: None
+pytest==9.1.1 # Vulnerabilities: None
+python-dotenv==1.2.2 # Vulnerabilities: None
+ruff==0.16.2 # From 0.15.22 | Vulnerabilities: None
+silly==1.1.0 # Vulnerabilities: None
+email-validator==2.3.0 # From none | Vulnerabilities: None

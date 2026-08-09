@@ -1,0 +1,136 @@
+{% extends "shared_base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <!-- Use full width for complex nested forms, standard width for others -->
+    <div class="{% if 'organization' in request.path %}col-lg-12{% else %}col-lg-10{% endif %}">
+        <div class="demo-card">
+            <!-- Header -->
+            <div class="form-header">
+                <h2 class="mb-3">
+                    {% if framework_type == "material" %}
+                        <span class="material-icons me-2" style="font-size: 2rem; vertical-align: middle;">description</span>
+                    {% else %}
+                        <i class="bi bi-file-earmark-text-fill me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h2>
+                <p class="mb-0">
+                    {{ description }}
+                    {% if framework == "fastapi" %}
+                        <span class="badge bg-info ms-2">Async</span>
+                    {% else %}
+                        <span class="badge bg-success ms-2">Sync</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+
+                {% if security_highlight %}
+                <div class="alert alert-warning d-flex align-items-start" role="alert">
+                    {% if framework_type == "material" %}
+                        <span class="material-icons me-2" style="font-size: 1.2rem;">verified_user</span>
+                    {% else %}
+                        <i class="bi bi-shield-lock-fill me-2"></i>
+                    {% endif %}
+                    <div>
+                        <strong>Security Highlight:</strong> {{ security_highlight }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Form -->
+                {{ form_html|safe }}
+
+                {% block extra_info_top %}{% endblock %}
+
+                <!-- Navigation -->
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Back to Examples
+                    </a>
+                </div>
+
+                <!-- Style Variants -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-palette-fill me-2"></i>
+                        Try Different Styles
+                    </h6>
+                    <div class="btn-group" role="group">
+                        <a href="?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-bootstrap me-1"></i>
+                            Bootstrap
+                        </a>
+                        <a href="?style=material&demo=true" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-palette me-1"></i>
+                            Material Design
+                        </a>
+                        <a href="?style=none&demo=true&debug=true" class="btn btn-outline-dark btn-sm">
+                            <i class="bi bi-code-square me-1"></i>
+                            Plain HTML
+                        </a>
+                    </div>
+                </div>
+
+                {% block extra_info %}{% endblock %}
+
+                {% if api_endpoint %}
+                <!-- Dual-Use API callout — shown when the route passes api_endpoint context -->
+                <div class="mt-4 p-3 rounded border" style="border-color: #0d6efd !important; background-color: rgba(13,110,253,.05);">
+                    <h6 class="mb-2" style="color: #0d6efd;">
+                        <i class="bi bi-braces me-2"></i>
+                        Also available as a JSON API
+                    </h6>
+                    <p class="small text-muted mb-2">
+                        This form shares a single <code>FormModel</code> with a typed JSON endpoint via
+                        <code>as_api_model()</code>. The API schema has no <code>ui_*</code> keys —
+                        identical to a hand-written Pydantic model, with all validation constraints intact.
+                    </p>
+                    <div class="row g-2 small">
+                        <div class="col-md-6">
+                            <div><strong>POST JSON:</strong> <code>{{ api_endpoint }}</code></div>
+                            <div><strong>Clean schema:</strong>
+                                <a href="{{ api_schema_endpoint }}" target="_blank" class="text-decoration-none">
+                                    GET {{ api_schema_endpoint }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div><strong>OpenAPI docs:</strong>
+                                <a href="/docs" target="_blank" class="text-decoration-none">
+                                    Interactive API Docs <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if framework == "fastapi" %}
+                <!-- API Info -->
+                <div class="mt-4 p-3 bg-info bg-opacity-10 rounded">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-code-slash me-2"></i>
+                        API Endpoints Available
+                    </h6>
+                    <div class="row g-2 small">
+                        <div class="col-md-6">
+                            <div><strong>Schema:</strong> GET /api/forms/{{ request.path.split('/')[-1] }}/schema</div>
+                            <div><strong>Render:</strong> GET /api/forms/{{ request.path.split('/')[-1] }}/render</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div><strong>Submit:</strong> POST /api/forms/{{ request.path.split('/')[-1] }}/submit</div>
+                            <div><strong>Docs:</strong> <a href="/docs" class="text-decoration-none">Interactive API Docs</a></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

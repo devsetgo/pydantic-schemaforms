@@ -1,0 +1,778 @@
+{% extends "shared_base.html" %}
+
+{% block title %}Pydantic Forms Demo{% endblock %}
+
+{% block extra_head %}
+<style>
+    body .hero-section {
+        background: linear-gradient(135deg, #050505, #111827);
+        padding: 3.5rem 2.5rem;
+        color: white;
+    }
+    .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 520px);
+        align-items: center;
+        gap: 2rem;
+    }
+    .hero-copy {
+        text-align: left;
+    }
+    .hero-logo {
+        display: block;
+        width: min(100%, 480px);
+        max-height: 320px;
+        object-fit: contain;
+        margin: 0 0 0 auto;
+        filter: drop-shadow(0 18px 38px rgba(79, 70, 229, 0.18));
+    }
+    .hero-note {
+        display: inline-block;
+        max-width: 42rem;
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--demo-primary-color);
+    }
+    .framework-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .live-validation-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: linear-gradient(45deg, #6610f2, #6f42c1);
+        color: white;
+        padding: 3px 9px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+    @media (max-width: 991px) {
+        body .hero-section {
+            padding: 2.5rem 1.5rem;
+        }
+        .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        .hero-copy {
+            text-align: center;
+        }
+        .hero-logo {
+            margin: 0 auto;
+            width: min(100%, 420px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <h1 class="display-4 fw-bold mb-4">Pydantic Schema Forms</h1>
+            <p class="lead mb-5 hero-note">
+                Experience the power of automatic form generation from Pydantic models<br>
+                Built with modern web frameworks and beautiful UI components<br>
+                <small>Plain HTML mode is available on all examples with <code>?style=none</code> (e.g. <a class="text-white" href="/login?style=none&demo=true&debug=true">/login?style=none</a>)</small>
+            </p>
+        </div>
+        <div>
+            <img class="hero-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}" alt="Pydantic Schemaform logo">
+        </div>
+    </div>
+</div>
+
+<!-- Main Demo Grid -->
+<div class="row g-4">
+    <!-- User Registration -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Core Forms</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <h5 class="card-title">User Registration</h5>
+                <p class="card-text flex-grow-1">
+                    Simple user registration form with validation,
+                    role selection, and responsive design.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/user?style=bootstrap&demo=true&debug=true&show_timing=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Default Style
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/user?style=bootstrap&demo=true&debug=true&show_timing=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/user?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/user?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Authentication form</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pet Registration -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Dynamic Lists</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-heart-fill"></i>
+                </div>
+                <h5 class="card-title">Pet Registration</h5>
+                <p class="card-text flex-grow-1">
+                    Complex nested forms with dynamic pet lists,
+                    owner information, and conditional fields.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/pets?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Default Style
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/pets?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/pets?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/pets?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">List management</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Showcase -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Kitchen Sink</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <h5 class="card-title">Complete Showcase</h5>
+                <p class="card-text flex-grow-1">
+                    Comprehensive form demonstrating all available
+                    input types, validations, and features.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/showcase?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Default Style
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/showcase?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/showcase?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/showcase?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">All components</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Forms -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Advanced</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-layout-three-columns"></i>
+                </div>
+                <h5 class="card-title">Layout Forms</h5>
+                <p class="card-text flex-grow-1">
+                    Complex form layouts demonstrating
+                    Tab layouts, List Layouts, and more.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/layouts?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Demo
+                        </a>
+                         <div class="btn-group" role="group">
+                            <a href="/layouts?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/layouts?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/layouts?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+
+                    <small class="text-muted mt-2">Conditional logic</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Widget Gallery -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Tabbed by Category</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </div>
+                <h5 class="card-title">Widget Gallery</h5>
+                <p class="card-text flex-grow-1">
+                    Every input type, grouped into tabs: Text, Checkboxes &amp; Toggles,
+                    Numeric, Selection, Date &amp; Time, and Files &amp; Specialized.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/gallery?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Demo
+                        </a>
+                         <div class="btn-group" role="group">
+                            <a href="/gallery?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/gallery?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/gallery?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+
+                    <small class="text-muted mt-2">One tab per widget category</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date/Time Format Showcase -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Custom Formats</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h5 class="card-title">Date/Time Format Showcase</h5>
+                <p class="card-text flex-grow-1">
+                    USA, Europe, and Asia date/time conventions, military (24-hour)
+                    time, and compact year-month-day shapes, all driven by
+                    <code>date_format</code>/<code>time_format</code>/<code>datetime_format</code>.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/date-time-formats?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Demo
+                        </a>
+                         <div class="btn-group" role="group">
+                            <a href="/date-time-formats?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/date-time-formats?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/date-time-formats?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+
+                    <small class="text-muted mt-2">21 formats across 3 tabs</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Simple Form</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                </div>
+                <h5 class="card-title">Login Form</h5>
+                <p class="card-text flex-grow-1">
+                    Minimal login form demonstrating basic
+                    authentication with form validation.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/login?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Login Demo
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/login?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/login?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/login?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Authentication</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Self-Contained Test -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Library Test</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h5 class="card-title">Self-Contained Test</h5>
+                <p class="card-text flex-grow-1">
+                    Test the library's self-contained form generation
+                    without external dependencies.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/self-contained?style=material&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Run Test
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/self-contained?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/self-contained?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/self-contained?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Library validation</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comprehensive Tabbed Interface -->
+    <!--
+        Teaching note:
+        This card points to the original stress-test example from
+        `nested_forms_models.py` with all 6 tabs enabled.
+    -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">🚀 Ultimate Showcase</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-diagram-3-fill"></i>
+                </div>
+                <h5 class="card-title">Comprehensive Tabs</h5>
+                <p class="card-text flex-grow-1">
+                    <strong>6 Tabs!</strong> Organization (5 levels) + Kitchen Sink (ALL inputs) + Contacts + Scheduling + Media + Settings
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/organization?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-rocket me-2"></i>
+                            Explore All Tabs
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/organization?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/organization?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/organization?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Every feature combined</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organization Shared Models -->
+    <!--
+        Teaching note:
+        This card points to a reusable organization-only example powered by
+        models in `src/models.py`.
+    -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Shared Models</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-diagram-2-fill"></i>
+                </div>
+                <h5 class="card-title">Organization (Reusable)</h5>
+                <p class="card-text flex-grow-1">
+                    Organization-only example reusing the 5-level nested hierarchy from shared models.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/organization-shared?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-diagram-3 me-2"></i>
+                            Open Reusable Org Form
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/organization-shared?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/organization-shared?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/organization-shared?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Organization hierarchy only</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dual-Use: Contact Form -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">as_api_model()</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-envelope-fill"></i>
+                </div>
+                <h5 class="card-title">Contact Form</h5>
+                <p class="card-text flex-grow-1">
+                    One <code>FormModel</code> drives both an HTML form and a typed
+                    JSON endpoint. <code>as_api_model()</code> strips <code>ui_*</code>
+                    keys — string fields with length and format constraints.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/contact?style=bootstrap&demo=true&debug=true&show_timing=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Open Form
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/contact?style=bootstrap&demo=true&debug=true&show_timing=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/contact?style=material&demo=true&debug=true&show_timing=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/contact?style=none&demo=true&debug=true&show_timing=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                        {% if framework == "fastapi" %}
+                        <a href="/docs#/Dual-Use%3A%20Form%20%2B%20JSON%20API/api_contact_api_contact_post" target="_blank" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-braces me-1"></i>
+                            POST /api/contact in OpenAPI
+                        </a>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted mt-2">str fields · <a href="/api/contact/schema" target="_blank" class="text-decoration-none">schema</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dual-Use: Feedback Form -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">as_api_model()</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <h5 class="card-title">Feedback Form</h5>
+                <p class="card-text flex-grow-1">
+                    Same dual-use pattern with an <code>int</code> rating field
+                    constrained by <code>ge=1</code> / <code>le=5</code> — shows
+                    numeric constraints surviving <code>as_api_model()</code>.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/feedback?style=bootstrap&demo=true&debug=true&show_timing=true" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Open Form
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/feedback?style=bootstrap&demo=true&debug=true&show_timing=true" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-bootstrap me-1"></i>
+                                Bootstrap
+                            </a>
+                            <a href="/feedback?style=material&demo=true&debug=true&show_timing=true" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                            <a href="/feedback?style=none&demo=true&debug=true&show_timing=true" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-code-square me-1"></i>
+                                Plain HTML
+                            </a>
+                        </div>
+                        {% if framework == "fastapi" %}
+                        <a href="/docs#/Dual-Use%3A%20Form%20%2B%20JSON%20API/api_feedback_api_feedback_post" target="_blank" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-braces me-1"></i>
+                            POST /api/feedback in OpenAPI
+                        </a>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted mt-2">int + ge/le · <a href="/api/feedback/schema" target="_blank" class="text-decoration-none">schema</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live HTMX Validation -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Live Validation</div>
+            <div class="live-validation-badge"><i class="bi bi-lightning-charge-fill me-1"></i>HTMX</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <h5 class="card-title">Live HTMX Validation</h5>
+                <p class="card-text flex-grow-1">
+                    Real-time field validation on blur via HTMX — each field
+                    checked server-side without a full page reload.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/live-validation" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Live Validation
+                        </a>
+                    </div>
+                    <small class="text-muted mt-2">LiveValidator · HTMX on blur</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email DNS/MX Validation -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Live Validation</div>
+            <div class="live-validation-badge"><i class="bi bi-hdd-network-fill me-1"></i>DNS/MX</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-hdd-network-fill"></i>
+                </div>
+                <h5 class="card-title">Email DNS/MX Validation</h5>
+                <p class="card-text flex-grow-1">
+                    Side-by-side comparison: email format checking alone vs. a real
+                    DNS/MX deliverability lookup, live via HTMX.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/email-dns-validation" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try With/Without DNS Check
+                        </a>
+                    </div>
+                    <small class="text-muted mt-2">EmailDeliverabilityRule · server-side only</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Type Reference -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Cheatsheet</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-code-square"></i>
+                </div>
+                <h5 class="card-title">Input Type Reference</h5>
+                <p class="card-text flex-grow-1">
+                    Every registered <code>ui_element</code> with a copy-pasteable
+                    <code>Field(...)</code> example — documentation only, no live rendering.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/input-types" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            View Reference
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Instructions -->
+    <!--
+        Teaching note:
+        Replaces the old API Documentation card — those links (Swagger UI,
+        ReDoc, Health) already live in the "Framework Detection" section at
+        the bottom of this page, so duplicating them up here was redundant.
+    -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">AI-Ready</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <h5 class="card-title">AI Assistant Instructions</h5>
+                <p class="card-text flex-grow-1">
+                    Packaged, verified integration guidance for Claude, Copilot, and
+                    generic assistants — browse what <code>get_app_instructions()</code>
+                    generates for each profile.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/ai-instructions" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            View Instructions
+                        </a>
+                    </div>
+                    <small class="text-muted mt-2">CLAUDE.md · copilot-instructions.md · AI_INSTRUCTIONS.md</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Framework Info -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="demo-card p-4 text-center">
+            <h4 class="mb-3">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Framework Detection
+            </h4>
+            <p class="text-muted mb-3">
+                Current Framework: <strong>{{ framework_name }}</strong> |
+                Renderer: <strong>{{ renderer_info }}</strong>
+            </p>
+            {% if framework == "fastapi" %}
+            <div class="row g-3 justify-content-center">
+                <div class="col-auto">
+                    <a href="/docs" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-book me-1"></i>
+                        API Documentation
+                    </a>
+                </div>
+                <div class="col-auto">
+                    <a href="/redoc" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-file-text me-1"></i>
+                        ReDoc
+                    </a>
+                </div>
+                <div class="col-auto">
+                    <a href="/api/health" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-heart-pulse me-1"></i>
+                        Health Check
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">
+                <i class="bi bi-flask me-2"></i>
+                Running in Flask mode - API documentation available in FastAPI mode
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add interactive animations -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.demo-card');
+
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

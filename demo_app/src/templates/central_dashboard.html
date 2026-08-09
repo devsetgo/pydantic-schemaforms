@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <title>Central Dashboard</title>
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; color: #111827; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 12px; }
+        .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; background: #fff; }
+        .kpi { font-size: 28px; font-weight: 700; }
+        .muted { color: #6b7280; font-size: 13px; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border-top: 1px solid #e5e7eb; padding: 8px 6px; text-align: left; vertical-align: top; }
+        th { color: #374151; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class='row'>
+        <h1 style='margin:0;'>Central dashboard</h1>
+        <span class='muted'>app: <code>{{ app_name }}</code> · version: <code>{{ app_version }}</code></span>
+    </div>
+
+    {% if token_required %}
+        <p class='muted'>Protected by <code>DASHBOARD_TOKEN</code>. Pass <code>?token=...</code> once to set a session cookie (~{{ ttl_min }} min), or use <code>X-Dashboard-Token</code> header.</p>
+    {% endif %}
+
+    <p class='muted'>
+        Access: <a href='/dashboard'>Analytics dashboard</a> ·
+        JSON: <a href='/api/health'>/api/health</a> · <a href='/api/analytics/ip-geo'>/api/analytics/ip-geo</a>
+    </p>
+
+    <div class='grid'>
+        <div class='card'>
+            <div class='muted'>Health</div>
+            <div class='kpi'>{{ health.get('status', 'unknown') }}</div>
+            <div class='muted'>timestamp: <code>{{ health.get('timestamp', '') }}</code></div>
+        </div>
+
+        <div class='card'>
+            <div class='muted'>IP Geo queue (pending)</div>
+            {% if ip_geo and ip_geo.get('available') %}
+                <div class='kpi'>{{ ip_geo.get('pending', 0) }}</div>
+                <div class='muted'>due now: <strong>{{ ip_geo.get('due_now', 0) }}</strong> · in progress: <strong>{{ ip_geo.get('in_progress', 0) }}</strong></div>
+                <div class='muted'>errors: <strong>{{ ip_geo.get('error', 0) }}</strong> · done: <strong>{{ ip_geo.get('done', 0) }}</strong></div>
+            {% else %}
+                <div class='kpi'>—</div>
+                <div class='muted'>Not available (migrations not applied yet)</div>
+            {% endif %}
+        </div>
+
+        <div class='card'>
+            <div class='muted'>IP Geo worker</div>
+            <div class='muted'>enabled: <code>{{ ip_geo_enabled }}</code> · worker: <code>{{ ip_geo_worker_enabled }}</code></div>
+            <div class='muted'>rate limit: <code>{{ ip_geo_rate_limit_per_min }}</code>/min</div>
+            {% if ip_geo and ip_geo.get('leader') %}
+                <div class='muted' style='margin-top:6px;'>leader: <code>{{ ip_geo.get('leader', {}).get('locked_by', '') }}</code></div>
+                <div class='muted'>lease until: <code>{{ ip_geo.get('leader', {}).get('locked_until', '') }}</code></div>
+            {% else %}
+                <div class='muted' style='margin-top:6px;'>leader: (none)</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class='card' style='margin-top: 16px;'>
+        <div class='row' style='justify-content: space-between;'>
+            <h2 style='margin:0; font-size: 16px;'>App config</h2>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Key</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>ANALYTICS_DB_PATH</code></td><td><code>{{ analytics_db_path }}</code></td></tr>
+                <tr><td><code>IP_GEO_CACHE_TTL_DAYS</code></td><td><code>{{ ip_geo_cache_ttl_days }}</code></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class='muted' style='margin-top: 18px;'>
+        <a href='/'>Back to app</a> · <a href='/dashboard'>Analytics dashboard</a> · <a href='/dashboard/logout'>Logout</a>
+    </p>
+</body>
+</html>
