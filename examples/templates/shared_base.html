@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
     <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', path='favicon.png') }}">
+    <script defer data-domain="pydantic-schemaforms.devsetgo.com" src="https://plausible.devsetgo.com/js/script.js"></script>
 
     {% block extra_head %}{% endblock %}
 
@@ -164,6 +165,24 @@
             color: #374151;
             margin: 0 0.5rem;
         }
+
+        .version-chip {
+            color: #e5e7eb;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 999px;
+            padding: 0.05rem 0.55rem;
+            font-size: 0.72rem;
+        }
+
+        .demo-version-footer {
+            margin-top: 2rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.78rem;
+            color: #6b7280;
+            text-align: center;
+        }
     </style>
 
     {% block extra_styles %}{% endblock %}
@@ -183,6 +202,8 @@
             <a href="https://pypi.org/project/pydantic-schemaforms/" target="_blank" rel="noopener">
                 <i class="bi bi-box-seam me-1"></i>PyPI
             </a>
+            <span class="sep">|</span>
+            <span class="version-chip">Library v{{ library_version }}</span>
             <span class="sep">|</span>
             <a href="https://github.com/devsetgo/pydantic-schemaforms/issues" target="_blank" rel="noopener">
                 <i class="bi bi-bug me-1"></i>Issues
@@ -206,6 +227,9 @@
         </div>
         {% endif %}
         {% block content %}{% endblock %}
+        <div class="demo-version-footer">
+            Demo App: v{{ container_version }}
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

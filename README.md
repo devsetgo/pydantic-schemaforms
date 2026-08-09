@@ -74,6 +74,18 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 pip install pydantic-schemaforms
 ```
 
+If any of your forms use an email field typed as `EmailStr` or `DeliverableEmailStr`
+(the recommended pattern throughout this README and the docs), also install the `email`
+extra — Pydantic's `EmailStr` requires the `email-validator` package just to *define* a
+model field with that type, not only to validate a value:
+
+```bash
+pip install pydantic-schemaforms[email]
+```
+
+`DeliverableEmailStr` additionally performs a real DNS/MX lookup for the domain — see
+`docs/validation_guide.md` for details.
+
 ### AI Assistant Bootstrap (for app repositories)
 
 If you are using Copilot or Claude in your application project, you can pull

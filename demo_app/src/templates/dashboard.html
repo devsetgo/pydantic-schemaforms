@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <title>SchemaForms Dashboard</title>
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; color: #111827; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 12px; }
+        .card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; background: #fff; }
+        .kpi { font-size: 28px; font-weight: 700; }
+        .muted { color: #6b7280; font-size: 13px; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border-top: 1px solid #e5e7eb; padding: 8px 6px; text-align: left; vertical-align: top; }
+        th { color: #374151; font-weight: 600; }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .ip-link { background: transparent; border: 0; color: #2563eb; cursor: pointer; padding: 0; text-decoration: underline dotted; }
+        .ip-link:hover { text-decoration: underline; }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal-card {
+            width: min(860px, 96vw);
+            max-height: 90vh;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 14px;
+        }
+        .modal-close {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #fff;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+        .modal-body { padding: 14px; }
+        pre.json-block {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+        }
+    </style>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+    <div class='row'>
+        <h1 style='margin:0;'>Dashboard</h1>
+        <span class='muted'>since <code>{{ summary.since_iso }}</code></span>
+    </div>
+
+    {% if token_required %}
+        <p class='muted'>Protected by <code>DASHBOARD_TOKEN</code>. Pass <code>?token=...</code> once to set a session cookie (~{{ ttl_min }} min), or use <code>X-Dashboard-Token</code> header.</p>
+    {% endif %}
+
+    <p class='muted'>Try: <a href='/dashboard?days=1'>1d</a> · <a href='/dashboard?days=7'>7d</a> · <a href='/dashboard?days=30'>30d</a> · <a href='/central'>Central dashboard</a></p>
+
+    <div class='grid'>
+        <div class='card'>
+            <div class='muted'>Requests</div>
+            <div class='kpi'>{{ summary.total_requests }}</div>
+        </div>
+        <div class='card'>
+            <div class='muted'>Unique IPs</div>
+            <div class='kpi'>{{ summary.unique_ips }}</div>
+        </div>
+        <div class='card'>
+            <div class='muted'>Avg latency</div>
+            <div class='kpi'>{{ summary.avg_duration_ms }} ms</div>
+        </div>
+
+        <div class='card'>
+            <div class='muted'>IP Geo queue</div>
+            {% if ip_geo and ip_geo.get('available') %}
+                <div class='kpi'>{{ ip_geo.get('pending', 0) }}</div>
+                <div class='muted'>pending · due now: <strong>{{ ip_geo.get('due_now', 0) }}</strong></div>
+                <div class='muted'>in progress: <strong>{{ ip_geo.get('in_progress', 0) }}</strong> · errors: <strong>{{ ip_geo.get('error', 0) }}</strong></div>
+                {% if ip_geo.get('leader') %}
+                    <div class='muted' style='margin-top:6px;'>
+                        worker leader: <code>{{ ip_geo.get('leader', {}).get('locked_by', '') }}</code>
+                        {% if ip_geo.get('leader', {}).get('expired') %}
+                            (expired)
+                        {% endif %}
+                    </div>
+                    <div class='muted'>
+                        lease until: <code>{{ ip_geo.get('leader', {}).get('locked_until', '') }}</code>
+                    </div>
+                {% else %}
+                    <div class='muted' style='margin-top:6px;'>worker leader: (none)</div>
+                {% endif %}
+            {% else %}
+                <div class='kpi'>—</div>
+                <div class='muted'>Not available (migrations not applied yet)</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class='grid'>
+        <div class='card'>
+            <div class='muted'>Top paths</div>
+            <ul style='margin: 10px 0 0; padding-left: 18px;'>
+                {% if summary.top_paths %}
+                    {% for p in summary.top_paths %}
+                        <li><code>{{ p.get('path', '') }}</code> — <strong>{{ p.get('count', 0) }}</strong></li>
+                    {% endfor %}
+                {% else %}
+                    <li>(none)</li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class='card'>
+            <div class='muted'>Status codes</div>
+            <ul style='margin: 10px 0 0; padding-left: 18px;'>
+                {% if summary.status_counts %}
+                    {% for s in summary.status_counts %}
+                        <li><code>{{ s.get('status_code', '') }}</code> — <strong>{{ s.get('count', 0) }}</strong></li>
+                    {% endfor %}
+                {% else %}
+                    <li>(none)</li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class='card'>
+            <div class='muted'>Browsers</div>
+            <ul style='margin: 10px 0 0; padding-left: 18px;'>
+                {% if summary.browser_counts %}
+                    {% for b in summary.browser_counts %}
+                        <li><code>{{ b.get('browser', '') }}</code> — <strong>{{ b.get('count', 0) }}</strong></li>
+                    {% endfor %}
+                {% else %}
+                    <li>(none)</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <div class='card' style='margin-top: 16px;'>
+        <div class='row' style='justify-content: space-between;'>
+            <h2 style='margin:0; font-size: 16px;'>Recent requests</h2>
+            <span class='muted'>JSON: <a href='/api/analytics/requests?limit=200'>/api/analytics/requests</a></span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ts</th><th>method</th><th>path</th><th>status</th><th>ms</th><th>ip</th><th>location</th><th>browser</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recent %}
+                    <tr>
+                        <td>{{ r.get('ts', '') }}</td>
+                        <td>{{ r.get('method', '') }}</td>
+                        <td>{{ r.get('path', '') }}</td>
+                        <td>{{ r.get('status_code', '') }}</td>
+                        <td>{{ r.get('duration_ms', '') }}</td>
+                        <td>
+                            {% if r.get('ip_lookup_id') %}
+                                <button
+                                    class="ip-link"
+                                    type="button"
+                                    title="View IP details"
+                                    hx-get="/dashboard/ip-modal/{{ r.get('ip_lookup_id') }}"
+                                    hx-target="#ip-modal-body"
+                                    hx-swap="innerHTML"
+                                    onclick="openIpModal()"
+                                >{{ r.get('client_ip', '') or '' }}</button>
+                            {% else %}
+                                <span style="cursor: help; text-decoration: underline dotted;" title="{{ (r.get('ip_geo_tooltip', '') or '') | e }}">{{ r.get('client_ip', '') or '' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ r.get('flag', '') }} {{ r.get('location', '') }}</td>
+                        <td>{{ r.get('browser', '') or '' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class='card' style='margin-top: 16px;'>
+        <div class='row' style='justify-content: space-between;'>
+            <h2 style='margin:0; font-size: 16px;'>Recent errors</h2>
+            <span class='muted'>JSON: <a href='/api/analytics/errors?limit=200'>/api/analytics/errors</a></span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ts</th><th>kind</th><th>message</th><th>path</th><th>status</th><th>ip</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in recent_errors %}
+                    <tr>
+                        <td>{{ e.get('ts', '') }}</td>
+                        <td>{{ e.get('kind', '') }}</td>
+                        <td>{{ e.get('message', '') }}</td>
+                        <td>{{ e.get('path', '') or '' }}</td>
+                        <td>{{ e.get('status_code', '') or '' }}</td>
+                        <td>{{ e.get('client_ip', '') or '' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style='margin-top: 18px; padding-top: 12px; border-top: 1px solid #e5e7eb;'>
+        <p class='muted' style='margin: 0 0 6px 0;'><strong>Analytics config</strong></p>
+        <p class='muted' style='margin: 0;'>
+            DB: <code>ANALYTICS_DB_PATH</code> (default: ./data/schemaforms_analytics.db) ·
+            retention: <code>ANALYTICS_RETENTION_DAYS</code> (default: 7)
+        </p>
+    </div>
+    <p class='muted'><a href='/'>Back to app</a> · <a href='/central'>Central dashboard</a> · <a href='/dashboard/logout'>Logout</a></p>
+
+    <div id="ip-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-label="IP details">
+        <div class="modal-card">
+            <div class="modal-head">
+                <strong>IP Detail</strong>
+                <button type="button" class="modal-close" onclick="closeIpModal()">Close</button>
+            </div>
+            <div id="ip-modal-body" class="modal-body">
+                <div class="muted">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openIpModal() {
+            var modal = document.getElementById('ip-modal');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function closeIpModal() {
+            var modal = document.getElementById('ip-modal');
+            if (!modal) return;
+            modal.classList.remove('show');
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeIpModal();
+        });
+
+        document.getElementById('ip-modal').addEventListener('click', function (event) {
+            if (event.target && event.target.id === 'ip-modal') {
+                closeIpModal();
+            }
+        });
+
+        document.body.addEventListener('htmx:responseError', function (event) {
+            if (event.detail && event.detail.elt && event.detail.elt.classList.contains('ip-link')) {
+                var container = document.getElementById('ip-modal-body');
+                if (container) {
+                    container.innerHTML = '<div class="muted">Unable to load IP details. The link may have expired.</div>';
+                }
+                openIpModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -620,11 +620,30 @@ class TestEmailDeliverabilityRule:
 
     def test_missing_dependency_raises_helpful_error(self):
         """If email-validator isn't installed, fail loudly with install instructions
-        rather than silently treating every address as valid or invalid."""
+        rather than silently treating every address as valid or invalid. Checks for
+        both the primary `[email]` extra and the `[email-dns]` alias, since the error
+        text names both."""
         rule = EmailDeliverabilityRule()
         with patch.dict('sys.modules', {'email_validator': None}):
-            with pytest.raises(ImportError, match='email-dns'):
+            with pytest.raises(ImportError, match=r'\[email\]') as exc_info:
                 rule.validate('user@example.com')
+        assert 'email-dns' in str(exc_info.value)
+
+    def test_pyproject_declares_email_extra_and_alias(self):
+        """Regression guard: pyproject.toml must keep declaring both the
+        `email` extra (the one docs/error messages point people to) and the
+        `email-dns` alias (pre-existing, still referenced in older docs/
+        error text) -- both resolving to the same email-validator pin."""
+        import tomllib
+        from pathlib import Path
+
+        pyproject = Path(__file__).parent.parent / 'pyproject.toml'
+        data = tomllib.loads(pyproject.read_text())
+        extras = data['project']['optional-dependencies']
+        assert 'email' in extras
+        assert 'email-dns' in extras
+        assert extras['email'] == extras['email-dns']
+        assert any(dep.startswith('email-validator') for dep in extras['email'])
 
 
 class TestDeliverableEmailStr:

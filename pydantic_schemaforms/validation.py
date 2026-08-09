@@ -251,8 +251,11 @@ class EmailDeliverabilityRule(ValidationRule):
     rather than one generic string — so the caller can tell a typo'd/missing
     domain apart from a reserved TLD apart from a domain with no MX record.
 
-    Install the dependency with ``pip install pydantic-schemaforms[email-dns]``
-    (or plain ``pip install email-validator``).
+    Install the dependency with ``pip install pydantic-schemaforms[email]``
+    (``[email-dns]`` is an alias for the same package; or plain
+    ``pip install email-validator``). Note this is the same package Pydantic's
+    own ``EmailStr`` needs just to *define* a field, DNS check or not — see
+    ``DeliverableEmailStr`` below.
     """
 
     rule_name = 'email_deliverability'
@@ -271,7 +274,8 @@ class EmailDeliverabilityRule(ValidationRule):
         except ImportError as e:
             raise ImportError(
                 'DNS/MX email deliverability checks require the "email-validator" package. '
-                'Install it with `pip install pydantic-schemaforms[email-dns]` '
+                'Install it with `pip install pydantic-schemaforms[email]` '
+                '(`[email-dns]` is an alias for the same package) '
                 'or `pip install email-validator`.'
             ) from e
 
@@ -314,8 +318,11 @@ That one line is enough for ``FormModel.validate()``, ``as_api_model()``, and
 enforce and live-check the same DNS/MX rule, since it's now part of the
 field's own type rather than a separate validator you have to register by
 hand. Needs the optional ``email-validator`` package (``pip install
-pydantic-schemaforms[email-dns]``); reach for ``EmailDeliverabilityRule``
-directly instead if you need a custom ``timeout`` or a fixed error message.
+pydantic-schemaforms[email]``) -- note plain ``EmailStr`` already needs this
+same package just to *define* a field, DNS check or not, so most apps with
+any email field need it regardless of whether they use this type; reach for
+``EmailDeliverabilityRule`` directly instead of this type if you need a
+custom ``timeout`` or a fixed error message.
 """
 
 
