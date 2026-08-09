@@ -19,14 +19,14 @@ target_metadata = None
 
 
 def _db_url_from_env() -> str:
-    db_path = os.environ.get("ANALYTICS_DB_PATH", "./data/schemaforms_analytics.db")
+    db_path = os.environ.get('ANALYTICS_DB_PATH', './data/schemaforms_analytics.db')
     parent = os.path.dirname(db_path)
     if parent:
         os.makedirs(parent, exist_ok=True)
     # Alembic/SQLAlchemy expects 4 slashes for absolute paths: sqlite:////abs/path
     if os.path.isabs(db_path):
-        return f"sqlite:///{db_path}"
-    return f"sqlite:///{os.path.abspath(db_path)}"
+        return f'sqlite:///{db_path}'
+    return f'sqlite:///{os.path.abspath(db_path)}'
 
 
 def run_migrations_offline() -> None:
@@ -35,7 +35,7 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        dialect_opts={'paramstyle': 'named'},
         render_as_batch=True,
     )
 
@@ -45,11 +45,11 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = _db_url_from_env()
+    configuration['sqlalchemy.url'] = _db_url_from_env()
 
     connectable = engine_from_config(
         configuration,
-        prefix="sqlalchemy.",
+        prefix='sqlalchemy.',
         poolclass=pool.NullPool,
         future=True,
     )

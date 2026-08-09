@@ -2,8 +2,8 @@ import httpx2 as httpx
 
 
 def main() -> None:
-    ip = "8.8.8.8"
-    url = f"http://ip-api.com/json/{ip}"
+    ip = '8.8.8.8'
+    url = f'http://ip-api.com/json/{ip}'
     with httpx.Client(timeout=2.0) as client:
         resp = client.get(url)
         resp.raise_for_status()
@@ -11,16 +11,16 @@ def main() -> None:
 
     print(
         {
-            "country": data.get("country"),
-            "region": data.get("regionName"),
-            "city": data.get("city"),
-            "lat": data.get("lat"),
-            "lon": data.get("lon"),
+            'country': data.get('country'),
+            'region': data.get('regionName'),
+            'city': data.get('city'),
+            'lat': data.get('lat'),
+            'lon': data.get('lon'),
         }
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 
 

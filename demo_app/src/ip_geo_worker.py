@@ -23,19 +23,19 @@ def _truthy_env(name: str, default: bool = False) -> bool:
     if raw is None:
         return default
     raw = raw.strip().lower()
-    if raw in {"1", "true", "yes", "y", "on"}:
+    if raw in {'1', 'true', 'yes', 'y', 'on'}:
         return True
-    if raw in {"0", "false", "no", "n", "off"}:
+    if raw in {'0', 'false', 'no', 'n', 'off'}:
         return False
     return default
 
 
 def ip_geo_enabled() -> bool:
-    return _truthy_env("IP_GEO_ENABLED", default=False)
+    return _truthy_env('IP_GEO_ENABLED', default=False)
 
 
 def ip_geo_worker_enabled() -> bool:
-    return _truthy_env("IP_GEO_WORKER_ENABLED", default=False)
+    return _truthy_env('IP_GEO_WORKER_ENABLED', default=False)
 
 
 def _parse_int(raw: str | None, default: int) -> int:
@@ -48,20 +48,20 @@ def _parse_int(raw: str | None, default: int) -> int:
 
 
 def _rate_limit_per_minute() -> int:
-    return max(1, _parse_int(os.environ.get("IP_GEO_RATE_LIMIT_PER_MIN"), 40))
+    return max(1, _parse_int(os.environ.get('IP_GEO_RATE_LIMIT_PER_MIN'), 40))
 
 
 def _instance_id() -> str:
     host = socket.gethostname()
     pid = os.getpid()
-    return f"{host}:{pid}"
+    return f'{host}:{pid}'
 
 
 async def run_ip_geo_worker(*, stop_event: asyncio.Event) -> None:
     if not ip_geo_enabled() or not ip_geo_worker_enabled():
         return
 
-    leader_key = "ip_geo_worker"
+    leader_key = 'ip_geo_worker'
     me = _instance_id()
     leader_ttl = 30
 
@@ -123,16 +123,16 @@ async def run_ip_geo_worker(*, stop_event: asyncio.Event) -> None:
             await asyncio.to_thread(
                 upsert_cache_error,
                 ip=normalized,
-                raw_json=getattr(ex, "raw_json", None),
-                status_code=getattr(ex, "status_code", None),
-                error=str(ex) or "lookup_error",
+                raw_json=getattr(ex, 'raw_json', None),
+                status_code=getattr(ex, 'status_code', None),
+                error=str(ex) or 'lookup_error',
             )
             await asyncio.to_thread(
                 mark_job_error,
                 ip=ip,
                 locked_by=me,
                 delay_seconds=delay,
-                error=str(ex) or "lookup_error",
+                error=str(ex) or 'lookup_error',
             )
         except Exception as ex:
             await asyncio.to_thread(

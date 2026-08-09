@@ -28,23 +28,23 @@ def _parse_int(raw: str | None, default: int) -> int:
 
 
 def _mem_cache_ttl_seconds() -> int:
-    return max(10, _parse_int(os.environ.get("IP_GEO_MEM_CACHE_TTL_SECONDS"), 30 * 60))
+    return max(10, _parse_int(os.environ.get('IP_GEO_MEM_CACHE_TTL_SECONDS'), 30 * 60))
 
 
 def _neg_cache_ttl_seconds() -> int:
-    return max(5, _parse_int(os.environ.get("IP_GEO_NEG_CACHE_TTL_SECONDS"), 2 * 60))
+    return max(5, _parse_int(os.environ.get('IP_GEO_NEG_CACHE_TTL_SECONDS'), 2 * 60))
 
 
 def _enqueue_cache_ttl_seconds() -> int:
-    return max(5, _parse_int(os.environ.get("IP_GEO_ENQUEUE_CACHE_TTL_SECONDS"), 60))
+    return max(5, _parse_int(os.environ.get('IP_GEO_ENQUEUE_CACHE_TTL_SECONDS'), 60))
 
 
 def _cache_ttl_days() -> int:
-    return max(1, _parse_int(os.environ.get("IP_GEO_CACHE_TTL_DAYS"), 180))
+    return max(1, _parse_int(os.environ.get('IP_GEO_CACHE_TTL_DAYS'), 180))
 
 
 def _provider_name() -> str:
-    return (os.environ.get("IP_GEO_PROVIDER") or "iplocation.net").strip() or "iplocation.net"
+    return (os.environ.get('IP_GEO_PROVIDER') or 'iplocation.net').strip() or 'iplocation.net'
 
 
 def _connect() -> sqlite3.Connection:
@@ -56,12 +56,12 @@ def _connect() -> sqlite3.Connection:
     conn = sqlite3.connect(db_path, timeout=30, isolation_level=None)
     conn.row_factory = sqlite3.Row
     try:
-        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute('PRAGMA busy_timeout=5000')
     except Exception:
         pass
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA synchronous=NORMAL')
+    conn.execute('PRAGMA foreign_keys=ON')
     return conn
 
 
@@ -70,8 +70,8 @@ def _tables_available(conn: sqlite3.Connection) -> bool:
         row = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('ip_geo_cache','ip_geo_queue','ip_geo_leader_lock')"
         ).fetchall()
-        names = {r["name"] for r in row}
-        return {"ip_geo_cache", "ip_geo_queue", "ip_geo_leader_lock"}.issubset(names)
+        names = {r['name'] for r in row}
+        return {'ip_geo_cache', 'ip_geo_queue', 'ip_geo_leader_lock'}.issubset(names)
     except Exception:
         return False
 
@@ -96,7 +96,7 @@ def get_cached_geo(ip: str) -> GeoRow | None:
     Never raises; failures behave like cache-miss.
     """
 
-    ip = (ip or "").strip()
+    ip = (ip or '').strip()
     if not ip:
         return None
 
@@ -129,12 +129,12 @@ def get_cached_geo(ip: str) -> GeoRow | None:
             return None
 
         value = GeoRow(
-            country=row["country"],
-            country_code=row["country_code"],
-            region=row["region"],
-            city=row["city"],
-            latitude=row["lat"],
-            longitude=row["lon"],
+            country=row['country'],
+            country_code=row['country_code'],
+            region=row['region'],
+            city=row['city'],
+            latitude=row['lat'],
+            longitude=row['lon'],
         )
         _mem_geo_cache[ip] = (now_mono, value)
         return value
@@ -153,7 +153,7 @@ def enqueue_ip(ip: str) -> None:
     Never raises.
     """
 
-    ip = (ip or "").strip()
+    ip = (ip or '').strip()
     if not ip:
         return
 
@@ -208,7 +208,7 @@ def upsert_cache_success(
     raw_json: str,
     status_code: int | None = None,
 ) -> None:
-    ip = (ip or "").strip()
+    ip = (ip or '').strip()
     if not ip:
         return
 
@@ -277,12 +277,12 @@ def upsert_cache_success(
 def upsert_cache_error(
     *, ip: str, raw_json: str | None, status_code: int | None, error: str
 ) -> None:
-    ip = (ip or "").strip()
+    ip = (ip or '').strip()
     if not ip:
         return
 
     # Store the raw JSON even for errors if we have it, for debugging.
-    raw = raw_json if raw_json is not None else json.dumps({"error": error}, ensure_ascii=False)
+    raw = raw_json if raw_json is not None else json.dumps({'error': error}, ensure_ascii=False)
     now = _utcnow()
     fetched_at = _iso(now)
     # Keep errors short-lived so we don't permanently poison the cache.
@@ -336,10 +336,10 @@ def try_acquire_leader(*, lock_key: str, locked_by: str, ttl_seconds: int) -> bo
             if not _tables_available(conn):
                 return False
 
-            conn.execute("BEGIN IMMEDIATE")
+            conn.execute('BEGIN IMMEDIATE')
 
             row = conn.execute(
-                "SELECT lock_key, locked_by, locked_until FROM ip_geo_leader_lock WHERE lock_key = ?",
+                'SELECT lock_key, locked_by, locked_until FROM ip_geo_leader_lock WHERE lock_key = ?',
                 (lock_key,),
             ).fetchone()
 
@@ -351,11 +351,11 @@ def try_acquire_leader(*, lock_key: str, locked_by: str, ttl_seconds: int) -> bo
                     """.strip(),
                     (lock_key, locked_by, locked_until, now_iso),
                 )
-                conn.execute("COMMIT")
+                conn.execute('COMMIT')
                 return True
 
-            current_until = row["locked_until"]
-            current_by = row["locked_by"]
+            current_until = row['locked_until']
+            current_by = row['locked_by']
 
             if current_by == locked_by:
                 conn.execute(
@@ -366,7 +366,7 @@ def try_acquire_leader(*, lock_key: str, locked_by: str, ttl_seconds: int) -> bo
                     """.strip(),
                     (locked_until, now_iso, lock_key, locked_by),
                 )
-                conn.execute("COMMIT")
+                conn.execute('COMMIT')
                 return True
 
             if current_until < now_iso:
@@ -378,10 +378,10 @@ def try_acquire_leader(*, lock_key: str, locked_by: str, ttl_seconds: int) -> bo
                     """.strip(),
                     (locked_by, locked_until, now_iso, lock_key),
                 )
-                conn.execute("COMMIT")
+                conn.execute('COMMIT')
                 return True
 
-            conn.execute("COMMIT")
+            conn.execute('COMMIT')
             return False
     except Exception:
         return False
@@ -420,7 +420,7 @@ def claim_next_job(*, locked_by: str, lock_seconds: int) -> str | None:
             if not _tables_available(conn):
                 return None
 
-            conn.execute("BEGIN IMMEDIATE")
+            conn.execute('BEGIN IMMEDIATE')
             row = conn.execute(
                 """
                 SELECT ip
@@ -435,10 +435,10 @@ def claim_next_job(*, locked_by: str, lock_seconds: int) -> str | None:
             ).fetchone()
 
             if not row:
-                conn.execute("COMMIT")
+                conn.execute('COMMIT')
                 return None
 
-            ip = row["ip"]
+            ip = row['ip']
 
             updated = conn.execute(
                 """
@@ -455,7 +455,7 @@ def claim_next_job(*, locked_by: str, lock_seconds: int) -> str | None:
                 (locked_by, locked_until, now_iso, ip, now_iso),
             ).rowcount
 
-            conn.execute("COMMIT")
+            conn.execute('COMMIT')
             return ip if updated else None
     except Exception:
         return None

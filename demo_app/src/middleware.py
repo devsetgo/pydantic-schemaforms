@@ -306,7 +306,9 @@ async def analytics_middleware(request: Request, call_next):
         client_ip = None
         country = None
         if capture_enabled:
-            client_ip = extract_client_ip(dict(request.headers), getattr(request.client, 'host', None))
+            client_ip = extract_client_ip(
+                dict(request.headers), getattr(request.client, 'host', None)
+            )
             country = extract_country(dict(request.headers))
 
         logger.error(
