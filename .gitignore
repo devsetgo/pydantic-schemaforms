@@ -1,6 +1,7 @@
 # BumpCalver
 .bumpcalver/
 # bumpcalver-history.json
+*/logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -25,9 +25,28 @@ from starlette.middleware.sessions import SessionMiddleware
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from examples.fastapi_routes import router
+from examples.fastapi_routes import RequestTimingMiddleware, router
 from examples.datatable_import_example import router as datatable_router
 from pydantic_schemaforms import __version__ as _psf_version
+
+from dsg_lib.common_functions.logging_config import config_log
+
+if 'pytest' not in sys.modules:
+    # config_log() reconfigures the *global* logging module (strips
+    # handlers, flips propagate on every logger) -- tests import this
+    # module (via examples.main.app) just to get a TestClient, and running
+    # it under pytest would leak that reconfiguration into unrelated tests
+    # in the same worker process.
+    config_log(
+        logging_directory='logs',  # Directory for storing logs
+        log_name='log',  # Base name for log files
+        logging_level='DEBUG',  # Minimum logging level
+        log_rotation='100 MB',  # Size threshold for log rotation
+        log_retention='30 days',  # Duration to retain old log files
+        enqueue=True,  # Enqueue log messages
+        log_propagate=False,  # Control log propagation
+    )
+
 
 _openapi_tags = [
     {
@@ -89,6 +108,9 @@ app.add_middleware(
     same_site='lax',
     https_only=False,
 )
+# Added last so it's outermost -- times the whole request/response cycle,
+# session middleware included, for every route.
+app.add_middleware(RequestTimingMiddleware)
 
 _base_dir = Path(__file__).resolve().parent
 
