@@ -189,7 +189,12 @@ ruff: ## Format Python code with Ruff
 
 
 ex-run: ## Run the FastAPI example (async implementation)
-	cd examples && $(PYTHON) -m uvicorn main:app --port $(PORT) --reload --reload-dir .. --log-level debug
+	# --reload-dir scoped to just the two source dirs (not --reload-dir ..,
+	# which watches the whole repo root) -- otherwise every `pytest` run's
+	# regenerated coverage.xml/report.xml/htmlcov/*.html/badges at the repo
+	# root looks like a source change and triggers a full app reload, paying
+	# the import cost again on the next request.
+	cd examples && $(PYTHON) -m uvicorn main:app --port $(PORT) --reload --reload-dir . --reload-dir ../$(SERVICE_PATH) --log-level debug
 
 ex-test: ## Test that the FastAPI example can be imported successfully
 	cd examples && $(PYTHON) -c "import main; print('✅ FastAPI example imports correctly')"
