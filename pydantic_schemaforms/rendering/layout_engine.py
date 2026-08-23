@@ -846,6 +846,14 @@ class LayoutEngine:
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
+        # Only reached when a field's name matches one of these four fixed
+        # strings *and* it has no `layout_handler`/`layout_renderer` and no
+        # BaseLayout value of its own (see _build_layout_body's callers) --
+        # a legacy "layout demonstration" fallback that renders one of the
+        # example app's own forms (examples/shared_models.py) as placeholder
+        # content. Not a general mechanism: real composite controls register
+        # a proper renderer (see docs/plugin_hooks.md) instead of depending
+        # on a field happening to be named 'personal_info' etc.
         form_mapping = {
             'personal_info': 'PersonalInfoForm',
             'contact_info': 'ContactInfoForm',

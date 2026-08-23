@@ -1,5 +1,5 @@
 """
-Enhanced FormField class that matches the design_idea.py vision.
+FormField: a factory that builds a Pydantic Field with UI metadata attached.
 Provides a clean interface for defining form fields with type validation and icon support.
 """
 
@@ -17,8 +17,9 @@ class FormField:
     """
     Enhanced FormField that provides a clean interface for defining form fields.
 
-    This class matches the design_idea.py vision with explicit parameters for
-    input_type, title, help_text, icon, etc.
+    Explicit parameters for input_type, title, help_text, icon, etc., instead
+    of json_schema_extra plumbing -- a friendlier alternative to `Field()`
+    for the common single-purpose-field case.
 
     This is actually a factory function that returns a Pydantic Field.
     """

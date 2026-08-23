@@ -3,12 +3,12 @@
 DataTableLayout Example - CSV Import to Table
 ==============================================
 
-Standalone example (not wired into main.py's showcase app) demonstrating
-DataTableLayout: a FormModel subclass whose fields describe table columns,
-rendered as an HTML <table> progressively enhanced client-side by
-DataTables.js (search/sort/paging/csv+copy export) -- with a built-in CSV
-import UI (file input, "Load CSV"/"Submit" buttons) that's part of the
-table's own rendered output, not something this file hand-builds.
+Mounted into main.py's showcase app (see the "CSV Import (DataTableLayout)"
+tag) demonstrating DataTableLayout: a FormModel subclass whose fields
+describe table columns, rendered as an HTML <table> progressively enhanced
+client-side by DataTables.js (search/sort/paging/csv+copy export) -- with a
+built-in CSV import UI (file input, "Load CSV"/"Submit" buttons) that's part
+of the table's own rendered output, not something this file hand-builds.
 
 Each field is a table column. A column declared with FormField(...,
 input_type=...) renders as a real editable widget per cell (dropdown for

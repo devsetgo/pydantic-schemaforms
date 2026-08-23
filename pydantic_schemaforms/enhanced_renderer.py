@@ -42,6 +42,18 @@ logger.addHandler(logging.NullHandler())
 
 
 class CSRFMode(str, Enum):
+    """How `render_form_html()`/`render_form_from_model()` handle CSRF.
+
+    - `OFF`: no CSRF field rendered (default).
+    - `FIELD_ONLY`: renders the field with an empty token if no
+      `csrf_token_provider` is given -- not a real protection, so it's
+      only accepted when `debug=True` (see `_resolve_csrf_mode`); use it
+      for local prototyping only.
+    - `REQUIRED_PROVIDER`: renders the field and raises `ValueError` unless
+      `csrf_token_provider` supplies a non-empty token -- the mode meant
+      for production use.
+    """
+
     OFF = 'off'
     FIELD_ONLY = 'field-only'
     REQUIRED_PROVIDER = 'required-provider'
@@ -1385,7 +1397,17 @@ def render_form_html(
     include_html_markers: bool = True,
     **kwargs: Any,
 ) -> str:
-    """Convenience wrapper mirroring the legacy helper."""
+    """Render a FormModel to a complete HTML `<form>` -- the library's primary
+    entry point (see the package docstring).
+
+    `submit_url` is required as a keyword-only kwarg (via **kwargs) since the
+    library never chooses a submission target on its own. `csrf_mode` (a
+    `CSRFMode` or its string value) and `csrf_token_provider` control CSRF
+    field rendering -- see `CSRFMode`. `self_contained`/`include_framework_assets`/
+    `asset_mode` control whether the selected framework's CSS/JS is inlined
+    into the returned HTML. Remaining **kwargs (e.g. `csrf_mode`,
+    `include_submit_button`) are forwarded to `EnhancedFormRenderer.render_form_from_model`.
+    """
 
     # Backwards-compatible knobs (historically accepted via kwargs).
     # - self_contained: inline framework assets (CSS/JS) for the selected framework.
@@ -1439,7 +1461,9 @@ async def render_form_html_async(
     include_html_markers: bool = True,
     **kwargs: Any,
 ) -> str:
-    """Async counterpart to render_form_html."""
+    """Same as render_form_html(), but runs it in the default executor via
+    `loop.run_in_executor` so it doesn't block the event loop -- rendering
+    itself is synchronous CPU-bound work, not async I/O."""
 
     # Ensure these knobs work consistently in async mode too.
     self_contained = bool(kwargs.pop('self_contained', False))

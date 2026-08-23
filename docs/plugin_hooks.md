@@ -86,6 +86,34 @@ class WizardForm(FormModel):
   renderer via `engine._renderer` if you need to reuse field rendering
   helpers.
 
+### `requires_multipart` — declare a nested file input
+
+If your renderer might emit its own `<input type="file">` inside the
+field's own output (as `DataTableLayout` does when `csv_upload` is on), pass
+`requires_multipart` to `register_layout_renderer`/`layout_renderer`. A
+nested file input like that isn't a top-level `FormModel` field, so the
+form's own file-field scan — which only sees this field's `layout` element,
+not what it renders — can never discover it on its own, and the enclosing
+`<form>` would silently miss `enctype="multipart/form-data"`, without which
+a browser sends only the chosen file's *name*, never its contents:
+
+```python
+def _needs_multipart(value: Any) -> bool:
+    # Called with this field's raw value (whatever your as_layout_value()-
+    # equivalent built) at render time; return whether *that specific
+    # value* needs multipart encoding.
+    return bool(value) and value.get('csv_upload_enabled', False)
+
+@LayoutEngine.layout_renderer('steps', requires_multipart=_needs_multipart)
+def render_steps(field_name, field_schema, value, ui_info, context, engine):
+    ...
+```
+
+`DataTableLayout` wires this to its own `csv_upload` config flag — see
+`pydantic_schemaforms/rendering/datatable_renderer.py`. If your composite
+never renders a file input, omit the parameter (the default `None` means
+"never needs multipart").
+
 ### `builtin=True` and the `@LayoutEngine.layout_renderer` decorator
 
 A renderer this library ships (like `DataTableLayout`'s or `model_list`'s)

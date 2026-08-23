@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Pydantic Forms Demo</title>
 
+    <!-- Served from /vendor/* (see fastapi_routes.py's vendor_bootstrap_css/js
+         routes), not a CDN -- a render-blocking cdn.jsdelivr.net <link> here
+         used to add several seconds per page load whenever the CDN was slow
+         to reach (e.g. a devcontainer's forwarded browser). -->
     <link href="/vendor/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/vendor/bootstrap-icons.css" />
     <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
