@@ -95,6 +95,33 @@ _ERROR_STYLES = """<style>
 """
 
 
+# The browser's own file-input chrome ("Choose File") plus FileInput's bare,
+# unstyled .file-drop-zone wrapper are both faint against a plain white
+# page background -- give the whole picker a visible border/background so
+# it doesn't read as invisible next to the solid "Submit" button. Scoped to
+# .datatable-upload-zone (this block's own wrapper) rather than the bare
+# .file-drop-zone class FileInput always emits, so unrelated file inputs
+# elsewhere on the same page are unaffected.
+_UPLOAD_STYLES = """<style>
+.datatable-upload-zone .file-drop-zone {
+    border: 2px dashed #adb5bd;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+}
+.datatable-upload-zone .file-drop-zone-active {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+.datatable-upload-zone .file-drop-zone-hint {
+    font-size: 0.875rem;
+    color: #495057;
+    margin-top: 0.25rem;
+}
+</style>
+"""
+
+
 def _field_label(field_name: str, field_info: Any) -> str:
     return field_info.title or field_name.replace('_', ' ').title()
 
@@ -205,28 +232,53 @@ def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str
     # in the t-string return statement -- see _render_read_only_cell above.
     href = f'data:text/csv;base64,{encoded}'  # NOSONAR
     filename = f'{model_cls.__name__.lower()}_template.csv'  # NOSONAR
-    css_class = '' if framework == 'none' else 'btn btn-outline-secondary btn-sm mb-2'  # NOSONAR
+    css_class = '' if framework == 'none' else 'btn btn-secondary btn-sm mb-2'  # NOSONAR
     return render_html(
         t'<a href="{href}" download="{filename}" class="{css_class}">Download CSV template</a>'
     )
 
 
-def _render_csv_upload_block(*, reviewing: bool) -> SafeHTML:
+def _render_csv_upload_block(*, reviewing: bool, editable: bool) -> SafeHTML:
     """The file input + "Load"/"Reload CSV" button -- reuses FileInput for
     the same drag-drop/preview UX an ordinary input_type='file' field gets.
     Field/button names ('csv_file', 'datatable_action') are the fixed,
     documented convention DataTableLayout.handle_import_post() reads --
     intentionally not namespaced per-field, matching row cells' own fixed
     'rows[i].field' convention (this library supports one DataTableLayout
-    per page today)."""
+    per page today).
+
+    When editable is False, cells aren't editable in place at all, so
+    there's no separate review step to wait on a later "Submit" for -- the
+    one button is always "Reload CSV" and both parses and commits in a
+    single click (action='reload', see handle_import_post()).
+
+    Wrapped in .datatable-upload-zone so _UPLOAD_STYLES below can give the
+    file picker more visual weight than the browser's own faint default
+    styling, without affecting unrelated file inputs elsewhere on the page.
+    """
     file_input_html = SafeHTML(FileInput().render(name='csv_file', id='csv_file'))
-    load_label = 'Reload CSV' if reviewing else 'Load CSV'
+    if not editable:
+        load_label = 'Reload CSV'
+        action_value = 'reload'
+        help_text = 'Upload a CSV to replace the table below.'
+    elif reviewing:
+        load_label = 'Reload CSV'
+        action_value = 'load'
+        help_text = (
+            'Upload a CSV to replace the table below, or edit cells directly and click Submit.'
+        )
+    else:
+        load_label = 'Load CSV'
+        action_value = 'load'
+        help_text = (
+            'Upload a CSV to replace the table below, or edit cells directly and click Submit.'
+        )
     return render_html(t"""
-<div class="mb-3">
+{SafeHTML(_UPLOAD_STYLES)}<div class="mb-3 datatable-upload-zone">
     <label for="csv_file" class="form-label">Import CSV (optional)</label>
     {file_input_html}
-    <div class="form-text">Upload a CSV to replace the table below, or edit cells directly and click Submit.</div>
-    <button type="submit" name="datatable_action" value="load" class="btn btn-outline-primary mt-2">{load_label}</button>
+    <div class="form-text">{help_text}</div>
+    <button type="submit" name="datatable_action" value="{action_value}" class="btn btn-secondary mt-2">{load_label}</button>
 </div>
 """)
 
@@ -265,6 +317,7 @@ def render_datatable_table(
     table_id: str = 'datatable',  # NOSONAR -- read via {table_id} in the return t-string below
     framework: str = 'bootstrap',
     style: dict[str, Any] | None = None,
+    editable: bool = True,
 ) -> str:
     rows = rows or []
     row_errors = row_errors or {}
@@ -286,7 +339,7 @@ def render_datatable_table(
         cell_parts = []
         for field_name, field_info in fields.items():
             value = row.get(field_name)
-            ui_element = _resolve_editable_ui_element(field_info)
+            ui_element = _resolve_editable_ui_element(field_info) if editable else None
             content = _render_cell_content(
                 field_name, field_info, value, index, ui_element
             )  # NOSONAR
@@ -445,7 +498,18 @@ function _dtCellExportValue(node) {{
 """)
 
 
-@LayoutEngine.layout_renderer('datatable')
+def _datatable_field_needs_multipart(value: Any) -> bool:
+    """Whether this field's current value will render its own file input --
+    see LayoutEngine.register_layout_renderer's requires_multipart param.
+    Only true when csv_upload is actually enabled for this row model; a
+    csv_upload=False table never emits an <input type="file"> at all."""
+    model_cls = (value or {}).get('model_cls')
+    if model_cls is None:
+        return False
+    return bool(model_cls.datatable_options().get('csv_upload', True))
+
+
+@LayoutEngine.layout_renderer('datatable', requires_multipart=_datatable_field_needs_multipart)
 def render_datatable_layout_field(
     field_name: str,
     field_schema: dict[str, Any],
@@ -484,6 +548,7 @@ def render_datatable_layout_field(
 
     options = model_cls.datatable_options()
     csv_upload_enabled = options.get('csv_upload', True)
+    editable = options.get('editable', True)
 
     template_link = (
         str(_render_csv_template_link(model_cls, framework)) if options.get('csv_template') else ''
@@ -496,6 +561,7 @@ def render_datatable_layout_field(
         table_id=table_id,
         framework=framework,
         style=options.get('style'),
+        editable=editable,
     )
     init_script = _render_init_script(table_id, options)
 
@@ -514,12 +580,17 @@ def render_datatable_layout_field(
     banner = ''
     submit_block = ''
     if csv_upload_enabled:
-        upload_block = str(_render_csv_upload_block(reviewing=reviewing))
+        upload_block = str(_render_csv_upload_block(reviewing=reviewing, editable=editable))
         if notice:
             banner = str(_render_notice_banner(notice))
-        elif reviewing:
+        elif reviewing and editable:
+            # The reviewing banner only makes sense when there's a separate
+            # review-then-Submit step to describe -- editable=False commits
+            # in the same click "Reload CSV" is pressed, so there's nothing
+            # left to "review" by the time this would render.
             banner = str(_render_reviewing_banner(discard_url))
-        submit_block = str(_render_datatable_submit_button())
+        if editable:
+            submit_block = str(_render_datatable_submit_button())
 
     return '\n'.join(
         part

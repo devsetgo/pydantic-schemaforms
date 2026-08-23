@@ -30,6 +30,15 @@ bare, no-upload-UI table instead (e.g. a read-only display table, or a
 custom upload flow of your own) -- in that case the embedding form's own
 default submit button *is* "Submit".
 
+``model_config['editable']`` (default ``True``) controls whether cells
+declared with ``FormField(..., input_type=...)`` actually render as
+editable widgets. Set it ``False`` to force every cell read-only regardless
+of a column's own ``input_type`` -- there's then nothing to "save" via
+in-place edits, so the built-in UI drops the "Submit" button entirely and
+keeps just one "Reload CSV" button, which parses *and* commits in a single
+click (there's no separate review step to wait on a later Submit for; see
+``handle_import_post()``'s ``action='reload'``).
+
 On the server side, ``handle_import_post()`` replaces hand-rolled
 load-vs-submit branching: it reads the submitted form data, figures out
 which button was clicked, parses accordingly (``parse_csv_rows()`` for
@@ -86,6 +95,7 @@ class DataTableConfig(TypedDict, total=False):
     length_menu: list[int]
     csv_template: bool
     csv_upload: bool
+    editable: bool
     style: DataTableStyleConfig
 
 
@@ -104,6 +114,7 @@ _DATATABLE_DEFAULTS: dict[str, Any] = {
     'length_menu': [10, 25, 50, 100],
     'csv_template': False,
     'csv_upload': True,
+    'editable': True,
     'style': dict(_DATATABLE_STYLE_DEFAULTS),
 }
 
@@ -122,10 +133,17 @@ class ImportResult:
     """What ``DataTableLayout.handle_import_post()`` figured out from one
     submitted request -- which button was clicked, and the rows/row_errors
     already merged back into their original order (``merge_rows()``), ready
-    to pass straight to ``as_layout_value()`` for re-display, or to commit
-    when ``action == 'submit'`` and ``has_errors`` is False."""
+    to pass straight to ``as_layout_value()`` for re-display, or to commit.
 
-    action: Literal['load', 'submit']
+    ``action`` is ``'load'`` (preview only, nothing committed -- wait for a
+    later ``'submit'``), ``'submit'`` (commit if not ``has_errors``), or
+    ``'reload'`` (``model_config['editable'] = False`` only: there's no
+    separate review step since cells aren't editable, so the one "Reload
+    CSV" button both parses *and* commits in a single click -- treat it the
+    same as ``'submit'``).
+    """
+
+    action: Literal['load', 'submit', 'reload']
     rows: list[dict[str, Any]]
     row_errors: dict[int, dict[str, str]]
     notice: str = ''
@@ -272,11 +290,24 @@ class DataTableLayout(CompositeLayoutModel):
         ]
 
     @classmethod
+    async def _read_uploaded_csv(cls, form_data: Any) -> bytes:
+        csv_upload = form_data.get('csv_file')
+        return await csv_upload.read() if hasattr(csv_upload, 'read') else b''
+
+    @classmethod
     async def handle_import_post(cls, form_data: Any) -> ImportResult:
         """Figure out which button was clicked (``datatable_action`` --
         emitted automatically by the layout field's own rendered controls
         when ``model_config['csv_upload']`` is enabled, see the module
-        docstring) and parse accordingly:
+        docstring) and parse accordingly.
+
+        When ``model_config['editable']`` is False (cells aren't editable
+        in place -- see the module docstring), there's only one button
+        ("Reload CSV"), and it both parses *and* commits in a single click
+        (``action='reload'``) since there's no separate review step to wait
+        on a later "Submit" for.
+
+        Otherwise:
 
         - "load": read the uploaded ``csv_file`` and validate it with
           ``parse_csv_rows()`` -- this never commits anything, it's just
@@ -290,11 +321,24 @@ class DataTableLayout(CompositeLayoutModel):
         original order via ``merge_rows()``, ready to pass straight to
         ``as_layout_value()`` for re-display.
         """
+        if not cls.datatable_options().get('editable', True):
+            raw = await cls._read_uploaded_csv(form_data)
+            if not raw:
+                return ImportResult(
+                    action='reload',
+                    rows=[],
+                    row_errors={},
+                    notice='Choose a CSV file first, then click "Reload CSV".',
+                )
+            rows, row_errors = cls.parse_csv_rows(raw)
+            merged_rows = cls.merge_rows(rows, row_errors)
+            row_errors_by_index = {err.row_index: err.errors for err in row_errors}
+            return ImportResult(action='reload', rows=merged_rows, row_errors=row_errors_by_index)
+
         action = form_data.get('datatable_action') or 'submit'
 
         if action == 'load':
-            csv_upload = form_data.get('csv_file')
-            raw = await csv_upload.read() if hasattr(csv_upload, 'read') else b''
+            raw = await cls._read_uploaded_csv(form_data)
             if not raw:
                 return ImportResult(
                     action='load',

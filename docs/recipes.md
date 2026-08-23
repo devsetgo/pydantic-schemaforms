@@ -810,7 +810,32 @@ not reject unknown `model_config` keys at runtime):
 | `length_menu` | `[10, 25, 50, 100]` | Choices offered in the "entries per page" dropdown. |
 | `csv_template` | `False` | Render a "Download CSV template" link above the table, as a `data:` URI built from `ContactImport.csv_template_bytes()` — no server route needed. |
 | `csv_upload` | `True` | Render the built-in file input + "Load CSV"/"Submit" buttons described above. Set `False` for a bare table with no upload UI (see above). |
+| `editable` | `True` | Whether cells declared with `FormField(..., input_type=...)` actually render as editable widgets. Set `False` to force every cell read-only regardless of its own `input_type` — see below. |
 | `style` | see below | Table-appearance flags (dict) — see next section. |
+
+### `editable: False` — a bulk-replace-only table, no in-place edits
+
+Set `model_config["editable"] = False` when the table should only ever be
+replaced wholesale by re-uploading a CSV — every cell renders read-only no
+matter what `input_type` a column declares, and the built-in UI drops
+"Submit" entirely, leaving one "Reload CSV" button that both parses *and*
+commits in a single click (`handle_import_post()` returns
+`action="reload"`) — there's no separate review-then-Submit step to wait on
+when nothing in the table can be hand-corrected anyway:
+
+```python
+class ReadOnlyImport(DataTableLayout):
+    name: str
+    favorite_color: Color = Field(Color.red, input_type="select")  # ignored -- always read-only
+
+    model_config = {"editable": False}
+```
+
+```python
+result = await ReadOnlyImport.handle_import_post(await request.form())
+# result.action is always "reload" here -- treat it the same as "submit":
+save_to_database(result.rows)
+```
 
 ### Table appearance (`style`)
 

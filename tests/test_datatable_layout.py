@@ -100,6 +100,7 @@ def test_datatable_options_defaults_when_model_config_unset() -> None:
         'length_menu': [10, 25, 50, 100],
         'csv_template': False,
         'csv_upload': True,
+        'editable': True,
         'style': {'striped': False, 'bordered': False, 'hover': True, 'compact': False},
     }
 
@@ -515,6 +516,19 @@ def test_csv_upload_ui_has_exactly_one_submit_and_one_load_button() -> None:
     assert html_out.count('name="datatable_action" value="submit"') == 1
 
 
+def test_csv_upload_ui_sets_multipart_enctype_on_the_embedding_form() -> None:
+    # The <input type="file"> here lives inside this layout field's own
+    # rendered output, not as a literal field on the embedding FormModel --
+    # the form's generic file-field scan can't see it from the schema
+    # alone, so this regression-guards LayoutEngine's requires_multipart
+    # hook (see rendering/layout_engine.py) actually firing. Without it, a
+    # real browser submit would silently send only the chosen file's name,
+    # never its contents, and "Load CSV"/"Reload CSV" would always look
+    # like no file was chosen.
+    html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False)
+    assert 'enctype="multipart/form-data"' in html_out
+
+
 def test_csv_upload_ui_opt_out() -> None:
     class NoUpload(DataTableLayout):
         name: str
@@ -523,6 +537,68 @@ def test_csv_upload_ui_opt_out() -> None:
     html_out = _render(NoUpload, rows=[{'name': 'Alice'}], include_assets=False)
     assert 'name="csv_file"' not in html_out
     assert 'datatable_action' not in html_out
+    # No file input anywhere -- multipart encoding would be pointless.
+    assert 'enctype' not in html_out
+
+
+# ---------------------------------------------------------------------------
+# model_config['editable'] -- force cells read-only, drop Submit entirely
+# ---------------------------------------------------------------------------
+
+
+class NonEditableImport(DataTableLayout):
+    name: str
+    favorite_color: Color = FormField(Color.red, input_type='select')
+    model_config = {'editable': False}
+
+
+def test_editable_false_forces_cells_read_only_even_with_input_type() -> None:
+    # favorite_color is declared input_type='select', but editable=False
+    # must still force it to a read-only cell, same as a plain field.
+    html_out = _render(
+        NonEditableImport,
+        rows=[{'name': 'Alice', 'favorite_color': 'blue'}],
+        include_assets=False,
+    )
+    assert '<select name="rows[0].favorite_color"' not in html_out
+    assert '<td class="datatable-cell" title="">blue<input type="hidden"' in html_out
+
+
+def test_editable_false_drops_submit_button_keeps_only_reload() -> None:
+    html_out = _render(NonEditableImport, rows=[{'name': 'Alice'}], include_assets=False)
+    assert 'name="datatable_action" value="submit"' not in html_out
+    assert '>Submit<' not in html_out
+    assert 'name="datatable_action" value="reload"' in html_out
+    assert '>Reload CSV<' in html_out
+
+
+def test_editable_false_label_is_always_reload_even_before_any_load() -> None:
+    # Unlike the editable=True case (which starts as "Load CSV" and only
+    # relabels to "Reload CSV" after reviewing=True), editable=False always
+    # says "Reload CSV" -- there's no separate review step to distinguish.
+    html_out = _render(NonEditableImport, rows=[], include_assets=False)
+    assert '>Load CSV<' not in html_out
+    assert '>Reload CSV<' in html_out
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_editable_false_reload_commits_in_one_click() -> None:
+    csv_bytes = b'name,favorite_color\nAlice,blue\nBadRow,purple\n'
+    form_data = {'csv_file': _FakeUpload(csv_bytes)}
+    result = await NonEditableImport.handle_import_post(form_data)
+
+    assert result.action == 'reload'
+    assert [row['name'] for row in result.rows] == ['Alice', 'BadRow']
+    assert result.has_errors
+    assert 'favorite_color' in result.row_errors[1]
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_editable_false_with_no_file_returns_notice() -> None:
+    result = await NonEditableImport.handle_import_post({})
+    assert result.action == 'reload'
+    assert result.rows == []
+    assert 'Choose a CSV file' in result.notice
 
 
 def test_reviewing_relabels_load_button_and_shows_banner() -> None:
