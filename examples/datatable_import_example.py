@@ -71,13 +71,21 @@ class Department(str, Enum):
 
 
 class EmployeeImport(DataTableLayout):
-    """Row schema for a CSV of employees -- also the table's columns."""
+    """Row schema for a CSV of employees -- also the table's columns.
 
-    name: str
-    email: EmailStr
+    Every column is declared with FormField(..., input_type=...), so every
+    cell renders as a real, editable widget -- not just department. Without
+    input_type, a column renders read-only (see DataTableLayout's own
+    docstring), which is the wrong default here: this demo lets you fix a
+    typo'd name/email/project field directly in the table, not just swap
+    the whole CSV to change anything but the dropdown.
+    """
+
+    name: str = FormField(..., input_type='text')
+    email: EmailStr = FormField(..., input_type='email')
     department: Department = FormField(Department.engineering, input_type='select')
-    project_team_name: str = ''
-    project_description: str = ''
+    project_team_name: str = FormField('', input_type='text')
+    project_description: str = FormField('', input_type='text')
 
     model_config = {
         'buttons': [
@@ -342,10 +350,30 @@ async def import_or_save(
         )
 
     rows, row_errors = EmployeeImport.parse_submitted_rows(form)
-    _IMPORTED_ROWS[:] = _merge_rows_in_original_order(rows, row_errors)
+    merged_rows = _merge_rows_in_original_order(rows, row_errors)
+    _IMPORTED_ROWS[:] = merged_rows
     _LAST_ROW_ERRORS = {err.row_index: err.errors for err in row_errors}
 
-    return _render_page(request, style=style, debug=debug, show_timing=show_timing)
+    if row_errors:
+        # Still errors after Submit -- stay on the table so they can keep
+        # fixing highlighted cells and submit again, same as every other
+        # DataTableLayout error path (never show a "success" page for data
+        # that didn't actually all validate).
+        return _render_page(request, style=style, debug=debug, show_timing=show_timing)
+
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': 'Employees Saved',
+            'message': f'{len(merged_rows)} employee(s) saved.',
+            'data': merged_rows,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'try_again_url': '/employees/import',
+        },
+    )
 
 
 @router.get('/import/template.csv')
