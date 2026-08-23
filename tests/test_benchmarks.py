@@ -12,6 +12,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
+import pytest
 from pydantic import EmailStr
 
 from pydantic_schemaforms import render_form_html
@@ -215,20 +216,9 @@ _BENCH_ROWS_BY_SIZE = {
 }
 
 
-def test_bench_datatable_parse_csv_rows_10(benchmark) -> None:
-    benchmark(_BenchEmployeeImport.parse_csv_rows, _BENCH_CSV_BY_SIZE[10])
-
-
-def test_bench_datatable_parse_csv_rows_100(benchmark) -> None:
-    benchmark(_BenchEmployeeImport.parse_csv_rows, _BENCH_CSV_BY_SIZE[100])
-
-
-def test_bench_datatable_parse_csv_rows_1000(benchmark) -> None:
-    benchmark(_BenchEmployeeImport.parse_csv_rows, _BENCH_CSV_BY_SIZE[1000])
-
-
-def test_bench_datatable_parse_csv_rows_10000(benchmark) -> None:
-    benchmark(_BenchEmployeeImport.parse_csv_rows, _BENCH_CSV_BY_SIZE[10000])
+@pytest.mark.parametrize('size', [10, 100, 1000, 10000])
+def test_bench_datatable_parse_csv_rows(benchmark, size: int) -> None:
+    benchmark(_BenchEmployeeImport.parse_csv_rows, _BENCH_CSV_BY_SIZE[size])
 
 
 class _BenchEmployeeImportPage(FormModel):
@@ -248,17 +238,6 @@ def _bench_render_datatable(rows: list[dict]) -> str:
     )
 
 
-def test_bench_datatable_render_form_10(benchmark) -> None:
-    benchmark(_bench_render_datatable, _BENCH_ROWS_BY_SIZE[10])
-
-
-def test_bench_datatable_render_form_100(benchmark) -> None:
-    benchmark(_bench_render_datatable, _BENCH_ROWS_BY_SIZE[100])
-
-
-def test_bench_datatable_render_form_1000(benchmark) -> None:
-    benchmark(_bench_render_datatable, _BENCH_ROWS_BY_SIZE[1000])
-
-
-def test_bench_datatable_render_form_10000(benchmark) -> None:
-    benchmark(_bench_render_datatable, _BENCH_ROWS_BY_SIZE[10000])
+@pytest.mark.parametrize('size', [10, 100, 1000, 10000])
+def test_bench_datatable_render_form(benchmark, size: int) -> None:
+    benchmark(_bench_render_datatable, _BENCH_ROWS_BY_SIZE[size])

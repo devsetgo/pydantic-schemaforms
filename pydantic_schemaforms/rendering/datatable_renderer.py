@@ -123,8 +123,12 @@ def _render_read_only_cell(field_name: str, row_index: int, value: Any) -> SafeH
     required 'email' column disappearing because only the 'department'
     dropdown next to it was actually an <input>).
     """
-    display_value = '' if value is None else str(value)
-    name = f'rows[{row_index}].{field_name}'
+    # NOSONAR comments below: each variable is read via {expr} interpolation
+    # in the t-string return statement -- Sonar's Python analyzer doesn't
+    # parse PEP 750 t-strings yet, so it can't see the reference and flags a
+    # false-positive "unused local variable".
+    display_value = '' if value is None else str(value)  # NOSONAR
+    name = f'rows[{row_index}].{field_name}'  # NOSONAR
     return render_html(
         t'{display_value}<input type="hidden" name="{name}" value="{display_value}">'
     )
@@ -187,9 +191,11 @@ def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str
     no server route of its own -- the template bytes are already fully
     determined by the model's own fields at render time."""
     encoded = base64.b64encode(model_cls.csv_template_bytes()).decode('ascii')
-    href = f'data:text/csv;base64,{encoded}'
-    filename = f'{model_cls.__name__.lower()}_template.csv'
-    css_class = '' if framework == 'none' else 'btn btn-outline-secondary btn-sm mb-2'
+    # NOSONAR comments below: each variable is read via {expr} interpolation
+    # in the t-string return statement -- see _render_read_only_cell above.
+    href = f'data:text/csv;base64,{encoded}'  # NOSONAR
+    filename = f'{model_cls.__name__.lower()}_template.csv'  # NOSONAR
+    css_class = '' if framework == 'none' else 'btn btn-outline-secondary btn-sm mb-2'  # NOSONAR
     return render_html(
         t'<a href="{href}" download="{filename}" class="{css_class}">Download CSV template</a>'
     )
@@ -200,7 +206,7 @@ def render_datatable_table(
     *,
     rows: list[dict[str, Any]] | None = None,
     row_errors: dict[int, dict[str, str]] | None = None,
-    table_id: str = 'datatable',
+    table_id: str = 'datatable',  # NOSONAR -- read via {table_id} in the return t-string below
     framework: str = 'bootstrap',
     style: dict[str, Any] | None = None,
 ) -> str:
@@ -208,11 +214,15 @@ def render_datatable_table(
     row_errors = row_errors or {}
     fields = model_cls.model_fields
 
+    # NOSONAR comments below: each variable is read via {expr} interpolation
+    # in a t-string -- Sonar's Python analyzer doesn't parse PEP 750
+    # t-strings yet, so it can't see the reference and flags a false-
+    # positive "unused local variable" (see _render_read_only_cell above).
     header_parts = []
     for field_name, field_info in fields.items():
-        label = _field_label(field_name, field_info)
+        label = _field_label(field_name, field_info)  # NOSONAR
         header_parts.append(render_html(t'<th>{label}</th>'))
-    thead_row = SafeHTML(''.join(header_parts))
+    thead_row = SafeHTML(''.join(header_parts))  # NOSONAR
 
     body_parts = []
     for index, row in enumerate(rows):
@@ -221,23 +231,27 @@ def render_datatable_table(
         for field_name, field_info in fields.items():
             value = row.get(field_name)
             ui_element = _resolve_editable_ui_element(field_info)
-            content = _render_cell_content(field_name, field_info, value, index, ui_element)
+            content = _render_cell_content(
+                field_name, field_info, value, index, ui_element
+            )  # NOSONAR
             cell_error = errors_for_row.get(field_name) or ''
-            error_class = ' datatable-cell-error' if cell_error else ''
+            error_class = ' datatable-cell-error' if cell_error else ''  # NOSONAR
             cell_parts.append(
                 render_html(
                     t'<td class="datatable-cell{error_class}" title="{cell_error}">{content}</td>'
                 )
             )
         error_message = next(iter(errors_for_row.values()), None)
-        row_class = ' class="datatable-row-error"' if error_message else ''
+        row_class = ' class="datatable-row-error"' if error_message else ''  # NOSONAR
         body_parts.append(
             render_html(
                 t'<tr data-row-index="{index}"{SafeHTML(row_class)}>{SafeHTML("".join(cell_parts))}</tr>'
             )
         )
-    tbody_rows = SafeHTML(''.join(body_parts))
-    table_class = f'{_table_classes_for_framework(framework, style or {})} datatable-table'.strip()
+    tbody_rows = SafeHTML(''.join(body_parts))  # NOSONAR
+    table_class = (  # NOSONAR
+        f'{_table_classes_for_framework(framework, style or {})} datatable-table'.strip()
+    )
 
     return render_html(t"""{SafeHTML(_ERROR_STYLES)}<table id="{table_id}" class="{table_class}">
 <thead><tr>{thead_row}</tr></thead>

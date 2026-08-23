@@ -327,7 +327,8 @@ def test_render_marks_rows_with_errors() -> None:
     assert 'datatable-cell-error' in html_out
     # error rows must be visually distinguishable, not just class-tagged --
     # a bare class with no matching CSS rule looks identical to a valid row
-    assert '.datatable-row-error' in html_out and 'background-color' in html_out
+    assert '.datatable-row-error' in html_out
+    assert 'background-color' in html_out
     assert 'title="Input should be' in html_out
 
 
