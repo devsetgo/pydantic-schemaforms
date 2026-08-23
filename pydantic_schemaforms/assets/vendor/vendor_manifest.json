@@ -173,6 +173,53 @@
           "source_url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
         }
       ]
+    },
+    {
+      "name": "datatables",
+      "version": "3.0.2",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables/dataTables.min.js",
+          "sha256": "bc53f4a69fc67c3ca05b49836dda8a1fb886ecd6d467b4f9db8d939f495f5fb4",
+          "source_url": "https://registry.npmjs.org/datatables.net/-/datatables.net-3.0.2.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables/dataTables.min.css",
+          "sha256": "156624d53bf9385a37f857fbc290361d4104d3536d30930fb86bce5cc0f19387",
+          "source_url": "https://registry.npmjs.org/datatables.net-dt/-/datatables.net-dt-3.0.2.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables/LICENSE",
+          "sha256": "62b5fdd54371b4f6bd07a60dbc78b38814f49a8028213f540dc2733cad605382",
+          "source_url": "https://registry.npmjs.org/datatables.net/-/datatables.net-3.0.2.tgz"
+        }
+      ]
+    },
+    {
+      "name": "datatables-buttons",
+      "version": "4.0.2",
+      "files": [
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables-buttons/dataTables.buttons.min.js",
+          "sha256": "3a5354a2af724e67b4d47336feabd3a0fac3df6ad7f248ef5edc6a4b6358210a",
+          "source_url": "https://registry.npmjs.org/datatables.net-buttons/-/datatables.net-buttons-4.0.2.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables-buttons/buttons.html5.min.js",
+          "sha256": "6532d753bbe952ea087739e8cca19aec9d0f6c3e6831b6f603514b8cbbf9d716",
+          "source_url": "https://registry.npmjs.org/datatables.net-buttons/-/datatables.net-buttons-4.0.2.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables-buttons/buttons.dataTables.min.css",
+          "sha256": "9ba046663101a56cbb6b3e152e404e304ba508b69b368a4c081fb07cce46a333",
+          "source_url": "https://registry.npmjs.org/datatables.net-buttons-dt/-/datatables.net-buttons-dt-4.0.2.tgz"
+        },
+        {
+          "path": "pydantic_schemaforms/assets/vendor/datatables-buttons/LICENSE",
+          "sha256": "62b5fdd54371b4f6bd07a60dbc78b38814f49a8028213f540dc2733cad605382",
+          "source_url": "https://registry.npmjs.org/datatables.net-buttons/-/datatables.net-buttons-4.0.2.tgz"
+        }
+      ]
     }
   ]
 }

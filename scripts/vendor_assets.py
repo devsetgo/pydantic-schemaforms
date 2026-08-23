@@ -12,6 +12,8 @@ sys.path.insert(0, str(REPO_ROOT))
 from pydantic_schemaforms.vendor_assets import (
     load_manifest,
     vendor_bootstrap,
+    vendor_datatables,
+    vendor_datatables_buttons,
     vendor_htmx,
     vendor_imask,
     vendor_materialize,
@@ -34,6 +36,16 @@ def main(argv: list[str]) -> int:
 
     p_materialize = sub.add_parser('update-materialize', help='Download and vendor Materialize CSS (npm).')
     p_materialize.add_argument('--version', default='1.0.0', help='Materialize version (default: 1.0.0).')
+
+    p_datatables = sub.add_parser('update-datatables', help='Download and vendor DataTables core + styling (npm).')
+    p_datatables.add_argument('--version', default='3.0.2', help='DataTables version (default: 3.0.2).')
+
+    p_datatables_buttons = sub.add_parser(
+        'update-datatables-buttons', help='Download and vendor the DataTables Buttons extension (npm).'
+    )
+    p_datatables_buttons.add_argument(
+        '--version', default='4.0.2', help='DataTables Buttons version (default: 4.0.2).'
+    )
 
     p_verify = sub.add_parser('verify', help='Verify vendored files match manifest checksums.')
     p_verify.add_argument(
@@ -67,6 +79,18 @@ def main(argv: list[str]) -> int:
     if args.cmd == 'update-materialize':
         info = vendor_materialize(version=args.version)
         print(f"Vendored Materialize from {info.source_url}")
+        print(f"Wrote {info.path} (sha256={info.sha256})")
+        return 0
+
+    if args.cmd == 'update-datatables':
+        info = vendor_datatables(version=args.version)
+        print(f"Vendored DataTables from {info.source_url}")
+        print(f"Wrote {info.path} (sha256={info.sha256})")
+        return 0
+
+    if args.cmd == 'update-datatables-buttons':
+        info = vendor_datatables_buttons(version=args.version)
+        print(f"Vendored DataTables Buttons from {info.source_url}")
         print(f"Wrote {info.path} (sha256={info.sha256})")
         return 0
 

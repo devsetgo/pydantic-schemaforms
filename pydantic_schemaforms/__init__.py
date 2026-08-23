@@ -101,6 +101,7 @@ from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
 from .enhanced_renderer import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
 from .form_data import coerce_form_value, flatten_nested_data, parse_nested_form_data
+from .datatable_layout import DataTableConfig, DataTableLayout, RowError
 
 from .rendering.layout_engine import (
     AccordionLayout,
@@ -202,6 +203,10 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'LayoutComposer',
     'LayoutFactory',
     'RenderContext',
+    # ── DATATABLE LAYOUT: CSV-import-to-table composite control ──
+    'DataTableLayout',
+    'DataTableConfig',
+    'RowError',
     # ── MODERN RENDERER ──
     'ModernFormRenderer',
     'FormDefinition',

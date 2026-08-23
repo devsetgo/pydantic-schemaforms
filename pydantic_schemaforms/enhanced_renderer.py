@@ -109,6 +109,10 @@ class SchemaFormValidationError(Exception):
         super().__init__('Schema form validation error')
 
 
+def _has_file_field(fields: list[tuple[str, dict[str, Any]]]) -> bool:
+    return any(resolve_ui_element(field_schema) == 'file' for _, field_schema in fields)
+
+
 class EnhancedFormRenderer:
     """Render Pydantic FormModels into HTML using UI metadata."""
 
@@ -191,6 +195,13 @@ class EnhancedFormRenderer:
             'class': default_form_class,
             'novalidate': True,
         }
+        # A <form> with a file input still submits under the default
+        # application/x-www-form-urlencoded encoding unless told otherwise --
+        # which silently sends only the filename, never the file's contents.
+        # Auto-set multipart/form-data whenever the model has a file field,
+        # unless the caller already chose an enctype explicitly.
+        if 'enctype' not in kwargs and _has_file_field(metadata.fields):
+            form_attrs['enctype'] = 'multipart/form-data'
         form_attrs.update(kwargs)
         form_attrs['action'] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
