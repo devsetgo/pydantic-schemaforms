@@ -13,14 +13,30 @@ A ``DataTableLayout`` subclass is embedded as one *layout field* on a plain
 registered automatically at import time, see ``rendering/datatable_renderer.py``),
 built via ``as_layout_value()``, exactly like any other layout field
 (``docs/plugin_hooks.md``). It is not rendered through a separate bespoke
-entry point -- the embedding FormModel's own ``render_form_html()`` call and
-its one submit button (which saves edits made in the table's own editable
-cells; see ``parse_submitted_rows()``) are all there is. CSV upload is a
-deliberately *separate*, small ``FormModel`` (a single file field) rather
-than nested inside this one: browsers silently drop a ``<form>`` nested
-inside another ``<form>``, and this table's own render sits inside whatever
-``<form>`` the embedding FormModel provides. See ``docs/recipes.md`` for the
-full pattern.
+entry point -- the embedding FormModel's own ``render_form_html_async()``
+call is all there is.
+
+CSV import is what this class is *for*, so ``model_config['csv_upload']``
+defaults to ``True``: the layout field's own rendered output already
+includes a file input, a "Load CSV" button (parses the file and shows it in
+the table for review -- nothing is saved yet), and a "Submit" button (saves
+whatever the table currently shows). Nobody declares a separate file field,
+hand-builds button HTML, or string-splices the rendered form -- the
+embedding ``FormModel`` needs nothing but the one layout field. Because the
+layout field renders its own "Submit", pass ``include_submit_button=False``
+to ``render_form_html_async()`` so there isn't a second, redundant one from
+the embedding form itself. Set ``csv_upload: False`` to opt out and get a
+bare, no-upload-UI table instead (e.g. a read-only display table, or a
+custom upload flow of your own) -- in that case the embedding form's own
+default submit button *is* "Submit".
+
+On the server side, ``handle_import_post()`` replaces hand-rolled
+load-vs-submit branching: it reads the submitted form data, figures out
+which button was clicked, parses accordingly (``parse_csv_rows()`` for
+"Load", ``parse_submitted_rows()`` for "Submit"), and returns rows merged
+back into their original submitted order (see ``merge_rows()`` -- an
+invalid row keeps its raw, as-typed values instead of vanishing). See
+``docs/recipes.md`` for the full pattern and a complete example route.
 """
 
 from __future__ import annotations
@@ -69,6 +85,7 @@ class DataTableConfig(TypedDict, total=False):
     page_length: int
     length_menu: list[int]
     csv_template: bool
+    csv_upload: bool
     style: DataTableStyleConfig
 
 
@@ -86,6 +103,7 @@ _DATATABLE_DEFAULTS: dict[str, Any] = {
     'page_length': 10,
     'length_menu': [10, 25, 50, 100],
     'csv_template': False,
+    'csv_upload': True,
     'style': dict(_DATATABLE_STYLE_DEFAULTS),
 }
 
@@ -97,6 +115,24 @@ class RowError:
     row_index: int
     errors: dict[str, str] = field(default_factory=dict)
     raw: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ImportResult:
+    """What ``DataTableLayout.handle_import_post()`` figured out from one
+    submitted request -- which button was clicked, and the rows/row_errors
+    already merged back into their original order (``merge_rows()``), ready
+    to pass straight to ``as_layout_value()`` for re-display, or to commit
+    when ``action == 'submit'`` and ``has_errors`` is False."""
+
+    action: Literal['load', 'submit']
+    rows: list[dict[str, Any]]
+    row_errors: dict[int, dict[str, str]]
+    notice: str = ''
+
+    @property
+    def has_errors(self) -> bool:
+        return bool(self.row_errors)
 
 
 class DataTableLayout(CompositeLayoutModel):
@@ -127,8 +163,14 @@ class DataTableLayout(CompositeLayoutModel):
         html = await render_form_html_async(
             FileImportPage,
             form_data={"rows": FileImport.as_layout_value(rows=current_rows)},
-            submit_url="/contacts/save",  # saves edits made in the table's own cells
+            submit_url="/contacts/import",
+            include_submit_button=False,  # the layout field renders its own Submit
         )
+
+        # In the POST route:
+        result = await FileImport.handle_import_post(await request.form())
+        # result.action == "load": preview only, nothing committed yet.
+        # result.action == "submit" and not result.has_errors: commit result.rows.
     """
 
     __is_datatable_layout__: ClassVar[bool] = True
@@ -215,6 +257,61 @@ class DataTableLayout(CompositeLayoutModel):
         return buffer.getvalue().encode('utf-8')
 
     @classmethod
+    def merge_rows(
+        cls, rows: list['DataTableLayout'], row_errors: list[RowError]
+    ) -> list[dict[str, Any]]:
+        """Reconstruct the original submitted/imported row order from
+        (valid rows, row errors) -- an invalid row keeps its raw, as-typed
+        values (instead of silently vanishing) so every row stays visible,
+        flagged via row_errors."""
+        errors_by_index = {err.row_index: err for err in row_errors}
+        valid_rows = iter(row.model_dump(mode='json') for row in rows)
+        return [
+            errors_by_index[i].raw if i in errors_by_index else next(valid_rows)
+            for i in range(len(rows) + len(row_errors))
+        ]
+
+    @classmethod
+    async def handle_import_post(cls, form_data: Any) -> ImportResult:
+        """Figure out which button was clicked (``datatable_action`` --
+        emitted automatically by the layout field's own rendered controls
+        when ``model_config['csv_upload']`` is enabled, see the module
+        docstring) and parse accordingly:
+
+        - "load": read the uploaded ``csv_file`` and validate it with
+          ``parse_csv_rows()`` -- this never commits anything, it's just
+          for review.
+        - "submit" (also the default, so a plain fallback submit -- e.g. the
+          embedding form's own button when ``csv_upload`` is disabled --
+          still saves rather than silently doing nothing): validate the
+          table's current cell values with ``parse_submitted_rows()``.
+
+        Either way, rows/row_errors come back already merged into their
+        original order via ``merge_rows()``, ready to pass straight to
+        ``as_layout_value()`` for re-display.
+        """
+        action = form_data.get('datatable_action') or 'submit'
+
+        if action == 'load':
+            csv_upload = form_data.get('csv_file')
+            raw = await csv_upload.read() if hasattr(csv_upload, 'read') else b''
+            if not raw:
+                return ImportResult(
+                    action='load',
+                    rows=[],
+                    row_errors={},
+                    notice='Choose a CSV file first, then click "Load CSV".',
+                )
+            rows, row_errors = cls.parse_csv_rows(raw)
+        else:
+            action = 'submit'
+            rows, row_errors = cls.parse_submitted_rows(form_data)
+
+        merged_rows = cls.merge_rows(rows, row_errors)
+        row_errors_by_index = {err.row_index: err.errors for err in row_errors}
+        return ImportResult(action=action, rows=merged_rows, row_errors=row_errors_by_index)
+
+    @classmethod
     def as_layout_value(
         cls,
         rows: list[dict[str, Any]] | None = None,
@@ -223,12 +320,23 @@ class DataTableLayout(CompositeLayoutModel):
         table_id: str | None = None,
         asset_mode: str = 'vendored',
         include_assets: bool = True,
+        reviewing: bool = False,
+        notice: str = '',
+        discard_url: str | None = None,
     ) -> dict[str, Any]:
         """Build the value for a layout field embedding this table
         (``input_type="layout", layout_handler="datatable"`` -- see the
         module docstring). Bundles this class alongside the current rows/
         row_errors so ``render_datatable_layout_field`` knows which row
         schema/columns to render.
+
+        ``reviewing``/``notice``/``discard_url`` only affect the built-in
+        upload UI (``model_config['csv_upload']``, on by default): pass
+        ``reviewing=True`` after a "Load CSV" click (relabels the button
+        "Reload CSV" and shows an info banner saying nothing's saved yet),
+        ``notice=`` for a one-off message (e.g. "choose a file first" --
+        see ``handle_import_post()``), and ``discard_url=`` to add a
+        "discard and start over" link to the reviewing banner.
         """
         return {
             'model_cls': cls,
@@ -237,4 +345,7 @@ class DataTableLayout(CompositeLayoutModel):
             'table_id': table_id or f'{cls.__name__.lower()}_datatable',
             'asset_mode': asset_mode,
             'include_assets': include_assets,
+            'reviewing': reviewing,
+            'notice': notice,
+            'discard_url': discard_url,
         }

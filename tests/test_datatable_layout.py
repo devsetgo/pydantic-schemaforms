@@ -54,15 +54,29 @@ def _render(
     include_assets: bool = True,
     table_id: str | None = None,
     submit_url: str = '/save',
+    reviewing: bool = False,
+    notice: str = '',
+    discard_url: str | None = None,
 ) -> str:
     value = model_cls.as_layout_value(
-        rows=rows, row_errors=row_errors, table_id=table_id, include_assets=include_assets
+        rows=rows,
+        row_errors=row_errors,
+        table_id=table_id,
+        include_assets=include_assets,
+        reviewing=reviewing,
+        notice=notice,
+        discard_url=discard_url,
     )
+    # The recommended pairing (see DataTableLayout's module docstring): when
+    # the model's own csv_upload is enabled, it renders its own Submit
+    # button, so the embedding form must not render a second, redundant one.
+    csv_upload_enabled = model_cls.datatable_options().get('csv_upload', True)
     return render_form_html(
         _page_for(model_cls),
         framework=framework,
         form_data={'rows': value},
         submit_url=submit_url,
+        include_submit_button=not csv_upload_enabled,
     )
 
 
@@ -85,6 +99,7 @@ def test_datatable_options_defaults_when_model_config_unset() -> None:
         'page_length': 10,
         'length_menu': [10, 25, 50, 100],
         'csv_template': False,
+        'csv_upload': True,
         'style': {'striped': False, 'bordered': False, 'hover': True, 'compact': False},
     }
 
@@ -474,3 +489,140 @@ def test_datatable_assets_included_by_default() -> None:
 def test_datatable_assets_excluded_when_disabled() -> None:
     html_out = _render(PlainImport, rows=[], include_assets=False)
     assert 'DataTables 3.0.2' not in html_out
+
+
+# ---------------------------------------------------------------------------
+# Built-in CSV upload UI (model_config['csv_upload'], on by default)
+# ---------------------------------------------------------------------------
+
+
+def test_csv_upload_ui_included_by_default() -> None:
+    # No separate file field, no hand-built button HTML -- the layout
+    # field's own output already has everything a CSV-import page needs.
+    html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False)
+    assert 'name="csv_file"' in html_out
+    assert 'type="file"' in html_out
+    assert '<button type="submit" name="datatable_action" value="load"' in html_out
+    assert '>Load CSV<' in html_out
+    assert '<button type="submit" name="datatable_action" value="submit"' in html_out
+
+
+def test_csv_upload_ui_has_exactly_one_submit_and_one_load_button() -> None:
+    # Recommended pairing (include_submit_button=False) must not leave a
+    # redundant second "Submit"-labeled control from the embedding form.
+    html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False)
+    assert html_out.count('name="datatable_action" value="load"') == 1
+    assert html_out.count('name="datatable_action" value="submit"') == 1
+
+
+def test_csv_upload_ui_opt_out() -> None:
+    class NoUpload(DataTableLayout):
+        name: str
+        model_config = {'csv_upload': False}
+
+    html_out = _render(NoUpload, rows=[{'name': 'Alice'}], include_assets=False)
+    assert 'name="csv_file"' not in html_out
+    assert 'datatable_action' not in html_out
+
+
+def test_reviewing_relabels_load_button_and_shows_banner() -> None:
+    html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False, reviewing=True)
+    assert '>Reload CSV<' in html_out
+    assert 'Reviewing rows loaded from CSV' in html_out
+    assert 'nothing is' in html_out
+
+
+def test_reviewing_banner_includes_discard_link_when_given() -> None:
+    html_out = _render(
+        PlainImport,
+        rows=[{'name': 'Alice'}],
+        include_assets=False,
+        reviewing=True,
+        discard_url='/employees/import',
+    )
+    assert '<a href="/employees/import">discard and start over</a>' in html_out
+
+
+def test_notice_banner_takes_priority_over_reviewing_banner() -> None:
+    html_out = _render(
+        PlainImport,
+        rows=[],
+        include_assets=False,
+        reviewing=True,
+        notice='Choose a CSV file first, then click "Load CSV".',
+    )
+    assert 'alert-warning' in html_out
+    assert 'Choose a CSV file first' in html_out
+    assert 'Reviewing rows loaded from CSV' not in html_out
+
+
+# ---------------------------------------------------------------------------
+# merge_rows() / handle_import_post()
+# ---------------------------------------------------------------------------
+
+
+def test_merge_rows_preserves_original_order_for_valid_and_invalid_rows() -> None:
+    rows, row_errors = ContactImport.parse_csv_rows(
+        b'name,address,favorite_color\n'
+        b'Alice,123 Main St,blue\n'
+        b'BadRow,789 Elm St,purple\n'
+        b'Carol,1 First Ave,red\n'
+    )
+    merged = ContactImport.merge_rows(rows, row_errors)
+    assert [row['name'] for row in merged] == ['Alice', 'BadRow', 'Carol']
+
+
+class _FakeUpload:
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    async def read(self) -> bytes:
+        return self._data
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_load_parses_and_merges_csv() -> None:
+    csv_bytes = b'name,address,favorite_color\nAlice,123 Main St,blue\nBadRow,789 Elm St,purple\n'
+    form_data = {'datatable_action': 'load', 'csv_file': _FakeUpload(csv_bytes)}
+    result = await ContactImport.handle_import_post(form_data)
+
+    assert result.action == 'load'
+    assert [row['name'] for row in result.rows] == ['Alice', 'BadRow']
+    assert result.has_errors
+    assert 'favorite_color' in result.row_errors[1]
+    assert result.notice == ''
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_load_with_no_file_returns_notice() -> None:
+    result = await ContactImport.handle_import_post({'datatable_action': 'load'})
+    assert result.action == 'load'
+    assert result.rows == []
+    assert not result.has_errors
+    assert 'Choose a CSV file' in result.notice
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_submit_parses_edited_cells() -> None:
+    form_data = {
+        'datatable_action': 'submit',
+        'rows[0].name': 'Alice',
+        'rows[0].address': '123 Main St',
+        'rows[0].favorite_color': 'green',
+    }
+    result = await ContactImport.handle_import_post(form_data)
+
+    assert result.action == 'submit'
+    assert not result.has_errors
+    assert result.rows[0]['favorite_color'] == 'green'
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_defaults_to_submit_when_action_is_missing() -> None:
+    # The embedding form's own plain submit button (used when csv_upload is
+    # disabled) carries no datatable_action field at all -- must still save
+    # rather than silently doing nothing.
+    form_data = {'rows[0].name': 'Alice', 'rows[0].address': '123 Main St'}
+    result = await PlainImport.handle_import_post(form_data)
+    assert result.action == 'submit'
+    assert result.rows[0]['name'] == 'Alice'

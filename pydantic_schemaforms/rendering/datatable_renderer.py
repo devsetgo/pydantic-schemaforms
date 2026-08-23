@@ -6,17 +6,26 @@ This is a *layout field* renderer (see docs/plugin_hooks.md): registered
 under the name 'datatable' via the @LayoutEngine.layout_renderer('datatable')
 decorator (builtin=True, so it survives LayoutEngine.reset_layout_renderers()
 -- this module-level registration only ever runs once per process), it
-plugs into the exact same render_form_html()/FormModel pipeline every
-other form in this library
-uses -- a DataTableLayout subclass is embedded as one field
-(input_type='layout', layout_handler='datatable') on a plain FormModel,
-not rendered through a separate bespoke entry point. See
-DataTableLayout.as_layout_value() for building that field's value, and
-docs/recipes.md for the full pattern. A CSV-upload file field can live
-right alongside this one as an ordinary sibling *field* on the same
-FormModel -- one <form>, one submit button -- since only nesting a
-<form> inside another <form> (which browsers silently drop) is the
-actual constraint, not sharing a form with another field.
+plugs into the exact same render_form_html()/FormModel pipeline every other
+form in this library uses -- a DataTableLayout subclass is embedded as one
+field (input_type='layout', layout_handler='datatable') on a plain
+FormModel, not rendered through a separate bespoke entry point.
+
+When model_config['csv_upload'] is enabled (the default -- see
+DataTableLayout's module docstring), this renderer's own output already
+includes the file input and the "Load CSV"/"Submit" buttons -- nobody
+declares a separate file field or hand-builds that markup. This is safe
+without a second <form>: a <button type="submit">/<input type="file">
+living inside this field's own slot still submits/attaches to whatever
+<form> the *embedding* FormModel opened; only a *nested* <form> tag would
+be silently dropped by the browser, and this renderer never emits one.
+Because of that own "Submit" button, callers should pass
+include_submit_button=False to render_form_html_async() so there isn't a
+second, redundant one from the embedding form itself.
+
+See DataTableLayout.as_layout_value() for building this field's value and
+DataTableLayout.handle_import_post() for the server side, and
+docs/recipes.md for the full pattern.
 """
 
 from __future__ import annotations
@@ -33,6 +42,7 @@ from pydantic_schemaforms.assets.runtime import (
     datatables_script_tag,
 )
 from pydantic_schemaforms.inputs.registry import get_input_component_map
+from pydantic_schemaforms.inputs.specialized_inputs import FileInput
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 from pydantic_schemaforms.tstring import SafeHTML
 from pydantic_schemaforms.tstring import html as render_html
@@ -198,6 +208,52 @@ def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str
     css_class = '' if framework == 'none' else 'btn btn-outline-secondary btn-sm mb-2'  # NOSONAR
     return render_html(
         t'<a href="{href}" download="{filename}" class="{css_class}">Download CSV template</a>'
+    )
+
+
+def _render_csv_upload_block(*, reviewing: bool) -> SafeHTML:
+    """The file input + "Load"/"Reload CSV" button -- reuses FileInput for
+    the same drag-drop/preview UX an ordinary input_type='file' field gets.
+    Field/button names ('csv_file', 'datatable_action') are the fixed,
+    documented convention DataTableLayout.handle_import_post() reads --
+    intentionally not namespaced per-field, matching row cells' own fixed
+    'rows[i].field' convention (this library supports one DataTableLayout
+    per page today)."""
+    file_input_html = SafeHTML(FileInput().render(name='csv_file', id='csv_file'))
+    load_label = 'Reload CSV' if reviewing else 'Load CSV'
+    return render_html(t"""
+<div class="mb-3">
+    <label for="csv_file" class="form-label">Import CSV (optional)</label>
+    {file_input_html}
+    <div class="form-text">Upload a CSV to replace the table below, or edit cells directly and click Submit.</div>
+    <button type="submit" name="datatable_action" value="load" class="btn btn-outline-primary mt-2">{load_label}</button>
+</div>
+""")
+
+
+def _render_notice_banner(notice: str) -> SafeHTML:
+    if not notice:
+        return SafeHTML('')
+    return render_html(t'<div class="alert alert-warning">{notice}</div>')
+
+
+def _render_reviewing_banner(discard_url: str | None) -> SafeHTML:
+    if discard_url:
+        return render_html(
+            t'<div class="alert alert-info">Reviewing rows loaded from CSV -- nothing is '
+            t'saved yet. Fix any highlighted cells below, then click <strong>Submit</strong> '
+            t'to save, or <a href="{discard_url}">discard and start over</a>.</div>'
+        )
+    return render_html(
+        t'<div class="alert alert-info">Reviewing rows loaded from CSV -- nothing is saved '
+        t'yet. Fix any highlighted cells below, then click <strong>Submit</strong> to save.</div>'
+    )
+
+
+def _render_datatable_submit_button() -> SafeHTML:
+    return render_html(
+        t'<div class="mt-3"><button type="submit" name="datatable_action" value="submit" '
+        t'class="btn btn-primary">Submit</button></div>'
     )
 
 
@@ -405,11 +461,11 @@ def render_datatable_layout_field(
     model class plus current rows/row_errors/table_id/config. This is the
     *only* rendering entry point for DataTableLayout now -- it plugs into
     the same render_form_html()/FormModel pipeline every other form uses,
-    rather than a separate bespoke one, so the embedding FormModel's own
-    submit button *is* "Save Changes" for this table's editable cells
-    (rows[i].field names -- see DataTableLayout.parse_submitted_rows()).
-    A CSV-upload file field, if any, is just another sibling field on that
-    same embedding FormModel -- see module docstring.
+    rather than a separate bespoke one. When model_config['csv_upload'] is
+    enabled (the default), the file input and Load/Submit buttons are part
+    of *this* function's own output -- see the module docstring for why
+    that's safe without a nested <form>, and DataTableLayout.handle_import_post()
+    for the matching server-side parsing.
     """
     value = value or {}
     model_cls = value.get('model_cls')
@@ -421,9 +477,13 @@ def render_datatable_layout_field(
     table_id = value.get('table_id') or f'{model_cls.__name__.lower()}_datatable'
     asset_mode = value.get('asset_mode', 'vendored')
     include_assets = value.get('include_assets', True)
+    reviewing = bool(value.get('reviewing'))
+    notice = value.get('notice') or ''
+    discard_url = value.get('discard_url')
     framework = getattr(getattr(engine, '_renderer', None), 'framework', 'bootstrap')
 
     options = model_cls.datatable_options()
+    csv_upload_enabled = options.get('csv_upload', True)
 
     template_link = (
         str(_render_csv_template_link(model_cls, framework)) if options.get('csv_template') else ''
@@ -450,4 +510,27 @@ def render_datatable_layout_field(
             asset_parts.append(datatables_buttons_script_tag(asset_mode=asset_mode))
         assets = '\n'.join(part for part in asset_parts if part)
 
-    return '\n'.join(part for part in (assets, template_link, table_html, init_script) if part)
+    upload_block = ''
+    banner = ''
+    submit_block = ''
+    if csv_upload_enabled:
+        upload_block = str(_render_csv_upload_block(reviewing=reviewing))
+        if notice:
+            banner = str(_render_notice_banner(notice))
+        elif reviewing:
+            banner = str(_render_reviewing_banner(discard_url))
+        submit_block = str(_render_datatable_submit_button())
+
+    return '\n'.join(
+        part
+        for part in (
+            assets,
+            upload_block,
+            banner,
+            template_link,
+            table_html,
+            submit_block,
+            init_script,
+        )
+        if part
+    )
