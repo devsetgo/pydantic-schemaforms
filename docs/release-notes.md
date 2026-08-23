@@ -116,6 +116,55 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>Enhancements to JSON output and new input types</span> ([26.3.3](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.3))
+
+## Changes
+## Features
+
+- Fix register\_input\_class registry and expand AI-assistant instructions (#202) (@devsetgo)
+
+## Documentation
+
+- Add code/data mode to TextArea: format + optional syntax highlighting (#205) (@devsetgo)
+- Refactoring Live Validation to Simplify (#204) (@devsetgo)
+- Add option for DNS and MX email deliverability validation (#203) (@devsetgo)
+- Fix register\_input\_class registry and expand AI-assistant instructions (#202) (@devsetgo)
+- 187 enhance date datetime and time (#192) (@devsetgo)
+- 189 enhancement json schema model output (#191) (@devsetgo)
+- Dev (#185) (@devsetgo)
+
+## GitHub Actions
+
+- Refactoring Live Validation to Simplify (#204) (@devsetgo)
+- github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.2.0 to 8.2.1 (#193) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/labeler from 6 to 7 (#194) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump release-drafter/release-drafter from 7.5.1 to 7.7.0 (#195) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/setup-python from 6 to 7 (#196) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- Dev (#185) (@devsetgo)
+
+## Maintenance
+
+- Bump version to 26.3.3 (#206) (@devsetgo)
+- Add code/data mode to TextArea: format + optional syntax highlighting (#205) (@devsetgo)
+- Refactoring Live Validation to Simplify (#204) (@devsetgo)
+- Add option for DNS and MX email deliverability validation (#203) (@devsetgo)
+- Fix register\_input\_class registry and expand AI-assistant instructions (#202) (@devsetgo)
+- github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.2.0 to 8.2.1 (#193) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/labeler from 6 to 7 (#194) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump release-drafter/release-drafter from 7.5.1 to 7.7.0 (#195) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- github-actions(deps): bump actions/setup-python from 6 to 7 (#196) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- 187 enhance date datetime and time (#192) (@devsetgo)
+- pip(deps): bump pymdown-extensions from 11.0 to 11.0.1 (#201) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- pip(deps): bump hatchling from 1.30.1 to 1.31.0 (#200) (@[dependabot[bot]](https://github.com/apps/dependabot))
+- 189 enhancement json schema model output (#191) (@devsetgo)
+- Dev (#185) (@devsetgo)
+
+## Contributors
+@devsetgo, [@dependabot[bot]](https://github.com/apps/dependabot) and @claude
+
+
+Published Date: 2026 August 07, 21:33
+
 ### <span style='color:blue'>New Input Types and Bug Fixes</span> ([26.3.2](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.2))
 
 ## Changes
