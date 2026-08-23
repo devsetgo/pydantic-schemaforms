@@ -45,7 +45,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import EmailStr
 
-from examples.fastapi_routes import templates
+from examples.fastapi_routes import log_timing, templates
 from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.datatable_layout import DataTableLayout
 from pydantic_schemaforms.schema_form import Field as FormField
@@ -177,40 +177,42 @@ async def _render_page(
     display_rows = _IMPORTED_ROWS if rows is None else rows
     display_errors = _LAST_ROW_ERRORS if row_errors is None else row_errors
 
-    form_html = await render_form_html_async(
-        EmployeeImportForm,
-        framework=style,
-        form_data={
-            'employees': EmployeeImport.as_layout_value(
-                rows=display_rows,
-                row_errors=display_errors,
-                table_id=_TABLE_ID,
-                reviewing=reviewing,
-                notice=notice,
-                discard_url=_IMPORT_URL,
-            )
-        },
-        submit_url=_IMPORT_URL,
-        debug=debug,
-        show_timing=show_timing,
-        enable_logging=True,
-        include_submit_button=False,  # EmployeeImport renders its own Submit
-    )
+    with log_timing('render_form_html_async', rows=len(display_rows)):
+        form_html = await render_form_html_async(
+            EmployeeImportForm,
+            framework=style,
+            form_data={
+                'employees': EmployeeImport.as_layout_value(
+                    rows=display_rows,
+                    row_errors=display_errors,
+                    table_id=_TABLE_ID,
+                    reviewing=reviewing,
+                    notice=notice,
+                    discard_url=_IMPORT_URL,
+                )
+            },
+            submit_url=_IMPORT_URL,
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=True,
+            include_submit_button=False,  # EmployeeImport renders its own Submit
+        )
     form_html = _sample_links_html() + form_html
 
-    return templates.TemplateResponse(
-        request,
-        'form.html',
-        {
-            'request': request,
-            'title': _TITLE,
-            'description': _DESCRIPTION,
-            'framework': 'fastapi',
-            'framework_name': 'FastAPI (Async)',
-            'framework_type': style,
-            'form_html': form_html,
-        },
-    )
+    with log_timing('TemplateResponse form.html', rows=len(display_rows)):
+        return templates.TemplateResponse(
+            request,
+            'form.html',
+            {
+                'request': request,
+                'title': _TITLE,
+                'description': _DESCRIPTION,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'framework_type': style,
+                'form_html': form_html,
+            },
+        )
 
 
 @router.get('/import', response_class=HTMLResponse)
@@ -229,8 +231,11 @@ async def import_or_save(
     DataTableLayout.handle_import_post()."""
     global _LAST_ROW_ERRORS
 
-    form = await request.form()
-    result = await EmployeeImport.handle_import_post(form)
+    with log_timing('request.form()'):
+        form = await request.form()
+
+    with log_timing('EmployeeImport.handle_import_post', action=form.get('datatable_action')):
+        result = await EmployeeImport.handle_import_post(form)
 
     if result.action == 'load':
         return await _render_page(
@@ -253,19 +258,20 @@ async def import_or_save(
         # page for data that didn't actually all validate).
         return await _render_page(request, style=style, debug=debug, show_timing=show_timing)
 
-    return templates.TemplateResponse(
-        request,
-        'success.html',
-        {
-            'request': request,
-            'title': 'Employees Saved',
-            'message': f'{len(result.rows)} employee(s) saved.',
-            'data': result.rows,
-            'framework': 'fastapi',
-            'framework_name': 'FastAPI (Async)',
-            'try_again_url': _IMPORT_URL,
-        },
-    )
+    with log_timing('TemplateResponse success.html', rows=len(result.rows)):
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Employees Saved',
+                'message': f'{len(result.rows)} employee(s) saved.',
+                'data': result.rows,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': _IMPORT_URL,
+            },
+        )
 
 
 @router.get('/import/template.csv')
