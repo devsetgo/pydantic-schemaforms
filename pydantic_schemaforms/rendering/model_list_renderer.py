@@ -320,8 +320,9 @@ def _render_item_field_cell(
     input_name = f'{field_name}[{index}].{field_key}'
     field_error = nested_errors.get(f'{index}.{field_key}')
 
-    # NOSONAR: field_col_class/nested_field_html are read via {expr}
-    # interpolation below -- see the note in _render_item_toggle above.
+    # NOSONAR comments below: field_col_class/nested_field_html are read via
+    # {expr} interpolation further down -- see the note in
+    # _render_item_toggle above.
     field_col_class = (  # NOSONAR
         'col-12' if nested_schema.get('input_type') == 'model_list' else col_class
     )
@@ -350,8 +351,9 @@ def _render_item_body_wrapper(
     *,
     collapsible: bool,
     expanded: bool,
-    # NOSONAR: collapse_id is read via {collapse_id} interpolation in the
-    # t-string below -- see the note in _render_item_toggle above.
+    # NOSONAR comment below: collapse_id is read via {collapse_id}
+    # interpolation in the t-string further down -- see the note in
+    # _render_item_toggle above.
     collapse_id: str,  # NOSONAR
     fields_html: str,
 ) -> str:

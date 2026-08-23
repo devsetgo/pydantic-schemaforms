@@ -314,8 +314,8 @@ def render_datatable_table(
     *,
     rows: list[dict[str, Any]] | None = None,
     row_errors: dict[int, dict[str, str]] | None = None,
-    # NOSONAR: table_id is read via {table_id} interpolation in the return
-    # t-string below -- see the note further down in this function.
+    # NOSONAR comment below: table_id is read via {table_id} interpolation
+    # in the return t-string further down in this function.
     table_id: str = 'datatable',  # NOSONAR
     framework: str = 'bootstrap',
     style: dict[str, Any] | None = None,
