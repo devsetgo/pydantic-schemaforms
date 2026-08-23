@@ -109,8 +109,24 @@ class SchemaFormValidationError(Exception):
         super().__init__('Schema form validation error')
 
 
-def _has_file_field(fields: list[tuple[str, dict[str, Any]]]) -> bool:
-    return any(resolve_ui_element(field_schema) == 'file' for _, field_schema in fields)
+def _has_file_field(fields: list[tuple[str, dict[str, Any]]], data: dict[str, Any]) -> bool:
+    """Whether this form needs `enctype="multipart/form-data"`: either a
+    top-level `input_type='file'` field, or a `layout_handler`-dispatched
+    field whose *current value* will render its own nested file input (see
+    `LayoutEngine.layout_field_needs_multipart` -- a layout field's own
+    schema only ever says `ui_element == 'layout'`, never revealing what it
+    actually renders, so that has to be checked separately, using the
+    field's value, not its static schema)."""
+    for field_name, field_schema in fields:
+        ui_element = resolve_ui_element(field_schema)
+        if ui_element == 'file':
+            return True
+        if ui_element == 'layout':
+            ui_info = extract_ui_info(field_schema)
+            handler_name = ui_info.get('layout_handler') or ui_info.get('layout_renderer')
+            if LayoutEngine.layout_field_needs_multipart(handler_name, data.get(field_name)):
+                return True
+    return False
 
 
 class EnhancedFormRenderer:
@@ -200,7 +216,7 @@ class EnhancedFormRenderer:
         # which silently sends only the filename, never the file's contents.
         # Auto-set multipart/form-data whenever the model has a file field,
         # unless the caller already chose an enctype explicitly.
-        if 'enctype' not in kwargs and _has_file_field(metadata.fields):
+        if 'enctype' not in kwargs and _has_file_field(metadata.fields, data):
             form_attrs['enctype'] = 'multipart/form-data'
         form_attrs.update(kwargs)
         form_attrs['action'] = submit_url  # kwargs must not override action
