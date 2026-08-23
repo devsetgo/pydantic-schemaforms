@@ -264,8 +264,11 @@ def _render_item_toggle(
     *,
     collapsible: bool,
     expanded: bool,
-    collapse_id: str,  # NOSONAR -- read via {collapse_id} in the t-strings below
-    item_title: str,  # NOSONAR -- read via {item_title} in the t-strings below
+    # NOSONAR comments below: collapse_id/item_title are read via {expr}
+    # interpolation in the t-strings below -- see the note further down in
+    # this function on false-positive "unused variable" warnings.
+    collapse_id: str,  # NOSONAR
+    item_title: str,  # NOSONAR
 ) -> SafeHTML:
     if not collapsible:
         return html(t"""
@@ -347,7 +350,9 @@ def _render_item_body_wrapper(
     *,
     collapsible: bool,
     expanded: bool,
-    collapse_id: str,  # NOSONAR -- read via {collapse_id} in the t-string below
+    # NOSONAR: collapse_id is read via {collapse_id} interpolation in the
+    # t-string below -- see the note in _render_item_toggle above.
+    collapse_id: str,  # NOSONAR
     fields_html: str,
 ) -> str:
     if collapsible:
