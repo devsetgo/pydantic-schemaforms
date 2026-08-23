@@ -715,8 +715,14 @@ def validate_passwords_match(data):
 
 form_validator.add_cross_field_rule(validate_passwords_match)
 
-# Live validator for HTMX
-live_validator = form_validator.build_live_validator()
+# Live validator for HTMX -- FormValidator itself has no build_live_validator()
+# (that's a ValidationSchema method); build one directly from the same
+# FieldValidator instances FormValidator already holds.
+from pydantic_schemaforms import LiveValidator
+
+live_validator = LiveValidator()
+for field_validator in form_validator.field_validators.values():
+    live_validator.register_field_validator(field_validator)
 ```
 
 #### 3. FastAPI Endpoints
@@ -920,6 +926,6 @@ The unified validation engine provides:
 8. **Pydantic v2 compatibility** with zero deprecation warnings in critical paths
 
 For questions or examples, see:
-- `tests/test_validation.py` — All validation tests (144 tests)
+- `tests/test_validation.py` — All validation tests
 - `tests/test_layouts.py` — Layout/tab rendering verification including async
 - `examples/fastapi_routes.py` — Real-world FastAPI integration

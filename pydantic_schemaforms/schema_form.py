@@ -75,6 +75,12 @@ def Field(
     """
     Enhanced Field function that supports UI element specifications.
     Compatible with Pydantic Field but adds UI-specific parameters.
+
+    The ui_* params (and input_type/ui_element) only control rendering --
+    they are not validation. min_length/max_length/pattern/ge/le/gt/lt
+    (Pydantic's own Field constraints, still accepted here) are what
+    actually validates; see `get_app_instructions()` for the full
+    constraints-vs-ui_options guidance.
     """
     # Collect UI attributes
     ui_attrs = {}

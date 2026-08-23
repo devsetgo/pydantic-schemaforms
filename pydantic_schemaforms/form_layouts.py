@@ -22,7 +22,7 @@ def _wrap_horizontal_column(form_html: str) -> str:
 
 class SectionDesign:
     """
-    Section configuration that matches the design_idea.py vision.
+    Section configuration for a form layout.
 
     Provides configuration for form sections including title, description,
     icon, and collapsible behavior.
@@ -72,7 +72,7 @@ class SectionDesign:
 
 class FormDesign:
     """
-    Comprehensive form configuration that matches the design_idea.py vision.
+    Comprehensive form configuration.
 
     Provides configuration for the entire form including theme, method, width,
     target URL, and error handling.
@@ -316,8 +316,10 @@ BaseLayout = FormLayoutBase
 
 class VerticalLayout(FormLayoutBase):
     """
-    Vertical layout that stacks forms vertically.
-    Matches the design_idea.py vision.
+    Stacks multiple whole FormModels vertically, rendered/validated together
+    via this class's own render()/validate() -- not to be confused with the
+    same-named flexbox primitive in rendering/layout_engine.py, which lays
+    out arbitrary content inside one already-rendered field/section.
     """
 
     def render(
@@ -357,8 +359,10 @@ class VerticalLayout(FormLayoutBase):
 
 class HorizontalLayout(FormLayoutBase):
     """
-    Horizontal layout that arranges forms side by side.
-    Matches the design_idea.py vision.
+    Arranges multiple whole FormModels side by side, rendered/validated
+    together via this class's own render()/validate() -- not to be confused
+    with the same-named flexbox primitive in rendering/layout_engine.py,
+    which lays out arbitrary content inside one already-rendered field/section.
     """
 
     def render(
@@ -404,7 +408,7 @@ class HorizontalLayout(FormLayoutBase):
 class TabbedLayout(FormLayoutBase):
     """
     Tabbed layout that organizes layouts/forms into tabs.
-    Matches the design_idea.py vision where tab order is determined by declaration order.
+    Tab order follows declaration order (the order forms/layouts are added).
     """
 
     def __init__(self, form_config: FormDesign | None = None):

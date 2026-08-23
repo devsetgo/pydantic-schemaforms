@@ -48,6 +48,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🧬 **Standard JSON Schema output**: `get_pydantic_json_schema()` returns spec-compliant JSON Schema (`$defs`/`$ref`) for the underlying Pydantic model, including nested `BaseModel`/`List[BaseModel]` fields
 - 🪆 **Nested by default, flat by choice**: `validate()` output/input mirrors the Pydantic model's nested shape by default; pass `flatten=True` for bracket+dot flat keys instead
 - 🕐 **Custom date/time display formats**: `date`/`time`/`datetime` fields default to the browser's own locale-controlled display; set `date_format`/`time_format`/`datetime_format` in `ui_options` (e.g. 24-hour "military" time) to opt into any `strftime`-defined shape instead
+- 📊 **Composite layout controls**: `DataTableLayout` turns a `FormModel` subclass into a CSV-import-to-table control — built-in file upload, per-cell editable widgets, row-level validation, and DataTables.js search/sort/paging — with no hand-built button HTML or load/submit branching; `model_list` renders repeating sub-forms the same way. Both plug into the same extensible layout-renderer registry documented in `docs/plugin_hooks.md`, so you can register your own composite controls the same way
 
 > **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
 
