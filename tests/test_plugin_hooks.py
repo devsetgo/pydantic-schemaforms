@@ -63,3 +63,45 @@ def test_layout_engine_custom_renderer_is_invoked():
     assert 'custom-layout' in output
     assert calls['field'] == 'my_layout'
     assert calls['value'] == {'steps': [1, 2]}
+
+
+def test_reset_layout_renderers_preserves_builtin_registrations():
+    """Module-level registration (e.g. DataTableLayout's/model_list's own
+    renderer) only runs once per process -- reset_layout_renderers() is
+    called between many tests across the suite, so a builtin renderer must
+    survive it or it's gone for the rest of the run. Only ad hoc/app-level
+    renderers (registered without builtin=True) should actually get
+    cleared."""
+
+    def one_off_handler(field_name, field_schema, value, ui_info, context, engine):
+        return '<div>one-off</div>'
+
+    def library_handler(field_name, field_schema, value, ui_info, context, engine):
+        return '<div>library-owned</div>'
+
+    LayoutEngine.register_layout_renderer('one_off', one_off_handler)
+    LayoutEngine.register_layout_renderer('library_owned', library_handler, builtin=True)
+    try:
+        LayoutEngine.reset_layout_renderers()
+
+        assert LayoutEngine.get_renderer_for_element('one_off') is None
+        assert LayoutEngine.get_renderer_for_element('library_owned') is library_handler
+    finally:
+        # builtin registrations survive reset_layout_renderers() by design,
+        # so this test must clean up after itself explicitly.
+        LayoutEngine._custom_renderers.pop('library_owned', None)
+        LayoutEngine._builtin_renderer_names.discard('library_owned')
+
+
+def test_layout_renderer_decorator_registers_as_builtin_by_default():
+    @LayoutEngine.layout_renderer('decorator_registered')
+    def handler(field_name, field_schema, value, ui_info, context, engine):
+        return '<div>decorated</div>'
+
+    try:
+        LayoutEngine.reset_layout_renderers()
+
+        assert LayoutEngine.get_renderer_for_element('decorator_registered') is handler
+    finally:
+        LayoutEngine._custom_renderers.pop('decorator_registered', None)
+        LayoutEngine._builtin_renderer_names.discard('decorator_registered')

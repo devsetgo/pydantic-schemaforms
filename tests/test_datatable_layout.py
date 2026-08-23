@@ -243,6 +243,36 @@ def test_datatable_layout_is_still_a_form_model_subclass() -> None:
     assert ContactImport.__is_datatable_layout__ is True
 
 
+def test_registered_renderer_ignores_render_contexts_error_and_required_fields() -> None:
+    """RenderContext grew error/required_fields/all_errors fields so
+    model_list's registered renderer could read its own field's error/
+    required-ness/nested errors (see rendering/context.py). Datatable's own
+    registered renderer never reads context.* at all, so populating those
+    new fields must not change its output one bit."""
+    from pydantic_schemaforms.rendering.datatable_renderer import render_datatable_layout_field
+    from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+    from pydantic_schemaforms.rendering.context import RenderContext
+
+    value = ContactImport.as_layout_value(
+        rows=[{'name': 'Alice', 'favorite_color': 'blue'}], include_assets=False
+    )
+    engine = LayoutEngine(renderer=None)
+
+    bare_context = RenderContext(form_data={}, schema_defs={})
+    enriched_context = RenderContext(
+        form_data={},
+        schema_defs={},
+        error='unrelated error',
+        required_fields=('some_other_field',),
+        all_errors={'some_other_field': 'bad'},
+    )
+
+    bare_output = render_datatable_layout_field('rows', {}, value, {}, bare_context, engine)
+    enriched_output = render_datatable_layout_field('rows', {}, value, {}, enriched_context, engine)
+
+    assert bare_output == enriched_output
+
+
 # ---------------------------------------------------------------------------
 # Rendering, via the layout_handler embedding path
 # ---------------------------------------------------------------------------

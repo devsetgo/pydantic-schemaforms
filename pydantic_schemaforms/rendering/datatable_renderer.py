@@ -3,9 +3,11 @@ DataTables.js wired in client-side as progressive enhancement over the
 plain <table> the server emits.
 
 This is a *layout field* renderer (see docs/plugin_hooks.md): registered
-under the name 'datatable' via LayoutEngine.register_layout_renderer at
-import time (bottom of this module), it plugs into the exact same
-render_form_html()/FormModel pipeline every other form in this library
+under the name 'datatable' via the @LayoutEngine.layout_renderer('datatable')
+decorator (builtin=True, so it survives LayoutEngine.reset_layout_renderers()
+-- this module-level registration only ever runs once per process), it
+plugs into the exact same render_form_html()/FormModel pipeline every
+other form in this library
 uses -- a DataTableLayout subclass is embedded as one field
 (input_type='layout', layout_handler='datatable') on a plain FormModel,
 not rendered through a separate bespoke entry point. See
@@ -31,13 +33,13 @@ from pydantic_schemaforms.assets.runtime import (
     datatables_script_tag,
 )
 from pydantic_schemaforms.inputs.registry import get_input_component_map
+from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 from pydantic_schemaforms.tstring import SafeHTML
 from pydantic_schemaforms.tstring import html as render_html
 
 if TYPE_CHECKING:
     from pydantic_schemaforms.datatable_layout import DataTableConfig, DataTableLayout
     from pydantic_schemaforms.rendering.context import RenderContext
-    from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 
 # ui_element values that are SelectInput-family widgets: render(options=[...],
 # **kwargs) with per-option 'selected' flags, rather than a bare `value=`
@@ -373,13 +375,14 @@ function _dtCellExportValue(node) {{
 """)
 
 
+@LayoutEngine.layout_renderer('datatable')
 def render_datatable_layout_field(
     field_name: str,
     field_schema: dict[str, Any],
     value: Any,
     ui_info: dict[str, Any],
     context: 'RenderContext',
-    engine: 'LayoutEngine',
+    engine: LayoutEngine,
 ) -> str:
     """LayoutRenderer entry point registered as the 'datatable' layout_handler
     (see the bottom of this module and DataTableLayout.as_layout_value()).
@@ -434,12 +437,3 @@ def render_datatable_layout_field(
         assets = '\n'.join(part for part in asset_parts if part)
 
     return '\n'.join(part for part in (assets, template_link, table_html, init_script) if part)
-
-
-def _register_datatable_layout_handler() -> None:
-    from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
-
-    LayoutEngine.register_layout_renderer('datatable', render_datatable_layout_field)
-
-
-_register_datatable_layout_handler()

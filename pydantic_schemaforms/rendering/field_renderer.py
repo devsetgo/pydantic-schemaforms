@@ -2,16 +2,24 @@
 
 from __future__ import annotations
 
-import re
+from dataclasses import replace
 from typing import Any
 
 from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 from pydantic_schemaforms.inputs import HiddenInput
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.frameworks import get_input_component
+from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
 from pydantic_schemaforms.tstring import SafeHTML, html
-from .themes import RendererTheme
+
+# Importing this registers the 'model_list' ui_element renderer (LayoutEngine
+# .register_layout_renderer, builtin=True) as a side effect at import time --
+# model_list is a core, always-available feature (unlike DataTableLayout,
+# which only registers itself if an app imports it), so this needs to be a
+# real, unconditional import here rather than the lazy per-call imports the
+# thin delegator methods below use for everything else in that module.
+from . import model_list_renderer as _model_list_renderer  # noqa: F401
 
 # ui_element values that render as an HTML checkbox under the hood and so
 # need the same boolean checked/value handling ('toggle' is CheckboxInput's
@@ -86,16 +94,25 @@ class FieldRenderer:
                 context,
             )
 
-        if ui_element == 'model_list':
-            return self._render_model_list_field(
+        # Second, independent dispatch keyspace from the 'layout_handler'
+        # lookup above -- looked up directly by ui_element (model_list,
+        # datatable, or any future registered composite), regardless of
+        # whether input_type is 'layout'. See LayoutEngine.get_renderer_for_element.
+        custom_renderer = LayoutEngine.get_renderer_for_element(ui_element)
+        if custom_renderer is not None:
+            enriched_context = replace(
+                context,
+                error=error,
+                required_fields=tuple(required_fields or ()),
+                all_errors=dict(all_errors or {}),
+            )
+            return custom_renderer(
                 field_name,
                 field_schema,
                 value,
-                error,
-                required_fields,
                 ui_info,
-                context,
-                all_errors,
+                enriched_context,
+                self._renderer._layout_engine,  # noqa: SLF001
             )
 
         input_component = get_input_component(ui_element)()  # type: ignore[misc]
@@ -234,50 +251,18 @@ class FieldRenderer:
         context: RenderContext,
         all_errors: dict[str, str] | None,
     ) -> str:
-        # The item model is always resolved from the list[ItemModel] type
-        # annotation's $ref — there is no separate model_class override.
-        # A model_class passed via ui_options can never reach here: Field()
-        # serializes ui_options into json_schema_extra (a raw class fails
-        # that), and register_field()'s dynamic-field schema builder only
-        # forwards ui_-prefixed keys. One resolution path, not two.
-        items_ref = field_schema.get('items', {}).get('$ref')
-        if not items_ref:
-            return html(
-                t"<!-- Error: model_list field '{field_name}' must be typed as list[ItemModel] -->"
-            )
+        from .model_list_renderer import render_model_list_field
 
-        model_name = items_ref.split('/')[-1]
-        schema_defs = context.schema_defs or {}
-        schema_def = schema_defs.get(model_name)
-        if not schema_def:
-            return html(
-                t"<!-- Error: Could not resolve model reference '{items_ref}' "
-                t"for field '{field_name}' -->"
-            )
-
-        list_values: list[dict[str, Any]] = []
-        if value:
-            if isinstance(value, list):
-                for item in value:
-                    if hasattr(item, 'model_dump'):
-                        list_values.append(item.model_dump())
-                    elif isinstance(item, dict):
-                        list_values.append(item)
-            elif hasattr(value, 'model_dump'):
-                list_values = [value.model_dump()]
-            elif isinstance(value, dict):
-                list_values = [value]
-
-        return self.render_model_list_from_schema(
-            field_name=field_name,
-            field_schema=field_schema,
-            schema_def=schema_def,
-            values=list_values,
-            error=error,
-            ui_info=ui_info,
-            required_fields=required_fields or [],
-            context=context,
-            all_errors=all_errors,
+        return render_model_list_field(
+            self,
+            field_name,
+            field_schema,
+            value,
+            error,
+            required_fields,
+            ui_info,
+            context,
+            all_errors,
         )
 
     def _extract_ui_options(
@@ -430,116 +415,27 @@ class FieldRenderer:
         context: RenderContext,
         all_errors: dict[str, str] | None = None,
     ) -> str:
-        nested_errors = self.extract_nested_errors_for_field(field_name, all_errors or {})
-        items_parts: list[str] = []
+        from .model_list_renderer import render_model_list_from_schema
 
-        for i, item_data in enumerate(values):
-            items_parts.append(
-                self._render_schema_list_item(
-                    field_name,
-                    schema_def,
-                    i,
-                    item_data,
-                    context,
-                    ui_info,
-                    nested_errors,
-                )
-            )
-
-        min_items = field_schema.get('minItems', 0)
-        if not values and min_items > 0:
-            for i in range(min_items):
-                items_parts.append(
-                    self._render_schema_list_item(
-                        field_name,
-                        schema_def,
-                        i,
-                        {},
-                        context,
-                        ui_info,
-                        nested_errors,
-                    )
-                )
-
-        if not values and min_items == 0:
-            items_parts.append(
-                self._render_schema_list_item(
-                    field_name,
-                    schema_def,
-                    0,
-                    {},
-                    context,
-                    ui_info,
-                    nested_errors,
-                )
-            )
-
-        # Always include a hidden template item so lists can be emptied (minItems=0)
-        # and still support adding new items afterwards.
-        template_item_html = self._render_schema_list_item(
+        return render_model_list_from_schema(
+            self,
             field_name,
+            field_schema,
             schema_def,
-            0,
-            {},
-            context,
+            values,
+            error,
             ui_info,
-            nested_errors,
-        )
-        _template_item_html = SafeHTML(str(template_item_html))
-        template_html = html(
-            t'<template class="model-list-item-template">{_template_item_html}</template>'
-        )
-
-        items_html = template_html + ''.join(items_parts)
-        max_items = field_schema.get('maxItems', 10)
-        help_text = ui_info.get('help_text') or field_schema.get('description')
-        label = field_schema.get('title', field_name.replace('_', ' ').title())
-        add_button_label = ui_info.get('add_button_label') or ui_info.get(
-            'add_button_text', 'Add Item'
-        )
-        is_required = field_name in (required_fields or [])
-
-        if self.theme:
-            themed_html = self.theme.render_model_list_container(
-                field_name=field_name,
-                label=label,
-                is_required=is_required,
-                min_items=min_items,
-                max_items=max_items,
-                items_html=items_html,
-                help_text=help_text,
-                error=error,
-                add_button_label=add_button_label,
-            )
-            if themed_html:
-                return themed_html
-
-        return RendererTheme().render_model_list_container(
-            field_name=field_name,
-            label=label,
-            is_required=is_required,
-            min_items=min_items,
-            max_items=max_items,
-            items_html=items_html,
-            help_text=help_text,
-            error=error,
-            add_button_label=add_button_label,
+            required_fields,
+            context,
+            all_errors,
         )
 
     def extract_nested_errors_for_field(
         self, field_name: str, all_errors: dict[str, Any]
     ) -> dict[str, str]:
-        nested_errors: dict[str, str] = {}
-        field_prefix = f'{field_name}['
+        from .model_list_renderer import extract_nested_errors_for_field
 
-        for error_path, error_message in (all_errors or {}).items():
-            if error_path.startswith(field_prefix):
-                nested_part = error_path[len(field_prefix) :]
-                if '].' in nested_part:
-                    simplified_path = nested_part.replace('].', '.')
-                    nested_errors[simplified_path] = error_message
-
-        return nested_errors
+        return extract_nested_errors_for_field(self, field_name, all_errors)
 
     def _render_schema_list_item(
         self,
@@ -551,122 +447,8 @@ class FieldRenderer:
         ui_info: dict[str, Any] | None = None,
         nested_errors: dict[str, str] | None = None,
     ) -> str:
-        ui_info = ui_info or {}
-        nested_errors = nested_errors or {}
-        collapsible = ui_info.get('collapsible_items', True)
-        expanded = ui_info.get('items_expanded', True)
-        title_template = ui_info.get('item_title_template', 'Item #{index}')
+        from .model_list_renderer import render_schema_list_item
 
-        title_vars = {'index': index + 1, **item_data}
-        try:
-            item_title = title_template.format(**title_vars)
-        except (KeyError, ValueError):  # fmt: skip  # pragma: no cover - best effort rendering
-            item_title = f'Item #{index + 1}'
-
-        safe_field_name = re.sub(r'[^a-zA-Z0-9_-]', '_', field_name)
-        collapse_id = f'{safe_field_name}_item_{index}_content'
-
-        item_html = html(t'''
-        <div class="model-list-item card border mb-3"
-             data-index="{index}"
-             data-title-template="{title_template}"
-             data-field-name="{field_name}">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">''')
-
-        if collapsible:
-            chevron_class = 'down' if expanded else 'right'
-            expanded_attr = str(expanded).lower()
-            item_html += html(t'''
-                    <button class="btn btn-link text-decoration-none p-0 text-start"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#{collapse_id}"
-                            aria-expanded="{expanded_attr}"
-                            aria-controls="{collapse_id}">
-                        <i class="bi bi-chevron-{chevron_class} me-2"></i>
-                        <i class="bi bi-card-list me-2"></i>
-                        {item_title}
-                    </button>''')
-        else:
-            item_html += html(t"""
-                    <span>
-                        <i class="bi bi-card-list me-2"></i>
-                        {item_title}
-                    </span>""")
-
-        item_html += html(t'''
-                </h6>
-                <button type="button"
-                        class="btn btn-outline-danger btn-sm remove-item-btn"
-                        data-index="{index}"
-                        data-field-name="{field_name}"
-                        title="Remove this item">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>''')
-
-        if collapsible:
-            show_class = 'show' if expanded else ''
-            item_html += html(t'''
-            <div class="collapse {show_class}" id="{collapse_id}">
-                <div class="card-body">''')
-        else:
-            item_html += """
-            <div class="card-body">"""
-
-        item_html += '<div class="row">'
-        properties = schema_def.get('properties', {})
-        field_count = len([key for key in properties.keys() if not key.startswith('_')])
-
-        if field_count <= 2:
-            col_class = 'col-12'
-        elif field_count <= 4:
-            col_class = 'col-md-6'
-        else:
-            col_class = 'col-lg-4 col-md-6'
-
-        for field_key, nested_schema in properties.items():
-            if field_key.startswith('_'):
-                continue
-
-            field_value = item_data.get(field_key, '')
-            input_name = f'{field_name}[{index}].{field_key}'
-            field_error = nested_errors.get(f'{index}.{field_key}')
-
-            field_col_class = col_class
-            if nested_schema.get('input_type') == 'model_list':
-                field_col_class = 'col-12'
-
-            nested_field_html = SafeHTML(
-                str(
-                    self.render_field(
-                        input_name,
-                        nested_schema,
-                        field_value,
-                        field_error,
-                        [],
-                        context,
-                        'vertical',
-                        nested_errors,
-                    )
-                )
-            )
-            item_html += html(t'''
-                <div class="{field_col_class}">
-                    {nested_field_html}
-                </div>''')
-
-        item_html += '</div>'
-
-        if collapsible:
-            item_html += """
-                </div>
-            </div>"""
-        else:
-            item_html += """
-            </div>"""
-
-        item_html += """
-        </div>"""
-        return item_html
+        return render_schema_list_item(
+            self, field_name, schema_def, index, item_data, context, ui_info, nested_errors
+        )
