@@ -107,6 +107,10 @@ class OptionalFieldsForm(FormModel):
     optional_int: Optional[int] = Field(None, ge=0, description='Optional int')
 
 
+class FileUploadForm(FormModel):
+    upload: str = Field('', title='Upload', input_type='file')
+
+
 # ---------------------------------------------------------------------------
 # render_form_html tests
 # ---------------------------------------------------------------------------
@@ -154,6 +158,26 @@ class TestRenderFormHtmlStructure:
         renderer = EnhancedFormRenderer(framework=framework)
         html = renderer.render_form_from_model(AllInputTypesForm)
         assert_valid_html(html, f'{framework}/all_inputs')
+
+    def test_file_field_auto_sets_multipart_enctype(self) -> None:
+        """A <form> with a file input still submits as the default
+        application/x-www-form-urlencoded unless told otherwise -- which
+        silently sends only the filename, never the file's contents. The
+        form must auto-opt into multipart/form-data whenever any field is
+        input_type='file', with no action required from the caller."""
+        html = render_form_html(FileUploadForm, submit_url='/submit')
+        assert 'enctype="multipart/form-data"' in html
+
+    def test_explicit_enctype_kwarg_is_not_overridden(self) -> None:
+        html = render_form_html(
+            FileUploadForm, submit_url='/submit', enctype='application/x-www-form-urlencoded'
+        )
+        assert 'enctype="application/x-www-form-urlencoded"' in html
+        assert 'multipart/form-data' not in html
+
+    def test_form_without_file_field_has_no_enctype(self) -> None:
+        html = render_form_html(MinimalForm, submit_url='/submit')
+        assert 'enctype' not in html
 
 
 # ---------------------------------------------------------------------------

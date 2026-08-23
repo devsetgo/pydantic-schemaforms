@@ -529,6 +529,127 @@ def vendor_prismjs(*, version: str | None = None) -> VendoredFile:
     )
 
 
+def vendor_datatables(*, version: str = '3.0.2') -> VendoredFile:
+    """Download and vendor DataTables core + its default styling (npm).
+
+    DataTables >= 2 ships jQuery-free (a standalone UMD bundle exposing
+    `window.DataTable`), so no jQuery is vendored alongside it.
+    """
+    resolved_version = version
+
+    core_tarball_url = npm_tarball_url('datatables.net', resolved_version)
+    core_tgz = http_get_bytes(core_tarball_url)
+
+    js_bytes = _safe_member_bytes_from_tgz(core_tgz, 'js/dataTables.min.js')
+    js_rel_path = Path('pydantic_schemaforms/assets/vendor/datatables/dataTables.min.js')
+    js_entry = _write_vendored_file(
+        rel_path=js_rel_path, data=js_bytes, source_url=core_tarball_url
+    )
+
+    license_bytes = _safe_member_bytes_from_tgz(core_tgz, 'License.txt')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/datatables/LICENSE')
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=core_tarball_url
+    )
+
+    style_tarball_url = npm_tarball_url('datatables.net-dt', resolved_version)
+    style_tgz = http_get_bytes(style_tarball_url)
+
+    css_bytes = _safe_member_bytes_from_tgz(style_tgz, 'css/dataTables.dataTables.min.css')
+    css_rel_path = Path('pydantic_schemaforms/assets/vendor/datatables/dataTables.min.css')
+    css_entry = _write_vendored_file(
+        rel_path=css_rel_path, data=css_bytes, source_url=style_tarball_url
+    )
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'datatables',
+        'version': resolved_version,
+        'files': [
+            js_entry,
+            css_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='datatables', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(
+        path=js_entry['path'], sha256=js_entry['sha256'], source_url=core_tarball_url
+    )
+
+
+def vendor_datatables_buttons(*, version: str = '4.0.2') -> VendoredFile:
+    """Download and vendor the DataTables Buttons extension + its styling (npm).
+
+    Only the core Buttons JS and the HTML5 export module (`buttons.html5`,
+    which covers the "csv" and "copy" export button types) are vendored.
+    `buttons.print` and the Excel/PDF export types (which additionally
+    require JSZip/pdfmake) are intentionally left out for now.
+    """
+    resolved_version = version
+
+    core_tarball_url = npm_tarball_url('datatables.net-buttons', resolved_version)
+    core_tgz = http_get_bytes(core_tarball_url)
+
+    core_js_bytes = _safe_member_bytes_from_tgz(core_tgz, 'js/dataTables.buttons.min.js')
+    core_js_rel_path = Path(
+        'pydantic_schemaforms/assets/vendor/datatables-buttons/dataTables.buttons.min.js'
+    )
+    core_js_entry = _write_vendored_file(
+        rel_path=core_js_rel_path, data=core_js_bytes, source_url=core_tarball_url
+    )
+
+    html5_js_bytes = _safe_member_bytes_from_tgz(core_tgz, 'js/buttons.html5.min.js')
+    html5_js_rel_path = Path(
+        'pydantic_schemaforms/assets/vendor/datatables-buttons/buttons.html5.min.js'
+    )
+    html5_js_entry = _write_vendored_file(
+        rel_path=html5_js_rel_path, data=html5_js_bytes, source_url=core_tarball_url
+    )
+
+    license_bytes = _safe_member_bytes_from_tgz(core_tgz, 'License.txt')
+    license_rel_path = Path('pydantic_schemaforms/assets/vendor/datatables-buttons/LICENSE')
+    license_entry = _write_vendored_file(
+        rel_path=license_rel_path, data=license_bytes, source_url=core_tarball_url
+    )
+
+    style_tarball_url = npm_tarball_url('datatables.net-buttons-dt', resolved_version)
+    style_tgz = http_get_bytes(style_tarball_url)
+
+    css_bytes = _safe_member_bytes_from_tgz(style_tgz, 'css/buttons.dataTables.min.css')
+    css_rel_path = Path(
+        'pydantic_schemaforms/assets/vendor/datatables-buttons/buttons.dataTables.min.css'
+    )
+    css_entry = _write_vendored_file(
+        rel_path=css_rel_path, data=css_bytes, source_url=style_tarball_url
+    )
+
+    manifest = load_manifest()
+    if not isinstance(manifest.get('schema_version'), int):
+        manifest['schema_version'] = 1
+
+    entry = {
+        'name': 'datatables-buttons',
+        'version': resolved_version,
+        'files': [
+            core_js_entry,
+            html5_js_entry,
+            css_entry,
+            license_entry,
+        ],
+    }
+    upsert_asset_entry(manifest, name='datatables-buttons', entry=entry)
+    write_manifest(manifest)
+
+    return VendoredFile(
+        path=core_js_entry['path'], sha256=core_js_entry['sha256'], source_url=core_tarball_url
+    )
+
+
 def verify_manifest_files(*, require_nonempty: bool = False) -> None:
     manifest = load_manifest()
     if not isinstance(manifest.get('schema_version'), int):

@@ -79,6 +79,100 @@ class TestField:
         assert 'ui_autofocus' not in schema_extra
         assert 'ui_options' not in schema_extra
 
+    def test_field_input_type_parameter(self):
+        """input_type is a documented alias for ui_element (resolve_ui_element()
+        checks both) and must be a real, declared parameter."""
+        field = Field(default='', input_type='textarea')
+        assert field.json_schema_extra.get('input_type') == 'textarea'
+
+    def test_field_input_type_survives_alongside_other_ui_parameters(self):
+        """Regression test: pydantic's Field() only shims *unrecognized* kwargs
+        into json_schema_extra when that dict would otherwise be empty. Before
+        input_type was a declared parameter here (falling into **kwargs
+        instead), combining it with any other explicit ui_* parameter (which
+        already populates json_schema_extra) silently dropped input_type
+        entirely -- e.g. Field(title=..., input_type='textarea',
+        ui_placeholder=...) rendered as a plain text input, not a textarea."""
+        field = Field(
+            default='',
+            title='Project Description',
+            input_type='textarea',
+            ui_placeholder='What is this project about?',
+        )
+        schema_extra = field.json_schema_extra
+        assert schema_extra.get('input_type') == 'textarea'
+        assert schema_extra.get('ui_placeholder') == 'What is this project about?'
+
+    def test_field_input_type_actually_renders_as_declared_widget(self):
+        """End-to-end version of the regression above: the rendered HTML
+        must use the declared widget, not silently fall back to a plain
+        text input."""
+        from pydantic_schemaforms import render_form_html
+
+        class M(FormModel):
+            description: str = Field(
+                '',
+                title='Description',
+                input_type='textarea',
+                ui_placeholder='Say something',
+            )
+
+        html = render_form_html(M, submit_url='/x')
+        assert '<textarea name="description" id="description"' in html
+        assert '<input name="description"' not in html
+
+    def test_field_layout_handler_survives_alongside_input_type(self):
+        """Same bug class as input_type above: layout_handler wasn't a
+        declared parameter either, so it fell into **kwargs and was
+        silently dropped whenever combined with input_type='layout' --
+        which is *required* to dispatch to the layout system at all, so
+        docs/plugin_hooks.md's own documented example
+        (Field(..., input_type="layout", layout_handler="steps")) never
+        actually worked."""
+        field = Field(
+            ['Account', 'Billing'],
+            title='Wizard Steps',
+            input_type='layout',
+            layout_handler='steps',
+        )
+        schema_extra = field.json_schema_extra
+        assert schema_extra.get('input_type') == 'layout'
+        assert schema_extra.get('layout_handler') == 'steps'
+
+    def test_field_layout_renderer_alias_also_survives(self):
+        field = Field([], title='X', input_type='layout', layout_renderer='custom_layout')
+        assert field.json_schema_extra.get('layout_renderer') == 'custom_layout'
+
+    def test_field_layout_handler_actually_dispatches_to_registered_renderer(self):
+        """End-to-end version: a field declared with layout_handler must
+        actually reach the registered renderer, not silently fall back to
+        the generic 'Unknown layout field type' placeholder."""
+        from pydantic_schemaforms import render_form_html
+        from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+
+        def _render_steps(field_name, field_schema, value, ui_info, context, engine):
+            return f'<ol class="steps">{"".join(f"<li>{s}</li>" for s in value or [])}</ol>'
+
+        LayoutEngine.register_layout_renderer('test_steps_handler', _render_steps)
+        try:
+
+            class WizardForm(FormModel):
+                steps: list[str] = Field(
+                    ['Account', 'Billing'],
+                    title='Wizard Steps',
+                    input_type='layout',
+                    layout_handler='test_steps_handler',
+                )
+
+            html = render_form_html(
+                WizardForm, form_data={'steps': ['Account', 'Billing']}, submit_url='/x'
+            )
+            assert '<ol class="steps">' in html
+            assert '<li>Account</li><li>Billing</li>' in html
+            assert 'Unknown layout field type' not in html
+        finally:
+            LayoutEngine._custom_renderers.pop('test_steps_handler', None)
+
 
 class TestFormModel:
     """Test the FormModel base class functionality."""

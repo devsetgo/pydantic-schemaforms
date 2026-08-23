@@ -26,6 +26,7 @@ from starlette.middleware.sessions import SessionMiddleware
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from examples.fastapi_routes import router
+from examples.datatable_import_example import router as datatable_router
 from pydantic_schemaforms import __version__ as _psf_version
 
 _openapi_tags = [
@@ -69,6 +70,10 @@ _openapi_tags = [
         'name': 'System',
         'description': 'Health check and static asset endpoints.',
     },
+    {
+        'name': 'CSV Import (DataTableLayout)',
+        'description': 'DataTableLayout — a file input for CSV import paired with an HTML table, validated row-by-row against a Pydantic model and progressively enhanced by DataTables.js.',
+    },
 ]
 
 app = FastAPI(
@@ -91,6 +96,7 @@ _base_dir = Path(__file__).resolve().parent
 app.mount('/static', StaticFiles(directory=_base_dir / 'img'), name='static')
 
 app.include_router(router)
+app.include_router(datatable_router)
 
 
 if __name__ == '__main__':

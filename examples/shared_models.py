@@ -2952,8 +2952,9 @@ class WidgetGalleryForm(FormModel):
     CSRF/honeypot/CAPTCHA are deliberately not included here -- they're
     route-level/security-flow concerns already demonstrated end-to-end on
     CompleteShowcaseForm's /showcase route, not "just another input type".
-    model_list is likewise covered elsewhere (PetRegistrationForm/TaskListForm)
-    since it's a composition mechanism, not a discrete widget.
+    model_list is likewise covered elsewhere (PetRegistrationForm/TaskListForm),
+    and DataTableLayout (CSV-import-to-table) at /employees/import, since both
+    are composition mechanisms rather than a discrete widget.
     """
 
     gallery: WidgetGalleryTabs = Field(

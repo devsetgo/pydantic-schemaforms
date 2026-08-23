@@ -1114,6 +1114,18 @@ async def gallery_get(
         enable_logging=True,
     )
 
+    # model_list and DataTableLayout are composition mechanisms, not discrete
+    # widgets (see WidgetGalleryForm's docstring), so they're cross-linked
+    # here rather than embedded as gallery fields.
+    form_html += (
+        '<div class="alert alert-info mt-4">'
+        '<strong>Looking for repeating sub-forms or CSV-import tables?</strong> '
+        'Those are composition mechanisms, not discrete widgets — see '
+        '<a href="/pets">/pets</a> (model_list) and '
+        '<a href="/employees/import">/employees/import</a> (DataTableLayout).'
+        '</div>'
+    )
+
     return templates.TemplateResponse(
         request,
         'form.html',
