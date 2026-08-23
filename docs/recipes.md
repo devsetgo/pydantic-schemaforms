@@ -668,7 +668,10 @@ instead of one instance's inputs: fields declared with
 formatted text. The table is progressively enhanced client-side by a
 vendored copy of [DataTables.js](https://datatables.net) (MIT-licensed, no
 jQuery required) for search/sort/paging, plus optional `csv`/`copy` export
-buttons.
+buttons. Since CSV import is what this class is *for*,
+`model_config["csv_upload"]` defaults to `True`: the rendered table already
+comes with a file input and "Load CSV"/"Submit" buttons built in — nobody
+declares a separate file field or hand-builds that markup.
 
 ```python
 from enum import Enum
@@ -690,131 +693,108 @@ class ContactImport(DataTableLayout):
 
 It is **not** rendered on its own — it's embedded as one *layout field* on
 a plain `FormModel`, exactly like `TabbedLayout`/any other layout (see
-`docs/plugin_hooks.md`), and rendered through the same `render_form_html()`
-call every other form in this library uses. A CSV upload field can sit
-right alongside it as an ordinary sibling field on that *same* `FormModel`
-— one `<form>`, handled by one route:
+`docs/plugin_hooks.md`), and rendered through the same
+`render_form_html_async()` call every other form in this library uses.
+That embedding `FormModel` needs nothing but the one field:
 
 ```python
 from typing import Any
-from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.schema_form import Field, FormModel
 
 class ContactsPage(FormModel):
-    csv_file: str = Field(
-        "", title="Import CSV (optional)", input_type="file",
-        ui_help_text="Upload a CSV to replace the table below, or edit cells directly.",
-    )
     rows: Any = Field(
         default_factory=dict, title="Contacts",
         input_type="layout", layout_handler="datatable",
     )
 
-html = render_form_html(
+html = await render_form_html_async(
     ContactsPage,
     form_data={"rows": ContactImport.as_layout_value(rows=current_rows, row_errors=row_errors)},
-    submit_url="/contacts/save",
+    submit_url="/contacts/import",
+    include_submit_button=False,  # ContactImport renders its own Submit -- see below
 )
 ```
 
-`render_form_html()` automatically adds `enctype="multipart/form-data"` to
-the `<form>` tag whenever any field (like `csv_file` above) is
-`input_type="file"` — without it, a browser's default form encoding sends
-only the chosen file's *name*, never its contents. Pass your own
-`enctype=` kwarg to override this.
-
 `layout_handler="datatable"` is registered automatically the moment you
 import anything from `pydantic_schemaforms.datatable_layout` — no manual
-registration step needed. `as_layout_value()` bundles the row model class
-alongside the current rows/errors so the renderer knows which columns to
-draw; it accepts `rows`, `row_errors`, `table_id`, `asset_mode`, and
-`include_assets`.
+registration step needed. The embedding `FormModel`'s framework
+(`bootstrap`/`material`/`none`), `debug`, and `show_timing` all apply to the
+table automatically — there's nothing DataTableLayout-specific to configure
+for those; they're just `render_form_html_async()`'s own parameters, same
+as any other form.
 
-The embedding `FormModel`'s framework (`bootstrap`/`material`/`none`),
-`debug`, and `show_timing` all apply to the table automatically — there's
-nothing DataTableLayout-specific to configure for those; they're just
-`render_form_html()`'s own parameters, same as any other form.
+### Why `include_submit_button=False`?
 
-### Why not a single bespoke `render_form()` for the whole thing?
+Because `csv_upload` is on, `ContactImport`'s own rendered output already
+includes a "Submit" button right below the table — pass
+`include_submit_button=False` so the embedding form doesn't *also* render
+its own generic one, which would leave two redundant "Submit"-ish controls
+on the page. This is safe without a nested `<form>`: a `<button
+type="submit">`/`<input type="file">` living inside this field's own slot
+still submits/attaches to whatever `<form>` the *embedding* FormModel
+opened — only a `<form>` nested inside another `<form>` is silently
+dropped by the browser's HTML parser, and DataTableLayout never renders
+one of its own (calling `ContactImport.render_form()` directly raises
+`NotImplementedError`, inherited from `CompositeLayoutModel` — see
+`docs/plugin_hooks.md` if you're building a similar composite of your own).
 
-An earlier version of this feature had `DataTableLayout.render_form(rows=,
-upload_url=, submit_url=, ...)` as its own, separate entry point — a
-different shape from every other form in this library. That's gone:
-calling it now raises `NotImplementedError` pointing here (inherited from
-`CompositeLayoutModel` — see `docs/plugin_hooks.md` if you're building a
-similar composite of your own). `DataTableLayout`
-is just a row schema; it's embedded as a single layout field like any other,
-via `as_layout_value()` — the file field above is an ordinary sibling
-*field*, not a second `<form>`. That distinction matters: a `<form>` nested
-inside another `<form>` is silently dropped by the browser's HTML parser,
-but a `<input type="file">` field living on the same `FormModel` as the
-table has no such problem — it's one form all along.
+If you don't want the built-in upload UI at all (e.g. a read-only display
+table, or your own custom upload flow), set `"csv_upload": False` in
+`model_config` — the embedding form's own default submit button then
+becomes "Submit" for the table's own editable cells, exactly like any other
+layout field.
 
 ### Load, review, then Submit — don't commit a CSV on one click
 
 A single submit button that immediately saves whatever CSV you chose gives
 you no chance to catch and fix bad rows (a typo'd address, an invalid
-color) before they land in your database. So use **two** submit buttons
-instead of one — `include_submit_button=False` suppresses the library's own
-button, and you splice in two plain `<button type="submit"
-name="datatable_action" value="...">` elements yourself: "Load" right next
-to the file field it acts on (immediately before the layout field's own
-wrapper, which every layout field renders as `<section
-class="layout-field-section ...">` — a stable, DataTableLayout-agnostic
-anchor), and "Submit" at the very end, since it acts on the table as a
-whole:
+color) before they land in your database. So the built-in UI is **two**
+buttons: "Load CSV" parses the chosen file and re-renders the table with
+those rows *for review* — validation errors show up highlighted, nothing
+is saved yet — and "Submit" saves whatever the table is currently showing.
 
-```python
-def render_page(rows, row_errors, *, reviewing=False) -> str:
-    html = render_form_html(
-        ContactsPage, form_data={"rows": ContactImport.as_layout_value(rows=rows, row_errors=row_errors)},
-        submit_url="/contacts/save", include_submit_button=False,
-    )
-    load_label = "Reload CSV" if reviewing else "Load CSV"
-    load_button = f'<button type="submit" name="datatable_action" value="load">{load_label}</button>'
-    html = html.replace('<section class="layout-field-section', load_button + '<section class="layout-field-section', 1)
-
-    submit_button = '<button type="submit" name="datatable_action" value="submit">Submit</button>'
-    return html.replace("</form>", submit_button + "</form>", 1)
-```
-
-Your route tells the two apart by `datatable_action`, not by whether a file
-happens to be present:
-
-- `datatable_action == "load"`: parse the chosen file with `parse_csv_rows()`
-  and re-render the table with those rows *for review* — validation errors
-  show up highlighted, exactly like any other error. Nothing gets saved.
-- `datatable_action == "submit"` (the default, so a plain fallback submit
-  still saves rather than silently doing nothing): save whatever the table
-  is currently showing, via `parse_submitted_rows()`.
+`handle_import_post()` on the model itself replaces hand-rolled
+load-vs-submit branching: it reads which button was clicked, parses
+accordingly (`parse_csv_rows()` for "Load", `parse_submitted_rows()` for
+"Submit" — the same default a plain fallback submit uses, so nothing is
+silently ignored), and returns an `ImportResult` with rows/row_errors
+already merged back into their original order (`merge_rows()` — an invalid
+row keeps its raw, as-typed values instead of vanishing):
 
 ```python
 form = await request.form()
-if form.get("datatable_action") == "load":
-    raw = await form["csv_file"].read()
-    rows, row_errors = ContactImport.parse_csv_rows(raw)
-    return render_page(rows, row_errors, reviewing=True)  # not saved yet
+result = await ContactImport.handle_import_post(form)
 
-rows, row_errors = ContactImport.parse_submitted_rows(form)
-save_to_database(rows)  # only Submit ever gets here
-return render_page(rows, row_errors)
+if result.action == "load":
+    # Preview only -- nothing committed. Re-render with reviewing=True so
+    # "Load CSV" relabels to "Reload CSV" and an info banner explains that.
+    return render_page(rows=result.rows, row_errors=result.row_errors, reviewing=True, notice=result.notice)
+
+save_to_database(result.rows)  # only "Submit" (result.action == "submit") ever gets here
+if result.has_errors:
+    return render_page(rows=result.rows, row_errors=result.row_errors)  # keep reviewing
+return show_success_page(result.rows)
 ```
 
-No server-side "staging" storage is needed to connect the two steps: the
+No server-side "staging" storage is needed to connect Load and Submit: the
 rows a CSV load rendered for review are already sitting in the table's own
 form fields (both the editable cells and the read-only cells' hidden
-inputs — see below), so whatever the browser submits on the *next* click,
-Load or Submit, already reflects any hand-fixes made in between. This is
-also why `parse_submitted_rows()` works identically whether the rows it's
-reading came from a CSV just loaded for review or from directly editing
-already-saved data — either way, it's just reading the table's current
-`rows[i].field` inputs.
+inputs — see below), so whatever the browser submits on the *next* click
+already reflects any hand-fixes made in between.
 
 Every read-only column also carries forward a hidden input with its
 current value, alongside its escaped display text — without that, a real
 browser submit would only include genuinely-editable cells' own inputs,
 and any read-only *required* field (like `name` above) would vanish from
 the submission and fail that row's validation on every save.
+
+`as_layout_value()`'s `reviewing`/`notice`/`discard_url` parameters only
+affect the built-in upload UI: `reviewing=True` relabels the button and
+shows the info banner described above; `notice=` shows a one-off warning
+banner instead (`handle_import_post()` returns one in `result.notice` when
+"Load" is clicked with no file chosen); `discard_url=` adds a "discard and
+start over" link to the reviewing banner.
 
 ### `model_config` keys
 
@@ -829,6 +809,7 @@ not reject unknown `model_config` keys at runtime):
 | `page_length` | `10` | Default rows per page. Always included as a choice in the "entries per page" dropdown, even if not listed in `length_menu`. |
 | `length_menu` | `[10, 25, 50, 100]` | Choices offered in the "entries per page" dropdown. |
 | `csv_template` | `False` | Render a "Download CSV template" link above the table, as a `data:` URI built from `ContactImport.csv_template_bytes()` — no server route needed. |
+| `csv_upload` | `True` | Render the built-in file input + "Load CSV"/"Submit" buttons described above. Set `False` for a bare table with no upload UI (see above). |
 | `style` | see below | Table-appearance flags (dict) — see next section. |
 
 ### Table appearance (`style`)
@@ -884,12 +865,15 @@ Bootstrap-ish classes as `framework="bootstrap"`.
 > render; and consider validating/importing in a background task instead
 > of inline in the request/response cycle for the largest files.
 
-### Complete example: one form, Load-then-Submit
+### Complete example: one field, one route
 
 A trimmed copy of `examples/datatable_import_example.py` (which also adds
 sample CSV files at 10/100/1,000/10,000 rows for trying the performance
 behavior above yourself) — run `python examples/main.py` and open
-`/employees/import`.
+`/employees/import`. Note how little of this is actually about the
+CSV-import mechanics: no file field, no button HTML, no load-vs-submit
+branching, no merge logic -- `EmployeeImport` and `handle_import_post()`
+own all of that.
 
 ```python
 from enum import Enum
@@ -898,7 +882,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, Response
 from pydantic import EmailStr
 
-from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms import render_form_html_async
 from pydantic_schemaforms.datatable_layout import DataTableLayout
 from pydantic_schemaforms.schema_form import Field, FormModel
 
@@ -908,8 +892,8 @@ class Department(str, Enum):
     support = "support"
 
 class EmployeeImport(DataTableLayout):
-    name: str
-    email: EmailStr
+    name: str = Field(..., input_type="text")
+    email: EmailStr = Field(..., input_type="email")
     department: Department = Field(Department.engineering, input_type="select")
 
     model_config = {
@@ -921,10 +905,8 @@ class EmployeeImport(DataTableLayout):
     }
 
 class EmployeeImportForm(FormModel):
-    """One form: a file field for bulk CSV import sits right above the
-    table itself (embedded as a layout field). "Load CSV" only previews a
-    file in the table below; "Submit" saves whatever the table shows."""
-    csv_file: str = Field("", title="Import CSV (optional)", input_type="file")
+    """One field -- EmployeeImport's own rendered output already includes
+    the file input and Load/Submit buttons (csv_upload defaults to True)."""
     employees: Any = Field(
         default_factory=dict, title="Employees",
         input_type="layout", layout_handler="datatable",
@@ -936,55 +918,36 @@ _ROW_ERRORS: dict[int, dict[str, str]] = {}
 
 router = APIRouter(prefix="/employees")
 
-def _merge(rows, row_errors) -> list[dict]:
-    errors_by_index = {e.row_index: e for e in row_errors}
-    valid = iter(r.model_dump(mode="json") for r in rows)
-    return [
-        errors_by_index[i].raw if i in errors_by_index else next(valid)
-        for i in range(len(rows) + len(row_errors))
-    ]
-
-def _render_page(style: str, *, rows=None, row_errors=None, reviewing=False) -> str:
-    html = render_form_html(
+async def _render_page(style: str, *, rows=None, row_errors=None, reviewing=False, notice="") -> str:
+    return await render_form_html_async(
         EmployeeImportForm, framework=style,
         form_data={"employees": EmployeeImport.as_layout_value(
             rows=_ROWS if rows is None else rows,
             row_errors=_ROW_ERRORS if row_errors is None else row_errors,
+            reviewing=reviewing, notice=notice, discard_url="/employees/import",
         )},
         submit_url="/employees/import", include_submit_button=False,
     )
-    # "Load" sits next to the file field it acts on, right before the
-    # table's own wrapper starts; "Submit" acts on the table as a whole,
-    # so it goes at the very end instead.
-    load_label = "Reload CSV" if reviewing else "Load CSV"
-    load_button = f'<button type="submit" name="datatable_action" value="load">{load_label}</button>'
-    html = html.replace('<section class="layout-field-section', load_button + '<section class="layout-field-section', 1)
-
-    submit_button = '<button type="submit" name="datatable_action" value="submit">Submit</button>'
-    return html.replace("</form>", submit_button + "</form>", 1)
 
 @router.get("/import", response_class=HTMLResponse)
-def show_import(style: str = "bootstrap"):
-    return _render_page(style)
+async def show_import(style: str = "bootstrap"):
+    return await _render_page(style)
 
 @router.post("/import", response_class=HTMLResponse)
 async def import_or_save(request: Request, style: str = "bootstrap"):
-    """Two submit buttons, told apart by datatable_action:
-    - "load": preview the chosen CSV in the table -- never touches _ROWS.
-    - "submit" (default): save whatever the table is currently showing."""
     global _ROWS, _ROW_ERRORS
-    form = await request.form()
+    result = await EmployeeImport.handle_import_post(await request.form())
 
-    if form.get("datatable_action") == "load":
-        raw = await form["csv_file"].read()
-        rows, row_errors = EmployeeImport.parse_csv_rows(raw)
-        preview_rows = _merge(rows, row_errors)
-        preview_errors = {e.row_index: e.errors for e in row_errors}
-        return _render_page(style, rows=preview_rows, row_errors=preview_errors, reviewing=True)
+    if result.action == "load":
+        return await _render_page(
+            style, rows=result.rows, row_errors=result.row_errors,
+            reviewing=True, notice=result.notice,
+        )
 
-    rows, row_errors = EmployeeImport.parse_submitted_rows(form)
-    _ROWS, _ROW_ERRORS = _merge(rows, row_errors), {e.row_index: e.errors for e in row_errors}
-    return _render_page(style)
+    _ROWS, _ROW_ERRORS = result.rows, result.row_errors
+    if result.has_errors:
+        return await _render_page(style)  # keep reviewing until it's all valid
+    return show_success_page(result.rows)  # your own success page
 
 @router.get("/import/template.csv")
 def download_template() -> Response:
