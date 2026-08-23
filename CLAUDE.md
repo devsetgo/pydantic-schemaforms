@@ -62,11 +62,15 @@ links there.
 
 ```
 pydantic_schemaforms/
-  tstring.py          # SafeHTML + html() processor — the XSS safety core
-  templates.py        # FormTemplates: t-string render functions for form elements
+  tstring.py           # SafeHTML + html() processor — the XSS safety core
+  templates.py         # FormTemplates: t-string render functions for form elements
+  composite_layout.py  # CompositeLayoutModel — base for FormModel-shaped composites
+  datatable_layout.py  # DataTableLayout — reference composite (CSV-import-to-table)
   rendering/
-    form_style.py     # FormStyle / FormStyleTemplates — framework-specific templates
-    layout_engine.py  # Layout rendering pipeline
+    form_style.py           # FormStyle / FormStyleTemplates — framework-specific templates
+    layout_engine.py        # Layout rendering pipeline + composite-renderer registry
+    datatable_renderer.py   # DataTableLayout's registered renderer
+    model_list_renderer.py  # model_list's registered renderer
   inputs/             # Field-level input classes
   integration/        # Framework adapters (FastAPI, Flask)
 examples/             # Live usage examples (not part of the package)
@@ -162,6 +166,58 @@ def _my_wrapper(*, content: str = '') -> SafeHTML:
     _content = SafeHTML(content)          # already-rendered HTML — pass through
     return html(t'<section>{_content}</section>')
 ```
+
+## Composite layout controls — reuse this pattern, don't invent a new one
+
+A "composite" control renders something bigger than a single input — a
+whole table, a repeating list of sub-forms, wizard steps, and similar.
+`DataTableLayout` (CSV-import-to-table) and `model_list` (repeating
+sub-form items) are the two shipped examples; both go through the same
+mechanism below. **When asked to build a new composite control, reuse this
+mechanism instead of hand-rolling a bespoke rendering path** — this
+codebase used to have three inconsistent ones (DataTableLayout's registry,
+model_list's hardcoded dispatch branch, `form_layouts.py`'s unrelated
+multi-FormModel orchestrators) before they were consolidated into this.
+Full details and worked examples: `docs/plugin_hooks.md`.
+
+- **`CompositeLayoutModel`** (`pydantic_schemaforms/composite_layout.py`) —
+  subclass this instead of `FormModel` directly when the composite's *own
+  fields ARE its structure* (table columns, wizard steps, ...), meant to be
+  embedded as a layout field and never rendered on its own. It disables
+  `render_form()` with a `NotImplementedError` pointing at the class's own
+  value-bundling classmethod (the `as_layout_value()` convention
+  `DataTableLayout` uses), since `FormModel.render_form()`'s single-instance
+  data/errors/submit_url shape doesn't apply. Not every composite needs
+  this base — `model_list` doesn't, since its item model is just an
+  ordinary, unmodified `FormModel` referenced via a `list[ItemModel]`
+  annotation, not a wrapper class of its own.
+- **Register the renderer** via `@LayoutEngine.layout_renderer(name)`
+  (`pydantic_schemaforms/rendering/layout_engine.py`), in its own dedicated
+  `rendering/<name>_renderer.py` module — not inline in
+  `field_renderer.py`'s general field-dispatch logic.
+- **Always keep `builtin=True`** (the decorator's default) for a renderer
+  shipped by this library. `LayoutEngine.reset_layout_renderers()` is
+  called by several test fixtures between tests across this project's own
+  suite; module-level registration only ever runs once per process, so a
+  non-builtin renderer is silently wiped for the rest of the process the
+  first time that fires. Only one-off/app-level/test-only renderers should
+  pass `builtin=False` (the plain `register_layout_renderer()` default).
+- **Two independent dispatch keyspaces**, same registry: `layout_handler`
+  (`input_type="layout"` + a `layout_handler` name — the field's own
+  *value* carries what the renderer needs, as `DataTableLayout` does) or
+  `ui_element` (the field's own `input_type`/`ui_element` string, looked up
+  directly via `LayoutEngine.get_renderer_for_element` — as `model_list`
+  does, with no change to its field-declaration API). Pick whichever
+  matches how the composite's data actually flows in. Don't repurpose
+  `input_type="layout"` for something that isn't shaped like a layout
+  field — it also drives `SchemaMetadata.layout_fields` grouping and
+  auto-tabbing behavior elsewhere in the renderer.
+- `form_layouts.py`'s `TabbedLayout`/`VerticalLayout`/`HorizontalLayout`/
+  `ListLayout` are a deliberately separate, out-of-scope mechanism — they
+  orchestrate multiple independent `FormModel`s rendered together (their
+  own `render()`/`validate()`, composed explicitly by app code), not one
+  field rendering something complex. Don't fold a new composite into that
+  family instead of this one without asking first.
 
 ## Coding standards
 

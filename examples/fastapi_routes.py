@@ -29,12 +29,16 @@ Layouts demonstrated:
 import hmac
 import os
 import secrets
+import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import markdown as _markdown
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
+from loguru import logger
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; Pet Forms; Layout Demonstration; Utility functions
     SHOWCASE_CAPTCHA_SECRET,
@@ -303,6 +307,36 @@ _base_dir = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=_base_dir / 'templates')
 
 
+@contextmanager
+def log_timing(label: str, **context: object):
+    """Log how long the wrapped block took -- used to narrow down which
+    step of a slow request (form render, CSV parsing, template render, ...)
+    is actually the bottleneck, rather than guessing from total request time."""
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        suffix = ' '.join(f'{key}={value}' for key, value in context.items())
+        logger.info(f'{label} took {elapsed_ms:.1f}ms' + (f' ({suffix})' if suffix else ''))
+
+
+class RequestTimingMiddleware(BaseHTTPMiddleware):
+    """Logs total wall-clock time for every request/response -- covers every
+    route (including ones nobody hand-wrapped in log_timing, like /vendor/*
+    or a page we haven't gotten to yet), so "how long did this page take"
+    always has an answer without needing per-route instrumentation."""
+
+    async def dispatch(self, request: Request, call_next):
+        start = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        logger.info(
+            f'{request.method} {request.url.path} -> {response.status_code} in {elapsed_ms:.1f}ms'
+        )
+        return response
+
+
 # Add custom JSON filter that handles date objects
 def safe_json_filter(obj):
     """Custom JSON filter that handles date/datetime objects."""
@@ -354,6 +388,23 @@ async def vendor_bootstrap_icons_css():
 async def vendor_htmx_js():
     """Serve the vendored HTMX JavaScript."""
     js = read_asset_text('assets/vendor/htmx/htmx.min.js')
+    return Response(content=js, media_type='application/javascript')
+
+
+@router.get('/vendor/bootstrap.min.css', tags=['System'])
+async def vendor_bootstrap_css():
+    """Serve the vendored Bootstrap CSS -- shared_base.html used to pull this
+    from cdn.jsdelivr.net as a render-blocking <link>, which added several
+    seconds per page load whenever the CDN was slow to reach (e.g. from a
+    devcontainer's forwarded browser). Same fix as bootstrap-icons above."""
+    css = read_asset_text('assets/vendor/bootstrap/bootstrap.min.css')
+    return Response(content=css, media_type='text/css')
+
+
+@router.get('/vendor/bootstrap.bundle.min.js', tags=['System'])
+async def vendor_bootstrap_js():
+    """Serve the vendored Bootstrap JS bundle (see vendor_bootstrap_css)."""
+    js = read_asset_text('assets/vendor/bootstrap/bootstrap.bundle.min.js')
     return Response(content=js, media_type='application/javascript')
 
 
@@ -1112,6 +1163,18 @@ async def gallery_get(
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
+    )
+
+    # model_list and DataTableLayout are composition mechanisms, not discrete
+    # widgets (see WidgetGalleryForm's docstring), so they're cross-linked
+    # here rather than embedded as gallery fields.
+    form_html += (
+        '<div class="alert alert-info mt-4">'
+        '<strong>Looking for repeating sub-forms or CSV-import tables?</strong> '
+        'Those are composition mechanisms, not discrete widgets — see '
+        '<a href="/pets">/pets</a> (model_list) and '
+        '<a href="/employees/import">/employees/import</a> (DataTableLayout).'
+        '</div>'
     )
 
     return templates.TemplateResponse(

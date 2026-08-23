@@ -25,8 +25,37 @@ from starlette.middleware.sessions import SessionMiddleware
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from examples.fastapi_routes import router
+from examples.fastapi_routes import RequestTimingMiddleware, router
+from examples.datatable_import_example import router as datatable_router
 from pydantic_schemaforms import __version__ as _psf_version
+
+from dsg_lib.common_functions.logging_config import config_log
+
+if 'pytest' not in sys.modules:
+    # config_log() reconfigures the *global* logging module (strips
+    # handlers, flips propagate on every logger) -- tests import this
+    # module (via examples.main.app) just to get a TestClient, and running
+    # it under pytest would leak that reconfiguration into unrelated tests
+    # in the same worker process.
+    #
+    # logging_directory is anchored to this file's own directory (not a
+    # bare relative path) because config_log()'s SafeFileSink opens the log
+    # file relative to the process's cwd, which varies by how this app is
+    # started: `make ex-run` cd's into examples/ first, but the demo
+    # Docker image runs `uvicorn examples.main:app` from /app -- a bare
+    # 'logs' would then resolve to a directory that's never created.
+    _logs_dir = Path(__file__).resolve().parent / 'logs'
+    _logs_dir.mkdir(parents=True, exist_ok=True)
+    config_log(
+        logging_directory=str(_logs_dir),  # Directory for storing logs
+        log_name='log',  # Base name for log files
+        logging_level='DEBUG',  # Minimum logging level
+        log_rotation='100 MB',  # Size threshold for log rotation
+        log_retention='30 days',  # Duration to retain old log files
+        enqueue=True,  # Enqueue log messages
+        log_propagate=False,  # Control log propagation
+    )
+
 
 _openapi_tags = [
     {
@@ -69,6 +98,10 @@ _openapi_tags = [
         'name': 'System',
         'description': 'Health check and static asset endpoints.',
     },
+    {
+        'name': 'CSV Import (DataTableLayout)',
+        'description': 'DataTableLayout — a file input for CSV import paired with an HTML table, validated row-by-row against a Pydantic model and progressively enhanced by DataTables.js.',
+    },
 ]
 
 app = FastAPI(
@@ -84,6 +117,9 @@ app.add_middleware(
     same_site='lax',
     https_only=False,
 )
+# Added last so it's outermost -- times the whole request/response cycle,
+# session middleware included, for every route.
+app.add_middleware(RequestTimingMiddleware)
 
 _base_dir = Path(__file__).resolve().parent
 
@@ -91,6 +127,7 @@ _base_dir = Path(__file__).resolve().parent
 app.mount('/static', StaticFiles(directory=_base_dir / 'img'), name='static')
 
 app.include_router(router)
+app.include_router(datatable_router)
 
 
 if __name__ == '__main__':

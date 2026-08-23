@@ -524,6 +524,8 @@ class LayoutEngine:
     """Encapsulates layout rendering routines for form renderers."""
 
     _custom_renderers: dict[str, LayoutRenderer] = {}
+    _builtin_renderer_names: set[str] = set()
+    _multipart_predicates: dict[str, Callable[[Any], bool]] = {}
 
     def __init__(self, renderer: 'EnhancedFormRenderer') -> None:
         self._renderer = renderer
@@ -532,18 +534,95 @@ class LayoutEngine:
     # Registration hooks
     # ------------------------------------------------------------------
     @classmethod
-    def register_layout_renderer(cls, name: str, renderer: LayoutRenderer) -> None:
-        """Register a custom layout renderer callable by name."""
+    def register_layout_renderer(
+        cls,
+        name: str,
+        renderer: LayoutRenderer,
+        *,
+        builtin: bool = False,
+        requires_multipart: Callable[[Any], bool] | None = None,
+    ) -> None:
+        """Register a custom layout renderer callable by name.
+
+        `builtin=True` marks a renderer shipped by this library itself
+        (e.g. DataTableLayout's/model_list's) so it survives
+        `reset_layout_renderers()` -- module-level registration only runs
+        once per process, so a test-suite-wide reset would otherwise wipe
+        it permanently for the rest of the run. One-off/test/app-level
+        renderers should leave this False so `reset_layout_renderers()`
+        still clears them between tests.
+
+        `requires_multipart`: pass a callable when this renderer might emit
+        its own `<input type="file">` inside the field's own output (as
+        DataTableLayout's does when `csv_upload` is on) -- a *nested* file
+        input like that isn't a top-level FormModel field, so the form's
+        own file-field scan (which only sees this field's `layout` element,
+        not what it renders) can never discover it on its own, and the
+        enclosing `<form>` would silently miss `enctype="multipart/form-
+        data"` -- without which a browser sends only the chosen file's
+        *name*, never its contents. Called with this field's raw value
+        (whatever `as_layout_value()`-equivalent built) at render time;
+        return whether *that specific value* needs multipart encoding.
+        """
 
         if not callable(renderer):  # pragma: no cover - defensive
             raise TypeError('renderer must be callable')
         cls._custom_renderers[name] = renderer
+        if builtin:
+            cls._builtin_renderer_names.add(name)
+        if requires_multipart is not None:
+            cls._multipart_predicates[name] = requires_multipart
+
+    @classmethod
+    def layout_renderer(
+        cls,
+        name: str,
+        *,
+        builtin: bool = True,
+        requires_multipart: Callable[[Any], bool] | None = None,
+    ) -> Callable[[LayoutRenderer], LayoutRenderer]:
+        """Decorator form of `register_layout_renderer`, defaulting to
+        `builtin=True` since it's meant for this library's own composite
+        controls, registered once at import time."""
+
+        def decorator(func: LayoutRenderer) -> LayoutRenderer:
+            cls.register_layout_renderer(
+                name, func, builtin=builtin, requires_multipart=requires_multipart
+            )
+            return func
+
+        return decorator
+
+    @classmethod
+    def get_renderer_for_element(cls, ui_element: str | None) -> LayoutRenderer | None:
+        """Look up a registered renderer directly by a field's own
+        ui_element/input_type string (the second, independent keyspace --
+        see `_build_layout_body` for the `layout_handler`-keyed lookup used
+        by `input_type='layout'` fields instead)."""
+
+        return cls._custom_renderers.get(ui_element) if ui_element else None
+
+    @classmethod
+    def layout_field_needs_multipart(cls, handler_name: str | None, value: Any) -> bool:
+        """Whether a `layout_handler`-dispatched field's *current value*
+        will render its own file input -- see `requires_multipart` above."""
+
+        if not handler_name:
+            return False
+        predicate = cls._multipart_predicates.get(handler_name)
+        return bool(predicate(value)) if predicate else False
 
     @classmethod
     def reset_layout_renderers(cls) -> None:
-        """Clear custom layout renderers (useful in tests)."""
+        """Clear non-builtin custom layout renderers (useful in tests)."""
 
-        cls._custom_renderers.clear()
+        # Snapshot the names to delete into a set first -- deleting from
+        # cls._custom_renderers while iterating it directly would raise
+        # RuntimeError: dictionary changed size during iteration.
+        non_builtin_names = set(cls._custom_renderers) - cls._builtin_renderer_names
+        for name in non_builtin_names:
+            cls._multipart_predicates.pop(name, None)
+            del cls._custom_renderers[name]
 
     # ------------------------------------------------------------------
     # Public API used by EnhancedFormRenderer

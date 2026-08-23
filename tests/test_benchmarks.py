@@ -9,11 +9,14 @@ Or together with the test suite:
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Optional
 
+import pytest
 from pydantic import EmailStr
 
 from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms.datatable_layout import DataTableLayout
 from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
 from pydantic_schemaforms.schema_form import Field, FormModel
 
@@ -174,3 +177,67 @@ def test_bench_fields_only_large(benchmark) -> None:
     """Benchmark rendering fields only (no form wrapper) for large form."""
     renderer = EnhancedFormRenderer(framework='bootstrap')
     benchmark(renderer.render_form_fields_only, LargeForm)
+
+
+# ---------------------------------------------------------------------------
+# Benchmarks: DataTableLayout (CSV parse+validate, and table rendering) at
+# increasing row counts. See docs/recipes.md's "Large-file uploads" section
+# for the user-facing performance note these numbers back up -- rendering
+# (not parsing) dominates at scale, since every editable cell instantiates
+# and renders its own input widget.
+# ---------------------------------------------------------------------------
+
+
+class _BenchDepartment(str, Enum):
+    engineering = 'engineering'
+    sales = 'sales'
+    support = 'support'
+
+
+class _BenchEmployeeImport(DataTableLayout):
+    name: str
+    email: str
+    department: _BenchDepartment = Field(_BenchDepartment.engineering, ui_element='select')
+
+    model_config = {'buttons': ['csv', 'copy'], 'search': True}
+
+
+def _bench_csv_bytes(count: int) -> bytes:
+    departments = ('engineering', 'sales', 'support')
+    lines = ['name,email,department']
+    lines.extend(f'Person {i},person{i}@example.com,{departments[i % 3]}' for i in range(count))
+    return ('\n'.join(lines) + '\n').encode('utf-8')
+
+
+_BENCH_CSV_BY_SIZE = {n: _bench_csv_bytes(n) for n in (10, 100, 1000, 10000)}
+_BENCH_ROWS_BY_SIZE = {
+    n: [row.model_dump(mode='json') for row in _BenchEmployeeImport.parse_csv_rows(csv_bytes)[0]]
+    for n, csv_bytes in _BENCH_CSV_BY_SIZE.items()
+}
+
+
+@pytest.mark.parametrize('size', [10, 100, 1000, 10000])
+def test_bench_datatable_parse_csv_rows(benchmark, size: int) -> None:
+    benchmark(_BenchEmployeeImport.parse_csv_rows, _BENCH_CSV_BY_SIZE[size])
+
+
+class _BenchEmployeeImportPage(FormModel):
+    """Embeds _BenchEmployeeImport as its one layout field -- the only way
+    a DataTableLayout subclass renders (see datatable_layout.py)."""
+
+    rows: object = Field(
+        default_factory=dict, title='Rows', input_type='layout', layout_handler='datatable'
+    )
+
+
+def _bench_render_datatable(rows: list[dict]) -> str:
+    return render_form_html(
+        _BenchEmployeeImportPage,
+        form_data={'rows': _BenchEmployeeImport.as_layout_value(rows=rows, include_assets=False)},
+        submit_url='/save',
+    )
+
+
+@pytest.mark.parametrize('size', [10, 100, 1000, 10000])
+def test_bench_datatable_render_form(benchmark, size: int) -> None:
+    benchmark(_bench_render_datatable, _BENCH_ROWS_BY_SIZE[size])

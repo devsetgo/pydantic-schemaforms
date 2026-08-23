@@ -9,7 +9,6 @@ Create Date: 2026-03-08 01:14:12.574249
 from __future__ import annotations
 
 
-
 # revision identifiers, used by Alembic.
 revision = '26_3_7_6'
 down_revision = '26_3_7_5'

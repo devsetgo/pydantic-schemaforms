@@ -51,6 +51,7 @@ def Field(
     max_length: int | None = None,
     min_length: int | None = None,
     # UI-specific parameters
+    input_type: str | None = None,
     ui_element: str | None = None,
     ui_widget: str | None = None,
     ui_autofocus: bool | None = None,
@@ -67,6 +68,8 @@ def Field(
     ui_item_title_template: str | None = None,
     ui_collapsible_items: bool | None = None,
     ui_items_expanded: bool | None = None,
+    layout_handler: str | None = None,
+    layout_renderer: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -76,6 +79,14 @@ def Field(
     # Collect UI attributes
     ui_attrs = {}
     ui_params = {
+        # 'input_type' is a widely-used alias for 'ui_element' (resolve_ui_element()
+        # checks both). Declared as a real parameter -- rather than left to fall
+        # into **kwargs -- because pydantic's Field() only shims *unrecognized*
+        # kwargs into json_schema_extra when that dict is otherwise empty; combined
+        # with any other ui_* parameter here (which already populates
+        # json_schema_extra), an unrecognized 'input_type' kwarg was silently
+        # dropped instead of merged.
+        'input_type': input_type,
         'ui_element': ui_element,
         'ui_widget': ui_widget,
         'ui_autofocus': ui_autofocus,
@@ -92,6 +103,12 @@ def Field(
         'ui_item_title_template': ui_item_title_template,
         'ui_collapsible_items': ui_collapsible_items,
         'ui_items_expanded': ui_items_expanded,
+        # Same fix as input_type above: LayoutEngine._build_layout_body()
+        # reads these straight (no 'ui_' prefix), and they're just as
+        # likely to be combined with another ui_*/input_type parameter
+        # (input_type='layout' is required to dispatch here at all).
+        'layout_handler': layout_handler,
+        'layout_renderer': layout_renderer,
     }
 
     # Filter out None values and add to json_schema_extra

@@ -252,3 +252,65 @@ def bootstrap_icons_css_tag(*, asset_mode: str = 'vendored') -> str:
         )
     css = _bootstrap_icons_css_inlined()
     return style_tag_inline(css) if css else ''
+
+
+def datatables_css_tag(*, asset_mode: str = 'vendored') -> str:
+    """Return the DataTables <style>/<link> tag based on the requested asset mode."""
+    mode = _normalized_asset_mode(asset_mode)
+    if mode == 'none':
+        return ''
+    if mode == 'cdn':
+        return style_tag_href(
+            _pinned_jsdelivr_url(
+                'datatables.net-dt', 'datatables', 'css/dataTables.dataTables.min.css'
+            )
+        )
+    css = _vendored_text_or_empty('assets/vendor/datatables/dataTables.min.css')
+    return style_tag_inline(css) if css else ''
+
+
+def datatables_script_tag(*, asset_mode: str = 'vendored') -> str:
+    """Return the DataTables core <script> tag based on the requested asset mode."""
+    mode = _normalized_asset_mode(asset_mode)
+    if mode == 'none':
+        return ''
+    if mode == 'cdn':
+        return script_tag_src(
+            _pinned_jsdelivr_url('datatables.net', 'datatables', 'js/dataTables.min.js')
+        )
+    js = _vendored_text_or_empty('assets/vendor/datatables/dataTables.min.js')
+    return script_tag_inline(js) if js else ''
+
+
+def datatables_buttons_css_tag(*, asset_mode: str = 'vendored') -> str:
+    """Return the DataTables Buttons <style>/<link> tag based on the requested asset mode."""
+    mode = _normalized_asset_mode(asset_mode)
+    if mode == 'none':
+        return ''
+    if mode == 'cdn':
+        return style_tag_href(
+            _pinned_jsdelivr_url(
+                'datatables.net-buttons-dt', 'datatables-buttons', 'css/buttons.dataTables.min.css'
+            )
+        )
+    css = _vendored_text_or_empty('assets/vendor/datatables-buttons/buttons.dataTables.min.css')
+    return style_tag_inline(css) if css else ''
+
+
+def datatables_buttons_script_tag(*, asset_mode: str = 'vendored') -> str:
+    """Return the DataTables Buttons core + HTML5 export <script> tags (csv/copy only; no Excel/PDF)."""
+    mode = _normalized_asset_mode(asset_mode)
+    if mode == 'none':
+        return ''
+    if mode == 'cdn':
+        core_url = _pinned_jsdelivr_url(
+            'datatables.net-buttons', 'datatables-buttons', 'js/dataTables.buttons.min.js'
+        )
+        html5_url = _pinned_jsdelivr_url(
+            'datatables.net-buttons', 'datatables-buttons', 'js/buttons.html5.min.js'
+        )
+        return script_tag_src(core_url) + '\n' + script_tag_src(html5_url)
+    core_js = _vendored_text_or_empty('assets/vendor/datatables-buttons/dataTables.buttons.min.js')
+    html5_js = _vendored_text_or_empty('assets/vendor/datatables-buttons/buttons.html5.min.js')
+    parts = [script_tag_inline(js) for js in (core_js, html5_js) if js]
+    return '\n'.join(parts)
