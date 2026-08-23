@@ -580,9 +580,12 @@ class LayoutEngine:
     def reset_layout_renderers(cls) -> None:
         """Clear non-builtin custom layout renderers (useful in tests)."""
 
-        for name in list(cls._custom_renderers):
-            if name not in cls._builtin_renderer_names:
-                del cls._custom_renderers[name]
+        # Snapshot the names to delete into a set first -- deleting from
+        # cls._custom_renderers while iterating it directly would raise
+        # RuntimeError: dictionary changed size during iteration.
+        non_builtin_names = set(cls._custom_renderers) - cls._builtin_renderer_names
+        for name in non_builtin_names:
+            del cls._custom_renderers[name]
 
     # ------------------------------------------------------------------
     # Public API used by EnhancedFormRenderer
