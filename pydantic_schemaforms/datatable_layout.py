@@ -32,7 +32,7 @@ from typing import Any, ClassVar, Literal, TypedDict
 
 from pydantic import ValidationError
 
-from .schema_form import FormModel
+from .composite_layout import CompositeLayoutModel
 
 # Importing this registers the 'datatable' layout_handler (LayoutEngine
 # .register_layout_renderer) as a side effect at import time -- without it,
@@ -99,7 +99,7 @@ class RowError:
     raw: dict[str, Any] = field(default_factory=dict)
 
 
-class DataTableLayout(FormModel):
+class DataTableLayout(CompositeLayoutModel):
     """FormModel whose fields are table columns instead of one instance's
     inputs -- embedded as a layout field on a plain FormModel, not rendered
     on its own. See the module docstring and ``docs/recipes.md``.
@@ -238,17 +238,3 @@ class DataTableLayout(FormModel):
             'asset_mode': asset_mode,
             'include_assets': include_assets,
         }
-
-    @classmethod
-    def render_form(cls, *args: Any, **kwargs: Any) -> str:
-        """Not supported -- ``DataTableLayout`` renders many rows, not one
-        instance, so ``FormModel.render_form()``'s single-instance
-        data/errors/submit_url shape doesn't apply. Embed it as a layout
-        field instead: see the class/module docstring and
-        ``as_layout_value()``.
-        """
-        raise NotImplementedError(
-            f'{cls.__name__}.render_form() is not supported -- DataTableLayout renders as a '
-            "layout field on a plain FormModel (input_type='layout', layout_handler='datatable'), "
-            'not on its own. See DataTableLayout.as_layout_value() and docs/recipes.md.'
-        )

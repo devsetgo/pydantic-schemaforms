@@ -740,7 +740,9 @@ nothing DataTableLayout-specific to configure for those; they're just
 An earlier version of this feature had `DataTableLayout.render_form(rows=,
 upload_url=, submit_url=, ...)` as its own, separate entry point — a
 different shape from every other form in this library. That's gone:
-calling it now raises `NotImplementedError` pointing here. `DataTableLayout`
+calling it now raises `NotImplementedError` pointing here (inherited from
+`CompositeLayoutModel` — see `docs/plugin_hooks.md` if you're building a
+similar composite of your own). `DataTableLayout`
 is just a row schema; it's embedded as a single layout field like any other,
 via `as_layout_value()` — the file field above is an ordinary sibling
 *field*, not a second `<form>`. That distinction matters: a `<form>` nested

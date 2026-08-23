@@ -524,6 +524,7 @@ class LayoutEngine:
     """Encapsulates layout rendering routines for form renderers."""
 
     _custom_renderers: dict[str, LayoutRenderer] = {}
+    _builtin_renderer_names: set[str] = set()
 
     def __init__(self, renderer: 'EnhancedFormRenderer') -> None:
         self._renderer = renderer
@@ -532,18 +533,56 @@ class LayoutEngine:
     # Registration hooks
     # ------------------------------------------------------------------
     @classmethod
-    def register_layout_renderer(cls, name: str, renderer: LayoutRenderer) -> None:
-        """Register a custom layout renderer callable by name."""
+    def register_layout_renderer(
+        cls, name: str, renderer: LayoutRenderer, *, builtin: bool = False
+    ) -> None:
+        """Register a custom layout renderer callable by name.
+
+        `builtin=True` marks a renderer shipped by this library itself
+        (e.g. DataTableLayout's/model_list's) so it survives
+        `reset_layout_renderers()` -- module-level registration only runs
+        once per process, so a test-suite-wide reset would otherwise wipe
+        it permanently for the rest of the run. One-off/test/app-level
+        renderers should leave this False so `reset_layout_renderers()`
+        still clears them between tests.
+        """
 
         if not callable(renderer):  # pragma: no cover - defensive
             raise TypeError('renderer must be callable')
         cls._custom_renderers[name] = renderer
+        if builtin:
+            cls._builtin_renderer_names.add(name)
+
+    @classmethod
+    def layout_renderer(
+        cls, name: str, *, builtin: bool = True
+    ) -> Callable[[LayoutRenderer], LayoutRenderer]:
+        """Decorator form of `register_layout_renderer`, defaulting to
+        `builtin=True` since it's meant for this library's own composite
+        controls, registered once at import time."""
+
+        def decorator(func: LayoutRenderer) -> LayoutRenderer:
+            cls.register_layout_renderer(name, func, builtin=builtin)
+            return func
+
+        return decorator
+
+    @classmethod
+    def get_renderer_for_element(cls, ui_element: str | None) -> LayoutRenderer | None:
+        """Look up a registered renderer directly by a field's own
+        ui_element/input_type string (the second, independent keyspace --
+        see `_build_layout_body` for the `layout_handler`-keyed lookup used
+        by `input_type='layout'` fields instead)."""
+
+        return cls._custom_renderers.get(ui_element) if ui_element else None
 
     @classmethod
     def reset_layout_renderers(cls) -> None:
-        """Clear custom layout renderers (useful in tests)."""
+        """Clear non-builtin custom layout renderers (useful in tests)."""
 
-        cls._custom_renderers.clear()
+        for name in list(cls._custom_renderers):
+            if name not in cls._builtin_renderer_names:
+                del cls._custom_renderers[name]
 
     # ------------------------------------------------------------------
     # Public API used by EnhancedFormRenderer
