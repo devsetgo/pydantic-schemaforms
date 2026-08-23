@@ -30,7 +30,7 @@ into `field_renderer`, kept as a parameter only for a uniform signature.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from pydantic_schemaforms.tstring import SafeHTML, html
 
@@ -39,6 +39,18 @@ from .layout_engine import LayoutEngine
 if TYPE_CHECKING:
     from .context import RenderContext
     from .field_renderer import FieldRenderer
+
+
+@runtime_checkable
+class _ModelDumpable(Protocol):
+    """Anything with a `model_dump()` method -- not narrowed to
+    pydantic's `BaseModel` specifically, since `_normalize_model_list_value`
+    deliberately accepts any model-dump-able object (see its docstring).
+    A `hasattr(item, 'model_dump')` check does the same thing at runtime but
+    pyright can't narrow through it; isinstance against a runtime_checkable
+    Protocol gets the same duck typing with real narrowing."""
+
+    def model_dump(self) -> dict[str, Any]: ...
 
 
 def _normalize_model_list_value(value: Any) -> list[dict[str, Any]]:
@@ -52,11 +64,11 @@ def _normalize_model_list_value(value: Any) -> list[dict[str, Any]]:
         return []
     if isinstance(value, list):
         return [
-            item.model_dump() if hasattr(item, 'model_dump') else item
+            item.model_dump() if isinstance(item, _ModelDumpable) else item
             for item in value
-            if hasattr(item, 'model_dump') or isinstance(item, dict)
+            if isinstance(item, (_ModelDumpable, dict))
         ]
-    if hasattr(value, 'model_dump'):
+    if isinstance(value, _ModelDumpable):
         return [value.model_dump()]
     if isinstance(value, dict):
         return [value]
