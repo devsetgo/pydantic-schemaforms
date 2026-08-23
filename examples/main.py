@@ -37,8 +37,17 @@ if 'pytest' not in sys.modules:
     # module (via examples.main.app) just to get a TestClient, and running
     # it under pytest would leak that reconfiguration into unrelated tests
     # in the same worker process.
+    #
+    # logging_directory is anchored to this file's own directory (not a
+    # bare relative path) because config_log()'s SafeFileSink opens the log
+    # file relative to the process's cwd, which varies by how this app is
+    # started: `make ex-run` cd's into examples/ first, but the demo
+    # Docker image runs `uvicorn examples.main:app` from /app -- a bare
+    # 'logs' would then resolve to a directory that's never created.
+    _logs_dir = Path(__file__).resolve().parent / 'logs'
+    _logs_dir.mkdir(parents=True, exist_ok=True)
     config_log(
-        logging_directory='logs',  # Directory for storing logs
+        logging_directory=str(_logs_dir),  # Directory for storing logs
         log_name='log',  # Base name for log files
         logging_level='DEBUG',  # Minimum logging level
         log_rotation='100 MB',  # Size threshold for log rotation
