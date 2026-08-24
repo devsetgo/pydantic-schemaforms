@@ -1,5 +1,26 @@
 [
   {
+    "operation_id": "20260824_011248_717",
+    "timestamp": "2026-08-24T01:12:48.730823",
+    "version": "26.3.6",
+    "files_updated": [
+      "/workspaces/pydantic-schemaforms/makefile",
+      "/workspaces/pydantic-schemaforms/pyproject.toml",
+      "/workspaces/pydantic-schemaforms/pydantic_schemaforms/__init__.py",
+      "/workspaces/pydantic-schemaforms/sonar-project.properties"
+    ],
+    "backups": {
+      "/workspaces/pydantic-schemaforms/makefile": "/workspaces/pydantic-schemaforms/.bumpcalver/backups/20260824_011248_717_makefile",
+      "/workspaces/pydantic-schemaforms/pyproject.toml": "/workspaces/pydantic-schemaforms/.bumpcalver/backups/20260824_011248_718_pyproject.toml",
+      "/workspaces/pydantic-schemaforms/pydantic_schemaforms/__init__.py": "/workspaces/pydantic-schemaforms/.bumpcalver/backups/20260824_011248_718___init__.py",
+      "/workspaces/pydantic-schemaforms/sonar-project.properties": "/workspaces/pydantic-schemaforms/.bumpcalver/backups/20260824_011248_718_sonar-project.properties"
+    },
+    "git_tag": true,
+    "git_commit": false,
+    "git_commit_hash": null,
+    "git_tag_name": "26.3.6"
+  },
+  {
     "operation_id": "20260824_003433_587",
     "timestamp": "2026-08-24T00:34:33.601484",
     "version": "26.3.5",

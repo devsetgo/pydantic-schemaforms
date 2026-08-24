@@ -116,6 +116,27 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>Bug Fix: CSV Import</span> ([26.3.5](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.5))
+
+## Changes
+## Bug Fixes
+
+- Fix DataTableLayout to submit all pages during large data imports (#215) (@devsetgo)
+
+## Documentation
+
+- Fix DataTableLayout to submit all pages during large data imports (#215) (@devsetgo)
+
+## Maintenance
+
+- Fix DataTableLayout to submit all pages during large data imports (#215) (@devsetgo)
+
+## Contributors
+@devsetgo and @claude
+
+
+Published Date: 2026 August 23, 20:54
+
 ### <span style='color:blue'>Enhancement: CSV Import</span> ([26.3.4](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.4))
 
 ## Changes
