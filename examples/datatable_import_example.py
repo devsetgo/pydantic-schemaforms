@@ -301,6 +301,11 @@ async def _render_page(
                 'framework_type': style,
                 'form_html': form_html,
             },
+            # Without this, the browser's Back/Forward button can restore
+            # this exact page from its cache (bfcache) instead of asking the
+            # server again -- e.g. showing a stale mid-review state (loaded
+            # rows, highlighted errors) after you've already moved past it.
+            headers={'Cache-Control': 'no-store'},
         )
 
 
@@ -312,8 +317,20 @@ async def show_import_page(
     show_timing: bool = True,
     editable: bool = True,
 ):
+    # Landing on this page fresh (a link, a reload, typing the URL) always
+    # starts a new, empty import -- explicit rows=[]/row_errors={} rather
+    # than falling through to _IMPORTED_ROWS/_LAST_ROW_ERRORS, which are
+    # this demo's staging area for an *in-progress* Load/Submit round-trip
+    # (still used that way by import_or_save below), not something a fresh
+    # visit should ever pick up.
     return await _render_page(
-        request, style=style, debug=debug, show_timing=show_timing, editable=editable
+        request,
+        style=style,
+        debug=debug,
+        show_timing=show_timing,
+        editable=editable,
+        rows=[],
+        row_errors={},
     )
 
 
@@ -380,6 +397,7 @@ async def import_or_save(
                 'framework_name': 'FastAPI (Async)',
                 'try_again_url': _IMPORT_URL if editable else f'{_IMPORT_URL}?editable=false',
             },
+            headers={'Cache-Control': 'no-store'},
         )
 
 

@@ -1,6 +1,6 @@
 # Demo container runtime dependencies (minimal set)
-# 26.3.4 is rendered by: make demo-requirements RELEASE_VERSION=<version>
-pydantic-schemaforms==26.3.4
+# 26.3.5 is rendered by: make demo-requirements RELEASE_VERSION=<version>
+pydantic-schemaforms==26.3.5
 fastapi[all]>=0.110,<2
 Markdown==3.10.3
 python-multipart==0.0.32
