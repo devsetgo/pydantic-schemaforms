@@ -116,6 +116,28 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>Enhancement: CSV Import</span> ([26.3.4](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.4))
+
+## Changes
+## Documentation
+
+- Deep documentation pass across library, examples, and docs (#213) (@devsetgo)
+- Add DataTableLayout composite control for CSV import to table (#212) (@devsetgo)
+- Demo Application and MonoRepo (#207) (@devsetgo)
+
+## Maintenance
+
+- Bump of Version to 26.3.4 (#214) (@devsetgo)
+- Deep documentation pass across library, examples, and docs (#213) (@devsetgo)
+- Add DataTableLayout composite control for CSV import to table (#212) (@devsetgo)
+- Demo Application and MonoRepo (#207) (@devsetgo)
+
+## Contributors
+@devsetgo and @claude
+
+
+Published Date: 2026 August 23, 19:08
+
 ### <span style='color:blue'>Enhancements to JSON output and new input types</span> ([26.3.3](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.3))
 
 ## Changes
@@ -444,3 +466,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+

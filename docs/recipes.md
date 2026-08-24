@@ -777,6 +777,14 @@ if result.has_errors:
 return show_success_page(result.rows)
 ```
 
+Every cell renders as its own named `<input>` (read-only columns get a
+hidden one too, see below), so a submit's field count is *rows times
+columns*, not row count. Starlette/FastAPI's `Request.form()` rejects a
+request over its default `max_fields=1000` with a 400 ("Too many fields") —
+a plain 5-column table already exceeds that at 200 rows. Size a higher
+`max_fields` to your largest expected import: `await
+request.form(max_fields=200_000)`.
+
 No server-side "staging" storage is needed to connect Load and Submit: the
 rows a CSV load rendered for review are already sitting in the table's own
 form fields (both the editable cells and the read-only cells' hidden
@@ -836,6 +844,17 @@ result = await ReadOnlyImport.handle_import_post(await request.form())
 # result.action is always "reload" here -- treat it the same as "submit":
 save_to_database(result.rows)
 ```
+
+**Performance:** every editable cell (a column declared with `input_type=`,
+with `editable` left at its default `True`) renders as a real `<select>`/
+`<input>` widget, with no virtualization — row count drives DOM size
+directly. Past roughly 100 rows this gets noticeably slower to render,
+paginate, and submit than plain read-only cells (escaped text plus a
+lightweight hidden input for round-tripping). For imports past that size,
+prefer a read-only presentation — either `model_config["editable"] = False`
+if a bulk-replace-only flow fits (above), or declare the columns without
+`input_type` if you still want the normal Load-then-Submit review step, just
+without any cell being hand-editable.
 
 ### Table appearance (`style`)
 

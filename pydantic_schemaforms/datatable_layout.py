@@ -189,6 +189,22 @@ class DataTableLayout(CompositeLayoutModel):
         result = await FileImport.handle_import_post(await request.form())
         # result.action == "load": preview only, nothing committed yet.
         # result.action == "submit" and not result.has_errors: commit result.rows.
+
+    Every cell renders as its own named ``<input>`` (read-only columns get a
+    hidden one), so a submit's field count is *rows times columns*, not row
+    count. Starlette/FastAPI's ``Request.form()`` rejects a request over its
+    default ``max_fields=1000`` with a 400 (``"Too many fields"``) -- a plain
+    5-column table already exceeds that at 200 rows. Pass a higher
+    ``max_fields`` sized to your largest expected import:
+    ``await request.form(max_fields=200_000)``.
+
+    Performance: editable cells are real ``<select>``/``<input>`` widgets
+    with no virtualization, so past roughly 100 rows they render noticeably
+    slower than plain read-only cells. Prefer a read-only presentation for
+    larger imports -- either ``model_config['editable'] = False`` for a
+    bulk-replace-only flow, or declare columns without ``input_type`` to
+    keep the Load-then-Submit review step without any cell being editable.
+    See ``docs/recipes.md``'s Performance note for the full tradeoff.
     """
 
     __is_datatable_layout__: ClassVar[bool] = True

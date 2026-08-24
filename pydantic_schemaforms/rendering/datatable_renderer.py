@@ -488,6 +488,26 @@ function _dtCellExportValue(node) {{
             // el.dtInstance.columns.adjust().draw(false) once the tab
             // becomes visible.
             el.dtInstance = new DataTable(el, dtConfig);
+
+            // Client-side paging detaches off-page <tr>s -- and the
+            // per-cell <input>/<select>/hidden inputs inside them -- from
+            // the DOM, keeping them only in DataTables' own JS cache. A
+            // native form submit only serializes DOM-attached inputs, so
+            // without this a page-size/page selection would silently
+            // truncate every row not on the currently displayed page.
+            // page.len(-1).draw(false) re-attaches every row before the
+            // browser reads the form's fields; it's synchronous for
+            // client-side data, so it completes within this handler,
+            // before the browser serializes the form. The bound flag
+            // guards against double-binding when only this table (not the
+            // whole form) gets re-initialized by a later htmx swap.
+            var form = el.closest('form');
+            if (form && !form._dtSubmitBound) {{
+                form._dtSubmitBound = true;
+                form.addEventListener('submit', function() {{
+                    el.dtInstance.page.len(-1).draw(false);
+                }});
+            }}
         }}
     }}
     if (document.readyState === 'loading') {{
