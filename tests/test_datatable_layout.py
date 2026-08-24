@@ -460,6 +460,18 @@ def test_init_script_stashes_datatable_instance_on_element() -> None:
     assert 'el.dtInstance = new DataTable(el, dtConfig);' in html_out
 
 
+def test_init_script_forces_all_rows_visible_before_submit() -> None:
+    # Client-side paging detaches off-page rows' <input>s from the DOM, so a
+    # native form submit would only serialize the currently displayed page --
+    # e.g. selecting "10 rows per page" on a 10,000-row import would silently
+    # submit only 10 rows. The init script must re-expand to all rows on the
+    # enclosing form's submit event before the browser reads the fields.
+    html_out = _render(PlainImport, rows=[{'name': 'Alice'}])
+    assert "el.closest('form')" in html_out
+    assert "form.addEventListener('submit'" in html_out
+    assert 'el.dtInstance.page.len(-1).draw(false);' in html_out
+
+
 def test_scripts_run_immediately_if_dom_already_ready_not_only_on_domcontentloaded() -> None:
     # This script re-runs whenever the embedding page swaps/re-renders it,
     # long after 'DOMContentLoaded' already fired once -- a listener added

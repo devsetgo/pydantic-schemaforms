@@ -32,6 +32,7 @@
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
+				"mechatroner.rainbow-csv",
 				"streetsidesoftware.code-spell-checker",
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
