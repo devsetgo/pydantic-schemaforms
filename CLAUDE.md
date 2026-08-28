@@ -12,6 +12,7 @@ pytest -n 2 --ignore=tests/playwright          # fast parallel test run
 pytest tests/test_invariants.py -v             # check architectural invariants
 ruff check pydantic_schemaforms tests          # lint
 ruff format --check pydantic_schemaforms tests # format check
+make ai-instructions                           # rebuild packaged AI-instruction files after editing their source
 ```
 
 ## Documentation pipeline — generated files, never hand-edit
@@ -57,6 +58,30 @@ can't use a single relative path that resolves correctly in both GitHub's
 README rendering and mkdocs' site (the same file serves both), so prefer
 plain-text references (e.g. "see `docs/recipes.md`") over `[text](path)`
 links there.
+
+## Public API surface — keep exports and AI instructions honest
+
+`pydantic_schemaforms/assets/ai/_shared_instructions.md` tells AI agents building apps with this
+library that **the only supported import surface is the top-level package**
+(`from pydantic_schemaforms import ...`) — never an internal submodule. That promise is only true
+if every name the instructions reference is actually re-exported top-level. When adding a new
+public class/function meant for app-author use:
+
+1. Add it to `pydantic_schemaforms/__init__.py`'s imports and `__all__` list — or, for a new
+   input-related utility living under `pydantic_schemaforms/inputs/`, add it to the appropriate
+   list in `inputs/__init__.py` (`UTILITIES`/`SPECIALIZED_UTILITIES`/`REGISTRY_UTILITIES`) and map
+   it to its defining module in `_MODULE_MAP` right below; the top-level package then forwards it
+   automatically via its own lazy `__getattr__`, no separate top-level import needed.
+2. If it's something an app-building agent would plausibly need, document it in
+   `pydantic_schemaforms/assets/ai/_shared_instructions.md` and run `make ai-instructions`.
+3. Never let an example inside `_shared_instructions.md`, `docs/*.md`, or `examples/*.py` import
+   from an internal submodule to work around a missing top-level export — that means the export
+   is missing, not that the example needs a workaround. Add the export instead.
+
+This was violated for `register_input_class` and `LayoutEngine` — real, working extension points
+with no top-level export, silently contradicting the AI instructions' own stated rule — until an
+audit caught it and both were added. Verify a name genuinely imports from the top level before
+referencing it in any doc or AI-instructions example.
 
 ## Repository layout
 
@@ -110,6 +135,19 @@ html_out = html(t'<input value="{user_input}">')   # user_input auto-escaped
    must be passed as plain `str` and let the processor escape them.
 4. JavaScript generation (validation scripts, not HTML) may use f-strings —
    that's not an HTML context, so the html() processor doesn't apply there.
+5. **This bar applies equally to every example this project ships, not just
+   `pydantic_schemaforms/` source** — `pydantic_schemaforms/assets/ai/*.md`,
+   `docs/*.md`, and `examples/*.py`. These are literally copy-paste templates
+   for real apps; a vulnerable example is exactly as dangerous as a
+   vulnerable library function. Any example that builds HTML from
+   submitted/validated form data must use `html(t'...')`, never an f-string
+   or `.format()` — a real instance of this (an f-string interpolating
+   `result.data["full_name"]` into an `<h1>` in the flagship AI-instructions
+   example) shipped and went unnoticed until an explicit audit found it.
+   `.validate()`/`Field()` constraints succeeding confirms type/constraint
+   compliance, not that a value is safe to place in HTML. Note this is a
+   convention to enforce in review, not something `test_invariants.py`/ruff's
+   TID251 catches — those only scan `pydantic_schemaforms/` source.
 
 ### Protected test files — NEVER remove or weaken
 
@@ -178,7 +216,11 @@ mechanism instead of hand-rolling a bespoke rendering path** — this
 codebase used to have three inconsistent ones (DataTableLayout's registry,
 model_list's hardcoded dispatch branch, `form_layouts.py`'s unrelated
 multi-FormModel orchestrators) before they were consolidated into this.
-Full details and worked examples: `docs/plugin_hooks.md`.
+Full details and worked examples: `docs/plugin_hooks.md`. This section is
+about *this library* shipping a new built-in composite (`builtin=True`); an
+*app author* registering their own composite via this same `LayoutEngine`
+mechanism (`builtin=False`) is the AI-instructions-facing use case — see
+"Public API surface" above and `_shared_instructions.md`'s own coverage of it.
 
 - **`CompositeLayoutModel`** (`pydantic_schemaforms/composite_layout.py`) —
   subclass this instead of `FormModel` directly when the composite's *own

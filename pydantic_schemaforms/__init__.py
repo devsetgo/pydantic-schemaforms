@@ -25,16 +25,14 @@ integration pattern from this docstring alone — run::
     python -m pydantic_schemaforms.ai_instructions claude --write
 
 (swap "claude" for "copilot"/"generic") to generate up-to-date,
-framework-specific guidance covering CSRF, model_list (repeating
-sub-forms), as_api_model (dual-use JSON+HTML models), and the
-Field-constraint-vs-ui_options distinction. Same content is available
-in-process via ``get_app_instructions()``.
+framework-specific guidance. It is the single source of truth for how to
+use this library correctly (input types, CSRF, model_list, DataTableLayout
+CSV import, HTMX live validation, flatten=True, error handling, and more)
+and is kept current as the library evolves — do not rely on any fixed list
+of topics here going stale. Same content is available in-process via
+``get_app_instructions()``.
 
 See the README for FastAPI/Flask integration and server-side validation.
-Layout system and CSRF protection are covered by the guidance generated
-via `ai_instructions`/`get_app_instructions()` above. HTMX live validation
-is not yet part of that guidance — see the hosted docs site linked from
-the README.
 """
 
 import logging
@@ -110,6 +108,7 @@ from .rendering.layout_engine import (
     GridLayout,
     Layout,
     LayoutComposer,
+    LayoutEngine,
     LayoutFactory,
     ModalLayout,
     ResponsiveGridLayout,
@@ -209,6 +208,7 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'DataTableLayout',
     'DataTableConfig',
     'RowError',
+    'LayoutEngine',
     # ── MODERN RENDERER ──
     'ModernFormRenderer',
     'FormDefinition',
