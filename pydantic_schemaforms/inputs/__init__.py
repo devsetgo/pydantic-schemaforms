@@ -76,10 +76,17 @@ UTILITIES = ['build_label', 'build_error_message', 'build_help_text']
 # Server-side helper functions (not input classes) exported alongside their widget.
 SPECIALIZED_UTILITIES = ['verify_captcha']
 
+# The one supported extension point for registering a custom input class --
+# exported top-level so app code never has to import the internal
+# `pydantic_schemaforms.inputs.registry` module directly to reach it.
+REGISTRY_UTILITIES = ['register_input_class']
+
 # All available inputs
 ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS + SPECIALIZED_INPUTS
 
-__all__ = ALL_INPUTS + BASE_CLASSES + UTILITIES + SPECIALIZED_UTILITIES  # pyright: ignore[reportUnsupportedDunderAll]
+__all__ = (  # pyright: ignore[reportUnsupportedDunderAll]
+    ALL_INPUTS + BASE_CLASSES + UTILITIES + SPECIALIZED_UTILITIES + REGISTRY_UTILITIES
+)
 
 _MODULE_MAP: dict[str, str] = {}
 
@@ -96,6 +103,8 @@ for _name in SPECIALIZED_INPUTS + SPECIALIZED_UTILITIES:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.specialized_inputs'
 for _name in TEXT_INPUTS:
     _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.text_inputs'
+for _name in REGISTRY_UTILITIES:
+    _MODULE_MAP[_name] = 'pydantic_schemaforms.inputs.registry'
 
 
 def __getattr__(name: str) -> Any:

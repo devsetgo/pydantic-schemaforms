@@ -373,6 +373,25 @@ async def import_or_save(
             notice=result.notice,
         )
 
+    if result.action == 'submit' and not result.rows and not result.has_errors:
+        # handle_import_post() itself has no opinion on whether an empty
+        # submit is meaningful -- it's just reporting "0 rows, 0 errors"
+        # faithfully. Clicking Submit on the page's own blank starting state
+        # (no CSV loaded yet, see show_import_page's rows=[] reset above) hits
+        # this exact case, so without this guard it would silently "save 0
+        # employees" and land on the success page as if that were a real
+        # commit. Reject it instead of touching _IMPORTED_ROWS at all.
+        return await _render_page(
+            request,
+            style=style,
+            debug=debug,
+            show_timing=show_timing,
+            editable=editable,
+            rows=[],
+            row_errors={},
+            notice='Nothing to submit -- load a CSV first.',
+        )
+
     _IMPORTED_ROWS[:] = result.rows
     _LAST_ROW_ERRORS = result.row_errors
 

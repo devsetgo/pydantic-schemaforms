@@ -777,6 +777,13 @@ if result.has_errors:
 return show_success_page(result.rows)
 ```
 
+`handle_import_post()` reports what was actually submitted, with no opinion on whether an
+empty result is meaningful — a `"submit"` with zero rows and no errors (e.g. Submit clicked
+before any CSV was ever loaded) comes back looking like a valid, empty save. Decide for
+yourself whether that's acceptable for your app; if not, check `not result.rows and not
+result.has_errors` before calling `save_to_database()` and show a "nothing to submit" message
+instead.
+
 Every cell renders as its own named `<input>` (read-only columns get a
 hidden one too, see below), so a submit's field count is *rows times
 columns*, not row count. Starlette/FastAPI's `Request.form()` rejects a
