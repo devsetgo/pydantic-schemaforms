@@ -219,9 +219,11 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
             ),
             InputTypeEntry(
                 'select',
-                'Native HTML <select> dropdown, single choice.',
-                "plan: str = Field('free', ui_element='select',\n"
-                "                  ui_options={'choices': [\n"
+                'Native HTML <select> dropdown, single choice. ui_options placeholder= '
+                'renders a disabled blank option forcing a real selection, instead of the '
+                'browser defaulting to the first option.',
+                "plan: str = Field(..., ui_element='select',\n"
+                "                  ui_options={'placeholder': 'Choose a plan...', 'choices': [\n"
                 "                      {'value': 'free', 'label': 'Free'},\n"
                 "                      {'value': 'pro', 'label': 'Pro'},\n"
                 '                  ]})',

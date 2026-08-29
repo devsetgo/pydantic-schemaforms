@@ -425,6 +425,22 @@ class TestSelectionInputs:
         assert '<option value="green" selected>Green</option>' in html
         assert '<option value="blue">Blue</option>' in html
 
+    def test_select_input_renders_disabled_placeholder_option(self):
+        """SelectInput._build_options already honors a disabled option dict --
+        this is the low-level behavior FieldRenderer's forced-selection
+        placeholder feature (ui_options={'placeholder': ...}) depends on."""
+        options = [
+            {'value': '', 'label': 'Choose a plan...', 'disabled': True, 'selected': True},
+            {'value': 'free', 'label': 'free'},
+            {'value': 'pro', 'label': 'pro'},
+        ]
+
+        html = SelectInput().render(name='plan', options=options)
+
+        assert '<option value="" selected disabled>Choose a plan...</option>' in html
+        assert '<option value="free">free</option>' in html
+        assert 'disabled' not in html.split('Choose a plan...')[1]
+
     def test_select_input_with_groups(self):
         """Test SelectInput with option groups."""
         options = [

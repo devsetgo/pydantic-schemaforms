@@ -369,7 +369,7 @@ Required:
 
 Optional:
 
-- ui_options: options, choices, size, class, style
+- ui_options: options, choices, size, class, style, placeholder
 
 ```python
 class SelectExample(FormModel):
@@ -385,6 +385,31 @@ class SelectExample(FormModel):
         },
     )
 ```
+
+`ui_options={"placeholder": "..."}` renders a disabled, empty-value first
+option forcing a genuine choice, instead of the browser silently
+highlighting the first real option as if it were already picked:
+
+```python
+class PlanExample(FormModel):
+    plan: str = Field(
+        ...,
+        title="Plan",
+        ui_element="select",
+        ui_options={"choices": ["free", "pro", "enterprise"], "placeholder": "Choose a plan..."},
+    )
+```
+
+The placeholder option is only ever the initially-shown, `selected` one when
+nothing has been chosen yet -- once a real value is set (a default, a
+previous submission, a validation-error re-render), the placeholder stays in
+the list but loses `selected` and remains `disabled`, so it can't be picked
+again. Combined with the `required` attribute this library already adds for
+required fields, native browser validation blocks submission until a real
+option is chosen -- no extra server-side validation needed for
+Enum/Literal-backed or `min_length`-constrained fields, since an empty
+string already fails those. Works identically on `bootstrap`/`plain`/`none`
+and `material` frameworks.
 
 #### multiselect
 

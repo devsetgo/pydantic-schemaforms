@@ -111,8 +111,7 @@ point — use it, do not invent something else:
 
 
   @LayoutEngine.layout_renderer('wizard_steps', builtin=False)
-  def render_wizard_steps(*, value, **kwargs) -> str:
-      ...  # build and return the composite's HTML
+  def render_wizard_steps(*, value, **kwargs) -> str: ...  # build and return the composite's HTML
   ```
 
   Then declare the field as `Field(default_factory=dict, input_type="layout",
@@ -393,6 +392,29 @@ will not pick up the file at all.
 seats: int = Field(1, ui_element='quantity', ui_options={'min': 1, 'max': 10})
 ```
 
+**select with a forced placeholder** — without this, a `select` with no current value
+renders with no `<option selected>` at all, so the browser silently highlights the
+first real option as if it had been chosen — a common source of "the user never
+touched this dropdown but it submitted a value anyway" bugs:
+
+```python
+plan: str = Field(
+    ...,
+    ui_element='select',
+    ui_options={'placeholder': 'Choose a plan...', 'choices': ['free', 'pro', 'enterprise']},
+)
+```
+
+Renders a disabled, empty-value first option that's `selected` only until a real
+choice is made (once a real value is set, the placeholder stays present and disabled
+— unselectable again — but is no longer the selected one). Combined with the
+`required` attribute this library already adds for a required field, native browser
+validation blocks submission on the placeholder alone. Opt-in only — omitting
+`placeholder` renders exactly as before. Works the same on every framework
+(`bootstrap`/`plain`/`none`/`material`). Only for `select`, not `multiselect`/
+`radio`/`checkbox_group`/`combobox` — none of those have this native
+auto-select-first-option problem.
+
 **code/structured-data editor** (JSON, YAML, TOML, Bash, or Python) — still a plain `textarea`
 field (a `str`), with an optional "Format"/"Clean up whitespace" button, Tab-key indentation, and
 light syntax highlighting layered on client-side:
@@ -546,7 +568,9 @@ class EventRegistration(FormModel):
     # server-side format validation, as the FastAPI example above does (needs email-validator) --
     # plain str here only to keep this second example dependency-free.
     ticket_type: str = Field(
-        ..., title='Ticket Type', ui_element='select',
+        ...,
+        title='Ticket Type',
+        ui_element='select',
         ui_options={'choices': ['standard', 'vip', 'student']},
     )
 
@@ -555,7 +579,9 @@ class EventRegistration(FormModel):
 def register():
     if request.method == 'POST':
         submitted = request.form.to_dict()
-        result = EventRegistration.validate(submitted, submit_url='/register', framework='bootstrap')
+        result = EventRegistration.validate(
+            submitted, submit_url='/register', framework='bootstrap'
+        )
         if result.is_valid:
             return html(t'<h1>Thanks, {result.data["full_name"]}!</h1>')
         return result.render_with_errors()  # sync -- no "_async" suffix on the Flask path

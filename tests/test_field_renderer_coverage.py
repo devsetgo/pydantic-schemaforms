@@ -413,6 +413,81 @@ class TestFieldRendererCheckboxHandling:
         assert '<option value="medium" selected="selected">medium</option>' in html
         assert '<option value="large">large</option>' in html
 
+    def test_bootstrap_select_placeholder_option_is_opt_in(self):
+        """Bootstrap/generic-framework counterpart to the Material test below --
+        same opt-in ui_options={'placeholder': ...} contract, routed through
+        FieldRenderer/SelectInput instead of the Material-specific renderer."""
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _NoPlaceholder(FormModel):
+            plan: str = Field(
+                ..., title='Plan', ui_element='select', ui_options={'choices': ['free', 'pro']}
+            )
+
+        class _WithPlaceholder(FormModel):
+            plan: str = Field(
+                ...,
+                title='Plan',
+                ui_element='select',
+                ui_options={'choices': ['free', 'pro'], 'placeholder': 'Choose a plan...'},
+            )
+
+        # Opt-in only: no `placeholder` configured -> byte-identical to today.
+        no_placeholder_html = render_form_html(
+            _NoPlaceholder, submit_url='/x', framework='bootstrap'
+        )
+        assert '<option value="">' not in no_placeholder_html
+        assert 'placeholder=' not in no_placeholder_html
+
+        unselected_html = render_form_html(_WithPlaceholder, submit_url='/x', framework='bootstrap')
+        assert '<option value="" selected disabled>Choose a plan...</option>' in unselected_html
+        # The leaked-attribute trap this feature fixes: no bogus placeholder="..." on <select>.
+        assert 'placeholder="Choose a plan' not in unselected_html
+
+        selected_html = render_form_html(
+            _WithPlaceholder, submit_url='/x', framework='bootstrap', form_data={'plan': 'pro'}
+        )
+        assert '<option value="" disabled>Choose a plan...</option>' in selected_html
+        assert '<option value="pro" selected>pro</option>' in selected_html
+
+    def test_material_select_placeholder_option_is_opt_in(self):
+        """Material's select used to always render an unconditional, empty-
+        label, non-disabled blank first option regardless of configuration.
+        It's now opt-in via ui_options={'placeholder': ...}, matching the
+        generic/bootstrap select path -- see FieldRenderer._build_placeholder_option."""
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _NoPlaceholder(FormModel):
+            plan: str = Field(
+                ..., title='Plan', ui_element='select', ui_options={'choices': ['free', 'pro']}
+            )
+
+        class _WithPlaceholder(FormModel):
+            plan: str = Field(
+                ...,
+                title='Plan',
+                ui_element='select',
+                ui_options={'choices': ['free', 'pro'], 'placeholder': 'Choose a plan...'},
+            )
+
+        no_placeholder_html = render_form_html(
+            _NoPlaceholder, submit_url='/x', framework='material'
+        )
+        assert '<option value="">' not in no_placeholder_html
+
+        unselected_html = render_form_html(_WithPlaceholder, submit_url='/x', framework='material')
+        assert (
+            '<option value="" selected="selected" disabled="disabled">Choose a plan...</option>'
+            in unselected_html
+        )
+
+        selected_html = render_form_html(
+            _WithPlaceholder, submit_url='/x', framework='material', form_data={'plan': 'pro'}
+        )
+        assert '<option value="" disabled="disabled">Choose a plan...</option>' in selected_html
+        assert 'selected="selected">Choose a plan' not in selected_html
+        assert '<option value="pro" selected="selected">pro</option>' in selected_html
+
     def test_material_text_input_applies_arbitrary_ui_options_attributes(self):
         """Regression test: _build_material_text_input_attributes only read a
         nested ui_options={'attributes': {...}} dict, while every other
@@ -1133,6 +1208,103 @@ def test_extract_apply_and_normalize_option_helpers():
     assert field_renderer._is_option_selected('x', None) is False
     assert field_renderer._is_option_selected('2', {1, 2}) is True
     assert field_renderer._is_option_selected('2', '2') is True
+
+
+def test_build_placeholder_option():
+    field_renderer = FieldRenderer(_DummyRenderer())
+
+    # No current value -- placeholder is the effective selection.
+    placeholder = field_renderer._build_placeholder_option(
+        {'placeholder': 'Choose a plan...'}, current_value=None
+    )
+    assert placeholder == {
+        'value': '',
+        'label': 'Choose a plan...',
+        'disabled': True,
+        'selected': True,
+    }
+
+    # A real value is already chosen -- placeholder stays present and
+    # disabled (unselectable again) but is no longer the selected one.
+    placeholder = field_renderer._build_placeholder_option(
+        {'placeholder': 'Choose a plan...'}, current_value='pro'
+    )
+    assert placeholder['selected'] is False
+    assert placeholder['disabled'] is True
+
+    # Not configured at all, or configured with a falsy value -- opt-in only.
+    assert field_renderer._build_placeholder_option({}, current_value=None) is None
+    assert field_renderer._build_placeholder_option({'placeholder': ''}, current_value=None) is None
+
+
+def test_apply_ui_option_attributes_skips_placeholder_for_select_only():
+    """placeholder is a real, documented ui_options key for other widgets
+    (text/tags) -- the leak-suppression for `select` (see
+    _build_placeholder_option) must not affect them."""
+    field_renderer = FieldRenderer(_DummyRenderer())
+
+    select_attrs = field_renderer._apply_ui_option_attributes(
+        {}, {'placeholder': 'Choose a plan...'}, 'select'
+    )
+    assert 'placeholder' not in select_attrs
+
+    text_attrs = field_renderer._apply_ui_option_attributes(
+        {}, {'placeholder': 'Full name'}, 'text'
+    )
+    assert text_attrs['placeholder'] == 'Full name'
+
+    # No ui_element passed at all (existing callers/tests) -- unaffected.
+    default_attrs = field_renderer._apply_ui_option_attributes({}, {'placeholder': 'Full name'})
+    assert default_attrs['placeholder'] == 'Full name'
+
+
+def test_render_field_select_placeholder_option_opt_in(monkeypatch):
+    renderer = _DummyRenderer()
+    field_renderer = FieldRenderer(renderer)
+
+    monkeypatch.setattr(
+        'pydantic_schemaforms.rendering.field_renderer.get_input_component',
+        lambda _ui_element: _CaptureInput,
+    )
+
+    schema = {
+        'type': 'string',
+        'enum': ['free', 'pro'],
+        'ui': {'element': 'select', 'options': {'placeholder': 'Choose a plan...'}},
+    }
+
+    field_renderer.render_field(
+        field_name='plan', field_schema=schema, value=None, context=_context()
+    )
+    options = _CaptureInput.last_kwargs['options']
+    assert options[0] == {
+        'value': '',
+        'label': 'Choose a plan...',
+        'disabled': True,
+        'selected': True,
+    }
+    assert len(options) == 3
+
+    field_renderer.render_field(
+        field_name='plan', field_schema=schema, value='pro', context=_context()
+    )
+    options = _CaptureInput.last_kwargs['options']
+    assert options[0]['selected'] is False
+    assert options[0]['disabled'] is True
+    assert any(opt['value'] == 'pro' and opt['selected'] for opt in options[1:])
+
+    # No placeholder configured at all -- output is unaffected (opt-in only).
+    no_placeholder_schema = {
+        'type': 'string',
+        'enum': ['free', 'pro'],
+        'ui': {'element': 'select'},
+    }
+    field_renderer.render_field(
+        field_name='plan', field_schema=no_placeholder_schema, value=None, context=_context()
+    )
+    options = _CaptureInput.last_kwargs['options']
+    assert len(options) == 2
+    assert all(opt['value'] != '' for opt in options)
 
 
 def test_render_model_list_field_errors_and_ref_resolution():

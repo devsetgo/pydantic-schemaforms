@@ -948,9 +948,28 @@ class EnhancedFormRenderer:
         error_class = _ERROR_CLASS if error else ''
         attrs = self._MATERIAL_REQUIRED if is_required else ''
         options = self._build_material_select_options(ui_info, field_schema)
-        rendered_options = [
-            render_template(FormTemplates.MATERIAL_SELECT_OPTION, value='', selected='', label='')
-        ]
+
+        # ui_options={'placeholder': '...'} (see FieldRenderer._build_placeholder_option
+        # for the shared/generic-framework equivalent) -- read from the same raw
+        # ui_info['options'] source _build_material_select_options already reads
+        # independently, since that helper's own contract is "real options only".
+        raw_ui_options = ui_info.get('options')
+        placeholder_text = (
+            raw_ui_options.get('placeholder') if isinstance(raw_ui_options, dict) else None
+        )
+
+        rendered_options = []
+        if placeholder_text:
+            is_placeholder_selected = value is None or str(value) == ''
+            rendered_options.append(
+                render_template(
+                    FormTemplates.MATERIAL_SELECT_OPTION,
+                    value='',
+                    selected=' selected="selected"' if is_placeholder_selected else '',
+                    disabled=' disabled="disabled"',
+                    label=str(placeholder_text),
+                )
+            )
         for opt_value, opt_label in options:
             is_selected = str(value) == str(opt_value)
             rendered_options.append(

@@ -116,6 +116,27 @@ First production release. All public Quick Start code paths verified working end
 
 #### Production Releases
 
+### <span style='color:blue'>Browser Cache Bug</span> ([26.3.6](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.6))
+
+## Changes
+## Bug Fixes
+
+- Reset CSV import page to blank state on each new visit (#216) (@devsetgo)
+
+## Documentation
+
+- Reset CSV import page to blank state on each new visit (#216) (@devsetgo)
+
+## Maintenance
+
+- Reset CSV import page to blank state on each new visit (#216) (@devsetgo)
+
+## Contributors
+@devsetgo and @claude
+
+
+Published Date: 2026 August 23, 21:17
+
 ### <span style='color:blue'>Bug Fix: CSV Import</span> ([26.3.5](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.5))
 
 ## Changes
@@ -487,3 +508,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+
