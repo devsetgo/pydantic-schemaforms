@@ -163,7 +163,7 @@ class FieldRenderer:
 
         ui_options_dict, ui_options_list = self._extract_ui_options(ui_info, field_schema)
         if ui_options_dict:
-            field_attrs = self._apply_ui_option_attributes(field_attrs, ui_options_dict)
+            field_attrs = self._apply_ui_option_attributes(field_attrs, ui_options_dict, ui_element)
 
         label_text = field_schema.get('title', field_name.replace('_', ' ').title())
         help_text = ui_info.get('help_text') or field_schema.get('description')
@@ -191,6 +191,11 @@ class FieldRenderer:
                         t"'{field_name}' -->"
                     )
                 else:
+                    if ui_element == 'select':
+                        placeholder_option = self._build_placeholder_option(ui_options_dict, value)
+                        if placeholder_option is not None:
+                            formatted_options = [placeholder_option, *formatted_options]
+
                     field_attrs.pop('value', None)
                     # radio/checkbox_group already show their title as the
                     # <fieldset><legend>; passing the same text as an outer
@@ -289,12 +294,22 @@ class FieldRenderer:
         return options_dict, options_list
 
     def _apply_ui_option_attributes(
-        self, field_attrs: dict[str, Any], ui_options: dict[str, Any]
+        self,
+        field_attrs: dict[str, Any],
+        ui_options: dict[str, Any],
+        ui_element: str | None = None,
     ) -> dict[str, Any]:
         if not ui_options:
             return field_attrs
 
         option_keys_to_skip = {'choices', 'options', 'async_options', 'fetch_url'}
+        if ui_element == 'select':
+            # 'placeholder' drives the forced-selection blank option built by
+            # _build_placeholder_option -- for `select` specifically (unlike
+            # `text`/`tags`, where it's a real HTML placeholder attribute) it
+            # must not also leak through as a meaningless placeholder="..."
+            # attribute on the <select> tag itself (browsers ignore it there).
+            option_keys_to_skip = option_keys_to_skip | {'placeholder'}
 
         for key, option_value in ui_options.items():
             if key in option_keys_to_skip:
@@ -357,6 +372,23 @@ class FieldRenderer:
                 )
 
         return normalized
+
+    def _build_placeholder_option(
+        self, ui_options: dict[str, Any], current_value: Any
+    ) -> dict[str, Any] | None:
+        """A disabled, empty-value first option forcing a genuine choice --
+        opt-in via ui_options={'placeholder': '...'} on `select` fields.
+        Stays disabled (unselectable once a real option is chosen) whether
+        or not it's the one currently marked `selected`."""
+        placeholder_text = ui_options.get('placeholder')
+        if not placeholder_text:
+            return None
+        return {
+            'value': '',
+            'label': placeholder_text,
+            'disabled': True,
+            'selected': current_value is None or self._is_option_selected('', current_value),
+        }
 
     def _is_option_selected(self, option_value: Any, current_value: Any) -> bool:
         if option_value is None or current_value is None:
