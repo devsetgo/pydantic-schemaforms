@@ -403,10 +403,10 @@ size: str = Field('medium', ui_element='radio',
                   ui_options={'choices': ['small', 'medium', 'large']})
 ```
 
-**`select`** — Native HTML <select> dropdown, single choice.
+**`select`** — Native HTML <select> dropdown, single choice. ui_options placeholder= renders a disabled blank option forcing a real selection, instead of the browser defaulting to the first option.
 ```python
-plan: str = Field('free', ui_element='select',
-                  ui_options={'choices': [
+plan: str = Field(..., ui_element='select',
+                  ui_options={'placeholder': 'Choose a plan...', 'choices': [
                       {'value': 'free', 'label': 'Free'},
                       {'value': 'pro', 'label': 'Pro'},
                   ]})

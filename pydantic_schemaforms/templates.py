@@ -830,10 +830,12 @@ def _material_select_option(
     *,
     value: str = '',
     selected: str = '',
+    disabled: str = '',
     label: str = '',
 ) -> SafeHTML:
     _selected = SafeHTML(selected)
-    return html(t'<option value="{value}"{_selected}>{label}</option>')
+    _disabled = SafeHTML(disabled)
+    return html(t'<option value="{value}"{_selected}{_disabled}>{label}</option>')
 
 
 def _material_help_text(*, help_content: str = '') -> SafeHTML:
