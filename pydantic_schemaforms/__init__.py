@@ -147,7 +147,7 @@ from .ai_instructions import (
     suggested_instruction_filename,
 )
 
-__version__ = '26.3.6'
+__version__ = '26.3.7'
 __package_name__ = 'pydantic-schemaforms'
 __author__ = 'Pydantic Forms Team'
 __description__ = 'Modern form generation library for Python 3.14+'
