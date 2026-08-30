@@ -77,6 +77,13 @@ class PydanticAndUiExample(FormModel):
     )
 ```
 
+`min_length`/`max_length`/`pattern`/`ge`/`le`/`gt`/`lt` are enforced server-side because they're
+real `Field()` constraints — putting the equivalent value in `ui_options` instead only decorates
+the HTML and validates nothing. This cuts both ways for a numeric `select`/`radio` with explicit
+`ui_options={"choices": [...]}`: if `choices` and `ge`/`le` ever drift out of sync (e.g. a choice
+added without widening the range), the extra choice renders as a normal, selectable option that
+then fails validation on submit — keep both in sync whenever either one changes.
+
 ## Copy-Paste Examples By ui_element
 
 Use this import block for the examples below:
@@ -360,6 +367,17 @@ class RatingAndSliderExample(FormModel):
 - `toggle` (aliases: `toggle_switch`, `checkbox_toggle`)
 - `combobox`
 
+**`Literal[...]` auto-populates options; a real `enum.Enum`/`StrEnum` does not** — this applies to
+every widget below that reads "schema enum" as a way to provide choices (`select`, `radio`,
+`checkbox_group`, `multiselect`, `combobox`). Pydantic inlines a `Literal[...]` field's values
+directly into that field's own JSON schema entry, which is what these widgets read to build their
+options; for an actual `Enum` class, Pydantic instead points the field at a separate `$defs` entry
+via `$ref`, which none of these widgets resolve. The failure mode isn't a wrong label — it's a
+silently empty control (a `<select>` with no `<option>`s, an HTML comment where the options should
+be) that's easy to miss in review. Always pass `ui_options={"choices": [e.value for e in MyEnum]}`
+explicitly for a real `Enum` field. If nothing requires pinning specific literal string values in
+the type itself, prefer `Literal[...]` over `Enum` to avoid this entirely.
+
 #### select
 
 Required:
@@ -476,7 +494,8 @@ Required:
 
 Optional:
 
-- ui_options: options, choices, legend, variant ("stacked" default, or "button_group")
+- ui_options: options, choices, legend, variant ("stacked" default, or "button_group"),
+  collapsible, collapsed
 
 ```python
 class CheckboxGroupExample(FormModel):
@@ -502,6 +521,14 @@ for styling the options as an adjacent button row; it's presentation only,
 your app's CSS still does the actual visual styling (removing borders
 between items, etc.).
 
+`ui_options={"collapsible": True}` turns the legend into a clickable toggle
+that shows/hides the checkboxes underneath -- useful for grouping a long
+options list (e.g. a "Vegetables"/"Condiments"/"Extra" set of toppings) so
+it doesn't take up space until opened. `collapsed=True` starts it closed
+(default: open). Purely presentational, like `variant` -- it never changes
+which fields are required; that's still driven entirely by the field's own
+`Field(...)` declaration.
+
 #### radio
 
 Required:
@@ -511,7 +538,8 @@ Required:
 
 Optional:
 
-- ui_options: options, choices, legend, variant ("stacked" default, or "segmented"), class, style
+- ui_options: options, choices, legend, variant ("stacked" default, or "segmented"), class, style,
+  collapsible, collapsed
 
 ```python
 class RadioExample(FormModel):
@@ -532,6 +560,9 @@ class RadioExample(FormModel):
 modifier classes for styling the options as adjacent buttons instead of
 stacked radios -- presentation only, same caveat as `checkbox_group`'s
 `button_group` variant above.
+
+`ui_options={"collapsible": True}` (and `collapsed=True` to start closed)
+works identically to `checkbox_group`'s -- see above.
 
 #### toggle (aliases: toggle_switch, checkbox_toggle)
 
@@ -589,7 +620,8 @@ beginning of each option's label instead of matching anywhere in it.
 Selection note:
 
 - Provide choices via ui_options={"options": [...]} or ui_options={"choices": [...]}.
-- Or use JSON Schema enums (for example Literal[...] or Enum) and options are inferred.
+- Or use a `Literal[...]`-typed field and options are inferred (a real `Enum` is *not* inferred
+  this way -- see the note at the top of this "Selection" section).
 
 ### Date/time
 
