@@ -420,6 +420,26 @@ validation blocks submission on the placeholder alone. Opt-in only — omitting
 `radio`/`checkbox_group`/`combobox` — none of those have this native
 auto-select-first-option problem.
 
+**collapsible `checkbox_group`/`radio`** — group related options under a toggle so a
+long list doesn't take up space until opened (e.g. a burger-builder form's
+"Vegetables"/"Condiments"/"Extra" toppings):
+
+```python
+vegetables: list[str] = Field(
+    default_factory=list,
+    ui_element='checkbox_group',
+    ui_options={'choices': ['Lettuce', 'Pickle'], 'collapsible': True, 'collapsed': True},
+)
+```
+
+Turns the fieldset's `<legend>` into a clickable toggle; `collapsed=True` starts it
+closed (default: open). **Purely presentational** — do not reach for this expecting
+it to change which fields are required. It never touches validation: fields inside
+keep exactly whatever required-ness their own `Field(...)` declaration already gives
+them, collapsed or not. Opt-in only — omitting `collapsible` renders exactly as
+before. Works the same on every framework. Only for `checkbox_group`/`radio`, not
+`select`/`multiselect`/`combobox`.
+
 **code/structured-data editor** (JSON, YAML, TOML, Bash, or Python) — still a plain `textarea`
 field (a `str`), with an optional "Format"/"Clean up whitespace" button, Tab-key indentation, and
 light syntax highlighting layered on client-side:
@@ -484,9 +504,46 @@ Putting these in ui_options instead only decorates the HTML — it does NOT vali
 server-side. Never use ui_options as a substitute for a real Field constraint; that produces a
 form that looks validated but silently accepts out-of-range or malformed data on POST.
 
-Similarly, enum/Literal fields auto-populate select/radio/multiselect options from the type
-itself — only pass ui_options choices for plain str/int fields that aren't already an
-enum/Literal.
+**The reverse mistake is just as real and easier to miss**: a numeric `select`/`radio` with
+explicit `ui_options={'choices': [...]}` *and* a `ge`/`le` constraint must keep both in sync. If
+`choices` ever lists a value outside the `ge`/`le` range (e.g. adding a 4th option to a field still
+constrained to `le=3`), that option renders as a normal, selectable, apparently-valid choice —
+and then fails validation on submit with a confusing error, since picking it looked completely
+legitimate. This isn't hypothetical — it's an easy edit-time drift (add a choice, forget to widen
+the range) worth double-checking whenever either one changes.
+
+Similarly, `Literal[...]` fields auto-populate select/radio/multiselect options from the type
+itself — only pass ui_options choices for plain str/int fields that aren't already `Literal`.
+
+**A real `enum.Enum`/`StrEnum` field does NOT auto-populate, despite looking like it should —
+verified directly, not assumed.** Pydantic's JSON schema for a `Literal[...]` field inlines its
+values straight into the field's own schema entry, which is what the auto-population check reads;
+for an actual `Enum` class, Pydantic instead emits a `$ref` pointing at a separate `$defs` entry,
+and this library does no `$ref` resolution before that same check runs. The result isn't a wrong
+label or a plain-text fallback — it's a silently empty `<select>` with an HTML comment
+(`<!-- Warning: No options provided for select field '...' -->`) where the options should be,
+which is easy to miss in review. Always pass `ui_options={'choices': [e.value for e in MyEnum]}`
+explicitly for a real `Enum` field — never rely on it auto-populating the way `Literal` does. If a
+field's semantics don't require pinning specific literal string values in the type itself, prefer
+`Literal[...]` over `Enum` for this exact reason.
+
+**A second, subtler trap with `Enum` fields**: if `Field(..., title=X)`'s title is set to the
+exact same string as the Enum class's own name-derived title (e.g. a class `Size` with
+`Field(title='Size', ...)`), Pydantic omits the property-level `title` from the schema entirely as
+a redundancy optimization — even with the `choices` fix above. Every widget's label/legend falls
+back to a name synthesized from the field's own Python attribute name when `title` is missing
+(`field_name.replace('_', ' ').title()`), so this is silently masked whenever that synthesized
+text happens to match the real title anyway (a field literally named `size` synthesizes back to
+"Size" by coincidence) — verified this genuinely affects `select`'s outer `<label>` too, not just
+`checkbox_group`/`radio`'s `<legend>`, once the field's name doesn't coincidentally match (e.g. a
+field named `sz` titled `'Size'` renders the label "Sz"). It becomes obviously wrong inside a
+`model_list` item specifically, because the name synthesis there uses the item's full indexed
+field name, not just the attribute name (field `size` inside list field `items` renders
+`<legend>Items[0].Size</legend>`, never coincidentally correct). Fix by passing
+`ui_options={'legend': '...'}` (for `checkbox_group`/`radio`) explicitly rather than relying on
+`title=` alone — this sidesteps the schema-title question entirely. (`select`/other widgets have
+no equivalent `ui_options` override for their outer label — for those, avoid giving an `Enum`
+field's `Field(title=...)` the exact same text as its `Enum` class's name instead.)
 
 ## Form configuration checklist
 
@@ -636,18 +693,18 @@ native HTML form POST does not naturally produce that shape; it produces flat br
 Two ways to bridge this, pick based on what your data already looks like:
 
 - Pass `flatten=True` to `FormModel.validate(data, flatten=True, ...)` — it accepts either shape
-  (already-nested data is also fine) and handles the bracket+dot reconstruction internally. Use
-  this whenever the submitted data might be in flat form-field shape, which is the common case
-  for any form with `model_list` or nested sub-models.
-- Call `parse_nested_form_data(dict(await request.form()))` yourself first (top-level export) if
-  you need the nested dict *before* calling `.validate()` for some other reason (e.g. to inspect
-  it, or because you're not using `.validate()` at all). `DataTableLayout.parse_submitted_rows()`
-  and `handle_import_post()` already do this internally — don't call it again on data you're
-  about to pass to those.
-
-`.validate()`'s own result (`result.data`) is always a plain nested dict regardless of which shape
-the input was in — `flatten=True` only affects how the *input* is interpreted, not the output
-shape.
+  on input (already-nested data is also fine), but **`result.data` then comes back in the same
+  flat bracket+dot shape too** (e.g. `result.data["pets[0].name"]`, not
+  `result.data["pets"][0]["name"]`) — confirmed directly in `FormModel.validate()`'s own
+  docstring. Only reach for this if flat keys are what you actually want to work with afterward
+  (rare) — it is *not* a "accept flat input, still get nested output" convenience.
+- Call `parse_nested_form_data(dict(await request.form()))` yourself first (top-level export),
+  then call `.validate()` on the result **without** `flatten=True` — this is the right default
+  for any form with `model_list`/nested sub-models, since it gets you both flat-key-tolerant
+  input *and* a nested `result.data` you can index the normal way
+  (`result.data["pets"][0]["name"]`). `DataTableLayout.parse_submitted_rows()` and
+  `handle_import_post()` already do this internally — don't call it again on data you're about
+  to pass to those.
 
 ## Two different `errors` shapes — do not conflate them
 
