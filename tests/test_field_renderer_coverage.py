@@ -384,6 +384,44 @@ class TestFieldRendererCheckboxHandling:
             assert '<legend>Pick a plan</legend>' in html, framework
             assert '<legend>Notify via</legend>' in html, framework
 
+    def test_checkbox_group_and_radio_collapsible_is_opt_in_across_frameworks(self):
+        """ui_options={'collapsible': True} needs no field_renderer.py wiring --
+        CheckboxGroup/RadioGroup.render() never call validate_attributes() on
+        their whole kwargs blob (unlike SelectInput), so collapsible/collapsed
+        simply bind as named render() params with no leak risk. Verified end-to-
+        end here across both bootstrap and material, since neither has a
+        bespoke Material template for these two ui_elements (see
+        enhanced_renderer.py's comment listing radio/checkbox_group as sharing
+        the generic FieldRenderer path)."""
+        from pydantic_schemaforms import Field, FormModel, render_form_html
+
+        class _Burger(FormModel):
+            vegetables: list[str] = Field(
+                default_factory=list,
+                title='Vegetables',
+                ui_element='checkbox_group',
+                ui_options={
+                    'choices': ['Lettuce', 'Pickle'],
+                    'collapsible': True,
+                    'collapsed': True,
+                },
+            )
+            size: str = Field(
+                'medium',
+                title='Size',
+                ui_element='radio',
+                ui_options={'choices': ['small', 'medium', 'large']},
+            )
+
+        for framework in ('bootstrap', 'material'):
+            html = render_form_html(_Burger, submit_url='/x', framework=framework)
+            assert 'toggleCollapsibleGroup' in html, framework
+            # vegetables: collapsible + collapsed -- starts closed.
+            assert 'aria-expanded="false"' in html, framework
+            assert 'style="display:none"' in html, framework
+            # size: no collapsible ui_option -- unaffected, plain <legend>.
+            assert '<legend>Size</legend>' in html, framework
+
     def test_material_select_renders_choices_from_ui_options_dict(self):
         """Regression test: _build_material_select_options only handled a raw
         options list (or an enum fallback) -- ui_options={'choices': [...]}

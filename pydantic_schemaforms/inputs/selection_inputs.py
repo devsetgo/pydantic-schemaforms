@@ -4,11 +4,61 @@ Includes SelectInput, RadioGroup, CheckboxInput, and multi-select components.
 """
 
 import json
+import re
 from html import escape
 from typing import Any
 
 from pydantic_schemaforms.tstring import SafeHTML, html, substitute
 from .base import FormInput, SelectInputBase
+
+# Self-contained collapse toggle for CheckboxGroup/RadioGroup (ui_options=
+# {'collapsible': True}) -- purely static, no Python-side interpolation, so
+# a plain string is enough (unlike MultiSelectInput's asset block below,
+# which needs an f-string to interpolate a per-field id). Defined once at
+# module level since both classes share the exact same behavior. Deliberately
+# not theme-aware (see AccordionLayout for that) since neither class has
+# access to a theme/renderer object -- see the module docstring above and
+# CheckboxGroup/RadioGroup's own render() for why this mirrors
+# MultiSelectInput's self-contained-assets pattern instead.
+_COLLAPSIBLE_GROUP_ASSETS = SafeHTML("""
+<style>
+.collapsible-group-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-weight: bold;
+    color: inherit;
+    cursor: pointer;
+}
+.collapsible-group-chevron {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.5em;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.15s ease;
+}
+.collapsible-group-toggle[aria-expanded="false"] .collapsible-group-chevron {
+    transform: rotate(-45deg);
+}
+</style>
+<script>
+function toggleCollapsibleGroup(contentId, buttonElement) {
+    var content = document.getElementById(contentId);
+    var isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
+    if (content) {
+        content.style.display = isExpanded ? 'none' : '';
+    }
+    buttonElement.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+}
+</script>
+""")
 
 
 class SelectInput(SelectInputBase):
@@ -304,6 +354,11 @@ class CheckboxGroup(SelectInputBase):
     ${checkboxes}
 </fieldset>"""
 
+    collapsible_template = """<fieldset ${fieldset_attributes}>
+    <legend>${toggle}</legend>
+    ${content}
+</fieldset>${assets}"""
+
     def get_input_type(self) -> str:
         return 'checkbox-group'
 
@@ -313,6 +368,8 @@ class CheckboxGroup(SelectInputBase):
         group_name: str,
         legend: str | None = None,
         variant: str = 'stacked',
+        collapsible: bool = False,
+        collapsed: bool = False,
         **kwargs: Any,
     ) -> str:
         """Render group of checkboxes.
@@ -322,6 +379,12 @@ class CheckboxGroup(SelectInputBase):
         underlying independent-selection semantics. Actual visual styling
         (removing borders between adjacent items, etc.) is left to the app's
         CSS, same as every other framework-styling concern in this library.
+
+        collapsible=True wraps the checkboxes in a toggle the user can
+        open/close -- purely presentational, like variant: it never changes
+        which fields are required (that's still driven entirely by the
+        underlying FormModel's own Field(...) declarations, untouched here).
+        collapsed=True starts it closed; only meaningful with collapsible=True.
         """
         item_class = 'checkbox-item'
         if variant == 'button_group':
@@ -377,6 +440,8 @@ class CheckboxGroup(SelectInputBase):
         fieldset_class = 'checkbox-group'
         if variant == 'button_group':
             fieldset_class += ' checkbox-group-button-group'
+        if collapsible:
+            fieldset_class += ' collapsible'
 
         fieldset_attrs: dict[str, Any] = {'class': fieldset_class}
         for attr in ['style', 'disabled']:
@@ -387,11 +452,30 @@ class CheckboxGroup(SelectInputBase):
         checkboxes_html = '\n'.join(checkboxes)
         legend_text = legend or group_name.replace('_', ' ').title()
 
+        if not collapsible:
+            return substitute(
+                self.template,
+                fieldset_attributes=fieldset_attributes_str,
+                legend=escape(legend_text),
+                checkboxes=checkboxes_html,
+            )
+
+        content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
+        aria_expanded = 'false' if collapsed else 'true'
+        content_style = 'display:none' if collapsed else ''
+        _checkboxes_html = SafeHTML(checkboxes_html)
+        toggle = html(
+            t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" onclick="toggleCollapsibleGroup('{content_id}', this)">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
+        )
+        content = html(
+            t'<div class="collapsible-group-content" id="{content_id}" style="{content_style}">{_checkboxes_html}</div>'
+        )
         return substitute(
-            self.template,
+            self.collapsible_template,
             fieldset_attributes=fieldset_attributes_str,
-            legend=escape(legend_text),
-            checkboxes=checkboxes_html,
+            toggle=toggle,
+            content=content,
+            assets=_COLLAPSIBLE_GROUP_ASSETS,
         )
 
 
@@ -424,6 +508,11 @@ class RadioGroup(SelectInputBase):
     ${radio_buttons}
 </fieldset>"""
 
+    collapsible_template = """<fieldset ${fieldset_attributes}>
+    <legend>${toggle}</legend>
+    ${content}
+</fieldset>${assets}"""
+
     def get_input_type(self) -> str:
         return 'radio-group'
 
@@ -433,6 +522,8 @@ class RadioGroup(SelectInputBase):
         group_name: str,
         legend: str | None = None,
         variant: str = 'stacked',
+        collapsible: bool = False,
+        collapsed: bool = False,
         **kwargs: Any,
     ) -> str:
         """Render group of radio buttons.
@@ -442,6 +533,12 @@ class RadioGroup(SelectInputBase):
         exclusive-choice semantics. Actual visual styling (removing borders
         between adjacent options, etc.) is left to the app's CSS, same as
         every other framework-styling concern in this library.
+
+        collapsible=True wraps the radios in a toggle the user can
+        open/close -- purely presentational, like variant: it never changes
+        which fields are required (that's still driven entirely by the
+        underlying FormModel's own Field(...) declarations, untouched here).
+        collapsed=True starts it closed; only meaningful with collapsible=True.
         """
         item_class = 'radio-item'
         if variant == 'segmented':
@@ -492,6 +589,8 @@ class RadioGroup(SelectInputBase):
         fieldset_class = 'radio-group'
         if variant == 'segmented':
             fieldset_class += ' radio-group-segmented'
+        if collapsible:
+            fieldset_class += ' collapsible'
 
         fieldset_attrs: dict[str, Any] = {'class': fieldset_class}
         for attr in ['style', 'disabled']:
@@ -502,11 +601,30 @@ class RadioGroup(SelectInputBase):
         radio_buttons_html = '\n'.join(radio_buttons)
         legend_text = legend or group_name.replace('_', ' ').title()
 
+        if not collapsible:
+            return substitute(
+                self.template,
+                fieldset_attributes=fieldset_attributes_str,
+                legend=escape(legend_text),
+                radio_buttons=radio_buttons_html,
+            )
+
+        content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
+        aria_expanded = 'false' if collapsed else 'true'
+        content_style = 'display:none' if collapsed else ''
+        _radio_buttons_html = SafeHTML(radio_buttons_html)
+        toggle = html(
+            t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" onclick="toggleCollapsibleGroup('{content_id}', this)">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
+        )
+        content = html(
+            t'<div class="collapsible-group-content" id="{content_id}" style="{content_style}">{_radio_buttons_html}</div>'
+        )
         return substitute(
-            self.template,
+            self.collapsible_template,
             fieldset_attributes=fieldset_attributes_str,
-            legend=escape(legend_text),
-            radio_buttons=radio_buttons_html,
+            toggle=toggle,
+            content=content,
+            assets=_COLLAPSIBLE_GROUP_ASSETS,
         )
 
 

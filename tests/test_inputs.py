@@ -1471,6 +1471,37 @@ class TestCheckboxGroup:
         checkbox_tag = html[html.find('<input') : html.find('/>') + 2]
         assert 'form-check-input' in checkbox_tag
 
+    def test_checkbox_group_collapsible_opt_in_is_unchanged_when_omitted(self):
+        """collapsible defaults to False -- omitting it must render exactly
+        as before this feature existed."""
+        group = CheckboxGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='test')
+        assert 'collapsible' not in html
+        assert 'toggleCollapsibleGroup' not in html
+        assert '<legend>Test</legend>' in html
+
+    def test_checkbox_group_collapsible_defaults_expanded(self):
+        group = CheckboxGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='vegetables', collapsible=True)
+
+        assert 'class="checkbox-group collapsible"' in html
+        assert 'toggleCollapsibleGroup' in html
+        assert 'aria-expanded="true"' in html
+        assert 'id="vegetables-options"' in html
+        assert 'style=""' in html  # visible, not display:none
+
+    def test_checkbox_group_collapsible_collapsed_starts_hidden(self):
+        group = CheckboxGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(
+            options=options, group_name='vegetables', collapsible=True, collapsed=True
+        )
+
+        assert 'aria-expanded="false"' in html
+        assert 'style="display:none"' in html
+
 
 # ---------------------------------------------------------------------------
 # RadioGroup tests (from test_input_types_coverage.py)
@@ -1547,6 +1578,33 @@ class TestRadioGroup:
 
         radio_tag = html[html.find('<input') : html.find('/>') + 2]
         assert 'form-check-input' in radio_tag
+
+    def test_radio_group_collapsible_opt_in_is_unchanged_when_omitted(self):
+        group = RadioGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='test')
+        assert 'collapsible' not in html
+        assert 'toggleCollapsibleGroup' not in html
+        assert '<legend>Test</legend>' in html
+
+    def test_radio_group_collapsible_defaults_expanded(self):
+        group = RadioGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='size', collapsible=True)
+
+        assert 'class="radio-group collapsible"' in html
+        assert 'toggleCollapsibleGroup' in html
+        assert 'aria-expanded="true"' in html
+        assert 'id="size-options"' in html
+        assert 'style=""' in html
+
+    def test_radio_group_collapsible_collapsed_starts_hidden(self):
+        group = RadioGroup()
+        options = [{'value': 'opt1', 'label': 'Option 1'}]
+        html = group.render(options=options, group_name='size', collapsible=True, collapsed=True)
+
+        assert 'aria-expanded="false"' in html
+        assert 'style="display:none"' in html
 
 
 # ---------------------------------------------------------------------------

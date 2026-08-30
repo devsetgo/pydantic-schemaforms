@@ -311,6 +311,14 @@ class FieldRenderer:
             # attribute on the <select> tag itself (browsers ignore it there).
             option_keys_to_skip = option_keys_to_skip | {'placeholder'}
 
+        # checkbox_group/radio's collapsible/collapsed ui_options need no
+        # entry here, unlike 'placeholder' above -- CheckboxGroup.render()/
+        # RadioGroup.render() (selection_inputs.py) never call
+        # validate_attributes() on their whole kwargs blob the way
+        # SelectInput does, so an unconsumed kwarg is just dropped, never
+        # written into HTML as a stray attribute. Same reason 'legend'/
+        # 'variant' already work with no skip-list entry.
+
         for key, option_value in ui_options.items():
             if key in option_keys_to_skip:
                 continue

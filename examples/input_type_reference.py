@@ -207,13 +207,17 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
             ),
             InputTypeEntry(
                 'checkbox_group',
-                'Multiple booleans from one field, rendered as a group of checkboxes.',
+                'Multiple booleans from one field, rendered as a group of checkboxes. '
+                'ui_options collapsible=True turns the legend into a toggle that shows/hides '
+                'the options -- purely presentational, does not affect required-ness.',
                 "channels: list[str] = Field(default_factory=list, ui_element='checkbox_group',\n"
-                "                            ui_options={'choices': ['email', 'sms', 'push']})",
+                "                            ui_options={'choices': ['email', 'sms', 'push'],\n"
+                "                                        'collapsible': True})",
             ),
             InputTypeEntry(
                 'radio',
-                'Single choice from a set of mutually-exclusive options.',
+                'Single choice from a set of mutually-exclusive options. Also supports '
+                'ui_options collapsible/collapsed, same as checkbox_group.',
                 "size: str = Field('medium', ui_element='radio',\n"
                 "                  ui_options={'choices': ['small', 'medium', 'large']})",
             ),
