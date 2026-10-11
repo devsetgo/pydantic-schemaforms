@@ -251,7 +251,8 @@ def test_wizard_has_one_step_per_group_with_the_first_active(framework: str) -> 
     assert _step_titles(html) == ['General', 'Contact details', 'Home address', 'Pets']
     assert html.count('data-wizard-step=') == 4
     assert _active_steps(html) == ['0']
-    assert 'data-wizard-back' in html and 'data-wizard-next' in html
+    assert 'data-wizard-back' in html
+    assert 'data-wizard-next' in html
     assert 'window.schemaformsWizard' in html
     # Every step is in the one <form>, so a single POST submits all of them.
     assert {'nickname', 'contact.email', 'address.city'} <= _input_names(html)
@@ -303,7 +304,8 @@ def test_wizard_options_control_progress_linearity_and_labels() -> None:
 
     assert 'data-linear="false"' in html
     assert '<ol class="wizard-progress">' not in html
-    assert '>Previous</button>' in html and '>Continue</button>' in html
+    assert '>Previous</button>' in html
+    assert '>Continue</button>' in html
 
 
 def test_unknown_wizard_option_is_rejected() -> None:
@@ -460,7 +462,8 @@ def test_render_with_errors_puts_each_message_next_to_its_input_in_the_right_tab
     message = html.index('String should have at least 2 characters', city_input)
     assert message - city_input < 1500
     active_button = re.search(r'<button[^>]*class="[^"]*active[^"]*"[^>]*>\s*([^<]+?)\s*<', html)
-    assert active_button and active_button.group(1) == 'Home address'
+    assert active_button is not None
+    assert active_button.group(1) == 'Home address'
     assert 'Address — City' in html
 
 
@@ -568,7 +571,8 @@ def test_grouped_material_forms_skip_native_validation_of_hidden_groups(layout: 
         r'<form[^>]*>',
         render_form_html(ProfileForm, layout=layout, framework='material', submit_url='/p'),
     )
-    assert form_tag and 'novalidate' in form_tag.group(0)
+    assert form_tag is not None
+    assert 'novalidate' in form_tag.group(0)
 
     vertical = render_form_html(ProfileForm, framework='material', submit_url='/p')
     assert 'novalidate' not in re.search(r'<form[^>]*>', vertical).group(0)
@@ -683,7 +687,8 @@ def test_hidden_element_renders_a_bare_input_and_color_shows_its_value(framework
     )
     assert 'Secret Label' not in html
     token_input = re.search(r'<input[^>]*name="token"[^>]*>', html).group(0)
-    assert 'type="hidden"' in token_input and 'value="abc"' in token_input
+    assert 'type="hidden"' in token_input
+    assert 'value="abc"' in token_input
     assert html.count('color-value-display') == 1
 
 

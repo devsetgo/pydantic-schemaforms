@@ -46,7 +46,15 @@ def _render_error(message: str | None) -> SafeHTML:
 
 
 def _wrap_collapsible(
-    *, title: str, body: str, collapsed: bool, has_errors: bool, field_name: str
+    *,
+    # NOSONAR comments below: title/field_name are read via {expr}
+    # interpolation in the t-strings in this function, which Sonar's parser
+    # doesn't see (same note as model_list_renderer._render_item_toggle).
+    title: str,  # NOSONAR
+    body: str,
+    collapsed: bool,
+    has_errors: bool,
+    field_name: str,  # NOSONAR
 ) -> SafeHTML:
     _body = SafeHTML(body)
     if collapsed and not has_errors:

@@ -42,7 +42,8 @@ def test_comprehensive_tabbed_form_accepts_the_wire_format():
     from_wire = validate_form_data(ComprehensiveTabbedForm, wire)
     from_json = validate_form_data(ComprehensiveTabbedForm, data)
 
-    assert from_wire.is_valid and from_json.is_valid
+    assert from_wire.is_valid
+    assert from_json.is_valid
     assert from_wire.data == from_json.data
     assert (
         from_wire.data['organization']['departments'][0]['teams'][0]['members'][0]['name']

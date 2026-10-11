@@ -43,8 +43,9 @@ def test_subclassing_a_removed_class_raises_with_upgrade_guide(name: str) -> Non
 
 @pytest.mark.parametrize('name', REMOVED)
 def test_instantiating_a_removed_class_raises(name: str) -> None:
+    removed_class = getattr(form_layouts, name)
     with pytest.raises(FormLayoutRemovedError, match=f'{name} was removed'):
-        getattr(form_layouts, name)()
+        removed_class()
 
 
 def test_removed_error_is_a_type_error() -> None:
@@ -58,8 +59,9 @@ def test_list_layout_error_points_at_list_fields() -> None:
 
 def test_top_level_names_still_import_and_raise() -> None:
     for name in ['TabbedLayout', 'ListLayout', 'FormLayoutBase', 'SectionDesign', 'FormDesign']:
+        removed_class = getattr(pydantic_schemaforms, name)
         with pytest.raises(FormLayoutRemovedError):
-            getattr(pydantic_schemaforms, name)()
+            removed_class()
 
 
 def test_top_level_vertical_and_horizontal_are_the_flex_primitives() -> None:

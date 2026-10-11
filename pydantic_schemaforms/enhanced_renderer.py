@@ -376,7 +376,6 @@ class EnhancedFormRenderer:
         model_cls: type[FormModel],
         data: dict[str, Any] | None = None,
         errors: dict[Any, Any] | None = None,
-        layout: str = 'vertical',
         **kwargs: Any,
     ) -> str:
         """Render only the field markup for nested usage."""
@@ -559,7 +558,9 @@ class EnhancedFormRenderer:
 
         item_parts = []
         for loc, message in flattened:
-            humanized_field = self._humanize_error_loc(loc)
+            # NOSONAR: read via {humanized_field} in the t-string below, which
+            # Sonar's parser doesn't see.
+            humanized_field = self._humanize_error_loc(loc)  # NOSONAR
             item_parts.append(
                 render_html(t'<li><strong>{humanized_field}:</strong> {message}</li>')
             )

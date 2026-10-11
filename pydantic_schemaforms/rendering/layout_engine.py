@@ -30,6 +30,9 @@ LayoutRenderer = Callable[
 # the field must not draw a second titled card (see nested_model_renderer).
 IN_GROUP_FLAG = '_in_group'
 
+# Leading space: appended directly after another class in the templates.
+_ACTIVE_CLASS = ' active'
+
 
 def _wrap_side_by_side_column(col: str) -> str:
     _col = SafeHTML(str(col))
@@ -184,7 +187,7 @@ ${component_assets}
                     button_template = tpl
             tab_buttons.append(
                 button_template.render(
-                    active_class=' active' if is_active else '',
+                    active_class=_ACTIVE_CLASS if is_active else '',
                     aria_selected='true' if is_active else 'false',
                     tab_id=tab_id,
                     title=tab['title'],
@@ -201,7 +204,7 @@ ${component_assets}
                     panel_template = tpl
 
             # Bootstrap tab panels need `show active` to display initial content
-            active_class = ' active'
+            active_class = _ACTIVE_CLASS
             if panel_template is BOOTSTRAP_TAB_PANEL_TEMPLATE:  # type: ignore[name-defined]
                 active_class = ' show active'
 
@@ -333,10 +336,10 @@ class WizardLayout(BaseLayout):
                     index=str(index),
                     title=step['title'],
                     content=step['content'],
-                    active_class=' active' if is_active else '',
+                    active_class=_ACTIVE_CLASS if is_active else '',
                 )
             )
-            state = (' active' if is_active else '') + (
+            state = (_ACTIVE_CLASS if is_active else '') + (
                 ' has-error' if step.get('has_error') else ''
             )
             progress_items.append(
@@ -823,7 +826,8 @@ class LayoutEngine:
         handler_name = ui_info.get('layout_handler') or ui_info.get('layout_renderer')
         handler = self._custom_renderers.get(str(handler_name)) if handler_name else None
         if handler is None:
-            title = field_schema.get('title', field_name.replace('_', ' ').title())
+            # NOSONAR: read via {title} in the t-string below (Sonar can't see it).
+            title = field_schema.get('title', field_name.replace('_', ' ').title())  # NOSONAR
             return html(t"""<div class="layout-field-unknown alert alert-warning">
     <p>Layout field "{title}" has no registered layout_handler.</p>
     <small>input_type="layout" needs layout_handler=... naming a renderer registered with
