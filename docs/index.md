@@ -46,7 +46,8 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
 - 🔀 **Dual-use form + JSON API**: `as_api_model()` returns a clean Pydantic `BaseModel` — one model class drives both the HTML form and a typed JSON API, with UI metadata stripped from OpenAPI docs
 - 🧬 **Standard JSON Schema output**: `get_pydantic_json_schema()` returns spec-compliant JSON Schema (`$defs`/`$ref`) for the underlying Pydantic model, including nested `BaseModel`/`List[BaseModel]` fields
-- 🪆 **Nested by default, flat by choice**: `validate()` output/input mirrors the Pydantic model's nested shape by default; pass `flatten=True` for bracket+dot flat keys instead
+- 🧩 **Complex forms by nesting**: build a big form from smaller `FormModel`s by declaring them as fields, then present them as sections, tabs, columns, or an accordion with one `layout=` argument
+- 🪆 **JSON in, JSON out**: `validate()` takes the raw request form and returns data and errors as nested JSON shaped like the model (`errors["pets"][1]["name"]`)
 - 🕐 **Custom date/time display formats**: `date`/`time`/`datetime` fields default to the browser's own locale-controlled display; set `date_format`/`time_format`/`datetime_format` in `ui_options` (e.g. 24-hour "military" time) to opt into any `strftime`-defined shape instead
 - 📊 **Composite layout controls**: `DataTableLayout` turns a `FormModel` subclass into a CSV-import-to-table control — built-in file upload, per-cell editable widgets, row-level validation, and DataTables.js search/sort/paging — with no hand-built button HTML or load/submit branching; `model_list` renders repeating sub-forms the same way. Both plug into the same extensible layout-renderer registry documented in `docs/plugin_hooks.md`, so you can register your own composite controls the same way
 
@@ -121,8 +122,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class MinimalLoginForm(FormModel):
@@ -200,8 +200,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class UserRegistrationForm(FormModel):
@@ -257,8 +256,7 @@ In synchronous apps (Flask), the simplest pattern is the same: define a `FormMod
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class MinimalLoginForm(FormModel):
@@ -312,8 +310,7 @@ def login():
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class UserRegistrationForm(FormModel):
@@ -536,7 +533,7 @@ Complete Flask application example:
 ```python
 from flask import Flask, request, render_template_string
 from pydantic import ValidationError
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel
 
 app = Flask(__name__)
 
@@ -773,7 +770,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel
 
 class MyForm(FormModel):
     field_name: str = Field(..., ui_element="email")
@@ -820,16 +817,25 @@ schema = ContactForm.get_pydantic_json_schema()
 schema = ContactForm.get_pydantic_json_schema(ref_template="#/components/schemas/{model}")
 ```
 
-#### Nested vs. flat form data — `validate(..., flatten=True)`
+#### Complex forms: nest `FormModel`s
 
-`FormModel.validate()` returns `result.data` shaped exactly like the underlying Pydantic model by default — nested `BaseModel`/`List[BaseModel]` fields come back nested, matching `model_dump()`. Pass `flatten=True` to accept and return bracket+dot flat keys instead (`"pets[0].name"`, the same notation used for `model_list` field names):
+Compose a large form from smaller ones by declaring them as fields. Pick the presentation with `layout=`: `"vertical"` (sections, the default), `"tabbed"`, `"side-by-side"`, `"accordion"`, or `"wizard"` (one step at a time with Back/Next). Groups follow declaration order.
 
 ```python
-result = PersonForm.validate(data, submit_url="/people", flatten=True)
-# result.data uses flat "field[0].sub" keys instead of nested dicts/lists
+class ProfileForm(FormModel):
+    nickname: str = Field(title="Nickname")
+    contact: ContactForm = Field(title="Contact details")
+    address: AddressForm = Field(title="Home address")
+    pets: list[PetForm] = Field(default_factory=list, title="Pets")
+
+html = render_form_html(ProfileForm, layout="tabbed", submit_url="/profile")
+
+result = ProfileForm.validate(await request.form(), submit_url="/profile", layout="tabbed")
+# result.data   == {"nickname": ..., "contact": {...}, "address": {...}, "pets": [{...}, ...]}
+# result.errors == {"address": {"city": "..."}, "pets": {1: {"name": "..."}}}
 ```
 
-See "Nested vs. flat form data" in the recipes guide (`docs/recipes.md`) for a full example.
+See `docs/complex_forms.md` for the full guide, including upgrading from the removed `TabbedLayout`/`VerticalLayout`/`ListLayout` classes.
 
 ### Field Function
 

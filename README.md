@@ -122,8 +122,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class MinimalLoginForm(FormModel):
@@ -201,8 +200,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class UserRegistrationForm(FormModel):
@@ -258,8 +256,7 @@ In synchronous apps (Flask), the simplest pattern is the same: define a `FormMod
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class MinimalLoginForm(FormModel):
@@ -313,8 +310,7 @@ def login():
 from flask import Flask, request
 from pydantic import ValidationError
 
-from pydantic_schemaforms import render_form_html
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
 
 class UserRegistrationForm(FormModel):
@@ -537,7 +533,7 @@ Complete Flask application example:
 ```python
 from flask import Flask, request, render_template_string
 from pydantic import ValidationError
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel
 
 app = Flask(__name__)
 
@@ -774,7 +770,7 @@ All HTML5 input attributes are supported through `ui_options` or Field parameter
 Extend your Pydantic models with `FormModel` to add form rendering capabilities:
 
 ```python
-from pydantic_schemaforms.schema_form import FormModel, Field
+from pydantic_schemaforms import Field, FormModel
 
 class MyForm(FormModel):
     field_name: str = Field(..., ui_element="email")

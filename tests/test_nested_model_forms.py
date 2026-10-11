@@ -539,12 +539,14 @@ def test_field_keeps_unlisted_ui_keys_alongside_listed_ones() -> None:
     assert schema['ui_collapsible'] is True
 
 
-def test_decoder_drops_list_indices_no_real_submission_could_have() -> None:
-    # One field must not be able to make the server allocate a huge padded list.
+def test_decoder_compacts_list_indices_instead_of_padding() -> None:
+    # One field must not be able to make the server allocate a huge padded list,
+    # and an item removed without re-indexing the rest must still decode.
     assert decode_submission([('pets[50000000].name', 'x'), ('nickname', 'mk')]) == {
-        'nickname': 'mk'
+        'pets': [{'name': 'x'}],
+        'nickname': 'mk',
     }
-    assert decode_submission([('pets[1].name', 'b'), ('pets[0].name', 'a')]) == {
+    assert decode_submission([('pets[2].name', 'b'), ('pets[0].name', 'a')]) == {
         'pets': [{'name': 'a'}, {'name': 'b'}]
     }
 

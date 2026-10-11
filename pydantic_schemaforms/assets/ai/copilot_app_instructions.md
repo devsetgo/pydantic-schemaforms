@@ -1047,8 +1047,8 @@ from pydantic_schemaforms import (
     FormModel,
     LiveValidator,
     render_form_html_async,
+    validation_response_headers,
 )
-from pydantic_schemaforms.live_validation import validation_response_headers
 
 app = FastAPI()
 

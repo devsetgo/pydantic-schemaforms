@@ -73,11 +73,12 @@ from pydantic_schemaforms import (
     suggested_instruction_filename,
     verify_captcha,
 )
-from pydantic_schemaforms.assets.runtime import (
+from pydantic_schemaforms import (
     bootstrap_icons_css_content,
     read_asset_text,
+    validation_response_headers,
+    wrap_with_schemaforms_markers,
 )
-from pydantic_schemaforms.live_validation import validation_response_headers
 
 router = APIRouter()
 
@@ -1814,8 +1815,6 @@ async def layouts_get(
             },
         }
 
-    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-
     renderer = EnhancedFormRenderer(framework=style)
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
@@ -1874,8 +1873,6 @@ async def layouts_post(
         )
 
     # Re-render the form with validation errors + user data.
-    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-
     renderer = EnhancedFormRenderer(framework=style)
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
@@ -1920,8 +1917,6 @@ async def self_contained(
     - Posts back to `/self-contained` so submissions work without extra routes.
     - Honors `style` for `bootstrap`, `material`, and `none` (plain HTML).
     """
-    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-
     selected_style = (style or 'material').lower()
     if selected_style not in {'bootstrap', 'material', 'none'}:
         selected_style = 'material'
@@ -1968,8 +1963,6 @@ async def self_contained_post(
     `UserRegistrationForm` and errors are rendered back into the same
     self-contained HTML output.
     """
-    from pydantic_schemaforms.html_markers import wrap_with_schemaforms_markers
-
     selected_style = (style or 'material').lower()
     if selected_style not in {'bootstrap', 'material', 'none'}:
         selected_style = 'material'

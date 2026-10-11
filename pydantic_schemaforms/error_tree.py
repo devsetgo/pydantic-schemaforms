@@ -4,7 +4,7 @@
 using string paths, so the developer reads errors the same way they read data::
 
     result.data   == {"address": {"city": "X"}, "pets": [{"name": "Rex"}, {"name": ""}]}
-    result.errors == {"address": {"city": "Must be at least 2 characters"},
+    result.errors == {"address": {"city": "String should have at least 2 characters"},
                       "pets": {1: {"name": "Field required"}}}
 
 Rules:

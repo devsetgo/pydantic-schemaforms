@@ -80,9 +80,14 @@ breaking release; see `docs/complex_forms.md#upgrading`.
 
 ### Fixed
 
-- Decoding a submission ignores list indices no real form could send (at or
-  above the submission's field count). Before, one field named like
-  `pets[500000000].name` made the server allocate a list that long.
+- Decoding a submission compacts list indices instead of padding gaps with
+  `None`: `pets[0]` and `pets[2]` decode to a two-item list, so an item removed
+  without re-indexing still validates, and one field named like
+  `pets[500000000].name` no longer makes the server allocate a list that long.
+- `validation_response_headers`, `wrap_with_schemaforms_markers`,
+  `read_asset_text`, `bootstrap_icons_css_content` and `bootstrap_icons_css_tag`
+  are exported from the top-level package; the docs and examples imported them
+  from internal modules.
 - Removing every item of a repeating sub-form now fails its `min_length`
   instead of passing as the field's default (form submissions only; nested
   JSON that omits the key still gets the default).
@@ -217,6 +222,38 @@ First production release. All public Quick Start code paths verified working end
 ## Latest Changes
 
 #### Production Releases
+
+### <span style='color:blue'>Enhancement: Collapse and Select Improvements</span> ([26.3.7](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.7))
+
+## Changes
+- Update project dependencies and configurations (#219) (@devsetgo)
+
+## Features
+
+- Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)
+- Add optional forced-selection placeholder to select dropdowns (#220) (@devsetgo)
+
+## Bug Fixes
+
+- Expand and improve AI assistant app-building instructions (#218) (@devsetgo)
+
+## Documentation
+
+- Bump version to 26.3.7 (#223) (@devsetgo)
+- Dev (#222) (@devsetgo)
+- Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)
+
+## Maintenance
+
+- Bump version to 26.3.7 (#223) (@devsetgo)
+- Dev (#222) (@devsetgo)
+- Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)
+
+## Contributors
+@devsetgo and @claude
+
+
+Published Date: 2026 August 29, 22:05
 
 ### <span style='color:blue'>Browser Cache Bug</span> ([26.3.6](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.6))
 
@@ -610,3 +647,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+

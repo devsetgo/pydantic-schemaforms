@@ -787,7 +787,7 @@ class LayoutEngine:
                 steps=rendered,
                 active_index=active_index,
                 class_='form-groups-wizard',
-                **check_wizard_options(wizard_options),
+                **(wizard_options or {}),
             )
         else:
             columns = [_wrap_side_by_side_column(group['content']) for group in rendered]

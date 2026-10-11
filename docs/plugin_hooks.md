@@ -7,8 +7,8 @@ This project now exposes lightweight extension points so third-party packages (o
 Use `pydantic_schemaforms.inputs.registry.register_input_class` to bind a `BaseInput` subclass to one or more `ui_element` aliases. The registry augments the built-in discovery of subclasses so you can register at import time or inside your framework startup.
 
 ```python
-from pydantic_schemaforms.inputs.base import BaseInput
-from pydantic_schemaforms.inputs.registry import register_input_class
+from pydantic_schemaforms import BaseInput
+from pydantic_schemaforms import register_input_class
 
 class ColorSwatchInput(BaseInput):
     ui_element = "color_swatch"
@@ -54,7 +54,7 @@ whose own `input_type`/`ui_element` literally equals `name`), not on
 anything about the registration call itself.
 
 ```python
-from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms import LayoutEngine
 
 # signature: (field_name, field_schema, value, ui_info, context, engine) -> str
 def render_steps(field_name, field_schema, value, ui_info, context, engine):

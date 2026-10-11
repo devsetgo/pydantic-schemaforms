@@ -7,6 +7,113 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [26.4.0] — Unreleased
+
+Complex forms are now built one way: nest `FormModel`s as fields of a parent
+`FormModel` and pick a `layout=`. Data in and out is nested JSON. This is a
+breaking release; see `docs/complex_forms.md#upgrading`.
+
+### Breaking Changes
+
+- **Form-orchestration classes removed.** `TabbedLayout`, `ListLayout`,
+  `SectionDesign`, `FormDesign`, `FormLayoutBase`, and the `form_layouts`
+  `VerticalLayout`/`HorizontalLayout` wrappers now raise
+  `FormLayoutRemovedError` (a `TypeError`) when subclassed or called. The
+  message contains the upgrade steps and points to the new "Upgrading to
+  nested forms" section of the AI instructions.
+- **Top-level `VerticalLayout`/`HorizontalLayout`** now name the flex layout
+  primitives from `rendering/layout_engine.py`, which the removed wrappers
+  used to shadow.
+- **`pydantic_schemaforms.layouts`** (the deprecated re-export shim) is deleted.
+- **`FormModel.validate(flatten=...)` removed.** `result.data` is always nested
+  like the model. Passing `flatten` raises a `TypeError` explaining this.
+- **`ValidationResult.errors` is a nested error tree** shaped like the data
+  (`errors["pets"][1]["name"]`) instead of string-path keys
+  (`errors["pets[1].name"]`). Container and form-wide messages use the
+  reserved `"_errors"` key instead of `"general"`.
+- **`layout="tabbed"`/`"side-by-side"` group sub-forms.** The field-name
+  keyword heuristic and the two-fields-per-row pairing are gone; on a form
+  with no sub-form fields these layouts raise `ValueError`. Several
+  `input_type="layout"` fields no longer auto-render as tabs; pass
+  `layout="tabbed"`.
+- **Unknown `layout=` values raise `ValueError`** instead of rendering vertically.
+- **Non-validation exceptions propagate from `validate()`** instead of being
+  shown on the form as `errors["general"]`.
+- **Renderer internals:** `RenderContext.all_errors` is replaced by
+  `child_errors` (the field's own error sub-tree), and `render_field()` takes
+  the field's error node as `error` with no `all_errors` argument.
+  `get_nested_form_data`, `EnhancedFormRenderer._humanize_error_field`, and
+  `FieldRenderer.extract_nested_errors_for_field` are removed.
+- **`handle_form`/`handle_form_async` with a model** return nested data and a
+  nested error tree. `FormValidator.validate_pydantic_model()` (which kept
+  only the first segment of each error path) is removed.
+
+### Added
+
+- **Sub-form fields.** A field typed as another `FormModel` (or `Optional` of
+  one) renders as a titled section with inputs named `address.city`, with no
+  `ui_element` needed. `ui_collapsible`/`ui_collapsed` render it as a
+  `<details>` section that opens when it holds an error.
+- **Grouped layouts:** `layout="tabbed"`, `"side-by-side"`, and the new
+  `"accordion"` arrange the parent's plain fields plus one group per sub-form,
+  in declaration order (`ui_order` overrides). Re-rendering after a failed
+  submit opens the first group that contains an error.
+- **Step wizard:** `layout="wizard"` shows the same groups one step at a time
+  with a progress header and Back/Next. All steps are in one `<form>`, so one
+  POST submits everything. Next runs the browser's validation on the current
+  step; a re-render opens the first step with an error and marks the others.
+  Options: `wizard_options={"linear", "show_progress", "back_label",
+  "next_label"}` and `Field(ui_step_title=...)`. Without JavaScript all steps
+  show stacked.
+- **`validate()` takes the raw request form** (Starlette `FormData`, Werkzeug
+  `MultiDict`, `(name, value)` pairs) as well as nested dicts, keeping
+  repeated values as lists. `render_form_html(form_data=...)` accepts the same.
+- **`ValidationResult.error_list()`** (flat `[{"loc": [...], "msg": ...}]`) and
+  **`ValidationResult.instance`** (the validated model).
+- **`list[FormModel]` fields render as repeating sub-forms** without
+  `ui_element="model_list"`.
+- **`LiveValidator.register_model_validator()`** registers sub-form and
+  list-item fields under their input names (`address.city`, `pets[].name`).
+- **`validate_form_data`** is exported from the top-level package, as the
+  validation guide already documented.
+- **`docs/complex_forms.md`**, a guide to composing forms and upgrading.
+
+### Fixed
+
+- Decoding a submission compacts list indices instead of padding gaps with
+  `None`: `pets[0]` and `pets[2]` decode to a two-item list, so an item removed
+  without re-indexing still validates, and one field named like
+  `pets[500000000].name` no longer makes the server allocate a list that long.
+- `validation_response_headers`, `wrap_with_schemaforms_markers`,
+  `read_asset_text`, `bootstrap_icons_css_content` and `bootstrap_icons_css_tag`
+  are exported from the top-level package; the docs and examples imported them
+  from internal modules.
+- Removing every item of a repeating sub-form now fails its `min_length`
+  instead of passing as the field's default (form submissions only; nested
+  JSON that omits the key still gets the default).
+- Under `layout="tabbed"`/`"accordion"`/`"wizard"`, Material forms no longer
+  let the browser block submission on a required input in a hidden group with
+  no visible message; the server re-renders with that group open.
+- A layout field's `default_factory` that raises is no longer silently
+  swallowed (the table rendered empty); the error propagates.
+- Material forms' inline script failed to parse (a `#` comment in
+  JavaScript), so its floating-label and field enhancements never ran.
+- `Field()` silently dropped any `ui_*` option it doesn't name as a parameter
+  (such as `ui_collapsible`) when another `ui_*` option like `ui_help_text` was
+  also passed. All `ui_*` options are now kept.
+- Validation errors now reach fields inside sub-forms and are namespaced per
+  sub-form, so two sub-forms with the same field name no longer collide.
+- Library code no longer imports from the `examples/` package or hard-codes
+  the demo app's field names.
+- `DataTableLayout.parse_submitted_rows()` no longer turns cell values like
+  `"1"` or `"yes"` into booleans before validation.
+- The documented `FormConfig`/`TabbedLayout((...))` and
+  `HorizontalLayout(label_cols=...)` recipes, which never worked, are replaced.
+- Several documentation examples that interpolated submitted values into
+  HTML with f-strings now use `html(t"...")`.
+
+---
+
 ## [26.2.3] — 2026-06-28
 
 ### Fixed
@@ -115,6 +222,38 @@ First production release. All public Quick Start code paths verified working end
 ## Latest Changes
 
 #### Production Releases
+
+### <span style='color:blue'>Enhancement: Collapse and Select Improvements</span> ([26.3.7](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.7))
+
+## Changes
+- Update project dependencies and configurations (#219) (@devsetgo)
+
+## Features
+
+- Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)
+- Add optional forced-selection placeholder to select dropdowns (#220) (@devsetgo)
+
+## Bug Fixes
+
+- Expand and improve AI assistant app-building instructions (#218) (@devsetgo)
+
+## Documentation
+
+- Bump version to 26.3.7 (#223) (@devsetgo)
+- Dev (#222) (@devsetgo)
+- Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)
+
+## Maintenance
+
+- Bump version to 26.3.7 (#223) (@devsetgo)
+- Dev (#222) (@devsetgo)
+- Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)
+
+## Contributors
+@devsetgo and @claude
+
+
+Published Date: 2026 August 29, 22:05
 
 ### <span style='color:blue'>Browser Cache Bug</span> ([26.3.6](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.6))
 

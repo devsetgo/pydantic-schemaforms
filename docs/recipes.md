@@ -701,7 +701,7 @@ declares a separate file field or hand-builds that markup.
 
 ```python
 from enum import Enum
-from pydantic_schemaforms.datatable_layout import DataTableLayout
+from pydantic_schemaforms import DataTableLayout
 from pydantic_schemaforms import Field as FormField
 
 class Color(str, Enum):
@@ -725,7 +725,7 @@ That embedding `FormModel` needs nothing but the one field:
 ```python
 from typing import Any
 from pydantic_schemaforms import render_form_html_async
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel
 
 class ContactsPage(FormModel):
     rows: Any = Field(
@@ -959,8 +959,8 @@ from fastapi.responses import HTMLResponse, Response
 from pydantic import EmailStr
 
 from pydantic_schemaforms import render_form_html_async
-from pydantic_schemaforms.datatable_layout import DataTableLayout
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import DataTableLayout
+from pydantic_schemaforms import Field, FormModel
 
 class Department(str, Enum):
     engineering = "engineering"
@@ -1298,8 +1298,13 @@ types — nothing to duplicate, checking as-you-type (debounced) rather than
 only on blur:
 
 ```python
-from pydantic_schemaforms import DeliverableEmailStr, Field, FormModel, LiveValidator
-from pydantic_schemaforms.live_validation import validation_response_headers
+from pydantic_schemaforms import (
+    DeliverableEmailStr,
+    Field,
+    FormModel,
+    LiveValidator,
+    validation_response_headers,
+)
 from fastapi.responses import HTMLResponse
 
 class ContactForm(FormModel):

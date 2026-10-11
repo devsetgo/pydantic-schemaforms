@@ -62,10 +62,8 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import EmailStr
 
 from examples.fastapi_routes import log_timing, templates
-from pydantic_schemaforms import render_form_html_async
-from pydantic_schemaforms.datatable_layout import DataTableLayout
-from pydantic_schemaforms.schema_form import Field as FormField
-from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms import DataTableLayout, FormModel, render_form_html_async
+from pydantic_schemaforms import Field as FormField
 
 
 class Department(str, Enum):

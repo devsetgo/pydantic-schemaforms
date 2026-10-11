@@ -161,10 +161,10 @@ Key changes to existing modules:
    grouped forms on one page would collide. This was pre-existing. `WizardLayout` avoids the
    problem by using no ids (data attributes, scoped by `closest('.form-wizard')`); tabs and
    accordion could be moved to the same approach.
-5. Some pre-existing internal-submodule imports remain in `examples/fastapi_routes.py`
-   (`live_validation.validation_response_headers`, `html_markers.wrap_with_schemaforms_markers`)
-   and `examples/datatable_import_example.py`. CLAUDE.md says to fix these by adding
-   top-level exports.
+5. ~~Internal-submodule imports in `examples/` (and in the AI instructions and
+   `docs/recipes.md`/`docs/assets.md`).~~ Fixed: `validation_response_headers`,
+   `wrap_with_schemaforms_markers`, `read_asset_text`, `bootstrap_icons_css_content` and
+   `bootstrap_icons_css_tag` are top-level exports now and every example imports them there.
 6. **Release:** bump to 26.4.0 with BumpCalver, set the CHANGELOG date, regenerate the docs
    copies (`make create-docs-local`), run the Playwright tests, then open a PR from
    `feature/nested-forms`. Per CLAUDE.md's attribution rules, the commit and PR need the

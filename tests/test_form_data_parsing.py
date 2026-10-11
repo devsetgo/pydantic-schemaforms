@@ -1,9 +1,10 @@
 from pydantic_schemaforms.form_data import (
+    _SparseList,
+    _compact,
     _assign_list_token,
     _assign_mapping_token,
     _assign_nested,
     _coerce_to_list,
-    _ensure_list_index,
     _new_container,
     flatten_nested_data,
     parse_nested_form_data,
@@ -59,7 +60,7 @@ def test_assign_nested_expands_list_for_direct_index_assignment() -> None:
 
     _assign_nested(container, ['items', 2], 'third')
 
-    assert container == {'items': [None, None, 'third']}
+    assert _compact(container) == {'items': ['third']}
 
 
 def test_assign_nested_replaces_none_with_expected_container() -> None:
@@ -70,11 +71,11 @@ def test_assign_nested_replaces_none_with_expected_container() -> None:
     _assign_nested(list_container, ['pets', 0, 'name'], 'Milo')
 
     assert dict_container == {'profile': {'name': 'Ada'}}
-    assert list_container == {'pets': [{'name': 'Milo'}]}
+    assert _compact(list_container) == {'pets': [{'name': 'Milo'}]}
 
 
 def test_new_container_returns_expected_types() -> None:
-    assert _new_container(0) == []
+    assert isinstance(_new_container(0), _SparseList)
     assert _new_container('name') == {}
     assert _new_container(None) == {}
 
@@ -89,7 +90,7 @@ def test_assign_mapping_token_last_and_non_last_paths() -> None:
         next_token=0,
         value='unused',
     )
-    assert mapping == {'users': []}
+    assert _compact(mapping) == {'users': []}
     assert next_current is mapping['users']
 
     end = _assign_mapping_token(
@@ -104,16 +105,20 @@ def test_assign_mapping_token_last_and_non_last_paths() -> None:
 
 
 def test_coerce_to_list_returns_existing_list_unchanged() -> None:
-    current = [1, 2]
+    current = _SparseList({0: 1, 1: 2})
     result = _coerce_to_list(current, ['ignored', 0], 1)
     assert result is current
+
+
+def test_coerce_to_list_indexes_a_plain_list_value() -> None:
+    assert _coerce_to_list(['a', 'b'], ['ignored', 0], 1) == {0: 'a', 1: 'b'}
 
 
 def test_coerce_to_list_with_idx_zero_does_not_reparent() -> None:
     current = {'x': 1}
     result = _coerce_to_list(current, [0], 0)
 
-    assert result == []
+    assert _compact(result) == []
     assert current == {'x': 1}
 
 
@@ -121,18 +126,12 @@ def test_coerce_to_list_reparents_when_previous_token_is_string() -> None:
     current = {'node': {}}
     result = _coerce_to_list(current, ['node', 0], 1)
 
-    assert result == []
-    assert current['node'] == []
-
-
-def test_ensure_list_index_extends_with_none() -> None:
-    values = ['a']
-    _ensure_list_index(values, 3)
-    assert values == ['a', None, None, None]
+    assert _compact(result) == []
+    assert current['node'] is result
 
 
 def test_assign_list_token_last_and_non_last_paths() -> None:
-    current = []
+    current = _SparseList()
 
     next_current = _assign_list_token(
         current,
@@ -143,7 +142,7 @@ def test_assign_list_token_last_and_non_last_paths() -> None:
         next_token='name',
         value='unused',
     )
-    assert current == [{}]
+    assert _compact(current) == [{}]
     assert next_current == {}
 
     end = _assign_list_token(
@@ -164,7 +163,7 @@ def test_assign_list_token_uses_reparented_list_for_non_list_current() -> None:
 
     _assign_nested(container, ['node', 0, 'name'], 'Neo')
 
-    assert container == {'node': {'node': [{'name': 'Neo'}]}}
+    assert _compact(container) == {'node': {'node': [{'name': 'Neo'}]}}
 
 
 def test_flatten_nested_data_simple_dict() -> None:

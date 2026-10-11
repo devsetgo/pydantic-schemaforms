@@ -93,7 +93,9 @@ from .integration import (
     render_form_page,
 )
 
-from .live_validation import HTMXValidationConfig, LiveValidator
+from .live_validation import HTMXValidationConfig, LiveValidator, validation_response_headers
+from .html_markers import wrap_with_schemaforms_markers
+from .assets.runtime import bootstrap_icons_css_content, bootstrap_icons_css_tag, read_asset_text
 from .modern_renderer import FormDefinition, FormSection, ModernFormRenderer
 from .enhanced_renderer import render_form_html, render_form_html_async
 from .rendering.context import RenderContext
@@ -223,6 +225,12 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     # ── LIVE VALIDATION ──
     'HTMXValidationConfig',
     'LiveValidator',
+    'validation_response_headers',
+    # ── PAGE ASSETS / MARKERS ──
+    'wrap_with_schemaforms_markers',
+    'read_asset_text',
+    'bootstrap_icons_css_content',
+    'bootstrap_icons_css_tag',
     # ── VALIDATION: rule classes and factory ──
     'create_validator',
     'FormValidator',
