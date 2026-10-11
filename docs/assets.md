@@ -89,15 +89,18 @@ Example:
 ```python
 from pydantic_schemaforms import FormBuilder, render_form_page
 
-builder = FormBuilder(
-    framework='bootstrap',
-    include_framework_assets=True,
-    asset_mode='vendored',
-).text_input('ssn', 'SSN')
+builder = (
+    FormBuilder(
+        framework='bootstrap',
+        include_framework_assets=True,
+        asset_mode='vendored',
+    )
+    .text_input('ssn', 'SSN')
+    .set_form_attributes(submit_url='/signup')
+)
 
 page = render_form_page(
     builder,
-    submit_url='/submit',
     title='Signup',
     include_framework_assets=True,
     asset_mode='vendored',

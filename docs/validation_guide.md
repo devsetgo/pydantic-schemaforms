@@ -43,7 +43,7 @@ dict_response = response.to_dict()
 Build reusable validation schemas from individual field validators:
 
 ```python
-from pydantic_schemaforms import ValidationSchema, FieldValidator
+from pydantic_schemaforms import EmailRule, FieldValidator, MinLengthRule, ValidationSchema
 
 # Create a schema with multiple fields
 schema = ValidationSchema()
@@ -54,7 +54,7 @@ email_validator.add_rule(EmailRule())
 schema.add_field(email_validator)
 
 password_validator = FieldValidator('password')
-password_validator.add_rule(LengthRule(min=8, message='Minimum 8 characters required'))
+password_validator.add_rule(MinLengthRule(8, message='Minimum 8 characters required'))
 schema.add_field(password_validator)
 
 # Build HTMX live validator from schema
@@ -66,12 +66,12 @@ live_validator = schema.build_live_validator()
 Validate entire forms with both field-level and cross-field rules:
 
 ```python
-from pydantic_schemaforms import FormValidator
+from pydantic_schemaforms import EmailRule, FormValidator, NumericRangeRule
 
 form_validator = FormValidator()
 
 # Add field validators
-form_validator.field('age').add_rule(NumericRangeRule(min=0, max=150))
+form_validator.field('age').add_rule(NumericRangeRule(min_value=0, max_value=150))
 form_validator.field('email').add_rule(EmailRule())
 
 
@@ -81,7 +81,7 @@ def validate_age_and_consent(data):
     consent = data.get('parental_consent')
 
     if age is not None and age < 18 and not consent:
-        return False, {'parental_consent': ['Parental consent required for users under 18']}
+        return False, {'parental_consent': 'Parental consent required for users under 18'}
     return True, {}
 
 
@@ -177,20 +177,20 @@ if result.is_valid:
 For validation with additional custom rules:
 
 ```python
-from pydantic_schemaforms import FormValidator
+from pydantic_schemaforms import EmailRule, FormValidator, MaxLengthRule, MinLengthRule
 
 form_validator = FormValidator()
-form_validator.field('username').add_rule(LengthRule(min=3, max=20))
+form_validator.field('username').add_rule(MinLengthRule(3)).add_rule(MaxLengthRule(20))
 form_validator.field('email').add_rule(EmailRule())
-form_validator.field('password').add_rule(LengthRule(min=8))
+form_validator.field('password').add_rule(MinLengthRule(8))
 
 # Validate and get results
 is_valid, errors = form_validator.validate(
     {'username': 'alice', 'email': 'alice@example.com', 'password': 'SecurePass123!'}
 )
 
-# Also validate against Pydantic model
-is_valid, errors = form_validator.validate_pydantic_model(RegistrationForm, request_data)
+# Pydantic constraints are checked separately, through the model:
+result = RegistrationForm.validate(request_data, submit_url='/register')
 ```
 
 ---
@@ -482,12 +482,12 @@ result = live_validator.validate_field('age', 25)
 Validate fields that depend on other fields:
 
 ```python
-from pydantic_schemaforms import FormValidator
+from pydantic_schemaforms import FormValidator, NumericRangeRule, RequiredRule
 
 form_validator = FormValidator()
 
 # Individual field rules
-form_validator.field('age').add_rule(NumericRangeRule(min=0, max=150))
+form_validator.field('age').add_rule(NumericRangeRule(min_value=0, max_value=150))
 form_validator.field('parental_consent').add_rule(RequiredRule())
 
 
@@ -499,7 +499,7 @@ def validate_minor_consent(data):
 
     if age is not None and age < 18 and not consent:
         return False, {
-            'parental_consent': ['Parental consent is required for users under 18 years old']
+            'parental_consent': 'Parental consent is required for users under 18 years old'
         }
     return True, {}
 
@@ -524,7 +524,7 @@ def validate_emergency_contact(data):
 
     if not has_phone and not has_emergency_contact:
         return False, {
-            'emergency_contact': ['Either a phone number or emergency contact is required']
+            'emergency_contact': 'Either a phone number or emergency contact is required'
         }
     return True, {}
 
@@ -541,7 +541,7 @@ def validate_passwords_match(data):
     confirm = data.get('confirm_password', '')
 
     if password and confirm and password != confirm:
-        return False, {'confirm_password': ['Passwords do not match']}
+        return False, {'confirm_password': 'Passwords do not match'}
     return True, {}
 
 
@@ -614,7 +614,7 @@ The validation system includes pre-built rules for common patterns:
 | `MaxLengthRule(n)` | Maximum string length | Username ≤ 20 chars |
 | `EmailRule()` | Valid email format | Email field |
 | `PhoneRule()` | Valid phone number | Phone field |
-| `NumericRangeRule(min, max)` | Numeric value range | Age 0–150 |
+| `NumericRangeRule(min_value, max_value)` | Numeric value range | Age 0–150 |
 | `DateRangeRule(min_date, max_date)` | Date within range | Future date only |
 | `RegexRule(pattern)` | Custom regex pattern | Custom format validation |
 | `CustomRule(func)` | Custom validation function | Complex logic |
@@ -638,13 +638,13 @@ username_validator.add_rule(MaxLengthRule(20, message='Maximum 20 characters'))
 
 # Age field validator
 age_validator = FieldValidator('age')
-age_validator.add_rule(NumericRangeRule(min=13, max=150, message='Must be 13+'))
+age_validator.add_rule(NumericRangeRule(min_value=13, max_value=150, message='Must be 13+'))
 
 # Use in form validator
 form_validator = FormValidator()
 form_validator.field('email').add_rule(EmailRule())
 form_validator.field('username').add_rule(MinLengthRule(3)).add_rule(MaxLengthRule(20))
-form_validator.field('age').add_rule(NumericRangeRule(min=13, max=150))
+form_validator.field('age').add_rule(NumericRangeRule(min_value=13, max_value=150))
 ```
 
 ---
@@ -711,13 +711,15 @@ form_validator.field('username').add_rule(MinLengthRule(3, message='3–20 chara
 )
 form_validator.field('email').add_rule(EmailRule())
 form_validator.field('password').add_rule(MinLengthRule(8, message='Minimum 8 characters'))
-form_validator.field('age').add_rule(NumericRangeRule(min=13, max=150, message='Must be 13+'))
+form_validator.field('age').add_rule(
+    NumericRangeRule(min_value=13, max_value=150, message='Must be 13+')
+)
 
 
 # Cross-field rules
 def validate_passwords_match(data):
     if data.get('password') != data.get('confirm_password'):
-        return False, {'confirm_password': ['Passwords do not match']}
+        return False, {'confirm_password': 'Passwords do not match'}
     return True, {}
 
 
@@ -862,7 +864,7 @@ def test_cross_field_validation():
 
     def validate_passwords(data):
         if data.get('password') != data.get('confirm'):
-            return False, {'confirm': ["Passwords don't match"]}
+            return False, {'confirm': "Passwords don't match"}
         return True, {}
 
     form_validator.add_cross_field_rule(validate_passwords)
@@ -875,47 +877,18 @@ def test_cross_field_validation():
 
 ---
 
-## Layout Demo & Tab Rendering Verification
+## The library's own tests
 
-The layout smoke tests in `tests/test_layouts.py` verify that initial tab content renders correctly for both Bootstrap and Material frameworks:
-
-```python
-def test_layout_demo_bootstrap_initial_tab_renders():
-    """Verify Bootstrap tabs show initial tab content."""
-    response = client.get('/layouts')
-    assert response.status_code == 200
-    assert 'Tab 1 Content' in response.text
-    # Assert tab buttons exist
-    assert 'class="nav-link active"' in response.text
-
-
-def test_layout_demo_material_initial_tab_renders():
-    """Verify Material tabs show initial tab content."""
-    response = client.get('/layouts?style=material')
-    assert response.status_code == 200
-    # Assert initial content and Material tab classes
-    assert 'Initial Tab Content' in response.text
-    assert 'data-toggle="tab"' in response.text
-```
-
-This coverage ensures that tab layouts work correctly across frameworks.
-
----
-
-## Pydantic v2 Deprecation Resolution
-
-As of this release, all Pydantic v2 deprecation warnings have been resolved:
-
-✅ **Resolved Deprecations:**
-- `min_items`/`max_items` → `min_length`/`max_length` in all FormField calls
-- Extra kwargs on `Field()` → properly use `json_schema_extra`
-- Starlette `TemplateResponse` signature updated to new parameter order
-
-**Result:** Deprecation warnings reduced from 23 → 8 (removed 15 Pydantic deprecations). The remaining 8 warnings are intentional migration guides (`form_layouts` deprecation notice) and informational (JSON schema hints).
+`tests/test_validation.py` covers the rule-based validators above;
+`tests/test_nested_model_forms.py` covers `validate()` with sub-forms, the nested
+error tree, and re-rendering errors inside the right tab, panel, or wizard step;
+`tests/test_layouts.py` renders the example app's `/layouts` page under Bootstrap
+and Material.
 
 Run validation tests:
 ```bash
 python -m pytest tests/test_validation.py -v
+python -m pytest tests/test_nested_model_forms.py -v
 python -m pytest tests/test_layouts.py -v
 ```
 
