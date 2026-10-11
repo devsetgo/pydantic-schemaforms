@@ -645,8 +645,8 @@ class TestFieldRendererErrorHandling:
 
         assert 'Invalid email format' in result
 
-    def test_render_field_with_all_errors_dict(self):
-        """Test rendering field with all_errors dictionary."""
+    def test_render_field_with_error_node_dict(self):
+        """A dict error node renders its own "_errors" message."""
         renderer = Mock()
         renderer.config = {}
         renderer.framework = 'bootstrap'
@@ -654,18 +654,17 @@ class TestFieldRendererErrorHandling:
         field_renderer = FieldRenderer(renderer)
         context = RenderContext(form_data={}, schema_defs={})
 
-        all_errors = {'field1': 'error1', 'field2': 'error2'}
-
         result = field_renderer.render_field(
             field_name='field1',
             field_schema={'type': 'string'},
             value='test',
-            all_errors=all_errors,
+            error={'_errors': 'error1', 'child': 'ignored here'},
             context=context,
             layout='vertical',
         )
 
         assert 'name="field1"' in result
+        assert 'error1' in result
 
 
 class TestFieldRendererRequiredFields:
@@ -1356,7 +1355,7 @@ def test_render_model_list_field_errors_and_ref_resolution():
         required_fields=[],
         ui_info={},
         context=_context(),
-        all_errors={},
+        list_errors={},
     )
     assert 'must be typed as list[ItemModel]' in no_ref
 
@@ -1368,7 +1367,7 @@ def test_render_model_list_field_errors_and_ref_resolution():
         required_fields=[],
         ui_info={},
         context=_context(schema_defs={}),
-        all_errors={},
+        list_errors={},
     )
     assert 'Could not resolve model reference' in unresolved_ref
 
@@ -1393,7 +1392,7 @@ def test_render_model_list_field_errors_and_ref_resolution():
         required_fields=['items'],
         ui_info={'help_text': 'help'},
         context=_context(schema_defs=schema_defs),
-        all_errors={'items[0].name': 'required', 'other': 'x'},
+        list_errors={0: {'name': 'required'}, 'other': 'x'},
     )
     assert 'model-list-item' in html
     assert 'required' in html
@@ -1420,7 +1419,7 @@ def test_render_model_list_field_single_model_dump_value_path():
         required_fields=[],
         ui_info={},
         context=_context(schema_defs=schema_defs),
-        all_errors={},
+        list_errors={},
     )
 
     assert 'value="single"' in html
@@ -1479,15 +1478,13 @@ def test_render_model_list_field_schema_fallback_and_container_theming(monkeypat
 def test_extract_nested_errors_and_schema_list_item_rendering(monkeypatch):
     field_renderer = FieldRenderer(_DummyRenderer())
 
-    extracted = field_renderer.extract_nested_errors_for_field(
-        'addresses',
-        {
-            'addresses[0].street': 'required',
-            'addresses[0]': 'ignored',
-            'other[0].x': 'not used',
-        },
-    )
-    assert extracted == {'0.street': 'required'}
+    from pydantic_schemaforms.rendering.model_list_renderer import item_errors
+
+    list_errors = {0: {'street': 'required'}, '1': {'zip': 'bad'}, 2: 'not a dict'}
+    assert item_errors(list_errors, 0) == {'street': 'required'}
+    assert item_errors(list_errors, 1) == {'zip': 'bad'}  # JSON round-tripped index key
+    assert item_errors(list_errors, 2) == {}
+    assert item_errors(list_errors, 3) == {}
 
     monkeypatch.setattr(
         field_renderer, 'render_field', lambda name, *_args, **_kwargs: f"<input name='{name}' />"
@@ -1606,7 +1603,7 @@ def test_render_model_list_field_single_dict_value_through_schema_path(monkeypat
         required_fields=[],
         ui_info={},
         context=_context(schema_defs=schema_defs),
-        all_errors={},
+        list_errors={},
     )
     assert schema_result == 'schema-list:things:1'
 

@@ -1,16 +1,13 @@
-"""Helpers for normalizing/reshaping raw form submissions.
+"""Decoding raw form submissions into nested JSON.
 
-HTML form submissions often arrive as a flat mapping of string keys to values.
-SchemaForms uses bracket + dot notation for repeated nested models, e.g.:
+App code never needs this module directly: ``FormModel.validate()`` accepts the
+raw request form (Starlette ``FormData``, Werkzeug ``MultiDict``, a list of
+``(key, value)`` pairs) and calls ``decode_submission()`` itself.
 
-- ``pets[0].name``
-- ``tasks[3].priority``
-
-Server-side validation expects the corresponding nested Python shape:
-
-- ``{"pets": [{"name": "..."}]}``
-
-These helpers are intentionally framework-agnostic (FastAPI/Flask/etc.).
+Wire format (internal): HTML inputs need a string ``name``, so nested fields
+are named with dots for sub-models and brackets for list indexes --
+``address.city``, ``pets[0].name``. ``decode_submission()`` turns those back
+into ``{"address": {"city": ...}, "pets": [{"name": ...}]}``.
 """
 
 from __future__ import annotations
@@ -198,6 +195,13 @@ def parse_nested_form_data(
 
         tokens = _tokenize_form_path(key)
 
+        # Every list item needs at least one input, so a real submission never
+        # has an index at or above its field count. Drop such keys: lists are
+        # padded up to the index, so `pets[500000000].name` would otherwise
+        # allocate half a billion slots from a single request field.
+        if any(isinstance(token, int) and token >= len(order) for token in tokens):
+            continue
+
         if not tokens:
             result[key] = value
             continue
@@ -246,4 +250,65 @@ def flatten_nested_data(data: Any, *, _prefix: str = '') -> dict[str, Any]:
     return result
 
 
-__all__ = ['parse_nested_form_data', 'flatten_nested_data', 'coerce_form_value']
+def _multi_items(raw: Any) -> list[tuple[str, Any]] | None:
+    multi_items = getattr(raw, 'multi_items', None)
+    if callable(multi_items):
+        return list(multi_items())
+    if hasattr(raw, 'getlist') and hasattr(raw, 'keys'):
+        return [(key, value) for key in raw.keys() for value in raw.getlist(key)]
+    return None
+
+
+def _is_wire_key(key: Any) -> bool:
+    return isinstance(key, str) and ('[' in key or '.' in key)
+
+
+def is_form_submission(raw: Any) -> bool:
+    """Whether *raw* is an HTML form's wire-format submission rather than nested JSON."""
+
+    if raw is None or isinstance(raw, (str, bytes)):
+        return False
+    if _multi_items(raw) is not None:
+        return True
+    if isinstance(raw, Mapping):
+        return any(_is_wire_key(key) for key in raw)
+    return isinstance(raw, Iterable)
+
+
+def decode_submission(raw: Any) -> dict[str, Any]:
+    """Return a nested-JSON dict from whatever a route received.
+
+    - Multi-value form objects (Starlette ``FormData``, Werkzeug ``MultiDict``)
+      and iterables of ``(key, value)`` pairs are decoded from the wire format,
+      collecting repeated keys (multi-selects, checkbox groups) into lists.
+    - A plain mapping that uses wire-format keys is decoded the same way.
+    - Any other mapping is assumed to already be nested JSON and is returned
+      as a shallow copy.
+
+    Values are left as submitted; type-aware coercion happens during
+    validation, where the field types are known.
+    """
+
+    if raw is None:
+        return {}
+    pairs = _multi_items(raw)
+    if pairs is not None:
+        return parse_nested_form_data(pairs, coerce_values=False)
+    if isinstance(raw, Mapping):
+        if any(_is_wire_key(key) for key in raw):
+            return parse_nested_form_data(raw, coerce_values=False)
+        return dict(raw)
+    if isinstance(raw, Iterable) and not isinstance(raw, (str, bytes)):
+        return parse_nested_form_data(list(raw), coerce_values=False)
+    raise TypeError(
+        f'Cannot decode a form submission of type {type(raw).__name__}; pass the request '
+        'form (request.form / await request.form()), a list of (key, value) pairs, or a dict.'
+    )
+
+
+__all__ = [
+    'coerce_form_value',
+    'decode_submission',
+    'flatten_nested_data',
+    'parse_nested_form_data',
+]

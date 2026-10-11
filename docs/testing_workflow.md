@@ -58,7 +58,8 @@ Tests are organized in `tests/` by domain — one file per subject area:
 | `test_integration.py` | FormBuilder, FastAPI integration, HTML markers | 107 |
 | `test_assets.py` | Vendor assets, CDN/vendored modes, Bootstrap Icons | 109 |
 | `test_rendering.py` | EnhancedFormRenderer, themes, templates, modern renderer | 99 |
-| `test_form_layouts.py` | Form-model-backed layouts (Vertical, Horizontal, Tabbed, List) | 100 |
+| `test_form_layouts.py` | Removed layout classes raise `FormLayoutRemovedError` with upgrade steps | 20 |
+| `test_nested_model_forms.py` | Composing forms by nesting FormModels: rendering, grouped layouts, nested data and errors | 34 |
 | `test_layouts.py` | Layout engine, TabLayout, AccordionLayout, async rendering | 94 |
 | `test_field_renderer_coverage.py` | Field-level rendering logic | 43 |
 | `test_schema_form.py` + `test_schema_form_coverage.py` | FormModel, Field, schema parsing | 67 |

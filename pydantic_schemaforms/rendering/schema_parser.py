@@ -21,6 +21,12 @@ class SchemaMetadata:
     layout_fields: list[tuple[str, dict[str, Any]]]
     non_layout_fields: list[tuple[str, dict[str, Any]]]
     schema_defs: dict[str, Any]
+    group_fields: tuple[tuple[str, dict[str, Any]], ...] = ()
+
+
+# ui_element values whose field renders a whole sub-form, and so becomes its
+# own group (section / tab / column / accordion panel) under a grouped layout.
+GROUP_ELEMENTS = frozenset({'nested_model', 'model_list', 'layout'})
 
 
 def extract_ui_info(field_schema: dict[str, Any]) -> dict[str, Any]:
@@ -52,16 +58,61 @@ def extract_ui_info(field_schema: dict[str, Any]) -> dict[str, Any]:
     return ui_info
 
 
+def _ref_name(ref: Any) -> str | None:
+    return ref.split('/')[-1] if isinstance(ref, str) and ref else None
+
+
+def resolve_nested_model_ref(field_schema: dict[str, Any]) -> str | None:
+    """The ``$defs`` name when a property is one nested model (or an Optional of one)."""
+
+    direct = _ref_name(field_schema.get('$ref'))
+    if direct:
+        return direct
+    for option in field_schema.get('anyOf') or []:
+        if isinstance(option, dict) and option.get('$ref'):
+            return _ref_name(option['$ref'])
+    return None
+
+
+def resolve_list_item_ref(field_schema: dict[str, Any]) -> str | None:
+    """The ``$defs`` name of a ``list[Model]`` property's item model."""
+
+    candidates = [field_schema, *(field_schema.get('anyOf') or [])]
+    for candidate in candidates:
+        if isinstance(candidate, dict) and candidate.get('type') == 'array':
+            items = candidate.get('items')
+            if isinstance(items, dict):
+                return _ref_name(items.get('$ref'))
+    return None
+
+
 def resolve_ui_element(field_schema: dict[str, Any]) -> str | None:
-    """Return the declared UI element name for a schema field."""
+    """Return the UI element for a schema field: the declared one, else an
+    inferred composite (``nested_model`` for a sub-model, ``model_list`` for a
+    list of sub-models), else ``None``."""
 
     ui_info = extract_ui_info(field_schema)
-    return (
+    declared = (
         ui_info.get('element')
         or ui_info.get('ui_element')
         or ui_info.get('widget')
         or ui_info.get('input_type')
     )
+    if declared:
+        return declared
+    if resolve_nested_model_ref(field_schema):
+        return 'nested_model'
+    if resolve_list_item_ref(field_schema):
+        return 'model_list'
+    return None
+
+
+def ordered_properties(schema: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    """A schema's properties in render order: declaration order, then ``ui_order``."""
+
+    properties = list((schema.get('properties') or {}).items())
+    properties.sort(key=lambda item: extract_ui_info(item[1]).get('order', 999))
+    return properties
 
 
 def build_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
@@ -88,12 +139,7 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     _inject_dynamic_fields(model_cls, properties, required_fields)
     schema['required'] = required_fields
 
-    fields: list[tuple[str, dict[str, Any]]] = list(properties.items())
-
-    def order_key(item: tuple[str, dict[str, Any]]) -> int:
-        return extract_ui_info(item[1]).get('order', 999)
-
-    fields.sort(key=order_key)
+    fields = ordered_properties(schema)
 
     layout_fields: list[tuple[str, dict[str, Any]]] = []
     non_layout_fields: list[tuple[str, dict[str, Any]]] = []
@@ -106,6 +152,11 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
             non_layout_fields.append((field_name, field_schema))
 
     schema_defs = schema.get('$defs', {}) or {}
+    group_fields = tuple(
+        (field_name, field_schema)
+        for field_name, field_schema in fields
+        if resolve_ui_element(field_schema) in GROUP_ELEMENTS
+    )
 
     return SchemaMetadata(
         schema=schema,
@@ -114,6 +165,7 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
         layout_fields=layout_fields,
         non_layout_fields=non_layout_fields,
         schema_defs=schema_defs,
+        group_fields=group_fields,
     )
 
 

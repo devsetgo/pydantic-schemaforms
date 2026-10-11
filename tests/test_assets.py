@@ -2245,17 +2245,19 @@ def test_render_form_page_vendored_includes_bootstrap_icons() -> None:
     assert 'data:font/woff2;base64,' in html
 
 
-def test_form_design_framework_urls_offline_by_default() -> None:
-    from pydantic_schemaforms.form_layouts import FormDesign
-
-    design = FormDesign(ui_theme='bootstrap')
-    assert design.get_framework_css_url() == ''
-    assert design.get_framework_js_url() == ''
-
-
 def test_material_theme_css_has_no_google_fonts_imports() -> None:
     from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme
 
     css = MaterialEmbeddedTheme._build_css()
     assert 'fonts.googleapis.com' not in css
     assert 'fonts.gstatic.com' not in css
+
+
+def test_inline_theme_scripts_have_no_python_comments() -> None:
+    # A stray `# comment` is a SyntaxError in JavaScript and kills the whole script.
+    from pydantic_schemaforms.rendering.theme_assets import WIZARD_COMPONENT_ASSETS
+    from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme
+
+    for source in (MaterialEmbeddedTheme._build_js(), WIZARD_COMPONENT_ASSETS):
+        script = source[source.index('<script>') : source.index('</script>')]
+        assert not [line for line in script.splitlines() if line.lstrip().startswith('#')]

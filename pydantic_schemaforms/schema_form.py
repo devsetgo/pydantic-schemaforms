@@ -117,6 +117,12 @@ def Field(
         'layout_renderer': layout_renderer,
     }
 
+    # Other ui_* keys (ui_collapsible, ui_step_title, ...) must not fall through
+    # to pydantic's **kwargs: it drops unknown kwargs whenever json_schema_extra
+    # is already populated, e.g. by ui_help_text above.
+    for key in [k for k in kwargs if k.startswith('ui_')]:
+        ui_params[key] = kwargs.pop(key)
+
     # Filter out None values and add to json_schema_extra
     for key, value in ui_params.items():
         if value is not None:
@@ -340,33 +346,38 @@ class FormModel(BaseModel):
     @classmethod
     def validate(
         cls,
-        data: dict[str, Any],
+        data: Any,
         *,
         submit_url: str | None = None,
         framework: str = 'bootstrap',
-        flatten: bool = False,
         **render_kwargs: Any,
     ) -> 'ValidationResult':
-        """Validate form data and return a result that can re-render itself on failure.
+        """Validate a submission and return a result that can re-render itself on failure.
 
-        The submit_url and framework are stored on the result so that
-        result.render_with_errors() requires no arguments in the common case.
-
-        When ``flatten`` is True, ``data`` may use bracket+dot flat keys
-        (e.g. ``"pets[0].name"``, already-nested data is also accepted) and
-        ``result.data`` will use flat bracket+dot keys instead of nested
-        dicts/lists.
+        ``data`` is the raw request form (``await request.form()`` in FastAPI,
+        ``request.form`` in Flask) or an already nested dict. ``result.data``
+        is nested and mirrors the model; ``result.errors`` is a nested error
+        tree with the same shape. Render options such as ``layout=`` are kept
+        so ``result.render_with_errors()`` needs no arguments.
 
         Example::
 
-            result = MyForm.validate(parsed_data, submit_url="/submit")
+            result = ProfileForm.validate(await request.form(), submit_url="/profile")
             if result.is_valid:
-                return success(result.data)
-            return result.render_with_errors()
+                return save(result.data)
+            return HTMLResponse(result.render_with_errors())
         """
         from .validation import validate_form_data
 
-        result = validate_form_data(cls, data, flatten=flatten)
+        if 'flatten' in render_kwargs:
+            raise TypeError(
+                'FormModel.validate(flatten=...) was removed: result.data is always nested JSON '
+                'that mirrors the model, e.g. {"pets": [{"name": "Rex"}]}. Drop the argument. '
+                'See "Upgrading to nested forms" in the AI instructions '
+                '(python -m pydantic_schemaforms.ai_instructions claude).'
+            )
+
+        result = validate_form_data(cls, data)
         result._submit_url = submit_url
         result._framework = framework
         result._render_kwargs = render_kwargs

@@ -142,19 +142,30 @@ else:
 
 `result` always exposes `.is_valid`, `.data`, and `.errors` regardless of the path.
 
-By default `.data` mirrors the underlying Pydantic model's shape — nested
-`BaseModel`/`List[BaseModel]` fields come back as nested dicts/lists, matching
-`model_dump()`. Pass `flatten=True` to get (and accept) bracket+dot flat keys
-instead (e.g. `"pets[0].name"`), the same notation used for `model_list` HTML
-field names:
+`.data` mirrors the underlying Pydantic model's shape: sub-forms and lists
+of sub-forms come back as nested dicts and lists. Pass the raw request form
+(`await request.form()` / `request.form`) or a nested dict; the library decodes
+the HTML input names itself.
+
+`.errors` has the same shape as `.data`:
 
 ```python
-result = RegistrationForm.validate(data, submit_url="/register", flatten=True)
-# result.data uses flat "field[0].sub" keys instead of nested dicts/lists
+result.errors == {
+    "address": {"city": "String should have at least 2 characters"},
+    "pets": {1: {"age": "Must be 0 or greater"}},   # list items keyed by index
+    "_errors": "Passwords do not match",            # form-wide (@model_validator)
+}
+result.error_list()  # [{"loc": ["address", "city"], "msg": "..."}, ...]
 ```
 
-See [Nested vs. flat form data](recipes.md#nested-vs-flat-form-data) in the
-recipes guide for a full nested-model example, and
+A node is either a message or a dict of child errors. A message about a whole
+list or sub-form is a plain string, or sits under `"_errors"` when that
+container also has child errors. Pass your own form-level message the same
+way: `errors={"_errors": "Session expired"}`. `docs/complex_forms.md` has the
+full rules.
+
+See [Submitted data and errors are nested JSON](recipes.md#submitted-data-and-errors-are-nested-json)
+in the recipes guide for a full nested-model example, and
 [JSON Schema output](recipes.md#json-schema-output) for
 `get_pydantic_json_schema()`, which returns the standard, `$defs`-aware JSON
 Schema of the form's underlying Pydantic model (as opposed to

@@ -343,8 +343,8 @@ class TestFormModelValidate:
             result.render_with_errors()
 
 
-class TestFormModelValidateFlatten:
-    """Test FormModel.validate(..., flatten=True)."""
+class TestFormModelValidateNestedJson:
+    """FormModel.validate() takes the request form or nested JSON and returns nested JSON."""
 
     def _make_nested_form(self):
         class Pet(FormModel):
@@ -357,7 +357,7 @@ class TestFormModelValidateFlatten:
 
         return OwnerForm
 
-    def test_flatten_false_is_default_and_returns_nested_data(self):
+    def test_nested_input_returns_nested_data(self):
         OwnerForm = self._make_nested_form()
         nested = {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
 
@@ -366,44 +366,30 @@ class TestFormModelValidateFlatten:
         assert result.is_valid
         assert result.data == nested
 
-    def test_flatten_true_returns_flat_bracket_dot_data(self):
+    def test_wire_format_input_returns_the_same_nested_data(self):
         OwnerForm = self._make_nested_form()
-        nested = {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
+        wire = [('owner', 'Casey'), ('pets[0].name', 'Fido'), ('pets[0].is_active', 'on')]
 
-        result = OwnerForm.validate(nested, flatten=True)
+        result = OwnerForm.validate(wire)
 
         assert result.is_valid
-        assert result.data == {
-            'owner': 'Casey',
-            'pets[0].name': 'Fido',
-            'pets[0].is_active': True,
-        }
+        assert result.data == {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
 
-    def test_flatten_true_accepts_pre_flattened_input(self):
+    def test_flatten_argument_was_removed_with_upgrade_hint(self):
         OwnerForm = self._make_nested_form()
-        flat_input = {
-            'owner': 'Casey',
-            'pets[0].name': 'Fido',
-            'pets[0].is_active': True,
-        }
 
-        result = OwnerForm.validate(flat_input, flatten=True)
+        with pytest.raises(TypeError, match=r'flatten=\.\.\.\) was removed'):
+            OwnerForm.validate({'owner': 'Casey'}, flatten=True)
 
-        assert result.is_valid
-        assert result.data == flat_input
-
-    def test_flatten_true_is_idempotent_with_already_nested_input(self):
+    def test_errors_mirror_the_data_shape(self):
         OwnerForm = self._make_nested_form()
-        nested = {'owner': 'Casey', 'pets': [{'name': 'Fido', 'is_active': True}]}
 
-        result = OwnerForm.validate(nested, flatten=True)
+        result = OwnerForm.validate({'owner': '', 'pets': [{'name': 'Fido'}, {'name': ''}]})
 
-        assert result.is_valid
-        assert result.data == {
-            'owner': 'Casey',
-            'pets[0].name': 'Fido',
-            'pets[0].is_active': True,
-        }
+        assert not result.is_valid
+        assert set(result.errors) == {'owner', 'pets'}
+        assert list(result.errors['pets']) == [1]
+        assert 'name' in result.errors['pets'][1]
 
 
 class TestFormModelIntegration:

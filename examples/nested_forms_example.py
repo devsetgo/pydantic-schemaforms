@@ -33,7 +33,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pydantic import EmailStr, field_validator
 from pydantic_schemaforms import FormField, FormModel
-from pydantic_schemaforms.form_layouts import TabbedLayout, VerticalLayout
 
 
 # ============================================================================
@@ -211,18 +210,10 @@ class TeamMember(FormModel):
         icon='award',
         min_length=0,
         max_length=20,
-        model_class=Certification,
         add_button_label='➕ Add Certification',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='{name} - {issuer}',
-        section_design={
-            'section_title': 'Professional Certifications',
-            'section_description': 'Add credentials and certifications',
-            'icon': 'bi bi-award',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -310,18 +301,10 @@ class Task(FormModel):
         icon='list-check',
         min_length=0,
         max_length=50,
-        model_class=Subtask,
         add_button_label='➕ Add Subtask',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔹 {title}',
-        section_design={
-            'section_title': 'Task Breakdown',
-            'section_description': 'Organize this task into smaller, manageable subtasks',
-            'icon': 'bi bi-list-check',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -373,18 +356,10 @@ class Team(FormModel):
         icon='people',
         min_length=1,
         max_length=100,
-        model_class=TeamMember,
         add_button_label='👤 Add Team Member',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👤 {name} - {role}',
-        section_design={
-            'section_title': 'Team Members',
-            'section_description': 'Members of this team with their certifications and experience',
-            'icon': 'bi bi-people',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -460,18 +435,10 @@ class Project(FormModel):
         icon='list-check',
         min_length=1,
         max_length=200,
-        model_class=Task,
         add_button_label='📝 Add Task',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📋 {title}',
-        section_design={
-            'section_title': 'Project Tasks',
-            'section_description': 'Organize project work into tasks and subtasks',
-            'icon': 'bi bi-list-task',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -542,18 +509,10 @@ class Department(FormModel):
         icon='people',
         min_length=1,
         max_length=50,
-        model_class=Team,
         add_button_label='👥 Add Team',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👥 {name} (Lead: {team_lead})',
-        section_design={
-            'section_title': 'Department Teams',
-            'section_description': 'Organize teams with members and their certifications',
-            'icon': 'bi bi-diagram-2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     projects: List[Project] = FormField(
@@ -564,18 +523,10 @@ class Department(FormModel):
         icon='kanban',
         min_length=0,
         max_length=100,
-        model_class=Project,
         add_button_label='🚀 Add Project',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🚀 {name}',
-        section_design={
-            'section_title': 'Department Projects',
-            'section_description': 'Projects in progress with tasks and subtasks',
-            'icon': 'bi bi-kanban',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -701,18 +652,10 @@ class CompanyOrganizationForm(FormModel):
         icon='diagram-2',
         min_length=1,
         max_length=500,
-        model_class=Department,
         add_button_label='🏢 Add Department',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🏢 {name} (Head: {department_head})',
-        section_design={
-            'section_title': 'Organizational Structure',
-            'section_description': 'Complete company hierarchy with departments, teams, members, and projects',
-            'icon': 'bi bi-diagram-2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     @field_validator('company_code')
@@ -1100,18 +1043,10 @@ class ContactManagementForm(FormModel):
         icon='telephone',
         min_length=0,
         max_length=10,
-        model_class=PhoneNumber,
         add_button_label='➕ Add Phone Number',
         collapsible_items=True,
         items_expanded=True,
         item_title_template='📞 {phone_type}: {number}',
-        section_design={
-            'section_title': 'Contact Numbers',
-            'section_description': 'Manage multiple phone numbers',
-            'icon': 'bi bi-telephone',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     addresses: List[Address] = FormField(
@@ -1122,18 +1057,10 @@ class ContactManagementForm(FormModel):
         icon='house',
         min_length=0,
         max_length=5,
-        model_class=Address,
         add_button_label='➕ Add Address',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📍 {address_type}: {city}, {state}',
-        section_design={
-            'section_title': 'Addresses',
-            'section_description': 'Manage multiple addresses',
-            'icon': 'bi bi-house',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     notes: Optional[str] = FormField(
@@ -1323,18 +1250,10 @@ class SchedulingForm(FormModel):
         icon='arrow-repeat',
         min_length=0,
         max_length=50,
-        model_class=RecurringEvent,
         add_button_label='➕ Add Recurring Event',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔄 {event_name} ({recurrence_pattern})',
-        section_design={
-            'section_title': 'Recurring Events',
-            'section_description': 'Manage repeating events and reminders',
-            'icon': 'bi bi-arrow-repeat',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1481,18 +1400,10 @@ class MediaFilesForm(FormModel):
         icon='palette2',
         min_length=0,
         max_length=10,
-        model_class=ColorTheme,
         add_button_label='➕ Add Color Theme',
         collapsible_items=True,
         items_expanded=True,
         item_title_template='🎨 {theme_name}',
-        section_design={
-            'section_title': 'Custom Color Themes',
-            'section_description': 'Design your own color schemes',
-            'icon': 'bi bi-palette2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     max_upload_size_mb: int = FormField(
@@ -1671,18 +1582,10 @@ class SettingsForm(FormModel):
         icon='bell',
         min_length=0,
         max_length=20,
-        model_class=NotificationPreference,
         add_button_label='➕ Add Notification Rule',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔔 {event_category} via {notification_type}',
-        section_design={
-            'section_title': 'Notification Rules',
-            'section_description': 'Control how and when you receive notifications',
-            'icon': 'bi bi-bell',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     two_factor_enabled: bool = FormField(
@@ -1715,73 +1618,26 @@ class SettingsForm(FormModel):
 # ============================================================================
 
 
-class OrganizationLayout(VerticalLayout):
-    """Wrapper layout for organization form."""
-
-    form = CompanyOrganizationForm
-
-
-class KitchenSinkLayout(VerticalLayout):
-    """Wrapper layout for kitchen sink form."""
-
-    form = KitchenSinkForm
-
-
-class ContactsLayout(VerticalLayout):
-    """Wrapper layout for contacts form."""
-
-    form = ContactManagementForm
-
-
-class SchedulingLayout(VerticalLayout):
-    """Wrapper layout for scheduling form."""
-
-    form = SchedulingForm
-
-
-class MediaLayout(VerticalLayout):
-    """Wrapper layout for media form."""
-
-    form = MediaFilesForm
-
-
-class SettingsLayout(VerticalLayout):
-    """Wrapper layout for settings form."""
-
-    form = SettingsForm
-
-
-class ComprehensiveTabbed(TabbedLayout):
-    """Main tabbed layout combining all forms."""
-
-    organization = OrganizationLayout()
-    kitchen_sink = KitchenSinkLayout()
-    contacts = ContactsLayout()
-    scheduling = SchedulingLayout()
-    media = MediaLayout()
-    settings = SettingsLayout()
-
-
 class ComprehensiveTabbedForm(FormModel):
-    """
-    Wrapper form model containing the comprehensive tabbed layout.
+    """Six independent FormModels composed into one form by nesting them as fields.
 
-    This form demonstrates:
-    - 6 major tabs covering all form capabilities
-    - Tab 1: Organization - 5 levels of nesting
-    - Tab 2: Kitchen Sink - ALL input types
-    - Tab 3: Contact Management - Nested contacts
-    - Tab 4: Scheduling - Date/time management
-    - Tab 5: Media & Files - Color themes and media
-    - Tab 6: Settings - Preferences and notifications
+    Render with ``layout="tabbed"``: each field becomes a tab, in declaration
+    order, titled by its ``title=``.
+
+    - Organization -- 5 levels of nesting (sub-models and repeating lists)
+    - Kitchen Sink -- every input type
+    - Contacts -- nested phone numbers and addresses
+    - Scheduling -- date/time management
+    - Media & Files -- color themes and media
+    - Settings -- preferences and notifications
     """
 
-    comprehensive_tabs: ComprehensiveTabbed = FormField(
-        default_factory=ComprehensiveTabbed,
-        title='Complete Feature Showcase',
-        input_type='layout',
-        help_text='Explore all 6 tabs to see every feature of Pydantic SchemaForms',
-    )
+    organization: CompanyOrganizationForm = FormField(title='Organization')
+    kitchen_sink: KitchenSinkForm = FormField(title='Kitchen Sink')
+    contacts: ContactManagementForm = FormField(title='Contacts')
+    scheduling: SchedulingForm = FormField(title='Scheduling')
+    media: MediaFilesForm = FormField(title='Media & Files')
+    settings: SettingsForm = FormField(title='Settings')
 
 
 # ============================================================================

@@ -1,9 +1,7 @@
-"""Policy regression tests for Option A security/model-boundary behavior."""
+"""Policy regression tests for Option A security/model-boundary behavior:
+validated output only ever has the model's own shape."""
 
-from pydantic_schemaforms.form_field import FormField
-from pydantic_schemaforms.form_layouts import TabbedLayout, VerticalLayout
-from pydantic_schemaforms.rendering.layout_engine import get_nested_form_data
-from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms import Field, FormModel
 from pydantic_schemaforms.validation import validate_form_data
 
 
@@ -16,43 +14,9 @@ class SettingsForm(FormModel):
     theme: str
 
 
-class OrgLayout(VerticalLayout):
-    form = OrgForm
-
-
-class SettingsLayout(VerticalLayout):
-    form = SettingsForm
-
-
-class GenericTabbed(TabbedLayout):
-    org = OrgLayout()
-    settings = SettingsLayout()
-
-
 class WrapperForm(FormModel):
-    tabs: GenericTabbed = FormField(
-        default_factory=GenericTabbed,
-        title='Wrapper',
-        input_type='layout',
-    )
-
-
-def test_get_nested_form_data_schema_driven_for_tabbed_layouts():
-    """Layout extraction should be generic and derived from layout schema, not field names."""
-
-    flat_data = {
-        'company_name': 'Acme',
-        'username': 'alice',
-        'theme': 'dark',
-        'unrelated': 'ignored',
-    }
-
-    nested = get_nested_form_data('tabs', flat_data, GenericTabbed())
-
-    assert nested == {
-        'org': {'company_name': 'Acme'},
-        'settings': {'username': 'alice', 'theme': 'dark'},
-    }
+    org: OrgForm = Field(title='Organization')
+    settings: SettingsForm = Field(title='Settings')
 
 
 def test_validate_form_data_returns_model_shape_only():
@@ -68,22 +32,22 @@ def test_validate_form_data_returns_model_shape_only():
     assert 'is_admin' not in result.data
 
 
-def test_validate_form_data_layout_wrapper_keeps_only_layout_model_shape():
-    """Layout wrapper forms should return only wrapper model keys with nested tab payload."""
+def test_nested_forms_keep_only_model_shape_at_every_level():
+    """Unknown keys are dropped at the top level and inside each sub-form."""
 
     result = validate_form_data(
         WrapperForm,
-        {
-            'company_name': 'Acme',
-            'username': 'alice',
-            'theme': 'dark',
-            'is_admin': '1',
-        },
+        [
+            ('org.company_name', 'Acme'),
+            ('org.is_admin', '1'),
+            ('settings.username', 'alice'),
+            ('settings.theme', 'dark'),
+            ('is_admin', '1'),
+        ],
     )
 
     assert result.is_valid is True
-    assert set(result.data.keys()) == {'tabs'}
-    assert result.data['tabs'] == {
+    assert result.data == {
         'org': {'company_name': 'Acme'},
         'settings': {'username': 'alice', 'theme': 'dark'},
     }

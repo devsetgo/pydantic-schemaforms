@@ -64,11 +64,10 @@ from .form_field import (
 from .form_layouts import (
     FormDesign,
     FormLayoutBase,
-    HorizontalLayout,
+    FormLayoutRemovedError,
     ListLayout,
     SectionDesign,
     TabbedLayout,
-    VerticalLayout,
 )
 
 from .input_types import (
@@ -106,6 +105,7 @@ from .rendering.layout_engine import (
     AccordionLayout,
     CardLayout,
     GridLayout,
+    HorizontalLayout,
     Layout,
     LayoutComposer,
     LayoutEngine,
@@ -113,6 +113,7 @@ from .rendering.layout_engine import (
     ModalLayout,
     ResponsiveGridLayout,
     TabLayout,
+    VerticalLayout,
 )
 
 from .schema_form import Field, FormModel, ValidationResult, form_validator
@@ -138,6 +139,7 @@ from .validation import (
     ValidationRule,
     ValidationSchema,
     create_email_validator,
+    validate_form_data,
     create_password_strength_validator,
     create_validator,
 )
@@ -194,11 +196,6 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'AccordionLayout',
     'ModalLayout',
     'TabLayout',
-    'TabbedLayout',
-    'ListLayout',
-    'FormLayoutBase',
-    'FormDesign',
-    'SectionDesign',
     'Layout',
     'LayoutComposer',
     'LayoutFactory',
@@ -209,6 +206,13 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'DataTableConfig',
     'RowError',
     'LayoutEngine',
+    # ── REMOVED in 26.4.0: using these raises FormLayoutRemovedError with upgrade steps ──
+    'FormLayoutRemovedError',
+    'TabbedLayout',
+    'ListLayout',
+    'FormLayoutBase',
+    'FormDesign',
+    'SectionDesign',
     # ── MODERN RENDERER ──
     'ModernFormRenderer',
     'FormDefinition',
@@ -240,6 +244,7 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'CrossFieldRules',
     'create_email_validator',
     'create_password_strength_validator',
+    'validate_form_data',
     # ── APP AI INSTRUCTIONS ──
     'get_app_instructions',
     'available_instruction_profiles',

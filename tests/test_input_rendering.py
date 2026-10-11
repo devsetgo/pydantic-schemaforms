@@ -8,8 +8,6 @@ identified from the --cov-report=term-missing output.
 from __future__ import annotations
 
 import asyncio
-import sys
-import warnings
 from datetime import date, datetime, time
 from typing import Annotated, Optional
 from unittest import mock
@@ -24,22 +22,6 @@ from pydantic_schemaforms import FormModel
 # ---------------------------------------------------------------------------
 # layouts.py  (0% → import triggers module-level deprecation warn)
 # ---------------------------------------------------------------------------
-
-
-class TestLayoutsDeprecationShim:
-    def test_import_emits_deprecation_warning(self):
-        # Force fresh import so module-level warn() runs.
-        mod_name = 'pydantic_schemaforms.layouts'
-        sys.modules.pop(mod_name, None)
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter('always')
-            import pydantic_schemaforms.layouts as layouts_mod  # noqa: F401
-
-            sys.modules.pop(mod_name, None)  # clean up for other test runs
-
-        dep_warns = [w for w in caught if issubclass(w.category, DeprecationWarning)]
-        assert dep_warns, 'Expected at least one DeprecationWarning'
-        assert 'layouts is deprecated' in str(dep_warns[0].message)
 
 
 # ---------------------------------------------------------------------------

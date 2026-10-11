@@ -184,3 +184,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 examples/img/*Zone.Identifier*
+
+# Local worklist written by dsg-* review skills
+TODO_TASKS.md

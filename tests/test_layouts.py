@@ -40,12 +40,6 @@ from pydantic_schemaforms.rendering.layout_engine import (
     ResponsiveGridLayout,
     TabLayout,
     VerticalLayout,
-    _extract_existing_field_data,
-    _extract_fallback_mapped_data,
-    _extract_layout_nested_data,
-    _safe_layout_tabs,
-    _tab_payload_from_main_data,
-    get_nested_form_data,
 )
 from pydantic_schemaforms.templates import TemplateString
 from pydantic_schemaforms.tstring import SafeHTML, html as thtml
@@ -786,35 +780,6 @@ class TestLayoutEngine:
 
         assert engine._renderer == renderer
 
-    def test_render_layout_fields_as_tabs_empty(self):
-        """Test rendering layout fields as tabs with empty list."""
-        renderer = EnhancedFormRenderer(framework='bootstrap')
-        engine = LayoutEngine(renderer)
-        context = RenderContext(form_data={}, schema_defs={})
-
-        result = engine.render_layout_fields_as_tabs(layout_fields=[], data={}, context=context)
-
-        assert result == []
-
-    def test_group_fields_into_tabs(self):
-        """Test grouping fields into tabs."""
-        renderer = EnhancedFormRenderer(framework='bootstrap')
-        engine = LayoutEngine(renderer)
-
-        fields = [
-            ('name', {'ui': {'tab': 'Personal'}}),
-            ('email', {'ui': {'tab': 'Personal'}}),
-            ('company', {'ui': {'tab': 'Professional'}}),
-        ]
-
-        tabs = engine._group_fields_into_tabs(fields)
-
-        assert len(tabs) >= 1  # Should group by tab
-        # tabs is a list of (tab_name, fields) tuples
-        for tab_name, tab_fields in tabs:
-            assert isinstance(tab_name, str)
-            assert isinstance(tab_fields, list)
-
 
 @pytest.fixture(autouse=True)
 def _reset_layout_renderers():
@@ -824,148 +789,6 @@ def _reset_layout_renderers():
 
 def _context(form_data=None):
     return RenderContext(form_data=form_data or {}, schema_defs={})
-
-
-def test_render_tabbed_layout_and_side_by_side_layout():
-    renderer = EnhancedFormRenderer(framework='bootstrap')
-    engine = LayoutEngine(renderer)
-    context = _context({'name': 'A', 'email': 'a@example.com', 'city': 'Boston'})
-
-    fields = [
-        ('name', {'type': 'string', 'title': 'Name'}),
-        ('email', {'type': 'string', 'title': 'Email'}),
-        ('city', {'type': 'string', 'title': 'City'}),
-    ]
-
-    tabbed_html_parts = engine.render_tabbed_layout(
-        fields=fields,
-        data=context.form_data,
-        errors={},
-        required_fields=['name'],
-        context=context,
-    )
-    side_by_side_parts = engine.render_side_by_side_layout(
-        fields=fields,
-        data=context.form_data,
-        errors={},
-        required_fields=[],
-        context=context,
-    )
-
-    assert len(tabbed_html_parts) == 1
-    assert 'tabbed-layout' in tabbed_html_parts[0]
-    assert 'Name' in tabbed_html_parts[0]
-    assert len(side_by_side_parts) == 2
-    assert all('side-by-side-row' in part for part in side_by_side_parts)
-
-
-def test_render_layout_fields_as_tabs_and_layout_field_wrapper():
-    renderer = EnhancedFormRenderer(framework='bootstrap')
-    engine = LayoutEngine(renderer)
-    context = _context({'misc': 'value'})
-
-    tabs = engine.render_layout_fields_as_tabs(
-        layout_fields=[
-            (
-                'unknown_layout',
-                {
-                    'title': 'Unknown Layout',
-                    'ui': {'help_text': 'fallback help'},
-                },
-            )
-        ],
-        data=context.form_data,
-        context=context,
-    )
-
-    direct = engine.render_layout_field(
-        'unknown_layout',
-        {'title': 'Unknown Layout'},
-        None,
-        {'help_text': 'wrapper help'},
-        context,
-    )
-
-    assert len(tabs) == 1
-    assert 'layout-tabbed-section' in tabs[0]
-    assert 'Unknown layout field type' in tabs[0]
-    assert 'wrapper help' in direct
-
-
-def test_render_layout_field_content_fallback_success_error_and_unknown(monkeypatch):
-    renderer = EnhancedFormRenderer(framework='bootstrap')
-    engine = LayoutEngine(renderer)
-    context = _context({'first_name': 'Ada', 'last_name': 'Lovelace'})
-
-    monkeypatch.setattr(
-        EnhancedFormRenderer,
-        'render_form_fields_only',
-        lambda self, *_args, **_kwargs: '<div>nested-content-ok</div>',
-    )
-    success = engine.render_layout_field_content_fallback(
-        'personal_info',
-        {'help_text': 'vertical help'},
-        context,
-    )
-
-    def _raise_render(*_args, **_kwargs):
-        raise RuntimeError('fallback boom')
-
-    monkeypatch.setattr(EnhancedFormRenderer, 'render_form_fields_only', _raise_render)
-    failed = engine.render_layout_field_content_fallback(
-        'personal_info',
-        {'help_text': 'vertical help'},
-        context,
-    )
-
-    unknown = engine.render_layout_field_content_fallback(
-        'unknown_layout',
-        {'help_text': 'unknown help'},
-        context,
-    )
-
-    assert 'nested-content-ok' in success
-    assert 'Could not render: fallback boom' in failed
-    assert 'Unknown layout field type' in unknown
-    assert 'unknown help' in unknown
-
-
-def test_render_layout_field_fallback_success_error_and_unknown(monkeypatch):
-    renderer = EnhancedFormRenderer(framework='bootstrap')
-    engine = LayoutEngine(renderer)
-    context = _context({'first_name': 'Grace'})
-
-    monkeypatch.setattr(
-        renderer, 'render_form_fields_only', lambda *_args, **_kwargs: '<div>ok</div>'
-    )
-    success = engine.render_layout_field_fallback(
-        'personal_info',
-        {'help_text': 'vertical help'},
-        context,
-    )
-
-    monkeypatch.setattr(
-        renderer,
-        'render_form_fields_only',
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(ValueError('render exploded')),
-    )
-    failed = engine.render_layout_field_fallback(
-        'personal_info',
-        {'help_text': 'help <b>unsafe</b>'},
-        context,
-    )
-
-    unknown = engine.render_layout_field_fallback(
-        'no_mapping',
-        {'help_text': 'plain unknown'},
-        context,
-    )
-
-    assert '<div>ok</div>' in success
-    assert 'Layout demonstration: PersonalInfoForm' in failed
-    assert 'render exploded' in failed
-    assert 'help &lt;b&gt;unsafe&lt;/b&gt;' in failed
-    assert 'Unknown layout field type' in unknown
 
 
 def test_build_layout_body_error_message_via_custom_handler():
@@ -1016,66 +839,6 @@ def test_render_layout_card_theme_short_circuit_and_template_fallbacks():
     assert 'Title' in defaulted
     assert 'help &lt;script&gt;x&lt;/script&gt;' in defaulted
     assert '<p>Body</p>' in defaulted
-
-
-def test_helper_extractors_cover_success_and_exception_paths():
-    class GoodTabLayout:
-        @staticmethod
-        def _get_forms():
-            class FormA:
-                model_fields = {'alpha': object(), 'beta': object()}
-
-            return [FormA]
-
-    class BrokenTabLayout:
-        @staticmethod
-        def _get_forms():
-            raise RuntimeError('broken forms')
-
-    class LayoutWithTabs(BaseLayout):
-        @staticmethod
-        def _get_layouts():
-            return [('profile', GoodTabLayout()), ('broken', BrokenTabLayout())]
-
-    class LayoutWithBrokenTabs(BaseLayout):
-        @staticmethod
-        def _get_layouts():
-            raise RuntimeError('broken tabs')
-
-    assert _extract_existing_field_data('profile', {'profile': {'x': 1}}) == {'x': 1}
-    assert _extract_existing_field_data('profile', {'profile': 'not a dict'}) is None
-
-    assert _safe_layout_tabs(object()) == []
-    assert _safe_layout_tabs(LayoutWithBrokenTabs(content='')) == []
-
-    main_data = {
-        'profile': {'pre': 'nested'},
-        'alpha': 1,
-        'beta': 2,
-        'first_name': 'Ada',
-        'email': 'ada@example.com',
-    }
-    assert _tab_payload_from_main_data(GoodTabLayout(), main_data) == {'alpha': 1, 'beta': 2}
-    assert _tab_payload_from_main_data(BrokenTabLayout(), main_data) == {}
-    assert _tab_payload_from_main_data(object(), main_data) == {}
-
-    nested_from_layout = _extract_layout_nested_data(LayoutWithTabs(content=''), main_data)
-    assert nested_from_layout['profile'] == {'pre': 'nested'}
-    assert 'broken' not in nested_from_layout
-
-    fallback = _extract_fallback_mapped_data('personal_info', main_data)
-    assert fallback == {'first_name': 'Ada', 'email': 'ada@example.com'}
-
-    assert get_nested_form_data('profile', main_data) == {'pre': 'nested'}
-    assert get_nested_form_data('tabs', {'alpha': 1, 'beta': 2}, LayoutWithTabs(content='')) == {
-        'profile': {'alpha': 1, 'beta': 2}
-    }
-    assert get_nested_form_data('personal_info', main_data, None) == fallback
-
-
-# ===========================================================================
-# From test_layout_templates.py
-# ===========================================================================
 
 
 def test_tab_layout_uses_template_markup() -> None:
@@ -1401,6 +1164,7 @@ class TestTabLayoutIntegration:
             LayoutDemonstrationForm,
             data=form_data,
             submit_url='/submit',
+            layout='tabbed',
         )
 
         # Verify both bootstrap tab structure and content are rendered
@@ -1603,53 +1367,43 @@ def test_layout_demo_tab_buttons_present():
 
 def test_layout_form_rejects_blank_first_name():
     data = {
-        # Vertical tab (PersonalInfoForm)
-        'first_name': '',
-        'last_name': 'Johnson',
-        'email': 'alex.johnson@example.com',
-        # Horizontal tab (ContactInfoForm)
-        'address': '456 Demo Street',
-        'city': 'San Francisco',
-        # Tabbed tab (PreferencesForm)
-        'notification_email': True,
-        'notification_sms': False,
-        'theme': 'dark',
-        'language': 'en',
-        # List tab (TaskListForm)
-        'project_name': 'Demo Project',
-        'tasks': [
-            {
-                'task_name': 'Complete project setup',
-                'priority': 'high',
-                'due_date': '2024-12-01',
-            }
-        ],
+        'personal_info': {
+            'first_name': '',
+            'last_name': 'Johnson',
+            'email': 'alex.johnson@example.com',
+        },
+        'contact_info': {'address': '456 Demo Street', 'city': 'San Francisco'},
+        'preferences': {'notification_email': True, 'notification_sms': False},
+        'task_list': {
+            'project_name': 'Demo Project',
+            'tasks': [
+                {
+                    'task_name': 'Complete project setup',
+                    'priority': 'high',
+                    'due_date': '2024-12-01',
+                }
+            ],
+        },
     }
 
     result = validate_form_data(LayoutDemonstrationForm, data)
     assert result.is_valid is False
-    assert 'first_name' in result.errors
+    assert 'first_name' in result.errors['personal_info']
 
 
 def test_layout_form_rejects_missing_first_name():
     data = {
-        # Vertical tab (PersonalInfoForm)
-        'last_name': 'Johnson',
-        'email': 'alex.johnson@example.com',
-        # Horizontal tab (ContactInfoForm)
-        'address': '456 Demo Street',
-        'city': 'San Francisco',
-        # List tab (TaskListForm)
-        'project_name': 'Demo Project',
-        'tasks': [
-            {
-                'task_name': 'Write documentation',
-                'priority': 'medium',
-                'due_date': '2024-12-15',
-            }
-        ],
+        'personal_info': {'last_name': 'Johnson', 'email': 'alex.johnson@example.com'},
+        'contact_info': {'address': '456 Demo Street', 'city': 'San Francisco'},
+        'task_list': {
+            'project_name': 'Demo Project',
+            'tasks': [
+                {'task_name': 'Write documentation', 'priority': 'medium', 'due_date': '2024-12-15'}
+            ],
+        },
     }
 
     result = validate_form_data(LayoutDemonstrationForm, data)
     assert result.is_valid is False
-    assert 'first_name' in result.errors
+    assert result.errors['personal_info']['first_name'] == 'Field required'
+    assert result.errors['preferences'] == 'Field required'

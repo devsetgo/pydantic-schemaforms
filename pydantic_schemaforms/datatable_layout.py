@@ -269,15 +269,13 @@ class DataTableLayout(CompositeLayoutModel):
         """Validate edited cell values posted from the table's own
         ``submit_url`` form (see ``render_form(submit_url=...)``).
 
-        Cells are named ``rows[i].field`` -- the same bracket+dot flat-key
-        convention ``model_list`` fields already use -- so this reuses
-        ``parse_nested_form_data`` to reconstruct them into per-row dicts
-        before validating each one independently, same as
-        ``parse_csv_rows``.
+        Accepts the raw request form; cells (named ``rows[i].field`` on the
+        wire) are decoded into per-row dicts and each row is validated
+        independently, same as ``parse_csv_rows``.
         """
-        from .form_data import parse_nested_form_data
+        from .form_data import decode_submission
 
-        nested = parse_nested_form_data(form_data)
+        nested = decode_submission(form_data)
         records = nested.get('rows') or []
         return cls._validate_rows(records)
 

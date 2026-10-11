@@ -201,6 +201,11 @@ class RendererTheme:
 
         return self.form_style.assets.accordion_assets
 
+    def wizard_component_assets(self) -> str:
+        """Return CSS/JS assets for the step wizard layout."""
+
+        return self.form_style.assets.wizard_assets
+
     def form_wrapper_template(self) -> TemplateString:
         """Return the template used for the outer <form> element."""
 
@@ -1417,8 +1422,14 @@ document.addEventListener('DOMContentLoaded', function() {
             let hasErrors = false;
 
             requiredInputs.forEach(input => {
-                const value = input.type === 'checkbox' ? input.checked : input.value.trim();
+                // An input in a hidden tab, wizard step or collapsed panel
+                // can't show this message; server validation reports it and
+                // re-renders with that group open instead.
                 const fieldContainer = input.closest('.md-field');
+                if (!fieldContainer || input.getClientRects().length === 0) {
+                    return;
+                }
+                const value = input.type === 'checkbox' ? input.checked : input.value.trim();
 
                 if (!value) {
                     input.classList.add('error');
@@ -1500,10 +1511,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    # Initialize floating labels
+    // Initialize floating labels
     initializeFloatingLabels();
 
-    # Reinitialize for dynamically added content
+    // Reinitialize for dynamically added content
     window.reinitializeMaterialForms = function() {
         initializeFloatingLabels();
     };

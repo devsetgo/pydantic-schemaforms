@@ -209,9 +209,10 @@ def _my_wrapper(*, content: str = '') -> SafeHTML:
 
 A "composite" control renders something bigger than a single input — a
 whole table, a repeating list of sub-forms, wizard steps, and similar.
-`DataTableLayout` (CSV-import-to-table) and `model_list` (repeating
-sub-form items) are the two shipped examples; both go through the same
-mechanism below. **When asked to build a new composite control, reuse this
+`DataTableLayout` (CSV-import-to-table), `model_list` (repeating
+sub-form items), and `nested_model` (one sub-form, inferred from a field
+typed as another `FormModel`) are the shipped examples; all go through the
+same mechanism below. **When asked to build a new composite control, reuse this
 mechanism instead of hand-rolling a bespoke rendering path** — this
 codebase used to have three inconsistent ones (DataTableLayout's registry,
 model_list's hardcoded dispatch branch, `form_layouts.py`'s unrelated
@@ -252,14 +253,23 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
   does, with no change to its field-declaration API). Pick whichever
   matches how the composite's data actually flows in. Don't repurpose
   `input_type="layout"` for something that isn't shaped like a layout
-  field — it also drives `SchemaMetadata.layout_fields` grouping and
-  auto-tabbing behavior elsewhere in the renderer.
-- `form_layouts.py`'s `TabbedLayout`/`VerticalLayout`/`HorizontalLayout`/
-  `ListLayout` are a deliberately separate, out-of-scope mechanism — they
-  orchestrate multiple independent `FormModel`s rendered together (their
-  own `render()`/`validate()`, composed explicitly by app code), not one
-  field rendering something complex. Don't fold a new composite into that
-  family instead of this one without asking first.
+  field — it also drives `SchemaMetadata.layout_fields`.
+- **Composing several `FormModel`s into one form is nesting, not a
+  composite.** A parent `FormModel` declares sub-forms as typed fields and
+  the parent's `layout=` (`vertical`/`tabbed`/`side-by-side`/`accordion`/`wizard`,
+  `LayoutEngine.render_groups`) arranges them; see `docs/complex_forms.md`.
+  The old `form_layouts.py` orchestrators (`TabbedLayout`, `ListLayout`,
+  ...) were removed in 26.4.0 and are now stubs raising
+  `FormLayoutRemovedError`. Don't reintroduce a wrapper-class way to
+  combine forms; a new presentation is a new `render_groups` mode, the way
+  `layout="wizard"` (`WizardLayout`) was added.
+- **Data and errors are nested JSON.** `validate()` decodes the request
+  form itself (`form_data.decode_submission`) and returns nested `data`
+  plus a nested error tree (`pydantic_schemaforms/error_tree.py`). A
+  renderer receives its field's error node as `error`; composites read
+  `context.error` (own message) and `context.child_errors` (children).
+  Wire names (`address.city`, `pets[0].name`) are internal: never make
+  app-facing APIs or docs take or return them.
 
 ## Coding standards
 

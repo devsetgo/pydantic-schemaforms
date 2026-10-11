@@ -110,16 +110,20 @@ point — use it, do not invent something else:
   from pydantic_schemaforms import LayoutEngine
 
 
-  @LayoutEngine.layout_renderer('wizard_steps', builtin=False)
-  def render_wizard_steps(*, value, **kwargs) -> str: ...  # build and return the composite's HTML
+  @LayoutEngine.layout_renderer('kanban_board', builtin=False)
+  def render_kanban_board(
+      field_name, field_schema, value, ui_info, context, engine
+  ) -> str: ...  # build and return the composite's HTML with html(t'...')
   ```
 
-  Then declare the field as `Field(default_factory=dict, input_type="layout",
-  layout_handler="wizard_steps")` and build its value with your own class method (mirroring
+  The engine calls the renderer with exactly these six positional arguments; the field's own
+  error message is `context.error` and its nested errors are `context.child_errors`. Then
+  declare the field as `Field(default_factory=dict, input_type="layout",
+  layout_handler="kanban_board")` and build its value with your own class method (mirroring
   `DataTableLayout.as_layout_value()`'s convention) — the field's *value* carries whatever the
   renderer needs. `builtin=False` is correct for an app-level renderer like this (only the
   library's own shipped renderers use `builtin=True`). If the composite's own fields ARE its
-  structure (table columns, wizard steps — not a `list[ItemModel]` like `model_list`), subclass
+  structure (table columns, board lanes — not a `list[ItemModel]` like `model_list`), subclass
   `CompositeLayoutModel` (also a top-level export) instead of `FormModel` for that structure
   class; it disables `render_form()` since a composite isn't meant to render as one standalone
   instance's inputs. This is a deep extension point — reach for it only when the "Supported
@@ -193,8 +197,9 @@ async def register_get():
 
 @app.post('/register', response_class=HTMLResponse)
 async def register_post(request: Request):
-    submitted = dict(await request.form())
-    result = EventRegistration.validate(submitted, submit_url='/register', framework='bootstrap')
+    result = EventRegistration.validate(
+        await request.form(), submit_url='/register', framework='bootstrap'
+    )
     if result.is_valid:
         return HTMLResponse(html(t'<h1>Thanks, {result.data["full_name"]}!</h1>'))
     form_html = await result.render_with_errors_async()
@@ -264,7 +269,7 @@ below, use the closest primitive rather than guessing at a plausible-sounding na
 | Specialized date | `birthdate` (adds a computed age display) |
 | File/color | `file`, `color` |
 | Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design), `captcha` (self-hosted arithmetic challenge; the answer is verified server-side via `verify_captcha()` and never sent to the client) |
-| Structural (not a real widget) | `model_list` (repeating sub-forms), `layout` (composed layout primitives) |
+| Structural (not a real widget) | `nested_model` (a sub-form: inferred automatically for a field typed as another `FormModel`, never declare it), `model_list` (repeating sub-forms: inferred automatically for a `list[FormModel]` field), `layout` (a registered custom composite such as `DataTableLayout`) |
 
 Most forms only need Text/Numeric/Selection/Date. The "Specialized numeric" and "Specialized
 date" rows add presentation behavior only (e.g. `percentage` shows a `%` placeholder, `rating`
@@ -350,10 +355,10 @@ class SignupForm(FormModel):
 
 
 # in the POST route, before validating the model:
-form_dict = dict(await request.form())
-token = form_dict.pop('captcha_answer_token', None)
-if not verify_captcha(token=token, answer=form_dict.get('captcha_answer'), secret_key=SECRET):
-    ...  # re-render with errors={"general": "..."}; a fresh challenge renders automatically
+form = await request.form()
+token = form.get('captcha_answer_token')
+if not verify_captcha(token=token, answer=form.get('captcha_answer'), secret_key=SECRET):
+    ...  # re-render with errors={"_errors": "..."}; a fresh challenge renders automatically
 ```
 
 **file with drag-and-drop** — on by default, no extra wiring needed:
@@ -550,9 +555,12 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
   unrecognized framework string silently falls back to this same unstyled rendering rather than
   raising an error, so a typo (e.g. `"boostrap"`) fails silently, not loudly — double check the
   spelling against this list.
-- Use layout explicitly for non-default structure: "vertical" (default), "tabbed", or "side-by-side".
+- Use layout explicitly for non-default structure: "vertical" (default), "tabbed", "side-by-side",
+  "accordion", or "wizard". The last four arrange sub-forms, so they need a form built from nested
+  `FormModel` fields (see "Composing complex forms" below).
 - Pass form_data on both GET defaults and failed POST validation so fields are sticky.
-- Pass errors as a field-name keyed dictionary.
+- Pass errors as the nested error tree `.validate()` returns (see "Data and errors are nested
+  JSON" below); `result.render_with_errors()` does this for you.
 - Keep one coherent framework/layout strategy per endpoint.
 - For first pass implementations, prefer readability over over-customized markup.
 - Prefer the synchronous `render_form_html()`/`FormModel.render_form()` inside a sync route
@@ -576,30 +584,38 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
 ## Layout guidance
 
 - Use layout="vertical" for most CRUD and simple forms.
-- Use layout="tabbed" for long forms grouped by topic, or when at least one applies: more than 12
-  user-facing fields, distinct business sections (Account/Profile/Preferences/Security/Billing),
-  or high cognitive load workflows (onboarding, account setup, compliance forms).
-- Use layout="side-by-side" when labels/inputs should align horizontally (dense admin pages).
-- Use advanced layout primitives only when required (grid, accordion, cards, custom layout fields).
-- Prefer predictable, explicit grouping over heuristic grouping for critical workflows — place
-  required identity fields in early groups, optional/advanced settings later.
+- For long forms (more than about 12 user-facing fields), distinct business sections
+  (Account/Profile/Preferences/Security/Billing), or high cognitive load workflows (onboarding,
+  account setup, compliance), split the form into one `FormModel` per section, nest them as
+  fields of a parent `FormModel`, and render with layout="tabbed" (or "accordion"). Each
+  sub-form becomes a tab titled by its field's `title=`, in declaration order.
+- Use layout="side-by-side" to show a few short sub-forms as columns (dense admin pages).
+- Use layout="wizard" for a linear flow the user should fill in order (signup, onboarding,
+  checkout): one step per sub-form, Back/Next, submit on the last step. It is still one `<form>`
+  and one POST, so the route is identical to any other layout; do not build per-step routes or
+  session state for it. Next checks only the browser's HTML5 constraints for the current step;
+  Pydantic validates everything on submit.
+- Order groups by declaring fields in the order you want, or with `ui_order=`. Put required
+  identity sections first and optional/advanced settings last.
+- Use the lower-level layout primitives (grid, cards, modal) only when required.
 
 ## Framework route contract
 
 ### FastAPI
 
 - Route supports both GET and POST.
-- Read POST data with submitted = dict(await request.form()).
-- Validate with FormModel.validate(submitted, ...) — see "Lower-boilerplate alternative" below
-  for why this is the default, not the manual `FormModel(**submitted)` + try/except path.
+- Pass the request form straight to validation: FormModel.validate(await request.form(), ...).
+  Do not convert it with `dict(...)` first: that drops repeated values (multi-selects, checkbox
+  groups). See "Lower-boilerplate alternative" below for why `.validate()` is the default, not
+  the manual `FormModel(**submitted)` + try/except path.
 - Re-render with errors + form_data on failure.
 - Return HTMLResponse.
 
 ### Flask
 
 - Route supports both GET and POST.
-- Read POST data with submitted = request.form.to_dict().
-- Validate with FormModel.validate(submitted, ...).
+- Pass the request form straight to validation: FormModel.validate(request.form, ...). Do not
+  call `request.form.to_dict()` first: that drops repeated values.
 - Re-render with errors + form_data on failure.
 - Return HTML markup or template response.
 
@@ -635,9 +651,8 @@ class EventRegistration(FormModel):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        submitted = request.form.to_dict()
         result = EventRegistration.validate(
-            submitted, submit_url='/register', framework='bootstrap'
+            request.form, submit_url='/register', framework='bootstrap'
         )
         if result.is_valid:
             return html(t'<h1>Thanks, {result.data["full_name"]}!</h1>')
@@ -655,18 +670,17 @@ if you use a real template instead, but a plain returned string like this one do
 
 **Prefer `FormModel.validate()` over `FormModel(**submitted)` + manual `try/except
 ValidationError` as the default for every route, not just an optional shortcut.** The manual path
-means hand-reimplementing this library's own error-mapping logic yourself: turning Pydantic's
-nested `ValidationError.errors()` into a flat, field-name-keyed dict the renderer understands
-(dot/bracket paths for nested fields, message text for constraints like `ge`/`le`/`min_length`),
-plus a form-level (non-field) error convention for anything that isn't tied to one field (see
-"Form-level errors" below). `.validate()` already does all of that:
+means hand-reimplementing this library's own work yourself: decoding the submitted input names
+into nested data, and turning Pydantic's `ValidationError.errors()` into the nested error tree
+the renderer understands, plus a form-level (non-field) error convention (see "Form-level errors"
+below). `.validate()` already does all of that:
 
-    result = MyForm.validate(parsed_data, submit_url="/submit")
+    result = MyForm.validate(await request.form(), submit_url="/submit")
     if result.is_valid:
         return success(result.data)
     return result.render_with_errors()  # or await result.render_with_errors_async()
 
-`FormModel.validate(data, submit_url=..., framework=..., flatten=...)` wraps the same validation
+`FormModel.validate(data, submit_url=..., framework=..., layout=...)` wraps the same validation
 and returns a `ValidationResult` that remembers `submit_url`/`framework`, so re-rendering on
 failure needs no repeated arguments — this matters even more once a route re-renders the same
 form in more than one place (e.g. a shared CSRF-failure branch and a validation-failure branch).
@@ -674,32 +688,36 @@ Reach for the manual `FormModel(**submitted)` + try/except route only if you spe
 raw Pydantic model instance and are prepared to build your own error-rendering path — it is not
 the recommended default despite being listed first in some framework quick-reference bullets.
 
-`result.data` is a plain `dict`, not a `FormModel` instance — if you need the validated model
-object itself (e.g. to pass to an ORM constructor), build it with `MyForm(**result.data)` after
-`result.is_valid` is `True`; this is guaranteed to succeed since the data already passed
-validation once.
+`result.data` is a plain nested `dict`, not a `FormModel` instance. If you need the validated
+model object itself (e.g. to pass to an ORM constructor), use `result.instance`, which is set
+when `result.is_valid` is `True`.
 
-## Nested vs. flat form data (flatten=True)
+## Data and errors are nested JSON
 
-By default, `.validate()`/`render_form_html()` expect `form_data`/submitted data shaped like the
-model itself — nested dicts/lists for nested fields (e.g. `{"pets": [{"name": "Rex"}]}`). A plain
-native HTML form POST does not naturally produce that shape; it produces flat bracket+dot keys
-(e.g. `pets[0].name`) instead, which is exactly what `model_list` and `DataTableLayout` emit.
-Two ways to bridge this, pick based on what your data already looks like:
+`FormModel.validate()` accepts the raw request form (`await request.form()` in FastAPI,
+`request.form` in Flask), a list of `(name, value)` pairs, or an already nested dict such as a
+JSON API body (`MyForm.validate(await request.json())`). It always returns:
 
-- Pass `flatten=True` to `FormModel.validate(data, flatten=True, ...)` — it accepts either shape
-  on input (already-nested data is also fine), but **`result.data` then comes back in the same
-  flat bracket+dot shape too** (e.g. `result.data["pets[0].name"]`, not
-  `result.data["pets"][0]["name"]`) — confirmed directly in `FormModel.validate()`'s own
-  docstring. Only reach for this if flat keys are what you actually want to work with afterward
-  (rare) — it is *not* a "accept flat input, still get nested output" convenience.
-- Call `parse_nested_form_data(dict(await request.form()))` yourself first (top-level export),
-  then call `.validate()` on the result **without** `flatten=True` — this is the right default
-  for any form with `model_list`/nested sub-models, since it gets you both flat-key-tolerant
-  input *and* a nested `result.data` you can index the normal way
-  (`result.data["pets"][0]["name"]`). `DataTableLayout.parse_submitted_rows()` and
-  `handle_import_post()` already do this internally — don't call it again on data you're about
-  to pass to those.
+- `result.data`: nested exactly like the model. Sub-forms are dicts, lists of sub-forms are
+  lists: `result.data["address"]["city"]`, `result.data["pets"][0]["name"]`. Keys that are not
+  fields of the model (CSRF tokens, honeypots) are dropped at every level.
+- `result.errors`: nested exactly like `result.data`. A node is either a message string or a
+  dict of child errors. A list's errors are a dict keyed by item index (only failing items
+  appear; JSON turns the keys into strings), so `result.errors["pets"][1]["name"]` sits where
+  `result.data["pets"][1]["name"]` does. A message about a whole list or sub-form (e.g.
+  `min_length` on the list) is a plain string, or sits under the reserved key `"_errors"` when
+  that container also has child errors. Form-wide messages (e.g. from a `@model_validator`) are
+  under the top-level `"_errors"`.
+- `result.error_list()`: the same errors as a flat `[{"loc": ["pets", 1, "name"], "msg": ...}]`
+  list, for API responses and logging.
+
+Read errors defensively, since a node can be a string or a dict:
+`result.errors.get("address", {}).get("city")` only works when `address` has child errors.
+
+HTML inputs are named `address.city` and `pets[0].name` on the wire; the library builds and
+decodes those names itself. **Never construct or parse those names in app code**, and never call
+`parse_nested_form_data()` before `.validate()`: pass the request form straight in.
+`DataTableLayout.handle_import_post()` likewise takes the raw request form.
 
 ## Two different `errors` shapes — do not conflate them
 
@@ -707,8 +725,9 @@ Two different result types both have an `.errors` attribute with **incompatible 
 them up produces a `TypeError` or silently wrong text, not a clean failure:
 
 - `ValidationResult.errors` (from `FormModel.validate()`, the primary server-side path) is a
-  **`dict[str, str]`** — one message string per field name (plus `"general"` for form-level
-  errors, see below). Access a specific field's message with `result.errors.get("email")`.
+  **nested error tree** shaped like the data (see above): a top-level field's message is
+  `result.errors.get("email")`, a sub-form field's is `result.errors["address"]["city"]`, plus
+  `"_errors"` for form-level errors (see below).
 - `ValidationResponse.errors` (from `LiveValidator`/`FieldValidator`, the HTMX live-validation
   path — see that section below) is a **`list[str]`** — zero or more messages for the one field
   that response is about. Access the first message with `result.errors[0]` (as the HTMX worked
@@ -721,11 +740,10 @@ type you actually have rather than assuming a shape.
 ## Form-level (non-field) errors
 
 Some failures aren't about any one field — a CSRF mismatch, a rate limit, a backend outage. Report
-these with a `"general"` key in the errors dict passed to `.validate()`/`render_form_html()`
-(`errors={"general": "Session expired, please try again."}`) rather than attaching the message to
-an arbitrary field — the renderer's error summary picks up every key in the errors dict, but
-`"general"` is the convention this library's own code uses (e.g. `.validate()`'s internal
-non-field errors), so use it for consistency with anything the library itself generates.
+these with the reserved `"_errors"` key in the errors passed to `render_form_html()`
+(`errors={"_errors": "Session expired, please try again."}`) rather than attaching the message to
+an arbitrary field. `"_errors"` is where `.validate()` itself puts form-wide errors (such as a
+`@model_validator` failure), and the error summary shows it as "Form: ...".
 
 ## CSRF protection
 
@@ -742,7 +760,7 @@ data), add CSRF protection instead of skipping it:
   either way, but don't add one as if it were a normal form field.
 - On POST, verify the submitted token against the stored one with a constant-time comparison
   before validating form data.
-- On mismatch, re-render with a form-level error (`errors={"general": "..."}`, see above — not a
+- On mismatch, re-render with a form-level error (`errors={"_errors": "..."}`, see above — not a
   field error) and issue a fresh token; do not proceed to model validation.
 - csrf_mode accepts "off" (no token), "field-only" (renders a field but does not require server
   verification — **only allowed when `debug=True`**; passing it explicitly outside `debug=True`
@@ -752,14 +770,146 @@ data), add CSRF protection instead of skipping it:
 - Treat this as part of the completion contract for stateful forms, not an optional extra — do
   not skip it just because it wasn't explicitly requested.
 
+## Composing complex forms from multiple FormModels
+
+A complex form is several `FormModel`s nested as fields of a parent `FormModel`. There are no
+wrapper or layout classes: a sub-form is an ordinary typed field, and its presentation is one
+`layout=` argument.
+
+```python
+from pydantic_schemaforms import Field, FormModel, html, render_form_html_async
+
+
+class Contact(FormModel):
+    email: str = Field(..., title='Email', ui_element='email')
+    phone: str = Field('', title='Phone', ui_element='tel')
+
+
+class Address(FormModel):
+    street: str = Field(..., title='Street')
+    city: str = Field(..., title='City', min_length=2)
+
+
+class Pet(FormModel):
+    name: str = Field(..., title='Pet name', min_length=1)
+    age: int = Field(0, title='Age', ge=0)
+
+
+class ProfileForm(FormModel):
+    nickname: str = Field(..., title='Nickname')  # plain field
+    contact: Contact = Field(title='Contact details')  # sub-form
+    address: Address = Field(title='Home address', ui_collapsible=True)  # sub-form
+    pets: list[Pet] = Field(default_factory=list, title='Pets', min_length=1)  # repeating sub-form
+
+
+@app.get('/profile', response_class=HTMLResponse)
+async def profile_get():
+    return await render_form_html_async(ProfileForm, layout='tabbed', submit_url='/profile')
+
+
+@app.post('/profile', response_class=HTMLResponse)
+async def profile_post(request: Request):
+    result = ProfileForm.validate(await request.form(), submit_url='/profile', layout='tabbed')
+    if result.is_valid:
+        save_profile(
+            result.data
+        )  # {"nickname": ..., "contact": {...}, "address": {...}, "pets": [...]}
+        return HTMLResponse(html(t'<h1>Saved {result.data["nickname"]}</h1>'))
+    return HTMLResponse(await result.render_with_errors_async())
+```
+
+- `layout=`: `"vertical"` (default; sub-forms as titled sections), `"tabbed"` (a "General" tab
+  for the parent's plain fields, then one tab per sub-form), `"side-by-side"` (columns), or
+  `"accordion"` (collapsible panels), or `"wizard"` (one step per group with Back/Next; options
+  `wizard_options={"linear": True, "show_progress": True, "back_label": "Back",
+  "next_label": "Next"}`). Pass the same `layout=` (and `wizard_options=`) to `.validate()` so
+  `render_with_errors()` re-renders identically; it opens the first tab, panel, or step
+  containing an error.
+- Groups follow field declaration order; `ui_order=n` on a field reorders it. The "General"
+  group is always first and is titled by the parent's `model_config = {"title": ...}`, else
+  "General".
+- Per sub-form options go on its field: `title=`, `ui_help_text=`, `ui_collapsible=True`,
+  `ui_collapsed=True` (opens automatically when it holds an error), `ui_order=`, and
+  `ui_step_title=` (wizard step label, falls back to `title=`).
+- The grouped layouts need sub-forms: `layout="tabbed"` on a form with only plain fields raises
+  `ValueError`. Split the form into sub-forms instead of hoping fields get grouped.
+- Nest as deep as needed: a sub-form can contain a list of sub-forms whose items contain
+  sub-forms. Data and errors keep the same nesting.
+
+## Upgrading to nested forms
+
+Version 26.4.0 removed the older ways of combining forms. Code using them fails with
+`FormLayoutRemovedError` (a `TypeError`) at class definition or call time, and the error message
+points here. Convert each pattern as follows.
+
+| Removed | Replace with |
+|---|---|
+| `TabbedLayout`, `VerticalLayout`, `HorizontalLayout` wrapper classes (`form = X` attributes, `_get_layouts()` overrides) | One nested `FormModel` field per wrapped form, plus `layout="tabbed"` / `"vertical"` / `"side-by-side"` on render and validate |
+| A parent field like `tabs: MyTabs = Field(default_factory=MyTabs, input_type="layout")` | Delete it; the sub-form fields go directly on the parent |
+| `ListLayout(Item, min_items=..., max_items=..., add_button_text=...)` | `items: list[Item] = Field(default_factory=list, min_length=..., max_length=..., ui_add_button_label=...)` |
+| `SectionDesign(section_title=..., section_description=..., collapsible=...)` | `Field(title=..., ui_help_text=..., ui_collapsible=True)` on the sub-form field |
+| `FormDesign(...)` | Arguments to `render_form_html(...)` / `render_form_page(...)` and the app's own page template |
+| `parse_nested_form_data(...)` / `dict(await request.form())` before validating | `Model.validate(await request.form(), ...)` |
+| `validate(..., flatten=True)` | Removed. `result.data` is always nested |
+| Error keys like `result.errors["pets[0].name"]` or `result.errors["city"]` for a sub-form field | `result.errors["pets"][0]["name"]`, `result.errors["address"]["city"]` |
+| `errors={"general": ...}` | `errors={"_errors": ...}` |
+| `layout="tabbed"` on a flat form (fields grouped by name keywords) | Split the fields into sub-forms; each sub-form is a tab |
+| Several `input_type="layout"` fields that auto-rendered as tabs | Nested sub-form fields plus explicit `layout="tabbed"` |
+| `from pydantic_schemaforms.layouts import ...` | `from pydantic_schemaforms import ...` (top-level `VerticalLayout`/`HorizontalLayout` are now the plain flex layout primitives) |
+
+Before:
+
+```python
+class ContactTab(VerticalLayout):
+    form = Contact
+
+
+class AddressTab(VerticalLayout):
+    form = Address
+
+
+class ProfileTabs(TabbedLayout):
+    contact = ContactTab()
+    address = AddressTab()
+
+
+class ProfileForm(FormModel):
+    tabs: ProfileTabs = Field(default_factory=ProfileTabs, input_type='layout')
+
+
+data = parse_nested_form_data(dict(await request.form()))
+result = ProfileForm.validate(data, submit_url='/profile')
+city_error = result.errors.get('city')
+email = result.data['email']
+```
+
+After:
+
+```python
+class ProfileForm(FormModel):
+    contact: Contact = Field(title='Contact')
+    address: Address = Field(title='Address')
+
+
+html_out = await render_form_html_async(ProfileForm, layout='tabbed', submit_url='/profile')
+result = ProfileForm.validate(await request.form(), submit_url='/profile', layout='tabbed')
+city_error = result.errors.get('address', {}).get('city')
+email = result.data['contact']['email']
+```
+
+Data shape changes too: each sub-form's values now arrive under its field name
+(`result.data["contact"]["email"]`, not `result.data["email"]`). Update anything that reads
+`result.data`, saves it, or pre-fills `form_data`. Prefill with the same nested shape:
+`render_form_html(ProfileForm, form_data={"contact": {"email": ...}}, ...)`.
+
 ## Repeating sub-forms (model_list)
 
 When a form needs a user-editable list of sub-records (e.g. "add another item"), do not hand-
 build add/remove JavaScript. Use the library's model_list support instead:
 
-- Define a nested FormModel for one item, then a field typed list[ItemModel] with
-  ui_element="model_list" (or input_type="model_list"). The item model class is resolved
-  automatically from the list[ItemModel] annotation.
+- Define a nested FormModel for one item, then a field typed list[ItemModel]. It renders as a
+  repeating sub-form automatically (`ui_element="model_list"` is optional). The item model class
+  is resolved from the list[ItemModel] annotation.
 - The renderer produces add/remove controls and repeats the sub-form automatically. Customize it
   with these Field() kwargs (not ui_options — they are named Field parameters, same pattern as
   ui_help_text):
@@ -770,10 +920,10 @@ build add/remove JavaScript. Use the library's model_list support instead:
   - ui_items_expanded=False — start collapsible items collapsed.
 - Bound the number of items with Field(min_length=..., max_length=...) on the list field itself
   — same constraint mechanism as string/number bounds, not a separate ui_options setting.
-- Nested per-item validation errors (keyed like "items[0].name" from FormModel.validate())
-  render inline on the matching item automatically.
-- On POST, run submitted form data through parse_nested_form_data before validating, so
-  bracketed/indexed keys (e.g. items[0][name]) are reassembled into nested lists/dicts.
+- Per-item validation errors (`result.errors["items"][0]["name"]`) render inline on the
+  matching item automatically.
+- On POST, pass the request form straight to `.validate()`; `result.data["items"]` comes back
+  as a list of dicts.
 
 ## CSV import to a table (DataTableLayout)
 
@@ -945,8 +1095,7 @@ async def validate_field(field_name: str, request: Request):
 
 @app.post('/signup', response_class=HTMLResponse)
 async def signup_post(request: Request):
-    data = dict(await request.form())
-    result = SignupForm.validate(data, submit_url='/signup')  # the real safety net -- always runs
+    result = SignupForm.validate(await request.form(), submit_url='/signup')  # the real safety net
     if result.is_valid:
         return '<p>Signed up!</p>'
     return await result.render_with_errors_async()
@@ -974,8 +1123,9 @@ to convert it.
 
 For complex requests, also provide:
 
-- Explicit layout choice (tabbed or side-by-side when appropriate).
-- Section grouping rationale (for example Account, Profile, Preferences).
+- One `FormModel` per section, nested as fields of a parent `FormModel` (for example Account,
+  Profile, Preferences), with an explicit `layout=` ("tabbed", "accordion", or "side-by-side").
+- Section grouping rationale.
 - Field-level constraints mirrored from model/schema (min_length, max_length, ge, le,
   regex/pattern).
 - Sticky value handling and field error mapping.
@@ -1016,7 +1166,14 @@ For complex requests, also provide:
 - Do not use an f-string/`.format()` to interpolate a submitted or validated field value into
   hand-written HTML — even after `.validate()` succeeds, use `html(t'...')` instead (structural
   XSS protection; see the flagship worked example's notes).
-- Do not index `ValidationResult.errors` (a `dict[str, str]`, from `.validate()`) like a list, or
+- Do not use `TabbedLayout`, `VerticalLayout`/`HorizontalLayout` wrapper subclasses, `ListLayout`,
+  `SectionDesign`, or `FormDesign` — they were removed and raise `FormLayoutRemovedError`. Nest
+  `FormModel`s as fields and pass `layout=` (see "Upgrading to nested forms").
+- Do not call `parse_nested_form_data()`, `dict(await request.form())`, or
+  `request.form.to_dict()` before `.validate()`, and do not pass `flatten=` — pass the request
+  form itself and read nested `result.data`/`result.errors`.
+- Do not build or parse wire-format input names (`"pets[0].name"`, `"address.city"`) in app code.
+- Do not index `ValidationResult.errors` (a nested error tree, from `.validate()`) like a list, or
   index `ValidationResponse.errors` (a `list[str]`, from `LiveValidator`/`FieldValidator`) like a
   dict — they are unrelated shapes that happen to share an attribute name.
 - Do not hand-build a CSV-import table's upload UI, per-row validation, or load/submit branching —

@@ -37,8 +37,7 @@ from datetime import date, datetime, time
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pydantic_schemaforms.form_layouts import TabbedLayout, VerticalLayout
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel
 
 # ============================================================================
 # DATE FORMATS
@@ -265,43 +264,6 @@ class DatetimeFormatShowcaseForm(FormModel):
 # ============================================================================
 
 
-class DateFormatsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Date Formats tab."""
-
-    form = DateFormatShowcaseForm
-
-
-class TimeFormatsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Time Formats tab."""
-
-    form = TimeFormatShowcaseForm
-
-
-class DatetimeFormatsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Datetime Formats tab."""
-
-    form = DatetimeFormatShowcaseForm
-
-
-class DateTimeFormatsTabs(TabbedLayout):
-    """Combines the date/time/datetime format tabs, in declaration order."""
-
-    def __init__(self, form_config=None):
-        super().__init__(form_config=form_config)
-        self.dates = DateFormatsTabLayout()
-        self.times = TimeFormatsTabLayout()
-        self.datetimes = DatetimeFormatsTabLayout()
-
-    def _get_layouts(self):
-        # Explicit order -- TabbedLayout's default _get_layouts() scans
-        # dir(self), which comes back alphabetical, not declaration order.
-        return [
-            ('dates', self.dates),
-            ('times', self.times),
-            ('datetimes', self.datetimes),
-        ]
-
-
 class DateTimeFormatsShowcaseForm(FormModel):
     """Tabbed showcase of custom date/time/datetime display formats.
 
@@ -311,11 +273,9 @@ class DateTimeFormatsShowcaseForm(FormModel):
     mapping easy to compare side by side.
     """
 
-    formats: DateTimeFormatsTabs = Field(
-        default_factory=DateTimeFormatsTabs,
-        title='Date, Time & Datetime Format Showcase',
-        ui_element='layout',
-    )
+    dates: DateFormatShowcaseForm = Field(title='Date Formats')
+    times: TimeFormatShowcaseForm = Field(title='Time Formats')
+    datetimes: DatetimeFormatShowcaseForm = Field(title='Datetime Formats')
 
 
 def create_sample_date_time_format_data() -> dict:
@@ -332,28 +292,31 @@ def create_sample_date_time_format_data() -> dict:
     (e.g. WidgetGalleryForm's plain-ISO 'date_input': '2024-06-15').
     """
     return {
-        # Date Formats tab
-        'default_browser_date': '2026-03-05',  # native picker -- always ISO
-        'usa_date': '03/05/2026',
-        'europe_slash_date': '05/03/2026',
-        'europe_dot_date': '05.03.2026',
-        'iso_asia_date': '2026-03-05',
-        'year_month_day_compact': '20260305',
-        'year_month_day_words': '2026 March 05',
-        'short_year_date': '03/05/26',
-        # Time Formats tab
-        'default_browser_time': '23:30:15',  # native picker -- always 24-hour ISO-ish
-        'military_time': '23:30',
-        'military_time_with_seconds': '23:30:15',
-        'usa_12_hour': '11:30 PM',
-        'europe_dot_time': '23.30',
-        'compact_time': '233015',
-        # Datetime Formats tab
-        'default_browser_datetime': '2026-03-05T23:30:15',  # native picker
-        'year_month_day_hour24_min_sec': '20260305233015',
-        'iso_style_datetime': '2026-03-05 23:30:15',
-        'usa_datetime': '03/05/2026 11:30 PM',
-        'europe_datetime': '05.03.2026 23:30',
-        'asia_datetime': '2026/03/05 23:30',
-        'custom_format_with_set_now_button': '2026-03-05 23:30',
+        'dates': {
+            'default_browser_date': '2026-03-05',  # native picker -- always ISO
+            'usa_date': '03/05/2026',
+            'europe_slash_date': '05/03/2026',
+            'europe_dot_date': '05.03.2026',
+            'iso_asia_date': '2026-03-05',
+            'year_month_day_compact': '20260305',
+            'year_month_day_words': '2026 March 05',
+            'short_year_date': '03/05/26',
+        },
+        'times': {
+            'default_browser_time': '23:30:15',  # native picker -- always 24-hour ISO-ish
+            'military_time': '23:30',
+            'military_time_with_seconds': '23:30:15',
+            'usa_12_hour': '11:30 PM',
+            'europe_dot_time': '23.30',
+            'compact_time': '233015',
+        },
+        'datetimes': {
+            'default_browser_datetime': '2026-03-05T23:30:15',  # native picker
+            'year_month_day_hour24_min_sec': '20260305233015',
+            'iso_style_datetime': '2026-03-05 23:30:15',
+            'usa_datetime': '03/05/2026 11:30 PM',
+            'europe_datetime': '05.03.2026 23:30',
+            'asia_datetime': '2026/03/05 23:30',
+            'custom_format_with_set_now_button': '2026-03-05 23:30',
+        },
     }

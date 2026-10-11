@@ -22,9 +22,11 @@ of the four, rather than calling the sibling free function directly --
 this keeps existing test suites that `monkeypatch.setattr(field_renderer,
 '<method_name>', ...)` or `patch.object(field_renderer, ...)` working
 unchanged, since `FieldRenderer` keeps thin delegator methods of the same
-name that forward here. `extract_nested_errors_for_field` is the one
-exception -- pure error-string processing that never needs to call back
-into `field_renderer`, kept as a parameter only for a uniform signature.
+name that forward here.
+
+Errors arrive as a nested error tree (see `pydantic_schemaforms.error_tree`):
+the list field's own child errors are a dict keyed by item index, and each
+item's errors are a dict keyed by that item's field names.
 """
 
 from __future__ import annotations
@@ -35,6 +37,12 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .layout_engine import LayoutEngine
+from .schema_parser import (
+    GROUP_ELEMENTS,
+    ordered_properties,
+    resolve_list_item_ref,
+    resolve_ui_element,
+)
 
 if TYPE_CHECKING:
     from .context import RenderContext
@@ -84,26 +92,21 @@ def render_model_list_field(
     required_fields: list[str] | None,
     ui_info: dict[str, Any],
     context: 'RenderContext',
-    all_errors: dict[str, str] | None,
+    list_errors: dict[Any, Any] | None,
 ) -> str:
     # The item model is always resolved from the list[ItemModel] type
-    # annotation's $ref — there is no separate model_class override.
-    # A model_class passed via ui_options can never reach here: Field()
-    # serializes ui_options into json_schema_extra (a raw class fails
-    # that), and register_field()'s dynamic-field schema builder only
-    # forwards ui_-prefixed keys. One resolution path, not two.
-    items_ref = field_schema.get('items', {}).get('$ref')
-    if not items_ref:
+    # annotation's $ref -- there is no separate model_class override.
+    model_name = resolve_list_item_ref(field_schema)
+    if not model_name:
         return html(
             t"<!-- Error: model_list field '{field_name}' must be typed as list[ItemModel] -->"
         )
 
-    model_name = items_ref.split('/')[-1]
     schema_defs = context.schema_defs or {}
     schema_def = schema_defs.get(model_name)
     if not schema_def:
         return html(
-            t"<!-- Error: Could not resolve model reference '{items_ref}' "
+            t"<!-- Error: Could not resolve model reference '{model_name}' "
             t"for field '{field_name}' -->"
         )
 
@@ -118,7 +121,7 @@ def render_model_list_field(
         ui_info=ui_info,
         required_fields=required_fields or [],
         context=context,
-        all_errors=all_errors,
+        list_errors=list_errors,
     )
 
 
@@ -132,9 +135,9 @@ def render_model_list_from_schema(
     ui_info: dict[str, Any],
     required_fields: list[str],
     context: 'RenderContext',
-    all_errors: dict[str, str] | None = None,
+    list_errors: dict[Any, Any] | None = None,
 ) -> str:
-    nested_errors = field_renderer.extract_nested_errors_for_field(field_name, all_errors or {})
+    list_errors = list_errors or {}
     items_parts: list[str] = []
 
     for i, item_data in enumerate(values):
@@ -146,7 +149,7 @@ def render_model_list_from_schema(
                 item_data,
                 context,
                 ui_info,
-                nested_errors,
+                item_errors(list_errors, i),
             )
         )
 
@@ -161,7 +164,7 @@ def render_model_list_from_schema(
                     {},
                     context,
                     ui_info,
-                    nested_errors,
+                    item_errors(list_errors, i),
                 )
             )
 
@@ -174,7 +177,7 @@ def render_model_list_from_schema(
                 {},
                 context,
                 ui_info,
-                nested_errors,
+                item_errors(list_errors, 0),
             )
         )
 
@@ -187,7 +190,7 @@ def render_model_list_from_schema(
         {},
         context,
         ui_info,
-        nested_errors,
+        {},
     )
     _template_item_html = SafeHTML(str(template_item_html))
     template_html = html(
@@ -231,25 +234,11 @@ def render_model_list_from_schema(
     )
 
 
-def extract_nested_errors_for_field(
-    _field_renderer: 'FieldRenderer', field_name: str, all_errors: dict[str, Any]
-) -> dict[str, str]:
-    """Pure error-string processing -- unlike the other three functions in
-    this module, this one never needs to call back into the owning
-    FieldRenderer, so its first parameter (kept only for a uniform
-    four-function signature convention -- see module docstring) is
-    intentionally unused."""
-    nested_errors: dict[str, str] = {}
-    field_prefix = f'{field_name}['
-
-    for error_path, error_message in (all_errors or {}).items():
-        if error_path.startswith(field_prefix):
-            nested_part = error_path[len(field_prefix) :]
-            if '].' in nested_part:
-                simplified_path = nested_part.replace('].', '.')
-                nested_errors[simplified_path] = error_message
-
-    return nested_errors
+def item_errors(list_errors: dict[Any, Any], index: int) -> dict[Any, Any]:
+    """One item's error sub-tree. Index keys are ints from Pydantic, or
+    strings when the tree round-tripped through JSON."""
+    node = list_errors.get(index, list_errors.get(str(index)))
+    return node if isinstance(node, dict) else {}
 
 
 def _resolve_item_title(title_template: str, index: int, item_data: dict[str, Any]) -> str:
@@ -312,19 +301,19 @@ def _render_item_field_cell(
     field_key: str,
     nested_schema: dict[str, Any],
     item_data: dict[str, Any],
-    nested_errors: dict[str, str],
+    nested_errors: dict[Any, Any],
     context: 'RenderContext',
     col_class: str,
 ) -> SafeHTML:
     field_value = item_data.get(field_key, '')
     input_name = f'{field_name}[{index}].{field_key}'
-    field_error = nested_errors.get(f'{index}.{field_key}')
+    field_error = nested_errors.get(field_key)
 
     # NOSONAR comments below: field_col_class/nested_field_html are read via
     # {expr} interpolation further down -- see the note in
     # _render_item_toggle above.
     field_col_class = (  # NOSONAR
-        'col-12' if nested_schema.get('input_type') == 'model_list' else col_class
+        'col-12' if resolve_ui_element(nested_schema) in GROUP_ELEMENTS else col_class
     )
 
     nested_field_html = SafeHTML(  # NOSONAR
@@ -337,7 +326,6 @@ def _render_item_field_cell(
                 [],
                 context,
                 'vertical',
-                nested_errors,
             )
         )
     )
@@ -381,7 +369,7 @@ def render_schema_list_item(
     item_data: dict[str, Any],
     context: 'RenderContext',
     ui_info: dict[str, Any] | None = None,
-    nested_errors: dict[str, str] | None = None,
+    nested_errors: dict[Any, Any] | None = None,
 ) -> str:
     ui_info = ui_info or {}
     nested_errors = nested_errors or {}
@@ -414,7 +402,7 @@ def render_schema_list_item(
             </button>
         </div>''')
 
-    properties = schema_def.get('properties', {})
+    properties = dict(ordered_properties(schema_def))
     field_count = len([key for key in properties.keys() if not key.startswith('_')])
     col_class = _column_class_for_field_count(field_count)
 
@@ -454,7 +442,7 @@ def render_model_list_layout_field(
     engine: LayoutEngine,
 ) -> str:
     """The registered entry point: reads the per-field error/required/
-    all_errors trio `FieldRenderer.render_field` stashes on `context` right
+    child_errors trio `FieldRenderer.render_field` stashes on `context` right
     before dispatching here (see field_renderer.py's generic dispatch),
     then calls back into the owning FieldRenderer's own
     `_render_model_list_field` -- the exact same method existing tests
@@ -469,5 +457,5 @@ def render_model_list_layout_field(
         list(context.required_fields),
         ui_info,
         context,
-        context.all_errors,
+        context.child_errors,
     )

@@ -37,7 +37,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import EmailStr
 
 from examples.fastapi_routes import log_timing, templates
-from pydantic_schemaforms import Field, FormModel, parse_nested_form_data, render_form_html_async
+from pydantic_schemaforms import Field, FormModel, render_form_html_async
 
 
 class MenuItemName(str, Enum):
@@ -215,15 +215,11 @@ async def show_form(request: Request, style: str = 'bootstrap', debug: bool = Fa
 
 @router.post('/', response_class=HTMLResponse)
 async def submit_form(request: Request, style: str = 'bootstrap', debug: bool = False):
-    form_dict = dict(await request.form())
-    submitted_csrf_token = form_dict.pop('csrf_token', None)
-    # items[0].vegetables-style flat keys (from the model_list subform) ->
-    # a nested {'items': [{...}]} dict, so result.data below comes back
-    # nested too (flatten=True on .validate() would accept the same flat
-    # input, but its *output* stays flat -- matching whichever shape was
-    # given -- so parse_nested_form_data() here is what actually gets a
-    # nested result.data below).
-    submitted = parse_nested_form_data(form_dict)
+    # The raw request form goes straight to render/validate: the library
+    # decodes items[0].vegetables-style input names into nested data itself,
+    # keeping repeated keys (checkbox groups) as lists.
+    submitted = await request.form()
+    submitted_csrf_token = submitted.get('csrf_token')
 
     if not verify_menu_order_csrf_token(request, submitted_csrf_token):
         # On mismatch: re-render with a form-level error (not a field error,

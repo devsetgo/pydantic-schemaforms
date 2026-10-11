@@ -16,9 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pydantic import EmailStr, field_validator
 
-from pydantic_schemaforms.form_field import FormField
-from pydantic_schemaforms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormField, FormModel
 
 # ============================================================================
 # ENUMS AND CONSTANTS
@@ -307,7 +305,7 @@ class UserRegistrationForm(FormModel):
 
 
 class PetOwnerForm(FormModel):
-    """Form that demonstrates ListLayout for pet management."""
+    """Form that demonstrates a repeating pet sub-form (a list[PetModel] field)."""
 
     owner_name: str = FormField(
         title='Owner Name',
@@ -399,18 +397,10 @@ class PetRegistrationForm(FormModel):
         icon='heart',
         min_length=1,
         max_length=10,
-        model_class=PetModel,
         add_button_label='Add Another Pet',
         collapsible_items=True,
         items_expanded=False,  # Start collapsed to show the feature
         item_title_template='Pet #{index}: {name}',  # Dynamic titles
-        section_design={
-            'section_title': 'Pet Registry',
-            'section_description': 'Register each of your beloved pets with detailed information',
-            'icon': 'bi bi-heart-fill',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -710,18 +700,10 @@ class CompleteShowcaseForm(FormModel):
         icon='heart-fill',
         min_length=0,
         max_length=5,
-        model_class=PetModel,
         add_button_label='🐾 Add Another Pet',
         collapsible_items=True,
         items_expanded=False,  # Start collapsed to showcase feature
         item_title_template='🐾 {name} the {species}',  # Dynamic titles with emojis
-        section_design={
-            'section_title': 'Pet Registry',
-            'section_description': 'Register each of your pets with detailed information for our records',
-            'icon': 'bi bi-heart-fill',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     # ======== EMERGENCY CONTACTS (ANOTHER LIST) ========
@@ -733,18 +715,10 @@ class CompleteShowcaseForm(FormModel):
         icon='person-exclamation',
         min_length=1,
         max_length=3,
-        model_class=EmergencyContactModel,
         add_button_label='➕ Add Emergency Contact',
         collapsible_items=True,
         items_expanded=True,  # Start expanded for required items
         item_title_template='📞 {name} ({relationship})',
-        section_design={
-            'section_title': 'Emergency Contacts',
-            'section_description': 'At least one emergency contact is required',
-            'icon': 'bi bi-shield-exclamation',
-            'collapsible': False,  # Don't allow collapsing required section
-            'collapsed': False,
-        },
     )
 
     # ======== ADDITIONAL PREFERENCES ========
@@ -1340,18 +1314,10 @@ class TeamMember(FormModel):
         icon='award',
         min_length=0,
         max_length=20,
-        model_class=Certification,
         add_button_label='➕ Add Certification',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='{name} - {issuer}',
-        section_design={
-            'section_title': 'Professional Certifications',
-            'section_description': 'Add credentials and certifications',
-            'icon': 'bi bi-award',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1439,18 +1405,10 @@ class Task(FormModel):
         icon='list-check',
         min_length=0,
         max_length=50,
-        model_class=Subtask,
         add_button_label='➕ Add Subtask',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔹 {title}',
-        section_design={
-            'section_title': 'Task Breakdown',
-            'section_description': 'Organize this task into smaller, manageable subtasks',
-            'icon': 'bi bi-list-check',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1497,18 +1455,10 @@ class Team(FormModel):
         icon='people',
         min_length=1,
         max_length=100,
-        model_class=TeamMember,
         add_button_label='👤 Add Team Member',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👤 {name} - {role}',
-        section_design={
-            'section_title': 'Team Members',
-            'section_description': 'Members of this team with their certifications and experience',
-            'icon': 'bi bi-people',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1584,18 +1534,10 @@ class Project(FormModel):
         icon='list-check',
         min_length=1,
         max_length=200,
-        model_class=Task,
         add_button_label='📝 Add Task',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📋 {title}',
-        section_design={
-            'section_title': 'Project Tasks',
-            'section_description': 'Organize project work into tasks and subtasks',
-            'icon': 'bi bi-list-task',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1660,18 +1602,10 @@ class Department(FormModel):
         icon='people',
         min_length=1,
         max_length=50,
-        model_class=Team,
         add_button_label='👥 Add Team',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👥 {name} (Lead: {team_lead})',
-        section_design={
-            'section_title': 'Department Teams',
-            'section_description': 'Organize teams with members and their certifications',
-            'icon': 'bi bi-diagram-2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     projects: List[Project] = FormField(
@@ -1682,18 +1616,10 @@ class Department(FormModel):
         icon='kanban',
         min_length=0,
         max_length=100,
-        model_class=Project,
         add_button_label='🚀 Add Project',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🚀 {name}',
-        section_design={
-            'section_title': 'Department Projects',
-            'section_description': 'Projects in progress with tasks and subtasks',
-            'icon': 'bi bi-kanban',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1794,18 +1720,10 @@ class CompanyOrganizationForm(FormModel):
         icon='diagram-2',
         min_length=1,
         max_length=500,
-        model_class=Department,
         add_button_label='🏢 Add Department',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🏢 {name} (Head: {department_head})',
-        section_design={
-            'section_title': 'Organizational Structure',
-            'section_description': 'Complete company hierarchy with departments, teams, members, and projects',
-            'icon': 'bi bi-diagram-2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     @field_validator('company_code')
@@ -2301,13 +2219,6 @@ __all__ = [
     'AppearanceForm',
     'TaskListForm',
     'LayoutDemonstrationForm',
-    # Layout Classes
-    'VerticalFormLayout',
-    'HorizontalFormLayout',
-    'NotificationsTabLayout',
-    'AppearanceTabLayout',
-    'TabbedFormLayout',
-    'ListFormLayout',
     # Widget Gallery (tabbed showcase by input-type category)
     'TextInputsGalleryForm',
     'CheckboxTogglesGalleryForm',
@@ -2315,12 +2226,6 @@ __all__ = [
     'SelectionGalleryForm',
     'DateTimeGalleryForm',
     'SpecializedGalleryForm',
-    'TextInputsTabLayout',
-    'CheckboxTogglesTabLayout',
-    'NumericTabLayout',
-    'SelectionTabLayout',
-    'DateTimeTabLayout',
-    'SpecializedTabLayout',
     'WidgetGalleryForm',
     # Helper Functions
     'create_sample_nested_data',
@@ -2574,7 +2479,6 @@ class TaskListForm(FormModel):
         icon='list-task',
         min_length=1,
         max_length=10,
-        model_class=TaskItem,
         add_button_label='Add Task',
         collapsible_items=True,
         items_expanded=True,
@@ -2591,90 +2495,29 @@ class TaskListForm(FormModel):
 
 
 # ============================================================================
-# LAYOUT CLASSES
+# LAYOUT DEMONSTRATION -- composing a form from several FormModels
 # ============================================================================
 
 
-class VerticalFormLayout(VerticalLayout):
-    """Vertical layout - default stacked form layout."""
-
-    form = PersonalInfoForm
-
-
-class HorizontalFormLayout(HorizontalLayout):
-    """Horizontal layout - side-by-side form arrangement."""
-
-    form = ContactInfoForm
-
-
-class NotificationsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Notifications tab."""
-
-    form = NotificationsForm
-
-
-class AppearanceTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Appearance tab."""
-
-    form = AppearanceForm
-
-
-class TabbedFormLayout(TabbedLayout):
-    """Tabbed layout - preferences organized into Notifications and Appearance tabs."""
-
-    def __init__(self, form_config=None):
-        super().__init__(form_config=form_config)
-        self.notifications = NotificationsTabLayout()
-        self.appearance = AppearanceTabLayout()
-
-    def _get_layouts(self):
-        # Keep ordering stable (and avoid scanning dir(self)).
-        return [
-            ('notifications', self.notifications),
-            ('appearance', self.appearance),
-        ]
-
-
-class ListFormLayout(VerticalLayout):
-    """List layout - form with dynamic task list."""
-
-    form = TaskListForm
-
-
 class LayoutDemonstrationForm(FormModel):
+    """Four independent FormModels composed into one form by nesting them as fields.
+
+    Render it with any layout to see the same structure presented differently:
+    ``layout="vertical"`` (stacked sections), ``"tabbed"``, ``"side-by-side"``,
+    ``"accordion"`` or ``"wizard"``. Groups follow field declaration order. Inputs
+    are named ``personal_info.first_name``, ``task_list.tasks[0].title``, ...,
+    and ``validate()`` returns nested data and errors in the same shape.
     """
-    Create a tabbed layout using VerticalLayout, HorizontalLayout, TabbedLayout, and ListLayout as the tabs.
 
-    This demonstrates how to use layout classes as field types in a Pydantic form.
-    Each field represents a different layout type that can be rendered as a tab.
-    """
-
-    personal_info: VerticalFormLayout = FormField(
-        default_factory=VerticalFormLayout,
-        title='Personal Info',
-        input_type='layout',
-        help_text='Vertical layout demonstration',
+    personal_info: PersonalInfoForm = Field(
+        title='Personal Info', ui_help_text='A plain nested sub-form'
     )
-
-    contact_info: HorizontalFormLayout = FormField(
-        default_factory=HorizontalFormLayout,
-        title='Contact Info',
-        input_type='layout',
-        help_text='Horizontal layout demonstration',
+    contact_info: ContactInfoForm = Field(title='Contact Info')
+    preferences: NotificationsForm = Field(
+        title='Preferences', ui_help_text='Collapsible section', ui_collapsible=True
     )
-
-    preferences: TabbedFormLayout = FormField(
-        default_factory=TabbedFormLayout,
-        title='Preferences',
-        input_type='layout',
-        help_text='Tabbed layout demonstration',
-    )
-
-    task_list: ListFormLayout = FormField(
-        default_factory=ListFormLayout,
-        title='Task List',
-        input_type='layout',
-        help_text='List layout demonstration',
+    task_list: TaskListForm = Field(
+        title='Task List', ui_help_text='A sub-form containing a repeating list'
     )
 
 
@@ -2682,14 +2525,9 @@ class LayoutDemonstrationForm(FormModel):
 # WIDGET GALLERY — tabbed showcase of every ui_element, grouped by category
 # ============================================================================
 #
-# Each tab below is its own FormModel wrapped in a VerticalLayout and declared
-# as a separate ui_element='layout' field on WidgetGalleryForm. Multiple
-# layout fields on one FormModel is what triggers automatic tab rendering
-# (enhanced_renderer.py's _render_layout_fields_as_tabs), and each field's own
-# title= becomes that tab's label. This preserves Pydantic field declaration
-# order for the tabs -- unlike TabbedLayout (see TabbedFormLayout above),
-# which introspects dir(self) alphabetically unless _get_layouts() is
-# overridden.
+# Each category is its own FormModel, nested as a field of WidgetGalleryForm.
+# Rendered with layout="tabbed", each field becomes a tab titled by its
+# title=, in declaration order.
 
 
 class TextInputsGalleryForm(FormModel):
@@ -2873,79 +2711,6 @@ class SpecializedGalleryForm(FormModel):
     hidden_input: str = Field('hidden-value', title='Hidden Field', ui_element='hidden')
 
 
-class TextInputsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Text Inputs gallery tab."""
-
-    form = TextInputsGalleryForm
-
-
-class CheckboxTogglesTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Checkboxes & Toggles gallery tab."""
-
-    form = CheckboxTogglesGalleryForm
-
-
-class NumericTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Numeric Inputs gallery tab."""
-
-    form = NumericGalleryForm
-
-
-class SelectionTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Selection Inputs gallery tab."""
-
-    form = SelectionGalleryForm
-
-
-class DateTimeTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Date & Time gallery tab."""
-
-    form = DateTimeGalleryForm
-
-
-class SpecializedTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Files & Specialized gallery tab."""
-
-    form = SpecializedGalleryForm
-
-
-class WidgetGalleryTabs(TabbedLayout):
-    """Combines every widget-category tab into one TabbedLayout, in declaration order.
-
-    Uses the single-TabbedLayout-field pattern (like ComprehensiveTabbedForm in
-    nested_forms_example.py) rather than multiple separate ui_element='layout'
-    fields (like LayoutDemonstrationForm above): TabbedLayout.validate() passes
-    the flat submitted data straight to each tab's VerticalLayout.validate(),
-    which constructs its sub-form via `form_cls(**form_data)` -- Pydantic's own
-    extra='ignore' picks out just that tab's fields from the shared flat dict.
-    This works for *any* tab names. The multiple-layout-fields pattern instead
-    depends on a fallback in validation.py/layout_engine.py that only knows
-    LayoutDemonstrationForm's specific field names (personal_info, contact_info,
-    preferences, task_list) -- fine for that one example, not a generic mechanism.
-    """
-
-    def __init__(self, form_config=None):
-        super().__init__(form_config=form_config)
-        self.text_inputs = TextInputsTabLayout()
-        self.checkboxes_toggles = CheckboxTogglesTabLayout()
-        self.numeric_inputs = NumericTabLayout()
-        self.selection_inputs = SelectionTabLayout()
-        self.date_time = DateTimeTabLayout()
-        self.files_specialized = SpecializedTabLayout()
-
-    def _get_layouts(self):
-        # Explicit order -- TabbedLayout's default _get_layouts() scans dir(self),
-        # which comes back alphabetical, not declaration order.
-        return [
-            ('text_inputs', self.text_inputs),
-            ('checkboxes_toggles', self.checkboxes_toggles),
-            ('numeric_inputs', self.numeric_inputs),
-            ('selection_inputs', self.selection_inputs),
-            ('date_time', self.date_time),
-            ('files_specialized', self.files_specialized),
-        ]
-
-
 class WidgetGalleryForm(FormModel):
     """Tabbed gallery of every registered ui_element, grouped by input-type category.
 
@@ -2957,8 +2722,9 @@ class WidgetGalleryForm(FormModel):
     are composition mechanisms rather than a discrete widget.
     """
 
-    gallery: WidgetGalleryTabs = Field(
-        default_factory=WidgetGalleryTabs,
-        title='Widget Gallery',
-        ui_element='layout',
-    )
+    text_inputs: TextInputsGalleryForm = Field(title='Text Inputs')
+    checkboxes_toggles: CheckboxTogglesGalleryForm = Field(title='Checkboxes & Toggles')
+    numeric_inputs: NumericGalleryForm = Field(title='Numeric Inputs')
+    selection_inputs: SelectionGalleryForm = Field(title='Selection Inputs')
+    date_time: DateTimeGalleryForm = Field(title='Date & Time')
+    files_specialized: SpecializedGalleryForm = Field(title='Files & Specialized')

@@ -65,12 +65,10 @@ from pydantic_schemaforms import (
     EnhancedFormRenderer,
     DeliverableEmailStr,
     Field,
-    FormLayoutBase,
     FormModel,
     LiveValidator,
     available_instruction_profiles,
     get_app_instructions,
-    parse_nested_form_data,
     render_form_html_async,
     suggested_instruction_filename,
     verify_captcha,
@@ -230,30 +228,6 @@ LOGIN_CSRF_SESSION_KEY = 'login_csrf_token'
 REGISTER_CSRF_SESSION_KEY = 'register_csrf_token'
 
 
-def _group_form_data(form_data) -> dict:
-    """Build a dict from Starlette FormData without losing repeated keys.
-
-    ``dict(form_data)`` keeps only the last value for a repeated key, which
-    silently drops all but one selection from a native ``<select multiple>``
-    or several checkboxes sharing one ``name``. Iterating
-    ``form_data.multi_items()`` instead preserves every value, grouping
-    repeats into a list so parse_nested_form_data() (and the schema-aware
-    coercion in validate_form_data()) can turn a single selection back into
-    a one-item list and a multi-selection into the full list.
-    """
-    grouped: dict = {}
-    for key, value in form_data.multi_items():
-        if key in grouped:
-            existing = grouped[key]
-            if isinstance(existing, list):
-                existing.append(value)
-            else:
-                grouped[key] = [existing, value]
-        else:
-            grouped[key] = value
-    return grouped
-
-
 def issue_login_csrf_token(request: Request) -> str:
     """Issue and persist a CSRF token for the login demo flow."""
     token = secrets.token_urlsafe(32)
@@ -347,22 +321,6 @@ def safe_json_filter(obj):
         """JSON serializer for objects not serializable by default json code"""
         if isinstance(o, (datetime, date)):
             return o.isoformat()
-        # Handle layout objects (TabbedLayout, VerticalLayout, etc.)
-        elif isinstance(o, FormLayoutBase):
-            layout_name = o.__class__.__name__
-            tab_names = []
-            if hasattr(o, '_get_layouts'):
-                try:
-                    tab_names = [name for name, _ in o._get_layouts()]
-                except Exception:
-                    tab_names = []
-            payload = {
-                'type': layout_name,
-                'description': f'Layout object: {layout_name}',
-            }
-            if tab_names:
-                payload['tabs'] = tab_names
-            return payload
         # Handle other common non-serializable objects
         elif hasattr(o, '__dict__'):
             return str(o)
@@ -543,18 +501,16 @@ async def login_post(
     """Simple form example - Login form submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
-    submitted_csrf_token = form_dict.pop('csrf_token', None)
+    submitted_csrf_token = form_data.get('csrf_token')
     csrf_error = 'CSRF verification failed. Refresh the page and submit again.'
     if not verify_login_csrf_token(request, submitted_csrf_token):
         csrf_token = issue_login_csrf_token(request)
-        parsed_data = parse_nested_form_data(form_dict)
 
         form_html = await render_form_html_async(
             MinimalLoginForm,
             framework=style,
-            form_data=parsed_data,
+            form_data=form_data,
             errors={'form': csrf_error},
             submit_url=f'/login?style={style}',
             csrf_mode='required-provider',
@@ -582,9 +538,8 @@ async def login_post(
             status_code=403,
         )
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = MinimalLoginForm.validate(
-        parsed_data,
+        form_data,
         submit_url=f'/login?style={style}',
         framework=style,
         debug=debug,
@@ -721,18 +676,16 @@ async def register_post(
     """Medium complexity form - User registration submission (async)."""
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
-    submitted_csrf_token = form_dict.pop('csrf_token', None)
+    submitted_csrf_token = form_data.get('csrf_token')
     csrf_error = 'CSRF verification failed. Refresh the page and submit again.'
     if not verify_register_csrf_token(request, submitted_csrf_token):
         csrf_token = issue_register_csrf_token(request)
-        parsed_data = parse_nested_form_data(form_dict)
 
         form_html = await render_form_html_async(
             UserRegistrationForm,
             framework=style,
-            form_data=parsed_data,
+            form_data=form_data,
             errors={'form': csrf_error},
             submit_url=f'/register?style={style}',
             csrf_mode='required-provider',
@@ -760,9 +713,8 @@ async def register_post(
             status_code=403,
         )
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = UserRegistrationForm.validate(
-        parsed_data,
+        form_data,
         submit_url=f'/register?style={style}',
         framework=style,
         debug=debug,
@@ -906,20 +858,14 @@ async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Complex form example - All features submission (async)."""
-    # CompleteShowcaseForm has genuinely multi-value fields (multiselect_field,
-    # checkbox_group_field). _group_form_data() preserves repeated keys as a
-    # list; validate_form_data()'s schema-aware coercion wraps a lone
-    # selection back into a single-item list for any List[<scalar>] field,
-    # so no per-field allowlist is needed here.
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
     full_referer_path = create_refer_path(request)
 
     # Honeypot: real users never see or fill this field in (it's hidden and
     # styled off-screen). A non-empty value means a bot filled every input it
     # could find. Pretend success rather than revealing that it was caught.
-    if form_dict.get('honeypot_field'):
+    if form_data.get('honeypot_field'):
         return templates.TemplateResponse(
             request,
             'success.html',
@@ -934,16 +880,15 @@ async def showcase_post(
             },
         )
 
-    submitted_csrf_token = form_dict.pop('csrf_token', None)
+    submitted_csrf_token = form_data.get('csrf_token')
     if not verify_showcase_csrf_token(request, submitted_csrf_token):
         csrf_error = 'CSRF verification failed. Refresh the page and submit again.'
         csrf_token = issue_showcase_csrf_token(request)
-        parsed_data = parse_nested_form_data(form_dict)
 
         form_html = await render_form_html_async(
             CompleteShowcaseForm,
             framework=style,
-            form_data=parsed_data,
+            form_data=form_data,
             errors={'form': csrf_error},
             submit_url=f'/showcase?style={style}',
             csrf_mode='required-provider',
@@ -974,20 +919,19 @@ async def showcase_post(
     # CaptchaInput's docstring for why this is checked here rather than via
     # a @model_validator (the token only exists in the raw POST body, never
     # as a declared model attribute).
-    captcha_token = form_dict.pop('captcha_answer_token', None)
+    captcha_token = form_data.get('captcha_answer_token')
     if not verify_captcha(
         token=captcha_token,
-        answer=form_dict.get('captcha_answer', ''),
+        answer=form_data.get('captcha_answer', ''),
         secret_key=SHOWCASE_CAPTCHA_SECRET,
     ):
         captcha_error = 'Incorrect answer to the verification question. Please try again.'
         csrf_token = issue_showcase_csrf_token(request)
-        parsed_data = parse_nested_form_data(form_dict)
 
         form_html = await render_form_html_async(
             CompleteShowcaseForm,
             framework=style,
-            form_data=parsed_data,
+            form_data=form_data,
             errors={'captcha_answer': captcha_error},
             submit_url=f'/showcase?style={style}',
             csrf_mode='required-provider',
@@ -1012,9 +956,8 @@ async def showcase_post(
             },
         )
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = CompleteShowcaseForm.validate(
-        parsed_data,
+        form_data,
         submit_url=f'/showcase?style={style}',
         framework=style,
         csrf_mode='required-provider',
@@ -1073,14 +1016,8 @@ async def gallery_get(
 ):
     """Tabbed widget gallery - every input type grouped by category (GET).
 
-    Demo data must be flat (no top-level 'gallery' key): WidgetGalleryForm has
-    a single ui_element='layout' field, and supplying a dict under that exact
-    field's own name would get accepted as the field's literal value (its
-    Pydantic schema is deliberately permissive so layout classes can be used
-    as field types at all) instead of the default WidgetGalleryTabs instance,
-    breaking the isinstance(value, BaseLayout) check the renderer relies on.
-    Flat keys let the renderer's own nested-data reconstruction find each
-    tab's fields by name, the same way POST submissions are matched up.
+    Demo data is nested one dict per tab, mirroring WidgetGalleryForm's
+    nested sub-form fields -- the same shape validate() returns.
     """
     form_data = {}
     if data:
@@ -1098,65 +1035,72 @@ async def gallery_get(
         # populated and blank-looking fields, which reads as broken/scrambled
         # data even though each field is rendering correctly on its own.
         form_data = {
-            # Text Inputs
-            'text_input': 'Hello, world!',
-            'textarea_input': 'This textarea supports\nmultiple lines of text.',
-            'code_json_input': '{\n  "name": "demo",\n  "enabled": true\n}',
-            'code_yaml_input': 'name: demo\nenabled: true\n',
-            'code_toml_input': 'name = "demo"\nenabled = true\n',
-            'code_bash_input': '#!/usr/bin/env bash\necho "hello, demo"\n',
-            'code_python_input': 'def hello():\n    print("hello, demo")\n',
-            'code_no_highlight_input': '{\n  "highlighting": "off"\n}',
-            'password_input': 'demo-password',
-            'email_input': 'demo@example.com',
-            'search_input': 'pydantic schemaforms',
-            'url_input': 'https://example.com',
-            'tel_input': '5551234567',
-            'phone_input': '(555) 123-4567',
-            'ssn_input': '123-45-6789',
-            'credit_card_input': '4111 1111 1111 1111',
-            'currency_input': '$1,234.56',
-            'tags_input': 'python,fastapi,pydantic',
-            # Checkboxes & Toggles
-            'checkbox_unchecked': False,
-            'checkbox_checked': True,
-            'toggle_off': False,
-            'toggle_on': True,
-            'checkbox_group_stacked': ['email', 'push'],
-            'checkbox_group_buttons': ['sms'],
-            # Numeric Inputs
-            'number_input': 42,
-            'range_input': 65,
-            'percentage_input': 82.5,
-            'decimal_input': 3.14,
-            'integer_input': 7,
-            'age_input': 34,
-            'quantity_input': 3,
-            'score_input': 91.0,
-            'rating_input': 8,
-            'star_rating_input': 4,
-            'slider_input': 55,
-            'temperature_input': 21.5,
-            # Selection Inputs
-            'select_input': 'medium',
-            'multiselect_input': ['python', 'rust'],
-            'radio_stacked': 'large',
-            'radio_segmented': 'express',
-            'combobox_input': 'New York',
-            # Date & Time
-            'date_input': '2024-06-15',
-            'time_input': '14:30',
-            'datetime_input': '2024-06-15T14:30',
-            'month_input': '2024-06',
-            'week_input': '2024-W24',
-            'birthdate_input': '1990-01-01',
-            # Files & Specialized
-            'color_input': '#3498db',
-            'hidden_input': 'hidden-demo-value',
+            'text_inputs': {
+                'text_input': 'Hello, world!',
+                'textarea_input': 'This textarea supports\nmultiple lines of text.',
+                'code_json_input': '{\n  "name": "demo",\n  "enabled": true\n}',
+                'code_yaml_input': 'name: demo\nenabled: true\n',
+                'code_toml_input': 'name = "demo"\nenabled = true\n',
+                'code_bash_input': '#!/usr/bin/env bash\necho "hello, demo"\n',
+                'code_python_input': 'def hello():\n    print("hello, demo")\n',
+                'code_no_highlight_input': '{\n  "highlighting": "off"\n}',
+                'password_input': 'demo-password',
+                'email_input': 'demo@example.com',
+                'search_input': 'pydantic schemaforms',
+                'url_input': 'https://example.com',
+                'tel_input': '5551234567',
+                'phone_input': '(555) 123-4567',
+                'ssn_input': '123-45-6789',
+                'credit_card_input': '4111 1111 1111 1111',
+                'currency_input': '$1,234.56',
+                'tags_input': 'python,fastapi,pydantic',
+            },
+            'checkboxes_toggles': {
+                'checkbox_unchecked': False,
+                'checkbox_checked': True,
+                'toggle_off': False,
+                'toggle_on': True,
+                'checkbox_group_stacked': ['email', 'push'],
+                'checkbox_group_buttons': ['sms'],
+            },
+            'numeric_inputs': {
+                'number_input': 42,
+                'range_input': 65,
+                'percentage_input': 82.5,
+                'decimal_input': 3.14,
+                'integer_input': 7,
+                'age_input': 34,
+                'quantity_input': 3,
+                'score_input': 91.0,
+                'rating_input': 8,
+                'star_rating_input': 4,
+                'slider_input': 55,
+                'temperature_input': 21.5,
+            },
+            'selection_inputs': {
+                'select_input': 'medium',
+                'multiselect_input': ['python', 'rust'],
+                'radio_stacked': 'large',
+                'radio_segmented': 'express',
+                'combobox_input': 'New York',
+            },
+            'date_time': {
+                'date_input': '2024-06-15',
+                'time_input': '14:30',
+                'datetime_input': '2024-06-15T14:30',
+                'month_input': '2024-06',
+                'week_input': '2024-W24',
+                'birthdate_input': '1990-01-01',
+            },
+            'files_specialized': {
+                'color_input': '#3498db',
+                'hidden_input': 'hidden-demo-value',
+            },
         }
 
     form_html = await render_form_html_async(
         WidgetGalleryForm,
+        layout='tabbed',
         framework=style,
         form_data=form_data,
         submit_url=f'/gallery?style={style}',
@@ -1198,17 +1142,11 @@ async def gallery_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Tabbed widget gallery submission (async)."""
-    # Several tabs have genuinely multi-value fields (multiselect_input,
-    # checkbox_group_stacked, checkbox_group_buttons). _group_form_data()
-    # preserves repeated keys as a list; validate_form_data()'s schema-aware
-    # coercion wraps a lone selection back into a single-item list for any
-    # List[<scalar>] field, so no per-field allowlist is needed here.
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = WidgetGalleryForm.validate(
-        parsed_data,
+        form_data,
+        layout='tabbed',
         submit_url=f'/gallery?style={style}',
         framework=style,
         debug=debug,
@@ -1265,10 +1203,8 @@ async def date_time_formats_get(
 ):
     """Custom date/time/datetime display format showcase (GET).
 
-    Demo data must be flat (no top-level 'formats' key) -- same reasoning as
-    WidgetGalleryForm's demo route: DateTimeFormatsShowcaseForm has a single
-    ui_element='layout' field, so flat keys let the renderer's own nested-data
-    reconstruction find each tab's fields by name.
+    Demo data is nested one dict per tab (dates/times/datetimes), mirroring
+    DateTimeFormatsShowcaseForm's nested sub-form fields.
     """
     form_data = {}
     if data:
@@ -1283,6 +1219,7 @@ async def date_time_formats_get(
 
     form_html = await render_form_html_async(
         DateTimeFormatsShowcaseForm,
+        layout='tabbed',
         framework=style,
         form_data=form_data,
         submit_url=f'/date-time-formats?style={style}',
@@ -1316,11 +1253,10 @@ async def date_time_formats_post(
 ):
     """Date/time/datetime format showcase submission (async)."""
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = DateTimeFormatsShowcaseForm.validate(
-        parsed_data,
+        form_data,
+        layout='tabbed',
         submit_url=f'/date-time-formats?style={style}',
         framework=style,
         debug=debug,
@@ -1531,11 +1467,9 @@ async def pets_post(
     """Pet registration form submission."""
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = PetRegistrationForm.validate(
-        parsed_data,
+        form_data,
         submit_url=f'/pets?style={style}',
         framework=style,
         debug=debug,
@@ -1629,6 +1563,7 @@ async def organization_get(
 
     form_html = await render_form_html_async(
         ComprehensiveTabbedForm,
+        layout='tabbed',
         framework=style,
         form_data=form_data,
         submit_url=f'/organization?style={style}',
@@ -1664,13 +1599,12 @@ async def organization_post(
     """
     # Get form data asynchronously
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
     from examples.nested_forms_example import ComprehensiveTabbedForm
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = ComprehensiveTabbedForm.validate(
-        parsed_data,
+        form_data,
+        layout='tabbed',
         submit_url=f'/organization?style={style}',
         framework=style,
         debug=debug,
@@ -1776,11 +1710,9 @@ async def organization_shared_post(
     model can power multiple framework routes and API endpoints.
     """
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
 
-    parsed_data = parse_nested_form_data(form_dict)
     validation = CompanyOrganizationForm.validate(
-        parsed_data,
+        form_data,
         submit_url=f'/organization-shared?style={style}',
         framework=style,
         debug=debug,
@@ -1824,12 +1756,17 @@ async def organization_shared_post(
 async def layouts_get(
     request: Request,
     style: str = 'bootstrap',
+    layout: str = 'tabbed',
     data: str = None,
     demo: bool = True,
     debug: bool = False,
     show_timing: bool = True,
 ):
-    """Comprehensive layout demonstration - single form showcasing all layout types."""
+    """Four FormModels nested in one parent form, shown with any layout.
+
+    Try ?layout=vertical, tabbed, side-by-side, accordion, or wizard -- the model is
+    the same; only the presentation changes.
+    """
     # Parse optional pre-fill data or use demo data
     form_data = {}
     if data:
@@ -1884,7 +1821,8 @@ async def layouts_get(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        submit_url=f'/layouts?style={style}',
+        submit_url=f'/layouts?style={style}&layout={layout}',
+        layout=layout,
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
@@ -1896,7 +1834,8 @@ async def layouts_get(
         {
             'request': request,
             'title': 'Layout Demonstration - All Types',
-            'description': 'Single form showcasing Vertical, Horizontal, Tabbed, and List layouts',
+            'description': 'Four FormModels nested in one form. Switch presentation with '
+            '?layout=vertical, tabbed, side-by-side, accordion, or wizard',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -1909,16 +1848,15 @@ async def layouts_get(
 async def layouts_post(
     request: Request,
     style: str = 'bootstrap',
+    layout: str = 'tabbed',
     debug: bool = False,
     show_timing: bool = True,
 ):
     """Handle comprehensive layout demonstration form submission."""
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
     full_referer_path = create_refer_path(request)
 
-    parsed_data = parse_nested_form_data(form_dict)
-    validation = LayoutDemonstrationForm.validate(parsed_data)
+    validation = LayoutDemonstrationForm.validate(form_data)
 
     if validation.is_valid:
         return templates.TemplateResponse(
@@ -1941,9 +1879,10 @@ async def layouts_post(
     renderer = EnhancedFormRenderer(framework=style)
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
-        data=parsed_data,
+        data=form_data,
         errors=validation.errors,
-        submit_url=f'/layouts?style={style}',
+        submit_url=f'/layouts?style={style}&layout={layout}',
+        layout=layout,
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
@@ -2036,11 +1975,9 @@ async def self_contained_post(
         selected_style = 'material'
 
     form_data = await request.form()
-    form_dict = _group_form_data(form_data)
-    parsed_data = parse_nested_form_data(form_dict)
     _submit_url = f'/self-contained?style={selected_style}&demo=false&debug={str(debug).lower()}&show_timing={str(show_timing).lower()}'
     validation = UserRegistrationForm.validate(
-        parsed_data,
+        form_data,
         submit_url=_submit_url,
         framework=selected_style,
         self_contained=True,
@@ -2132,19 +2069,17 @@ async def api_form_pydantic_schema(form_type: str):
 
 
 @router.post('/api/forms/{form_type}/submit', tags=['Generic Form API'])
-async def api_submit_form(form_type: str, request: Request, flatten: bool = False):
+async def api_submit_form(form_type: str, request: Request):
     """
     Validate JSON form submissions against a selected Pydantic form model.
 
     This shows the API workflow behind the HTML examples:
-    request payload -> model validation -> normalized data/errors response.
+    request payload -> model validation -> data/errors response.
 
-    By default, nested models (e.g. the `organization` form's
-    departments -> teams -> members) round-trip as nested JSON, matching the
-    shape of the underlying Pydantic model. Pass ``?flatten=true`` to submit
-    and receive bracket+dot flat keys instead (e.g.
-    ``"departments[0].teams[0].members[0].name"``), which some form-building
-    clients prefer.
+    Input and output are nested JSON matching the model, e.g. the
+    `organization` form's departments -> teams -> members. ``errors`` has the
+    same shape as ``data`` (list items keyed by index), so
+    ``errors["departments"]["0"]["name"]`` sits where ``data["departments"][0]["name"]`` does.
     """
 
     if form_type not in FORM_REGISTRY:
@@ -2154,7 +2089,7 @@ async def api_submit_form(form_type: str, request: Request, flatten: bool = Fals
 
     json_data = await request.json()
 
-    validation = form_class.validate(json_data, flatten=flatten)
+    validation = form_class.validate(json_data)
 
     return {
         'success': validation.is_valid,
@@ -2247,8 +2182,7 @@ async def contact_post(
 ):
     """Accept and validate a browser form submission (multipart/form-data)."""
     raw = await request.form()
-    data = parse_nested_form_data(raw.multi_items())
-    result = ContactForm.validate(data, submit_url=f'/contact?style={style}', framework=style)
+    result = ContactForm.validate(raw, submit_url=f'/contact?style={style}', framework=style)
     if result.is_valid:
         return templates.TemplateResponse(
             request,
@@ -2351,8 +2285,7 @@ async def feedback_post(
 ):
     """Accept and validate a browser feedback submission."""
     raw = await request.form()
-    data = parse_nested_form_data(raw.multi_items())
-    result = FeedbackForm.validate(data, submit_url=f'/feedback?style={style}', framework=style)
+    result = FeedbackForm.validate(raw, submit_url=f'/feedback?style={style}', framework=style)
     if result.is_valid:
         return templates.TemplateResponse(
             request,
@@ -2432,9 +2365,8 @@ async def live_validation_get(request: Request, style: str = 'bootstrap'):
 async def live_validation_post(request: Request, style: str = 'bootstrap'):
     """Handle contact form submission for the live-validation demo."""
     raw = await request.form()
-    data = parse_nested_form_data(raw.multi_items())
     result = ContactForm.validate(
-        data, submit_url=f'/live-validation?style={style}', framework=style
+        raw, submit_url=f'/live-validation?style={style}', framework=style
     )
     if result.is_valid:
         return templates.TemplateResponse(
@@ -2462,7 +2394,7 @@ async def live_validation_post(request: Request, style: str = 'bootstrap'):
             'framework_type': style,
             'validator_script': _LIVE_VALIDATOR_SCRIPT,
             'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
-            'form_data': data,
+            'form_data': result.original_data,
             'errors': result.errors,
         },
     )
@@ -2537,9 +2469,8 @@ async def email_dns_validation_post(
     rather than silently passing on submit.
     """
     raw = await request.form()
-    parsed_data = parse_nested_form_data(_group_form_data(raw))
     validation = EmailDnsComparisonForm.validate(
-        parsed_data,
+        raw,
         submit_url=f'/email-dns-validation?style={style}',
         framework=style,
         debug=debug,

@@ -43,9 +43,14 @@ File: examples/nested_forms_example.py
 
 What it demonstrates:
 
-- Deeply nested FormModel structures
-- Complex model lists and tabbed layouts
+- Composing a complex form by nesting FormModels as fields of a parent
+  FormModel (`ComprehensiveTabbedForm`), rendered with `layout="tabbed"`
+- Deeply nested model lists inside those sub-forms
 - Broad input-type coverage in nested contexts
+
+`/layouts` shows the same composed form under every presentation: append
+`?layout=vertical`, `tabbed`, `side-by-side`, `accordion`, or `wizard`. The guide is
+`docs/complex_forms.md`.
 
 This module is imported by the FastAPI example to generate rich nested sample payloads.
 

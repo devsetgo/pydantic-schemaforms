@@ -11,7 +11,8 @@ from pydantic_schemaforms.templates import FormTemplates
 from pydantic_schemaforms.tstring import SafeHTML, html
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
-from .schema_parser import extract_ui_info
+from pydantic_schemaforms.error_tree import has_errors
+from .schema_parser import SchemaMetadata
 
 if TYPE_CHECKING:  # pragma: no cover
     from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
@@ -22,6 +23,12 @@ _DEFAULT_FORM_STYLE = get_form_style('default', 'default')
 LayoutRenderer = Callable[
     [str, dict[str, Any], Any, dict[str, Any], RenderContext, 'LayoutEngine'], str
 ]
+
+
+# Set on the schema of a composite field rendered as the sole content of a
+# tab or accordion panel, whose heading already shows the field's title, so
+# the field must not draw a second titled card (see nested_model_renderer).
+IN_GROUP_FLAG = '_in_group'
 
 
 def _wrap_side_by_side_column(col: str) -> str:
@@ -152,9 +159,10 @@ class TabLayout(BaseLayout):
 ${component_assets}
     """
 
-    def __init__(self, tabs: list[dict[str, str]], **kwargs: Any) -> None:
+    def __init__(self, tabs: list[dict[str, str]], active_index: int = 0, **kwargs: Any) -> None:
         super().__init__(content='', **kwargs)
         self.tabs = tabs
+        self.active_index = active_index
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
@@ -168,7 +176,7 @@ ${component_assets}
 
         tab_buttons: list[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
-            is_active = i == 0
+            is_active = i == self.active_index
             button_template = FormTemplates.TAB_BUTTON
             if theme:
                 tpl = getattr(theme.form_style.templates, 'tab_button', None)
@@ -185,7 +193,7 @@ ${component_assets}
 
         tab_panels: list[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
-            is_active = i == 0
+            is_active = i == self.active_index
             panel_template = FormTemplates.TAB_PANEL
             if theme:
                 tpl = getattr(theme.form_style.templates, 'tab_panel', None)
@@ -282,6 +290,76 @@ ${component_assets}
             layout_class=layout_class,
             layout_style=layout_style,
             sections='\n'.join(accordion_sections),
+            component_assets=assets,
+        )
+
+
+class WizardLayout(BaseLayout):
+    """Step wizard: every step is rendered into the one <form>, and a script
+    shows one at a time, so a single POST submits all of them."""
+
+    def __init__(
+        self,
+        steps: list[dict[str, Any]],
+        active_index: int = 0,
+        *,
+        linear: bool = True,
+        show_progress: bool = True,
+        back_label: str = 'Back',
+        next_label: str = 'Next',
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(content='', **kwargs)
+        self.steps = steps
+        self.active_index = active_index
+        self.linear = linear
+        self.show_progress = show_progress
+        self.back_label = back_label
+        self.next_label = next_label
+
+    def render(self, **kwargs: Any) -> str:  # type: ignore[override]
+        attrs: dict[str, Any] = {**self.attributes, **kwargs}
+        renderer = attrs.get('renderer')
+        theme = getattr(renderer, 'theme', None) if renderer else None
+        form_style = getattr(theme, 'form_style', None) or _DEFAULT_FORM_STYLE
+        templates = form_style.templates
+
+        steps_html: list[str] = []
+        progress_items: list[str] = []
+        for index, step in enumerate(self.steps):
+            is_active = index == self.active_index
+            steps_html.append(
+                templates.wizard_step.render(
+                    index=str(index),
+                    title=step['title'],
+                    content=step['content'],
+                    active_class=' active' if is_active else '',
+                )
+            )
+            state = (' active' if is_active else '') + (
+                ' has-error' if step.get('has_error') else ''
+            )
+            progress_items.append(
+                templates.wizard_progress_item.render(
+                    index=str(index), number=str(index + 1), title=step['title'], state_class=state
+                )
+            )
+
+        progress_html = (
+            templates.wizard_progress.render(items_html='\n'.join(progress_items))
+            if self.show_progress
+            else ''
+        )
+        assets = theme.wizard_component_assets() if theme else form_style.assets.wizard_assets
+        return templates.wizard_layout.render(
+            layout_class=self._merge_classes(attrs),
+            linear='true' if self.linear else 'false',
+            active_step=str(self.active_index),
+            progress_html=progress_html,
+            steps_html='\n'.join(steps_html),
+            footer_html=templates.wizard_footer.render(
+                back_label=self.back_label, next_label=self.next_label
+            ),
             component_assets=assets,
         )
 
@@ -627,177 +705,99 @@ class LayoutEngine:
     # ------------------------------------------------------------------
     # Public API used by EnhancedFormRenderer
     # ------------------------------------------------------------------
-    def render_tabbed_layout(
+    def render_groups(
         self,
-        fields: list[tuple[str, dict[str, Any]]],
+        metadata: SchemaMetadata,
         data: dict[str, Any],
-        errors: dict[str, Any],
-        required_fields: list[str],
+        errors: dict[Any, Any],
         context: RenderContext,
+        *,
+        mode: str,
+        general_title: str = 'General',
+        wizard_options: dict[str, Any] | None = None,
     ) -> list[str]:
-        tabs = self._group_fields_into_tabs(fields)
-        if not tabs:
-            return []
+        """Render a parent form as groups -- its own plain fields first, then
+        one group per sub-form field (nested model, model_list, layout field),
+        in field order -- shown as tabs, side-by-side columns, accordion panels,
+        or wizard steps."""
 
-        tab_payload: list[dict[str, str]] = []
-        for tab_name, tab_fields in tabs:
-            field_html_parts: list[str] = []
-            for field_name, field_schema in tab_fields:
-                field_html_parts.append(
-                    self._renderer._render_field(  # noqa: SLF001 - intentional internal call
-                        field_name,
-                        field_schema,
-                        data.get(field_name),
-                        errors.get(field_name),
-                        required_fields,
-                        context,
-                        'vertical',
-                        errors,
-                    )
-                )
-
-            tab_payload.append(
-                {
-                    'title': tab_name,
-                    'content': ''.join(field_html_parts),
-                }
+        if not metadata.group_fields:
+            raise ValueError(
+                f"layout='{mode}' needs groups to arrange, but this form has no sub-form "
+                'fields. Split it into nested FormModel fields, e.g. '
+                '`contact: Contact = Field(title="Contact")`, or use layout="vertical". '
+                'See docs/complex_forms.md.'
             )
 
-        component = TabLayout(
-            tabs=tab_payload,
-            class_='tabbed-layout',
-        )
+        group_names = {name for name, _schema in metadata.group_fields}
+        plain_fields = [(n, sch) for n, sch in metadata.fields if n not in group_names]
+        groups: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
+        if plain_fields:
+            groups.append((general_title, plain_fields))
+        for name, schema in metadata.group_fields:
+            title = schema.get('title') or name.replace('_', ' ').title()
+            if mode == 'wizard':
+                title = schema.get('ui_step_title') or title
+            groups.append((title, [(name, schema)]))
 
-        return [
-            component.render(
-                framework=self._renderer.framework,
-                renderer=self._renderer,
-            )
-        ]
+        # A tab/panel/step heading already shows a sub-form's title, so the
+        # sub-form must not draw its own titled card inside it. Columns have no heading.
+        in_group = mode in ('tabbed', 'accordion', 'wizard')
 
-    def render_layout_fields_as_tabs(
-        self,
-        layout_fields: list[tuple[str, dict[str, Any]]],
-        data: dict[str, Any],
-        context: RenderContext,
-    ) -> list[str]:
-        if not layout_fields:
-            return []
-
-        tabs_payload: list[dict[str, str]] = []
-        for field_name, field_schema in layout_fields:
-            ui_info = extract_ui_info(field_schema)
-            layout_content = self.render_layout_field_content(
-                field_name,
-                field_schema,
-                data.get(field_name),
-                ui_info,
-                context,
-            )
-            tabs_payload.append(
-                {
-                    'title': field_schema.get('title', field_name.replace('_', ' ').title()),
-                    'content': layout_content,
-                }
-            )
-
-        component = TabLayout(
-            tabs=tabs_payload,
-            class_='layout-tabbed-section',
-        )
-
-        return [
-            component.render(
-                framework=self._renderer.framework,
-                renderer=self._renderer,
-            )
-        ]
-
-    def render_layout_field_content(
-        self,
-        field_name: str,
-        field_schema: dict[str, Any],
-        value: Any,
-        ui_info: dict[str, Any],
-        context: RenderContext,
-    ) -> str:
-        section_title = field_schema.get('title', field_name.replace('_', ' ').title())
-        help_text = ui_info.get('help_text', '')
-        body_html = self._build_layout_body(field_name, field_schema, value, ui_info, context)
-        return self._render_layout_card(section_title, body_html, help_text)
-
-    def render_layout_field_content_fallback(
-        self,
-        field_name: str,
-        ui_info: dict[str, Any],
-        context: RenderContext,
-    ) -> str:
-        """Same fallback resolution as render_layout_field_fallback()."""
-        return self.render_layout_field_fallback(field_name, ui_info, context)
-
-    def render_side_by_side_layout(
-        self,
-        fields: list[tuple[str, dict[str, Any]]],
-        data: dict[str, Any],
-        errors: dict[str, Any],
-        required_fields: list[str],
-        context: RenderContext,
-    ) -> list[str]:
-        parts: list[str] = []
-        field_pairs = []
-        for i in range(0, len(fields), 2):
-            field_pairs.append((fields[i], fields[i + 1] if i + 1 < len(fields) else None))
-
-        for left_field, right_field in field_pairs:
-            columns: list[str] = []
-            if left_field:
-                field_name, field_schema = left_field
-                columns.append(
+        rendered: list[dict[str, str]] = []
+        active_index: int | None = None
+        for index, (title, fields) in enumerate(groups):
+            parts = []
+            for name, schema in fields:
+                if in_group and name in group_names:
+                    schema = {**schema, IN_GROUP_FLAG: True}
+                parts.append(
                     self._renderer._render_field(  # noqa: SLF001
-                        field_name,
-                        field_schema,
-                        data.get(field_name),
-                        errors.get(field_name),
-                        required_fields,
+                        name,
+                        schema,
+                        data.get(name),
+                        errors.get(name),
+                        metadata.required_fields,
                         context,
                         'vertical',
-                        errors,
                     )
                 )
+            body = '\n'.join(parts)
+            if mode == 'side-by-side' and fields is plain_fields:
+                body = self._render_layout_card(title, body, '')
+            group_has_error = any(has_errors(errors.get(n)) for n, _ in fields)
+            if active_index is None and group_has_error:
+                active_index = index
+            rendered.append({'title': title, 'content': body, 'has_error': group_has_error})
 
-            if right_field:
-                field_name, field_schema = right_field
-                columns.append(
-                    self._renderer._render_field(  # noqa: SLF001
-                        field_name,
-                        field_schema,
-                        data.get(field_name),
-                        errors.get(field_name),
-                        required_fields,
-                        context,
-                        'vertical',
-                        errors,
-                    )
-                )
+        active_index = active_index or 0
+        renderer_kwargs = {'framework': self._renderer.framework, 'renderer': self._renderer}
 
-            wrapped_columns = [_wrap_side_by_side_column(col) for col in columns]
-            layout = HorizontalLayout(
-                content=wrapped_columns,
-                class_='side-by-side-row',
+        if mode == 'tabbed':
+            component: BaseLayout = TabLayout(
+                tabs=rendered, active_index=active_index, class_='form-groups-tabbed'
+            )
+        elif mode == 'accordion':
+            sections = [
+                {**group, 'expanded': index == active_index} for index, group in enumerate(rendered)
+            ]
+            component = AccordionLayout(sections=sections, class_='form-groups-accordion')
+        elif mode == 'wizard':
+            component = WizardLayout(
+                steps=rendered,
+                active_index=active_index,
+                class_='form-groups-wizard',
+                **check_wizard_options(wizard_options),
+            )
+        else:
+            columns = [_wrap_side_by_side_column(group['content']) for group in rendered]
+            component = HorizontalLayout(
+                content=columns,
+                class_='form-groups-side-by-side',
                 gap='1.5rem',
                 align_items='flex-start',
             )
-
-            parts.append(
-                layout.render(
-                    data=data,
-                    errors=errors,
-                    renderer=self._renderer,
-                    framework=self._renderer.framework,
-                )
-            )
-
-        return parts
+        return [component.render(**renderer_kwargs)]
 
     def render_layout_field(
         self,
@@ -820,95 +820,20 @@ class LayoutEngine:
         ui_info: dict[str, Any],
         context: RenderContext,
     ) -> str:
+        handler_name = ui_info.get('layout_handler') or ui_info.get('layout_renderer')
+        handler = self._custom_renderers.get(str(handler_name)) if handler_name else None
+        if handler is None:
+            title = field_schema.get('title', field_name.replace('_', ' ').title())
+            return html(t"""<div class="layout-field-unknown alert alert-warning">
+    <p>Layout field "{title}" has no registered layout_handler.</p>
+    <small>input_type="layout" needs layout_handler=... naming a renderer registered with
+    LayoutEngine.layout_renderer(). To compose forms, nest FormModels as fields instead
+    (see docs/complex_forms.md).</small>
+</div>""")
         try:
-            handler_name = ui_info.get('layout_handler') or ui_info.get('layout_renderer')
-            if handler_name:
-                handler = self._custom_renderers.get(str(handler_name))
-                if handler:
-                    return handler(field_name, field_schema, value, ui_info, context, self)
-
-            if isinstance(value, BaseLayout):
-                nested_data = get_nested_form_data(field_name, context.form_data, value)
-                return value.render(
-                    data=nested_data,
-                    errors=None,
-                    renderer=self._renderer,
-                    framework=self._renderer.framework,
-                )
-
-            return self.render_layout_field_fallback(field_name, ui_info, context)
+            return handler(field_name, field_schema, value, ui_info, context, self)
         except Exception as exc:  # pragma: no cover - defensive message
             return self._layout_error_message(field_name, field_schema, ui_info, exc)
-
-    def render_layout_field_fallback(
-        self,
-        field_name: str,
-        ui_info: dict[str, Any],
-        context: RenderContext,
-    ) -> str:
-        # Only reached when a field's name matches one of these four fixed
-        # strings *and* it has no `layout_handler`/`layout_renderer` and no
-        # BaseLayout value of its own (see _build_layout_body's callers) --
-        # a legacy "layout demonstration" fallback that renders one of the
-        # example app's own forms (examples/shared_models.py) as placeholder
-        # content. Not a general mechanism: real composite controls register
-        # a proper renderer (see docs/plugin_hooks.md) instead of depending
-        # on a field happening to be named 'personal_info' etc.
-        form_mapping = {
-            'personal_info': 'PersonalInfoForm',
-            'contact_info': 'ContactInfoForm',
-            'preferences': 'NotificationsForm',
-            'task_list': 'TaskListForm',
-        }
-
-        form_name = form_mapping.get(field_name)
-        if form_name:
-            try:
-                if form_name == 'PersonalInfoForm':
-                    from examples.shared_models import (
-                        PersonalInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'ContactInfoForm':
-                    from examples.shared_models import (
-                        ContactInfoForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'NotificationsForm':
-                    from examples.shared_models import (
-                        NotificationsForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                elif form_name == 'TaskListForm':
-                    from examples.shared_models import (
-                        TaskListForm as FormClass,  # pylint: disable=import-outside-toplevel
-                    )
-                else:
-                    raise ImportError(f'Unknown form: {form_name}')
-
-                nested_data = get_nested_form_data(field_name, context.form_data)
-                form_html = self._renderer.render_form_fields_only(
-                    FormClass,
-                    data=nested_data,
-                    errors={},
-                    layout='vertical',
-                )
-                return form_html
-            except Exception as exc:  # pragma: no cover
-                help_text = ui_info.get('help_text', '')
-                error_message = str(exc)
-                return html(t"""
-                <div class="layout-field-placeholder alert alert-info">
-                    <p>Layout demonstration: {form_name}</p>
-                    <small class="text-muted">{help_text}</small>
-                    <small class="text-danger d-block">Could not render: {error_message}</small>
-                </div>
-                """)
-
-        help_text = ui_info.get('help_text', '')
-        return html(t"""
-            <div class="layout-field-unknown alert alert-secondary">
-                <p>Unknown layout field type</p>
-                <small class="text-muted">{help_text}</small>
-            </div>
-            """)
 
     def _render_layout_card(self, title: str, body_html: str, help_text: str) -> str:
         theme = getattr(self._renderer, 'theme', None)
@@ -956,127 +881,26 @@ class LayoutEngine:
         </div>
         ''')
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-    def _group_fields_into_tabs(
-        self, fields: list[tuple[str, dict[str, Any]]]
-    ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
-        personal_fields: list[tuple[str, dict[str, Any]]] = []
-        contact_fields: list[tuple[str, dict[str, Any]]] = []
-        other_fields: list[tuple[str, dict[str, Any]]] = []
 
-        for field_name, field_schema in fields:
-            field_lower = field_name.lower()
-            if any(
-                keyword in field_lower
-                for keyword in ['name', 'username', 'password', 'bio', 'role']
-            ):
-                personal_fields.append((field_name, field_schema))
-            elif any(
-                keyword in field_lower
-                for keyword in ['email', 'phone', 'address', 'subject', 'message']
-            ):
-                contact_fields.append((field_name, field_schema))
-            else:
-                other_fields.append((field_name, field_schema))
-
-        tabs: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
-        if personal_fields:
-            tabs.append(('Personal Info', personal_fields))
-        if contact_fields:
-            tabs.append(('Contact Details', contact_fields))
-        if other_fields:
-            tabs.append(('Additional', other_fields))
-
-        if not tabs:
-            tabs.append(('Form Fields', fields))
-        return tabs
+GROUPED_LAYOUTS = frozenset({'tabbed', 'side-by-side', 'accordion', 'wizard'})
+LAYOUTS = frozenset({'vertical', *GROUPED_LAYOUTS})
+WIZARD_OPTIONS = frozenset({'linear', 'show_progress', 'back_label', 'next_label'})
 
 
-def _extract_existing_field_data(
-    field_name: str, main_data: dict[str, Any]
-) -> dict[str, Any] | None:
-    field_data = main_data.get(field_name)
-    if isinstance(field_data, dict):
-        return field_data
-    return None
+def check_layout(layout: str) -> None:
+    """Reject unknown layout names."""
+
+    if layout not in LAYOUTS:
+        raise ValueError(f'Unknown layout {layout!r}; expected one of {sorted(LAYOUTS)}.')
 
 
-def _safe_layout_tabs(layout_value: Any) -> list[tuple[str, Any]]:
-    if not isinstance(layout_value, BaseLayout) or not hasattr(layout_value, '_get_layouts'):
-        return []
-    try:
-        return list(layout_value._get_layouts())  # type: ignore[union-attr]
-    except Exception:
-        return []
+def check_wizard_options(options: dict[str, Any] | None) -> dict[str, Any]:
+    """Validate `wizard_options=` (a typo would otherwise be silently ignored)."""
 
-
-def _tab_payload_from_main_data(tab_layout: Any, main_data: dict[str, Any]) -> dict[str, Any]:
-    if not hasattr(tab_layout, '_get_forms'):
-        return {}
-
-    tab_payload: dict[str, Any] = {}
-    try:
-        for form_cls in tab_layout._get_forms():
-            model_fields = getattr(form_cls, 'model_fields', {}) or {}
-            for form_field_name in model_fields.keys():
-                if form_field_name in main_data:
-                    tab_payload[form_field_name] = main_data[form_field_name]
-    except Exception:
-        return {}
-
-    return tab_payload
-
-
-def _extract_layout_nested_data(layout_value: Any, main_data: dict[str, Any]) -> dict[str, Any]:
-    nested_data: dict[str, Any] = {}
-
-    for tab_name, tab_layout in _safe_layout_tabs(layout_value):
-        tab_data = main_data.get(tab_name)
-        if isinstance(tab_data, dict):
-            nested_data[tab_name] = tab_data
-            continue
-
-        tab_payload = _tab_payload_from_main_data(tab_layout, main_data)
-        if tab_payload:
-            nested_data[tab_name] = tab_payload
-
-    return nested_data
-
-
-def _extract_fallback_mapped_data(field_name: str, main_data: dict[str, Any]) -> dict[str, Any]:
-    field_data_mapping = {
-        'personal_info': ['first_name', 'last_name', 'email', 'birth_date'],
-        'contact_info': ['phone', 'address', 'city', 'postal_code'],
-        'preferences': [
-            'notification_email',
-            'notification_sms',
-            'notification_push',
-            'digest_frequency',
-        ],
-        'task_list': ['project_name', 'tasks'],
-    }
-
-    nested_data: dict[str, Any] = {}
-    for key in field_data_mapping.get(field_name, []):
-        if key in main_data:
-            nested_data[key] = main_data[key]
-    return nested_data
-
-
-def get_nested_form_data(
-    field_name: str,
-    main_data: dict[str, Any],
-    layout_value: Any | None = None,
-) -> dict[str, Any]:
-    """Utility used across renderers to extract nested layout data."""
-    existing = _extract_existing_field_data(field_name, main_data)
-    if existing is not None:
-        return existing
-
-    layout_nested = _extract_layout_nested_data(layout_value, main_data)
-    if layout_nested:
-        return layout_nested
-
-    return _extract_fallback_mapped_data(field_name, main_data)
+    options = dict(options or {})
+    unknown = set(options) - WIZARD_OPTIONS
+    if unknown:
+        raise ValueError(
+            f'Unknown wizard_options {sorted(unknown)}; expected any of {sorted(WIZARD_OPTIONS)}.'
+        )
+    return options

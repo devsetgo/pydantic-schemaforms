@@ -10,7 +10,6 @@ import html
 import inspect
 import json
 import logging
-import re
 import time
 from enum import Enum
 from functools import partial
@@ -23,12 +22,21 @@ from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
 from .inputs.registry import get_input_component_map
-from .rendering.layout_engine import LayoutEngine, get_nested_form_data
+from .error_tree import field_message, iter_errors, normalize_error_tree
+from .form_data import decode_submission
+from .rendering.layout_engine import (
+    GROUPED_LAYOUTS,
+    LayoutEngine,
+    check_layout,
+    check_wizard_options,
+)
 from .rendering.material_icons import render_material_icon
 from .rendering.schema_parser import (
     SchemaMetadata,
     build_schema_metadata,
     extract_ui_info,
+    resolve_nested_model_ref,
+    resolve_list_item_ref,
     resolve_ui_element,
 )
 from .rendering.themes import MaterialEmbeddedTheme, RendererTheme, get_theme_for_framework
@@ -121,7 +129,31 @@ class SchemaFormValidationError(Exception):
         super().__init__('Schema form validation error')
 
 
-def _has_file_field(fields: list[tuple[str, dict[str, Any]]], data: dict[str, Any]) -> bool:
+def _general_group_title(model_cls: type[FormModel], metadata: SchemaMetadata) -> str:
+    """Heading of the group holding a parent's own plain fields under a
+    grouped layout: the model's explicit title, else "General"."""
+    title = metadata.schema.get('title')
+    return title if title and title != model_cls.__name__ else 'General'
+
+
+def _schema_has_file_input(
+    schema: dict[str, Any], schema_defs: dict[str, Any], seen: frozenset[str] = frozenset()
+) -> bool:
+    for _name, field_schema in (schema.get('properties') or {}).items():
+        if resolve_ui_element(field_schema) == 'file':
+            return True
+        ref = resolve_nested_model_ref(field_schema) or resolve_list_item_ref(field_schema)
+        if ref and ref not in seen and ref in schema_defs:
+            if _schema_has_file_input(schema_defs[ref], schema_defs, seen | {ref}):
+                return True
+    return False
+
+
+def _has_file_field(
+    fields: list[tuple[str, dict[str, Any]]],
+    data: dict[str, Any],
+    schema_defs: dict[str, Any] | None = None,
+) -> bool:
     """Whether this form needs `enctype="multipart/form-data"`: either a
     top-level `input_type='file'` field, or a `layout_handler`-dispatched
     field whose *current value* will render its own nested file input (see
@@ -132,6 +164,10 @@ def _has_file_field(fields: list[tuple[str, dict[str, Any]]], data: dict[str, An
     for field_name, field_schema in fields:
         ui_element = resolve_ui_element(field_schema)
         if ui_element == 'file':
+            return True
+        if ui_element in ('nested_model', 'model_list') and _schema_has_file_input(
+            {'properties': {field_name: field_schema}}, schema_defs or {}
+        ):
             return True
         if ui_element == 'layout':
             ui_info = extract_ui_info(field_schema)
@@ -201,9 +237,10 @@ class EnhancedFormRenderer:
         # Start timing
         start_time = time.perf_counter()
 
+        check_layout(layout)
+        wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
-        data = dict(data or {})
-        errors = errors or {}
+        data = decode_submission(data)
 
         # Keep backward compatibility for callers still passing these via kwargs.
         include_csrf = bool(kwargs.pop('include_csrf', False))
@@ -211,9 +248,7 @@ class EnhancedFormRenderer:
 
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
-        if isinstance(errors, dict) and 'errors' in errors:
-            errors = {err.get('name', ''): err.get('message', '') for err in errors['errors']}
-
+        errors = normalize_error_tree(errors)
         error_summary_markup = self._render_error_summary(errors)
 
         default_form_class = self._theme.form_class() or self.config.get('form_class', '')
@@ -228,11 +263,17 @@ class EnhancedFormRenderer:
         # which silently sends only the filename, never the file's contents.
         # Auto-set multipart/form-data whenever the model has a file field,
         # unless the caller already chose an enctype explicitly.
-        if 'enctype' not in kwargs and _has_file_field(metadata.fields, data):
+        if 'enctype' not in kwargs and _has_file_field(metadata.fields, data, metadata.schema_defs):
             form_attrs['enctype'] = 'multipart/form-data'
         form_attrs.update(kwargs)
         form_attrs['action'] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
+        if layout in GROUPED_LAYOUTS:
+            # Themes may drop novalidate to get native required-checks (Material
+            # does), but the browser can't focus an invalid input in a hidden
+            # tab/panel/step, so it silently refuses to submit. Server
+            # validation re-renders with the errored group open instead.
+            form_attrs['novalidate'] = True
 
         resolved_csrf_mode = self._resolve_csrf_mode(
             include_csrf=include_csrf,
@@ -245,59 +286,31 @@ class EnhancedFormRenderer:
             csrf_field_name=csrf_field_name,
         )
         form_body_parts: list[str] = []
+        self._prefill_layout_field_defaults(model_cls, metadata, data)
 
-        fields = metadata.fields
-        required_fields = metadata.required_fields
-        layout_fields = metadata.layout_fields
-        non_layout_fields = metadata.non_layout_fields
-
-        if layout_fields:
-            model_fields = getattr(model_cls, 'model_fields', {}) or {}
-            for field_name, _field_schema in layout_fields:
-                if field_name in data:
-                    continue
-                field_info = model_fields.get(field_name)
-                if not field_info:
-                    continue
-                default_factory = getattr(field_info, 'default_factory', None)
-                if default_factory is not None:
-                    try:
-                        data[field_name] = default_factory()
-                    except Exception:  # pragma: no cover - defensive
-                        continue
-                elif not field_info.is_required():
-                    default_value = getattr(field_info, 'default', None)
-                    if default_value is not None:
-                        data[field_name] = default_value
-
-        if len(layout_fields) > 1 and len(non_layout_fields) == 0:
+        if layout in GROUPED_LAYOUTS:
             form_body_parts.extend(
-                self._render_layout_fields_as_tabs(
-                    layout_fields,
+                self._layout_engine.render_groups(
+                    metadata,
                     data,
+                    errors,
                     context,
+                    mode=layout,
+                    general_title=_general_group_title(model_cls, metadata),
+                    wizard_options=wizard_options,
                 )
             )
-        elif layout == 'tabbed':
-            form_body_parts.extend(
-                self._render_tabbed_layout(fields, data, errors, required_fields, context)
-            )
-        elif layout == 'side-by-side':
-            form_body_parts.extend(
-                self._render_side_by_side_layout(fields, data, errors, required_fields, context)
-            )
         else:
-            for field_name, field_schema in fields:
+            for field_name, field_schema in metadata.fields:
                 form_body_parts.append(
                     self._render_field(
                         field_name,
                         field_schema,
                         data.get(field_name),
                         errors.get(field_name),
-                        required_fields,
+                        metadata.required_fields,
                         context,
-                        layout,
-                        errors,
+                        'vertical',
                     )
                 )
 
@@ -327,7 +340,10 @@ class EnhancedFormRenderer:
         # rendered markup for the add-item button that model_list fields
         # always emit, regardless of nesting depth or framework.
         has_model_list_fields = (
-            any(resolve_ui_element(field_schema) == 'model_list' for _name, field_schema in fields)
+            any(
+                resolve_ui_element(field_schema) == 'model_list'
+                for _name, field_schema in metadata.fields
+            )
             or 'add-item-btn' in form_markup
         )
         if has_model_list_fields:
@@ -365,29 +381,21 @@ class EnhancedFormRenderer:
         """Render only the field markup for nested usage."""
 
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
-        data = data or {}
-        errors = errors or {}
-
+        data = decode_submission(data)
+        errors = normalize_error_tree(errors)
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
-        if isinstance(errors, dict) and 'errors' in errors:
-            errors = {err.get('name', ''): err.get('message', '') for err in errors['errors']}
-
-        fields = metadata.fields
-        required_fields = metadata.required_fields
-
         form_parts: list[str] = []
-        for field_name, field_schema in fields:
+        for field_name, field_schema in metadata.fields:
             form_parts.append(
                 self._render_field(
                     field_name,
                     field_schema,
                     data.get(field_name),
                     errors.get(field_name),
-                    required_fields,
+                    metadata.required_fields,
                     context,
-                    layout,
-                    errors,
+                    'vertical',
                 )
             )
 
@@ -432,115 +440,47 @@ class EnhancedFormRenderer:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, render_callable)
 
+    @staticmethod
+    def _prefill_layout_field_defaults(
+        model_cls: type[FormModel], metadata: SchemaMetadata, data: dict[str, Any]
+    ) -> None:
+        """A layout_handler field (e.g. DataTableLayout) renders from its value,
+        so seed a missing value from the field's default/default_factory."""
+        model_fields = getattr(model_cls, 'model_fields', {}) or {}
+        for field_name, _field_schema in metadata.layout_fields:
+            if field_name in data:
+                continue
+            field_info = model_fields.get(field_name)
+            if not field_info:
+                continue
+            default_factory = getattr(field_info, 'default_factory', None)
+            if default_factory is not None:
+                # A factory taking validated data can't run before validation.
+                if not getattr(field_info, 'default_factory_takes_data', False):
+                    data[field_name] = default_factory()
+            elif not field_info.is_required():
+                default_value = getattr(field_info, 'default', None)
+                if default_value is not None:
+                    data[field_name] = default_value
+
     def _render_field(
         self,
         field_name: str,
         field_schema: dict[str, Any],
         value: Any = None,
-        error: str | None = None,
+        error: Any = None,
         required_fields: list[str] | None = None,
         context: RenderContext | None = None,
         layout: str = 'vertical',
-        all_errors: dict[str, str] | None = None,
     ) -> str:
+        """``error`` is the field's error node (see ``pydantic_schemaforms.error_tree``)."""
         if self.framework == 'material':
             return self._render_material_field(
-                field_name,
-                field_schema,
-                value,
-                error,
-                required_fields,
-                context,
-                layout,
-                all_errors,
+                field_name, field_schema, value, error, required_fields, context, layout
             )
         return self._field_renderer.render_field(
-            field_name,
-            field_schema,
-            value,
-            error,
-            required_fields,
-            context,
-            layout,
-            all_errors,
+            field_name, field_schema, value, error, required_fields, context, layout
         )
-
-    def _render_tabbed_layout(
-        self,
-        fields: list[tuple[str, dict[str, Any]]],
-        data: dict[str, Any],
-        errors: dict[str, Any],
-        required_fields: list[str],
-        context: RenderContext,
-    ) -> list[str]:
-        return self._layout_engine.render_tabbed_layout(
-            fields, data, errors, required_fields, context
-        )
-
-    def _render_layout_fields_as_tabs(
-        self,
-        layout_fields: list[tuple[str, dict[str, Any]]],
-        data: dict[str, Any],
-        context: RenderContext,
-    ) -> list[str]:
-        return self._layout_engine.render_layout_fields_as_tabs(
-            layout_fields,
-            data,
-            context,
-        )
-
-    def _render_layout_field_content(
-        self,
-        field_name: str,
-        field_schema: dict[str, Any],
-        value: Any,
-        ui_info: dict[str, Any],
-        context: RenderContext,
-    ) -> str:
-        return self._layout_engine.render_layout_field_content(
-            field_name,
-            field_schema,
-            value,
-            ui_info,
-            context,
-        )
-
-    def _get_nested_form_data(
-        self,
-        field_name: str,
-        main_data: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        return get_nested_form_data(field_name, main_data or {})
-
-    def _render_side_by_side_layout(
-        self,
-        fields: list[tuple[str, dict[str, Any]]],
-        data: dict[str, Any],
-        errors: dict[str, Any],
-        required_fields: list[str],
-        context: RenderContext,
-    ) -> list[str]:
-        return self._layout_engine.render_side_by_side_layout(
-            fields,
-            data,
-            errors,
-            required_fields,
-            context,
-        )
-
-    def _extract_nested_errors_for_field(
-        self, field_name: str, all_errors: dict[str, Any]
-    ) -> dict[str, str]:
-        nested_errors: dict[str, str] = {}
-        field_prefix = f'{field_name}['
-
-        for error_path, error_message in (all_errors or {}).items():
-            if error_path.startswith(field_prefix):
-                nested_part = error_path[len(field_prefix) :]
-                if '].' in nested_part:
-                    nested_errors[nested_part.replace('].', '.')] = error_message
-
-        return nested_errors
 
     def _render_layout_support_styles(self) -> str:
         """Return shared form layout CSS so templates don't need framework-specific fixes."""
@@ -582,28 +522,6 @@ class EnhancedFormRenderer:
 </style>
 """
 
-    def _flatten_error_messages(self, errors: Any, prefix: str = '') -> list[tuple[str, str]]:
-        """Flatten mixed error payloads into (field_path, message) tuples."""
-
-        flattened: list[tuple[str, str]] = []
-
-        if isinstance(errors, dict):
-            for key, value in errors.items():
-                path = f'{prefix}.{key}' if prefix and key else str(key or prefix)
-                flattened.extend(self._flatten_error_messages(value, path))
-            return flattened
-
-        if isinstance(errors, list):
-            for item in errors:
-                flattened.extend(self._flatten_error_messages(item, prefix))
-            return flattened
-
-        field_path = prefix or 'form'
-        message = '' if errors is None else str(errors)
-        if message:
-            flattened.append((field_path, message))
-        return flattened
-
     def _singularize_label(self, label: str) -> str:
         """Best-effort singularization for indexed collection labels."""
 
@@ -613,50 +531,34 @@ class EnhancedFormRenderer:
             return label[:-1]
         return label
 
-    def _humanize_error_field(self, field_path: str) -> str:
-        """Convert internal field paths into user-friendly labels."""
+    def _humanize_error_loc(self, loc: tuple[Any, ...]) -> str:
+        """Turn an error location like ``('pets', 1, 'name')`` into ``Pet #2 — Name``."""
 
-        if not field_path or field_path == 'form':
+        if not loc:
             return 'Form'
 
-        tokens: list[str | int] = []
-        for name_token, index_token in re.findall(r'([^.\[\]]+)|\[(\d+)\]', field_path):
-            if name_token:
-                tokens.append(name_token)
-            elif index_token:
-                tokens.append(int(index_token))
-
-        if not tokens:
-            return field_path
-
         parts: list[str] = []
-        for token in tokens:
-            if isinstance(token, str):
-                pretty = token.replace('_', ' ').strip().title()
-                parts.append(pretty)
+        for token in loc:
+            if isinstance(token, int) or (isinstance(token, str) and token.isdigit()):
+                index = int(token)
+                if parts:
+                    parts[-1] = f'{self._singularize_label(parts[-1])} #{index + 1}'
+                else:
+                    parts.append(f'Item #{index + 1}')
                 continue
-
-            if parts:
-                collection_label = self._singularize_label(parts[-1])
-                parts[-1] = f'{collection_label} #{token + 1}'
-            else:
-                parts.append(f'Item #{token + 1}')
-
+            parts.append(str(token).replace('_', ' ').strip().title())
         return ' — '.join(parts)
 
     def _render_error_summary(self, errors: dict[str, Any]) -> str:
         """Render a framework-aware top-level summary for validation errors."""
 
-        if not isinstance(errors, dict) or not errors:
-            return ''
-
-        flattened = self._flatten_error_messages(errors)
+        flattened = list(iter_errors(errors))
         if not flattened:
             return ''
 
         item_parts = []
-        for field, message in flattened:
-            humanized_field = self._humanize_error_field(field)
+        for loc, message in flattened:
+            humanized_field = self._humanize_error_loc(loc)
             item_parts.append(
                 render_html(t'<li><strong>{humanized_field}:</strong> {message}</li>')
             )
@@ -1092,11 +994,10 @@ class EnhancedFormRenderer:
         field_name: str,
         field_schema: dict[str, Any],
         value: Any = None,
-        error: str | None = None,
+        error: Any = None,
         required_fields: list[str] | None = None,
         context: RenderContext | None = None,
         _layout: str = 'vertical',
-        all_errors: dict[str, Any] | None = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
         ui_info = extract_ui_info(field_schema)
@@ -1105,19 +1006,21 @@ class EnhancedFormRenderer:
             display_value = str(value or '')
             return render_html(t'<input type="hidden" name="{field_name}" value="{display_value}">')
 
-        input_type = (
-            ui_info.get('input_type')
-            or ui_info.get('element')
-            or self._infer_material_input_type(field_schema)
+        input_type = resolve_ui_element(field_schema) or self._infer_material_input_type(
+            field_schema
         )
-
-        if input_type == 'layout':
-            return self._render_layout_field(field_name, field_schema, value, ui_info, context)
 
         if input_type == 'model_list':
             return self._render_material_model_list_field(
-                field_name, field_schema, value, error, required_fields, context, all_errors
+                field_name, field_schema, value, error, required_fields, context
             )
+
+        if input_type == 'layout' or LayoutEngine.get_renderer_for_element(input_type):
+            return self._field_renderer.render_field(
+                field_name, field_schema, value, error, required_fields, context, _layout
+            )
+
+        error = field_message(error)
 
         label = field_schema.get('title', field_name.replace('_', ' ').title())
         help_text = ui_info.get('help_text') or field_schema.get('description')
@@ -1175,7 +1078,6 @@ class EnhancedFormRenderer:
                 required_fields,
                 context,
                 _layout,
-                all_errors,
             )
 
         return self._render_material_outlined_field(
@@ -1198,7 +1100,6 @@ class EnhancedFormRenderer:
         error: str | None = None,
         required_fields: list[str] | None = None,
         context: RenderContext | None = None,
-        all_errors: dict[str, Any] | None = None,
     ) -> str:
         context = context or RenderContext(form_data={}, schema_defs={})
         field_html = self._field_renderer.render_field(
@@ -1209,7 +1110,6 @@ class EnhancedFormRenderer:
             required_fields or [],
             context,
             'vertical',
-            all_errors or {},
         )
         return render_template(FormTemplates.MATERIAL_MODEL_LIST_WRAPPER, content=field_html)
 
