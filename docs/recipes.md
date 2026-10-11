@@ -340,7 +340,7 @@ opacity: int = Field(100, ui_element='slider', ge=0, le=100)
 rating: int = Field(3, ui_element='rating', ui_options={'max_rating': 5})
 ```
 
-**`temperature`** — Number input with a unit indicator (celsius/fahrenheit).
+**`temperature`** — Number input whose placeholder and absolute-zero minimum follow unit (celsius/fahrenheit/kelvin).
 ```python
 temp: float = Field(20.0, ui_element='temperature',
                     ui_options={'unit': 'celsius'})
@@ -453,7 +453,7 @@ keywords: str = Field('', ui_element='tags',
 
 **`star_rating`** — Individually clickable stars (contrast with rating, which is a slider).
 ```python
-stars: int = Field(0, ui_element='star_rating', ui_options={'max_rating': 5})
+stars: int = Field(0, ui_element='star_rating', ui_options={'max_stars': 5})
 ```
 
 **`captcha`** — Simple math-challenge CAPTCHA for spam resistance without a third-party service.

@@ -486,6 +486,7 @@ function switchTab(tabId, buttonElement) {
 
     panels.forEach(panel => {
         panel.style.display = 'none';
+        panel.classList.remove('active');
         panel.setAttribute('aria-hidden', 'true');
     });
 
@@ -497,6 +498,7 @@ function switchTab(tabId, buttonElement) {
     const selectedPanel = document.getElementById(tabId);
     if (selectedPanel) {
         selectedPanel.style.display = 'block';
+        selectedPanel.classList.add('active');
         selectedPanel.setAttribute('aria-hidden', 'false');
     }
 
@@ -1338,8 +1340,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 function updateLabelState() {
                     const hasValue = input.value && input.value.trim() !== '';
                     const isFocused = document.activeElement === input;
+                    // A <select> always shows an option (the placeholder one is
+                    // empty), so its label stays floated, as the CSS intends.
+                    const alwaysFloat = input.classList.contains('md-select');
 
-                    if (hasValue || isFocused) {
+                    if (hasValue || isFocused || alwaysFloat) {
                         label.style.transform = 'translateY(-28px) scale(0.75)';
                         label.style.color = isFocused ? '#6750a4' : '#49454f';
                         label.style.background = '#ffffff';

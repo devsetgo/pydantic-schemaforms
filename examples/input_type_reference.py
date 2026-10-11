@@ -149,7 +149,8 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
             ),
             InputTypeEntry(
                 'temperature',
-                'Number input with a unit indicator (celsius/fahrenheit).',
+                'Number input whose placeholder and absolute-zero minimum follow unit '
+                '(celsius/fahrenheit/kelvin).',
                 "temp: float = Field(20.0, ui_element='temperature',\n"
                 "                    ui_options={'unit': 'celsius'})",
             ),
@@ -280,7 +281,7 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
             InputTypeEntry(
                 'star_rating',
                 'Individually clickable stars (contrast with rating, which is a slider).',
-                "stars: int = Field(0, ui_element='star_rating', ui_options={'max_rating': 5})",
+                "stars: int = Field(0, ui_element='star_rating', ui_options={'max_stars': 5})",
             ),
             InputTypeEntry(
                 'captcha',

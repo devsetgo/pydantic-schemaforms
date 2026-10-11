@@ -217,48 +217,70 @@
         </div>
     </div>
 
-    <!-- Dynamic Forms -->
+    <!-- Layouts -->
     <div class="col-md-6 col-lg-4">
         <div class="card h-100 demo-card position-relative">
-            <div class="framework-badge">Advanced</div>
+            <div class="framework-badge">Composed Forms</div>
             <div class="card-body d-flex flex-column text-center p-4">
                 <div class="feature-icon">
                     <i class="bi bi-layout-three-columns"></i>
                 </div>
-                <h5 class="card-title">Layout Forms</h5>
+                <h5 class="card-title">Layouts</h5>
                 <p class="card-text flex-grow-1">
-                    Complex form layouts demonstrating
-                    Tab layouts, List Layouts, and more.
+                    Four FormModels nested in one form, shown with every
+                    <code>layout=</code>: vertical, tabbed, side by side,
+                    accordion, and step wizard. Same model, same data.
                 </p>
                 <div class="mt-auto">
                     <div class="d-grid gap-2">
-                        <a href="/layouts?style=bootstrap&demo=true&debug=true" class="btn btn-demo btn-sm">
+                        <a href="/layouts?layout=tabbed" class="btn btn-demo btn-sm">
                             <i class="bi bi-arrow-right me-2"></i>
                             Try Demo
                         </a>
-                         <div class="btn-group" role="group">
-                            <a href="/layouts?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-bootstrap me-1"></i>
-                                Bootstrap
-                            </a>
-                            <a href="/layouts?style=material&demo=true&debug=true" class="btn btn-outline-info btn-sm">
-                                <i class="bi bi-palette me-1"></i>
-                                Material
-                            </a>
-                            <a href="/layouts?style=none&demo=true&debug=true" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-code-square me-1"></i>
-                                Plain HTML
-                            </a>
+                        <div class="btn-group flex-wrap" role="group">
+                            <a href="/layouts?layout=vertical" class="btn btn-outline-primary btn-sm">Vertical</a>
+                            <a href="/layouts?layout=side-by-side" class="btn btn-outline-primary btn-sm">Side by side</a>
+                            <a href="/layouts?layout=accordion" class="btn btn-outline-primary btn-sm">Accordion</a>
+                            <a href="/layouts?layout=tabbed&style=material" class="btn btn-outline-info btn-sm">Material</a>
                         </div>
                     </div>
-
-                    <small class="text-muted mt-2">Conditional logic</small>
+                    <small class="text-muted mt-2">Switch layouts from the page itself</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Widget Gallery -->
+    <!-- Step Wizard -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">layout="wizard"</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-signpost-split"></i>
+                </div>
+                <h5 class="card-title">Step Wizard</h5>
+                <p class="card-text flex-grow-1">
+                    One sub-form per step with a progress header and Back/Next.
+                    Next checks the current step; one POST submits every step.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/layouts?layout=wizard" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try the Wizard
+                        </a>
+                        <div class="btn-group flex-wrap" role="group">
+                            <a href="/layouts?layout=wizard&linear=false" class="btn btn-outline-primary btn-sm">Jump to any step</a>
+                            <a href="/layouts?layout=wizard&progress=false&labels=true" class="btn btn-outline-primary btn-sm">No header, custom labels</a>
+                            <a href="/layouts?layout=wizard&style=material" class="btn btn-outline-info btn-sm">Material</a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Works without JavaScript too: steps stack</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-md-6 col-lg-4">
         <div class="card h-100 demo-card position-relative">
             <div class="framework-badge">Tabbed by Category</div>
@@ -268,8 +290,9 @@
                 </div>
                 <h5 class="card-title">Widget Gallery</h5>
                 <p class="card-text flex-grow-1">
-                    Every input type, grouped into tabs: Text, Checkboxes &amp; Toggles,
-                    Numeric, Selection, Date &amp; Time, and Files &amp; Specialized.
+                    Every input type and alias with every widget option, in tabs:
+                    Text, Checkboxes &amp; Toggles, Numeric, Selection, Date &amp; Time,
+                    Files &amp; Specialized, and Field Options.
                 </p>
                 <div class="mt-auto">
                     <div class="d-grid gap-2">
@@ -293,7 +316,7 @@
                         </div>
                     </div>
 
-                    <small class="text-muted mt-2">One tab per widget category</small>
+                    <small class="text-muted mt-2">One tab per widget category, every option shown</small>
                 </div>
             </div>
         </div>
@@ -603,6 +626,42 @@
         </div>
     </div>
 
+    <!-- Validation Showcase -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 demo-card position-relative">
+            <div class="framework-badge">Every Validation</div>
+            <div class="card-body d-flex flex-column text-center p-4">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h5 class="card-title">Validation Showcase</h5>
+                <p class="card-text flex-grow-1">
+                    Every kind of validation on one form: Pydantic constraints,
+                    field and model validators, sub-form and list errors, every
+                    rule class, and a cross-field rule.
+                </p>
+                <div class="mt-auto">
+                    <div class="d-grid gap-2">
+                        <a href="/validation" class="btn btn-demo btn-sm">
+                            <i class="bi bi-arrow-right me-2"></i>
+                            Try Demo
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="/validation?scenario=mismatch" class="btn btn-outline-primary btn-sm">
+                                Form-wide error
+                            </a>
+                            <a href="/validation?style=material" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-palette me-1"></i>
+                                Material
+                            </a>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">Submit as-is to see every error</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Live HTMX Validation -->
     <div class="col-md-6 col-lg-4">
         <div class="card h-100 demo-card position-relative">
@@ -681,6 +740,10 @@
                         <a href="/employees/import?style=bootstrap&demo=true&debug=true&show_timing=true&editable=false" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-eye me-2"></i>
                             Import Employees (Read-Only)
+                        </a>
+                        <a href="/employees/directory" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-table me-2"></i>
+                            Browse-Only Table (no upload, paging options)
                         </a>
                     </div>
                 </div>

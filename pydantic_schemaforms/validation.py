@@ -1018,6 +1018,9 @@ class ValidationResult:
     ) -> str:
         """Render the form with validation errors displayed.
 
+        Pass ``errors=`` to show a different tree, e.g. this result's errors
+        merged with a rule-based ``FormValidator``'s.
+
         Uses the submit_url and framework stored at validate() time when not
         supplied explicitly, so the common case needs no arguments at all.
         """
@@ -1032,7 +1035,7 @@ class ValidationResult:
 
         return self.form_model_cls.render_form(
             data=self.original_data,
-            errors=self.errors,
+            errors=kwargs.pop('errors', self.errors),
             framework=framework or self._framework,
             submit_url=url,
             **{**self._render_kwargs, **kwargs},

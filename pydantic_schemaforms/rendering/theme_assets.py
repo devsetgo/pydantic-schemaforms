@@ -9,6 +9,7 @@ function switchTab(tabId, buttonElement) {
 
     panels.forEach(panel => {
         panel.style.display = 'none';
+        panel.classList.remove('active');
         panel.setAttribute('aria-hidden', 'true');
     });
 
@@ -20,6 +21,7 @@ function switchTab(tabId, buttonElement) {
     const selectedPanel = document.getElementById(tabId);
     if (selectedPanel) {
         selectedPanel.style.display = 'block';
+        selectedPanel.classList.add('active');
         selectedPanel.setAttribute('aria-hidden', 'false');
     }
 

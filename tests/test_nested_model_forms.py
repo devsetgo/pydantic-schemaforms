@@ -539,6 +539,17 @@ def test_field_keeps_unlisted_ui_keys_alongside_listed_ones() -> None:
     assert schema['ui_collapsible'] is True
 
 
+def test_field_keeps_non_pydantic_keywords_alongside_ui_options() -> None:
+    class Iconic(FormModel):
+        email: str = Field('', title='Email', icon='envelope', ui_help_text='h')
+        tags: list[str] = Field(default_factory=list, validation_alias='labels')
+
+    properties = Iconic.model_json_schema()['properties']
+    assert properties['email']['icon'] == 'envelope'
+    assert 'bi-envelope' in render_form_html(Iconic, submit_url='/i')
+    assert Iconic.model_validate({'labels': ['a']}).tags == ['a']
+
+
 def test_decoder_compacts_list_indices_instead_of_padding() -> None:
     # One field must not be able to make the server allocate a huge padded list,
     # and an item removed without re-indexing the rest must still decode.
@@ -607,3 +618,81 @@ def test_a_failing_layout_default_factory_is_not_swallowed() -> None:
 
     with pytest.raises(RuntimeError, match='bad default'):
         render_form_html(Broken, submit_url='/b')
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+def test_choice_widgets_show_the_current_value(framework: str) -> None:
+    class Choices(FormModel):
+        size: str = Field('small', ui_element='radio', ui_options={'choices': ['small', 'large']})
+        channels: list[str] = Field(
+            default_factory=list, ui_element='checkbox_group', ui_options={'choices': ['a', 'b']}
+        )
+        city: str = Field('', ui_element='combobox', ui_options={'choices': ['Oslo', 'Rome']})
+
+    html = render_form_html(
+        Choices,
+        form_data={'size': 'large', 'channels': ['b'], 'city': 'Rome'},
+        submit_url='/c',
+        framework=framework,
+    )
+    checked = re.findall(r'<input[^>]*\bchecked\b[^>]*>', html)
+    assert sorted(re.search(r'value="([^"]*)"', tag).group(1) for tag in checked) == ['b', 'large']
+    assert re.search(r'<input[^>]*name="city"[^>]*value="Rome"', html)
+
+
+def test_custom_date_formats_apply_to_iso_string_values() -> None:
+    from datetime import date, datetime, time
+
+    class Formatted(FormModel):
+        day: date = Field(
+            date(2024, 1, 1), ui_element='date', ui_options={'date_format': '%m/%d/%Y'}
+        )
+        at: time = Field(time(9, 0), ui_element='time', ui_options={'time_format': '%I:%M %p'})
+        when: datetime = Field(
+            datetime(2024, 1, 1),
+            ui_element='datetime',
+            ui_options={'datetime_format': '%d.%m.%Y %H:%M'},
+        )
+
+    for data in (
+        {'day': '2024-06-15', 'at': '14:30:00', 'when': '2024-06-15T18:00:00'},  # JSON / ISO
+        {'day': '06/15/2024', 'at': '02:30 PM', 'when': '15.06.2024 18:00'},  # typed, re-rendered
+    ):
+        html = render_form_html(Formatted, form_data=data, submit_url='/f')
+        assert re.findall(r'name="(?:day|at|when)"[^>]*?value="([^"]*)"', html) == [
+            '06/15/2024',
+            '02:30 PM',
+            '15.06.2024 18:00',
+        ]
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+def test_hidden_element_renders_a_bare_input_and_color_shows_its_value(framework: str) -> None:
+    class Widgets(FormModel):
+        token: str = Field('', title='Secret Label', ui_element='hidden')
+        shade: str = Field('#123456', title='Shade', ui_element='color')
+        plain: str = Field(
+            '#abcdef', title='Plain', ui_element='color', ui_options={'show_value': False}
+        )
+
+    html = render_form_html(
+        Widgets,
+        form_data={'token': 'abc', 'shade': '#123456', 'plain': '#abcdef'},
+        submit_url='/w',
+        framework=framework,
+    )
+    assert 'Secret Label' not in html
+    token_input = re.search(r'<input[^>]*name="token"[^>]*>', html).group(0)
+    assert 'type="hidden"' in token_input and 'value="abc"' in token_input
+    assert html.count('color-value-display') == 1
+
+
+def test_render_with_errors_accepts_a_merged_error_tree() -> None:
+    wire = [(k, 'X' if k == 'address.city' else v) for k, v in VALID_WIRE]
+    result = ProfileForm.validate(wire, submit_url='/p')
+    rule_errors = {'nickname': ['Nickname is taken']}
+
+    html = result.render_with_errors(errors={**rule_errors, **result.errors})
+
+    assert 'Nickname is taken' in html
+    assert 'String should have at least 2 characters' in html

@@ -82,11 +82,15 @@ class FileInput(FileInputBase):
                                 fileItem.className = 'file-item';
                                 fileItem.style.cssText = 'margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 3px;';
 
-                                // Use file info to create content  # noqa: F821
-                                let content = `<strong>${{file.name}}</strong> (${{(file.size / 1024).toFixed(1)}} KB)`;
+                                // Text nodes, not innerHTML: a file name is user-controlled.
+                                const nameEl = document.createElement('strong');
+                                nameEl.textContent = file.name;
+                                fileItem.appendChild(nameEl);
+                                fileItem.appendChild(document.createTextNode(
+                                    ' (' + (file.size / 1024).toFixed(1) + ' KB)'));
 
                                 // Show image preview for image files
-                                if (file.type.startsWith('image/')) {{  # noqa: F821
+                                if (file.type.startsWith('image/')) {{
                                     const reader = new FileReader();
                                     reader.onload = function(e) {{
                                         const img = document.createElement('img');
@@ -97,7 +101,6 @@ class FileInput(FileInputBase):
                                     reader.readAsDataURL(file);
                                 }}
 
-                                fileItem.innerHTML = content;
                                 preview.appendChild(fileItem);
                             }});
                         }}

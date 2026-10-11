@@ -94,7 +94,8 @@ _MATERIAL_NATIVE_SCALAR_TYPES = frozenset(
         'week',
         'datetime',
         'datetime-local',
-        'color',
+        # 'color' is deliberately absent: the shared ColorInput adds the hex
+        # readout (show_value) that the outlined Material template lacks.
         'time',
         'hidden',
         # 'select' has a genuine bespoke Material template
@@ -1002,7 +1003,7 @@ class EnhancedFormRenderer:
         context = context or RenderContext(form_data={}, schema_defs={})
         ui_info = extract_ui_info(field_schema)
 
-        if ui_info.get('hidden'):
+        if ui_info.get('hidden') or resolve_ui_element(field_schema) == 'hidden':
             display_value = str(value or '')
             return render_html(t'<input type="hidden" name="{field_name}" value="{display_value}">')
 

@@ -2,6 +2,8 @@ from functools import wraps
 from typing import Any, Literal
 from collections.abc import Callable
 
+import inspect
+
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
 from pydantic.fields import FieldInfo
@@ -23,6 +25,9 @@ def form_validator(func: Callable) -> Callable:
 
     wrapper._is_form_validator = True  # type: ignore[attr-defined]
     return classmethod(wrapper)  # type: ignore[return-value]
+
+
+_PYDANTIC_FIELD_PARAMS = frozenset(inspect.signature(PydanticField).parameters)
 
 
 def Field(
@@ -117,10 +122,10 @@ def Field(
         'layout_renderer': layout_renderer,
     }
 
-    # Other ui_* keys (ui_collapsible, ui_step_title, ...) must not fall through
-    # to pydantic's **kwargs: it drops unknown kwargs whenever json_schema_extra
-    # is already populated, e.g. by ui_help_text above.
-    for key in [k for k in kwargs if k.startswith('ui_')]:
+    # Other UI keys (ui_collapsible, ui_step_title, icon, ...) must not fall
+    # through to pydantic's **kwargs: it drops unknown kwargs whenever
+    # json_schema_extra is already populated, e.g. by ui_help_text above.
+    for key in [k for k in kwargs if k not in _PYDANTIC_FIELD_PARAMS]:
         ui_params[key] = kwargs.pop(key)
 
     # Filter out None values and add to json_schema_extra

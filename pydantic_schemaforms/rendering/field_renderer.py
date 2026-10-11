@@ -80,7 +80,9 @@ class FieldRenderer:
         error = field_message(error)
         ui_info = extract_ui_info(field_schema)
 
-        if ui_info.get('hidden'):
+        # ui_hidden=True and ui_element='hidden' both mean a bare hidden input
+        # with no label, help text, or wrapper.
+        if ui_info.get('hidden') or resolve_ui_element(field_schema) == 'hidden':
             return self._render_hidden_field(field_name, value)
 
         ui_element = (
@@ -203,7 +205,10 @@ class FieldRenderer:
                         if placeholder_option is not None:
                             formatted_options = [placeholder_option, *formatted_options]
 
-                    field_attrs.pop('value', None)
+                    # A combobox is a free-text <input> with suggestions, so it
+                    # keeps its value; the others carry it as selected options.
+                    if ui_element != 'combobox':
+                        field_attrs.pop('value', None)
                     # radio/checkbox_group already show their title as the
                     # <fieldset><legend>; passing the same text as an outer
                     # label too duplicates it (and under Material's floating

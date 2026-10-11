@@ -174,6 +174,20 @@ if result.is_valid:
 
 ### Using FormValidator with Pydantic Models
 
+To run rule-based checks on a submission that a `FormModel` also validates,
+use `result.original_data` (the decoded submission, nested like the model)
+and merge the two error sets; `render_form_html()` takes both shapes. The
+example app's `/validation` page does exactly this:
+
+```python
+result = ProfileForm.validate(await request.form(), submit_url='/profile')
+rules_ok, rule_errors = rules.validate(result.original_data)
+if not (result.is_valid and rules_ok):
+    return HTMLResponse(result.render_with_errors(errors={**rule_errors, **result.errors}))
+```
+
+### Adding custom rules to a FormValidator
+
 For validation with additional custom rules:
 
 ```python

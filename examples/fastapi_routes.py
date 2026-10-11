@@ -32,6 +32,7 @@ import secrets
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import markdown as _markdown
 from fastapi import APIRouter, HTTPException, Request
@@ -48,7 +49,13 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     MinimalLoginForm,
     PetRegistrationForm,
     UserRegistrationForm,
+    INVALID_VALIDATION_DEMO,
+    PASSWORD_MISMATCH_DEMO,
+    VALID_VALIDATION_DEMO,
+    ValidationShowcaseForm,
     WidgetGalleryForm,
+    validation_showcase_rules,
+    widget_gallery_demo_data,
     create_sample_nested_data,
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
@@ -76,6 +83,8 @@ from pydantic_schemaforms import (
 from pydantic_schemaforms import (
     bootstrap_icons_css_content,
     read_asset_text,
+    SafeHTML,
+    html,
     validation_response_headers,
     wrap_with_schemaforms_markers,
 )
@@ -1006,6 +1015,34 @@ async def showcase_post(
 # ================================
 
 
+# The library leaves the look of radio variant="segmented" and checkbox_group
+# variant="button_group" to the app's CSS (see RadioGroup/CheckboxGroup); this is
+# the gallery's own styling for them, a starting point an app can copy.
+_CHOICE_VARIANT_CSS = """
+<style>
+.radio-group-segmented, .checkbox-group-button-group { border: 0; padding: 0; }
+.radio-item-segmented, .checkbox-item-button-group { display: inline-block; margin: 0 -1px 0 0; }
+.radio-item-segmented label, .checkbox-item-button-group label {
+    display: inline-block; padding: .375rem .9rem; margin: 0; cursor: pointer;
+    border: 1px solid #0d6efd; color: #0d6efd; background: #fff;
+}
+.radio-item-segmented:first-of-type label, .checkbox-item-button-group:first-of-type label {
+    border-radius: .375rem 0 0 .375rem;
+}
+.radio-item-segmented:last-of-type label, .checkbox-item-button-group:last-of-type label {
+    border-radius: 0 .375rem .375rem 0;
+}
+.radio-item-segmented input, .checkbox-item-button-group input {
+    position: absolute; opacity: 0; pointer-events: none;
+}
+.radio-item-segmented label:has(input:checked),
+.checkbox-item-button-group label:has(input:checked) { background: #0d6efd; color: #fff; }
+.radio-item-segmented label:has(input:focus-visible),
+.checkbox-item-button-group label:has(input:focus-visible) { outline: 2px solid #86b7fe; }
+</style>
+"""
+
+
 @router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_get(
     request: Request,
@@ -1017,8 +1054,8 @@ async def gallery_get(
 ):
     """Tabbed widget gallery - every input type grouped by category (GET).
 
-    Demo data is nested one dict per tab, mirroring WidgetGalleryForm's
-    nested sub-form fields -- the same shape validate() returns.
+    Demo data is every field's default, nested one dict per tab -- the same
+    shape validate() returns.
     """
     form_data = {}
     if data:
@@ -1029,75 +1066,10 @@ async def gallery_get(
         except Exception:
             pass  # Ignore invalid JSON
     elif demo:
-        # Rendering only ever pre-fills fields explicitly present here -- it
-        # never falls back to a field's own Pydantic default for display (that's
-        # true of every FormModel in this library, not specific to tabbed/layout
-        # fields). Every field gets a value below so the demo doesn't mix
-        # populated and blank-looking fields, which reads as broken/scrambled
-        # data even though each field is rendering correctly on its own.
-        form_data = {
-            'text_inputs': {
-                'text_input': 'Hello, world!',
-                'textarea_input': 'This textarea supports\nmultiple lines of text.',
-                'code_json_input': '{\n  "name": "demo",\n  "enabled": true\n}',
-                'code_yaml_input': 'name: demo\nenabled: true\n',
-                'code_toml_input': 'name = "demo"\nenabled = true\n',
-                'code_bash_input': '#!/usr/bin/env bash\necho "hello, demo"\n',
-                'code_python_input': 'def hello():\n    print("hello, demo")\n',
-                'code_no_highlight_input': '{\n  "highlighting": "off"\n}',
-                'password_input': 'demo-password',
-                'email_input': 'demo@example.com',
-                'search_input': 'pydantic schemaforms',
-                'url_input': 'https://example.com',
-                'tel_input': '5551234567',
-                'phone_input': '(555) 123-4567',
-                'ssn_input': '123-45-6789',
-                'credit_card_input': '4111 1111 1111 1111',
-                'currency_input': '$1,234.56',
-                'tags_input': 'python,fastapi,pydantic',
-            },
-            'checkboxes_toggles': {
-                'checkbox_unchecked': False,
-                'checkbox_checked': True,
-                'toggle_off': False,
-                'toggle_on': True,
-                'checkbox_group_stacked': ['email', 'push'],
-                'checkbox_group_buttons': ['sms'],
-            },
-            'numeric_inputs': {
-                'number_input': 42,
-                'range_input': 65,
-                'percentage_input': 82.5,
-                'decimal_input': 3.14,
-                'integer_input': 7,
-                'age_input': 34,
-                'quantity_input': 3,
-                'score_input': 91.0,
-                'rating_input': 8,
-                'star_rating_input': 4,
-                'slider_input': 55,
-                'temperature_input': 21.5,
-            },
-            'selection_inputs': {
-                'select_input': 'medium',
-                'multiselect_input': ['python', 'rust'],
-                'radio_stacked': 'large',
-                'radio_segmented': 'express',
-                'combobox_input': 'New York',
-            },
-            'date_time': {
-                'date_input': '2024-06-15',
-                'time_input': '14:30',
-                'datetime_input': '2024-06-15T14:30',
-                'month_input': '2024-06',
-                'week_input': '2024-W24',
-                'birthdate_input': '1990-01-01',
-            },
-            'files_specialized': {
-                'color_input': '#3498db',
-                'hidden_input': 'hidden-demo-value',
-            },
-        }
+        # Rendering only pre-fills values present in form_data; it never falls
+        # back to a field's own default. The gallery's defaults are its demo
+        # values, so pass them explicitly.
+        form_data = widget_gallery_demo_data()
 
     form_html = await render_form_html_async(
         WidgetGalleryForm,
@@ -1110,6 +1082,7 @@ async def gallery_get(
         enable_logging=True,
     )
 
+    form_html = _CHOICE_VARIANT_CSS + form_html
     # model_list and DataTableLayout are composition mechanisms, not discrete
     # widgets (see WidgetGalleryForm's docstring), so they're cross-linked
     # here rather than embedded as gallery fields.
@@ -1128,8 +1101,9 @@ async def gallery_get(
         {
             'request': request,
             'title': 'Widget Gallery - Tabbed by Category',
-            'description': 'Every input type grouped into tabs: Text, Checkboxes & Toggles, '
-            'Numeric, Selection, Date & Time, and Files & Specialized',
+            'description': 'Every input type, alias, and widget option, grouped into tabs: '
+            'Text, Checkboxes & Toggles, Numeric, Selection, Date & Time, '
+            'Files & Specialized, and Field Options',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -1171,7 +1145,7 @@ async def gallery_post(
             },
         )
     else:
-        form_html = await validation.render_with_errors_async()
+        form_html = _CHOICE_VARIANT_CSS + await validation.render_with_errors_async()
         return templates.TemplateResponse(
             request,
             'form.html',
@@ -1753,11 +1727,81 @@ async def organization_shared_post(
     )
 
 
+def _layout_demo_options(
+    style: str, layout: str, linear: bool, progress: bool, labels: bool
+) -> dict:
+    """Render kwargs for /layouts: the submit URL keeps every query option,
+    and the wizard gets wizard_options built from them."""
+    query = f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
+    options: dict = {'submit_url': f'/layouts?{query}', 'layout': layout}
+    if layout == 'wizard':
+        options['wizard_options'] = {'linear': linear, 'show_progress': progress}
+        if labels:
+            options['wizard_options'] |= {'back_label': 'Previous', 'next_label': 'Continue'}
+    return options
+
+
+_LAYOUT_CHOICES = [
+    ('vertical', 'Vertical'),
+    ('tabbed', 'Tabbed'),
+    ('side-by-side', 'Side by side'),
+    ('accordion', 'Accordion'),
+    ('wizard', 'Step wizard'),
+]
+
+
+def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labels: bool) -> str:
+    """Buttons to re-render /layouts with each layout, plus the wizard's options."""
+
+    current_query = {
+        'style': style,
+        'layout': layout,
+        'linear': str(linear).lower(),
+        'progress': str(progress).lower(),
+        'labels': str(labels).lower(),
+    }
+
+    def link(label: str, current: bool, **query: object) -> SafeHTML:
+        params = current_query | query
+        href = '/layouts?' + '&'.join(f'{key}={value}' for key, value in params.items())
+        css = 'btn btn-sm ' + ('btn-primary' if current else 'btn-outline-primary')
+        return html(t'<a class="{css}" href="{href}">{label}</a>')
+
+    layout_links = SafeHTML(
+        ''.join(str(link(label, value == layout, layout=value)) for value, label in _LAYOUT_CHOICES)
+    )
+    wizard_row = SafeHTML('')
+    if layout == 'wizard':
+        toggles = SafeHTML(
+            ''.join(
+                str(link(label, active, **{key: str(not active).lower()}))
+                for key, label, active in (
+                    ('linear', 'Linear (validate before jumping ahead)', linear),
+                    ('progress', 'Progress header', progress),
+                    ('labels', 'Custom button labels', labels),
+                )
+            )
+        )
+        wizard_row = html(
+            t'<div class="d-flex flex-wrap gap-2 align-items-center mt-2">'
+            t'<span class="text-muted small">Wizard options:</span>{toggles}</div>'
+        )
+    return str(
+        html(
+            t'<div class="layout-switcher mb-4"><div class="d-flex flex-wrap gap-2 align-items-center">'
+            t'<span class="text-muted small">Layout:</span>{layout_links}</div>{wizard_row}</div>'
+        )
+    )
+
+
 @router.get('/layouts', response_class=HTMLResponse, tags=['Showcase'])
 async def layouts_get(
     request: Request,
     style: str = 'bootstrap',
     layout: str = 'tabbed',
+    linear: bool = True,
+    progress: bool = True,
+    labels: bool = False,
     data: str = None,
     demo: bool = True,
     debug: bool = False,
@@ -1766,7 +1810,9 @@ async def layouts_get(
     """Four FormModels nested in one parent form, shown with any layout.
 
     Try ?layout=vertical, tabbed, side-by-side, accordion, or wizard -- the model is
-    the same; only the presentation changes.
+    the same; only the presentation changes. Wizard options: &linear=false lets
+    the step header jump anywhere, &progress=false hides it, &labels=true
+    renames Back/Next.
     """
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -1820,13 +1866,13 @@ async def layouts_get(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        submit_url=f'/layouts?style={style}&layout={layout}',
-        layout=layout,
+        **_layout_demo_options(style, layout, linear, progress, labels),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
+    form_html = _layout_switcher(style, layout, linear, progress, labels) + form_html
     return templates.TemplateResponse(
         request,
         'form.html',
@@ -1834,7 +1880,8 @@ async def layouts_get(
             'request': request,
             'title': 'Layout Demonstration - All Types',
             'description': 'Four FormModels nested in one form. Switch presentation with '
-            '?layout=vertical, tabbed, side-by-side, accordion, or wizard',
+            '?layout=vertical, tabbed, side-by-side, accordion, or wizard '
+            '(wizard options: &linear=false, &progress=false, &labels=true)',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -1848,6 +1895,9 @@ async def layouts_post(
     request: Request,
     style: str = 'bootstrap',
     layout: str = 'tabbed',
+    linear: bool = True,
+    progress: bool = True,
+    labels: bool = False,
     debug: bool = False,
     show_timing: bool = True,
 ):
@@ -1878,13 +1928,13 @@ async def layouts_post(
         LayoutDemonstrationForm,
         data=form_data,
         errors=validation.errors,
-        submit_url=f'/layouts?style={style}&layout={layout}',
-        layout=layout,
+        **_layout_demo_options(style, layout, linear, progress, labels),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
+    form_html = _layout_switcher(style, layout, linear, progress, labels) + form_html
 
     return templates.TemplateResponse(
         request,
@@ -2018,6 +2068,8 @@ FORM_REGISTRY = {
     'layouts': LayoutDemonstrationForm,
     'organization': CompanyOrganizationForm,
     'organization-shared': CompanyOrganizationForm,
+    'gallery': WidgetGalleryForm,
+    'validation': ValidationShowcaseForm,
 }
 
 
@@ -2331,6 +2383,82 @@ async def api_feedback_schema():
 # ================================
 # LIVE HTMX VALIDATION DEMO
 # ================================
+
+
+# ================================
+# VALIDATION SHOWCASE
+# ================================
+
+_VALIDATION_SCENARIOS = {
+    'invalid': INVALID_VALIDATION_DEMO,
+    'mismatch': PASSWORD_MISMATCH_DEMO,
+    'valid': VALID_VALIDATION_DEMO,
+}
+
+
+async def _render_validation_page(
+    request: Request, style: str, form_data: Any, errors: dict | None = None
+) -> HTMLResponse:
+    form_html = await render_form_html_async(
+        ValidationShowcaseForm,
+        form_data=form_data,
+        errors=errors,
+        framework=style,
+        submit_url=f'/validation?style={style}',
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Validation Showcase',
+            'description': 'Every kind of validation on one form: Pydantic Field constraints, '
+            '@field_validator, @model_validator, sub-form and list-item errors, every '
+            'built-in rule class, and a cross-field rule. Submit as-is to see them fail; '
+            '?scenario=mismatch shows the form-wide @model_validator error, '
+            '?scenario=valid a passing submission. As-you-type HTMX validation: '
+            '/live-validation.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.get('/validation', response_class=HTMLResponse, tags=['Showcase'])
+async def validation_get(request: Request, style: str = 'bootstrap', scenario: str = 'invalid'):
+    """Every kind of validation, pre-filled so one Submit makes each of them fail."""
+    return await _render_validation_page(
+        request, style, _VALIDATION_SCENARIOS.get(scenario, INVALID_VALIDATION_DEMO)
+    )
+
+
+@router.post('/validation', response_class=HTMLResponse, tags=['Showcase'])
+async def validation_post(request: Request, style: str = 'bootstrap'):
+    """Validate with Pydantic and a rule-based FormValidator; merge both error sets."""
+    form_data = await request.form()
+    result = ValidationShowcaseForm.validate(form_data, submit_url=f'/validation?style={style}')
+    # original_data is the decoded (nested) submission; the rule-based layer
+    # validates its top-level fields.
+    rules_ok, rule_errors = validation_showcase_rules().validate(result.original_data)
+    if result.is_valid and rules_ok:
+        return templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Validation Showcase Passed',
+                'message': 'Every Pydantic constraint, validator, and rule passed.',
+                'data': result.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': create_refer_path(request),
+            },
+        )
+    # Both layers share one nested error tree; a field's message may be a list.
+    errors = {**rule_errors, **result.errors}
+    return await _render_validation_page(request, style, form_data, errors)
 
 
 @router.get('/live-validation', response_class=HTMLResponse, tags=['Live Validation'])

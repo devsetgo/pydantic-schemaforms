@@ -65,9 +65,22 @@ breaking release; see `docs/complex_forms.md#upgrading`.
   Options: `wizard_options={"linear", "show_progress", "back_label",
   "next_label"}` and `Field(ui_step_title=...)`. Without JavaScript all steps
   show stacked.
+- **Examples cover every layout, input, and validation**, enforced by
+  `tests/test_examples_coverage.py` and a browser test that loads every
+  example page: the widget gallery shows every input type and alias with each
+  of its options plus field-level options (`ui_disabled`, `ui_readonly`,
+  `icon`, ...); `/validation` shows every Pydantic constraint, validator, rule
+  class, and a cross-field rule failing on one form; `/layouts` takes the
+  wizard options as query parameters; `/employees/directory` shows the
+  read-only `DataTableLayout` options.
 - **`validate()` takes the raw request form** (Starlette `FormData`, Werkzeug
   `MultiDict`, `(name, value)` pairs) as well as nested dicts, keeping
   repeated values as lists. `render_form_html(form_data=...)` accepts the same.
+- **`render_with_errors(errors=...)`** re-renders with a different error tree, e.g.
+  the result's own errors merged with a rule-based `FormValidator`'s.
+- **AI instructions** now list every `ui_options` key per widget with its default,
+  every field-level option, the rule classes and cross-field rules, the
+  `FormModel`/`ValidationResult` API, every render option, and the asset helpers.
 - **`ValidationResult.error_list()`** (flat `[{"loc": [...], "msg": ...}]`) and
   **`ValidationResult.instance`** (the validated model).
 - **`list[FormModel]` fields render as repeating sub-forms** without
@@ -96,6 +109,20 @@ breaking release; see `docs/complex_forms.md#upgrading`.
   no visible message; the server re-renders with that group open.
 - A layout field's `default_factory` that raises is no longer silently
   swallowed (the table rendered empty); the error propagates.
+- `radio` and `checkbox_group` never showed the current value: a re-rendered
+  form lost the user's choices. A `combobox` lost its value the same way.
+- A field declared `ui_element="hidden"` rendered a visible label (only
+  `ui_hidden=True` produced a bare hidden input).
+- Custom `date_format`/`time_format`/`datetime_format` were not applied to ISO
+  string values (JSON data), which showed as `2024-06-15` instead of the format.
+- The file input's preview script failed to parse (a `#` comment in
+  JavaScript), so no preview appeared; it now shows file names as text, never
+  as markup.
+- Material: the colour picker's hex readout (`show_value`) was missing, and a
+  `select` with a placeholder had its label overlapping the placeholder text.
+- Switching tabs left the `active` class on the first panel.
+- `Field(icon=...)`, like other non-Pydantic keywords, was silently dropped
+  when any `ui_*` option was also passed.
 - Material forms' inline script failed to parse (a `#` comment in
   JavaScript), so its floating-label and field enhancements never ran.
 - `Field()` silently dropped any `ui_*` option it doesn't name as a parameter
@@ -647,4 +674,3 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
-

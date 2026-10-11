@@ -264,7 +264,7 @@ below, use the closest primitive rather than guessing at a plausible-sounding na
 | Category | Values |
 |---|---|
 | Text | `text`, `password`, `email`, `search`, `url`, `tel`, `textarea` |
-| Formatted text | `ssn`, `phone`, `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
+| Formatted text | `ssn` (alias `social_security_number`), `phone` (alias `phone_number`), `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
 | Text collection | `tags` (chip/tag input for a list of short values) |
 | Numeric | `number`, `range` |
 | Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity` (ships +/- stepper buttons by default), `score`, `rating` (alias `rating_stars`; range-slider based), `star_rating` (individually clickable stars — a distinct widget from `rating`, not an alias of it), `slider`, `temperature` |
@@ -273,15 +273,15 @@ below, use the closest primitive rather than guessing at a plausible-sounding na
 | Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week` |
 | Specialized date | `birthdate` (adds a computed age display) |
 | File/color | `file`, `color` |
-| Hidden/security | `hidden`, `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design), `captcha` (self-hosted arithmetic challenge; the answer is verified server-side via `verify_captcha()` and never sent to the client) |
+| Hidden/security | `hidden` (a bare `<input type="hidden">` with no label; `ui_hidden=True` on any field does the same), `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design), `captcha` (self-hosted arithmetic challenge; the answer is verified server-side via `verify_captcha()` and never sent to the client) |
 | Structural (not a real widget) | `nested_model` (a sub-form: inferred automatically for a field typed as another `FormModel`, never declare it), `model_list` (repeating sub-forms: inferred automatically for a `list[FormModel]` field), `layout` (a registered custom composite such as `DataTableLayout`) |
 
 Most forms only need Text/Numeric/Selection/Date. The "Specialized numeric" and "Specialized
 date" rows add presentation behavior only (e.g. `percentage` shows a `%` placeholder, `rating`
 renders stars) — validation still comes entirely from `Field()` constraints, not the widget
-choice. The full authoritative reference with every ui_options key lives at
-<https://devsetgo.github.io/pydantic-schemaforms/inputs/> — check it before assuming an option
-doesn't exist.
+choice. Every ui_options key each widget accepts is listed in "Every widget option" below —
+check it before assuming an option doesn't exist, and before inventing one (an unknown key is
+not an error: it is written onto the `<input>` as an HTML attribute).
 
 **Do not trust `pydantic_schemaforms.NUMERIC_INPUTS`/`TEXT_INPUTS`/`SELECTION_INPUTS`/
 `DATETIME_INPUTS`/`SPECIALIZED_INPUTS` (top-level exported constants) as a way to double-check
@@ -462,6 +462,102 @@ equivalent to `black`/`shfmt` exists), so don't promise real code formatting for
 Invalid input on Format never throws — it flags the field with a CSS class and inline error
 instead, leaving the textarea's content untouched.
 
+## Every widget option (`ui_options` keys)
+
+Pass these as `Field(..., ui_options={...})`. Defaults are what you get without the key. The
+example app's widget gallery (`/gallery`) renders every row of this table.
+
+| ui_element | Key | Default | Effect |
+|---|---|---|---|
+| any | `placeholder`, `autocomplete`, `data-*`, `hx-*`, any other scalar | — | Any key not listed below becomes an HTML attribute on the input (how HTMX attributes are attached). Lists/dicts are skipped. |
+| `textarea` | `rows` | browser default | Visible lines |
+| `textarea` | `resize` | — | CSS `resize` value, e.g. `"none"` or `"vertical"` |
+| `textarea` | `language` | — | `json`/`yaml`/`toml`/`bash`/`python`: code editor with a Format button, Tab indentation, syntax highlighting |
+| `textarea` | `code_format` / `code_highlight` / `code_tab_indent` | `True` | Turn off the Format button / highlighting / Tab-key indentation (with `language`) |
+| `textarea` | `indent_size` | `2` | Spaces per indent level (with `language`) |
+| `phone` | `phone_format` | — | Mask with `#` per digit, e.g. `"(###) ###-####"` |
+| `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder |
+| `phone`, `currency`, `date`, `time`, `datetime` | `live_format` | `True` | `False` applies the format on blur instead of while typing |
+| `currency` | `currency_symbol` | `"$"` | Symbol shown and stripped on submit |
+| `tags` | `separator` | `","` | Join character for the submitted string |
+| `number`, `integer`, `decimal`, `percentage`, `age`, `score`, `temperature` | `show_stepper` | `False` | +/- buttons beside the input |
+| `quantity` | `show_stepper` | `True` | `False` removes its default +/- buttons |
+| `decimal` | `decimal_places` | `2` | Sets the input's `step` (e.g. 4 → `0.0001`) |
+| `score` | `min_score`, `max_score` | `0`, `100` | Bounds |
+| `temperature` | `unit` | `"celsius"` | `"fahrenheit"`/`"kelvin"`: sets the placeholder (`68°F`, `293K`) and the absolute-zero minimum |
+| `range`, `slider`, `rating`, `color` | `show_value` | `True` | Hide the live value readout (hex readout for `color`) |
+| `slider` | `show_labels` | `True` | Hide the min/max labels under the slider |
+| `rating` | `max_rating` | `5` | Number of stars (slider based) |
+| `star_rating` | `max_stars` | `5` | Number of clickable stars (note: not `max_rating`) |
+| `date` / `time` / `datetime` | `date_format` / `time_format` / `datetime_format` | native picker | `strftime` display format, e.g. `"%m/%d/%Y"`, `"%I:%M %p"`; the field still validates as `date`/`time`/`datetime` |
+| `datetime` | `with_set_now_button` | `False` | Adds a "Set Now" button |
+| `datetime` | `auto_set_current` | `False` | Fills the current time when the field is empty on load |
+| `birthdate` | `show_age` | `True` | Hide the computed-age line |
+| `file` | `accept` | — | e.g. `".pdf,.docx"` or `"image/*"` |
+| `file` | `multiple` | `False` | Allow several files |
+| `file` | `capture` | — | `"environment"`/`"user"`: open the camera on mobile |
+| `file` | `show_preview` | `True` | Hide the chosen-file list / image thumbnails |
+| `file` | `enable_drag_drop` | `True` | Plain file input without the drop zone |
+| `select`, `multiselect`, `radio`, `checkbox_group`, `combobox` | `choices` (or `options`) | — | `["a", "b"]` or `[{"value": "a", "label": "A"}]`; an `Enum`-typed field needs neither |
+| `select` | `placeholder` | — | Disabled blank first option that forces a real choice |
+| `multiselect` | `searchable` | `True` | `False`: chips without the search box |
+| `multiselect` | `search_placeholder` | `"Search..."` | Text in the search box |
+| `multiselect` | `enhanced` | `True` | `False`: a native `<select multiple>` |
+| `combobox` | `filter_mode` | `"contains"` | `"startswith"` matches from the start of each option |
+| `combobox` | `min_chars` | `0` | Characters typed before suggestions appear |
+| `radio` | `variant` | `"stacked"` | `"segmented"`: options as an adjacent button row |
+| `checkbox_group` | `variant` | `"stacked"` | `"button_group"`: options as an adjacent button row |
+| `radio`, `checkbox_group` | `collapsible` | `False` | The legend toggles the options open/closed |
+| `radio`, `checkbox_group` | `collapsed` | `False` | Start closed (with `collapsible`) |
+
+The `segmented`/`button_group` variants only add CSS classes (`radio-item-segmented`,
+`checkbox-item-button-group`); the app styles them. The gallery route in
+`examples/fastapi_routes.py` has a copyable stylesheet.
+
+## Field-level options (work on every widget)
+
+These are `Field()` keyword arguments, not `ui_options` keys:
+
+| Keyword | Effect |
+|---|---|
+| `title=` | Label text (also the tab/step/section heading for a sub-form field) |
+| `description=` or `ui_help_text=` | Help text under the input |
+| `ui_placeholder=` | Placeholder attribute |
+| `icon=` | Icon name shown before the label (`"envelope"`, `"person"`, ...), mapped per framework |
+| `ui_order=` | Position among the fields/groups; lower first, default is declaration order |
+| `ui_disabled=True` | Disabled: not editable and **not submitted** |
+| `ui_readonly=True` | Read-only: not editable but submitted |
+| `ui_hidden=True` | Rendered as a bare hidden input (same as `ui_element="hidden"`) |
+| `ui_autofocus=True` | Focused on load (one field per page) |
+| `ui_class=` / `ui_style=` | Extra CSS class / inline style on the input |
+| `ui_element=` (`input_type=` and `ui_widget=` are accepted aliases) | The widget; see the table above |
+| `ui_collapsible=True` / `ui_collapsed=True` | On a sub-form field: render it as a collapsible section (vertical layout), optionally starting closed; it opens itself when it holds an error |
+| `ui_step_title=` | On a sub-form field: the step label under `layout="wizard"` (falls back to `title=`) |
+| `ui_add_button_label=`, `ui_item_title_template=`, `ui_collapsible_items=`, `ui_items_expanded=` | On a `list[FormModel]` field: see "Repeating sub-forms" |
+
+Every keyword Pydantic's own `Field()` doesn't know (all of the above plus anything else) is
+stored in the field's `json_schema_extra`, so they combine freely with Pydantic constraints.
+
+### The widget classes behind the strings
+
+Each `ui_element` value maps to an exported input class (`TextInput`, `TextArea`, `SelectInput`,
+`RadioGroup`, `CheckboxGroup`, `MultiSelectInput`, `ComboBoxInput`, `DateInput`, `FileInput`,
+`ToggleSwitch`, `TagsInput`, `CurrencyInput`, ...). App code names the string on the field and
+never instantiates these, with two exceptions: subclassing one for `register_input_class` (see
+"Library boundary"), and rendering a lone input outside any model,
+`TextInput().render_with_label(name="q", label="Search", framework="bootstrap")`. Inside a
+custom widget's `render()`, `build_label(field_name, label, required, icon, framework)`,
+`build_help_text(field_name, text)` and `build_error_message(field_name, error)` return the
+framework-correct label/help/error markup so it matches the built-ins. `BaseInput`/`FormInput`,
+`NumericInput`, `SelectInputBase` and `FileInputBase` are the base classes. `DateRangeInput`,
+`TimeRangeInput`, `ImageInput`, `ButtonInput`, `SubmitInput`, `ResetInput` and `RadioInput` are
+exported but **not registered as `ui_element` values** — they only work through
+`register_input_class` or a direct `.render()`.
+
+A custom composite renderer's `context` argument (see the `LayoutEngine` sample in "Library
+boundary") is a `RenderContext` (top-level export) carrying `form_data`, `schema_defs`,
+`error` (the field's own message) and `child_errors` (its nested error tree).
+
 ## Accepted input sources
 
 - JSON sample payload
@@ -585,6 +681,20 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
   HTML completely standalone with no other page assets, pass `self_contained=True` instead — it
   implies `include_framework_assets=True` and inlines the CSS/JS directly into the returned HTML
   (no extra request of any kind, vendored or CDN).
+- To serve the vendored assets from your own routes instead, the top-level helpers are
+  `read_asset_text("assets/vendor/htmx/htmx.min.js")` (any file under the package's
+  `assets/vendor/`), `bootstrap_icons_css_tag(asset_mode=...)` / `bootstrap_icons_css_content()`
+  (the icon font used by `icon=`), and `wrap_with_schemaforms_markers(html)` (wraps a fragment
+  in `<!--- Start/End Pydantic-SchemaForms -->` comments; `render_form_html()` already does this
+  unless `include_html_markers=False`).
+- Other render options, all keyword arguments to `render_form_html()`/`render_form()`/
+  `validate()`: `include_submit_button=False` (a composite such as `DataTableLayout` renders its
+  own buttons), `method=`, `wizard_options=` (see "Composing complex forms"), `debug=True` (adds a
+  collapsed panel with the rendered HTML, model source, schema, and errors; also the only mode
+  that allows `csrf_mode="field-only"`), `show_timing=True` (prints the render time under the
+  form), `enable_logging=True` (logs it), `inject_layout_styles=False` (omit the small layout
+  support `<style>`). Any other keyword becomes an attribute on the `<form>` tag; `enctype` is set
+  to `multipart/form-data` automatically when the model (or a sub-form) has a `file` field.
 
 ## Layout guidance
 
@@ -602,7 +712,10 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
   Pydantic validates everything on submit.
 - Order groups by declaring fields in the order you want, or with `ui_order=`. Put required
   identity sections first and optional/advanced settings last.
-- Use the lower-level layout primitives (grid, cards, modal) only when required.
+- Use the lower-level layout primitives only when required: `GridLayout`,
+  `ResponsiveGridLayout`, `HorizontalLayout`, `VerticalLayout`, `CardLayout`, `TabLayout`,
+  `AccordionLayout`, `WizardLayout`, `ModalLayout` (all top-level exports) wrap already-rendered
+  HTML fragments; they are not how forms are composed — see `docs/layouts.md`.
 
 ## Framework route contract
 
@@ -697,6 +810,31 @@ the recommended default despite being listed first in some framework quick-refer
 model object itself (e.g. to pass to an ORM constructor), use `result.instance`, which is set
 when `result.is_valid` is `True`.
 
+## FormModel and ValidationResult at a glance
+
+`FormModel` adds to a Pydantic `BaseModel`:
+
+- `Model.render_form(data=None, errors=None, framework="bootstrap", *, submit_url, **render_kwargs)` and `render_form_async(...)` — same as `render_form_html(Model, ...)`; `layout=`, `wizard_options=`, `csrf_mode=` and the rest go in `render_kwargs`.
+- `Model.validate(data, *, submit_url=None, framework="bootstrap", **render_kwargs)` — the POST
+  path; `render_kwargs` such as `layout=`/`wizard_options=` are remembered for re-rendering.
+- `Model.as_api_model()` — the same fields without UI metadata, for JSON endpoints.
+- `Model.get_json_schema()` — the JSON schema with the `ui_*` keys kept (what the renderer reads);
+  `Model.model_json_schema()` is Pydantic's.
+- `Model.get_example_form_data()` — plausible sample values per field, handy for demo pages
+  and tests.
+- `Model.register_field(name, annotation=..., field=...)` — add a field at runtime (advanced:
+  forms whose fields come from configuration).
+
+`validate_form_data(Model, data)` is the function form of `Model.validate(data)` and also
+accepts a plain Pydantic `BaseModel` class. `EnhancedFormRenderer(framework=...,
+include_framework_assets=..., asset_mode=...)` with `.render_form_from_model(Model, data,
+errors, submit_url=..., layout=...)` is the object behind `render_form_html()`; use it to render
+several forms through one configured renderer.
+
+`ValidationResult` (from `validate()`): `is_valid`, `data`, `errors`, `error_list()`,
+`original_data`, `instance`, `render_with_errors(framework=None, *, submit_url=None, errors=None,
+**render_kwargs)` and `render_with_errors_async(...)`.
+
 ## Data and errors are nested JSON
 
 `FormModel.validate()` accepts the raw request form (`await request.form()` in FastAPI,
@@ -715,6 +853,14 @@ JSON API body (`MyForm.validate(await request.json())`). It always returns:
   under the top-level `"_errors"`.
 - `result.error_list()`: the same errors as a flat `[{"loc": ["pets", 1, "name"], "msg": ...}]`
   list, for API responses and logging.
+- `result.original_data`: the decoded submission before validation, nested like the model and
+  including fields that failed — what `render_with_errors()` uses for sticky values, and what to
+  hand to a rule-based `FormValidator` (see "Rule-based validation").
+- `result.instance`: the validated model object, set only when `result.is_valid`.
+
+`render_form_html(errors=...)` also accepts the older `{"errors": [{"name": "address.city",
+"message": "..."}]}` contract and a `SchemaFormValidationError` carrying it; both are converted to
+the tree. Prefer the tree in new code.
 
 Read errors defensively, since a node can be a string or a dict:
 `result.errors.get("address", {}).get("city")` only works when `address` has child errors.
@@ -750,6 +896,81 @@ these with the reserved `"_errors"` key in the errors passed to `render_form_htm
 an arbitrary field. `"_errors"` is where `.validate()` itself puts form-wide errors (such as a
 `@model_validator` failure), and the error summary shows it as "Form: ...".
 
+## Rule-based validation (FormValidator and the rule classes)
+
+`Field()` constraints and `@field_validator`/`@model_validator` are the default and cover most
+forms. The rule-based layer exists for three cases: a `FormBuilder` form with no typed model, a
+reusable rule set shared between the HTMX live-validation endpoint and the POST route, or a
+check that is awkward as a Pydantic validator (a DNS lookup, a cross-field rule you want to
+toggle per route). All names are top-level exports.
+
+| Rule | Checks |
+|---|---|
+| `RequiredRule(message=...)` | Non-empty |
+| `MinLengthRule(n)` / `MaxLengthRule(n)` | String length (there is no `LengthRule`) |
+| `RegexRule(pattern, message)` | Full-match against a pattern |
+| `EmailRule()` | Email format |
+| `EmailDeliverabilityRule()` | Format plus a DNS/MX lookup of the domain (`pip install pydantic-schemaforms[email]`); reserved names like `.invalid` fail without a lookup |
+| `PhoneRule()` | Phone-number shape |
+| `NumericRangeRule(min_value=, max_value=)` | Numeric bounds (keywords are `min_value`/`max_value`, not `min`/`max`) |
+| `DateRangeRule(min_date=, max_date=)` | Date bounds; accepts `date` objects or ISO strings |
+| `CustomRule(func, message)` | `func(value) -> bool` or `-> (bool, message)` |
+
+```python
+from datetime import date
+
+from pydantic_schemaforms import (
+    DateRangeRule,
+    EmailRule,
+    FormValidator,
+    NumericRangeRule,
+    PhoneRule,
+    RequiredRule,
+)
+
+rules = FormValidator()
+rules.field('phone').add_rule(RequiredRule('Phone is required')).add_rule(PhoneRule())
+rules.field('backup_email').add_rule(EmailRule())
+rules.field('budget').add_rule(NumericRangeRule(min_value=100, max_value=10000))
+rules.field('start_date').add_rule(DateRangeRule(min_date=date(2025, 1, 1)))
+
+
+def end_after_start(data: dict) -> tuple[bool, dict[str, str]]:
+    # Return one message per field (a string, not a list).
+    if data.get('end_date') and data.get('end_date') <= data.get('start_date', ''):
+        return False, {'end_date': 'End date must be after the start date'}
+    return True, {}
+
+
+rules.add_cross_field_rule(end_after_start)
+
+is_valid, errors = rules.validate({'phone': '123', 'budget': '50'})
+# errors == {"phone": ["Please enter a valid phone number"], "budget": ["Must be between 100 and 10000"]}
+```
+
+`FieldValidator("email").required().email()` is the fluent equivalent for one field, and
+`validator.to_schema()`/`ValidationSchema` bundle validators for `LiveValidator`. Two cross-field
+rules come ready-made: `CrossFieldRules.password_confirmation(password_field="password",
+confirm_field="confirm_password")` and `CrossFieldRules.date_range_validation(start_field,
+end_field)`, each returning a function for `add_cross_field_rule()`. For a reusable rule with
+client-side support, subclass `ValidationRule` (implement `rule_name`, `validate(value) ->
+(bool, message)` and optionally `get_client_validation()`); `CustomRule` is the shortcut when a
+plain function is enough.
+
+To run rules on a submission a `FormModel` also validates, give them `result.original_data` (the
+decoded submission, nested like the model) and merge the two error sets; `render_form_html()`
+accepts either shape in one tree:
+
+```python
+result = ProfileForm.validate(await request.form(), submit_url='/profile')
+rules_ok, rule_errors = rules.validate(result.original_data)
+if not (result.is_valid and rules_ok):
+    html_out = result.render_with_errors(errors={**rule_errors, **result.errors})
+```
+
+The example app's `/validation` page shows every rule class, every `Field()` constraint, and
+both validator decorators failing on one form.
+
 ## CSRF protection
 
 For any form that changes state (login, registration, anything behind auth, anything mutating
@@ -767,7 +988,8 @@ data), add CSRF protection instead of skipping it:
   before validating form data.
 - On mismatch, re-render with a form-level error (`errors={"_errors": "..."}`, see above — not a
   field error) and issue a fresh token; do not proceed to model validation.
-- csrf_mode accepts "off" (no token), "field-only" (renders a field but does not require server
+- csrf_mode accepts the `CSRFMode` enum (`CSRFMode.OFF`/`FIELD_ONLY`/`REQUIRED_PROVIDER`, a
+  top-level export) or its string values: "off" (no token), "field-only" (renders a field but does not require server
   verification — **only allowed when `debug=True`**; passing it explicitly outside `debug=True`
   raises `ValueError`, so never generate `csrf_mode="field-only"` for anything but a throwaway
   local demo route), and "required-provider" (renders + the app must verify it) — default to
@@ -934,8 +1156,7 @@ build add/remove JavaScript. Use the library's model_list support instead:
 
 When a form needs to import a CSV file into an editable/reviewable table (not just a single
 `file` upload field), do not hand-build the upload UI, per-row validation, or load/submit
-branching. Use `DataTableLayout` (`pydantic_schemaforms.datatable_layout.DataTableLayout`)
-instead:
+branching. Use `DataTableLayout` (a top-level export) instead:
 
 - Subclass `DataTableLayout` with one field per table column. A column declared with
   `FormField(..., input_type=...)` renders as a real editable widget per cell (e.g. a dropdown
@@ -947,6 +1168,16 @@ instead:
   `include_submit_button=False` to `render_form_html_async()` — the rendered field already
   includes its own file input and "Load CSV"/"Submit" buttons when `model_config["csv_upload"]`
   is on (the default).
+- Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
+  `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
+  `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
+  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`["csv",
+  "copy"]`; `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
+  `True` links a downloadable header-only CSV), and `style` (`{"striped", "bordered", "hover",
+  "compact"}` booleans). Per-row errors are `dict[int, dict[str, str]]` (row index →
+  field → message), the shape `ImportResult.row_errors` and `as_layout_value(row_errors=...)`
+  share; `RowError(row_index, errors, raw)` is the per-row record `parse_submitted_rows()`
+  returns.
 - `as_layout_value()`'s full signature is `as_layout_value(rows=None, row_errors=None, *,
   table_id=None, asset_mode="vendored", include_assets=True, reviewing=False, notice="",
   discard_url=None)`. The keyword-only ones control the built-in review UI specifically: pass
@@ -1020,8 +1251,8 @@ POST validation:
   `validator.render_field_with_live_validation(field_name, field_type=..., value=..., label=...)`.
 - Add one endpoint per validated field, e.g. `POST /validate/{field_name}`, that reads the
   submitted value, calls `validator.validate_field(field_name, value)`, and returns a small HTML
-  fragment with headers from `validation_response_headers(field_name, result.is_valid)` (import
-  from `pydantic_schemaforms.live_validation`, not the top-level package).
+  fragment with headers from `validation_response_headers(field_name, result.is_valid)` (a
+  top-level export).
 - Keep the real POST submit route validating with `FormModel.validate()` regardless — live
   validation is UX sugar; it never replaces server-side validation on submit (JS can be disabled
   or bypassed).
@@ -1147,6 +1378,10 @@ For complex requests, also provide:
   the generated route code — always `html(t'...')` for that (see the flagship worked example).
 - Any `DataTableLayout`/`ImportResult.action` handling covers all three values (`"load"`,
   `"submit"`, `"reload"`), not just `"load"`/`"submit"`.
+- Every `ui_options` key used appears in "Every widget option" for that widget — an unknown or
+  misspelled key is written onto the input as an HTML attribute, never reported.
+- Every `ui_element` value used appears in the "Supported ui_element values" table — an unknown
+  one silently renders a plain text input.
 
 ## Common mistakes to avoid
 
@@ -1172,7 +1407,7 @@ For complex requests, also provide:
   hand-written HTML — even after `.validate()` succeeds, use `html(t'...')` instead (structural
   XSS protection; see the flagship worked example's notes).
 - Do not use `TabbedLayout`, `VerticalLayout`/`HorizontalLayout` wrapper subclasses, `ListLayout`,
-  `SectionDesign`, or `FormDesign` — they were removed and raise `FormLayoutRemovedError`. Nest
+  `FormLayoutBase`, `SectionDesign`, or `FormDesign` — they were removed and raise `FormLayoutRemovedError`. Nest
   `FormModel`s as fields and pass `layout=` (see "Upgrading to nested forms").
 - Do not call `parse_nested_form_data()`, `dict(await request.form())`, or
   `request.form.to_dict()` before `.validate()`, and do not pass `flatten=` — pass the request
@@ -1184,6 +1419,17 @@ For complex requests, also provide:
 - Do not hand-build a CSV-import table's upload UI, per-row validation, or load/submit branching —
   use `DataTableLayout`/`handle_import_post()`, and handle all three `ImportResult.action` values
   (`"load"`, `"submit"`, `"reload"` — the last needs the same commit handling as `"submit"`).
+- Do not pass `max_rating` to `star_rating` (it takes `max_stars`), `min=`/`max=` to
+  `NumericRangeRule` (it takes `min_value=`/`max_value=`), or return a list of messages from a
+  cross-field rule (one string per field).
+- Do not use the exported `@form_validator` decorator for cross-field checks: nothing in the
+  library invokes a method decorated with it, so the check silently never runs. Use Pydantic's
+  `@model_validator(mode="after")` on the `FormModel` (its message lands in `"_errors"`), or
+  `FormValidator.add_cross_field_rule` for the rule-based layer.
+- Do not start new code from the compatibility surfaces that are still exported:
+  `ModernFormRenderer`, `FormDefinition`, `FormSection`, `LayoutComposer`, `LayoutFactory`, and
+  the `TextField`/`EmailField`/`SelectField`/... shorthands. Declare a `FormModel` with
+  `Field(ui_element=...)`; `FormBuilder` is the supported path for forms with no typed model.
 - Do not invent a new composite rendering mechanism for a table/wizard/repeating structure — use
   `LayoutEngine.layout_renderer`/`register_layout_renderer` (see "Library boundary" above), the
   same mechanism `DataTableLayout` and `model_list` are themselves built on.

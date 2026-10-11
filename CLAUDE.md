@@ -271,6 +271,60 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
   Wire names (`address.city`, `pets[0].name`) are internal: never make
   app-facing APIs or docs take or return them.
 
+## Examples must cover every layout, input, and validation
+
+The example app (`examples/`, run with `python examples/main.py`) is the
+library's live showcase and its manual test bed. **Every supported layout,
+input type, and kind of validation must be demonstrated there**, rendered
+on a reachable route, not just mentioned in a docstring or a doc page.
+A feature without a working example is not done.
+
+- **Layouts:** every value in `LAYOUTS` (`rendering/layout_engine.py`) is
+  selectable on a page; today that is `/layouts?layout=...` with
+  `LayoutDemonstrationForm`. A new layout value, or a new option such as
+  `wizard_options=`, gets wired into that page's switcher and a link on the
+  home page (`examples/templates/home.html`) in the same change -- a page you
+  can only reach by typing a query string is not demonstrated.
+- **Inputs:** every registered `ui_element` (`get_input_component_map()`,
+  including aliases), with every one of its widget options, is rendered on
+  the widget gallery (`/gallery`, `WidgetGalleryForm` in
+  `examples/shared_models.py`; its field defaults are its demo values), *and* listed in
+  `examples/input_type_reference.py` (the `/input-types` cheatsheet, which
+  is static text, so it alone does not count as rendered). After editing
+  that file, run `scripts/generate_input_type_reference.py` so the generated
+  section of `docs/recipes.md` stays in sync.
+- **Validation:** every kind of validation the library supports is shown
+  failing and re-rendering on an example form: each Pydantic `Field`
+  constraint (`min_length`, `max_length`, `ge`, `le`, `gt`, `lt`, `pattern`,
+  `multiple_of`), `@field_validator`, `@model_validator`
+  (form-wide `_errors`), errors inside sub-forms and list items, each
+  built-in rule class in `validation.py` (`RequiredRule`, `MinLengthRule`,
+  `MaxLengthRule`, `EmailRule`, `EmailDeliverabilityRule`, `PhoneRule`, `NumericRangeRule`,
+  `DateRangeRule`, `RegexRule`, `CustomRule`) and a cross-field rule via
+  `FormValidator.add_cross_field_rule` -- all on `/validation`
+  (`ValidationShowcaseForm`) -- plus live HTMX validation (`LiveValidator`,
+  `/live-validation`).
+- **Composites:** every `model_list` option (`/menu-order`, `/layouts`) and
+  every `DataTableLayout` `model_config` key (`/employees/import`,
+  `/employees/directory`).
+- **Both frameworks:** each example page must render under
+  `?style=bootstrap` and `?style=material`.
+- **Same change, same bar:** adding or changing a layout, input, or
+  validation feature includes its example in the same change. Examples
+  follow every rule in this file: top-level imports only (see "Public API
+  surface"), and HTML built from submitted data uses `html(t'...')` (see
+  the t-string rule).
+- **Enforced by tests:** `tests/test_examples_coverage.py` fails when a
+  registered input name, a widget option (read from each input class's own
+  `render()`/`__init__` signature), a layout, a wizard option, a Pydantic
+  constraint, or a validation rule class has no example; it also requests
+  every example route under both styles and posts a bad submission to every
+  POST route. `tests/playwright/test_example_pages.py` loads every example
+  page in a browser and fails on any JavaScript error -- inline scripts live
+  in Python strings, where a Python-style `# comment` silently kills the
+  whole script. Also look at the pages: an option that renders but shows
+  nothing visible (an unstyled variant, an empty value) is not demonstrated.
+
 ## Coding standards
 
 - No comments unless the WHY is non-obvious.

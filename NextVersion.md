@@ -165,7 +165,11 @@ Key changes to existing modules:
    `docs/recipes.md`/`docs/assets.md`).~~ Fixed: `validation_response_headers`,
    `wrap_with_schemaforms_markers`, `read_asset_text`, `bootstrap_icons_css_content` and
    `bootstrap_icons_css_tag` are top-level exports now and every example imports them there.
-6. **Release:** bump to 26.4.0 with BumpCalver, set the CHANGELOG date, regenerate the docs
+6. **`@form_validator` (top-level export, `schema_form.py`) is dead:** it marks a method with
+   `_is_form_validator`, but nothing in the package reads that flag, so decorated checks never
+   run. The AI instructions now warn against it; remove the export (or wire it up) in a later
+   release.
+7. **Release:** bump to 26.4.0 with BumpCalver, set the CHANGELOG date, regenerate the docs
    copies (`make create-docs-local`), run the Playwright tests, then open a PR from
    `feature/nested-forms`. Per CLAUDE.md's attribution rules, the commit and PR need the
    Co-Authored-By / "Generated with Claude Code" lines.
