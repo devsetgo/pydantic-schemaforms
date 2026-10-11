@@ -744,7 +744,7 @@ class LayoutEngine:
         # sub-form must not draw its own titled card inside it. Columns have no heading.
         in_group = mode in ('tabbed', 'accordion', 'wizard')
 
-        rendered: list[dict[str, str]] = []
+        rendered: list[dict[str, Any]] = []
         active_index: int | None = None
         for index, (title, fields) in enumerate(groups):
             parts = []

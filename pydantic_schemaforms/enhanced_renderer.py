@@ -219,7 +219,7 @@ class EnhancedFormRenderer:
         self,
         model_cls: type[FormModel],
         data: dict[str, Any] | None = None,
-        errors: dict[str, Any] | None = None,
+        errors: dict[Any, Any] | None = None,
         *,
         submit_url: str = '/submit',
         method: str = 'POST',
@@ -253,7 +253,7 @@ class EnhancedFormRenderer:
         error_summary_markup = self._render_error_summary(errors)
 
         default_form_class = self._theme.form_class() or self.config.get('form_class', '')
-        form_attrs = {
+        form_attrs: dict[str, Any] = {
             'method': method,
             'action': submit_url,
             'class': default_form_class,
@@ -375,7 +375,7 @@ class EnhancedFormRenderer:
         self,
         model_cls: type[FormModel],
         data: dict[str, Any] | None = None,
-        errors: dict[str, Any] | None = None,
+        errors: dict[Any, Any] | None = None,
         layout: str = 'vertical',
         **kwargs: Any,
     ) -> str:
@@ -406,7 +406,7 @@ class EnhancedFormRenderer:
         self,
         model_cls: type[FormModel],
         data: dict[str, Any] | None = None,
-        errors: dict[str, Any] | None = None,
+        errors: dict[Any, Any] | None = None,
         *,
         submit_url: str = '/submit',
         method: str = 'POST',
@@ -550,7 +550,7 @@ class EnhancedFormRenderer:
             parts.append(str(token).replace('_', ' ').strip().title())
         return ' — '.join(parts)
 
-    def _render_error_summary(self, errors: dict[str, Any]) -> str:
+    def _render_error_summary(self, errors: dict[Any, Any]) -> str:
         """Render a framework-aware top-level summary for validation errors."""
 
         flattened = list(iter_errors(errors))

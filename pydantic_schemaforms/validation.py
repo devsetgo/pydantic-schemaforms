@@ -986,7 +986,7 @@ class ValidationResult:
         self,
         is_valid: bool,
         data: dict[str, Any] | None = None,
-        errors: dict[str, Any] | None = None,
+        errors: dict[Any, Any] | None = None,
         form_model_cls: Any | None = None,
         original_data: dict[str, Any] | None = None,
         submit_url: str | None = None,
@@ -995,7 +995,7 @@ class ValidationResult:
     ):
         self.is_valid = is_valid
         self.data: dict[str, Any] = data or {}
-        self.errors: dict[str, Any] = errors or {}
+        self.errors: dict[Any, Any] = errors or {}
         self.form_model_cls = form_model_cls
         self.original_data: dict[str, Any] = original_data or {}
         self._submit_url = submit_url

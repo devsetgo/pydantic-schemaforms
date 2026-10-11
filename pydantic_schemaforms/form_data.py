@@ -274,7 +274,8 @@ def flatten_nested_data(data: Any, *, _prefix: str = '') -> dict[str, Any]:
 def _multi_items(raw: Any) -> list[tuple[str, Any]] | None:
     multi_items = getattr(raw, 'multi_items', None)
     if callable(multi_items):
-        return list(multi_items())
+        pairs: Any = multi_items()  # callable() narrows to `-> object`; the method yields pairs
+        return list(pairs)
     if hasattr(raw, 'getlist') and hasattr(raw, 'keys'):
         return [(key, value) for key in raw.keys() for value in raw.getlist(key)]
     return None

@@ -23,7 +23,7 @@ Rules:
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any
 
 ErrorTree = dict[str | int, Any]
@@ -64,12 +64,12 @@ def _descend(parent: dict[Any, Any], key: Any) -> dict[Any, Any]:
     return child
 
 
-def build_error_tree(errors: list[Mapping[str, Any]]) -> ErrorTree:
+def build_error_tree(errors: Sequence[Mapping[str, Any]]) -> ErrorTree:
     """Turn Pydantic's ``ValidationError.errors()`` list into a nested error tree."""
 
     tree: ErrorTree = {}
     for error in errors:
-        loc = tuple(error.get('loc') or ())
+        loc: tuple[Any, ...] = tuple(error.get('loc') or ())
         message = _friendly_message(error)
         if not loc:
             tree.setdefault(CONTAINER_ERROR_KEY, message)
