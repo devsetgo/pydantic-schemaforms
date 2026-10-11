@@ -324,12 +324,14 @@ class SelectInputBase(BaseInput):
                 )
 
             if icon:
-                field_parts.append('<div class="input-group">')
-                field_parts.append(
-                    html(t'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>')
+                field_parts.extend(
+                    [
+                        '<div class="input-group">',
+                        html(t'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>'),
+                        input_html,
+                        _CLOSE_DIV,
+                    ]
                 )
-                field_parts.append(input_html)
-                field_parts.append(_CLOSE_DIV)
             else:
                 field_parts.append(input_html)
 
@@ -345,9 +347,13 @@ class SelectInputBase(BaseInput):
             field_parts.append('<div class="md-field">')
 
             if icon:
-                field_parts.append('<div class="md-field-with-icon">')
-                field_parts.append(html(t'<span class="md-icon material-icons">{icon}</span>'))
-                field_parts.append('<div class="md-input-wrapper">')
+                field_parts.extend(
+                    [
+                        '<div class="md-field-with-icon">',
+                        html(t'<span class="md-icon material-icons">{icon}</span>'),
+                        '<div class="md-input-wrapper">',
+                    ]
+                )
 
             # A floating label (.md-floating-label, absolutely positioned on
             # top of the control until CSS ":not(:placeholder-shown)"/":focus"
@@ -384,11 +390,15 @@ class SelectInputBase(BaseInput):
                 field_parts.append(html(t'<label for="{field_id}">{label}</label>'))
 
             if icon:
-                field_parts.append(
-                    html(t'<div class="input-with-icon"><span class="input-icon">{icon}</span>')
+                field_parts.extend(
+                    [
+                        html(
+                            t'<div class="input-with-icon"><span class="input-icon">{icon}</span>'
+                        ),
+                        input_html,
+                        _CLOSE_DIV,
+                    ]
                 )
-                field_parts.append(input_html)
-                field_parts.append(_CLOSE_DIV)
             else:
                 field_parts.append(input_html)
 
