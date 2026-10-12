@@ -558,8 +558,8 @@ class EnhancedFormRenderer:
 
         item_parts = []
         for loc, message in flattened:
-            # NOSONAR: read via {humanized_field} in the t-string below, which
-            # Sonar's parser doesn't see.
+            # NOSONAR comment below: humanized_field is read via
+            # {humanized_field} interpolation in the t-string below.
             humanized_field = self._humanize_error_loc(loc)  # NOSONAR
             item_parts.append(
                 render_html(t'<li><strong>{humanized_field}:</strong> {message}</li>')

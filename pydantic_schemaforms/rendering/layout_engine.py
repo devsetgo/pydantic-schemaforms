@@ -826,7 +826,7 @@ class LayoutEngine:
         handler_name = ui_info.get('layout_handler') or ui_info.get('layout_renderer')
         handler = self._custom_renderers.get(str(handler_name)) if handler_name else None
         if handler is None:
-            # NOSONAR: read via {title} in the t-string below (Sonar can't see it).
+            # NOSONAR comment below: title is read via {title} interpolation below.
             title = field_schema.get('title', field_name.replace('_', ' ').title())  # NOSONAR
             return html(t"""<div class="layout-field-unknown alert alert-warning">
     <p>Layout field "{title}" has no registered layout_handler.</p>
