@@ -48,7 +48,9 @@ SECURITY_ELEMENTS = {'csrf', 'captcha', 'honeypot'}
 
 def _example_source() -> str:
     return '\n'.join(
-        path.read_text() for path in EXAMPLES_DIR.glob('*.py') if path.name != CHEATSHEET
+        path.read_text(encoding='utf-8')
+        for path in EXAMPLES_DIR.glob('*.py')
+        if path.name != CHEATSHEET
     )
 
 

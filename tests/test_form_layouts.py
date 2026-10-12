@@ -83,6 +83,7 @@ def test_library_never_imports_the_examples_package() -> None:
     offenders = [
         str(path.relative_to(package_root))
         for path in package_root.rglob('*.py')
-        if 'from examples' in path.read_text() or 'import examples' in path.read_text()
+        if 'from examples' in path.read_text(encoding='utf-8')
+        or 'import examples' in path.read_text(encoding='utf-8')
     ]
     assert offenders == []

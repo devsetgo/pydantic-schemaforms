@@ -635,7 +635,7 @@ class TestEmailDeliverabilityRule:
         from pathlib import Path
 
         pyproject = Path(__file__).parent.parent / 'pyproject.toml'
-        data = tomllib.loads(pyproject.read_text())
+        data = tomllib.loads(pyproject.read_text(encoding='utf-8'))
         extras = data['project']['optional-dependencies']
         assert 'email' in extras
         assert 'email-dns' in extras
