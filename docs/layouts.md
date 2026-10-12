@@ -1,29 +1,39 @@
 # Layouts
 
-There are two layers of layout support:
+To build a form out of several models (sections, tabs, columns, accordion
+panels), nest `FormModel`s as fields of a parent `FormModel` and choose a
+`layout=`. That is covered in full in `docs/complex_forms.md`; this page is the
+reference for the layout values and the lower-level layout primitives.
 
-1) **Top-level layout modes** (`layout=` when you render the form)
-2) **Composable layout primitives** (horizontal/grid/tabs/etc) for advanced composition
+## Form layouts (`layout=`)
 
-## 1) Top-level layout modes
+Pass `layout=` to `render_form_html()`, `FormModel.render_form()`, or
+`FormModel.validate()` (so `render_with_errors()` keeps it).
 
-Pass `layout=` to `render_form_html()` / `FormModel.render_form()`.
-
-Supported values:
-
-- `vertical` (default)
-- `tabbed`: groups fields into tabs automatically
-- `side-by-side`: renders fields in two-column rows
+| Value | Result |
+|---|---|
+| `vertical` (default) | Fields stacked; each sub-form is a titled section |
+| `tabbed` | The parent's plain fields in a first tab, then one tab per sub-form |
+| `side-by-side` | The same groups as columns |
+| `accordion` | The same groups as collapsible panels |
+| `wizard` | The same groups as steps shown one at a time, with Back/Next |
 
 ```python
 from pydantic_schemaforms import render_form_html
 
-html = render_form_html(MyFormModel, layout="side-by-side", submit_url="/submit")
+html = render_form_html(ProfileForm, layout="tabbed", submit_url="/profile")
 ```
 
-## 2) Layout primitives (advanced)
+`tabbed`, `side-by-side`, `accordion`, and `wizard` arrange *sub-forms*: fields typed as
+another `FormModel`, a `list[FormModel]`, or a registered composite such as
+`DataTableLayout`. On a form without any, they raise a `ValueError` asking you
+to split the form into nested models. Groups follow field declaration order;
+`ui_order` overrides it.
 
-The module `pydantic_schemaforms.rendering.layout_engine` contains reusable wrappers:
+## Layout primitives (advanced)
+
+Reusable HTML wrappers for composing arbitrary, already-rendered content, all
+exported from the top-level package:
 
 - `HorizontalLayout`
 - `VerticalLayout`
@@ -41,7 +51,7 @@ A convenience factory is provided:
 Example:
 
 ```python
-from pydantic_schemaforms.rendering.layout_engine import Layout
+from pydantic_schemaforms import Layout
 
 layout = Layout.create_grid(
     "<div>Left</div>",
@@ -56,37 +66,21 @@ html = layout.render(framework="bootstrap", renderer=my_renderer, data={}, error
 `LayoutComposer` (aliased as `Layout`) also exposes `create_horizontal()`, `create_vertical()`,
 `responsive_grid()`, `create_tabs()`, and `create_accordion()`.
 
-## Schema-defined layout fields
+## Custom composite fields (`input_type="layout"`)
 
-A schema field with `ui_element="layout"` is treated as a layout field.
-
-At render time, the renderer will:
-
-- Call a custom layout renderer if you configured one (`layout_handler` / `layout_renderer`)
-- Or, if the field value is a `BaseLayout` instance, call its `.render()`
-
-This is intentionally an advanced feature (useful for complex nested forms and custom layout engines).
-
-## Registering custom layout renderers
-
-You can register a named layout renderer:
+A field with `input_type="layout"` and a `layout_handler` is rendered by a
+renderer you register. This is the extension point `DataTableLayout` uses; it
+is for genuinely new controls, not for composing forms (nest models instead).
 
 ```python
-from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms import LayoutEngine
 
 
+@LayoutEngine.layout_renderer("my_layout", builtin=False)
 def my_layout_renderer(field_name, field_schema, value, ui_info, context, engine):
     return "<div>Custom layout output</div>"
-
-
-LayoutEngine.register_layout_renderer("my_layout", my_layout_renderer)
 ```
 
-Then set `ui_options` (or schema `ui`) to reference it:
-
-- `layout_handler="my_layout"` or `layout_renderer="my_layout"`
-
-## Notes
-
-- `tabbed` grouping is heuristic-based (field-name keywords). If you need deterministic tabbing, use explicit layout fields or custom renderers.
-- Layout fields can include nested form markup via `EnhancedFormRenderer.render_form_fields_only()`.
+Then declare the field with `input_type="layout", layout_handler="my_layout"`.
+The renderer receives the field's own error message as `context.error` and its
+nested errors as `context.child_errors`. See `docs/plugin_hooks.md`.

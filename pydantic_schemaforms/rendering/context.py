@@ -1,6 +1,6 @@
 """Render context helpers shared across renderer implementations."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -8,16 +8,17 @@ from typing import Any
 class RenderContext:
     """Immutable payload passed through render helpers to avoid shared state.
 
-    error/required_fields/all_errors default empty and are only populated
+    error/required_fields/child_errors default empty and are only populated
     per-field, right before dispatching to a registered ui_element renderer
-    (see LayoutEngine.get_renderer_for_element) -- a composite renderer that
-    needs its own field's error/required-ness/nested errors (e.g. model_list)
-    reads them from here instead of the LayoutRenderer signature growing new
-    positional params every registrant would have to accept.
+    (see LayoutEngine.get_renderer_for_element) -- a composite renderer reads
+    its own field's message (`error`), required-ness, and the error sub-tree
+    for its children (`child_errors`, same shape as the field's value; see
+    `pydantic_schemaforms.error_tree`) from here instead of the
+    LayoutRenderer signature growing new positional params.
     """
 
     form_data: dict[str, Any]
     schema_defs: dict[str, Any]
     error: str | None = None
     required_fields: tuple[str, ...] = ()
-    all_errors: dict[str, Any] | None = None
+    child_errors: dict[Any, Any] = field(default_factory=dict)

@@ -725,30 +725,6 @@ class FormValidator:
 
         return is_form_valid, all_errors
 
-    def validate_pydantic_model(
-        self, model_class: type, data: dict[str, Any]
-    ) -> tuple[bool, dict[str, list[str]]]:
-        """
-        Validate data against a Pydantic model.
-
-        Returns:
-            Tuple of (is_valid, dict_of_field_errors)
-        """
-        try:
-            model_class(**data)
-            return True, {}
-        except ValidationError as e:
-            errors = {}
-            for error in e.errors():
-                field_name = error['loc'][0] if error['loc'] else 'general'
-                error_message = error['msg']
-
-                if field_name not in errors:
-                    errors[field_name] = []
-                errors[field_name].append(error_message)
-
-            return False, errors
-
     def generate_client_validation_script(self) -> str:
         """Generate complete JavaScript validation script."""
         field_functions = []
@@ -1010,7 +986,7 @@ class ValidationResult:
         self,
         is_valid: bool,
         data: dict[str, Any] | None = None,
-        errors: dict[str, Any] | None = None,
+        errors: dict[Any, Any] | None = None,
         form_model_cls: Any | None = None,
         original_data: dict[str, Any] | None = None,
         submit_url: str | None = None,
@@ -1019,12 +995,19 @@ class ValidationResult:
     ):
         self.is_valid = is_valid
         self.data: dict[str, Any] = data or {}
-        self.errors: dict[str, Any] = errors or {}
+        self.errors: dict[Any, Any] = errors or {}
         self.form_model_cls = form_model_cls
         self.original_data: dict[str, Any] = original_data or {}
         self._submit_url = submit_url
         self._framework = framework
         self._render_kwargs: dict[str, Any] = render_kwargs or {}
+        self.instance: Any | None = None
+
+    def error_list(self) -> list[dict[str, Any]]:
+        """Flat ``[{"loc": [...], "msg": ...}]`` view of ``errors`` (summaries, HTMX, APIs)."""
+        from .error_tree import error_list
+
+        return error_list(self.errors)
 
     def render_with_errors(
         self,
@@ -1034,6 +1017,9 @@ class ValidationResult:
         **kwargs: Any,
     ) -> str:
         """Render the form with validation errors displayed.
+
+        Pass ``errors=`` to show a different tree, e.g. this result's errors
+        merged with a rule-based ``FormValidator``'s.
 
         Uses the submit_url and framework stored at validate() time when not
         supplied explicitly, so the common case needs no arguments at all.
@@ -1049,7 +1035,7 @@ class ValidationResult:
 
         return self.form_model_cls.render_form(
             data=self.original_data,
-            errors=self.errors,
+            errors=kwargs.pop('errors', self.errors),
             framework=framework or self._framework,
             submit_url=url,
             **{**self._render_kwargs, **kwargs},
@@ -1089,7 +1075,9 @@ class ValidationResult:
         return f'ValidationResult(valid=False, errors={self.errors})'
 
 
-def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any]) -> dict[str, Any]:
+def _coerce_html_form_values(
+    data: dict[str, Any], model_fields: dict[str, Any], *, from_form: bool = False
+) -> dict[str, Any]:
     """Recursively repair two HTML-form-submission quirks Pydantic won't:
 
     1. A blank date/datetime/time/number input submits the empty string, not
@@ -1112,14 +1100,14 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
        Pydantic's own ISO parser still gets a try (keeping JSON/API callers
        that submit plain ISO strings working regardless of what display
        format the HTML form uses).
+    4. (``from_form`` only) A repeating sub-form whose items were all removed
+       submits no inputs at all, so the field falls back to its default and
+       Pydantic, which never validates defaults, skips ``min_length``. An
+       absent ``list[Model]`` field is submitted as ``[]`` instead.
     """
     result = dict(data)
 
     for field_name, field_info in model_fields.items():
-        if field_name not in result:
-            continue
-
-        value = result[field_name]
         annotation = field_info.annotation
         union_args = get_args(annotation) if get_origin(annotation) is Union else ()
         non_none_types = (
@@ -1135,6 +1123,13 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
             else None
         )
 
+        if field_name not in result:
+            if from_form and list_item_model is not None:
+                result[field_name] = []
+            continue
+
+        value = result[field_name]
+
         if list_type is not None and list_item_model is None:
             if value not in (None, '') and not isinstance(value, list):
                 result[field_name] = [value]
@@ -1143,7 +1138,9 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
         if isinstance(value, dict):
             for candidate in non_none_types:
                 if isinstance(candidate, type) and issubclass(candidate, BaseModel):
-                    result[field_name] = _coerce_html_form_values(value, candidate.model_fields)
+                    result[field_name] = _coerce_html_form_values(
+                        value, candidate.model_fields, from_form=from_form
+                    )
                     break
             continue
 
@@ -1151,7 +1148,9 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
             if list_item_model is not None:
                 item_fields = list_item_model.model_fields
                 result[field_name] = [
-                    _coerce_html_form_values(item, item_fields) if isinstance(item, dict) else item
+                    _coerce_html_form_values(item, item_fields, from_form=from_form)
+                    if isinstance(item, dict)
+                    else item
                     for item in value
                 ]
             continue
@@ -1203,205 +1202,57 @@ def _coerce_html_form_values(data: dict[str, Any], model_fields: dict[str, Any])
     return result
 
 
-def validate_form_data(
-    form_model_class: type[Any], data: dict[str, Any], *, flatten: bool = False
-) -> ValidationResult:
-    """
-    Validate form data against a Pydantic model.
+def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResult:
+    """Validate a submission against a form model.
 
     Args:
-        form_model_class: The Pydantic model class to validate against
-        data: Dictionary of form data to validate. If ``flatten`` is True,
-            this may use bracket+dot flat keys (e.g. ``"pets[0].name"``);
-            already-nested data is also accepted (a no-op passthrough).
-        flatten: When True, ``data`` is un-flattened via
-            ``parse_nested_form_data`` before validation, and the returned
-            ``ValidationResult.data`` uses flat bracket+dot keys instead of
-            nested dicts/lists.
+        form_model_class: The FormModel (or plain Pydantic model) to validate against.
+        data: The raw request form (Starlette ``FormData``, Werkzeug
+            ``MultiDict``, a list of ``(key, value)`` pairs) or an already
+            nested dict. See ``form_data.decode_submission``.
 
     Returns:
-        ValidationResult with is_valid, data, and errors
+        A ``ValidationResult`` whose ``data`` is nested JSON mirroring the
+        model and whose ``errors`` is a nested error tree (see ``error_tree``).
 
     Note:
-        Extra keys in ``data`` that are not declared on the model are silently
-        stripped from the validated output. This follows Pydantic's default
-        ``extra='ignore'`` behaviour and is intentional for HTML form submissions,
-        which may include browser-injected fields (CSRF tokens, honeypots, etc.).
+        Keys not declared on the model (CSRF tokens, honeypots, ...) are
+        dropped from ``result.data``, following Pydantic's default
+        ``extra='ignore'``.
     """
-    from .form_data import flatten_nested_data, parse_nested_form_data
+    from .error_tree import build_error_tree
+    from .form_data import decode_submission, is_form_submission
 
-    if flatten:
-        data = parse_nested_form_data(data, coerce_values=False)
-
+    nested = decode_submission(data)
     runtime_model = (
         form_model_class.get_runtime_model()
         if hasattr(form_model_class, 'get_runtime_model')
         else form_model_class
     )
 
+    coerced = _coerce_html_form_values(
+        nested,
+        getattr(runtime_model, 'model_fields', {}) or {},
+        from_form=is_form_submission(data),
+    )
     try:
-        # Create instance to validate
-        coerced_data = _coerce_html_form_values(
-            data, getattr(runtime_model, 'model_fields', {}) or {}
-        )
-        validated_instance = runtime_model(**coerced_data)
-
-        # Convert to dict for consistent return format
-        validated_data = validated_instance.model_dump()
-
-        model_fields = getattr(runtime_model, 'model_fields', {}) or {}
-        layout_field_names = []
-        for field_name, field_info in model_fields.items():
-            extra = getattr(field_info, 'json_schema_extra', None) or {}
-            if not isinstance(extra, dict):
-                continue
-            ui_element = extra.get('ui_element') or extra.get('input_type')
-            if ui_element == 'layout':
-                layout_field_names.append(field_name)
-
-        if layout_field_names:
-            from .rendering.layout_engine import get_nested_form_data
-
-            layout_errors: dict[str, str] = {}
-
-            for layout_field_name in layout_field_names:
-                layout_value = getattr(validated_instance, layout_field_name, None)
-                nested_layout_data = get_nested_form_data(layout_field_name, data, layout_value)
-                if nested_layout_data:
-                    is_nested_payload = any(
-                        isinstance(value, dict) for value in nested_layout_data.values()
-                    )
-
-                    # Validate the nested payload against the layout's underlying FormModel(s)
-                    # so constraints like `min_length` and required fields are enforced.
-                    nested_result: ValidationResult | None = None
-
-                    validate_method = getattr(layout_value, 'validate', None)
-                    if callable(validate_method):
-                        try:
-                            nested_result = validate_method(nested_layout_data)  # type: ignore[assignment]
-                        except Exception:
-                            nested_result = None
-
-                    # Fallback: validate each nested form class if available.
-                    if nested_result is None and hasattr(layout_value, '_get_forms'):
-                        get_forms = getattr(layout_value, '_get_forms', None)
-                        if callable(get_forms):
-                            combined_data: dict[str, Any] = {}
-                            combined_errors: dict[str, str] = {}
-                            is_valid = True
-
-                            try:
-                                for form_cls in get_forms() or []:  # type: ignore[union-attr]
-                                    child = validate_form_data(form_cls, nested_layout_data)
-                                    if not child.is_valid:
-                                        is_valid = False
-                                        combined_errors.update(child.errors)
-                                    combined_data.update(child.data)
-                            except Exception:
-                                # If introspection validation fails, fall back to accepting payload.
-                                combined_data = {}
-                                combined_errors = {}
-                                is_valid = True
-
-                            nested_result = ValidationResult(
-                                is_valid=is_valid,
-                                data=combined_data or nested_layout_data,
-                                errors=combined_errors,
-                            )
-
-                    if nested_result is not None:
-                        # Preserve the schema-derived nested payload shape (e.g. tabbed layouts)
-                        # while still preferring coerced values for flat layouts.
-                        validated_data[layout_field_name] = nested_layout_data
-                        if not is_nested_payload and nested_result.data:
-                            validated_data[layout_field_name] = nested_result.data
-                        if not nested_result.is_valid:
-                            layout_errors.update(nested_result.errors)
-                    else:
-                        validated_data[layout_field_name] = nested_layout_data
-
-                    continue
-
-                layout_payload = validated_data.get(layout_field_name)
-                if isinstance(layout_payload, dict) and layout_payload.get('layout') is True:
-                    validated_data.pop(layout_field_name, None)
-
-            if layout_errors:
-                return ValidationResult(
-                    is_valid=False,
-                    data=flatten_nested_data(validated_data) if flatten else validated_data,
-                    errors=layout_errors,
-                    form_model_cls=form_model_class,
-                    original_data=data,
-                )
-
-        return ValidationResult(
-            is_valid=True,
-            data=flatten_nested_data(validated_data) if flatten else validated_data,
-            form_model_cls=form_model_class,
-            original_data=data,
-        )
-
-    except ValidationError as e:
-        errors = {}
-        for error in e.errors():
-            # Create more specific field paths for nested data
-            if error['loc']:
-                # Handle nested field locations like ('pets', 0, 'weight')
-                field_path_parts = []
-                for loc_part in error['loc']:
-                    if isinstance(loc_part, int):
-                        # This is an array index
-                        field_path_parts.append(f'[{loc_part}]')
-                    else:
-                        if field_path_parts:
-                            field_path_parts.append(f'.{loc_part}')
-                        else:
-                            field_path_parts.append(str(loc_part))
-
-                field_name = ''.join(field_path_parts)
-
-                # Create more user-friendly error messages
-                error_message = error['msg']
-                error_type = error['type']
-
-                # Enhance error messages with context
-                if 'greater_than_equal' in error_type:
-                    limit = error.get('ctx', {}).get('ge')
-                    if limit is not None:
-                        error_message = f'Must be {limit} or greater'
-                elif 'less_than_equal' in error_type:
-                    limit = error.get('ctx', {}).get('le')
-                    if limit is not None:
-                        error_message = f'Must be {limit} or less'
-                elif 'min_length' in error_type:
-                    min_length = error.get('ctx', {}).get('min_length')
-                    if min_length is not None:
-                        error_message = f'Must be at least {min_length} characters'
-                elif 'max_length' in error_type:
-                    max_length = error.get('ctx', {}).get('max_length')
-                    if max_length is not None:
-                        error_message = f'Must be no more than {max_length} characters'
-
-                errors[field_name] = error_message
-            else:
-                errors['general'] = error['msg']
-
+        instance = runtime_model(**coerced)
+    except ValidationError as exc:
         return ValidationResult(
             is_valid=False,
-            errors=errors,
+            errors=build_error_tree(exc.errors()),
             form_model_cls=form_model_class,
-            original_data=data,
+            original_data=nested,
         )
 
-    except Exception as e:
-        return ValidationResult(
-            is_valid=False,
-            errors={'general': str(e)},
-            form_model_cls=form_model_class,
-            original_data=data,
-        )
+    result = ValidationResult(
+        is_valid=True,
+        data=instance.model_dump(),
+        form_model_cls=form_model_class,
+        original_data=nested,
+    )
+    result.instance = instance
+    return result
 
 
 # Export validation rules for easy access

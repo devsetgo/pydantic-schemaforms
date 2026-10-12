@@ -1,10 +1,11 @@
 from examples.nested_forms_example import ComprehensiveTabbedForm, create_comprehensive_sample_data
 from examples.shared_models import CompanyOrganizationForm, create_sample_nested_data
+from pydantic_schemaforms.form_data import flatten_nested_data
 from pydantic_schemaforms.validation import validate_form_data
 
 
-def test_company_org_deep_leaf_validation_path_includes_indices():
-    """Deeply nested validation should fail and report a precise field path."""
+def test_company_org_deep_leaf_error_mirrors_the_data_path():
+    """A deep failure is reported at the same path the value lives at."""
 
     data = create_sample_nested_data()
     # Break a deep leaf: departments -> teams -> members -> name (min_length=2)
@@ -13,12 +14,14 @@ def test_company_org_deep_leaf_validation_path_includes_indices():
     result = validate_form_data(CompanyOrganizationForm, data)
 
     assert result.is_valid is False
-    # Ensure the error key preserves nested path + list indices.
-    assert 'departments[0].teams[0].members[0].name' in result.errors
+    assert result.errors['departments'][0]['teams'][0]['members'][0]['name']
+    assert {'loc': ['departments', 0, 'teams', 0, 'members', 0, 'name']}.items() <= (
+        result.error_list()[0].items()
+    )
 
 
-def test_comprehensive_tabbed_form_validates_deep_organization_tab():
-    """Layout-wrapped forms must still validate deeply nested organization data."""
+def test_comprehensive_tabbed_form_errors_are_namespaced_by_sub_form():
+    """Each sub-form's errors live under its own field, so tabs never collide."""
 
     data = create_comprehensive_sample_data()
     data['organization']['departments'][0]['teams'][0]['members'][0]['name'] = 'A'
@@ -26,34 +29,23 @@ def test_comprehensive_tabbed_form_validates_deep_organization_tab():
     result = validate_form_data(ComprehensiveTabbedForm, data)
 
     assert result.is_valid is False
-    # Layout validation delegates to validate_form_data(), so the nested
-    # path + list indices survive through the layout wrapper too.
-    assert 'departments[0].teams[0].members[0].name' in result.errors
+    assert list(result.errors) == ['organization']
+    assert result.errors['organization']['departments'][0]['teams'][0]['members'][0]['name']
 
 
-def test_company_org_flatten_true_produces_bracket_dot_output():
-    """flatten=True on a deeply nested form yields flat bracket+dot keys."""
-
-    data = create_sample_nested_data()
-
-    result = validate_form_data(CompanyOrganizationForm, data, flatten=True)
-
-    assert result.is_valid is True
-    assert (
-        result.data['departments[0].teams[0].members[0].name']
-        == data['departments'][0]['teams'][0]['members'][0]['name']
-    )
-    assert 'departments' not in result.data
-
-
-def test_comprehensive_tabbed_form_flatten_true_does_not_crash():
-    """flatten=True combined with a layout (tabbed) field produces a flat dict."""
+def test_comprehensive_tabbed_form_accepts_the_wire_format():
+    """The flat input names the browser submits decode into the same nested data."""
 
     data = create_comprehensive_sample_data()
+    wire = list(flatten_nested_data(data).items())
 
-    result = validate_form_data(ComprehensiveTabbedForm, data, flatten=True)
+    from_wire = validate_form_data(ComprehensiveTabbedForm, wire)
+    from_json = validate_form_data(ComprehensiveTabbedForm, data)
 
-    assert isinstance(result.data, dict)
-    assert all(
-        not isinstance(value, (dict, list)) or value in ({}, []) for value in result.data.values()
+    assert from_wire.is_valid
+    assert from_json.is_valid
+    assert from_wire.data == from_json.data
+    assert (
+        from_wire.data['organization']['departments'][0]['teams'][0]['members'][0]['name']
+        == (data['organization']['departments'][0]['teams'][0]['members'][0]['name'])
     )

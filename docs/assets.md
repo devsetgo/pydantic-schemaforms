@@ -37,9 +37,9 @@ from pydantic_schemaforms import render_form_html
 
 html = render_form_html(
     MyForm,
-    submit_url="/submit",
-    framework="bootstrap",
-    asset_mode="vendored",
+    submit_url='/submit',
+    framework='bootstrap',
+    asset_mode='vendored',
     include_framework_assets=True,  # inline Bootstrap CSS/JS for self-contained HTML
 )
 ```
@@ -51,9 +51,9 @@ from pydantic_schemaforms.render_form import render_form_html as render_form_htm
 
 html = render_form_html_legacy(
     MyForm,
-    submit_url="/submit",
+    submit_url='/submit',
     include_htmx_script=True,  # injects HTMX
-    include_imask=True,         # injects IMask for masked inputs
+    include_imask=True,  # injects IMask for masked inputs
 )
 ```
 
@@ -67,14 +67,14 @@ Use `self_contained=True` as a shorthand for `include_framework_assets=True, ass
 Use this when you want to render multiple forms with the same configuration, or when you need finer control over the rendering pipeline.
 
 ```python
-from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
+from pydantic_schemaforms import EnhancedFormRenderer
 
 renderer = EnhancedFormRenderer(
-    framework="bootstrap",
+    framework='bootstrap',
     include_framework_assets=True,
-    asset_mode="vendored",
+    asset_mode='vendored',
 )
-html = renderer.render_form_from_model(MyForm, submit_url="/submit")
+html = renderer.render_form_from_model(MyForm, submit_url='/submit')
 ```
 
 ### Modern/builder path: `FormBuilder` + `render_form_page()`
@@ -87,20 +87,23 @@ File: `pydantic_schemaforms/integration/builder.py`
 Example:
 
 ```python
-from pydantic_schemaforms.integration.builder import FormBuilder, render_form_page
+from pydantic_schemaforms import FormBuilder, render_form_page
 
-builder = FormBuilder(
-    framework="bootstrap",
-    include_framework_assets=True,
-    asset_mode="vendored",
-).text_input("ssn", "SSN")
+builder = (
+    FormBuilder(
+        framework='bootstrap',
+        include_framework_assets=True,
+        asset_mode='vendored',
+    )
+    .text_input('ssn', 'SSN')
+    .set_form_attributes(submit_url='/signup')
+)
 
 page = render_form_page(
     builder,
-    submit_url="/submit",
-    title="Signup",
+    title='Signup',
     include_framework_assets=True,
-    asset_mode="vendored",
+    asset_mode='vendored',
 )
 ```
 
@@ -137,11 +140,12 @@ them.  Options:
 
   ```python
   # In your FastAPI/Flask app
-  from pydantic_schemaforms.assets.runtime import bootstrap_icons_css_content
+  from pydantic_schemaforms import bootstrap_icons_css_content
 
-  @app.get("/vendor/bootstrap-icons.css")
+
+  @app.get('/vendor/bootstrap-icons.css')
   async def bootstrap_icons():
-      return Response(content=bootstrap_icons_css_content(), media_type="text/css")
+      return Response(content=bootstrap_icons_css_content(), media_type='text/css')
   ```
 
   Then in your base template:
@@ -158,19 +162,19 @@ them.  Options:
 ### Runtime API
 
 ```python
-from pydantic_schemaforms.assets.runtime import (
-    bootstrap_icons_css_tag,     # returns <style>…</style> / <link …/> / ""
-    bootstrap_icons_css_content, # returns raw CSS string with woff2 embedded
+from pydantic_schemaforms import (
+    bootstrap_icons_css_tag,  # returns <style>…</style> / <link …/> / ""
+    bootstrap_icons_css_content,  # returns raw CSS string with woff2 embedded
 )
 
 # Inline vendored CSS (default)
-tag = bootstrap_icons_css_tag(asset_mode="vendored")
+tag = bootstrap_icons_css_tag(asset_mode='vendored')
 
 # Pinned CDN link
-tag = bootstrap_icons_css_tag(asset_mode="cdn")
+tag = bootstrap_icons_css_tag(asset_mode='cdn')
 
 # Nothing (you manage the asset yourself)
-tag = bootstrap_icons_css_tag(asset_mode="none")
+tag = bootstrap_icons_css_tag(asset_mode='none')
 
 # Raw CSS for serving via your own HTTP endpoint
 css = bootstrap_icons_css_content()

@@ -28,7 +28,7 @@ def _load_build_script():
 
 # ui_element values that are handled outside the input registry (special-cased
 # in the field renderer) rather than backed by a BaseInput subclass.
-_STRUCTURAL_UI_ELEMENTS = {'model_list', 'layout'}
+_STRUCTURAL_UI_ELEMENTS = {'model_list', 'nested_model', 'layout'}
 
 
 def _authoritative_table_tokens(instructions: str) -> set[str]:

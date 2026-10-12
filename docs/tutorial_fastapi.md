@@ -41,7 +41,7 @@ Create a file named `main.py`:
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
-from pydantic_schemaforms import Field, FormModel, render_form_html_async
+from pydantic_schemaforms import Field, FormModel, html, render_form_html_async
 
 
 class User(FormModel):
@@ -55,10 +55,10 @@ app = FastAPI(title="SchemaForms Demo")
 @app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
 async def user_form(request: Request):
     if request.method == "POST":
-        submitted = dict(await request.form())
-        result = User.validate(submitted, submit_url="/user")
+        result = User.validate(await request.form(), submit_url="/user")
         if result.is_valid:
-            return f"<p>Hello {result.data['name']}!</p>"
+            # html(t"...") escapes the submitted name; never use an f-string for form data.
+            return str(html(t"<p>Hello {result.data['name']}!</p>"))
         form_html = await result.render_with_errors_async()
     else:
         form_html = await render_form_html_async(User, submit_url="/user")
@@ -100,7 +100,7 @@ Example (Flask):
 ```python
 from flask import Flask, request
 
-from pydantic_schemaforms import Field, FormModel, render_form_html
+from pydantic_schemaforms import Field, FormModel, html, render_form_html
 
 
 class User(FormModel):
@@ -114,9 +114,9 @@ app = Flask(__name__)
 @app.route("/user", methods=["GET", "POST"])
 def user_form():
     if request.method == "POST":
-        result = User.validate(request.form.to_dict(), submit_url="/user")
+        result = User.validate(request.form, submit_url="/user")
         if result.is_valid:
-            return f"Hello {result.data['name']}!"
+            return str(html(t"Hello {result.data['name']}!"))
         return result.render_with_errors()
 
     return render_form_html(User, submit_url="/user")
@@ -154,7 +154,7 @@ preserved.
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
-from pydantic_schemaforms import Field, FormModel, parse_nested_form_data
+from pydantic_schemaforms import Field, FormModel, html
 
 app = FastAPI()
 
@@ -197,10 +197,10 @@ async def contact_get():
 
 @app.post("/contact", response_class=HTMLResponse)
 async def contact_post(request: Request):
-    data = parse_nested_form_data(await request.form())
-    result = ContactForm.validate(data, submit_url="/contact")
+    result = ContactForm.validate(await request.form(), submit_url="/contact")
     if result.is_valid:
-        return f"<p>Thank you, {result.data['name']}!</p>"
+        # html(t"...") escapes the submitted name; never build HTML from form data with an f-string.
+        return HTMLResponse(str(html(t"<p>Thank you, {result.data['name']}!</p>")))
     return HTMLResponse(await result.render_with_errors_async())
 
 

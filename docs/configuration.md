@@ -100,15 +100,20 @@ See also: [docs/assets.md](assets.md)
 
 At the top level, pass `layout=` to the renderer:
 
-- `"vertical"` (default)
-- `"tabbed"`
-- `"side-by-side"`
+- `"vertical"` (default): sub-forms render as stacked sections
+- `"tabbed"`: one tab per sub-form, plus a first tab for the parent's plain fields
+- `"side-by-side"`: the same groups as columns
+- `"accordion"`: the same groups as collapsible panels
+- `"wizard"`: the same groups as steps with Back/Next (options via `wizard_options=`)
 
 ```python
-html = render_form_html(RegistrationForm, layout="tabbed", submit_url="/register")
+html = render_form_html(ProfileForm, layout="tabbed", submit_url="/profile")
 ```
 
-For advanced composition (tabs/accordion/grid wrappers and schema-defined layout fields), see [docs/layouts.md](layouts.md).
+The grouped layouts arrange sub-forms (fields typed as another `FormModel` or a
+list of them), so they need a form built from nested models; see
+[docs/complex_forms.md](complex_forms.md). For lower-level layout primitives,
+see [docs/layouts.md](layouts.md).
 
 ## Field UI metadata
 

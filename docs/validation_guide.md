@@ -24,13 +24,13 @@ The canonical response object for all validation operations (server-side or HTMX
 from pydantic_schemaforms import ValidationResponse
 
 response = ValidationResponse(
-    field_name="email",
+    field_name='email',
     is_valid=True,
-    errors=[],                          # List of error messages
-    warnings=[],                        # List of warnings (non-blocking)
-    suggestions=["Example: user@example.com"],  # Helpful hints
-    value="user@example.com",           # The validated value
-    formatted_value="user@example.com"  # Optionally formatted (e.g., lowercase)
+    errors=[],  # List of error messages
+    warnings=[],  # List of warnings (non-blocking)
+    suggestions=['Example: user@example.com'],  # Helpful hints
+    value='user@example.com',  # The validated value
+    formatted_value='user@example.com',  # Optionally formatted (e.g., lowercase)
 )
 
 # Serialize for HTMX responses
@@ -43,20 +43,18 @@ dict_response = response.to_dict()
 Build reusable validation schemas from individual field validators:
 
 ```python
-from pydantic_schemaforms.validation import ValidationSchema, FieldValidator
+from pydantic_schemaforms import EmailRule, FieldValidator, MinLengthRule, ValidationSchema
 
 # Create a schema with multiple fields
 schema = ValidationSchema()
 
 # Add field validators
-email_validator = FieldValidator("email")
+email_validator = FieldValidator('email')
 email_validator.add_rule(EmailRule())
 schema.add_field(email_validator)
 
-password_validator = FieldValidator("password")
-password_validator.add_rule(
-    LengthRule(min=8, message="Minimum 8 characters required")
-)
+password_validator = FieldValidator('password')
+password_validator.add_rule(MinLengthRule(8, message='Minimum 8 characters required'))
 schema.add_field(password_validator)
 
 # Build HTMX live validator from schema
@@ -68,33 +66,31 @@ live_validator = schema.build_live_validator()
 Validate entire forms with both field-level and cross-field rules:
 
 ```python
-from pydantic_schemaforms.validation import FormValidator
+from pydantic_schemaforms import EmailRule, FormValidator, NumericRangeRule
 
 form_validator = FormValidator()
 
 # Add field validators
-form_validator.field("age").add_rule(NumericRangeRule(min=0, max=150))
-form_validator.field("email").add_rule(EmailRule())
+form_validator.field('age').add_rule(NumericRangeRule(min_value=0, max_value=150))
+form_validator.field('email').add_rule(EmailRule())
+
 
 # Add cross-field validation
 def validate_age_and_consent(data):
-    age = data.get("age")
-    consent = data.get("parental_consent")
+    age = data.get('age')
+    consent = data.get('parental_consent')
 
     if age is not None and age < 18 and not consent:
-        return False, {
-            "parental_consent": ["Parental consent required for users under 18"]
-        }
+        return False, {'parental_consent': 'Parental consent required for users under 18'}
     return True, {}
+
 
 form_validator.add_cross_field_rule(validate_age_and_consent)
 
 # Validate form data
-is_valid, errors = form_validator.validate({
-    "age": 16,
-    "email": "teen@example.com",
-    "parental_consent": False
-})
+is_valid, errors = form_validator.validate(
+    {'age': 16, 'email': 'teen@example.com', 'parental_consent': False}
+)
 ```
 
 ---
@@ -110,51 +106,53 @@ The recommended way to validate submitted data is `FormModel.validate()`. Pass `
 ```python
 from pydantic_schemaforms import FormModel, FormField
 
+
 class RegistrationForm(FormModel):
-    username: str = FormField(
-        title="Username",
-        min_length=3,
-        max_length=20
-    )
-    email: str = FormField(
-        title="Email Address",
-        input_type="email"
-    )
-    password: str = FormField(
-        title="Password",
-        input_type="password",
-        min_length=8
-    )
+    username: str = FormField(title='Username', min_length=3, max_length=20)
+    email: str = FormField(title='Email Address', input_type='email')
+    password: str = FormField(title='Password', input_type='password', min_length=8)
+
 
 # Validate — stores submit_url so render_with_errors() needs no args
 result = RegistrationForm.validate(
-    {"username": "alice", "email": "alice@example.com", "password": "SecurePass123!"},
-    submit_url="/register",
+    {'username': 'alice', 'email': 'alice@example.com', 'password': 'SecurePass123!'},
+    submit_url='/register',
 )
 
 if result.is_valid:
-    print(f"Valid! Data: {result.data}")
+    print(f'Valid! Data: {result.data}')
 else:
-    print(f"Invalid! Errors: {result.errors}")
-    html = result.render_with_errors()          # sync (Flask / scripts)
+    print(f'Invalid! Errors: {result.errors}')
+    html = result.render_with_errors()  # sync (Flask / scripts)
     # html = await result.render_with_errors_async()  # async (FastAPI)
 ```
 
 `result` always exposes `.is_valid`, `.data`, and `.errors` regardless of the path.
 
-By default `.data` mirrors the underlying Pydantic model's shape — nested
-`BaseModel`/`List[BaseModel]` fields come back as nested dicts/lists, matching
-`model_dump()`. Pass `flatten=True` to get (and accept) bracket+dot flat keys
-instead (e.g. `"pets[0].name"`), the same notation used for `model_list` HTML
-field names:
+`.data` mirrors the underlying Pydantic model's shape: sub-forms and lists
+of sub-forms come back as nested dicts and lists. Pass the raw request form
+(`await request.form()` / `request.form`) or a nested dict; the library decodes
+the HTML input names itself.
+
+`.errors` has the same shape as `.data`:
 
 ```python
-result = RegistrationForm.validate(data, submit_url="/register", flatten=True)
-# result.data uses flat "field[0].sub" keys instead of nested dicts/lists
+result.errors == {
+    'address': {'city': 'String should have at least 2 characters'},
+    'pets': {1: {'age': 'Must be 0 or greater'}},  # list items keyed by index
+    '_errors': 'Passwords do not match',  # form-wide (@model_validator)
+}
+result.error_list()  # [{"loc": ["address", "city"], "msg": "..."}, ...]
 ```
 
-See [Nested vs. flat form data](recipes.md#nested-vs-flat-form-data) in the
-recipes guide for a full nested-model example, and
+A node is either a message or a dict of child errors. A message about a whole
+list or sub-form is a plain string, or sits under `"_errors"` when that
+container also has child errors. Pass your own form-level message the same
+way: `errors={"_errors": "Session expired"}`. `docs/complex_forms.md` has the
+full rules.
+
+See [Submitted data and errors are nested JSON](recipes.md#submitted-data-and-errors-are-nested-json)
+in the recipes guide for a full nested-model example, and
 [JSON Schema output](recipes.md#json-schema-output) for
 `get_pydantic_json_schema()`, which returns the standard, `$defs`-aware JSON
 Schema of the form's underlying Pydantic model (as opposed to
@@ -176,28 +174,37 @@ if result.is_valid:
 
 ### Using FormValidator with Pydantic Models
 
+To run rule-based checks on a submission that a `FormModel` also validates,
+use `result.original_data` (the decoded submission, nested like the model)
+and merge the two error sets; `render_form_html()` takes both shapes. The
+example app's `/validation` page does exactly this:
+
+```python
+result = ProfileForm.validate(await request.form(), submit_url='/profile')
+rules_ok, rule_errors = rules.validate(result.original_data)
+if not (result.is_valid and rules_ok):
+    return HTMLResponse(result.render_with_errors(errors={**rule_errors, **result.errors}))
+```
+
+### Adding custom rules to a FormValidator
+
 For validation with additional custom rules:
 
 ```python
-from pydantic_schemaforms.validation import FormValidator
+from pydantic_schemaforms import EmailRule, FormValidator, MaxLengthRule, MinLengthRule
 
 form_validator = FormValidator()
-form_validator.field("username").add_rule(LengthRule(min=3, max=20))
-form_validator.field("email").add_rule(EmailRule())
-form_validator.field("password").add_rule(LengthRule(min=8))
+form_validator.field('username').add_rule(MinLengthRule(3)).add_rule(MaxLengthRule(20))
+form_validator.field('email').add_rule(EmailRule())
+form_validator.field('password').add_rule(MinLengthRule(8))
 
 # Validate and get results
-is_valid, errors = form_validator.validate({
-    "username": "alice",
-    "email": "alice@example.com",
-    "password": "SecurePass123!"
-})
-
-# Also validate against Pydantic model
-is_valid, errors = form_validator.validate_pydantic_model(
-    RegistrationForm,
-    request_data
+is_valid, errors = form_validator.validate(
+    {'username': 'alice', 'email': 'alice@example.com', 'password': 'SecurePass123!'}
 )
+
+# Pydantic constraints are checked separately, through the model:
+result = RegistrationForm.validate(request_data, submit_url='/register')
 ```
 
 ---
@@ -209,31 +216,37 @@ is_valid, errors = form_validator.validate_pydantic_model(
 Use `LiveValidator` for server-side validation triggered via HTMX on blur/input/change events:
 
 ```python
-from pydantic_schemaforms import LiveValidator, HTMXValidationConfig, FieldValidator, EmailRule, MinLengthRule
+from pydantic_schemaforms import (
+    LiveValidator,
+    HTMXValidationConfig,
+    FieldValidator,
+    EmailRule,
+    MinLengthRule,
+)
 
 # Configure HTMX behavior — any combination of triggers may be enabled.
 # When multiple are True, the generated hx-trigger combines them:
 #   validate_on_blur=True + validate_on_change=True  →  hx-trigger="blur, change"
 config = HTMXValidationConfig(
-    validate_on_blur=True,           # Validate when field loses focus
-    validate_on_input=False,         # Validate on every keystroke (with debounce)
-    validate_on_change=True,         # Validate on value change (select, checkbox)
-    debounce_ms=300,                 # Debounce delay for validate_on_input
-    show_success_indicators=True,    # Apply success_class on valid input
-    success_class="is-valid",        # Bootstrap / custom CSS classes
-    error_class="is-invalid",
-    warning_class="has-warning",
-    loading_class="is-validating",
+    validate_on_blur=True,  # Validate when field loses focus
+    validate_on_input=False,  # Validate on every keystroke (with debounce)
+    validate_on_change=True,  # Validate on value change (select, checkbox)
+    debounce_ms=300,  # Debounce delay for validate_on_input
+    show_success_indicators=True,  # Apply success_class on valid input
+    success_class='is-valid',  # Bootstrap / custom CSS classes
+    error_class='is-invalid',
+    warning_class='has-warning',
+    loading_class='is-validating',
 )
 
 live_validator = LiveValidator(config)
 
 # Register field validators
-email_fv = FieldValidator("email")
+email_fv = FieldValidator('email')
 email_fv.add_rule(EmailRule())
 live_validator.register_field_validator(email_fv)
 
-password_fv = FieldValidator("password")
+password_fv = FieldValidator('password')
 password_fv.add_rule(MinLengthRule(8))
 live_validator.register_field_validator(password_fv)
 ```
@@ -274,19 +287,26 @@ the bundled JS uses to apply `is-valid` / `is-invalid` CSS classes to the input.
 ```python
 from fastapi import Request
 from fastapi.responses import HTMLResponse
-from pydantic_schemaforms import LiveValidator, HTMXValidationConfig, FieldValidator, EmailRule, MinLengthRule
-from pydantic_schemaforms.live_validation import validation_response_headers
+from pydantic_schemaforms import (
+    LiveValidator,
+    HTMXValidationConfig,
+    FieldValidator,
+    EmailRule,
+    MinLengthRule,
+)
+from pydantic_schemaforms import validation_response_headers
 
 live_validator = LiveValidator(HTMXValidationConfig(validate_on_blur=True))
 
-email_fv = FieldValidator("email")
+email_fv = FieldValidator('email')
 email_fv.add_rule(EmailRule())
 live_validator.register_field_validator(email_fv)
 
-@app.post("/validate/{field_name}", response_class=HTMLResponse)
+
+@app.post('/validate/{field_name}', response_class=HTMLResponse)
 async def htmx_validate(field_name: str, request: Request):
     data = await request.form()
-    value = str(data.get(field_name, ""))
+    value = str(data.get(field_name, ''))
     result = live_validator.validate_field(field_name, value)
 
     if result.is_valid:
@@ -315,11 +335,11 @@ validator_script = live_validator.render_htmx_script()
 
 ```python
 from pydantic_schemaforms import FieldValidator, EmailRule
-from pydantic_schemaforms.validation import ValidationSchema
+from pydantic_schemaforms import ValidationSchema
 
 schema = ValidationSchema()
 
-email_fv = FieldValidator("email")
+email_fv = FieldValidator('email')
 email_fv.add_rule(EmailRule())
 schema.add_field(email_fv)
 
@@ -357,8 +377,9 @@ register, or keep in sync with the field:
 ```python
 from pydantic_schemaforms import DeliverableEmailStr, Field, FormModel
 
+
 class SignupForm(FormModel):
-    email: DeliverableEmailStr = Field(..., title="Email")
+    email: DeliverableEmailStr = Field(..., title='Email')
 ```
 
 That one line is enough for `FormModel.validate()`, `as_api_model()`'s JSON endpoint, and
@@ -396,7 +417,7 @@ directly if you need a custom `timeout`, a fixed error `message`, or you're buil
 field imperatively rather than through a typed model:
 
 ```python
-from pydantic_schemaforms.validation import EmailDeliverabilityRule
+from pydantic_schemaforms import EmailDeliverabilityRule
 
 EmailDeliverabilityRule(message="We couldn't verify that domain accepts mail.", timeout=5)
 ```
@@ -409,7 +430,7 @@ a `FormModel` type annotation:
 ```python
 from pydantic_schemaforms import FieldValidator
 
-email_fv = FieldValidator("email").required().email(check_deliverability=True, dns_timeout=5)
+email_fv = FieldValidator('email').required().email(check_deliverability=True, dns_timeout=5)
 ```
 
 If `email-validator` isn't installed, `EmailDeliverabilityRule.validate()` (and so
@@ -428,6 +449,7 @@ lookup, ...), checking as-you-type (debounced) instead of only on blur:
 class ContactForm(FormModel):
     name: str = Field(..., min_length=2)
     email: DeliverableEmailStr = Field(...)
+
 
 live_validator = LiveValidator.for_model(ContactForm, debounce_ms=600)  # the whole setup
 ```
@@ -448,18 +470,20 @@ required fields are absent:
 from pydantic import BaseModel
 from pydantic_schemaforms import LiveValidator
 
+
 class ProfileModel(BaseModel):
     name: str
     age: int
+
 
 live_validator = LiveValidator()
 live_validator.register_model_validator(ProfileModel)
 
 # Only the age field's own constraints are checked — name being absent is irrelevant
-result = live_validator.validate_field("age", "not-a-number")
+result = live_validator.validate_field('age', 'not-a-number')
 # result.is_valid == False, result.errors == ["Input should be a valid integer..."]
 
-result = live_validator.validate_field("age", 25)
+result = live_validator.validate_field('age', 25)
 # result.is_valid == True
 ```
 
@@ -472,35 +496,32 @@ result = live_validator.validate_field("age", 25)
 Validate fields that depend on other fields:
 
 ```python
-from pydantic_schemaforms.validation import FormValidator
+from pydantic_schemaforms import FormValidator, NumericRangeRule, RequiredRule
 
 form_validator = FormValidator()
 
 # Individual field rules
-form_validator.field("age").add_rule(NumericRangeRule(min=0, max=150))
-form_validator.field("parental_consent").add_rule(RequiredRule())
+form_validator.field('age').add_rule(NumericRangeRule(min_value=0, max_value=150))
+form_validator.field('parental_consent').add_rule(RequiredRule())
+
 
 # Cross-field validation
 def validate_minor_consent(data):
     """Minors must have parental consent."""
-    age = data.get("age")
-    consent = data.get("parental_consent")
+    age = data.get('age')
+    consent = data.get('parental_consent')
 
     if age is not None and age < 18 and not consent:
         return False, {
-            "parental_consent": [
-                "Parental consent is required for users under 18 years old"
-            ]
+            'parental_consent': 'Parental consent is required for users under 18 years old'
         }
     return True, {}
+
 
 form_validator.add_cross_field_rule(validate_minor_consent)
 
 # Validate returns both field and cross-field errors
-is_valid, errors = form_validator.validate({
-    "age": 16,
-    "parental_consent": False
-})
+is_valid, errors = form_validator.validate({'age': 16, 'parental_consent': False})
 
 # errors = {"parental_consent": ["Parental consent is required..."]}
 ```
@@ -512,16 +533,15 @@ Validate a field only if another field has a certain value:
 ```python
 def validate_emergency_contact(data):
     """Emergency contact required if no direct phone provided."""
-    has_phone = bool(data.get("phone"))
-    has_emergency_contact = bool(data.get("emergency_contact"))
+    has_phone = bool(data.get('phone'))
+    has_emergency_contact = bool(data.get('emergency_contact'))
 
     if not has_phone and not has_emergency_contact:
         return False, {
-            "emergency_contact": [
-                "Either a phone number or emergency contact is required"
-            ]
+            'emergency_contact': 'Either a phone number or emergency contact is required'
         }
     return True, {}
+
 
 form_validator.add_cross_field_rule(validate_emergency_contact)
 ```
@@ -531,14 +551,13 @@ form_validator.add_cross_field_rule(validate_emergency_contact)
 ```python
 def validate_passwords_match(data):
     """Ensure password and confirm_password match."""
-    password = data.get("password", "")
-    confirm = data.get("confirm_password", "")
+    password = data.get('password', '')
+    confirm = data.get('confirm_password', '')
 
     if password and confirm and password != confirm:
-        return False, {
-            "confirm_password": ["Passwords do not match"]
-        }
+        return False, {'confirm_password': 'Passwords do not match'}
     return True, {}
+
 
 form_validator.add_cross_field_rule(validate_passwords_match)
 ```
@@ -550,14 +569,14 @@ form_validator.add_cross_field_rule(validate_passwords_match)
 ### Email Validator
 
 ```python
-from pydantic_schemaforms.validation import create_email_validator
+from pydantic_schemaforms import create_email_validator
 
 email_validator = create_email_validator()
 
-response = email_validator("user@example.com")
+response = email_validator('user@example.com')
 # ValidationResponse(field_name="email", is_valid=True, ...)
 
-response = email_validator("invalid-email")
+response = email_validator('invalid-email')
 # ValidationResponse(
 #     field_name="email",
 #     is_valid=False,
@@ -570,11 +589,11 @@ response = email_validator("invalid-email")
 ### Password Strength Validator
 
 ```python
-from pydantic_schemaforms.validation import create_password_strength_validator
+from pydantic_schemaforms import create_password_strength_validator
 
 password_validator = create_password_strength_validator(min_length=8)
 
-response = password_validator("WeakPass")
+response = password_validator('WeakPass')
 # ValidationResponse(
 #     field_name="password",
 #     is_valid=False,
@@ -590,7 +609,7 @@ response = password_validator("WeakPass")
 #     value="WeakPass"
 # )
 
-response = password_validator("SecurePass123!")
+response = password_validator('SecurePass123!')
 # ValidationResponse(field_name="password", is_valid=True, ...)
 ```
 
@@ -609,7 +628,7 @@ The validation system includes pre-built rules for common patterns:
 | `MaxLengthRule(n)` | Maximum string length | Username ≤ 20 chars |
 | `EmailRule()` | Valid email format | Email field |
 | `PhoneRule()` | Valid phone number | Phone field |
-| `NumericRangeRule(min, max)` | Numeric value range | Age 0–150 |
+| `NumericRangeRule(min_value, max_value)` | Numeric value range | Age 0–150 |
 | `DateRangeRule(min_date, max_date)` | Date within range | Future date only |
 | `RegexRule(pattern)` | Custom regex pattern | Custom format validation |
 | `CustomRule(func)` | Custom validation function | Complex logic |
@@ -618,28 +637,28 @@ The validation system includes pre-built rules for common patterns:
 
 ```python
 from pydantic_schemaforms import FieldValidator, EmailRule, MinLengthRule, MaxLengthRule
-from pydantic_schemaforms.validation import RequiredRule, NumericRangeRule, FormValidator
+from pydantic_schemaforms import RequiredRule, NumericRangeRule, FormValidator
 
 # Email field validator
-email_validator = FieldValidator("email")
-email_validator.add_rule(RequiredRule("Email is required"))
+email_validator = FieldValidator('email')
+email_validator.add_rule(RequiredRule('Email is required'))
 email_validator.add_rule(EmailRule())
 
 # Username field validator (fluent API: .min_length() / .max_length())
-username_validator = FieldValidator("username")
-username_validator.add_rule(RequiredRule("Username is required"))
-username_validator.add_rule(MinLengthRule(3, message="Minimum 3 characters"))
-username_validator.add_rule(MaxLengthRule(20, message="Maximum 20 characters"))
+username_validator = FieldValidator('username')
+username_validator.add_rule(RequiredRule('Username is required'))
+username_validator.add_rule(MinLengthRule(3, message='Minimum 3 characters'))
+username_validator.add_rule(MaxLengthRule(20, message='Maximum 20 characters'))
 
 # Age field validator
-age_validator = FieldValidator("age")
-age_validator.add_rule(NumericRangeRule(min=13, max=150, message="Must be 13+"))
+age_validator = FieldValidator('age')
+age_validator.add_rule(NumericRangeRule(min_value=13, max_value=150, message='Must be 13+'))
 
 # Use in form validator
 form_validator = FormValidator()
-form_validator.field("email").add_rule(EmailRule())
-form_validator.field("username").add_rule(MinLengthRule(3)).add_rule(MaxLengthRule(20))
-form_validator.field("age").add_rule(NumericRangeRule(min=13, max=150))
+form_validator.field('email').add_rule(EmailRule())
+form_validator.field('username').add_rule(MinLengthRule(3)).add_rule(MaxLengthRule(20))
+form_validator.field('age').add_rule(NumericRangeRule(min_value=13, max_value=150))
 ```
 
 ---
@@ -655,63 +674,68 @@ Here's a complete registration form with both server validation and real-time HT
 ```python
 from pydantic_schemaforms import FormModel, FormField
 
+
 class RegistrationForm(FormModel):
     username: str = FormField(
-        title="Username",
-        input_type="text",
+        title='Username',
+        input_type='text',
         min_length=3,
         max_length=20,
-        help_text="3–20 alphanumeric characters"
+        help_text='3–20 alphanumeric characters',
     )
 
     email: str = FormField(
-        title="Email Address",
-        input_type="email",
-        help_text="We'll send a confirmation link"
+        title='Email Address', input_type='email', help_text="We'll send a confirmation link"
     )
 
     password: str = FormField(
-        title="Password",
-        input_type="password",
+        title='Password',
+        input_type='password',
         min_length=8,
-        help_text="Must be at least 8 characters"
+        help_text='Must be at least 8 characters',
     )
 
     confirm_password: str = FormField(
-        title="Confirm Password",
-        input_type="password",
-        help_text="Re-enter your password"
+        title='Confirm Password', input_type='password', help_text='Re-enter your password'
     )
 
     age: int = FormField(
-        title="Age",
-        input_type="number",
-        ge=13,
-        le=150,
-        help_text="Must be 13 or older"
+        title='Age', input_type='number', ge=13, le=150, help_text='Must be 13 or older'
     )
 ```
 
 #### 2. Set Up Validation
 
 ```python
-from pydantic_schemaforms import FieldValidator, EmailRule, MinLengthRule, MaxLengthRule, LiveValidator
-from pydantic_schemaforms.validation import FormValidator, NumericRangeRule
+from pydantic_schemaforms import (
+    FieldValidator,
+    EmailRule,
+    MinLengthRule,
+    MaxLengthRule,
+    LiveValidator,
+)
+from pydantic_schemaforms import FormValidator, NumericRangeRule
 
 # Create form validator with all rules
 form_validator = FormValidator()
 
 # Field validators
-form_validator.field("username").add_rule(MinLengthRule(3, message="3–20 characters")).add_rule(MaxLengthRule(20))
-form_validator.field("email").add_rule(EmailRule())
-form_validator.field("password").add_rule(MinLengthRule(8, message="Minimum 8 characters"))
-form_validator.field("age").add_rule(NumericRangeRule(min=13, max=150, message="Must be 13+"))
+form_validator.field('username').add_rule(MinLengthRule(3, message='3–20 characters')).add_rule(
+    MaxLengthRule(20)
+)
+form_validator.field('email').add_rule(EmailRule())
+form_validator.field('password').add_rule(MinLengthRule(8, message='Minimum 8 characters'))
+form_validator.field('age').add_rule(
+    NumericRangeRule(min_value=13, max_value=150, message='Must be 13+')
+)
+
 
 # Cross-field rules
 def validate_passwords_match(data):
-    if data.get("password") != data.get("confirm_password"):
-        return False, {"confirm_password": ["Passwords do not match"]}
+    if data.get('password') != data.get('confirm_password'):
+        return False, {'confirm_password': 'Passwords do not match'}
     return True, {}
+
 
 form_validator.add_cross_field_rule(validate_passwords_match)
 
@@ -734,33 +758,34 @@ from pydantic_schemaforms import render_form_html_async
 
 app = FastAPI()
 
-@app.get("/register", response_class=HTMLResponse)
+
+@app.get('/register', response_class=HTMLResponse)
 async def show_registration():
     return await render_form_html_async(
-        RegistrationForm, framework="bootstrap", submit_url="/register"
+        RegistrationForm, framework='bootstrap', submit_url='/register'
     )
 
-@app.post("/register", response_class=HTMLResponse)
+
+@app.post('/register', response_class=HTMLResponse)
 async def handle_registration(request: Request):
     form_data = await request.form()
     result = RegistrationForm.validate(
-        dict(form_data), submit_url="/register", framework="bootstrap"
+        dict(form_data), submit_url='/register', framework='bootstrap'
     )
 
     if result.is_valid:
-        return JSONResponse({
-            "success": True,
-            "message": "Registration successful!"
-        })
+        return JSONResponse({'success': True, 'message': 'Registration successful!'})
     else:
         return await result.render_with_errors_async()
 
+
 # HTMX validation — one parameterised endpoint handles every field
-@app.post("/validate/{field_name}", response_class=HTMLResponse)
+@app.post('/validate/{field_name}', response_class=HTMLResponse)
 async def htmx_validate(field_name: str, request: Request):
-    from pydantic_schemaforms.live_validation import validation_response_headers
+    from pydantic_schemaforms import validation_response_headers
+
     data = await request.form()
-    value = str(data.get(field_name, ""))
+    value = str(data.get(field_name, ''))
     result = live_validator.validate_field(field_name, value)
 
     if result.is_valid:
@@ -825,88 +850,59 @@ The test suite includes comprehensive coverage. Use these patterns in your tests
 
 ```python
 import pytest
-from pydantic_schemaforms.validation import (
+from pydantic_schemaforms import (
     FormValidator,
     FieldValidator,
     EmailRule,
-    ValidationResponse
+    ValidationResponse,
 )
 
+
 def test_email_validation():
-    email_validator = FieldValidator("email")
+    email_validator = FieldValidator('email')
     email_validator.add_rule(EmailRule())
 
     # Valid email
-    response = email_validator.validate("user@example.com")
+    response = email_validator.validate('user@example.com')
     assert response.is_valid
     assert response.errors == []
 
     # Invalid email
-    response = email_validator.validate("not-an-email")
+    response = email_validator.validate('not-an-email')
     assert not response.is_valid
     assert len(response.errors) > 0
+
 
 def test_cross_field_validation():
     form_validator = FormValidator()
 
     def validate_passwords(data):
-        if data.get("password") != data.get("confirm"):
-            return False, {"confirm": ["Passwords don't match"]}
+        if data.get('password') != data.get('confirm'):
+            return False, {'confirm': "Passwords don't match"}
         return True, {}
 
     form_validator.add_cross_field_rule(validate_passwords)
 
-    is_valid, errors = form_validator.validate({
-        "password": "secret",
-        "confirm": "different"
-    })
+    is_valid, errors = form_validator.validate({'password': 'secret', 'confirm': 'different'})
 
     assert not is_valid
-    assert "confirm" in errors
+    assert 'confirm' in errors
 ```
 
 ---
 
-## Layout Demo & Tab Rendering Verification
+## The library's own tests
 
-The layout smoke tests in `tests/test_layouts.py` verify that initial tab content renders correctly for both Bootstrap and Material frameworks:
-
-```python
-def test_layout_demo_bootstrap_initial_tab_renders():
-    """Verify Bootstrap tabs show initial tab content."""
-    response = client.get("/layouts")
-    assert response.status_code == 200
-    assert "Tab 1 Content" in response.text
-    # Assert tab buttons exist
-    assert 'class="nav-link active"' in response.text
-
-def test_layout_demo_material_initial_tab_renders():
-    """Verify Material tabs show initial tab content."""
-    response = client.get("/layouts?style=material")
-    assert response.status_code == 200
-    # Assert initial content and Material tab classes
-    assert "Initial Tab Content" in response.text
-    assert 'data-toggle="tab"' in response.text
-```
-
-This coverage ensures that tab layouts work correctly across frameworks.
-
----
-
-## Pydantic v2 Deprecation Resolution
-
-As of this release, all Pydantic v2 deprecation warnings have been resolved:
-
-✅ **Resolved Deprecations:**
-- `min_items`/`max_items` → `min_length`/`max_length` in all FormField calls
-- Extra kwargs on `Field()` → properly use `json_schema_extra`
-- Starlette `TemplateResponse` signature updated to new parameter order
-
-**Result:** Deprecation warnings reduced from 23 → 8 (removed 15 Pydantic deprecations). The remaining 8 warnings are intentional migration guides (`form_layouts` deprecation notice) and informational (JSON schema hints).
+`tests/test_validation.py` covers the rule-based validators above;
+`tests/test_nested_model_forms.py` covers `validate()` with sub-forms, the nested
+error tree, and re-rendering errors inside the right tab, panel, or wizard step;
+`tests/test_layouts.py` renders the example app's `/layouts` page under Bootstrap
+and Material.
 
 Run validation tests:
 ```bash
 python -m pytest tests/test_validation.py -v
+python -m pytest tests/test_nested_model_forms.py -v
 python -m pytest tests/test_layouts.py -v
 ```
 

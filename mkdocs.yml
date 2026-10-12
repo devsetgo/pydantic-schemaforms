@@ -16,6 +16,7 @@ nav:
   - Tutorials:
       - FastAPI Project: 'tutorial_fastapi.md'
       - Recipes: 'recipes.md'
+      - Complex Forms: 'complex_forms.md'
       # Legacy tutorial removed
   - Reference:
       - Configuration: 'configuration.md'

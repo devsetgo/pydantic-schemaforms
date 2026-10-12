@@ -282,12 +282,12 @@ class SliderInput(RangeInput):
 
 
 class TemperatureInput(NumberInput):
-    """Temperature input with unit selection."""
+    """Temperature input; `unit` sets its placeholder (20°C, 68°F, 293K) and absolute-zero minimum."""
 
     ui_element: str = 'temperature'
 
     def render(self, unit: str = 'celsius', **kwargs: Any) -> str:
-        """Render temperature input with unit indicator."""
+        """Render a number input whose placeholder and bounds follow `unit`."""
         if unit.lower() in ['celsius', 'c']:
             kwargs['placeholder'] = kwargs.get('placeholder', '20°C')
             kwargs['min'] = kwargs.get('min', '-273.15')  # Absolute zero

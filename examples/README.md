@@ -43,9 +43,15 @@ File: examples/nested_forms_example.py
 
 What it demonstrates:
 
-- Deeply nested FormModel structures
-- Complex model lists and tabbed layouts
+- Composing a complex form by nesting FormModels as fields of a parent
+  FormModel (`ComprehensiveTabbedForm`), rendered with `layout="tabbed"`
+- Deeply nested model lists inside those sub-forms
 - Broad input-type coverage in nested contexts
+
+`/layouts` shows the same composed form under every presentation: append
+`?layout=vertical`, `tabbed`, `side-by-side`, `accordion`, or `wizard`. For the
+wizard, `&linear=false`, `&progress=false`, and `&labels=true` exercise every
+`wizard_options` key. The guide is `docs/complex_forms.md`.
 
 This module is imported by the FastAPI example to generate rich nested sample payloads.
 
@@ -63,17 +69,28 @@ What it demonstrates:
 - Row-by-row server-side validation against the same Pydantic model used
   for the columns, with per-row error highlighting
 
-Then open http://localhost:8000/employees/import.
+Then open http://localhost:8000/employees/import. `/employees/directory` is a
+read-only table showing the remaining `model_config` options (`csv_upload`,
+`editable`, `search`, `paging`, `length_menu`, the `compact` style; `?paging=false`,
+`?assets=cdn`).
 
 ### 4) Other reference pages
 
 - `/gallery` (examples/shared_models.py's `WidgetGalleryForm`) — every
-  registered input type, tabbed by category
+  registered input type and alias with each of its widget options, plus
+  field-level options, tabbed by category
+- `/validation` (`ValidationShowcaseForm`) — every Pydantic constraint,
+  `@field_validator`, `@model_validator`, sub-form and list-item errors, every
+  rule class, and a cross-field rule, failing on one form; `?scenario=mismatch`
+  shows the form-wide error and `?scenario=valid` a passing submission
 - `/date-time-formats` (examples/date_time_formats_example.py) — custom
   `date_format`/`time_format`/`datetime_format` `ui_options`, as a
   copy-pasteable format-string reference
 - `/input-types` (examples/input_type_reference.py) — static "every
   ui_element with a code example" cheatsheet, not wired to the renderer
+
+`tests/test_examples_coverage.py` fails if a layout, input type, widget
+option, or validation kind has no example here (see CLAUDE.md).
 - `/ai-instructions` — the packaged AI-assistant instruction files, rendered
   from Markdown
 

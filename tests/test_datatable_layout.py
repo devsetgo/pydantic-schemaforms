@@ -260,7 +260,7 @@ def test_datatable_layout_is_still_a_form_model_subclass() -> None:
 
 
 def test_registered_renderer_ignores_render_contexts_error_and_required_fields() -> None:
-    """RenderContext grew error/required_fields/all_errors fields so
+    """RenderContext grew error/required_fields/child_errors fields so
     model_list's registered renderer could read its own field's error/
     required-ness/nested errors (see rendering/context.py). Datatable's own
     registered renderer never reads context.* at all, so populating those
@@ -280,7 +280,7 @@ def test_registered_renderer_ignores_render_contexts_error_and_required_fields()
         schema_defs={},
         error='unrelated error',
         required_fields=('some_other_field',),
-        all_errors={'some_other_field': 'bad'},
+        child_errors={'some_other_field': 'bad'},
     )
 
     bare_output = render_datatable_layout_field('rows', {}, value, {}, bare_context, engine)

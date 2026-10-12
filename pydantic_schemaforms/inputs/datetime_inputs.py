@@ -137,6 +137,23 @@ def _picker_toggle_js_expr(fmt: str) -> str | None:
     return _build_js_date_expr(_tokenize_strftime(fmt), 'd')
 
 
+def _parse_iso_values(kwargs: dict[str, Any], kind: type) -> None:
+    """Turn ISO strings in value/min/max into *kind* objects, in place.
+
+    JSON data (or ``model_dump(mode='json')``) carries dates as ISO strings,
+    and a custom display format can only be applied to a real date/time.
+    Anything that isn't ISO -- e.g. a value the user already typed in the
+    custom format, re-rendered after a failed submit -- is left as it is.
+    """
+    for key in ('value', 'min', 'max'):
+        raw = kwargs.get(key)
+        if isinstance(raw, str):
+            try:
+                kwargs[key] = kind.fromisoformat(raw)
+            except ValueError:
+                pass
+
+
 def _tokenize_strftime(fmt: str) -> list[str]:
     """Split a strftime format string into literal runs and '%x' directive
     tokens, preserving order (e.g. '%Y-%m-%d' -> ['%Y', '-', '%m', '-', '%d'])."""
@@ -393,6 +410,7 @@ class DateInput(FormInput):
         # custom format (the browser always controls its display per the
         # HTML5 spec) -- fall back to a live-formatted text input instead,
         # the same approach PhoneInput/CurrencyInput use in text_inputs.py.
+        _parse_iso_values(kwargs, date)
         if 'value' in kwargs and isinstance(kwargs['value'], date):
             kwargs['value'] = kwargs['value'].strftime(date_format)
         if 'min' in kwargs and isinstance(kwargs['min'], date):
@@ -469,6 +487,7 @@ class TimeInput(FormInput):
         # live-formatted text input, the same approach PhoneInput/CurrencyInput
         # use in text_inputs.py. `step` (native-picker-only) is not applicable
         # to a text input, so it's deliberately not defaulted here.
+        _parse_iso_values(kwargs, time)
         if 'value' in kwargs and isinstance(kwargs['value'], time):
             kwargs['value'] = kwargs['value'].strftime(time_format)
         if 'min' in kwargs and isinstance(kwargs['min'], time):
@@ -586,6 +605,7 @@ class DatetimeInput(FormInput):
         # Custom display format: native <input type="datetime-local"> can't
         # show a custom format, so fall back to a live-formatted text input,
         # the same approach PhoneInput/CurrencyInput use in text_inputs.py.
+        _parse_iso_values(kwargs, datetime)
         if 'value' in kwargs and isinstance(kwargs['value'], datetime):
             kwargs['value'] = kwargs['value'].strftime(datetime_format)
         if 'min' in kwargs and isinstance(kwargs['min'], datetime):

@@ -244,9 +244,13 @@ class FormBuilder:
         form_def = self.build()
         return await self.renderer.render_form_async(form_def, data=data or {}, errors=errors or {})
 
-    def validate_data(self, data: dict[str, Any]) -> tuple[bool, dict[str, list[str]]]:
+    def validate_data(self, data: Any) -> tuple[bool, dict[Any, Any]]:
+        """``(is_valid, errors)``; model-backed builders return a nested error tree."""
         if self.model:
-            return self.validator.validate_pydantic_model(self.model, data)
+            from pydantic_schemaforms.validation import validate_form_data
+
+            result = validate_form_data(self.model, data)
+            return result.is_valid, result.errors
         return self.validator.validate(data)
 
     def get_validation_script(self) -> str:

@@ -1,16 +1,13 @@
-"""Helpers for normalizing/reshaping raw form submissions.
+"""Decoding raw form submissions into nested JSON.
 
-HTML form submissions often arrive as a flat mapping of string keys to values.
-SchemaForms uses bracket + dot notation for repeated nested models, e.g.:
+App code never needs this module directly: ``FormModel.validate()`` accepts the
+raw request form (Starlette ``FormData``, Werkzeug ``MultiDict``, a list of
+``(key, value)`` pairs) and calls ``decode_submission()`` itself.
 
-- ``pets[0].name``
-- ``tasks[3].priority``
-
-Server-side validation expects the corresponding nested Python shape:
-
-- ``{"pets": [{"name": "..."}]}``
-
-These helpers are intentionally framework-agnostic (FastAPI/Flask/etc.).
+Wire format (internal): HTML inputs need a string ``name``, so nested fields
+are named with dots for sub-models and brackets for list indexes --
+``address.city``, ``pets[0].name``. ``decode_submission()`` turns those back
+into ``{"address": {"city": ...}, "pets": [{"name": ...}]}``.
 """
 
 from __future__ import annotations
@@ -52,8 +49,18 @@ def _tokenize_form_path(path: str) -> list[str | int]:
     return tokens
 
 
-def _new_container(next_token: str | int | None) -> dict[str, Any] | list[Any]:
-    return [] if isinstance(next_token, int) else {}
+class _SparseList(dict[int, Any]):
+    """A list under construction, keyed by submitted index.
+
+    Indices are compacted into a real list by ``_compact`` once every key has
+    been assigned, so memory is bounded by the number of submitted fields, not
+    by the index values: ``pets[500000000].name`` costs one entry, not half a
+    billion padding slots.
+    """
+
+
+def _new_container(next_token: str | int | None) -> dict[str, Any] | _SparseList:
+    return _SparseList() if isinstance(next_token, int) else {}
 
 
 def _assign_mapping_token(
@@ -68,8 +75,13 @@ def _assign_mapping_token(
         current[token] = value
         return None
 
-    if token not in current or current[token] is None:
+    existing = current.get(token)
+    if existing is None:
         current[token] = _new_container(next_token)
+    elif isinstance(existing, list):
+        # A value assigned directly (e.g. from a repeated key) that a later
+        # key now indexes into; convert in place so the index is recorded.
+        current[token] = _SparseList(enumerate(existing))
     return current[token]
 
 
@@ -77,22 +89,19 @@ def _coerce_to_list(
     current: Any,
     tokens: list[str | int],
     idx: int,
-) -> list[Any]:
-    if isinstance(current, list):
+) -> _SparseList:
+    if isinstance(current, _SparseList):
         return current
+    if isinstance(current, list):
+        return _SparseList(enumerate(current))
 
     # If the data shape is inconsistent (e.g. a key used as both dict
     # and list), prefer overwriting with a list to match the path.
     current_parent = current
-    list_value: list[Any] = []
+    list_value = _SparseList()
     if idx > 0 and isinstance(tokens[idx - 1], str):
         current_parent[tokens[idx - 1]] = list_value
     return list_value
-
-
-def _ensure_list_index(current: list[Any], index: int) -> None:
-    while len(current) <= index:
-        current.append(None)
 
 
 def _assign_list_token(
@@ -106,14 +115,16 @@ def _assign_list_token(
     value: Any,
 ) -> Any:
     current_list = _coerce_to_list(current, tokens, idx)
-    _ensure_list_index(current_list, token)
 
     if is_last:
         current_list[token] = value
         return None
 
-    if current_list[token] is None:
+    existing = current_list.get(token)
+    if existing is None:
         current_list[token] = _new_container(next_token)
+    elif isinstance(existing, list):
+        current_list[token] = _SparseList(enumerate(existing))
     return current_list[token]
 
 
@@ -151,6 +162,16 @@ def _assign_nested(
         current = next_current
 
 
+def _compact(obj: Any) -> Any:
+    """Turn every ``_SparseList`` into a list in ascending index order."""
+
+    if isinstance(obj, _SparseList):
+        return [_compact(obj[index]) for index in sorted(obj)]
+    if isinstance(obj, dict):
+        return {key: _compact(value) for key, value in obj.items()}
+    return obj
+
+
 def parse_nested_form_data(
     form_data: Mapping[str, Any] | Iterable[tuple[str, Any]],
     *,
@@ -168,6 +189,10 @@ def parse_nested_form_data(
     ``dict(form_data)``, and not a plain ``Mapping``, whose ``.items()``
     can only ever hold one value per key) when the source is a Starlette
     ``FormData``/multidict.
+
+    Gaps in list indices are closed: ``pets[0]`` and ``pets[2]`` become a
+    two-item list, so an item removed without re-indexing the rest still
+    decodes, and no index value can make the decoder allocate padding.
 
     Example:
         ``{"pets[0].name": "Fido"}`` -> ``{"pets": [{"name": "Fido"}]}``
@@ -208,7 +233,7 @@ def parse_nested_form_data(
 
         _assign_nested(result, tokens, value)
 
-    return result
+    return _compact(result)
 
 
 def flatten_nested_data(data: Any, *, _prefix: str = '') -> dict[str, Any]:
@@ -246,4 +271,66 @@ def flatten_nested_data(data: Any, *, _prefix: str = '') -> dict[str, Any]:
     return result
 
 
-__all__ = ['parse_nested_form_data', 'flatten_nested_data', 'coerce_form_value']
+def _multi_items(raw: Any) -> list[tuple[str, Any]] | None:
+    multi_items = getattr(raw, 'multi_items', None)
+    if callable(multi_items):
+        pairs: Any = multi_items()  # callable() narrows to `-> object`; the method yields pairs
+        return list(pairs)
+    if hasattr(raw, 'getlist') and hasattr(raw, 'keys'):
+        return [(key, value) for key in raw.keys() for value in raw.getlist(key)]
+    return None
+
+
+def _is_wire_key(key: Any) -> bool:
+    return isinstance(key, str) and ('[' in key or '.' in key)
+
+
+def is_form_submission(raw: Any) -> bool:
+    """Whether *raw* is an HTML form's wire-format submission rather than nested JSON."""
+
+    if raw is None or isinstance(raw, (str, bytes)):
+        return False
+    if _multi_items(raw) is not None:
+        return True
+    if isinstance(raw, Mapping):
+        return any(_is_wire_key(key) for key in raw)
+    return isinstance(raw, Iterable)
+
+
+def decode_submission(raw: Any) -> dict[str, Any]:
+    """Return a nested-JSON dict from whatever a route received.
+
+    - Multi-value form objects (Starlette ``FormData``, Werkzeug ``MultiDict``)
+      and iterables of ``(key, value)`` pairs are decoded from the wire format,
+      collecting repeated keys (multi-selects, checkbox groups) into lists.
+    - A plain mapping that uses wire-format keys is decoded the same way.
+    - Any other mapping is assumed to already be nested JSON and is returned
+      as a shallow copy.
+
+    Values are left as submitted; type-aware coercion happens during
+    validation, where the field types are known.
+    """
+
+    if raw is None:
+        return {}
+    pairs = _multi_items(raw)
+    if pairs is not None:
+        return parse_nested_form_data(pairs, coerce_values=False)
+    if isinstance(raw, Mapping):
+        if any(_is_wire_key(key) for key in raw):
+            return parse_nested_form_data(raw, coerce_values=False)
+        return dict(raw)
+    if isinstance(raw, Iterable) and not isinstance(raw, (str, bytes)):
+        return parse_nested_form_data(list(raw), coerce_values=False)
+    raise TypeError(
+        f'Cannot decode a form submission of type {type(raw).__name__}; pass the request '
+        'form (request.form / await request.form()), a list of (key, value) pairs, or a dict.'
+    )
+
+
+__all__ = [
+    'coerce_form_value',
+    'decode_submission',
+    'flatten_nested_data',
+    'parse_nested_form_data',
+]

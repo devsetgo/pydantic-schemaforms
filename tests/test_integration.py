@@ -1720,32 +1720,26 @@ def test_fastapi_self_contained_has_no_external_cdn(client: TestClient):
 
 
 def _valid_layout_post_payload() -> dict:
-    # Note: LayoutDemonstrationForm renders nested layout fields without prefixes,
-    # and model_list items use bracketed indices (parsed by parse_nested_form_data).
+    # The input names the browser submits: each sub-form's fields are prefixed
+    # with its field name, and list items use bracketed indices.
     return {
-        # PersonalInfoForm (personal_info)
-        'first_name': 'Alex',
-        'last_name': 'Johnson',
-        'email': 'alex.johnson@example.com',
-        # ContactInfoForm (contact_info)
-        'address': '456 Demo Street',
-        'city': 'San Francisco',
-        # PreferencesForm (preferences) - defaults exist, but include one to ensure tab renders
-        'notification_email': 'true',
-        'theme': 'dark',
-        'language': 'en',
-        # TaskListForm (task_list) - must include at least one task
-        'project_name': 'Demo Project',
-        'tasks[0].task_name': 'Complete project setup',
-        'tasks[0].priority': 'high',
-        'tasks[0].due_date': '2024-12-01',
+        'personal_info.first_name': 'Alex',
+        'personal_info.last_name': 'Johnson',
+        'personal_info.email': 'alex.johnson@example.com',
+        'contact_info.address': '456 Demo Street',
+        'contact_info.city': 'San Francisco',
+        'preferences.notification_email': 'true',
+        'task_list.project_name': 'Demo Project',
+        'task_list.tasks[0].task_name': 'Complete project setup',
+        'task_list.tasks[0].priority': 'high',
+        'task_list.tasks[0].due_date': '2024-12-01',
     }
 
 
 def test_layouts_post_rejects_blank_first_name_and_preferences_tab_renders():
     client = TestClient(app)
     payload = _valid_layout_post_payload()
-    payload['first_name'] = ''  # invalid (min_length=2)
+    payload['personal_info.first_name'] = ''  # invalid (min_length=2)
 
     resp = client.post('/layouts?style=bootstrap', data=payload)
     assert resp.status_code == 200
@@ -1874,16 +1868,14 @@ def test_api_submit_form_default_returns_nested_data(client: TestClient) -> None
     ]
 
 
-def test_api_submit_form_flatten_true_returns_flat_data(client: TestClient) -> None:
+def test_api_submit_form_errors_mirror_the_data_shape(client: TestClient) -> None:
     payload = {
         'owner_name': 'Casey Jordan',
         'email': 'casey@example.com',
-        'pets': [{'name': 'Fido', 'species': 'dog'}],
+        'pets': [{'name': 'Fido', 'species': 'dog'}, {'name': '', 'species': 'dog'}],
     }
-    resp = client.post('/api/forms/pets/submit?flatten=true', json=payload)
+    resp = client.post('/api/forms/pets/submit', json=payload)
     assert resp.status_code == 200
     body = resp.json()
-    assert body['success'] is True
-    assert body['data']['pets[0].name'] == 'Fido'
-    assert body['data']['pets[0].species'] == 'dog'
-    assert 'pets' not in body['data']
+    assert body['success'] is False
+    assert 'name' in body['errors']['pets']['1']

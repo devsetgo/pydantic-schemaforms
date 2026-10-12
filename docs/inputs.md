@@ -1021,7 +1021,7 @@ Required:
 - ui_options with a `secret_key`
 
 ```python
-from pydantic_schemaforms.inputs.specialized_inputs import verify_captcha
+from pydantic_schemaforms import verify_captcha
 
 SECRET = "change-me-and-load-from-your-app-config"
 

@@ -29,7 +29,7 @@ html = render_form_html(User, submit_url="/user")
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
-from pydantic_schemaforms import Field, FormModel, render_form_html_async
+from pydantic_schemaforms import Field, FormModel, html, render_form_html_async
 
 
 class User(FormModel):
@@ -43,10 +43,10 @@ app = FastAPI()
 @app.api_route("/user", methods=["GET", "POST"], response_class=HTMLResponse)
 async def user_form(request: Request):
     if request.method == "POST":
-        submitted = dict(await request.form())
-        result = User.validate(submitted, submit_url="/user")
+        result = User.validate(await request.form(), submit_url="/user")
         if result.is_valid:
-            return f"<p>Hello {result.data['name']}!</p>"
+            # html(t"...") escapes the submitted name; never use an f-string for form data.
+            return str(html(t"<p>Hello {result.data['name']}!</p>"))
         form_html = await result.render_with_errors_async()
     else:
         form_html = await render_form_html_async(User, submit_url="/user")
@@ -135,8 +135,7 @@ async def user_form(request: Request):
     builder = create_form_from_model(User, framework="bootstrap")
 
     if request.method == "POST":
-        form = await request.form()
-        result = await handle_form_async(builder, submitted_data=dict(form))
+        result = await handle_form_async(builder, submitted_data=await request.form())
         if result.get("success"):
             return {"ok": True, "data": result["data"]}
         return result["form_html"]
@@ -144,6 +143,12 @@ async def user_form(request: Request):
     result = await handle_form_async(builder)
     return result["form_html"]
 ```
+
+A valid POST returns `{"success": True, "data": ...}`; an invalid one returns
+`{"success": False, "errors": ..., "form_html": ...}`. For a model-backed builder,
+`data` is nested like the model (`{"address": {"city": ...}}`) and `errors` is a
+nested error tree in the same shape (`{"address": {"city": "..."}}`); see
+`docs/complex_forms.md` and `docs/validation_guide.md`.
 
 ## 3) Sync integration (Flask / WSGI)
 
@@ -160,9 +165,9 @@ def user_form():
     builder = create_form_from_model(User, framework="bootstrap")
 
     if request.method == "POST":
-        result = handle_form(builder, submitted_data=request.form.to_dict())
+        result = handle_form(builder, submitted_data=request.form)
         if result.get("success"):
-            return f"Saved: {result['data']}"
+            return {"ok": True, "data": result["data"]}
         return result["form_html"]
 
     return handle_form(builder)["form_html"]

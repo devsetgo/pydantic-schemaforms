@@ -7,7 +7,11 @@ from typing import Any
 
 from pydantic_schemaforms.templates import FormTemplates, TemplateString
 from pydantic_schemaforms.tstring import SafeHTML, html
-from .theme_assets import ACCORDION_COMPONENT_ASSETS, TAB_COMPONENT_ASSETS
+from .theme_assets import (
+    ACCORDION_COMPONENT_ASSETS,
+    TAB_COMPONENT_ASSETS,
+    WIZARD_COMPONENT_ASSETS,
+)
 
 # ---------------------------------------------------------------------------
 # Default (Bootstrap-compatible) templates
@@ -573,6 +577,133 @@ MATERIAL_SUBMIT_BUTTON_TEMPLATE = TemplateString(_material_submit_button)
 
 
 # ---------------------------------------------------------------------------
+# Step wizard templates (behaviour and base styling: WIZARD_COMPONENT_ASSETS)
+# ---------------------------------------------------------------------------
+
+
+def _wizard_layout(
+    *,
+    layout_class: str = '',
+    linear: str = 'true',
+    active_step: str = '0',
+    progress_html: str = '',
+    steps_html: str = '',
+    footer_html: str = '',
+    component_assets: str = '',
+    **_: Any,
+) -> SafeHTML:
+    return html(t'''
+<div class="form-wizard {layout_class}" data-linear="{linear}" data-active-step="{active_step}">
+    {SafeHTML(progress_html)}
+    <div class="wizard-steps">{SafeHTML(steps_html)}</div>
+    {SafeHTML(footer_html)}
+</div>
+{SafeHTML(component_assets)}
+''')
+
+
+WIZARD_LAYOUT_TEMPLATE = TemplateString(_wizard_layout)
+
+
+def _wizard_progress(*, items_html: str = '', **_: Any) -> SafeHTML:
+    return html(t'<ol class="wizard-progress">{SafeHTML(items_html)}</ol>')
+
+
+WIZARD_PROGRESS_TEMPLATE = TemplateString(_wizard_progress)
+
+
+def _wizard_progress_item(
+    *, index: str = '', number: str = '', title: str = '', state_class: str = '', **_: Any
+) -> SafeHTML:
+    return html(t'''
+<li><button type="button" class="wizard-progress-item{SafeHTML(state_class)}" data-wizard-goto="{index}">
+    <span class="wizard-progress-number">{number}</span>
+    <span class="wizard-progress-title">{title}</span>
+</button></li>''')
+
+
+WIZARD_PROGRESS_ITEM_TEMPLATE = TemplateString(_wizard_progress_item)
+
+
+def _default_wizard_step(
+    *, index: str = '', title: str = '', content: str = '', active_class: str = '', **_: Any
+) -> SafeHTML:
+    return html(t'''
+<section class="wizard-step{SafeHTML(active_class)}" data-wizard-step="{index}">
+    <h3 class="wizard-step-title h5 mb-3">{title}</h3>
+    {SafeHTML(content)}
+</section>''')
+
+
+DEFAULT_WIZARD_STEP_TEMPLATE = TemplateString(_default_wizard_step)
+
+
+def _default_wizard_footer(
+    *, back_label: str = 'Back', next_label: str = 'Next', **_: Any
+) -> SafeHTML:
+    return html(t"""
+<div class="wizard-footer">
+    <button type="button" class="btn btn-outline-secondary" data-wizard-back>{back_label}</button>
+    <button type="button" class="btn btn-primary" data-wizard-next>{next_label}</button>
+</div>""")
+
+
+DEFAULT_WIZARD_FOOTER_TEMPLATE = TemplateString(_default_wizard_footer)
+
+
+def _plain_wizard_step(
+    *, index: str = '', title: str = '', content: str = '', active_class: str = '', **_: Any
+) -> SafeHTML:
+    return html(t'''
+<section class="wizard-step{SafeHTML(active_class)}" data-wizard-step="{index}">
+    <h3 class="wizard-step-title">{title}</h3>
+    {SafeHTML(content)}
+</section>''')
+
+
+PLAIN_WIZARD_STEP_TEMPLATE = TemplateString(_plain_wizard_step)
+
+
+def _plain_wizard_footer(
+    *, back_label: str = 'Back', next_label: str = 'Next', **_: Any
+) -> SafeHTML:
+    return html(t"""
+<div class="wizard-footer">
+    <button type="button" data-wizard-back>{back_label}</button>
+    <button type="button" data-wizard-next>{next_label}</button>
+</div>""")
+
+
+PLAIN_WIZARD_FOOTER_TEMPLATE = TemplateString(_plain_wizard_footer)
+
+
+def _material_wizard_step(
+    *, index: str = '', title: str = '', content: str = '', active_class: str = '', **_: Any
+) -> SafeHTML:
+    return html(t'''
+<section class="wizard-step md-wizard-step{SafeHTML(active_class)}" data-wizard-step="{index}">
+    <h3 class="wizard-step-title md-layout-card__title">{title}</h3>
+    {SafeHTML(content)}
+</section>''')
+
+
+MATERIAL_WIZARD_STEP_TEMPLATE = TemplateString(_material_wizard_step)
+
+
+def _material_wizard_footer(
+    *, back_label: str = 'Back', next_label: str = 'Next', **_: Any
+) -> SafeHTML:
+    return html(t"""
+<div class="wizard-footer">
+    <button type="button" class="md-button md-button-tonal" data-wizard-back>{back_label}</button>
+    <button type="button" class="md-button md-button-filled" data-wizard-next>{next_label}</button>
+</div>""")
+
+
+MATERIAL_WIZARD_FOOTER_TEMPLATE = TemplateString(_material_wizard_footer)
+
+
+# ---------------------------------------------------------------------------
 # FormStyleTemplates dataclass
 # ---------------------------------------------------------------------------
 
@@ -595,6 +726,11 @@ class FormStyleTemplates:
     field_help: TemplateString = DEFAULT_FIELD_HELP_TEMPLATE
     field_error: TemplateString = DEFAULT_FIELD_ERROR_TEMPLATE
     submit_button: TemplateString = DEFAULT_SUBMIT_BUTTON_TEMPLATE
+    wizard_layout: TemplateString = WIZARD_LAYOUT_TEMPLATE
+    wizard_progress: TemplateString = WIZARD_PROGRESS_TEMPLATE
+    wizard_progress_item: TemplateString = WIZARD_PROGRESS_ITEM_TEMPLATE
+    wizard_step: TemplateString = DEFAULT_WIZARD_STEP_TEMPLATE
+    wizard_footer: TemplateString = DEFAULT_WIZARD_FOOTER_TEMPLATE
 
 
 @dataclass(frozen=True)
@@ -605,6 +741,7 @@ class FormStyleAssets:
     after_form: str = ''
     tab_assets: str = TAB_COMPONENT_ASSETS
     accordion_assets: str = ACCORDION_COMPONENT_ASSETS
+    wizard_assets: str = WIZARD_COMPONENT_ASSETS
 
 
 @dataclass(frozen=True)
@@ -708,6 +845,8 @@ register_form_style(
             field_help=PLAIN_FIELD_HELP_TEMPLATE,
             field_error=PLAIN_FIELD_ERROR_TEMPLATE,
             submit_button=PLAIN_SUBMIT_BUTTON_TEMPLATE,
+            wizard_step=PLAIN_WIZARD_STEP_TEMPLATE,
+            wizard_footer=PLAIN_WIZARD_FOOTER_TEMPLATE,
         ),
     )
 )
@@ -726,6 +865,8 @@ _MATERIAL_TEMPLATES = FormStyleTemplates(
     field_help=MATERIAL_FIELD_HELP_TEMPLATE,
     field_error=MATERIAL_FIELD_ERROR_TEMPLATE,
     submit_button=MATERIAL_SUBMIT_BUTTON_TEMPLATE,
+    wizard_step=MATERIAL_WIZARD_STEP_TEMPLATE,
+    wizard_footer=MATERIAL_WIZARD_FOOTER_TEMPLATE,
 )
 
 register_form_style(FormStyle(framework='material', templates=_MATERIAL_TEMPLATES))

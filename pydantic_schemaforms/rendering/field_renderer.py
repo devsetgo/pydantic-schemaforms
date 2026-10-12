@@ -10,7 +10,8 @@ from pydantic_schemaforms.inputs import HiddenInput
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.frameworks import get_input_component
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
-from pydantic_schemaforms.rendering.schema_parser import extract_ui_info
+from pydantic_schemaforms.error_tree import child_errors, field_message
+from pydantic_schemaforms.rendering.schema_parser import extract_ui_info, resolve_ui_element
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 # Importing this registers the 'model_list' ui_element renderer (LayoutEngine
@@ -20,6 +21,7 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 # real, unconditional import here rather than the lazy per-call imports the
 # thin delegator methods below use for everything else in that module.
 from . import model_list_renderer as _model_list_renderer  # noqa: F401
+from . import nested_model_renderer as _nested_model_renderer  # noqa: F401
 
 # ui_element values that render as an HTML checkbox under the hood and so
 # need the same boolean checked/value handling ('toggle' is CheckboxInput's
@@ -67,14 +69,20 @@ class FieldRenderer:
         required_fields: list[str] | None = None,
         context: RenderContext | None = None,
         layout: str = 'vertical',
-        all_errors: dict[str, str] | None = None,
     ) -> str:
+        """Render one field. ``error`` is the field's error node: a message,
+        or (for a composite) a dict of child errors that may carry its own
+        message under ``"_errors"`` -- see ``pydantic_schemaforms.error_tree``."""
         if context is None:
             raise ValueError('RenderContext is required for field rendering')
 
+        child_errors_tree = child_errors(error)
+        error = field_message(error)
         ui_info = extract_ui_info(field_schema)
 
-        if ui_info.get('hidden'):
+        # ui_hidden=True and ui_element='hidden' both mean a bare hidden input
+        # with no label, help text, or wrapper.
+        if ui_info.get('hidden') or resolve_ui_element(field_schema) == 'hidden':
             return self._render_hidden_field(field_name, value)
 
         ui_element = (
@@ -85,13 +93,20 @@ class FieldRenderer:
             or self._infer_ui_element(field_schema)
         )
 
+        enriched_context = replace(
+            context,
+            error=error,
+            required_fields=tuple(required_fields or ()),
+            child_errors=child_errors_tree,
+        )
+
         if ui_element == 'layout':
             return self._renderer._render_layout_field(  # noqa: SLF001
                 field_name,
                 field_schema,
                 value,
                 ui_info,
-                context,
+                enriched_context,
             )
 
         # Second, independent dispatch keyspace from the 'layout_handler'
@@ -100,12 +115,6 @@ class FieldRenderer:
         # whether input_type is 'layout'. See LayoutEngine.get_renderer_for_element.
         custom_renderer = LayoutEngine.get_renderer_for_element(ui_element)
         if custom_renderer is not None:
-            enriched_context = replace(
-                context,
-                error=error,
-                required_fields=tuple(required_fields or ()),
-                all_errors=dict(all_errors or {}),
-            )
             return custom_renderer(
                 field_name,
                 field_schema,
@@ -196,7 +205,10 @@ class FieldRenderer:
                         if placeholder_option is not None:
                             formatted_options = [placeholder_option, *formatted_options]
 
-                    field_attrs.pop('value', None)
+                    # A combobox is a free-text <input> with suggestions, so it
+                    # keeps its value; the others carry it as selected options.
+                    if ui_element != 'combobox':
+                        field_attrs.pop('value', None)
                     # radio/checkbox_group already show their title as the
                     # <fieldset><legend>; passing the same text as an outer
                     # label too duplicates it (and under Material's floating
@@ -254,7 +266,7 @@ class FieldRenderer:
         required_fields: list[str] | None,
         ui_info: dict[str, Any],
         context: RenderContext,
-        all_errors: dict[str, str] | None,
+        list_errors: dict[Any, Any] | None,
     ) -> str:
         from .model_list_renderer import render_model_list_field
 
@@ -267,7 +279,7 @@ class FieldRenderer:
             required_fields,
             ui_info,
             context,
-            all_errors,
+            list_errors,
         )
 
     def _extract_ui_options(
@@ -414,6 +426,9 @@ class FieldRenderer:
         return hidden_input.render(name=field_name, id=field_name, value=value or '')
 
     def _infer_ui_element(self, field_schema: dict[str, Any]) -> str:
+        composite = resolve_ui_element(field_schema)
+        if composite:
+            return composite
         field_type = field_schema.get('type', 'string')
 
         if field_type == 'string':
@@ -453,7 +468,7 @@ class FieldRenderer:
         ui_info: dict[str, Any],
         required_fields: list[str],
         context: RenderContext,
-        all_errors: dict[str, str] | None = None,
+        list_errors: dict[Any, Any] | None = None,
     ) -> str:
         from .model_list_renderer import render_model_list_from_schema
 
@@ -467,15 +482,8 @@ class FieldRenderer:
             ui_info,
             required_fields,
             context,
-            all_errors,
+            list_errors,
         )
-
-    def extract_nested_errors_for_field(
-        self, field_name: str, all_errors: dict[str, Any]
-    ) -> dict[str, str]:
-        from .model_list_renderer import extract_nested_errors_for_field
-
-        return extract_nested_errors_for_field(self, field_name, all_errors)
 
     def _render_schema_list_item(
         self,
@@ -485,7 +493,7 @@ class FieldRenderer:
         item_data: dict[str, Any],
         context: RenderContext,
         ui_info: dict[str, Any] | None = None,
-        nested_errors: dict[str, str] | None = None,
+        nested_errors: dict[Any, Any] | None = None,
     ) -> str:
         from .model_list_renderer import render_schema_list_item
 

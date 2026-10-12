@@ -7,18 +7,31 @@ This module contains all the form models used across different framework example
 
 import os
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, time
 from enum import Enum
 from typing import List, Optional
 
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pydantic import EmailStr, field_validator
+from pydantic import EmailStr, field_validator, model_validator
 
-from pydantic_schemaforms.form_field import FormField
-from pydantic_schemaforms.form_layouts import HorizontalLayout, TabbedLayout, VerticalLayout
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import (
+    CustomRule,
+    DateRangeRule,
+    EmailDeliverabilityRule,
+    EmailRule,
+    Field,
+    FormField,
+    FormModel,
+    FormValidator,
+    MaxLengthRule,
+    MinLengthRule,
+    NumericRangeRule,
+    PhoneRule,
+    RegexRule,
+    RequiredRule,
+)
 
 # ============================================================================
 # ENUMS AND CONSTANTS
@@ -307,7 +320,7 @@ class UserRegistrationForm(FormModel):
 
 
 class PetOwnerForm(FormModel):
-    """Form that demonstrates ListLayout for pet management."""
+    """Form that demonstrates a repeating pet sub-form (a list[PetModel] field)."""
 
     owner_name: str = FormField(
         title='Owner Name',
@@ -399,18 +412,10 @@ class PetRegistrationForm(FormModel):
         icon='heart',
         min_length=1,
         max_length=10,
-        model_class=PetModel,
         add_button_label='Add Another Pet',
         collapsible_items=True,
         items_expanded=False,  # Start collapsed to show the feature
         item_title_template='Pet #{index}: {name}',  # Dynamic titles
-        section_design={
-            'section_title': 'Pet Registry',
-            'section_description': 'Register each of your beloved pets with detailed information',
-            'icon': 'bi bi-heart-fill',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -710,18 +715,10 @@ class CompleteShowcaseForm(FormModel):
         icon='heart-fill',
         min_length=0,
         max_length=5,
-        model_class=PetModel,
         add_button_label='🐾 Add Another Pet',
         collapsible_items=True,
         items_expanded=False,  # Start collapsed to showcase feature
         item_title_template='🐾 {name} the {species}',  # Dynamic titles with emojis
-        section_design={
-            'section_title': 'Pet Registry',
-            'section_description': 'Register each of your pets with detailed information for our records',
-            'icon': 'bi bi-heart-fill',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     # ======== EMERGENCY CONTACTS (ANOTHER LIST) ========
@@ -733,18 +730,10 @@ class CompleteShowcaseForm(FormModel):
         icon='person-exclamation',
         min_length=1,
         max_length=3,
-        model_class=EmergencyContactModel,
         add_button_label='➕ Add Emergency Contact',
         collapsible_items=True,
         items_expanded=True,  # Start expanded for required items
         item_title_template='📞 {name} ({relationship})',
-        section_design={
-            'section_title': 'Emergency Contacts',
-            'section_description': 'At least one emergency contact is required',
-            'icon': 'bi bi-shield-exclamation',
-            'collapsible': False,  # Don't allow collapsing required section
-            'collapsed': False,
-        },
     )
 
     # ======== ADDITIONAL PREFERENCES ========
@@ -1340,18 +1329,10 @@ class TeamMember(FormModel):
         icon='award',
         min_length=0,
         max_length=20,
-        model_class=Certification,
         add_button_label='➕ Add Certification',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='{name} - {issuer}',
-        section_design={
-            'section_title': 'Professional Certifications',
-            'section_description': 'Add credentials and certifications',
-            'icon': 'bi bi-award',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1439,18 +1420,10 @@ class Task(FormModel):
         icon='list-check',
         min_length=0,
         max_length=50,
-        model_class=Subtask,
         add_button_label='➕ Add Subtask',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🔹 {title}',
-        section_design={
-            'section_title': 'Task Breakdown',
-            'section_description': 'Organize this task into smaller, manageable subtasks',
-            'icon': 'bi bi-list-check',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1497,18 +1470,10 @@ class Team(FormModel):
         icon='people',
         min_length=1,
         max_length=100,
-        model_class=TeamMember,
         add_button_label='👤 Add Team Member',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👤 {name} - {role}',
-        section_design={
-            'section_title': 'Team Members',
-            'section_description': 'Members of this team with their certifications and experience',
-            'icon': 'bi bi-people',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1584,18 +1549,10 @@ class Project(FormModel):
         icon='list-check',
         min_length=1,
         max_length=200,
-        model_class=Task,
         add_button_label='📝 Add Task',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='📋 {title}',
-        section_design={
-            'section_title': 'Project Tasks',
-            'section_description': 'Organize project work into tasks and subtasks',
-            'icon': 'bi bi-list-task',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1660,18 +1617,10 @@ class Department(FormModel):
         icon='people',
         min_length=1,
         max_length=50,
-        model_class=Team,
         add_button_label='👥 Add Team',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='👥 {name} (Lead: {team_lead})',
-        section_design={
-            'section_title': 'Department Teams',
-            'section_description': 'Organize teams with members and their certifications',
-            'icon': 'bi bi-diagram-2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     projects: List[Project] = FormField(
@@ -1682,18 +1631,10 @@ class Department(FormModel):
         icon='kanban',
         min_length=0,
         max_length=100,
-        model_class=Project,
         add_button_label='🚀 Add Project',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🚀 {name}',
-        section_design={
-            'section_title': 'Department Projects',
-            'section_description': 'Projects in progress with tasks and subtasks',
-            'icon': 'bi bi-kanban',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
 
@@ -1794,18 +1735,10 @@ class CompanyOrganizationForm(FormModel):
         icon='diagram-2',
         min_length=1,
         max_length=500,
-        model_class=Department,
         add_button_label='🏢 Add Department',
         collapsible_items=True,
         items_expanded=False,
         item_title_template='🏢 {name} (Head: {department_head})',
-        section_design={
-            'section_title': 'Organizational Structure',
-            'section_description': 'Complete company hierarchy with departments, teams, members, and projects',
-            'icon': 'bi bi-diagram-2',
-            'collapsible': True,
-            'collapsed': False,
-        },
     )
 
     @field_validator('company_code')
@@ -2301,13 +2234,6 @@ __all__ = [
     'AppearanceForm',
     'TaskListForm',
     'LayoutDemonstrationForm',
-    # Layout Classes
-    'VerticalFormLayout',
-    'HorizontalFormLayout',
-    'NotificationsTabLayout',
-    'AppearanceTabLayout',
-    'TabbedFormLayout',
-    'ListFormLayout',
     # Widget Gallery (tabbed showcase by input-type category)
     'TextInputsGalleryForm',
     'CheckboxTogglesGalleryForm',
@@ -2315,12 +2241,6 @@ __all__ = [
     'SelectionGalleryForm',
     'DateTimeGalleryForm',
     'SpecializedGalleryForm',
-    'TextInputsTabLayout',
-    'CheckboxTogglesTabLayout',
-    'NumericTabLayout',
-    'SelectionTabLayout',
-    'DateTimeTabLayout',
-    'SpecializedTabLayout',
     'WidgetGalleryForm',
     # Helper Functions
     'create_sample_nested_data',
@@ -2574,10 +2494,10 @@ class TaskListForm(FormModel):
         icon='list-task',
         min_length=1,
         max_length=10,
-        model_class=TaskItem,
         add_button_label='Add Task',
+        item_title_template='{task_name}',
         collapsible_items=True,
-        items_expanded=True,
+        items_expanded=False,  # /menu-order shows the expanded variant
     )
 
     @field_validator('tasks')
@@ -2591,374 +2511,729 @@ class TaskListForm(FormModel):
 
 
 # ============================================================================
-# LAYOUT CLASSES
+# LAYOUT DEMONSTRATION -- composing a form from several FormModels
 # ============================================================================
-
-
-class VerticalFormLayout(VerticalLayout):
-    """Vertical layout - default stacked form layout."""
-
-    form = PersonalInfoForm
-
-
-class HorizontalFormLayout(HorizontalLayout):
-    """Horizontal layout - side-by-side form arrangement."""
-
-    form = ContactInfoForm
-
-
-class NotificationsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Notifications tab."""
-
-    form = NotificationsForm
-
-
-class AppearanceTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Appearance tab."""
-
-    form = AppearanceForm
-
-
-class TabbedFormLayout(TabbedLayout):
-    """Tabbed layout - preferences organized into Notifications and Appearance tabs."""
-
-    def __init__(self, form_config=None):
-        super().__init__(form_config=form_config)
-        self.notifications = NotificationsTabLayout()
-        self.appearance = AppearanceTabLayout()
-
-    def _get_layouts(self):
-        # Keep ordering stable (and avoid scanning dir(self)).
-        return [
-            ('notifications', self.notifications),
-            ('appearance', self.appearance),
-        ]
-
-
-class ListFormLayout(VerticalLayout):
-    """List layout - form with dynamic task list."""
-
-    form = TaskListForm
 
 
 class LayoutDemonstrationForm(FormModel):
-    """
-    Create a tabbed layout using VerticalLayout, HorizontalLayout, TabbedLayout, and ListLayout as the tabs.
+    """Four independent FormModels composed into one form by nesting them as fields.
 
-    This demonstrates how to use layout classes as field types in a Pydantic form.
-    Each field represents a different layout type that can be rendered as a tab.
+    Render it with any layout to see the same structure presented differently:
+    ``layout="vertical"`` (stacked sections), ``"tabbed"``, ``"side-by-side"``,
+    ``"accordion"`` or ``"wizard"``. Groups follow field declaration order. Inputs
+    are named ``personal_info.first_name``, ``task_list.tasks[0].title``, ...,
+    and ``validate()`` returns nested data and errors in the same shape.
     """
 
-    personal_info: VerticalFormLayout = FormField(
-        default_factory=VerticalFormLayout,
+    personal_info: PersonalInfoForm = Field(
         title='Personal Info',
-        input_type='layout',
-        help_text='Vertical layout demonstration',
+        ui_help_text='A plain nested sub-form',
+        ui_step_title='About you',  # wizard step label only; tabs/panels use title
     )
-
-    contact_info: HorizontalFormLayout = FormField(
-        default_factory=HorizontalFormLayout,
+    contact_info: ContactInfoForm = Field(
         title='Contact Info',
-        input_type='layout',
-        help_text='Horizontal layout demonstration',
+        ui_help_text='Collapsible section that starts closed (vertical layout)',
+        ui_collapsible=True,
+        ui_collapsed=True,
     )
-
-    preferences: TabbedFormLayout = FormField(
-        default_factory=TabbedFormLayout,
-        title='Preferences',
-        input_type='layout',
-        help_text='Tabbed layout demonstration',
+    preferences: NotificationsForm = Field(
+        title='Preferences', ui_help_text='Collapsible section', ui_collapsible=True
     )
-
-    task_list: ListFormLayout = FormField(
-        default_factory=ListFormLayout,
-        title='Task List',
-        input_type='layout',
-        help_text='List layout demonstration',
+    task_list: TaskListForm = Field(
+        title='Task List', ui_help_text='A sub-form containing a repeating list'
     )
 
 
 # ============================================================================
-# WIDGET GALLERY — tabbed showcase of every ui_element, grouped by category
+# WIDGET GALLERY — every ui_element (and alias) with every one of its options
 # ============================================================================
 #
-# Each tab below is its own FormModel wrapped in a VerticalLayout and declared
-# as a separate ui_element='layout' field on WidgetGalleryForm. Multiple
-# layout fields on one FormModel is what triggers automatic tab rendering
-# (enhanced_renderer.py's _render_layout_fields_as_tabs), and each field's own
-# title= becomes that tab's label. This preserves Pydantic field declaration
-# order for the tabs -- unlike TabbedLayout (see TabbedFormLayout above),
-# which introspects dir(self) alphabetically unless _get_layouts() is
-# overridden.
+# Each category is its own FormModel, nested as a field of WidgetGalleryForm
+# and rendered with layout="tabbed", one tab per category in declaration
+# order. Every field has a default, and those defaults are the page's demo
+# values (see widget_gallery_demo_data()), so a field and its demo value can
+# never drift apart. CLAUDE.md requires every registered ui_element and each
+# of its options to appear here; tests/test_examples_coverage.py checks it.
+
+_SIZES = ['small', 'medium', 'large']
+_CHANNELS = ['email', 'sms', 'push']
+_CITIES = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix']
+_LANGUAGES = [
+    {'value': 'python', 'label': 'Python'},
+    {'value': 'javascript', 'label': 'JavaScript'},
+    {'value': 'go', 'label': 'Go'},
+    {'value': 'rust', 'label': 'Rust'},
+]
 
 
 class TextInputsGalleryForm(FormModel):
-    """Every text-family widget: plain, multi-line, masked, and formatted."""
+    """Text-family widgets: plain, multi-line/code, masked, and formatted."""
 
-    text_input: str = Field('', title='Text', ui_element='text', ui_placeholder='Plain text input')
+    text_input: str = Field(
+        'Hello, world!', title='Text', ui_element='text', ui_placeholder='Plain text input'
+    )
     textarea_input: str = Field(
-        '',
-        title='Textarea',
+        'This textarea supports\nmultiple lines of text.',
+        title='Textarea (rows=3)',
         ui_element='textarea',
-        ui_placeholder='Multiple lines of text...',
         ui_options={'rows': 3},
     )
+    textarea_no_resize: str = Field(
+        'Fixed size: the drag handle is hidden.',
+        title='Textarea (resize="none")',
+        ui_element='textarea',
+        ui_options={'rows': 2, 'resize': 'none'},
+    )
     code_json_input: str = Field(
-        '',
-        title='Code: JSON (real format + syntax highlighting)',
+        '{\n  "name": "demo",\n  "enabled": true\n}',
+        title='Code: JSON (Format button + syntax highlighting)',
         ui_element='textarea',
         ui_options={'language': 'json', 'rows': 6},
     )
     code_yaml_input: str = Field(
-        '',
-        title='Code: YAML (real format + syntax highlighting)',
+        'name: demo\nenabled: true\n',
+        title='Code: YAML',
         ui_element='textarea',
-        ui_options={'language': 'yaml', 'rows': 6},
+        ui_options={'language': 'yaml', 'rows': 4},
     )
     code_toml_input: str = Field(
-        '',
-        title='Code: TOML (real format + syntax highlighting)',
+        'name = "demo"\nenabled = true\n',
+        title='Code: TOML',
         ui_element='textarea',
-        ui_options={'language': 'toml', 'rows': 6},
+        ui_options={'language': 'toml', 'rows': 4},
     )
     code_bash_input: str = Field(
-        '',
-        title='Code: Bash (whitespace cleanup + syntax highlighting)',
+        '#!/usr/bin/env bash\necho "hello, demo"\n',
+        title='Code: Bash (whitespace cleanup + highlighting)',
         ui_element='textarea',
-        ui_options={'language': 'bash', 'rows': 6},
+        ui_options={'language': 'bash', 'rows': 4},
     )
     code_python_input: str = Field(
-        '',
-        title='Code: Python (whitespace cleanup + syntax highlighting)',
+        'def hello():\n    print("hello, demo")\n',
+        title='Code: Python, 4-space indent (indent_size=4)',
         ui_element='textarea',
-        ui_options={'language': 'python', 'rows': 6},
+        ui_options={'language': 'python', 'rows': 4, 'indent_size': 4},
     )
     code_no_highlight_input: str = Field(
-        '',
-        title='Code: JSON, highlighting disabled (code_highlight=False)',
+        '{\n  "highlighting": "off"\n}',
+        title='Code: JSON, no highlighting (code_highlight=False)',
         ui_element='textarea',
         ui_options={'language': 'json', 'rows': 4, 'code_highlight': False},
     )
-    password_input: str = Field('', title='Password', ui_element='password')
-    email_input: str = Field(
-        '', title='Email', ui_element='email', ui_placeholder='you@example.com'
+    code_no_format_input: str = Field(
+        '{"format_button": "hidden"}',
+        title='Code: JSON, no Format button (code_format=False)',
+        ui_element='textarea',
+        ui_options={'language': 'json', 'rows': 2, 'code_format': False},
     )
-    search_input: str = Field('', title='Search', ui_element='search', ui_placeholder='Search...')
-    url_input: str = Field('', title='URL', ui_element='url', ui_placeholder='https://example.com')
-    tel_input: str = Field('', title='Telephone (plain)', ui_element='tel')
+    code_no_tab_input: str = Field(
+        '{"tab_key": "moves focus"}',
+        title='Code: JSON, Tab moves focus (code_tab_indent=False)',
+        ui_element='textarea',
+        ui_options={'language': 'json', 'rows': 2, 'code_tab_indent': False},
+    )
+    password_input: str = Field('demo-password', title='Password', ui_element='password')
+    email_input: str = Field(
+        'demo@example.com', title='Email', ui_element='email', ui_placeholder='you@example.com'
+    )
+    search_input: str = Field(
+        'pydantic schemaforms', title='Search', ui_element='search', ui_placeholder='Search...'
+    )
+    url_input: str = Field(
+        'https://example.com', title='URL', ui_element='url', ui_placeholder='https://example.com'
+    )
+    tel_input: str = Field('5551234567', title='Telephone (plain)', ui_element='tel')
     phone_input: str = Field(
-        '',
-        title='Phone (formatted as you type)',
+        '(555) 123-4567',
+        title='Phone (phone_format mask as you type)',
         ui_element='phone',
         ui_options={'phone_format': '(###) ###-####'},
     )
-    ssn_input: str = Field('', title='Social Security Number', ui_element='ssn')
-    credit_card_input: str = Field('', title='Credit Card Number', ui_element='credit_card')
-    currency_input: str = Field('', title='Currency', ui_element='currency')
+    phone_country_code: str = Field(
+        '',
+        title='Phone with country code (alias "phone_number", country_code="+44")',
+        ui_element='phone_number',
+        ui_placeholder='20 7946 0958',
+        ui_options={'country_code': '+44'},
+    )
+    phone_no_live_format: str = Field(
+        '5551234567',
+        title='Phone, formatted on blur only (live_format=False)',
+        ui_element='phone',
+        ui_options={'phone_format': '(###) ###-####', 'live_format': False},
+    )
+    ssn_input: str = Field('123-45-6789', title='Social Security Number', ui_element='ssn')
+    ssn_alias: str = Field(
+        '', title='SSN (alias "social_security_number")', ui_element='social_security_number'
+    )
+    credit_card_input: str = Field(
+        '4111 1111 1111 1111', title='Credit Card Number', ui_element='credit_card'
+    )
+    card_alias: str = Field('', title='Credit Card (alias "card")', ui_element='card')
+    cc_number_alias: str = Field(
+        '', title='Credit Card (alias "cc_number")', ui_element='cc_number'
+    )
+    currency_input: str = Field('$1,234.56', title='Currency', ui_element='currency')
+    currency_euro: str = Field(
+        '€99.00',
+        title='Currency in euros (alias "money", currency_symbol="€")',
+        ui_element='money',
+        ui_options={'currency_symbol': '€'},
+    )
+    currency_no_live_format: str = Field(
+        '1234.5',
+        title='Currency, no live formatting (live_format=False)',
+        ui_element='currency',
+        ui_options={'live_format': False},
+    )
     tags_input: str = Field(
         'python,fastapi,pydantic',
         title='Tags',
         ui_element='tags',
         ui_help_text='Press Enter or comma to add a chip; Backspace removes the last one',
     )
+    tags_semicolon: str = Field(
+        'red;green;blue',
+        title='Tags joined with ";" (separator=";")',
+        ui_element='tags',
+        ui_options={'separator': ';'},
+    )
 
 
 class CheckboxTogglesGalleryForm(FormModel):
-    """Every boolean/multi-boolean widget: plain checkbox, styled switch, and grouped variants."""
+    """Boolean and multi-boolean widgets: checkbox, switch, and grouped variants."""
 
     checkbox_unchecked: bool = Field(False, title='Checkbox (unchecked)', ui_element='checkbox')
     checkbox_checked: bool = Field(True, title='Checkbox (checked)', ui_element='checkbox')
     toggle_off: bool = Field(False, title='Toggle Switch (off)', ui_element='toggle')
     toggle_on: bool = Field(True, title='Toggle Switch (on)', ui_element='toggle')
+    toggle_switch_alias: bool = Field(
+        True, title='Toggle (alias "toggle_switch")', ui_element='toggle_switch'
+    )
+    checkbox_toggle_alias: bool = Field(
+        False, title='Toggle (alias "checkbox_toggle")', ui_element='checkbox_toggle'
+    )
     checkbox_group_stacked: List[str] = Field(
-        default_factory=lambda: ['email'],
+        default_factory=lambda: ['email', 'push'],
         title='Checkbox Group (stacked)',
         ui_element='checkbox_group',
-        ui_options={'choices': ['email', 'sms', 'push']},
+        ui_options={'choices': _CHANNELS},
     )
     checkbox_group_buttons: List[str] = Field(
         default_factory=lambda: ['sms'],
-        title='Checkbox Group (button-group variant)',
+        title='Checkbox Group (variant="button_group")',
         ui_element='checkbox_group',
-        ui_options={'choices': ['email', 'sms', 'push'], 'variant': 'button_group'},
+        ui_options={'choices': _CHANNELS, 'variant': 'button_group'},
+    )
+    checkbox_group_collapsible: List[str] = Field(
+        default_factory=lambda: ['email'],
+        title='Checkbox Group (collapsible=True: click the legend)',
+        ui_element='checkbox_group',
+        ui_options={'choices': _CHANNELS, 'collapsible': True},
+    )
+    checkbox_group_collapsed: List[str] = Field(
+        default_factory=list,
+        title='Checkbox Group (collapsible, starts collapsed=True)',
+        ui_element='checkbox_group',
+        ui_options={'choices': _CHANNELS, 'collapsible': True, 'collapsed': True},
     )
 
 
 class NumericGalleryForm(FormModel):
-    """Every numeric widget, from a plain number box to specialized presentations."""
+    """Numeric widgets, from a plain number box to specialized presentations."""
 
-    number_input: int = Field(0, title='Number', ui_element='number')
-    range_input: int = Field(50, title='Range', ui_element='range', ge=0, le=100)
-    percentage_input: float = Field(50.0, title='Percentage', ui_element='percentage')
-    decimal_input: float = Field(1.5, title='Decimal', ui_element='decimal')
-    integer_input: int = Field(10, title='Integer', ui_element='integer')
-    age_input: int = Field(25, title='Age', ui_element='age')
-    quantity_input: int = Field(1, title='Quantity (ships a +/- stepper)', ui_element='quantity')
-    score_input: float = Field(75.0, title='Score', ui_element='score')
+    number_input: int = Field(42, title='Number', ui_element='number')
+    number_stepper: int = Field(
+        5,
+        title='Number with +/- buttons (show_stepper=True)',
+        ui_element='number',
+        ui_options={'show_stepper': True},
+    )
+    integer_input: int = Field(7, title='Integer', ui_element='integer')
+    decimal_input: float = Field(3.14, title='Decimal (2 places by default)', ui_element='decimal')
+    decimal_four_places: float = Field(
+        2.7183,
+        title='Decimal with 4 places (decimal_places=4)',
+        ui_element='decimal',
+        ui_options={'decimal_places': 4},
+    )
+    percentage_input: float = Field(82.5, title='Percentage', ui_element='percentage')
+    age_input: int = Field(34, title='Age', ui_element='age')
+    quantity_input: int = Field(3, title='Quantity (ships a +/- stepper)', ui_element='quantity')
+    quantity_no_stepper: int = Field(
+        1,
+        title='Quantity without the stepper (show_stepper=False)',
+        ui_element='quantity',
+        ui_options={'show_stepper': False},
+    )
+    score_input: float = Field(91.0, title='Score (0-100 by default)', ui_element='score')
+    score_out_of_ten: float = Field(
+        7.5,
+        title='Score out of 10 (min_score=0, max_score=10)',
+        ui_element='score',
+        ui_options={'min_score': 0, 'max_score': 10},
+    )
+    range_input: int = Field(65, title='Range', ui_element='range', ge=0, le=100)
+    range_no_value: int = Field(
+        30,
+        title='Range without the value readout (show_value=False)',
+        ui_element='range',
+        ge=0,
+        le=100,
+        ui_options={'show_value': False},
+    )
+    slider_input: int = Field(
+        55, title='Slider (with min/max labels)', ui_element='slider', ge=0, le=100
+    )
+    slider_no_labels: int = Field(
+        20,
+        title='Slider without labels (show_labels=False)',
+        ui_element='slider',
+        ge=0,
+        le=100,
+        ui_options={'show_labels': False},
+    )
     rating_input: int = Field(
-        6,
-        title='Rating (range-slider based)',
+        8,
+        title='Rating out of 10 (range-slider based, max_rating=10)',
         ui_element='rating',
         ui_options={'max_rating': 10},
     )
+    rating_stars_alias: int = Field(
+        4, title='Rating (alias "rating_stars", default max 5)', ui_element='rating_stars'
+    )
     star_rating_input: int = Field(
-        3,
-        title='Star Rating (clickable stars)',
+        4, title='Star Rating (clickable stars)', ui_element='star_rating'
+    )
+    star_rating_ten: int = Field(
+        7,
+        title='Star Rating out of 10 (max_stars=10)',
         ui_element='star_rating',
-        ui_options={'max_stars': 5},
+        ui_options={'max_stars': 10},
     )
-    slider_input: int = Field(
-        40, title='Slider (with min/max labels)', ui_element='slider', ge=0, le=100
+    temperature_input: float = Field(
+        21.5, title='Temperature (celsius by default)', ui_element='temperature'
     )
-    temperature_input: float = Field(20.0, title='Temperature', ui_element='temperature')
+    # unit sets the placeholder and the absolute-zero minimum, so these two
+    # start empty to show the unit's placeholder.
+    temperature_fahrenheit: Optional[float] = Field(
+        None,
+        title='Temperature, empty to show its placeholder (unit="fahrenheit")',
+        ui_element='temperature',
+        ui_options={'unit': 'fahrenheit'},
+    )
+    temperature_kelvin: Optional[float] = Field(
+        None,
+        title='Temperature, empty to show its placeholder (unit="kelvin")',
+        ui_element='temperature',
+        ui_options={'unit': 'kelvin'},
+    )
 
 
 class SelectionGalleryForm(FormModel):
-    """Every choose-from-options widget, including presentation variants."""
+    """Choose-from-options widgets, including every presentation variant."""
 
     select_input: str = Field(
         'medium',
         title='Select (dropdown)',
         ui_element='select',
-        ui_options={'choices': ['small', 'medium', 'large']},
+        ui_options={'choices': _SIZES},
+    )
+    select_placeholder: str = Field(
+        '',
+        title='Select forcing a real choice (placeholder="Choose a size...")',
+        ui_element='select',
+        ui_options={'choices': _SIZES, 'placeholder': 'Choose a size...'},
+    )
+    select_labelled: str = Field(
+        'rust',
+        title='Select with value/label pairs',
+        ui_element='select',
+        ui_options={'choices': _LANGUAGES},
     )
     multiselect_input: List[str] = Field(
-        default_factory=lambda: ['python'],
+        default_factory=lambda: ['python', 'rust'],
         title='Multi-Select (chips + search)',
         ui_element='multiselect',
-        ui_options={'choices': ['python', 'javascript', 'go', 'rust']},
+        ui_options={'choices': _LANGUAGES, 'search_placeholder': 'Find a language...'},
+    )
+    multiselect_no_search: List[str] = Field(
+        default_factory=lambda: ['go'],
+        title='Multi-Select, chips without search (searchable=False)',
+        ui_element='multiselect',
+        ui_options={'choices': _LANGUAGES, 'searchable': False},
+    )
+    multiselect_native: List[str] = Field(
+        default_factory=lambda: ['javascript'],
+        title='Multi-Select, native <select multiple> (enhanced=False)',
+        ui_element='multiselect',
+        ui_options={'choices': _LANGUAGES, 'enhanced': False},
     )
     radio_stacked: str = Field(
-        'medium',
+        'large',
         title='Radio (stacked)',
         ui_element='radio',
-        ui_options={'choices': ['small', 'medium', 'large']},
+        ui_options={'choices': _SIZES},
     )
     radio_segmented: str = Field(
-        'standard',
-        title='Radio (segmented variant)',
+        'express',
+        title='Radio (variant="segmented")',
         ui_element='radio',
         ui_options={'choices': ['standard', 'express', 'overnight'], 'variant': 'segmented'},
     )
+    radio_collapsible: str = Field(
+        'small',
+        title='Radio (collapsible=True: click the legend)',
+        ui_element='radio',
+        ui_options={'choices': _SIZES, 'collapsible': True},
+    )
+    radio_collapsed: str = Field(
+        'medium',
+        title='Radio (collapsible, starts collapsed=True)',
+        ui_element='radio',
+        ui_options={'choices': _SIZES, 'collapsible': True, 'collapsed': True},
+    )
     combobox_input: str = Field(
-        '',
-        title='Combobox (type to filter)',
+        'New York',
+        title='Combobox (type to filter, matches anywhere)',
         ui_element='combobox',
-        ui_options={'choices': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix']},
+        ui_options={'choices': _CITIES},
+    )
+    combobox_startswith: str = Field(
+        '',
+        title='Combobox matching from the start, after 2 characters '
+        '(filter_mode="startswith", min_chars=2)',
+        ui_element='combobox',
+        ui_options={'choices': _CITIES, 'filter_mode': 'startswith', 'min_chars': 2},
     )
 
 
 class DateTimeGalleryForm(FormModel):
-    """Every temporal widget, including the age-calculating birthdate variant."""
+    """Temporal widgets. /date-time-formats shows many more custom formats."""
 
-    date_input: date = Field(date(2024, 6, 15), title='Date', ui_element='date')
-    time_input: str = Field('14:30', title='Time', ui_element='time')
+    date_input: date = Field(date(2024, 6, 15), title='Date (native picker)', ui_element='date')
+    date_custom_format: date = Field(
+        date(2024, 6, 15),
+        title='Date typed as MM/DD/YYYY (date_format="%m/%d/%Y")',
+        ui_element='date',
+        ui_options={'date_format': '%m/%d/%Y'},
+    )
+    date_no_live_format: date = Field(
+        date(2024, 6, 15),
+        title='Date as DD.MM.YYYY, no mask while typing (live_format=False)',
+        ui_element='date',
+        ui_options={'date_format': '%d.%m.%Y', 'live_format': False},
+    )
+    time_input: time = Field(time(14, 30), title='Time (native picker)', ui_element='time')
+    time_custom_format: time = Field(
+        time(14, 30),
+        title='Time typed as 12-hour (time_format="%I:%M %p")',
+        ui_element='time',
+        ui_options={'time_format': '%I:%M %p'},
+    )
+    time_no_live_format: time = Field(
+        time(9, 15),
+        title='Time as 12-hour, no mask while typing (live_format=False)',
+        ui_element='time',
+        ui_options={'time_format': '%I:%M %p', 'live_format': False},
+    )
     datetime_input: datetime = Field(
         datetime(2024, 6, 15, 14, 30), title='Date & Time', ui_element='datetime'
+    )
+    datetime_no_live_format: datetime = Field(
+        datetime(2024, 6, 15, 18, 0),
+        title='Date & Time as DD.MM.YYYY HH:MM, no mask while typing (live_format=False)',
+        ui_element='datetime',
+        ui_options={'datetime_format': '%d.%m.%Y %H:%M', 'live_format': False},
+    )
+    datetime_local_alias: datetime = Field(
+        datetime(2024, 6, 15, 9, 0),
+        title='Date & Time (alias "datetime-local")',
+        ui_element='datetime-local',
+    )
+    datetime_custom_format: datetime = Field(
+        datetime(2024, 6, 15, 14, 30),
+        title='Date & Time typed as MM/DD/YYYY HH:MM (datetime_format=...)',
+        ui_element='datetime',
+        ui_options={'datetime_format': '%m/%d/%Y %H:%M'},
+    )
+    datetime_now_button: Optional[datetime] = Field(
+        None,
+        title='Date & Time with a "Now" button (with_set_now_button=True)',
+        ui_element='datetime',
+        ui_options={'with_set_now_button': True},
+    )
+    datetime_auto_now: Optional[datetime] = Field(
+        None,
+        title='Date & Time filled with the current time on load (auto_set_current=True)',
+        ui_element='datetime',
+        ui_options={'auto_set_current': True},
     )
     month_input: str = Field('2024-06', title='Month', ui_element='month')
     week_input: str = Field('2024-W24', title='Week', ui_element='week')
     birthdate_input: date = Field(
-        date(1990, 1, 1),
-        title='Birthdate (shows a computed age)',
+        date(1990, 1, 1), title='Birthdate (shows a computed age)', ui_element='birthdate'
+    )
+    birthdate_no_age: date = Field(
+        date(1985, 5, 20),
+        title='Birthdate without the age readout (show_age=False)',
         ui_element='birthdate',
+        ui_options={'show_age': False},
     )
 
 
 class SpecializedGalleryForm(FormModel):
-    """Files and other specialized, non-text/numeric/date widgets."""
+    """Files and other specialized widgets."""
 
-    file_input: str = Field('', title='File Upload (drag-and-drop enabled)', ui_element='file')
+    file_input: str = Field(
+        '', title='File Upload (drag-and-drop + preview by default)', ui_element='file'
+    )
+    file_documents: str = Field(
+        '',
+        title='Several documents (accept=".pdf,.docx", multiple=True)',
+        ui_element='file',
+        ui_options={'accept': '.pdf,.docx', 'multiple': True},
+    )
+    file_camera: str = Field(
+        '',
+        title='Photo from the rear camera on mobile (accept="image/*", capture="environment")',
+        ui_element='file',
+        ui_options={'accept': 'image/*', 'capture': 'environment'},
+    )
+    file_plain: str = Field(
+        '',
+        title='Plain file input (show_preview=False, enable_drag_drop=False)',
+        ui_element='file',
+        ui_options={'show_preview': False, 'enable_drag_drop': False},
+    )
     color_input: str = Field('#3498db', title='Color Picker', ui_element='color')
-    hidden_input: str = Field('hidden-value', title='Hidden Field', ui_element='hidden')
+    color_no_value: str = Field(
+        '#e74c3c',
+        title='Color Picker without the hex readout (show_value=False)',
+        ui_element='color',
+        ui_options={'show_value': False},
+    )
+    hidden_input: str = Field('hidden-demo-value', title='Hidden Field', ui_element='hidden')
 
 
-class TextInputsTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Text Inputs gallery tab."""
+class FieldOptionsGalleryForm(FormModel):
+    """Field-level options that work on any widget, shown on plain inputs."""
 
-    form = TextInputsGalleryForm
-
-
-class CheckboxTogglesTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Checkboxes & Toggles gallery tab."""
-
-    form = CheckboxTogglesGalleryForm
-
-
-class NumericTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Numeric Inputs gallery tab."""
-
-    form = NumericGalleryForm
-
-
-class SelectionTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Selection Inputs gallery tab."""
-
-    form = SelectionGalleryForm
-
-
-class DateTimeTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Date & Time gallery tab."""
-
-    form = DateTimeGalleryForm
-
-
-class SpecializedTabLayout(VerticalLayout):
-    """Vertical layout wrapper for the Files & Specialized gallery tab."""
-
-    form = SpecializedGalleryForm
-
-
-class WidgetGalleryTabs(TabbedLayout):
-    """Combines every widget-category tab into one TabbedLayout, in declaration order.
-
-    Uses the single-TabbedLayout-field pattern (like ComprehensiveTabbedForm in
-    nested_forms_example.py) rather than multiple separate ui_element='layout'
-    fields (like LayoutDemonstrationForm above): TabbedLayout.validate() passes
-    the flat submitted data straight to each tab's VerticalLayout.validate(),
-    which constructs its sub-form via `form_cls(**form_data)` -- Pydantic's own
-    extra='ignore' picks out just that tab's fields from the shared flat dict.
-    This works for *any* tab names. The multiple-layout-fields pattern instead
-    depends on a fallback in validation.py/layout_engine.py that only knows
-    LayoutDemonstrationForm's specific field names (personal_info, contact_info,
-    preferences, task_list) -- fine for that one example, not a generic mechanism.
-    """
-
-    def __init__(self, form_config=None):
-        super().__init__(form_config=form_config)
-        self.text_inputs = TextInputsTabLayout()
-        self.checkboxes_toggles = CheckboxTogglesTabLayout()
-        self.numeric_inputs = NumericTabLayout()
-        self.selection_inputs = SelectionTabLayout()
-        self.date_time = DateTimeTabLayout()
-        self.files_specialized = SpecializedTabLayout()
-
-    def _get_layouts(self):
-        # Explicit order -- TabbedLayout's default _get_layouts() scans dir(self),
-        # which comes back alphabetical, not declaration order.
-        return [
-            ('text_inputs', self.text_inputs),
-            ('checkboxes_toggles', self.checkboxes_toggles),
-            ('numeric_inputs', self.numeric_inputs),
-            ('selection_inputs', self.selection_inputs),
-            ('date_time', self.date_time),
-            ('files_specialized', self.files_specialized),
-        ]
+    with_help: str = Field(
+        'Help text sits under the input',
+        title='ui_help_text',
+        ui_help_text='Explain what the user should enter here.',
+    )
+    with_icon: str = Field('ada@example.com', title='icon="envelope"', icon='envelope')
+    with_placeholder: str = Field('', title='ui_placeholder', ui_placeholder='Shown while empty')
+    disabled_field: str = Field(
+        'Not editable, not submitted', title='ui_disabled=True', ui_disabled=True
+    )
+    readonly_field: str = Field(
+        'Not editable, but submitted', title='ui_readonly=True', ui_readonly=True
+    )
+    autofocus_field: str = Field('', title='ui_autofocus=True (focused on load)', ui_autofocus=True)
+    styled_field: str = Field(
+        'Custom class and inline style',
+        title='ui_class="border-primary", ui_style="font-weight: 600"',
+        ui_class='border-primary',
+        ui_style='font-weight: 600',
+    )
+    ordered_first: str = Field(
+        'Declared last, shown first', title='ui_order=0 (moved to the top)', ui_order=0
+    )
+    data_attributes: str = Field(
+        '',
+        title='Extra HTML attributes via ui_options (autocomplete, data-*)',
+        ui_options={'autocomplete': 'off', 'data-analytics-id': 'gallery-demo'},
+    )
 
 
 class WidgetGalleryForm(FormModel):
-    """Tabbed gallery of every registered ui_element, grouped by input-type category.
+    """Tabbed gallery of every registered ui_element and alias, with all its options.
 
     CSRF/honeypot/CAPTCHA are deliberately not included here -- they're
-    route-level/security-flow concerns already demonstrated end-to-end on
+    route-level/security-flow concerns demonstrated end-to-end on
     CompleteShowcaseForm's /showcase route, not "just another input type".
-    model_list is likewise covered elsewhere (PetRegistrationForm/TaskListForm),
-    and DataTableLayout (CSV-import-to-table) at /employees/import, since both
-    are composition mechanisms rather than a discrete widget.
+    model_list (/pets, /menu-order) and DataTableLayout (/employees/import) are
+    composition mechanisms rather than discrete widgets.
     """
 
-    gallery: WidgetGalleryTabs = Field(
-        default_factory=WidgetGalleryTabs,
-        title='Widget Gallery',
-        ui_element='layout',
+    text_inputs: TextInputsGalleryForm = Field(title='Text Inputs')
+    checkboxes_toggles: CheckboxTogglesGalleryForm = Field(title='Checkboxes & Toggles')
+    numeric_inputs: NumericGalleryForm = Field(title='Numeric Inputs')
+    selection_inputs: SelectionGalleryForm = Field(title='Selection Inputs')
+    date_time: DateTimeGalleryForm = Field(title='Date & Time')
+    files_specialized: SpecializedGalleryForm = Field(title='Files & Specialized')
+    field_options: FieldOptionsGalleryForm = Field(title='Field Options')
+
+
+def widget_gallery_demo_data() -> dict:
+    """The gallery's demo values: every tab's field defaults, as nested JSON."""
+
+    return {
+        name: info.annotation().model_dump(mode='json')
+        for name, info in WidgetGalleryForm.model_fields.items()
+    }
+
+
+# ============================================================================
+# VALIDATION SHOWCASE — every kind of validation, failing and re-rendering
+# ============================================================================
+#
+# One form, two validation layers, one error tree: Pydantic validates the
+# model (Field constraints, validators, sub-forms, lists) and a rule-based
+# FormValidator checks the rest; /validation merges both into the nested
+# error tree render_form_html() takes. INVALID_VALIDATION_DEMO pre-fills a
+# value that breaks every rule, so a single Submit shows them all.
+# Live (as-you-type) HTMX validation is its own page: /live-validation.
+
+
+class ValidationAddress(FormModel):
+    city: str = Field(..., title='City (min_length=2)', min_length=2)
+    postcode: str = Field(..., title='Postcode (pattern: 5 digits)', pattern=r'^\d{5}$')
+
+
+class ValidationItem(FormModel):
+    name: str = Field(..., title='Item name (min_length=1)', min_length=1)
+    quantity: int = Field(1, title='Quantity (ge=1)', ge=1)
+
+
+class ValidationShowcaseForm(FormModel):
+    """Every kind of validation the library supports, on one form."""
+
+    # Pydantic Field constraints. Pydantic reports only the first failing
+    # constraint of a field, so each constraint gets its own field here.
+    username: str = Field(..., title='Username (min_length=3)', min_length=3)
+    bio: str = Field('', title='Bio (max_length=40)', max_length=40, ui_element='textarea')
+    handle: str = Field(..., title='Handle (pattern=^[a-z0-9_]+$)', pattern=r'^[a-z0-9_]+$')
+    age: int = Field(..., title='Age (ge=13)', ge=13)
+    rating: int = Field(..., title='Rating (le=5)', le=5)
+    discount: float = Field(..., title='Discount % (gt=0)', gt=0)
+    tip_percent: float = Field(..., title='Tip % (lt=50)', lt=50)
+    pack_size: int = Field(..., title='Pack size (multiple_of=6)', multiple_of=6)
+    email: EmailStr = Field(..., title='Email (EmailStr)', ui_element='email')
+
+    # Validators
+    password: str = Field(
+        ..., title='Password (@field_validator: needs a digit)', ui_element='password'
     )
+    confirm_password: str = Field(
+        ..., title='Confirm password (@model_validator: must match)', ui_element='password'
+    )
+
+    # Errors inside a sub-form and inside list items
+    address: ValidationAddress = Field(title='Address (errors inside a sub-form)')
+    items: List[ValidationItem] = Field(
+        default_factory=list,
+        title='Items (min_length=1 on the list, errors on each item)',
+        min_length=1,
+    )
+
+    # Checked by the rule-based FormValidator in validation_showcase_rules()
+    phone: str = Field('', title='Phone (RequiredRule + PhoneRule)')
+    nickname: str = Field('', title='Nickname (MinLengthRule(2) + MaxLengthRule(10))')
+    backup_email: str = Field('', title='Backup email (EmailRule)')
+    work_email: str = Field('', title='Work email (EmailDeliverabilityRule: domain accepts mail)')
+    budget: str = Field('', title='Budget (NumericRangeRule 100-10000)')
+    website: str = Field('', title='Website (RegexRule: starts with http(s)://)')
+    coupon: str = Field('', title='Coupon (CustomRule: starts with SAVE)')
+    start_date: str = Field(
+        '', title='Start date (DateRangeRule: 2025 or later)', ui_element='date'
+    )
+    end_date: str = Field('', title='End date (cross-field rule: after start)', ui_element='date')
+
+    @field_validator('password')
+    @classmethod
+    def _password_has_digit(cls, value: str) -> str:
+        if not any(ch.isdigit() for ch in value):
+            raise ValueError('Password must contain at least one digit')
+        return value
+
+    @model_validator(mode='after')
+    def _passwords_match(self) -> 'ValidationShowcaseForm':
+        if self.password != self.confirm_password:
+            raise ValueError('Passwords do not match')
+        return self
+
+
+def _end_after_start(data: dict) -> tuple[bool, dict[str, str]]:
+    start, end = data.get('start_date'), data.get('end_date')
+    if start and end and end <= start:
+        return False, {'end_date': 'End date must be after the start date'}
+    return True, {}
+
+
+def validation_showcase_rules() -> FormValidator:
+    """The rule-based half of /validation: rule classes plus a cross-field rule."""
+
+    rules = FormValidator()
+    rules.field('phone').add_rule(RequiredRule('Phone is required')).add_rule(PhoneRule())
+    rules.field('nickname').add_rule(MinLengthRule(2)).add_rule(MaxLengthRule(10))
+    rules.field('backup_email').add_rule(EmailRule())
+    # Looks the domain up in DNS; reserved names like .invalid fail without a lookup.
+    rules.field('work_email').add_rule(EmailDeliverabilityRule())
+    rules.field('budget').add_rule(NumericRangeRule(min_value=100, max_value=10000))
+    rules.field('website').add_rule(RegexRule(r'^https?://', 'Must start with http:// or https://'))
+    rules.field('coupon').add_rule(
+        CustomRule(lambda value: str(value).startswith('SAVE'), 'Coupons start with SAVE')
+    )
+    rules.field('start_date').add_rule(DateRangeRule(min_date=date(2025, 1, 1)))
+    rules.add_cross_field_rule(_end_after_start)
+    return rules
+
+
+VALID_VALIDATION_DEMO = {
+    'username': 'ada',
+    'bio': 'Mathematician and writer.',
+    'handle': 'ada_l',
+    'age': 36,
+    'rating': 5,
+    'discount': 10,
+    'tip_percent': 15,
+    'pack_size': 12,
+    'email': 'ada@example.com',
+    'password': 'engine1843',
+    'confirm_password': 'engine1843',
+    'address': {'city': 'London', 'postcode': '10001'},
+    'items': [{'name': 'Widget', 'quantity': 2}],
+    'phone': '(555) 123-4567',
+    'nickname': 'ada',
+    'backup_email': 'ada.backup@example.com',
+    'work_email': '',
+    'budget': '2500',
+    'website': 'https://example.com',
+    'coupon': 'SAVE10',
+    'start_date': '2025-03-01',
+    'end_date': '2025-04-01',
+}
+
+# Everything valid except the passwords: Pydantic only runs
+# @model_validator(mode='after') once every field is valid, so the form-wide
+# "_errors" message needs its own scenario.
+PASSWORD_MISMATCH_DEMO = VALID_VALIDATION_DEMO | {'confirm_password': 'engine1844'}
+
+INVALID_VALIDATION_DEMO = {
+    'username': 'ab',
+    'bio': 'This bio is far longer than the forty characters allowed.',
+    'handle': 'Bad Handle!',
+    'age': 9,
+    'rating': 9,
+    'discount': 0,
+    'tip_percent': 75,
+    'pack_size': 10,
+    'email': 'not-an-email',
+    'password': 'nodigits',
+    'confirm_password': 'different',
+    'address': {'city': 'X', 'postcode': 'ABC'},
+    'items': [{'name': 'Widget', 'quantity': 2}, {'name': '', 'quantity': 0}],
+    'phone': '123',
+    'nickname': 'x',
+    'backup_email': 'backup-at-example',
+    'work_email': 'someone@no-such-domain.invalid',
+    'budget': '50',
+    'website': 'ftp://example.com',
+    'coupon': 'FREE10',
+    'start_date': '2024-03-01',
+    'end_date': '2024-02-01',
+}

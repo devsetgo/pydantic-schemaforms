@@ -62,10 +62,8 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import EmailStr
 
 from examples.fastapi_routes import log_timing, templates
-from pydantic_schemaforms import render_form_html_async
-from pydantic_schemaforms.datatable_layout import DataTableLayout
-from pydantic_schemaforms.schema_form import Field as FormField
-from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms import DataTableLayout, FormModel, render_form_html_async
+from pydantic_schemaforms import Field as FormField
 
 
 class Department(str, Enum):
@@ -128,6 +126,45 @@ class EmployeeImportReadOnly(EmployeeImport):
     department: Department = Department.engineering
     project_team_name: str = ''
     project_description: str = ''
+
+
+class EmployeeDirectory(DataTableLayout):
+    """A browse-only table: the DataTableLayout options /import doesn't use.
+
+    csv_upload=False drops the file input and Load/Submit buttons,
+    editable=False renders every cell as text, and length_menu offers the
+    page sizes. /employees/directory?paging=false uses EmployeeDirectoryAll.
+    """
+
+    name: str
+    email: EmailStr
+    department: Department = Department.engineering
+
+    model_config = {
+        'csv_upload': False,
+        'editable': False,
+        'search': False,
+        'paging': True,
+        'page_length': 5,
+        'length_menu': [5, 10, 20],
+        'buttons': ['csv'],
+        'style': {'striped': True, 'compact': True},
+    }
+
+
+class EmployeeDirectoryAll(EmployeeDirectory):
+    """Same table with paging=False: every row on one page."""
+
+    model_config = {**EmployeeDirectory.model_config, 'paging': False}
+
+
+class EmployeeDirectoryForm(FormModel):
+    directory: Any = FormField(
+        default_factory=dict,
+        title='Employee Directory',
+        input_type='layout',
+        layout_handler='datatable',
+    )
 
 
 class EmployeeImportForm(FormModel):
@@ -307,6 +344,50 @@ async def _render_page(
             # rows, highlighted errors) after you've already moved past it.
             headers={'Cache-Control': 'no-store'},
         )
+
+
+_DIRECTORY_ROWS = [
+    {
+        'name': f'Employee {n:02d}',
+        'email': f'employee{n:02d}@example.com',
+        'department': ('engineering', 'sales', 'support')[n % 3],
+    }
+    for n in range(1, 13)
+]
+
+
+@router.get('/directory', response_class=HTMLResponse)
+async def show_directory(
+    request: Request, style: str = 'bootstrap', paging: bool = True, assets: str = 'vendored'
+):
+    """Read-only DataTableLayout: no upload, no editing, paging and page-size menu.
+
+    ?paging=false shows every row on one page; ?assets=cdn loads DataTables
+    from a CDN instead of the vendored copy (as_layout_value(asset_mode=...)).
+    """
+    table = EmployeeDirectory if paging else EmployeeDirectoryAll
+    form_html = await render_form_html_async(
+        EmployeeDirectoryForm,
+        framework=style,
+        form_data={'directory': table.as_layout_value(rows=_DIRECTORY_ROWS, asset_mode=assets)},
+        submit_url='/employees/directory',
+        include_submit_button=False,
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Employee Directory - read-only DataTableLayout',
+            'description': 'csv_upload=False, editable=False, search=False, page_length=5 '
+            'with length_menu=[5, 10, 20], a CSV export button, and the compact style. '
+            '?paging=false shows every row; ?assets=cdn loads DataTables from a CDN.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+        },
+    )
 
 
 @router.get('/import', response_class=HTMLResponse)

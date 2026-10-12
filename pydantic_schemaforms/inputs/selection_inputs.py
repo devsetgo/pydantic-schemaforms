@@ -395,7 +395,9 @@ class CheckboxGroup(SelectInputBase):
         for i, option in enumerate(options):
             value = option.get('value', '')
             label = option.get('label', str(value))
-            checked = option.get('checked', False)
+            # The field renderer marks the submitted/current value 'selected'
+            # (shared with <select>); 'checked' is accepted for direct callers.
+            checked = option.get('checked', option.get('selected', False))
             disabled = option.get('disabled', False)
 
             checkbox_id = f'{group_name}_{i}'
@@ -549,7 +551,9 @@ class RadioGroup(SelectInputBase):
         for i, option in enumerate(options):
             value = option.get('value', '')
             label = option.get('label', str(value))
-            checked = option.get('checked', False)
+            # The field renderer marks the submitted/current value 'selected'
+            # (shared with <select>); 'checked' is accepted for direct callers.
+            checked = option.get('checked', option.get('selected', False))
             disabled = option.get('disabled', False)
 
             radio_id = f'{group_name}_{i}'

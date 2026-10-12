@@ -47,8 +47,7 @@ app = FastAPI()
 @app.api_route("/contact", methods=["GET", "POST"], response_class=HTMLResponse)
 async def contact(request: Request):
     if request.method == "POST":
-        data = dict(await request.form())
-        result = ContactForm.validate(data, submit_url="/contact")
+        result = ContactForm.validate(await request.form(), submit_url="/contact")
         if result.is_valid:
             # process result.data …
             return "<p>Thanks!</p>"
@@ -77,7 +76,7 @@ class ContactForm(FormModel):
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "POST":
-        result = ContactForm.validate(request.form.to_dict(), submit_url="/contact")
+        result = ContactForm.validate(request.form, submit_url="/contact")
         if result.is_valid:
             return "Thanks!"
         form_html = result.render_with_errors()
@@ -341,7 +340,7 @@ opacity: int = Field(100, ui_element='slider', ge=0, le=100)
 rating: int = Field(3, ui_element='rating', ui_options={'max_rating': 5})
 ```
 
-**`temperature`** — Number input with a unit indicator (celsius/fahrenheit).
+**`temperature`** — Number input whose placeholder and absolute-zero minimum follow unit (celsius/fahrenheit/kelvin).
 ```python
 temp: float = Field(20.0, ui_element='temperature',
                     ui_options={'unit': 'celsius'})
@@ -454,7 +453,7 @@ keywords: str = Field('', ui_element='tags',
 
 **`star_rating`** — Individually clickable stars (contrast with rating, which is a slider).
 ```python
-stars: int = Field(0, ui_element='star_rating', ui_options={'max_rating': 5})
+stars: int = Field(0, ui_element='star_rating', ui_options={'max_stars': 5})
 ```
 
 **`captcha`** — Simple math-challenge CAPTCHA for spam resistance without a third-party service.
@@ -597,14 +596,40 @@ html = await render_form_html_async(
 
 ---
 
-## Repeating sub-forms (model list)
+## Sub-forms (nested models)
 
-Let users add/remove items dynamically with a `model_list` field.
+Type a field as another `FormModel` and it renders as a titled section whose
+inputs are named `address.street`, `address.city`. Validation returns the
+same nesting. To arrange several sub-forms as tabs, columns, or accordion
+panels, see `docs/complex_forms.md`.
 
 ```python
-from typing import List
+from pydantic_schemaforms import Field, FormModel, render_form_html
+
+class Address(FormModel):
+    street: str = Field(..., title="Street")
+    city:   str = Field(..., title="City", min_length=2)
+
+class PersonForm(FormModel):
+    name:    str     = Field(..., title="Full Name")
+    address: Address = Field(..., title="Home address", ui_collapsible=True)
+
+html = render_form_html(PersonForm, submit_url="/person")
+
+result = PersonForm.validate(await request.form(), submit_url="/person")
+# result.data   == {"name": "...", "address": {"street": "...", "city": "..."}}
+# result.errors == {"address": {"city": "String should have at least 2 characters"}}
+```
+
+---
+
+## Repeating sub-forms (model list)
+
+Type a field as `list[ItemModel]` and users can add and remove items
+dynamically.
+
+```python
 from pydantic_schemaforms import Field, FormModel
-from pydantic_schemaforms.form_field import FormField
 
 class PhoneEntry(FormModel):
     label:  str = Field(..., title="Label",  ui_element="text",  ui_placeholder="Mobile / Home / Work")
@@ -612,33 +637,27 @@ class PhoneEntry(FormModel):
 
 class PersonForm(FormModel):
     name:   str              = Field(..., title="Full Name", ui_element="text")
-    phones: List[PhoneEntry] = FormField(
+    phones: list[PhoneEntry] = Field(
         default_factory=list,
         title="Phone Numbers",
-        input_type="model_list",
-        model_class=PhoneEntry,
-        add_button_label="Add phone",
+        ui_add_button_label="Add phone",
         min_length=0,
         max_length=5,
     )
 ```
 
-Parse the submitted flat form data back into the nested structure:
+Pass the submitted form straight to `validate()`; items come back as a list:
 
 ```python
-from pydantic_schemaforms import parse_nested_form_data
-
-raw = dict(await request.form())
-nested = parse_nested_form_data(raw)
-result = PersonForm.validate(nested, submit_url="/person")
+result = PersonForm.validate(await request.form(), submit_url="/person")
+# result.data == {"name": "...", "phones": [{"label": "Mobile", "number": "..."}]}
 ```
 
 ### Customizing the list with `Field()`
 
 The item model is resolved automatically from the `list[ItemModel]` type
-annotation — `model_class` is only needed with the `FormField` constructor
-shown above. Using the recommended `Field()` constructor, the same list
-can be customized with these `ui_*` keyword arguments:
+annotation, and `ui_element="model_list"` is optional. The list can be
+customized with these `ui_*` keyword arguments:
 
 ```python
 class PersonForm(FormModel):
@@ -661,8 +680,8 @@ class PersonForm(FormModel):
 - Item-count bounds (`min_length`/`max_length` above) are the same Pydantic
   constraint used for string length — they are not a separate `ui_options`
   setting.
-- Nested per-item validation errors (keyed like `phones[0].number` by
-  `FormModel.validate()`) render inline on the matching item automatically.
+- Per-item validation errors (`result.errors["phones"][0]["number"]`) render
+  inline on the matching item automatically.
 
 ---
 
@@ -682,8 +701,8 @@ declares a separate file field or hand-builds that markup.
 
 ```python
 from enum import Enum
-from pydantic_schemaforms.datatable_layout import DataTableLayout
-from pydantic_schemaforms.schema_form import Field as FormField
+from pydantic_schemaforms import DataTableLayout
+from pydantic_schemaforms import Field as FormField
 
 class Color(str, Enum):
     red = "red"
@@ -699,15 +718,14 @@ class ContactImport(DataTableLayout):
 ```
 
 It is **not** rendered on its own — it's embedded as one *layout field* on
-a plain `FormModel`, exactly like `TabbedLayout`/any other layout (see
-`docs/plugin_hooks.md`), and rendered through the same
+a plain `FormModel` (see `docs/plugin_hooks.md`), and rendered through the same
 `render_form_html_async()` call every other form in this library uses.
 That embedding `FormModel` needs nothing but the one field:
 
 ```python
 from typing import Any
 from pydantic_schemaforms import render_form_html_async
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import Field, FormModel
 
 class ContactsPage(FormModel):
     rows: Any = Field(
@@ -941,8 +959,8 @@ from fastapi.responses import HTMLResponse, Response
 from pydantic import EmailStr
 
 from pydantic_schemaforms import render_form_html_async
-from pydantic_schemaforms.datatable_layout import DataTableLayout
-from pydantic_schemaforms.schema_form import Field, FormModel
+from pydantic_schemaforms import DataTableLayout
+from pydantic_schemaforms import Field, FormModel
 
 class Department(str, Enum):
     engineering = "engineering"
@@ -1017,45 +1035,34 @@ def download_template() -> Response:
 
 ---
 
-## Tabbed layout
+## Tabs, columns, and accordions
 
-Group fields into tabs. Users navigate between tabs without a page reload.
-
-```python
-from pydantic_schemaforms import Field, FormModel
-from pydantic_schemaforms.form_layouts import TabbedLayout
-
-class ProfileForm(FormModel):
-    # Tab 1
-    first_name: str = Field(..., title="First Name", ui_element="text")
-    last_name:  str = Field(..., title="Last Name",  ui_element="text")
-    # Tab 2
-    bio:        str = Field("",  title="Bio",     ui_element="textarea")
-    website:    str = Field("",  title="Website", ui_element="url")
-
-    class FormConfig:
-        layout = TabbedLayout(
-            ("Personal", ["first_name", "last_name"]),
-            ("Profile",  ["bio", "website"]),
-        )
-```
-
----
-
-## Horizontal layout
-
-Render label and input side-by-side (Bootstrap grid).
+Split the form into sub-forms and pick a `layout=`. Each sub-form becomes a
+tab (or column, or accordion panel) titled by its field's `title`, in
+declaration order; the parent's own plain fields go in a first "General"
+group.
 
 ```python
-from pydantic_schemaforms.form_layouts import HorizontalLayout
+from pydantic_schemaforms import Field, FormModel, render_form_html
 
-class SettingsForm(FormModel):
-    display_name: str = Field(..., title="Display name", ui_element="text")
-    timezone:     str = Field("UTC", title="Timezone",   ui_element="text")
+class Personal(FormModel):
+    first_name: str = Field(..., title="First Name")
+    last_name:  str = Field(..., title="Last Name")
 
-    class FormConfig:
-        layout = HorizontalLayout(label_cols=3, input_cols=9)
+class Profile(FormModel):
+    bio:     str = Field("", title="Bio", ui_element="textarea")
+    website: str = Field("", title="Website", ui_element="url")
+
+class AccountForm(FormModel):
+    personal: Personal = Field(title="Personal")
+    profile:  Profile  = Field(title="Profile")
+
+html = render_form_html(AccountForm, layout="tabbed", submit_url="/account")
+# also: layout="side-by-side" or layout="accordion"
 ```
+
+On a failed submit, `result.render_with_errors()` opens the first tab that
+contains an error. Full details: `docs/complex_forms.md`.
 
 ---
 
@@ -1167,41 +1174,30 @@ to call regardless of what UI metadata the form declares.
 
 ---
 
-## Nested vs. flat form data
+## Submitted data and errors are nested JSON
 
-By default, `FormModel.validate()` returns `result.data` shaped exactly
-like the underlying (possibly nested) Pydantic model — a `List[BaseModel]`
-field like `pets` above comes back as a nested list of dicts, matching
-`model_dump()`. Pass `flatten=True` to opt into bracket+dot flat keys
-instead (the same notation used for `model_list` HTML field names and for
-`parse_nested_form_data()`), for both the accepted input and the returned
-`result.data`:
+`FormModel.validate()` accepts the raw request form, a list of
+`(name, value)` pairs, or an already nested dict (for example a JSON body),
+and always returns data shaped like the model. Errors have the same shape as
+the data, with list items keyed by index:
 
 ```python
-nested = {"owner": "Casey", "pets": [{"name": "Fido", "is_active": True}]}
+result = PersonForm.validate(await request.form(), submit_url="/people")
+# result.data   == {"owner": "Casey", "pets": [{"name": "Fido"}, {"name": ""}]}
+# result.errors == {"pets": {1: {"name": "String should have at least 1 character"}}}
 
-# Default: nested in, nested out — mirrors the Pydantic model shape.
-result = PersonForm.validate(nested, submit_url="/people")
-# result.data == {"owner": "Casey", "pets": [{"name": "Fido", "is_active": True}]}
-
-# flatten=True: flat in (nested input is also accepted), flat out.
-result = PersonForm.validate(nested, submit_url="/people", flatten=True)
-# result.data == {"owner": "Casey", "pets[0].name": "Fido", "pets[0].is_active": True}
-
-flat_input = {"owner": "Casey", "pets[0].name": "Fido", "pets[0].is_active": True}
-result = PersonForm.validate(flat_input, submit_url="/people", flatten=True)
-# same result — flatten=True un-flattens bracket+dot input before validating
+result.error_list()
+# [{"loc": ["pets", 1, "name"], "msg": "String should have at least 1 character"}]
 ```
 
-`flatten_nested_data()` (the inverse of `parse_nested_form_data()`) is
-available directly if you need to flatten data outside of `.validate()`:
+The same call validates a JSON API body:
 
 ```python
-from pydantic_schemaforms import flatten_nested_data
-
-flatten_nested_data({"pets": [{"name": "Fido"}]})
-# {"pets[0].name": "Fido"}
+result = PersonForm.validate(await request.json())
 ```
+
+Inputs in the HTML are named `pets[0].name`; that naming is internal and
+decoded for you. See `docs/complex_forms.md` for the full error-tree rules.
 
 ---
 
@@ -1302,8 +1298,13 @@ types — nothing to duplicate, checking as-you-type (debounced) rather than
 only on blur:
 
 ```python
-from pydantic_schemaforms import DeliverableEmailStr, Field, FormModel, LiveValidator
-from pydantic_schemaforms.live_validation import validation_response_headers
+from pydantic_schemaforms import (
+    DeliverableEmailStr,
+    Field,
+    FormModel,
+    LiveValidator,
+    validation_response_headers,
+)
 from fastapi.responses import HTMLResponse
 
 class ContactForm(FormModel):

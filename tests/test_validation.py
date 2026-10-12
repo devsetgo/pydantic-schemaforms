@@ -19,8 +19,6 @@ from unittest.mock import patch
 import pytest
 from pydantic import Field, model_validator
 
-from pydantic_schemaforms.form_field import FormField
-from pydantic_schemaforms.form_layouts import TabbedLayout, VerticalLayout
 from pydantic_schemaforms.live_validation import LiveValidator
 from pydantic_schemaforms.live_validation import ValidationResponse as LiveValidationResponse
 from pydantic_schemaforms.schema_form import FormModel
@@ -39,7 +37,6 @@ from pydantic_schemaforms.validation import (
     RegexRule,
     RequiredRule,
     ValidationResponse,
-    ValidationResult,
     ValidationRule,
     ValidationSchema,
     create_email_validator,
@@ -638,7 +635,7 @@ class TestEmailDeliverabilityRule:
         from pathlib import Path
 
         pyproject = Path(__file__).parent.parent / 'pyproject.toml'
-        data = tomllib.loads(pyproject.read_text())
+        data = tomllib.loads(pyproject.read_text(encoding='utf-8'))
         extras = data['project']['optional-dependencies']
         assert 'email' in extras
         assert 'email-dns' in extras
@@ -1270,13 +1267,6 @@ def test_email_and_password_factory_validators_edge_paths():
 # ---------------------------------------------------------------------------
 
 
-class _LayoutFieldModel(FormModel):
-    layout_field: dict = Field(
-        default_factory=lambda: {'layout': True},
-        json_schema_extra={'ui_element': 'layout'},
-    )
-
-
 class _CallableExtraModel(FormModel):
     name: str = Field(default='ok', json_schema_extra=lambda schema, _cls: schema.update({'x': 1}))
 
@@ -1294,15 +1284,7 @@ class _GeneralModelError(FormModel):
         raise ValueError('model invalid')
 
 
-def test_validate_form_data_layout_cleanup_and_non_dict_extra(monkeypatch):
-    import pydantic_schemaforms.rendering.layout_engine as layout_engine
-
-    monkeypatch.setattr(layout_engine, 'get_nested_form_data', lambda *args, **kwargs: {})
-
-    result = validate_form_data(_LayoutFieldModel, {})
-    assert result.is_valid is True
-    assert 'layout_field' not in result.data
-
+def test_validate_form_data_non_dict_json_schema_extra():
     callable_extra_result = validate_form_data(_CallableExtraModel, {'name': 'ok'})
     assert callable_extra_result.is_valid is True
     assert callable_extra_result.data['name'] == 'ok'
@@ -1350,13 +1332,13 @@ def test_validate_form_data_error_message_paths_and_general_and_exception():
 
     assert mapped_errors_result.is_valid is False
     assert mapped_errors_result.errors['n'] == 'Must be 4 or less'
-    assert mapped_errors_result.errors['min_field'] == 'Must be at least 3 characters'
-    assert mapped_errors_result.errors['max_field'] == 'Must be no more than 7 characters'
-    assert mapped_errors_result.errors['general'] == 'general bad'
+    assert mapped_errors_result.errors['min_field'] == 'bad'
+    assert mapped_errors_result.errors['max_field'] == 'bad'
+    assert mapped_errors_result.errors['_errors'] == 'general bad'
 
     general_result = validate_form_data(_GeneralModelError, {'x': 1})
     assert general_result.is_valid is False
-    assert 'general' in general_result.errors
+    assert '_errors' in general_result.errors
 
     class _ExplodingRuntimeProvider:
         @staticmethod
@@ -1366,9 +1348,10 @@ def test_validate_form_data_error_message_paths_and_general_and_exception():
 
             return _explode
 
-    exception_result = validate_form_data(_ExplodingRuntimeProvider, {})
-    assert exception_result.is_valid is False
-    assert exception_result.errors == {'general': 'boom'}
+    # A non-validation exception is a bug, not user input to report back:
+    # it propagates instead of being shown on the form.
+    with pytest.raises(RuntimeError, match='boom'):
+        validate_form_data(_ExplodingRuntimeProvider, {})
 
 
 # ---------------------------------------------------------------------------
@@ -1510,7 +1493,7 @@ class TestCustomDateTimeFormatCoercion:
             {'events': [{'name': 'Launch', 'starts_on': 'nope'}]},
         )
         assert result.is_valid is False
-        assert 'events[0].starts_on' in result.errors
+        assert 'starts_on' in result.errors['events'][0]
 
 
 # ---------------------------------------------------------------------------
@@ -1832,150 +1815,6 @@ class TestConsolidatedValidationEngine:
 
         username_response = live_validator.validate_field('username', 'ab')
         assert not username_response.is_valid
-
-
-# ---------------------------------------------------------------------------
-# Layout-related tests (from test_validation_coverage.py)
-# ---------------------------------------------------------------------------
-
-
-class LeafForm(FormModel):
-    first_name: str = Field(..., min_length=2)
-
-
-class RaisingValidateLayout(VerticalLayout):
-    form = LeafForm
-
-    def validate(self, form_data, files=None):  # pragma: no cover - executed in tests
-        raise RuntimeError('boom')
-
-
-class BadGetFormsLayout(VerticalLayout):
-    form = LeafForm
-
-    def validate(self, form_data, files=None):  # pragma: no cover - executed in tests
-        raise RuntimeError('boom')
-
-    def _get_forms(self):  # pragma: no cover - executed in tests
-        raise RuntimeError('boom')
-
-
-class NoCallableGetFormsLayout(VerticalLayout):
-    form = LeafForm
-
-    def __init__(self):
-        super().__init__()
-        # Make the attribute present but not callable.
-        self._get_forms = None
-
-    def validate(self, form_data, files=None):  # pragma: no cover - executed in tests
-        raise RuntimeError('boom')
-
-
-class EmptyDataValidateLayout(VerticalLayout):
-    form = LeafForm
-
-    def validate(self, form_data, files=None):  # pragma: no cover - executed in tests
-        # Return an empty dict to hit the `nested_result.data` falsey branch.
-        return ValidationResult(is_valid=True, data={}, errors={})
-
-
-class WrapperRaising(FormModel):
-    personal_info: RaisingValidateLayout = FormField(
-        default_factory=RaisingValidateLayout, input_type='layout'
-    )
-
-
-class WrapperBadGetForms(FormModel):
-    personal_info: BadGetFormsLayout = FormField(
-        default_factory=BadGetFormsLayout, input_type='layout'
-    )
-
-
-class WrapperNoCallableGetForms(FormModel):
-    personal_info: NoCallableGetFormsLayout = FormField(
-        default_factory=NoCallableGetFormsLayout, input_type='layout'
-    )
-
-
-class WrapperEmptyData(FormModel):
-    personal_info: EmptyDataValidateLayout = FormField(
-        default_factory=EmptyDataValidateLayout, input_type='layout'
-    )
-
-
-class OrgForm(FormModel):
-    company_name: str
-
-
-class SettingsForm(FormModel):
-    username: str
-    theme: str
-
-
-class OrgLayout(VerticalLayout):
-    form = OrgForm
-
-
-class SettingsLayout(VerticalLayout):
-    form = SettingsForm
-
-
-class GenericTabbed(TabbedLayout):
-    def __init__(self, form_config=None):
-        super().__init__(form_config=form_config)
-        self.org = OrgLayout()
-        self.settings = SettingsLayout()
-
-    def _get_layouts(self):
-        return [('org', self.org), ('settings', self.settings)]
-
-
-class WrapperTabbed(FormModel):
-    tabs: GenericTabbed = FormField(default_factory=GenericTabbed, input_type='layout')
-
-
-def test_layout_validate_raises_falls_back_to_get_forms_and_reports_errors():
-    result = validate_form_data(WrapperRaising, {'first_name': 'A'})
-    assert result.is_valid is False
-    assert 'first_name' in result.errors
-
-
-def test_layout_get_forms_raises_is_safely_ignored():
-    result = validate_form_data(WrapperBadGetForms, {'first_name': 'A'})
-    assert result.is_valid is True
-    assert result.data.get('personal_info') == {'first_name': 'A'}
-
-
-def test_layout_get_forms_not_callable_skips_fallback():
-    result = validate_form_data(WrapperNoCallableGetForms, {'first_name': 'A'})
-    assert result.is_valid is True
-    assert result.data.get('personal_info') == {'first_name': 'A'}
-
-
-def test_layout_validate_returns_empty_data_does_not_replace_payload():
-    payload = {'first_name': 'Ok'}
-    result = validate_form_data(WrapperEmptyData, payload)
-    assert result.is_valid is True
-    # Because validate() returned empty data, validate_form_data keeps nested payload.
-    assert result.data.get('personal_info') == {'first_name': 'Ok'}
-
-
-def test_layout_payload_removed_when_no_nested_data_extracted():
-    result = validate_form_data(WrapperTabbed, {})
-    assert result.is_valid is True
-    assert result.data == {}
-
-
-def test_tabbed_layout_nested_payload_validation_sets_layout_errors():
-    result = validate_form_data(
-        WrapperTabbed,
-        {'username': 'alice', 'theme': 'dark'},
-    )
-    assert result.is_valid is False
-    assert 'company_name' in result.errors
-    assert 'tabs' in result.data
-    assert 'settings' in result.data['tabs']
 
 
 # ---------------------------------------------------------------------------

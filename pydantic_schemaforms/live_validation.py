@@ -13,6 +13,10 @@ from html import escape as _html_escape
 from typing import TYPE_CHECKING, Any
 from collections.abc import Callable
 
+import re
+import types
+from typing import Union, get_args, get_origin
+
 from pydantic import BaseModel, ValidationError
 
 from .templates import TemplateString
@@ -132,6 +136,25 @@ document.addEventListener('DOMContentLoaded', function() {{
 }});
 </script>
 """
+
+
+_LIST_INDEX_RE = re.compile(r'\[\d+\]')
+
+
+def _sub_model_of(annotation: Any) -> tuple[type[BaseModel] | None, bool]:
+    """``(Model, is_list)`` when an annotation is a sub-model, an Optional of
+    one, or a list of them; ``(None, False)`` otherwise."""
+    candidates = [annotation]
+    if get_origin(annotation) in (Union, types.UnionType):
+        candidates = [arg for arg in get_args(annotation) if arg is not type(None)]
+    for candidate in candidates:
+        if get_origin(candidate) is list:
+            args = get_args(candidate)
+            if args and isinstance(args[0], type) and issubclass(args[0], BaseModel):
+                return args[0], True
+        elif isinstance(candidate, type) and issubclass(candidate, BaseModel):
+            return candidate, False
+    return None, False
 
 
 @dataclass
@@ -255,33 +278,40 @@ class LiveValidator:
         for field_validator in schema.validators():
             self.register_field_validator(field_validator)
 
-    def register_model_validator(self, model_class: type[BaseModel]) -> None:
+    def register_model_validator(self, model_class: type[BaseModel], _prefix: str = '') -> None:
         """
-        Register validators for all fields in a Pydantic model.
+        Register validators for every field of a Pydantic model, including
+        fields of nested sub-models (``address.city``) and of list items
+        (``pets[].name`` -- matched for any index, see ``validate_field``),
+        keyed by the input name the form renders.
 
         Args:
             model_class: Pydantic model class
         """
-        model_fields = model_class.model_fields
 
-        for field_name, field_info in model_fields.items():
+        def create_model_validator(model: type[BaseModel], fname: str, wire_name: str):
+            def validator(value: Any) -> ValidationResponse:
+                try:
+                    model.__pydantic_validator__.validate_assignment(
+                        model.model_construct(), fname, value
+                    )
+                    return ValidationResponse(field_name=wire_name, is_valid=True, value=value)
+                except ValidationError as e:
+                    errors = [err['msg'] for err in e.errors()]
+                    return ValidationResponse(
+                        field_name=wire_name, is_valid=False, errors=errors, value=value
+                    )
 
-            def create_model_validator(fname: str, _finfo: Any):
-                def validator(value: Any) -> ValidationResponse:
-                    try:
-                        model_class.__pydantic_validator__.validate_assignment(
-                            model_class.model_construct(), fname, value
-                        )
-                        return ValidationResponse(field_name=fname, is_valid=True, value=value)
-                    except ValidationError as e:
-                        errors = [err['msg'] for err in e.errors()]
-                        return ValidationResponse(
-                            field_name=fname, is_valid=False, errors=errors, value=value
-                        )
+            return validator
 
-                return validator
-
-            self.validators[field_name] = create_model_validator(field_name, field_info)
+        for field_name, field_info in model_class.model_fields.items():
+            wire_name = f'{_prefix}{field_name}'
+            sub_model, is_list = _sub_model_of(field_info.annotation)
+            if sub_model is not None:
+                child_prefix = f'{wire_name}[].' if is_list else f'{wire_name}.'
+                self.register_model_validator(sub_model, child_prefix)
+                continue
+            self.validators[wire_name] = create_model_validator(model_class, field_name, wire_name)
 
     @classmethod
     def for_model(
@@ -325,6 +355,7 @@ class LiveValidator:
         Returns:
             ValidationResponse with validation results
         """
+        field_name = _LIST_INDEX_RE.sub('[]', field_name)
         if field_name not in self.validators:
             return ValidationResponse(
                 field_name=field_name,

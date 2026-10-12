@@ -7,8 +7,8 @@ This project now exposes lightweight extension points so third-party packages (o
 Use `pydantic_schemaforms.inputs.registry.register_input_class` to bind a `BaseInput` subclass to one or more `ui_element` aliases. The registry augments the built-in discovery of subclasses so you can register at import time or inside your framework startup.
 
 ```python
-from pydantic_schemaforms.inputs.base import BaseInput
-from pydantic_schemaforms.inputs.registry import register_input_class
+from pydantic_schemaforms import BaseInput
+from pydantic_schemaforms import register_input_class
 
 class ColorSwatchInput(BaseInput):
     ui_element = "color_swatch"
@@ -54,7 +54,7 @@ whose own `input_type`/`ui_element` literally equals `name`), not on
 anything about the registration call itself.
 
 ```python
-from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms import LayoutEngine
 
 # signature: (field_name, field_schema, value, ui_info, context, engine) -> str
 def render_steps(field_name, field_schema, value, ui_info, context, engine):
@@ -143,11 +143,11 @@ One-off, app-level, or test-only renderers should leave `builtin` at its
 default (`False`) so `reset_layout_renderers()` still clears them between
 tests, same as always.
 
-### Two real, working composite examples
+### Real, working composite examples
 
 Earlier versions of this guide illustrated the mechanism with a `WizardForm`
-example that was never actually shipped. Two real composites in this
-library now demonstrate both keyspaces end-to-end:
+example that was never actually shipped. Three real composites in this
+library demonstrate both keyspaces end-to-end:
 
 - **`DataTableLayout`** (`pydantic_schemaforms/datatable_layout.py` +
   `pydantic_schemaforms/rendering/datatable_renderer.py`) — the
@@ -161,6 +161,15 @@ library now demonstrate both keyspaces end-to-end:
   a `list[ItemModel]`-annotated field, where `ItemModel` is any ordinary,
   unmodified `FormModel` — there's no wrapper class at all, since the
   item's shape already comes from its own type annotation.
+- **`nested_model`** (`pydantic_schemaforms/rendering/nested_model_renderer.py`)
+  — also the `ui_element` keyspace, inferred from a field typed as another
+  `FormModel`. It renders the sub-form's fields under dotted input names and
+  is how complex forms are composed (see `docs/complex_forms.md`).
+
+Every registered renderer is called with six positional arguments,
+`(field_name, field_schema, value, ui_info, context, engine)`. The field's
+own error message is `context.error`, and its nested errors (same shape as
+its value; see `docs/complex_forms.md`) are `context.child_errors`.
 
 ### `CompositeLayoutModel`: a base for FormModel-shaped composites
 
