@@ -204,7 +204,7 @@ raw POST, these are the names to send.
 
 ## Upgrading
 
-Version 26.4.0 removed the older ways of combining forms. Using any of them
+Version 26.4.1 removed the older ways of combining forms. Using any of them
 raises `FormLayoutRemovedError` whose message contains these steps.
 
 | Removed | Replacement |

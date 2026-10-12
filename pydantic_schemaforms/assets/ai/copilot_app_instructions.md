@@ -1063,7 +1063,7 @@ async def profile_post(request: Request):
 
 ## Upgrading to nested forms
 
-Version 26.4.0 removed the older ways of combining forms. Code using them fails with
+Version 26.4.1 removed the older ways of combining forms. Code using them fails with
 `FormLayoutRemovedError` (a `TypeError`) at class definition or call time, and the error message
 points here. Convert each pattern as follows.
 

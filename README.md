@@ -654,7 +654,7 @@ html = render_form_html(MyForm, submit_url="/submit")
 - Debugging: Use `debug=True` to see form structure and timing
 - Production: Timing is logged automatically at INFO level for monitoring
 
-See [Render Timing Docs](https://devsetgo.github.io/pydantic-schemaforms/timing/) for complete details.
+See [Render Timing Docs](https://devsetgo.github.io/pydantic-schemaforms/stable/timing/) for complete details.
 
 ---
 
@@ -714,7 +714,7 @@ html = render_form_html(MyForm, submit_url="/submit")
 
 **Best Practice**: Use Approach 1 (application-level configuration) in most cases. The library respects your app's logging setup.
 
-See [Application Logging Docs](https://devsetgo.github.io/pydantic-schemaforms/logging/) for complete details and integration examples.
+See [Application Logging Docs](https://devsetgo.github.io/pydantic-schemaforms/stable/logging/) for complete details and integration examples.
 
 ---
 
@@ -730,8 +730,8 @@ See `examples/main.py` (composition root), `examples/fastapi_routes.py` (routes)
 `examples/shared_models.py` for the complete implementation.
 
 For render timing and logging configuration patterns, see the
-[Render Timing](https://devsetgo.github.io/pydantic-schemaforms/timing/) and
-[Application Logging](https://devsetgo.github.io/pydantic-schemaforms/logging/) docs — the
+[Render Timing](https://devsetgo.github.io/pydantic-schemaforms/stable/timing/) and
+[Application Logging](https://devsetgo.github.io/pydantic-schemaforms/stable/logging/) docs — the
 standalone timing/logging demo scripts previously linked here have been removed from `examples/`.
 
 ---

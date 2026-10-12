@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any, NoReturn
 
-REMOVED_IN = '26.4.0'
+REMOVED_IN = '26.4.1'
 
 _UPGRADE_GUIDE = """\
 Complex forms are now built by nesting FormModels as fields of a parent FormModel:

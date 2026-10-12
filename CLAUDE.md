@@ -259,7 +259,7 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
   the parent's `layout=` (`vertical`/`tabbed`/`side-by-side`/`accordion`/`wizard`,
   `LayoutEngine.render_groups`) arranges them; see `docs/complex_forms.md`.
   The old `form_layouts.py` orchestrators (`TabbedLayout`, `ListLayout`,
-  ...) were removed in 26.4.0 and are now stubs raising
+  ...) were removed in 26.4.1 and are now stubs raising
   `FormLayoutRemovedError`. Don't reintroduce a wrapper-class way to
   combine forms; a new presentation is a new `render_groups` mode, the way
   `layout="wizard"` (`WizardLayout`) was added.

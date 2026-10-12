@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
-## [26.4.0] — Unreleased
+## [26.4.1] — 2026-10-12
 
 Complex forms are now built one way: nest `FormModel`s as fields of a parent
 `FormModel` and pick a `layout=`. Data in and out is nested JSON. This is a

@@ -208,7 +208,7 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'DataTableConfig',
     'RowError',
     'LayoutEngine',
-    # ── REMOVED in 26.4.0: using these raises FormLayoutRemovedError with upgrade steps ──
+    # ── REMOVED in 26.4.1: using these raises FormLayoutRemovedError with upgrade steps ──
     'FormLayoutRemovedError',
     'TabbedLayout',
     'ListLayout',
