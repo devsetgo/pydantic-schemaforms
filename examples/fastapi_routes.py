@@ -39,6 +39,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from loguru import logger
+from starlette.datastructures import FormData, UploadFile
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; Pet Forms; Layout Demonstration; Utility functions
@@ -322,14 +323,36 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
 
 
 # Add custom JSON filter that handles date objects
+def uploads_as_filenames(form_data: FormData) -> FormData:
+    """Swap each file part for its filename(s) before ``.validate()``.
+
+    File fields are typed ``str`` and the upload itself never goes through
+    Pydantic. A browser sends an empty file part for every file input left
+    blank, so passing ``request.form()`` straight in fails those fields.
+    """
+    items: list[tuple[str, str]] = []
+    filenames: dict[str, list[str]] = {}
+    for key, value in form_data.multi_items():
+        if isinstance(value, UploadFile):
+            if value.filename:
+                filenames.setdefault(key, []).append(value.filename)
+            else:
+                filenames.setdefault(key, [])
+        else:
+            items.append((key, value))
+    items.extend((key, ', '.join(names)) for key, names in filenames.items())
+    return FormData(items)
+
+
 def safe_json_filter(obj):
     """Custom JSON filter that handles date/datetime objects."""
     import json
     from datetime import date, datetime
+    from datetime import time as dt_time
 
     def json_serial(o):
         """JSON serializer for objects not serializable by default json code"""
-        if isinstance(o, (datetime, date)):
+        if isinstance(o, (datetime, date, dt_time)):
             return o.isoformat()
         # Handle other common non-serializable objects
         elif hasattr(o, '__dict__'):
@@ -868,7 +891,7 @@ async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Complex form example - All features submission (async)."""
-    form_data = await request.form()
+    form_data = uploads_as_filenames(await request.form())
 
     full_referer_path = create_refer_path(request)
 
@@ -993,7 +1016,8 @@ async def showcase_post(
             },
         )
     else:
-        form_html = await validation.render_with_errors_async()
+        csrf_token = issue_showcase_csrf_token(request)
+        form_html = await validation.render_with_errors_async(csrf_token_provider=csrf_token)
         return templates.TemplateResponse(
             request,
             'form.html',
@@ -1117,7 +1141,7 @@ async def gallery_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Tabbed widget gallery submission (async)."""
-    form_data = await request.form()
+    form_data = uploads_as_filenames(await request.form())
 
     validation = WidgetGalleryForm.validate(
         form_data,
@@ -1572,8 +1596,9 @@ async def organization_post(
     The submission path demonstrates how raw HTML form payloads are validated
     against the tabbed root model and then rendered in success/error templates.
     """
-    # Get form data asynchronously
-    form_data = await request.form()
+    # Every nested list item's inputs are separate fields: the demo data is
+    # ~500, so a few added departments pass Starlette's default max_fields=1000.
+    form_data = await request.form(max_fields=10_000)
 
     from examples.nested_forms_example import ComprehensiveTabbedForm
 

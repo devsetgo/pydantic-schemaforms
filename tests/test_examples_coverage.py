@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import inspect
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -221,3 +222,169 @@ def test_every_example_post_handles_a_bad_submission(example_client: TestClient)
         if response.status_code >= 500:
             failures.append((path, response.status_code))
     assert not failures
+
+
+class _FormValues(HTMLParser):
+    """Collect what a browser would submit for a page's forms."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.values: list[tuple[str, str]] = []
+        self.files: list[str] = []
+        self._template_depth = 0
+        self._textarea: str | None = None
+        self._select: str | None = None
+        self._first_option: str | None = None
+        self._selected = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        # model_list's add-item rows live in <template>, which browsers never submit.
+        if tag == 'template':
+            self._template_depth += 1
+        a = dict(attrs)
+        name = a.get('name')
+        if self._template_depth or 'disabled' in a:
+            return
+        if tag == 'input' and name:
+            input_type = a.get('type') or 'text'
+            if input_type in ('submit', 'button', 'reset', 'image'):
+                return
+            if input_type == 'file':
+                self.files.append(name)
+            elif input_type not in ('checkbox', 'radio') or 'checked' in a:
+                self.values.append((name, a.get('value') or ''))
+        elif tag == 'textarea' and name:
+            self._textarea = name
+            self.values.append((name, ''))
+        elif tag == 'select' and name:
+            self._select, self._first_option, self._selected = name, None, False
+        elif tag == 'option' and self._select:
+            value = a.get('value') or ''
+            if self._first_option is None:
+                self._first_option = value
+            if 'selected' in a:
+                self.values.append((self._select, value))
+                self._selected = True
+
+    def handle_data(self, data: str) -> None:
+        if self._textarea and not self._template_depth:
+            name, value = self.values[-1]
+            self.values[-1] = (name, value + data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == 'template':
+            self._template_depth -= 1
+        elif self._template_depth:
+            return
+        elif tag == 'textarea':
+            self._textarea = None
+        elif tag == 'select' and self._select:
+            if not self._selected and self._first_option is not None:
+                self.values.append((self._select, self._first_option))
+            self._select = None
+
+
+def _submit_rendered_form(client: TestClient, path: str, style: str = 'bootstrap'):
+    parser = _FormValues()
+    parser.feed(client.get(path, params={'style': style}).text)
+    data: dict[str, list[str]] = {}
+    for name, value in parser.values:
+        data.setdefault(name, []).append(value)
+    # A browser sends an empty part for every file input left blank.
+    files = [(name, ('', b'', 'application/octet-stream')) for name in parser.files]
+    return client.post(path, params={'style': style}, data=data, files=files or None)
+
+
+# Pages whose rendered demo values are a complete, valid submission. The rest
+# start blank, intentionally invalid (/validation), or need a CAPTCHA answer.
+_VALID_DEMO_PAGES = [
+    '/date-time-formats',
+    '/gallery',
+    '/layouts',
+    '/login',
+    '/organization',
+    '/organization-shared',
+    '/pets',
+    '/register',
+    '/self-contained',
+]
+
+
+def test_every_example_post_handles_its_own_rendered_values(example_client: TestClient) -> None:
+    failures = []
+    get_routes = set(_routes('get'))
+    for path in _routes('post'):
+        if path in get_routes:
+            response = _submit_rendered_form(example_client, path)
+            if response.status_code >= 500:
+                failures.append((path, response.status_code))
+    assert not failures
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+@pytest.mark.parametrize('path', _VALID_DEMO_PAGES)
+def test_valid_demo_values_submit_successfully(path: str, style: str) -> None:
+    client = TestClient(examples.main.app)
+    response = _submit_rendered_form(client, path, style)
+    assert response.status_code == 200
+    assert 'alert-success' in response.text, path
+
+
+def _example_form_models() -> list[type[FormModel]]:
+    import importlib
+    import pkgutil
+
+    import examples
+
+    models: set[type[FormModel]] = set()
+    for module_info in pkgutil.iter_modules(examples.__path__):
+        module = importlib.import_module(f'examples.{module_info.name}')
+        models.update(
+            obj
+            for obj in vars(module).values()
+            if isinstance(obj, type) and issubclass(obj, FormModel) and obj is not FormModel
+        )
+    return sorted(models, key=lambda m: m.__qualname__)
+
+
+def test_every_example_option_value_validates_against_its_field() -> None:
+    from pydantic import TypeAdapter, ValidationError
+
+    rejected = []
+    for model in _example_form_models():
+        for name, field in model.model_fields.items():
+            extra = field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {}
+            adapter = TypeAdapter(field.annotation)
+            for option in extra.get('options') or []:
+                value = option.get('value') if isinstance(option, dict) else option
+                if isinstance(option, dict) and 'options' in option:
+                    continue
+                try:
+                    adapter.validate_python(value)
+                except ValidationError:
+                    try:
+                        adapter.validate_python([value])
+                    except ValidationError:
+                        rejected.append((model.__qualname__, name, value))
+    assert not rejected, f'Options the field itself rejects: {rejected}'
+
+
+def test_showcase_rerenders_errors_after_a_correct_captcha() -> None:
+    client = TestClient(examples.main.app)
+    page = client.get('/showcase').text
+    question = re.search(r'What is (\d+) ([-+]) (\d+)\?', page)
+    assert question
+    a, op, b = int(question[1]), question[2], int(question[3])
+    csrf = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', page)
+    token = re.search(r'name="captcha_answer_token"[^>]*value="([^"]+)"', page)
+    assert csrf and token
+    response = client.post(
+        '/showcase',
+        data={
+            'csrf_token': csrf[1],
+            'captcha_answer_token': token[1],
+            'captcha_answer': str(a + b if op == '+' else a - b),
+        },
+    )
+    assert response.status_code == 200
+    assert 'Submission failed.' in response.text
