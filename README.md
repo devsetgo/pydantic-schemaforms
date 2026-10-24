@@ -6,10 +6,11 @@
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms)](https://pepy.tech/project/pydantic-schemaforms)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms/month)](https://pepy.tech/project/pydantic-schemaforms)
 [![Downloads](https://static.pepy.tech/badge/pydantic-schemaforms/week)](https://pepy.tech/project/pydantic-schemaforms)
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/devsetgo/badge.svg)](https://hub.xerj.org/contributors/devsetgo)
 
 **Support Python Versions**
 
-![Static Badge](https://img.shields.io/badge/Python-3.14-blue)
+![Static Badge](https://img.shields.io/badge/Python-3.14%20%7C%203.15-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Coverage Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/coverage-badge.svg)](https://sonarcloud.io/dashboard?id=devsetgo_pydantic-schemaforms)
 [![Tests Status](https://raw.githubusercontent.com/devsetgo/pydantic-schemaforms/refs/heads/main/tests-badge.svg)](https://github.com/devsetgo/pydantic-schemaforms/actions/workflows/testing.yml)
