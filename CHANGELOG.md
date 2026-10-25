@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [Unreleased]
+
+### Breaking Changes
+
+- **React and Vue adapters removed.** `ReactJSONSchemaFormAdapter`,
+  `VueFormulateAdapter`, and their modules
+  (`integration.json_schema_form_adapter`, `integration.vue_formulate_adapter`,
+  and the `integration.react`/`integration.vue` shims) are deleted, along with
+  the React/Vue-only helpers `map_ui_element_to_framework` and
+  `convert_validation_rules`. They produced config blobs for client-side form
+  libraries, outside this library's server-rendered scope, and had no examples
+  or docs. For a JSON Schema of a form, use `FormModel.get_json_schema()`;
+  for a plain Pydantic model, use `FormModel.as_api_model()`. (#248)
+
 ## [26.4.1] — 2026-10-12
 
 Complex forms are now built one way: nest `FormModel`s as fields of a parent
