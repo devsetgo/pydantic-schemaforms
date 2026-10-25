@@ -133,7 +133,7 @@ From repository root:
 
 ```bash
 make tests
-make create-docs-local
+make docs-build
 ```
 
 These commands validate code and documentation locally without publishing.
