@@ -18,8 +18,8 @@ make ai-instructions                           # rebuild packaged AI-instruction
 ## Documentation pipeline — generated files, never hand-edit
 
 Three files under `docs/` are **build artifacts**, copied verbatim from
-repo-root source files by `scripts/changelog.py` + `make create-docs` /
-`make create-docs-local` (and by `.github/workflows/deploy-docs.yml` on
+repo-root source files by `scripts/changelog.py` + `make docs-deploy` /
+`make docs-build` (and by `.github/workflows/deploy-docs.yml` on
 release). Any hand edit made directly to the `docs/` copy is silently
 overwritten the next time docs are built:
 
@@ -40,7 +40,7 @@ the script, don't hand-edit the generated markdown. `tests/test_docs_generated_s
 fails the suite if the two drift out of sync.
 
 To verify a doc change (including regenerating the three copies above from
-their sources) without touching the deploy pipeline: `make create-docs-local`
+their sources) without touching the deploy pipeline: `make docs-build`
 (runs `scripts/changelog.py`, copies the three files, then `mkdocs build`).
 
 The 3 packaged AI-assistant instruction files under
@@ -52,7 +52,7 @@ The 3 packaged AI-assistant instruction files under
 `_profile_{generic,copilot,claude}.md` (the small per-profile intro/outro,
 each containing an `<!-- INCLUDE: _shared_instructions.md -->` marker)
 instead, then run `make ai-instructions` (`scripts/build_ai_instructions.py`
-— also runs automatically as part of `make create-docs`/`create-docs-local`).
+— also runs automatically as part of `make docs-deploy`/`docs-build`).
 Cross-links between `README.md`/`docs/index.md` and other `docs/*.md` files
 can't use a single relative path that resolves correctly in both GitHub's
 README rendering and mkdocs' site (the same file serves both), so prefer

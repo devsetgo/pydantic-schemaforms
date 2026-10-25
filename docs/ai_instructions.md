@@ -127,7 +127,7 @@ model_list, live validation, common mistakes) or `_profile_{generic,copilot,clau
 small per-profile title/intro and closing prompt-starter, containing an
 `<!-- INCLUDE: _shared_instructions.md -->` marker) instead, then run `make ai-instructions`
 (`scripts/build_ai_instructions.py`) to regenerate the 3 packaged files. This also runs as part
-of `make create-docs`/`create-docs-local`.
+of `make docs-deploy`/`docs-build`.
 
 ## Keeping this feature honest
 

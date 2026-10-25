@@ -14,32 +14,30 @@ The release path now prioritizes building the demo image from canonical `example
 
 ## Build locally
 
-Render the demo requirements first (pins `pydantic-schemaforms` to your target version):
-
 ```bash
-make demo-requirements RELEASE_VERSION=<version>
+make docker-build   # build + smoke-test
+make docker-push    # push the last build (version tag + latest)
+make docker-all     # both
 ```
 
-```bash
-docker build -f demo_app/Dockerfile -t pydantic-schemaforms-demo:local .
-```
+`docker-build` renders `demo_app/requirements.txt` (pinning `pydantic-schemaforms` to the makefile's `APP_VERSION`; override with `VERSION=<version>`) and tags the image `mikeryan56/pydantic-schemaforms-demo:<YY.MM.DD.HHMM>` and `:latest`.
+The image installs the published package from PyPI, not your local checkout, so that version must already be released.
 
 ## Run locally
 
 ```bash
-docker run --rm -p 8000:8000 pydantic-schemaforms-demo:local
+docker run --rm -p 8000:8000 mikeryan56/pydantic-schemaforms-demo:latest
 ```
 
 Then open http://localhost:8000.
 
-## Manual release via root Makefile
+## Full release
 
 ```bash
-make release-manual RELEASE_VERSION=<version> CONFIRM_RELEASE=1
+make release
 ```
 
-Docs and image publishing run in one operator flow with independent pass/fail status.
-The demo image install is based on the published `pydantic-schemaforms==<version>` pin in `demo_app/requirements.txt`, not an editable local install.
+Runs `release-check`, `docs-deploy`, `package`, and `docker-all` in order, stopping at the first failure.
 
 ## Privacy-first defaults
 

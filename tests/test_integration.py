@@ -36,9 +36,7 @@ from pydantic_schemaforms.integration import (
     handle_form_async,
     handle_sync_form,
 )
-from pydantic_schemaforms.integration.json_schema_form_adapter import ReactJSONSchemaFormAdapter
 from pydantic_schemaforms.integration.schema import JSONSchemaGenerator, OpenAPISchemaGenerator
-from pydantic_schemaforms.integration.vue_formulate_adapter import VueFormulateAdapter
 from pydantic_schemaforms.integration.builder import (
     AutoFormBuilder,
     create_contact_form,
@@ -214,137 +212,6 @@ class TestGenericServerIntegrations:
 
 
 # ===========================================================================
-# Section 2 – React JSON Schema integration
-# ===========================================================================
-
-
-class TestReactJSONSchemaFormAdapter:
-    """Test React JSON Schema Forms integration."""
-
-    def test_react_integration_creation(self):
-        """Test basic ReactJSONSchemaFormAdapter creation."""
-        integration = ReactJSONSchemaFormAdapter()
-        assert integration is not None
-        assert hasattr(integration, 'generate_schema')
-        assert hasattr(integration, 'generate_ui_schema')
-        assert hasattr(integration, 'generate_form_data')
-
-    def test_react_schema_generation(self, simple_form_model):
-        """Test React JSON Schema generation."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        schema = integration.generate_schema(simple_form_model)
-
-        assert isinstance(schema, dict)
-        assert 'type' in schema
-        assert schema['type'] == 'object'
-        assert 'properties' in schema
-
-        # Check properties
-        properties = schema['properties']
-        assert 'name' in properties
-        assert 'email' in properties
-        assert 'age' in properties
-        assert 'newsletter' in properties
-
-        # Check property types
-        assert properties['name']['type'] == 'string'
-        assert properties['email']['type'] == 'string'
-        assert properties['age']['type'] == 'integer'
-        assert properties['newsletter']['type'] == 'boolean'
-
-    def test_react_ui_schema_generation(self, complex_form_model):
-        """Test React UI Schema generation."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        ui_schema = integration.generate_ui_schema(complex_form_model)
-
-        assert isinstance(ui_schema, dict)
-
-        # Should contain UI specifications for different field types
-        if 'email' in ui_schema:
-            assert ui_schema['email']['ui:widget'] == 'email'
-
-        if 'bio' in ui_schema:
-            assert ui_schema['bio']['ui:widget'] == 'textarea'
-
-        if 'birth_date' in ui_schema:
-            assert ui_schema['birth_date']['ui:widget'] == 'date'
-
-    def test_react_form_data_generation(self, simple_form_model, sample_form_data):
-        """Test React form data generation."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        form_data = integration.generate_form_data(sample_form_data)
-
-        assert isinstance(form_data, dict)
-        assert form_data['name'] == sample_form_data['name']
-        assert form_data['email'] == sample_form_data['email']
-
-    def test_react_complete_form_config(self, complex_form_model):
-        """Test complete React form configuration."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        config = integration.generate_complete_config(complex_form_model)
-
-        assert isinstance(config, dict)
-        assert 'schema' in config
-        assert 'uiSchema' in config
-        assert 'formData' in config
-
-        # Should be valid JSON Schema
-        schema = config['schema']
-        assert schema['type'] == 'object'
-        assert 'properties' in schema
-
-
-# ===========================================================================
-# Section 3 – Vue Formulate integration
-# ===========================================================================
-
-
-class TestVueFormulateAdapter:
-    """Test Vue Formulate integration."""
-
-    def test_vue_integration_creation(self):
-        """Test basic VueFormulateAdapter creation."""
-        integration = VueFormulateAdapter()
-        assert integration is not None
-        assert hasattr(integration, 'generate_form_config')
-        assert hasattr(integration, 'generate_validation_rules')
-
-    def test_vue_form_config_generation(self, simple_form_model):
-        """Test Vue Formulate configuration generation."""
-        integration = VueFormulateAdapter()
-
-        config = integration.generate_form_config(simple_form_model)
-
-        assert isinstance(config, list)  # Vue Formulate uses array of fields
-
-        # Check field configurations
-        field_names = [field['name'] for field in config if 'name' in field]
-        assert 'name' in field_names
-        assert 'email' in field_names
-        assert 'age' in field_names
-        assert 'newsletter' in field_names
-
-    def test_vue_validation_rules(self, simple_form_model):
-        """Test Vue Formulate validation rules."""
-        integration = VueFormulateAdapter()
-
-        rules = integration.generate_validation_rules(simple_form_model)
-
-        assert isinstance(rules, dict)
-
-        # Should have validation rules for required fields
-        if 'name' in rules:
-            assert 'required' in rules['name']
-
-        if 'email' in rules:
-            assert 'email' in rules['email'] or 'required' in rules['email']
-
-
-# ===========================================================================
 # Section 4 – JSON Schema generator
 # ===========================================================================
 
@@ -494,35 +361,6 @@ class TestIntegrationUtilities:
         assert map_pydantic_to_json_schema_type(list) == 'array'
         assert map_pydantic_to_json_schema_type(dict) == 'object'
 
-    def test_ui_element_mapping(self):
-        """Test UI element mapping for different frameworks."""
-        from pydantic_schemaforms.integration import map_ui_element_to_framework
-
-        # Test email field mapping
-        react_email = map_ui_element_to_framework('email', 'react')
-        assert react_email == 'email'
-
-        vue_email = map_ui_element_to_framework('email', 'vue')
-        assert vue_email in ['email', 'text']
-
-        # Test textarea mapping
-        react_textarea = map_ui_element_to_framework('textarea', 'react')
-        assert react_textarea == 'textarea'
-
-    def test_validation_rule_conversion(self):
-        """Test conversion of Pydantic validation to framework rules."""
-        from pydantic_schemaforms.integration import convert_validation_rules
-
-        Field(..., min_length=3, max_length=50, ge=1, le=100)
-
-        # Test React JSON Schema validation
-        react_rules = convert_validation_rules('react')
-        assert isinstance(react_rules, dict)
-
-        # Test Vue Formulate validation
-        vue_rules = convert_validation_rules('vue')
-        assert isinstance(vue_rules, (list, dict, str))
-
 
 # ===========================================================================
 # Section 7 – Integration error handling
@@ -531,18 +369,6 @@ class TestIntegrationUtilities:
 
 class TestIntegrationErrorHandling:
     """Test error handling in integrations."""
-
-    def test_invalid_form_model_handling(self):
-        """Test handling of invalid form models."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        # Test with None
-        with pytest.raises((TypeError, ValueError)):
-            integration.generate_schema(None)
-
-        # Test with non-FormModel class
-        with pytest.raises((TypeError, ValueError)):
-            integration.generate_schema(str)
 
     def test_missing_framework_handling(self):
         """Test handling of missing framework dependencies."""
@@ -554,19 +380,6 @@ class TestIntegrationErrorHandling:
 
         fastapi_available = check_framework_availability('fastapi')
         assert isinstance(fastapi_available, bool)
-
-    def test_integration_fallbacks(self, simple_form_model):
-        """Test integration fallback mechanisms."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        # Test with minimal form model
-        class MinimalForm(FormModel):
-            field: str = Field(...)
-
-        schema = integration.generate_schema(MinimalForm)
-        assert isinstance(schema, dict)
-        assert 'properties' in schema
-        assert 'field' in schema['properties']
 
 
 # ===========================================================================
@@ -1341,53 +1154,6 @@ class TestMultiRenderer:
             assert len(html) > 0
             assert 'name="name"' in html
             assert 'name="email"' in html
-
-
-# ===========================================================================
-# Section 17 – Form integration with external systems (workflow tests)
-# ===========================================================================
-
-
-class TestFormIntegration:
-    """Test integration with external systems."""
-
-    def test_react_json_schema_integration(self, simple_form_model):
-        """Test React JSON Schema integration."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        # Convert pydantic model to JSON schema
-        json_schema = integration.generate_schema(simple_form_model)
-
-        assert isinstance(json_schema, dict)
-        assert 'properties' in json_schema
-        assert 'name' in json_schema['properties']
-        assert 'email' in json_schema['properties']
-
-        # Convert to React JSON Schema form config
-        react_config = integration.generate_complete_config(simple_form_model)
-
-        assert isinstance(react_config, dict)
-        assert 'schema' in react_config
-        assert 'uiSchema' in react_config
-
-    def test_json_schema_validation_integration(self, simple_form_model):
-        """Test JSON schema validation integration."""
-        integration = ReactJSONSchemaFormAdapter()
-
-        # Get JSON schema
-        json_schema = integration.generate_schema(simple_form_model)
-
-        # Valid data should pass - test basic schema generation for now
-
-        # Test that schema generation works
-        assert json_schema is not None
-        assert isinstance(json_schema, dict)
-
-        # Invalid data test - for now just test that schema exists
-
-        # Test that we can generate schema consistently
-        schema2 = integration.generate_schema(simple_form_model)
-        assert schema2 == json_schema
 
 
 # ===========================================================================

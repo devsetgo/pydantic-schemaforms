@@ -1,5 +1,5 @@
 # Demo container runtime dependencies (minimal set)
-# __APP_VERSION__ is rendered by: make demo-requirements RELEASE_VERSION=<version>
+# __APP_VERSION__ is rendered by: make docker-build VERSION=<version>
 pydantic-schemaforms==__APP_VERSION__
 fastapi[all]>=0.110,<2
 Markdown==3.10.3
