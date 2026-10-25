@@ -17,7 +17,7 @@ form_html = render_form_html(MyForm, submit_url="/submit")
 |---|---|
 | Your page already includes Bootstrap/Material | Default — no extra args |
 | You want fully self-contained HTML (inlined CSS) | Pass `self_contained=True` |
-| You want the renderer to emit `<link>` tags | Pass `include_framework_assets=True` |
+| You want the renderer to emit the framework CSS/JS | Pass `include_framework_assets=True` (inlines the vendored copy; add `asset_mode="cdn"` for pinned `<link>`/`<script src>` tags) |
 
 If you embed `form_html` in a plain HTML response without loading Bootstrap/Material, the form will render without styling. Pass `self_contained=True` for offline/standalone use, or load Bootstrap/Material in your base template.
 

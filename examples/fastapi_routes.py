@@ -2556,16 +2556,24 @@ async def htmx_validate_field(field_name: str, request: Request):
     except ImportError as e:
         # EmailDeliverabilityRule's DNS/MX check needs the optional
         # email-validator package — surface that as feedback instead of a 500.
-        feedback = f'<span class="text-warning small"><i class="bi bi-exclamation-triangle-fill me-1"></i>{e}</span>'
+        message = str(e)
+        feedback = html(
+            t'<span class="text-warning small"><i class="bi bi-exclamation-triangle-fill me-1"></i>{message}</span>'
+        )
         headers = validation_response_headers(field_name, False)
-        return HTMLResponse(feedback, headers=headers)
+        return HTMLResponse(str(feedback), headers=headers)
     if result.is_valid:
-        feedback = '<span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Looks good!</span>'
+        feedback = html(
+            t'<span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Looks good!</span>'
+        )
     else:
+        # Validator messages can echo the submitted value, so let html() escape them.
         error_text = '; '.join(result.errors)
-        feedback = f'<span class="text-danger small"><i class="bi bi-exclamation-circle-fill me-1"></i>{error_text}</span>'
+        feedback = html(
+            t'<span class="text-danger small"><i class="bi bi-exclamation-circle-fill me-1"></i>{error_text}</span>'
+        )
     headers = validation_response_headers(field_name, result.is_valid)
-    return HTMLResponse(feedback, headers=headers)
+    return HTMLResponse(str(feedback), headers=headers)
 
 
 @router.get('/email-dns-validation', response_class=HTMLResponse, tags=['Live Validation'])

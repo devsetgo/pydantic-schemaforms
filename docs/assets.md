@@ -44,20 +44,27 @@ html = render_form_html(
 )
 ```
 
-HTMX and IMask are **not** injected by `render_form_html()`. If you need HTMX/IMask injection, use the legacy `render_form.py` wrapper directly:
+HTMX and IMask are **not** injected by `render_form_html()`. Load them from your host page; to serve the library's vendored copies (no CDN), expose them with `read_asset_text()`:
 
 ```python
-from pydantic_schemaforms.render_form import render_form_html as render_form_html_legacy
+from fastapi import FastAPI, Response
 
-html = render_form_html_legacy(
-    MyForm,
-    submit_url='/submit',
-    include_htmx_script=True,  # injects HTMX
-    include_imask=True,  # injects IMask for masked inputs
-)
+from pydantic_schemaforms import read_asset_text
+
+app = FastAPI()
+
+
+@app.get('/vendor/htmx.min.js')
+async def vendor_htmx():
+    return Response(read_asset_text('assets/vendor/htmx/htmx.min.js'), media_type='application/javascript')
+
+
+@app.get('/vendor/imask.min.js')
+async def vendor_imask():
+    return Response(read_asset_text('assets/vendor/imask/imask.min.js'), media_type='application/javascript')
 ```
 
-Otherwise, add HTMX and IMask scripts to your host page manually.
+Then add `<script src="/vendor/htmx.min.js"></script>` (and the IMask one, if you use masked inputs) to your base template.
 
 If you already provide Bootstrap/Materialize in your host app, keep `include_framework_assets=False`.
 Use `self_contained=True` as a shorthand for `include_framework_assets=True, asset_mode=”vendored”` — for Bootstrap this also embeds Bootstrap Icons as a data URI (truly zero external dependencies).

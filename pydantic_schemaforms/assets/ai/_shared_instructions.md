@@ -670,8 +670,9 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
   Material itself (the pattern every worked example in this document uses: the app's own
   `<html>`/base template provides the CDN `<link>`/`<script>` tags, separately from the form
   fragment this library returns). Pass `include_framework_assets=True` to have the library emit
-  those tags itself instead, with `asset_mode="cdn"` (default once enabled — loads from a public
-  CDN) or `asset_mode="vendored"` (serves the library's own bundled copy, no third-party request).
+  those tags itself instead, with `asset_mode="vendored"` (the default — inlines the library's own
+  bundled copy, no third-party request) or `asset_mode="cdn"` (pinned `<link>`/`<script src>` tags
+  to a public CDN).
   For an air-gapped deployment, a strict CSP blocking third-party origins, or embedding the form's
   HTML completely standalone with no other page assets, pass `self_contained=True` instead — it
   implies `include_framework_assets=True` and inlines the CSS/JS directly into the returned HTML
@@ -709,7 +710,7 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
   identity sections first and optional/advanced settings last.
 - Use the lower-level layout primitives only when required: `GridLayout`,
   `ResponsiveGridLayout`, `HorizontalLayout`, `VerticalLayout`, `CardLayout`, `TabLayout`,
-  `AccordionLayout`, `WizardLayout`, `ModalLayout` (all top-level exports) wrap already-rendered
+  `AccordionLayout`, `ModalLayout` (all top-level exports) wrap already-rendered
   HTML fragments; they are not how forms are composed — see `docs/layouts.md`.
 
 ## Framework route contract

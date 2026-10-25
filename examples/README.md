@@ -28,7 +28,7 @@ Run:
 
 ```bash
 python examples/main.py
-# or, from within examples/:
+# or, also from the repository root:
 make ex-run
 ```
 
@@ -88,11 +88,11 @@ read-only table showing the remaining `model_config` options (`csv_upload`,
   copy-pasteable format-string reference
 - `/input-types` (examples/input_type_reference.py) — static "every
   ui_element with a code example" cheatsheet, not wired to the renderer
+- `/ai-instructions` — the packaged AI-assistant instruction files, rendered
+  from Markdown
 
 `tests/test_examples_coverage.py` fails if a layout, input type, widget
 option, or validation kind has no example here (see CLAUDE.md).
-- `/ai-instructions` — the packaged AI-assistant instruction files, rendered
-  from Markdown
 
 ## Shared model definitions
 
