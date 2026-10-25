@@ -6,7 +6,7 @@ It uses the **async-first** render API so large forms won’t block the event lo
 
 ## Prerequisites
 
-- Python 3.14+
+- Python 3.14+ (tested on 3.14 and 3.15)
 
 ## Note: model-first rendering
 

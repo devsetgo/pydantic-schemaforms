@@ -66,7 +66,7 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 
 > **Python 3.14+ is required.** The library will raise `RuntimeError` on import if your Python version is older.
 
-- Python **3.14+** (hard requirement — no fallback or compatibility shim)
+- Python **3.14+** (hard requirement — no fallback or compatibility shim); tested on 3.14 and 3.15
 - Pydantic **2.13+** (included as a dependency)
 
 ## Quick Start

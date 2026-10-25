@@ -12,9 +12,10 @@ make tests
 
 This runs:
 1. **Pre-commit hooks** (Ruff linting + formatting, YAML/TOML checks, trailing whitespace)
-2. **Parser regression suite** (`tests/test_form_data_parsing.py`)
-3. **Full pytest suite** (985 tests covering validation, rendering, async, layouts, integration)
-4. **Coverage badge generation** (summarizes test coverage)
+2. **Type check** (`pyright`)
+3. **Parser regression suite** (`tests/test_form_data_parsing.py`)
+4. **Full pytest suite** (~1,500 tests covering validation, rendering, async, layouts, examples, integration)
+5. **Coverage badge generation** (summarizes test coverage)
 
 ## What Changed
 
@@ -40,9 +41,10 @@ make cleanup       # Run all formatters (isort + ruff + autoflake)
 
 ```
 🔍 Running pre-commit (ruff, formatting, yaml/toml checks)...
-✅ Pre-commit passed. Running form-data parser regression tests...
+✅ Pre-commit passed. Running type check...
+✅ Type check passed. Running form-data parser regression tests...
 🧪 Regression passed. Running full pytest suite...
-[985 tests run]
+[full suite runs]
 📊 Generating coverage and test badges...
 ✨ Tests complete. Badges updated.
 ```
@@ -53,19 +55,26 @@ Tests are organized in `tests/` by domain — one file per subject area:
 
 | Test File | Purpose | ~Tests |
 |-----------|---------|--------|
-| `test_inputs.py` | All input component types (text, datetime, selection, specialized) | 148 |
-| `test_validation.py` | Validation rules, engine, HTMX live validation | 144 |
-| `test_integration.py` | FormBuilder, FastAPI integration, HTML markers | 107 |
-| `test_assets.py` | Vendor assets, CDN/vendored modes, Bootstrap Icons | 109 |
-| `test_rendering.py` | EnhancedFormRenderer, themes, templates, modern renderer | 99 |
+| `test_inputs.py` | All input component types (text, datetime, selection, specialized) | 185 |
+| `test_validation.py` | Validation rules, engine, HTMX live validation | 165 |
+| `test_assets.py` | Vendor assets, CDN/vendored modes, Bootstrap Icons | 135 |
+| `test_input_rendering.py` | Rendered HTML of each input type and its widget options | 120 |
+| `test_integration.py` | FormBuilder, FastAPI integration, HTML markers | 120 |
+| `test_rendering.py` | EnhancedFormRenderer, themes, templates, modern renderer | 100 |
+| `test_layouts.py` | Layout engine, TabLayout, AccordionLayout, async rendering | 85 |
+| `test_examples_coverage.py` | Every layout, input, widget option, and validation kind has a working example; every example route renders under both styles | 70 |
+| `test_nested_model_forms.py` | Composing forms by nesting FormModels: rendering, grouped layouts, nested data and errors | 65 |
+| `test_field_renderer_coverage.py` | Field-level rendering logic | 60 |
+| `test_schema_form.py` + `test_schema_form_coverage.py` | FormModel, Field, schema parsing | 95 |
+| `test_template_coverage.py` | t-string templates in `templates.py` / `FormStyle` | 55 |
+| `test_datatable_layout.py` | DataTableLayout composite (CSV import, row errors) | 50 |
+| `test_live_validation_coverage.py` | HTMX live validation config | 45 |
+| `test_form_data_parsing.py` | Nested form data parsing | 25 |
 | `test_form_layouts.py` | Removed layout classes raise `FormLayoutRemovedError` with upgrade steps | 20 |
-| `test_nested_model_forms.py` | Composing forms by nesting FormModels: rendering, grouped layouts, nested data and errors | 34 |
-| `test_layouts.py` | Layout engine, TabLayout, AccordionLayout, async rendering | 94 |
-| `test_field_renderer_coverage.py` | Field-level rendering logic | 43 |
-| `test_schema_form.py` + `test_schema_form_coverage.py` | FormModel, Field, schema parsing | 67 |
-| `test_live_validation_coverage.py` | HTMX live validation config | 34 |
-| `test_form_data_parsing.py` | Nested form data parsing | 16 |
-| Smaller focused files | CSRF, debug mode, model lists, plugin hooks, etc. | ~30 |
+| `test_invariants.py` + `test_meta_invariants.py` | **Protected.** Enforce the t-string / no-`string.Template` rule; never remove or weaken | 6 |
+| Smaller focused files | CSRF, debug mode, model lists, plugin hooks, AI instructions, benchmarks, etc. | ~100 |
+
+`tests/playwright/` holds browser tests (every example page loads without a JavaScript error); CI runs them in their own job.
 
 ## Linting Rules (Ruff)
 

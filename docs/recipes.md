@@ -1441,7 +1441,7 @@ checks run, not the HTML trigger, which lives on the field's own
 
 ```python
 email: DeliverableEmailStr = Field(
-    ..., ui_element="email", ui_options={"hx-trigger": "blur", ...},
+    ..., ui_element="email", ui_options={"hx-trigger": "blur"},
 )
 ```
 
