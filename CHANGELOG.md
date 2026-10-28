@@ -88,6 +88,12 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   multiselect. `Optional` fields keep their input type instead of falling back
   to a text box. Previously an `Enum` field rendered an empty section (or a
   select with no options), so its choices had to be built by hand. (#258)
+- **A fresh form shows the model's defaults.** When no `form_data` is
+  passed, every field starts at its default (an `int = 1` shows 1, an Enum or
+  `Literal` default is selected, a `bool = True` checkbox is ticked,
+  `default_factory` values included). Passed data, such as a submission being
+  re-rendered or an edit form, is still used as is. Previously defaults were
+  never rendered, so they had to be passed in `form_data` by hand. (#258)
 - **Optional selects can be left empty.** An `Optional` select gets an empty
   first choice, and submitting it validates to `None`, including for
   `str`-based enums. (#258)

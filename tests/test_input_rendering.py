@@ -1218,3 +1218,36 @@ def test_enum_field_title_survives_matching_the_enum_class_name(framework: str) 
     html_out = render_form_html(_SizeForm, submit_url='/x', framework=framework)
     labels = re.findall(r'<label[^>]*for="(sz|items\[0\]\.size)"[^>]*>\s*([^<*]*)', html_out)
     assert labels and all(text.strip() == '_Size' for _, text in labels), labels
+
+
+class _DefaultsForm(FormModel):
+    team_size: int = 3
+    plan: _Plan = _Plan.pro
+    contact: Literal['email', 'phone'] = Field('phone', ui_element='radio')
+    newsletter: bool = True
+    tags: list[Literal['x', 'y']] = Field(default_factory=lambda: ['y'])
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+def test_a_fresh_form_starts_from_the_field_defaults(framework: str) -> None:
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_DefaultsForm, submit_url='/x', framework=framework)
+    assert re.search(r'name="team_size"[^>]*value="3"|value="3"[^>]*name="team_size"', html_out)
+    assert re.search(r'<option value="pro"[^>]*selected', html_out)
+    assert re.search(r'name="contact"[^>]*value="phone"[^>]*checked', html_out)
+    assert re.search(r'name="newsletter"[^>]*checked|checked[^>]*name="newsletter"', html_out)
+
+
+def test_passed_data_is_used_as_is_without_defaults() -> None:
+    # An unticked checkbox is absent from a submission; filling its default
+    # back in on re-render would tick it again.
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_DefaultsForm, submit_url='/x', form_data={'team_size': '7'})
+    assert 'value="7"' in html_out
+    assert not re.search(r'name="newsletter"[^>]*checked', html_out)

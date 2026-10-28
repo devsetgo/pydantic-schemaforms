@@ -16,6 +16,9 @@ from functools import partial
 from typing import Any
 from collections.abc import Callable
 
+from pydantic import BaseModel
+from pydantic_core import PydanticSerializationError, PydanticUndefined, to_jsonable_python
+
 from .html_markers import wrap_with_schemaforms_markers
 from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
@@ -241,6 +244,12 @@ class EnhancedFormRenderer:
         check_layout(layout)
         wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
+        # A fresh form (no data passed) starts from the model's defaults. Data
+        # that was passed, such as a submission being re-rendered, is used as
+        # is: an unticked checkbox is simply absent from a submission, so
+        # filling in its default would tick it again.
+        if data is None:
+            data = self._model_defaults(model_cls)
         data = decode_submission(data)
 
         # Keep backward compatibility for callers still passing these via kwargs.
@@ -441,6 +450,35 @@ class EnhancedFormRenderer:
         return await loop.run_in_executor(None, render_callable)
 
     @staticmethod
+    def _model_defaults(model_cls: type[BaseModel]) -> dict[str, Any]:
+        """The values a fresh form starts with: each field's default, in the
+        same JSON-ish shape a submission has (an Enum as its value, a date as
+        ISO text). A required sub-form starts with its own defaults."""
+        defaults: dict[str, Any] = {}
+        if not (isinstance(model_cls, type) and issubclass(model_cls, BaseModel)):
+            return defaults
+        for name, info in model_cls.model_fields.items():
+            key = info.alias or name
+            if info.default_factory is not None:
+                if info.default_factory_takes_validated_data:
+                    continue
+                value = info.default_factory()  # type: ignore[call-arg]
+            elif info.default is not PydanticUndefined:
+                value = info.default
+            elif isinstance(info.annotation, type) and issubclass(info.annotation, BaseModel):
+                defaults[key] = EnhancedFormRenderer._model_defaults(info.annotation)
+                continue
+            else:
+                continue
+            if value is None:
+                continue
+            try:
+                defaults[key] = to_jsonable_python(value)
+            except PydanticSerializationError:
+                defaults[key] = value  # e.g. a layout value holding a model class
+        return defaults
+
+    @staticmethod
     def _prefill_layout_field_defaults(
         model_cls: type[FormModel], metadata: SchemaMetadata, data: dict[str, Any]
     ) -> None:
@@ -456,7 +494,7 @@ class EnhancedFormRenderer:
             default_factory = getattr(field_info, 'default_factory', None)
             if default_factory is not None:
                 # A factory taking validated data can't run before validation.
-                if not getattr(field_info, 'default_factory_takes_data', False):
+                if not getattr(field_info, 'default_factory_takes_validated_data', False):
                     data[field_name] = default_factory()
             elif not field_info.is_required():
                 default_value = getattr(field_info, 'default', None)
