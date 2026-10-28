@@ -1872,3 +1872,22 @@ def test_live_validator_direct_field_registration():
     assert response.errors
 
     assert live_validator.validate_field('code', 'abcd').is_valid
+
+
+def test_validator_messages_are_shown_without_pydantics_value_error_prefix() -> None:
+    from pydantic import field_validator
+
+    from pydantic_schemaforms import FormModel
+
+    class _Form(FormModel):
+        code: str
+
+        @field_validator('code')
+        @classmethod
+        def must_be_upper(cls, value: str) -> str:
+            if value != value.upper():
+                raise ValueError('Use capital letters')
+            return value
+
+    result = _Form.validate({'code': 'abc'}, submit_url='/x')
+    assert result.errors == {'code': 'Use capital letters'}

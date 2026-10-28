@@ -94,6 +94,9 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   `default_factory` values included). Passed data, such as a submission being
   re-rendered or an edit form, is still used as is. Previously defaults were
   never rendered, so they had to be passed in `form_data` by hand. (#258)
+- **Validator messages are shown as written.** A `ValueError` raised in a
+  `@field_validator` or `@model_validator` shows its own message, without
+  Pydantic's "Value error, " prefix. (#258)
 - **Optional selects can be left empty.** An `Optional` select gets an empty
   first choice, and submitting it validates to `None`, including for
   `str`-based enums. (#258)
