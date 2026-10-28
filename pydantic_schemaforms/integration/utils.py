@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.util
-from typing import Any
 
 
 def map_pydantic_to_json_schema_type(python_type: type) -> str:
@@ -22,34 +21,6 @@ def map_pydantic_to_json_schema_type(python_type: type) -> str:
     return 'string'
 
 
-def map_ui_element_to_framework(ui_element: str, framework: str) -> str:
-    mapping: dict[str, dict[str, str]] = {
-        'react': {
-            'email': 'email',
-            'password': 'password',
-            'textarea': 'textarea',
-            'select': 'select',
-        },
-        'vue': {
-            'email': 'email',
-            'password': 'password',
-            'textarea': 'textarea',
-            'select': 'select',
-        },
-    }
-    return mapping.get(framework, {}).get(ui_element, ui_element)
-
-
-def convert_validation_rules(  # pragma: no cover - passthrough
-    framework: str,
-) -> dict[str, Any] | list[Any]:
-    if framework == 'react':
-        return {}
-    if framework == 'vue':
-        return []
-    return {}
-
-
 def check_framework_availability(framework_name: str) -> bool:
     if framework_name not in {'flask', 'fastapi'}:
         return False
@@ -59,7 +30,5 @@ def check_framework_availability(framework_name: str) -> bool:
 
 __all__ = [
     'map_pydantic_to_json_schema_type',
-    'map_ui_element_to_framework',
-    'convert_validation_rules',
     'check_framework_availability',
 ]
