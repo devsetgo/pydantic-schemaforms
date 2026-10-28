@@ -58,6 +58,10 @@ if TYPE_CHECKING:
 # are intentionally not handled here -- see the try/except fallback below.
 _OPTION_BASED_UI_ELEMENTS = frozenset({'select', 'multiselect', 'combobox'})
 
+# Sub-key of the embedding field carrying the row model's class name; read by
+# DataTableLayout._submitted_section().
+MODEL_MARKER_KEY = 'datatable_model'
+
 _BUTTON_NAME_MAP = {'csv': 'csvHtml5', 'copy': 'copyHtml5', 'pdf': 'pdfHtml5'}
 
 
@@ -147,7 +151,11 @@ def _enum_options(annotation: Any) -> list[dict[str, str]] | None:
     return None
 
 
-def _render_read_only_cell(field_name: str, row_index: int, value: Any) -> SafeHTML:
+def _cell_name(prefix: str, row_index: int, field_name: str) -> str:
+    return f'{prefix}.rows[{row_index}].{field_name}'
+
+
+def _render_read_only_cell(prefix: str, field_name: str, row_index: int, value: Any) -> SafeHTML:
     """Escaped display text plus a hidden input carrying the same value.
 
     The hidden input matters whenever this table sits inside a save form
@@ -165,14 +173,19 @@ def _render_read_only_cell(field_name: str, row_index: int, value: Any) -> SafeH
     # parse PEP 750 t-strings yet, so it can't see the reference and flags a
     # false-positive "unused local variable".
     display_value = '' if value is None else str(value)  # NOSONAR
-    name = f'rows[{row_index}].{field_name}'  # NOSONAR
+    name = _cell_name(prefix, row_index, field_name)  # NOSONAR
     return render_html(
         t'{display_value}<input type="hidden" name="{name}" value="{display_value}">'
     )
 
 
 def _render_cell_content(
-    field_name: str, field_info: Any, value: Any, row_index: int, ui_element: str | None
+    prefix: str,
+    field_name: str,
+    field_info: Any,
+    value: Any,
+    row_index: int,
+    ui_element: str | None,
 ) -> Any:
     """Return SafeHTML for an editable input, or escaped display text plus
     a same-value hidden input for a read-only cell (see
@@ -182,14 +195,14 @@ def _render_cell_content(
         value = value.value
 
     if not ui_element:
-        return _render_read_only_cell(field_name, row_index, value)
+        return _render_read_only_cell(prefix, field_name, row_index, value)
 
     input_map = get_input_component_map()
     input_cls = input_map.get(ui_element)
     if input_cls is None:
-        return _render_read_only_cell(field_name, row_index, value)
+        return _render_read_only_cell(prefix, field_name, row_index, value)
 
-    name = f'rows[{row_index}].{field_name}'
+    name = _cell_name(prefix, row_index, field_name)
     instance = input_cls()
     kwargs: dict[str, Any] = {'name': name, 'id': name}
 
@@ -207,7 +220,7 @@ def _render_cell_content(
         try:
             return SafeHTML(instance.render(options=marked_options, **kwargs))
         except TypeError:
-            return _render_read_only_cell(field_name, row_index, value)
+            return _render_read_only_cell(prefix, field_name, row_index, value)
 
     if value is not None:
         kwargs['value'] = value
@@ -220,7 +233,7 @@ def _render_cell_content(
         # renderer doesn't know how to supply -- fall back to read-only
         # display (still round-trips via the hidden input) rather than
         # breaking the whole row.
-        return _render_read_only_cell(field_name, row_index, value)
+        return _render_read_only_cell(prefix, field_name, row_index, value)
 
 
 def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str) -> SafeHTML:
@@ -238,14 +251,12 @@ def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str
     )
 
 
-def _render_csv_upload_block(*, reviewing: bool, editable: bool) -> SafeHTML:
+def _render_csv_upload_block(*, prefix: str, reviewing: bool, editable: bool) -> SafeHTML:
     """The file input + "Load"/"Reload CSV" button -- reuses FileInput for
     the same drag-drop/preview UX an ordinary input_type='file' field gets.
-    Field/button names ('csv_file', 'datatable_action') are the fixed,
-    documented convention DataTableLayout.handle_import_post() reads --
-    intentionally not namespaced per-field, matching row cells' own fixed
-    'rows[i].field' convention (this library supports one DataTableLayout
-    per page today).
+    Names are namespaced under the embedding field (prefix), like the row
+    cells, so two tables on one page never share an input --
+    DataTableLayout.handle_import_post() reads them back from that field.
 
     When editable is False, cells aren't editable in place at all, so
     there's no separate review step to wait on a later "Submit" for -- the
@@ -256,7 +267,10 @@ def _render_csv_upload_block(*, reviewing: bool, editable: bool) -> SafeHTML:
     file picker more visual weight than the browser's own faint default
     styling, without affecting unrelated file inputs elsewhere on the page.
     """
-    file_input_html = SafeHTML(FileInput().render(name='csv_file', id='csv_file'))
+    # NOSONAR comments below: read via {expr} interpolation in the t-string.
+    file_name = f'{prefix}.csv_file'  # NOSONAR
+    action_name = f'{prefix}.datatable_action'  # NOSONAR
+    file_input_html = SafeHTML(FileInput().render(name=file_name, id=file_name))  # NOSONAR
     if not editable:
         load_label = 'Reload CSV'
         action_value = 'reload'
@@ -275,10 +289,10 @@ def _render_csv_upload_block(*, reviewing: bool, editable: bool) -> SafeHTML:
         )
     return render_html(t"""
 {SafeHTML(_UPLOAD_STYLES)}<div class="mb-3 datatable-upload-zone">
-    <label for="csv_file" class="form-label">Import CSV (optional)</label>
+    <label for="{file_name}" class="form-label">Import CSV (optional)</label>
     {file_input_html}
     <div class="form-text">{help_text}</div>
-    <button type="submit" name="datatable_action" value="{action_value}" class="btn btn-secondary mt-2">{load_label}</button>
+    <button type="submit" name="{action_name}" value="{action_value}" class="btn btn-secondary mt-2">{load_label}</button>
 </div>
 """)
 
@@ -302,11 +316,21 @@ def _render_reviewing_banner(discard_url: str | None) -> SafeHTML:
     )
 
 
-def _render_datatable_submit_button() -> SafeHTML:
+def _render_datatable_submit_button(prefix: str) -> SafeHTML:
+    action_name = f'{prefix}.datatable_action'  # NOSONAR
     return render_html(
-        t'<div class="mt-3"><button type="submit" name="datatable_action" value="submit" '
+        t'<div class="mt-3"><button type="submit" name="{action_name}" value="submit" '
         t'class="btn btn-primary">Submit</button></div>'
     )
+
+
+def _render_model_marker(prefix: str, model_cls: type['DataTableLayout']) -> SafeHTML:
+    """Lets DataTableLayout.handle_import_post() find this table's part of
+    the submission without the app having to name the embedding field."""
+    # NOSONAR comments below: read via {expr} interpolation in the t-string.
+    name = f'{prefix}.{MODEL_MARKER_KEY}'  # NOSONAR
+    model_name = model_cls.__name__  # NOSONAR
+    return render_html(t'<input type="hidden" name="{name}" value="{model_name}">')
 
 
 def render_datatable_table(
@@ -314,6 +338,7 @@ def render_datatable_table(
     *,
     rows: list[dict[str, Any]] | None = None,
     row_errors: dict[int, dict[str, str]] | None = None,
+    name_prefix: str,
     # NOSONAR comment below: table_id is read via {table_id} interpolation
     # in the return t-string further down in this function.
     table_id: str = 'datatable',  # NOSONAR
@@ -343,7 +368,7 @@ def render_datatable_table(
             value = row.get(field_name)
             ui_element = _resolve_editable_ui_element(field_info) if editable else None
             content = _render_cell_content(
-                field_name, field_info, value, index, ui_element
+                name_prefix, field_name, field_info, value, index, ui_element
             )  # NOSONAR
             cell_error = errors_for_row.get(field_name) or ''
             error_class = ' datatable-cell-error' if cell_error else ''  # NOSONAR
@@ -433,6 +458,7 @@ def _render_init_script(table_id: str, options: 'DataTableConfig') -> SafeHTML:
         'layout': _build_layout(has_buttons=bool(button_names), paging=paging, search=search),
     }
     config_json = json.dumps(config)
+    table_id_js = json.dumps(table_id)
 
     # button_names come only from _BUTTON_NAME_MAP's fixed values
     # ('csvHtml5'/'copyHtml5'/'pdfHtml5'), never from arbitrary user input,
@@ -478,7 +504,8 @@ function _dtCellExportValue(node) {{
 }}
 (function() {{
     function _dtInit() {{
-        var el = document.getElementById('{table_id}');
+        var tableId = {table_id_js};
+        var el = document.getElementById(tableId);
         if (el && window.DataTable) {{
             var dtConfig = {config_json};{buttons_js}
             // Stashed on the element (not just a local variable) so a page
@@ -498,15 +525,22 @@ function _dtCellExportValue(node) {{
             // page.len(-1).draw(false) re-attaches every row before the
             // browser reads the form's fields; it's synchronous for
             // client-side data, so it completes within this handler,
-            // before the browser serializes the form. The bound flag
-            // guards against double-binding when only this table (not the
-            // whole form) gets re-initialized by a later htmx swap.
+            // before the browser serializes the form. Bound once per table
+            // id (one form can hold several tables), and the element is
+            // looked up at submit time so a later htmx swap of just this
+            // table is still the one that gets re-attached.
             var form = el.closest('form');
-            if (form && !form._dtSubmitBound) {{
-                form._dtSubmitBound = true;
-                form.addEventListener('submit', function() {{
-                    el.dtInstance.page.len(-1).draw(false);
-                }});
+            if (form) {{
+                form._dtSubmitBound = form._dtSubmitBound || {{}};
+                if (!form._dtSubmitBound[tableId]) {{
+                    form._dtSubmitBound[tableId] = true;
+                    form.addEventListener('submit', function() {{
+                        var current = document.getElementById(tableId);
+                        if (current && current.dtInstance) {{
+                            current.dtInstance.page.len(-1).draw(false);
+                        }}
+                    }});
+                }}
             }}
         }}
     }}
@@ -544,7 +578,9 @@ def render_datatable_layout_field(
     (see the bottom of this module and DataTableLayout.as_layout_value()).
 
     `value` is whatever DataTableLayout.as_layout_value() built: the row
-    model class plus current rows/row_errors/table_id/config. This is the
+    model class plus current rows/row_errors/table_id/config. Every input
+    name and the default table id are derived from `field_name`, so several
+    tables can share one page or form. This is the
     *only* rendering entry point for DataTableLayout now -- it plugs into
     the same render_form_html()/FormModel pipeline every other form uses,
     rather than a separate bespoke one. When model_config['csv_upload'] is
@@ -560,7 +596,7 @@ def render_datatable_layout_field(
 
     rows = value.get('rows') or []
     row_errors = value.get('row_errors') or {}
-    table_id = value.get('table_id') or f'{model_cls.__name__.lower()}_datatable'
+    table_id = value.get('table_id') or f'{field_name}_datatable'
     asset_mode = value.get('asset_mode', 'vendored')
     include_assets = value.get('include_assets', True)
     reviewing = bool(value.get('reviewing'))
@@ -580,6 +616,7 @@ def render_datatable_layout_field(
         model_cls,
         rows=rows,
         row_errors=row_errors,
+        name_prefix=field_name,
         table_id=table_id,
         framework=framework,
         style=options.get('style'),
@@ -602,7 +639,9 @@ def render_datatable_layout_field(
     banner = ''
     submit_block = ''
     if csv_upload_enabled:
-        upload_block = str(_render_csv_upload_block(reviewing=reviewing, editable=editable))
+        upload_block = str(
+            _render_csv_upload_block(prefix=field_name, reviewing=reviewing, editable=editable)
+        )
         if notice:
             banner = str(_render_notice_banner(notice))
         elif reviewing and editable:
@@ -612,12 +651,13 @@ def render_datatable_layout_field(
             # left to "review" by the time this would render.
             banner = str(_render_reviewing_banner(discard_url))
         if editable:
-            submit_block = str(_render_datatable_submit_button())
+            submit_block = str(_render_datatable_submit_button(field_name))
 
     return '\n'.join(
         part
         for part in (
             assets,
+            str(_render_model_marker(field_name, model_cls)),
             upload_block,
             banner,
             template_link,

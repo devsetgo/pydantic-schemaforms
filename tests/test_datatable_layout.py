@@ -38,8 +38,8 @@ def _page_for(model_cls: type[DataTableLayout]) -> type[FormModel]:
     the only way a DataTableLayout subclass renders now."""
 
     class _Page(FormModel):
-        rows: Any = FormField(
-            default_factory=dict, title='Rows', input_type='layout', layout_handler='datatable'
+        contacts: Any = FormField(
+            default_factory=dict, title='Contacts', input_type='layout', layout_handler='datatable'
         )
 
     return _Page
@@ -74,7 +74,7 @@ def _render(
     return render_form_html(
         _page_for(model_cls),
         framework=framework,
-        form_data={'rows': value},
+        form_data={'contacts': value},
         submit_url=submit_url,
         include_submit_button=not csv_upload_enabled,
     )
@@ -177,12 +177,13 @@ def test_csv_template_bytes_has_header_only() -> None:
 
 def test_parse_submitted_rows_reconstructs_bracket_dot_keys() -> None:
     form_data = {
-        'rows[0].name': 'Alice',
-        'rows[0].address': '123 Main St',
-        'rows[0].favorite_color': 'blue',
-        'rows[1].name': 'Bob',
-        'rows[1].address': '456 Oak Ave',
-        'rows[1].favorite_color': 'green',
+        'contacts.datatable_model': 'ContactImport',
+        'contacts.rows[0].name': 'Alice',
+        'contacts.rows[0].address': '123 Main St',
+        'contacts.rows[0].favorite_color': 'blue',
+        'contacts.rows[1].name': 'Bob',
+        'contacts.rows[1].address': '456 Oak Ave',
+        'contacts.rows[1].favorite_color': 'green',
     }
     rows, errors = ContactImport.parse_submitted_rows(form_data)
     assert errors == []
@@ -192,9 +193,10 @@ def test_parse_submitted_rows_reconstructs_bracket_dot_keys() -> None:
 
 def test_parse_submitted_rows_reports_per_row_errors() -> None:
     form_data = {
-        'rows[0].name': 'Alice',
-        'rows[0].address': '123 Main St',
-        'rows[0].favorite_color': 'not-a-real-color',
+        'contacts.datatable_model': 'ContactImport',
+        'contacts.rows[0].name': 'Alice',
+        'contacts.rows[0].address': '123 Main St',
+        'contacts.rows[0].favorite_color': 'not-a-real-color',
     }
     rows, errors = ContactImport.parse_submitted_rows(form_data)
     assert rows == []
@@ -216,18 +218,20 @@ def test_read_only_cells_carry_a_hidden_input_so_saving_edits_does_not_lose_them
         rows=[{'name': 'Alice', 'address': '123 Main St', 'favorite_color': 'blue'}],
         include_assets=False,
     )
-    assert '<input type="hidden" name="rows[0].name" value="Alice">' in html_out
-    assert '<input type="hidden" name="rows[0].address" value="123 Main St">' in html_out
+    assert '<input type="hidden" name="contacts.rows[0].name" value="Alice">' in html_out
+    assert '<input type="hidden" name="contacts.rows[0].address" value="123 Main St">' in html_out
 
     # Simulate exactly what a browser sends: the select's own value plus
     # the hidden inputs -- must validate successfully, not fail on missing
     # name/address.
     submitted = {
-        'rows[0].name': 'Alice',
-        'rows[0].address': '123 Main St',
-        'rows[0].favorite_color': 'green',  # the one "edited" field
+        'contacts.rows[0].name': 'Alice',
+        'contacts.rows[0].address': '123 Main St',
+        'contacts.rows[0].favorite_color': 'green',  # the one "edited" field
     }
-    rows, errors = ContactImport.parse_submitted_rows(submitted)
+    rows, errors = ContactImport.parse_submitted_rows(
+        {**submitted, 'contacts.datatable_model': 'ContactImport'}
+    )
     assert errors == []
     assert rows[0].name == 'Alice'
     assert rows[0].favorite_color == Color.green
@@ -240,9 +244,9 @@ def test_as_layout_value_bundles_model_cls_and_rows() -> None:
     assert value['table_id'] == 'custom_id'
 
 
-def test_as_layout_value_default_table_id_from_class_name() -> None:
-    value = PlainImport.as_layout_value()
-    assert value['table_id'] == 'plainimport_datatable'
+def test_default_table_id_comes_from_the_embedding_field_name() -> None:
+    html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False)
+    assert '<table id="contacts_datatable"' in html_out
 
 
 def test_render_form_raises_not_implemented() -> None:
@@ -283,8 +287,10 @@ def test_registered_renderer_ignores_render_contexts_error_and_required_fields()
         child_errors={'some_other_field': 'bad'},
     )
 
-    bare_output = render_datatable_layout_field('rows', {}, value, {}, bare_context, engine)
-    enriched_output = render_datatable_layout_field('rows', {}, value, {}, enriched_context, engine)
+    bare_output = render_datatable_layout_field('contacts', {}, value, {}, bare_context, engine)
+    enriched_output = render_datatable_layout_field(
+        'contacts', {}, value, {}, enriched_context, engine
+    )
 
     assert bare_output == enriched_output
 
@@ -320,7 +326,7 @@ def test_render_emits_table_with_header_and_cells() -> None:
     # (see test_read_only_cells_carry_a_hidden_input... for why)
     assert '<td class="datatable-cell" title="">Alice<input type="hidden"' in html_out
     # Enum column was declared with input_type='select' -> real editable widget
-    assert '<select name="rows[0].favorite_color"' in html_out
+    assert '<select name="contacts.rows[0].favorite_color"' in html_out
     assert 'option value="blue" selected' in html_out
 
 
@@ -469,7 +475,7 @@ def test_init_script_forces_all_rows_visible_before_submit() -> None:
     html_out = _render(PlainImport, rows=[{'name': 'Alice'}])
     assert "el.closest('form')" in html_out
     assert "form.addEventListener('submit'" in html_out
-    assert 'el.dtInstance.page.len(-1).draw(false);' in html_out
+    assert 'current.dtInstance.page.len(-1).draw(false);' in html_out
 
 
 def test_scripts_run_immediately_if_dom_already_ready_not_only_on_domcontentloaded() -> None:
@@ -513,19 +519,19 @@ def test_csv_upload_ui_included_by_default() -> None:
     # No separate file field, no hand-built button HTML -- the layout
     # field's own output already has everything a CSV-import page needs.
     html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False)
-    assert 'name="csv_file"' in html_out
+    assert 'name="contacts.csv_file"' in html_out
     assert 'type="file"' in html_out
-    assert '<button type="submit" name="datatable_action" value="load"' in html_out
+    assert '<button type="submit" name="contacts.datatable_action" value="load"' in html_out
     assert '>Load CSV<' in html_out
-    assert '<button type="submit" name="datatable_action" value="submit"' in html_out
+    assert '<button type="submit" name="contacts.datatable_action" value="submit"' in html_out
 
 
 def test_csv_upload_ui_has_exactly_one_submit_and_one_load_button() -> None:
     # Recommended pairing (include_submit_button=False) must not leave a
     # redundant second "Submit"-labeled control from the embedding form.
     html_out = _render(PlainImport, rows=[{'name': 'Alice'}], include_assets=False)
-    assert html_out.count('name="datatable_action" value="load"') == 1
-    assert html_out.count('name="datatable_action" value="submit"') == 1
+    assert html_out.count('name="contacts.datatable_action" value="load"') == 1
+    assert html_out.count('name="contacts.datatable_action" value="submit"') == 1
 
 
 def test_csv_upload_ui_sets_multipart_enctype_on_the_embedding_form() -> None:
@@ -547,7 +553,7 @@ def test_csv_upload_ui_opt_out() -> None:
         model_config = {'csv_upload': False}
 
     html_out = _render(NoUpload, rows=[{'name': 'Alice'}], include_assets=False)
-    assert 'name="csv_file"' not in html_out
+    assert 'name="contacts.csv_file"' not in html_out
     assert 'datatable_action' not in html_out
     # No file input anywhere -- multipart encoding would be pointless.
     assert 'enctype' not in html_out
@@ -572,15 +578,15 @@ def test_editable_false_forces_cells_read_only_even_with_input_type() -> None:
         rows=[{'name': 'Alice', 'favorite_color': 'blue'}],
         include_assets=False,
     )
-    assert '<select name="rows[0].favorite_color"' not in html_out
+    assert '<select name="contacts.rows[0].favorite_color"' not in html_out
     assert '<td class="datatable-cell" title="">blue<input type="hidden"' in html_out
 
 
 def test_editable_false_drops_submit_button_keeps_only_reload() -> None:
     html_out = _render(NonEditableImport, rows=[{'name': 'Alice'}], include_assets=False)
-    assert 'name="datatable_action" value="submit"' not in html_out
+    assert 'name="contacts.datatable_action" value="submit"' not in html_out
     assert '>Submit<' not in html_out
-    assert 'name="datatable_action" value="reload"' in html_out
+    assert 'name="contacts.datatable_action" value="reload"' in html_out
     assert '>Reload CSV<' in html_out
 
 
@@ -596,7 +602,10 @@ def test_editable_false_label_is_always_reload_even_before_any_load() -> None:
 @pytest.mark.asyncio
 async def test_handle_import_post_editable_false_reload_commits_in_one_click() -> None:
     csv_bytes = b'name,favorite_color\nAlice,blue\nBadRow,purple\n'
-    form_data = {'csv_file': _FakeUpload(csv_bytes)}
+    form_data = {
+        'contacts.datatable_model': 'NonEditableImport',
+        'contacts.csv_file': _FakeUpload(csv_bytes),
+    }
     result = await NonEditableImport.handle_import_post(form_data)
 
     assert result.action == 'reload'
@@ -671,7 +680,11 @@ class _FakeUpload:
 @pytest.mark.asyncio
 async def test_handle_import_post_load_parses_and_merges_csv() -> None:
     csv_bytes = b'name,address,favorite_color\nAlice,123 Main St,blue\nBadRow,789 Elm St,purple\n'
-    form_data = {'datatable_action': 'load', 'csv_file': _FakeUpload(csv_bytes)}
+    form_data = {
+        'contacts.datatable_model': 'ContactImport',
+        'contacts.datatable_action': 'load',
+        'contacts.csv_file': _FakeUpload(csv_bytes),
+    }
     result = await ContactImport.handle_import_post(form_data)
 
     assert result.action == 'load'
@@ -683,7 +696,9 @@ async def test_handle_import_post_load_parses_and_merges_csv() -> None:
 
 @pytest.mark.asyncio
 async def test_handle_import_post_load_with_no_file_returns_notice() -> None:
-    result = await ContactImport.handle_import_post({'datatable_action': 'load'})
+    result = await ContactImport.handle_import_post(
+        {'contacts.datatable_model': 'ContactImport', 'contacts.datatable_action': 'load'}
+    )
     assert result.action == 'load'
     assert result.rows == []
     assert not result.has_errors
@@ -693,10 +708,11 @@ async def test_handle_import_post_load_with_no_file_returns_notice() -> None:
 @pytest.mark.asyncio
 async def test_handle_import_post_submit_parses_edited_cells() -> None:
     form_data = {
-        'datatable_action': 'submit',
-        'rows[0].name': 'Alice',
-        'rows[0].address': '123 Main St',
-        'rows[0].favorite_color': 'green',
+        'contacts.datatable_model': 'ContactImport',
+        'contacts.datatable_action': 'submit',
+        'contacts.rows[0].name': 'Alice',
+        'contacts.rows[0].address': '123 Main St',
+        'contacts.rows[0].favorite_color': 'green',
     }
     result = await ContactImport.handle_import_post(form_data)
 
@@ -710,7 +726,113 @@ async def test_handle_import_post_defaults_to_submit_when_action_is_missing() ->
     # The embedding form's own plain submit button (used when csv_upload is
     # disabled) carries no datatable_action field at all -- must still save
     # rather than silently doing nothing.
-    form_data = {'rows[0].name': 'Alice', 'rows[0].address': '123 Main St'}
+    form_data = {
+        'contacts.datatable_model': 'PlainImport',
+        'contacts.rows[0].name': 'Alice',
+        'contacts.rows[0].address': '123 Main St',
+    }
     result = await PlainImport.handle_import_post(form_data)
     assert result.action == 'submit'
     assert result.rows[0]['name'] == 'Alice'
+
+
+# ---------------------------------------------------------------------------
+# Several tables on one page (#253)
+# ---------------------------------------------------------------------------
+
+
+class _TwoTablePage(FormModel):
+    first: Any = FormField(
+        default_factory=dict, title='First', input_type='layout', layout_handler='datatable'
+    )
+    second: Any = FormField(
+        default_factory=dict, title='Second', input_type='layout', layout_handler='datatable'
+    )
+
+
+def _render_two(first_cls: type[DataTableLayout], second_cls: type[DataTableLayout]) -> str:
+    return render_form_html(
+        _TwoTablePage,
+        form_data={
+            'first': first_cls.as_layout_value(rows=[{'name': 'Alice'}], include_assets=False),
+            'second': second_cls.as_layout_value(rows=[{'name': 'Bob'}], include_assets=False),
+        },
+        submit_url='/save',
+        include_submit_button=False,
+    )
+
+
+def test_two_tables_on_one_page_get_distinct_names_and_ids() -> None:
+    html_out = _render_two(PlainImport, PlainImport)
+    for field in ('first', 'second'):
+        assert f'<table id="{field}_datatable"' in html_out
+        assert f'name="{field}.rows[0].name"' in html_out
+        assert f'name="{field}.csv_file" id="{field}.csv_file"' in html_out
+        assert f'<label for="{field}.csv_file"' in html_out
+        assert f'name="{field}.datatable_action" value="load"' in html_out
+    assert 'name="rows[' not in html_out
+    assert 'name="csv_file"' not in html_out
+
+
+def test_init_script_binds_submit_per_table_not_once_per_form() -> None:
+    html_out = _render_two(PlainImport, PlainImport)
+    assert 'form._dtSubmitBound[tableId]' in html_out
+    assert 'var tableId = "first_datatable";' in html_out
+    assert 'var tableId = "second_datatable";' in html_out
+
+
+def _two_table_submission(first_model: str, second_model: str) -> dict[str, Any]:
+    return {
+        'first.datatable_model': first_model,
+        'first.datatable_action': 'load',
+        'first.csv_file': _FakeUpload(b'name,address\nCarol,1 First Ave\n'),
+        'second.datatable_model': second_model,
+        'second.rows[0].name': 'Bob',
+        'second.rows[0].address': '456 Oak Ave',
+    }
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_reads_only_its_own_table_by_field() -> None:
+    form_data = _two_table_submission('PlainImport', 'PlainImport')
+
+    first = await PlainImport.handle_import_post(form_data, field='first')
+    second = await PlainImport.handle_import_post(form_data, field='second')
+
+    assert first.action == 'load'
+    assert [row['name'] for row in first.rows] == ['Carol']
+    assert second.action == 'submit'
+    assert [row['name'] for row in second.rows] == ['Bob']
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_finds_its_table_by_row_model_without_field() -> None:
+    class OtherImport(DataTableLayout):
+        name: str
+        address: str
+
+    form_data = _two_table_submission('PlainImport', 'OtherImport')
+
+    first = await PlainImport.handle_import_post(form_data)
+    second = await OtherImport.handle_import_post(form_data)
+
+    assert [row['name'] for row in first.rows] == ['Carol']
+    assert [row['name'] for row in second.rows] == ['Bob']
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_asks_for_field_when_same_model_appears_twice() -> None:
+    form_data = _two_table_submission('PlainImport', 'PlainImport')
+    with pytest.raises(ValueError, match='field='):
+        await PlainImport.handle_import_post(form_data)
+
+
+@pytest.mark.asyncio
+async def test_handle_import_post_finds_a_table_inside_a_sub_form() -> None:
+    form_data = {
+        'section.contacts.datatable_model': 'PlainImport',
+        'section.contacts.rows[0].name': 'Alice',
+        'section.contacts.rows[0].address': '123 Main St',
+    }
+    result = await PlainImport.handle_import_post(form_data)
+    assert [row['name'] for row in result.rows] == ['Alice']

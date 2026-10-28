@@ -1182,8 +1182,13 @@ branching. Use `DataTableLayout` (a top-level export) instead:
   discard_url=None)`. The keyword-only ones control the built-in review UI specifically: pass
   `reviewing=True` after a "Load CSV" click so the button relabels to "Reload CSV" and an info
   banner explains nothing is saved yet; `notice=` shows a one-off warning banner (e.g. "Choose a
-  CSV file first"); `discard_url=` adds a "discard and start over" link. `table_id` only matters
-  if you embed more than one `DataTableLayout` field on the same page (each needs a distinct id).
+  CSV file first"); `discard_url=` adds a "discard and start over" link. `table_id` defaults to
+  one derived from the embedding field's name, so you rarely need it.
+- Several `DataTableLayout` fields can share one page or form: each table's inputs and buttons
+  are namespaced by its own field, so loading a CSV into one leaves the others alone. If two of
+  them use the *same* row model, pass the embedding field's name to tell them apart:
+  `await EmployeeImport.handle_import_post(form, field="joining")` (same `field=` on
+  `parse_submitted_rows()`). With one table per row model, leave `field` out.
 - On POST, call `await YourImportModel.handle_import_post(await request.form(max_fields=...))`
   instead of hand-rolling load-vs-submit branching — it parses/validates, merges rows back into
   their original order (an invalid row keeps its raw values instead of vanishing), and returns
@@ -1196,7 +1201,7 @@ branching. Use `DataTableLayout` (a top-level export) instead:
   get committed.**
 - `handle_import_post()` is `async def`-only (it awaits the uploaded file's `.read()`), which
   assumes a Starlette/FastAPI-style async `UploadFile`. **It does not work unmodified on Flask**
-  (WSGI, sync) — Flask's `request.files['csv_file']` is a sync `FileStorage` whose `.read()` is
+  (WSGI, sync) — Flask's uploaded file is a sync `FileStorage` whose `.read()` is
   not awaitable. `DataTableLayout` is a FastAPI/Starlette-oriented feature; for a Flask app that
   needs CSV import, either run it under an ASGI adapter or handle the CSV upload/parsing
   yourself with `DataTableLayout.parse_csv_rows(raw_bytes)` (sync, safe to call directly) instead

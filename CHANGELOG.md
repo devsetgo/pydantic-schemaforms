@@ -20,6 +20,18 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   libraries, outside this library's server-rendered scope, and had no examples
   or docs. For a JSON Schema of a form, use `FormModel.get_json_schema()`;
   for a plain Pydantic model, use `FormModel.as_api_model()`. (#248)
+- **`DataTableLayout` input names are namespaced by the embedding field.**
+  Cells, the CSV file input and the Load/Submit buttons used to have fixed
+  names (`rows[i].col`, `csv_file`, `datatable_action`), so two tables on one
+  page overwrote each other. They are now named under the field the table is
+  embedded in (an `employees` field submits `employees.rows[i].col`,
+  `employees.csv_file`, `employees.datatable_action`), and the default table
+  id comes from the field name instead of the row model's class name.
+  `handle_import_post()` and `parse_submitted_rows()` find their table in the
+  submission themselves, so app code using them doesn't change. Code that
+  reads those form keys directly, or builds test submissions by hand, must use
+  the new names. When two tables share a row model, pass the new
+  `field=` argument to say which one to read. (#253)
 
 ## [26.4.1] — 2026-10-12
 
