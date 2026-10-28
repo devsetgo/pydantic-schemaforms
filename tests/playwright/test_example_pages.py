@@ -98,3 +98,28 @@ def test_material_placeholder_select_keeps_its_label_floated(
     label = page.locator('label[for="selection_inputs.select_placeholder"]')
     # Unfloated is translateY(0); the CSS floats a select's label above it.
     expect(label).not_to_have_attribute('style', re.compile(r'translateY\(0\)'), timeout=TIMEOUT)
+
+
+_GROUP_CONTROLS = {
+    'tabbed': '[role="tab"][aria-controls^="tab-"]',
+    'accordion': 'button[aria-controls^="accordion-"]',
+}
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+@pytest.mark.parametrize('layout', ['tabbed', 'accordion'])
+def test_grouped_forms_on_one_page_switch_independently(
+    page: Page, examples_server_url: str, layout: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/layouts/two-forms?style={style}&layout={layout}')
+    first, second = page.locator('form').nth(0), page.locator('form').nth(1)
+
+    def panel(form, index: int):
+        control = form.locator(_GROUP_CONTROLS[layout]).nth(index)
+        return page.locator(f'[id="{control.get_attribute("aria-controls")}"]')
+
+    second.locator(_GROUP_CONTROLS[layout]).nth(1).click()
+
+    expect(panel(second, 1)).to_be_visible(timeout=TIMEOUT)
+    expect(panel(first, 0)).to_be_visible(timeout=TIMEOUT)
+    expect(panel(first, 1)).to_be_hidden(timeout=TIMEOUT)

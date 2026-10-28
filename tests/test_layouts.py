@@ -13,6 +13,7 @@ Consolidated from:
 from __future__ import annotations
 
 import asyncio
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -942,19 +943,47 @@ class TestTabLayoutStructure:
         assert collapsed_count >= 1
 
     def test_accordion_section_ids_are_unique(self):
-        """Verify each accordion section has unique ID."""
         sections = [{'title': f'Section {i}', 'content': f'Content {i}'} for i in range(5)]
-        layout = AccordionLayout(sections)
-        html = layout.render()
+        html = AccordionLayout(sections).render()
 
-        # Count unique section IDs
-        section_ids = []
-        for i in range(5):
-            section_id = f'accordion-{i}'
-            if section_id in html:
-                section_ids.append(section_id)
-
+        section_ids = re.findall(r'<div id="(accordion-[^"]+)"', html)
         assert len(section_ids) == 5
+        assert len(set(section_ids)) == 5
+
+    def test_bootstrap_accordion_shows_the_expanded_section(self):
+        sections = [
+            {'title': 'Open', 'content': 'a', 'expanded': True},
+            {'title': 'Closed', 'content': 'b'},
+        ]
+        renderer = EnhancedFormRenderer(framework='bootstrap')
+        html = AccordionLayout(sections).render(renderer=renderer)
+
+        assert html.count('accordion-collapse collapse show') == 1
+        assert html.count('accordion-button collapsed') == 1
+
+    @pytest.mark.parametrize('framework', ['bootstrap', 'material', None])
+    def test_accordion_headers_never_submit_the_form(self, framework):
+        sections = [{'title': 'A', 'content': 'a'}, {'title': 'B', 'content': 'b'}]
+        renderer = EnhancedFormRenderer(framework=framework) if framework else None
+        html = AccordionLayout(sections).render(renderer=renderer)
+
+        buttons = re.findall(r'<button\b[^>]*>', html)
+        assert len(buttons) == 2
+        assert all('type="button"' in button for button in buttons)
+
+    @pytest.mark.parametrize(
+        'layout',
+        [
+            TabLayout([{'title': 'A', 'content': 'a'}, {'title': 'B', 'content': 'b'}]),
+            AccordionLayout([{'title': 'A', 'content': 'a'}, {'title': 'B', 'content': 'b'}]),
+        ],
+    )
+    def test_rendering_twice_gives_distinct_ids(self, layout):
+        page = layout.render() + layout.render()
+
+        ids = re.findall(r'\bid="([^"]+)"', page)
+        assert ids
+        assert len(ids) == len(set(ids))
 
 
 class TestTabLayoutBootstrapMaterial:

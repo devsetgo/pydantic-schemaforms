@@ -4,8 +4,10 @@ TAB_COMPONENT_ASSETS = """
 <script>
 function switchTab(tabId, buttonElement) {
     const tabLayout = buttonElement.closest('.tab-layout');
-    const panels = tabLayout.querySelectorAll('.tab-panel');
-    const buttons = tabLayout.querySelectorAll('.tab-button');
+    const own = selector => Array.from(tabLayout.querySelectorAll(selector))
+        .filter(el => el.closest('.tab-layout') === tabLayout);
+    const panels = own('.tab-panel');
+    const buttons = own('.tab-button');
 
     panels.forEach(panel => {
         panel.style.display = 'none';
@@ -18,7 +20,7 @@ function switchTab(tabId, buttonElement) {
         button.setAttribute('aria-selected', 'false');
     });
 
-    const selectedPanel = document.getElementById(tabId);
+    const selectedPanel = panels.find(panel => panel.id === tabId);
     if (selectedPanel) {
         selectedPanel.style.display = 'block';
         selectedPanel.classList.add('active');
@@ -61,7 +63,9 @@ function switchTab(tabId, buttonElement) {
 ACCORDION_COMPONENT_ASSETS = """
 <script>
 function toggleAccordion(sectionId, buttonElement) {
-    const content = document.getElementById(sectionId);
+    const content = Array.from(buttonElement.parentElement.children)
+        .find(el => el.id === sectionId);
+    if (!content) { return; }
     const isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
 
     if (isExpanded) {

@@ -562,6 +562,7 @@ def _accordion_section(
     return html(t'''
 <div class="accordion-section">
     <button class="accordion-header{_expanded_class}"
+            type="button"
             aria-expanded="{aria_expanded}"
             aria-controls="{section_id}"
             onclick="toggleAccordion(&#39;{section_id}&#39;, this)">

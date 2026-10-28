@@ -46,6 +46,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     SHOWCASE_CAPTCHA_SECRET,
     CompanyOrganizationForm,
     CompleteShowcaseForm,
+    AccountSettingsForm,
     LayoutDemonstrationForm,
     MinimalLoginForm,
     PetRegistrationForm,
@@ -1973,6 +1974,52 @@ async def layouts_post(
             'framework_type': style,
             'form_html': form_html,
             'errors': validation.errors,
+        },
+    )
+
+
+_TWO_FORMS_LAYOUTS = [('tabbed', 'Tabbed'), ('accordion', 'Accordion'), ('wizard', 'Step wizard')]
+
+
+@router.get('/layouts/two-forms', response_class=HTMLResponse, tags=['Showcase'])
+async def layouts_two_forms(request: Request, style: str = 'bootstrap', layout: str = 'tabbed'):
+    """Two grouped forms on one page: each form's tabs, sections and steps
+    control only that form."""
+    if layout not in dict(_TWO_FORMS_LAYOUTS):
+        layout = 'tabbed'
+    renderer = EnhancedFormRenderer(framework=style)
+    forms = []
+    for heading, model in (
+        ('Form 1: layout demo', LayoutDemonstrationForm),
+        ('Form 2: account settings', AccountSettingsForm),
+    ):
+        form_html = await renderer.render_form_from_model_async(
+            model, data={}, errors={}, layout=layout, include_submit_button=False
+        )
+        forms.append(html(t'<h4 class="mt-4">{heading}</h4>{SafeHTML(form_html)}'))
+
+    def link(value: str, label: str) -> str:
+        css = 'btn btn-sm ' + ('btn-primary' if value == layout else 'btn-outline-primary')
+        href = f'/layouts/two-forms?style={style}&layout={value}'
+        return str(html(t'<a class="{css}" href="{href}">{label}</a>'))
+
+    links = SafeHTML(''.join(link(value, label) for value, label in _TWO_FORMS_LAYOUTS))
+    page_html = html(
+        t'<div class="d-flex flex-wrap gap-2 align-items-center mb-2">'
+        t'<span class="text-muted small">Layout:</span>{links}</div>'
+        t'{SafeHTML("".join(str(form) for form in forms))}'
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Two Grouped Forms on One Page',
+            'description': 'Switching a tab, section or step in one form leaves the other alone.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': wrap_with_schemaforms_markers(str(page_html)),
         },
     )
 

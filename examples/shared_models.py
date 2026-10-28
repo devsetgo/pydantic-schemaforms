@@ -2234,6 +2234,7 @@ __all__ = [
     'AppearanceForm',
     'TaskListForm',
     'LayoutDemonstrationForm',
+    'AccountSettingsForm',
     # Widget Gallery (tabbed showcase by input-type category)
     'TextInputsGalleryForm',
     'CheckboxTogglesGalleryForm',
@@ -2542,6 +2543,14 @@ class LayoutDemonstrationForm(FormModel):
     task_list: TaskListForm = Field(
         title='Task List', ui_help_text='A sub-form containing a repeating list'
     )
+
+
+class AccountSettingsForm(FormModel):
+    """A second grouped form for /layouts/two-forms: rendered on the same page as
+    LayoutDemonstrationForm, its tabs and sections must work independently."""
+
+    notifications: NotificationsForm = Field(title='Notifications')
+    appearance: AppearanceForm = Field(title='Appearance')
 
 
 # ============================================================================
