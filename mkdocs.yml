@@ -10,52 +10,71 @@ repo_url: 'https://github.com/devsetgo/pydantic-schemaforms'
 copyright: 'Copyright &copy; 2025 - 2026 Mike Ryan'
 
 nav:
-  - Introduction: 'index.md'
-  - "Live Demo ↗": 'https://pydantic-schemaforms.devsetgo.com/'
-  - Quick Start: 'quickstart.md'
-  - Tutorials:
-      - FastAPI Project: 'tutorial_fastapi.md'
-      - Recipes: 'recipes.md'
-      - Complex Forms: 'complex_forms.md'
-      # Legacy tutorial removed
+  - Home: 'index.md'
+  - Tutorial - User Guide:
+      - 'tutorial/index.md'
+      - First Form: 'tutorial/first-form.md'
+      - Handling Submissions: 'tutorial/handling-submissions.md'
+      - Fields and Inputs: 'tutorial/fields.md'
+      - Validation: 'tutorial/validation.md'
+      - Nested Forms and Lists: 'tutorial/nested-forms.md'
+      - Layouts: 'tutorial/layouts.md'
+      - Styling: 'tutorial/styling.md'
+      - CSRF Protection: 'tutorial/csrf.md'
+  - Advanced User Guide:
+      - 'advanced/index.md'
+      - Live Validation (HTMX): 'advanced/live-validation.md'
+      - Rule-Based Validation: 'advanced/rule-validation.md'
+      - Data Tables (CSV Import): 'advanced/data-tables.md'
+      - Forms Built at Runtime: 'advanced/runtime-forms.md'
+      - JSON API and JSON Schema: 'advanced/json-api.md'
+      - Assets and Self-Contained Forms: 'advanced/assets.md'
+      - Render Timing and Logging: 'advanced/timing-logging.md'
+      - Layout Primitives: 'advanced/layout-primitives.md'
+      - Plugin Hooks and Custom Composites: 'advanced/plugin-hooks.md'
+      - AI Assistant Instructions: 'advanced/ai-instructions.md'
+  - Recipes:
+      - 'recipes/index.md'
+      - Contact Form: 'recipes/contact-form.md'
+      - Login and Registration: 'recipes/login-registration.md'
+      - Edit Form from a Database Row: 'recipes/edit-form.md'
+      - Address Sub-Form: 'recipes/address-subform.md'
+      - Order with Line Items: 'recipes/order-line-items.md'
+      - File Upload: 'recipes/file-upload.md'
+      - CSV Import into a Table: 'recipes/csv-import.md'
+      - Multi-Step Application (Wizard): 'recipes/wizard-application.md'
+      - Settings with a Code Field: 'recipes/settings-code-field.md'
+      - Embedding in a Jinja Template: 'recipes/jinja-template.md'
   - Reference:
-      - Configuration: 'configuration.md'
-      - CSRF Protection: 'csrf.md'
-      - Inputs (UI Elements): 'inputs.md'
-      - Accessibility: 'accessibility.md'
-      - Layouts: 'layouts.md'
-      - Assets: 'assets.md'
-      - Render Timing: 'timing.md'
-      - Application Logging: 'logging.md'
-      - Validation Guide: 'validation_guide.md'
-      - Plugin Hooks: 'plugin_hooks.md'
-      - AI Assistant Instructions: 'ai_instructions.md'
-  - Development:
-      - Testing Workflow: 'testing_workflow.md'
+      - 'reference/index.md'
+      - Input Types: 'reference/inputs.md'
+      - Layouts: 'reference/layouts.md'
+      - Field Options: 'reference/field-options.md'
+      - Validation Rules: 'reference/validation-rules.md'
+      - Rendering API: 'reference/rendering-api.md'
+      - Accessibility: 'reference/accessibility.md'
+  - Alternatives: 'alternatives.md'
+  - Project:
+      - About: 'about.md'
+      - Roadmap: 'roadmap.md'
       - Contributing: 'contribute.md'
+      - Testing Workflow: 'testing_workflow.md'
       - Release Notes: 'release-notes.md'
-  - About: 'about.md'
-    # - QuickStart: 'quickstart.md'
-    # - Modules: 'models.md'
-    # - Examples:
-    #   - Configuration: 'examples/configuration.md'
-    #   - Filelayout: 'examples/filelayout.md'
-    # - Documentation:
-    #   - Versioning: 'versioning.md'
-    #   - Quick Reference: 'mike-quickref.md'
-    # - About:
-    #   - About: 'about.md'
-    #   - Contributing: 'contribute.md'
-  - Release Notes: release-notes.md
+  - "Live Demo ↗": 'https://pydantic-schemaforms.devsetgo.com/'
 # Theme
 theme:
   features:
     - navigation.tabs
     - navigation.instant
     - navigation.tabs.sticky
-    - toc.integrate
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
     - toc.follow
     - navigation.top
+    - search.suggest
+    - content.tabs.link
+    - content.code.copy
   name: 'material'
   # Use compact icon in top nav; full hero logo remains on the intro page content.
   logo: 'favicon.png'
@@ -101,6 +120,9 @@ markdown_extensions:
       check_paths: true
       base_path: .
   - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
   - toc:
       permalink: true
 extra_javascript:
