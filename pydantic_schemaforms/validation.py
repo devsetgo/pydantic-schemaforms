@@ -11,6 +11,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
+from enum import Enum
 from typing import Annotated, Any, Union, get_args, get_origin
 from collections.abc import Callable
 
@@ -1156,8 +1157,11 @@ def _coerce_html_form_values(
             continue
 
         if value == '' and is_optional:
+            # A str-based Enum can't hold "", so it gets None like any other type.
             allows_string = any(
-                isinstance(candidate, type) and issubclass(candidate, str)
+                isinstance(candidate, type)
+                and issubclass(candidate, str)
+                and not issubclass(candidate, Enum)
                 for candidate in non_none_types
             )
             if not allows_string:

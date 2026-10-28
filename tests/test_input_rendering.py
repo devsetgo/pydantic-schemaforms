@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import asyncio
 from datetime import date, datetime, time
-from typing import Annotated
+from enum import Enum
+from typing import Annotated, Literal
 from unittest import mock
 
 import pytest
@@ -1116,3 +1117,104 @@ def test_valid_fields_are_not_flagged_invalid(framework: str) -> None:
     html_out = render_form_html(_AriaForm, submit_url='/x', framework=framework)
     assert 'aria-invalid="true"' not in html_out
     assert 'aria-describedby="name-help"' in _control_tag(html_out, 'name')
+
+
+# ---------------------------------------------------------------------------
+# Inputs inferred from the field's type (no ui_element)
+# ---------------------------------------------------------------------------
+
+
+class _Plan(str, Enum):
+    free = 'free'
+    pro = 'pro'
+
+
+class _InferredForm(FormModel):
+    plan: _Plan = _Plan.free
+    plan_or_none: _Plan | None = None
+    color: Literal['red', 'blue'] = 'red'
+    tags: list[Literal['x', 'y']] = []
+    age: int | None = None
+    birthday: date | None = None
+    starts_at: datetime | None = None
+    alarm: time | None = None
+    website: AnyUrl | None = None
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+@pytest.mark.parametrize(
+    ('name', 'pattern'),
+    [
+        ('plan', r'<select\b[^>]*name="plan"'),
+        ('plan_or_none', r'<select\b[^>]*name="plan_or_none"'),
+        ('color', r'<select\b[^>]*name="color"'),
+        ('tags', r'<select\b[^>]*name="tags"[^>]*multiple'),
+        ('age', r'type="number"'),
+        ('birthday', r'type="date"'),
+        ('starts_at', r'type="datetime-local"'),
+        ('alarm', r'type="time"'),
+        ('website', r'type="url"'),
+    ],
+)
+def test_input_is_inferred_from_the_field_type(framework: str, name: str, pattern: str) -> None:
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_InferredForm, submit_url='/x', framework=framework)
+    control = re.search(rf'<(?:input|select)\b[^>]*\bname="{name}"[^>]*>', html_out, re.S)
+    assert control, (framework, name)
+    assert re.search(pattern, control.group(0), re.S), (framework, name, control.group(0))
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+def test_enum_select_options_and_empty_choice_only_when_optional(framework: str) -> None:
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_InferredForm, submit_url='/x', framework=framework)
+
+    def options(name: str) -> list[str]:
+        block = re.search(rf'<select[^>]*name="{name}"[^>]*>(.*?)</select>', html_out, re.S)
+        assert block, name
+        return re.findall(r'<option value="([^"]*)"', block.group(1))
+
+    assert options('plan') == ['free', 'pro']
+    assert options('plan_or_none') == ['', 'free', 'pro']
+    # The label comes from the field name, not the Enum class name.
+    assert re.search(r'<label[^>]*for="plan_or_none"[^>]*>\s*Plan Or None', html_out)
+
+
+def test_blank_optional_enum_validates_to_none() -> None:
+    result = _InferredForm.validate({'plan': 'pro', 'plan_or_none': ''}, submit_url='/x')
+    assert result.is_valid, result.errors
+    assert result.data['plan'] == _Plan.pro
+    assert result.data['plan_or_none'] is None
+
+
+class _Size(str, Enum):
+    small = 'small'
+    large = 'large'
+
+
+class _SizeItem(FormModel):
+    size: _Size = Field(_Size.small, title='_Size')
+
+
+class _SizeForm(FormModel):
+    sz: _Size = Field(_Size.small, title='_Size')
+    items: list[_SizeItem] = Field(default_factory=lambda: [_SizeItem()])
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+def test_enum_field_title_survives_matching_the_enum_class_name(framework: str) -> None:
+    # Pydantic drops a $ref field's title when it equals the referenced
+    # class's title; the label must still use it, not the field name.
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_SizeForm, submit_url='/x', framework=framework)
+    labels = re.findall(r'<label[^>]*for="(sz|items\[0\]\.size)"[^>]*>\s*([^<*]*)', html_out)
+    assert labels and all(text.strip() == '_Size' for _, text in labels), labels

@@ -81,6 +81,21 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 - **Contrast meets WCAG AA (4.5:1)** for tag chips, the code editor's
   property/tag syntax color and the "Rendered in" timing line. (#246)
 - **The date picker toggle is a 24×24 px target** (WCAG 2.2 target size). (#246)
+- **Inputs are inferred from more field types.** Without a `ui_element`,
+  `date`, `datetime`, `time`, `EmailStr` and `AnyUrl` fields render as date,
+  datetime-local, time, email and URL inputs; `Enum` and `Literal` fields render
+  as a select with their values; and a `list` of either renders as a
+  multiselect. `Optional` fields keep their input type instead of falling back
+  to a text box. Previously an `Enum` field rendered an empty section (or a
+  select with no options), so its choices had to be built by hand. (#258)
+- **Optional selects can be left empty.** An `Optional` select gets an empty
+  first choice, and submitting it validates to `None`, including for
+  `str`-based enums. (#258)
+- **An `Enum` field keeps its title** when it matches the Enum class's name
+  (`Field(title="Size")` on a `Size` enum), including inside list items; it
+  used to fall back to the field name. (#258)
+- **Material renders datetime fields as `datetime-local`**, not the invalid
+  `datetime` input type. (#258)
 
 ## [26.4.1] — 2026-10-12
 

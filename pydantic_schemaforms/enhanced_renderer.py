@@ -19,7 +19,7 @@ from collections.abc import Callable
 from .html_markers import wrap_with_schemaforms_markers
 from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
-from .rendering.field_renderer import FieldRenderer
+from .rendering.field_renderer import _FORMAT_UI_ELEMENTS, FieldRenderer
 from .rendering.frameworks import get_framework_config
 from .inputs.registry import get_input_component_map
 from .error_tree import field_message, iter_errors, normalize_error_tree
@@ -803,16 +803,19 @@ class EnhancedFormRenderer:
     def _infer_material_input_type(self, field_schema: dict[str, Any]) -> str:
         field_type = field_schema.get('type', 'string')
         field_format = field_schema.get('format', '')
-        if field_format == 'email':
-            return 'email'
-        if field_format == 'date':
-            return 'date'
+        if field_schema.get('enum'):
+            return 'select'
+        if field_type == 'array' and (field_schema.get('items') or {}).get('enum'):
+            return 'multiselect'
+        if field_type == 'string' and field_format in _FORMAT_UI_ELEMENTS:
+            # "datetime" is not a valid HTML input type; Material renders the
+            # type attribute directly.
+            inferred = _FORMAT_UI_ELEMENTS[field_format]
+            return 'datetime-local' if inferred == 'datetime' else inferred
         if field_type in ('integer', 'number'):
             return 'number'
         if field_type == 'boolean':
             return 'checkbox'
-        if field_schema.get('enum'):
-            return 'select'
         return 'text'
 
     def _render_material_text_input(
@@ -885,6 +888,16 @@ class EnhancedFormRenderer:
         )
 
         rendered_options = []
+        if not placeholder_text and field_schema.get('nullable'):
+            # An Optional select must be able to stay empty.
+            rendered_options.append(
+                render_template(
+                    FormTemplates.MATERIAL_SELECT_OPTION,
+                    value='',
+                    selected=' selected="selected"' if value in (None, '') else '',
+                    label='',
+                )
+            )
         if placeholder_text:
             is_placeholder_selected = value is None or str(value) == ''
             rendered_options.append(

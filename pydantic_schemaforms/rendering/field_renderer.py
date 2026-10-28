@@ -41,6 +41,16 @@ _CHECKBOX_LIKE_ELEMENTS = {'checkbox', 'toggle', 'toggle_switch', 'checkbox_togg
 # broken dropdown arrow instead of a radio button).
 _CHECKBOX_FAMILY_ELEMENTS = _CHECKBOX_LIKE_ELEMENTS | {'radio', 'checkbox_group'}
 
+# JSON Schema string formats Pydantic emits for these types -> the input they
+# should render as when no ui_element is given.
+_FORMAT_UI_ELEMENTS = {
+    'date': 'date',
+    'date-time': 'datetime',
+    'time': 'time',
+    'email': 'email',
+    'uri': 'url',
+}
+
 
 class FieldRenderer:
     """Encapsulates the heavy lifting of turning schema fields into HTML."""
@@ -202,6 +212,13 @@ class FieldRenderer:
                 else:
                     if ui_element == 'select':
                         placeholder_option = self._build_placeholder_option(ui_options_dict, value)
+                        if placeholder_option is None and field_schema.get('nullable'):
+                            # An Optional select must be able to stay empty.
+                            placeholder_option = {
+                                'value': '',
+                                'label': '',
+                                'selected': value in (None, ''),
+                            }
                         if placeholder_option is not None:
                             formatted_options = [placeholder_option, *formatted_options]
 
@@ -431,6 +448,12 @@ class FieldRenderer:
             return composite
         field_type = field_schema.get('type', 'string')
 
+        if field_schema.get('enum'):
+            return 'select'
+        if field_type == 'array' and (field_schema.get('items') or {}).get('enum'):
+            return 'multiselect'
+        if field_type == 'string' and field_schema.get('format') in _FORMAT_UI_ELEMENTS:
+            return _FORMAT_UI_ELEMENTS[field_schema['format']]
         if field_type == 'string':
             max_length = field_schema.get('maxLength', 0)
             if max_length > 200:
