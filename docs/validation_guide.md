@@ -422,10 +422,10 @@ from pydantic_schemaforms import EmailDeliverabilityRule
 EmailDeliverabilityRule(message="We couldn't verify that domain accepts mail.", timeout=5)
 ```
 
-`FieldValidator.email(check_deliverability=True)`, `FormBuilder.email_input(check_deliverability=True)`,
-and `create_email_validator(check_deliverability=True)` all expose the same rule for the
-`FieldValidator`/`FormBuilder`/factory-function styles of building validation instead of
-a `FormModel` type annotation:
+`FieldValidator.email(check_deliverability=True)` and
+`create_email_validator(check_deliverability=True)` expose the same rule for the
+`FieldValidator`/factory-function styles of building validation instead of a `FormModel`
+type annotation:
 
 ```python
 from pydantic_schemaforms import FieldValidator

@@ -1,6 +1,4 @@
-from functools import wraps
 from typing import Any, Literal
-from collections.abc import Callable
 
 import inspect
 
@@ -9,22 +7,6 @@ from pydantic import Field as PydanticField
 from pydantic.fields import FieldInfo
 
 from .validation import ValidationResult
-
-
-def form_validator(func: Callable) -> Callable:
-    """Classmethod decorator for cross-field validation on FormModel subclasses."""
-
-    @wraps(func)
-    def wrapper(cls, values: dict[str, Any]) -> dict[str, Any]:
-        try:
-            return func(cls, values)
-        except ValueError:
-            raise
-        except Exception as e:
-            raise ValueError(f'Validation error: {str(e)}') from e
-
-    wrapper._is_form_validator = True  # type: ignore[attr-defined]
-    return classmethod(wrapper)  # type: ignore[return-value]
 
 
 _PYDANTIC_FIELD_PARAMS = frozenset(inspect.signature(PydanticField).parameters)

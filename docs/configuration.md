@@ -50,15 +50,6 @@ form_html = render_form_html(
 
 If you prefer a method on the model, use `RegistrationForm.render_form(...)`.
 
-### 2) Builder + handlers (legacy integration)
-
-Docs and examples may still reference the builder pattern:
-
-- Build with `create_form_from_model()`
-- Validate + render with `handle_form()` / `handle_form_async()`
-
-This remains supported for backwards compatibility, but the underlying HTML rendering flows through the same enhanced renderer pipeline.
-
 ## Framework and assets
 
 There are two separate but related concepts:

@@ -155,58 +155,6 @@ class TestInputTypesUncovered:
 # ---------------------------------------------------------------------------
 
 
-class TestSyncUncovered:
-    def test_normalize_form_data_single_item_list(self):
-        from pydantic_schemaforms.integration.sync import normalize_form_data
-
-        result = normalize_form_data({'field': ['value']})
-        assert result['field'] == 'value'
-
-    def test_normalize_form_data_multi_item_list_kept(self):
-        from pydantic_schemaforms.integration.sync import normalize_form_data
-
-        result = normalize_form_data({'field': ['a', 'b']})
-        assert result['field'] == ['a', 'b']
-
-    def test_normalize_form_data_on_becomes_true(self):
-        from pydantic_schemaforms.integration.sync import normalize_form_data
-
-        result = normalize_form_data({'active': 'on'})
-        assert result['active'] is True
-
-    def test_normalize_form_data_off_becomes_false(self):
-        from pydantic_schemaforms.integration.sync import normalize_form_data
-
-        result = normalize_form_data({'active': 'off'})
-        assert result['active'] is False
-
-    def test_handle_sync_form_validation_error_renders(self):
-        from pydantic_schemaforms.integration.builder import FormBuilder
-        from pydantic_schemaforms.integration.sync import handle_sync_form
-
-        builder = FormBuilder().email_input('email').required('email')
-        result = handle_sync_form(
-            builder,
-            submitted_data={'email': ''},
-            render_on_error=True,
-        )
-        assert result['success'] is False
-        assert 'form_html' in result
-
-    def test_handle_sync_form_validation_error_no_render(self):
-        from pydantic_schemaforms.integration.builder import FormBuilder
-        from pydantic_schemaforms.integration.sync import handle_sync_form
-
-        builder = FormBuilder().email_input('email').required('email')
-        result = handle_sync_form(
-            builder,
-            submitted_data={'email': ''},
-            render_on_error=False,
-        )
-        assert result['success'] is False
-        assert 'form_html' not in result
-
-
 # ---------------------------------------------------------------------------
 # inputs/registry.py  (86%)
 # ---------------------------------------------------------------------------

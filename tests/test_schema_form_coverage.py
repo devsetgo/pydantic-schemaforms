@@ -2,30 +2,12 @@
 
 import pytest
 from pydantic import Field as PydanticField
-from typing import Dict, Any
 
 from pydantic_schemaforms.schema_form import (
-    form_validator,
     Field,
     FormModel,
     ValidationResult,
 )
-
-
-class TestFormValidator:
-    """Test form_validator decorator."""
-
-    def test_form_validator_decorator_basic(self):
-        """Test form_validator wraps function correctly."""
-
-        @form_validator
-        def validate_age(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-            if values.get('age', 0) < 18:
-                raise ValueError('Must be 18 or older')
-            return values
-
-        # The decorator returns a classmethod
-        assert isinstance(validate_age, classmethod)
 
 
 class TestFieldFunction:
