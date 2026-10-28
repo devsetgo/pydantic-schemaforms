@@ -58,12 +58,14 @@ from typing import Any, ClassVar, Literal, TypedDict
 from pydantic import ValidationError
 
 from .composite_layout import CompositeLayoutModel
+from .form_data import decode_submission
 
 # Importing this registers the 'datatable' layout_handler (LayoutEngine
 # .register_layout_renderer) as a side effect at import time -- without it,
 # a field declared with layout_handler='datatable' would never find a
 # renderer no matter how DataTableLayout itself gets used.
 from .rendering import datatable_renderer as _datatable_renderer  # noqa: F401
+from .rendering.datatable_renderer import MODEL_MARKER_KEY
 
 
 class DataTableStyleConfig(TypedDict, total=False):
@@ -265,19 +267,54 @@ class DataTableLayout(CompositeLayoutModel):
         return cls._validate_rows(list(reader))
 
     @classmethod
-    def parse_submitted_rows(cls, form_data: Any) -> tuple[list['DataTableLayout'], list[RowError]]:
-        """Validate edited cell values posted from the table's own
-        ``submit_url`` form (see ``render_form(submit_url=...)``).
+    def _submitted_section(cls, nested: Any, field: str | None) -> dict[str, Any]:
+        """Find this table's part of a decoded submission.
 
-        Accepts the raw request form; cells (named ``rows[i].field`` on the
-        wire) are decoded into per-row dicts and each row is validated
-        independently, same as ``parse_csv_rows``.
+        Every rendered table carries a hidden marker naming its row model,
+        so a page with one table (or one per row model) needs no ``field``.
+        Two tables of the same row model on one page need ``field`` -- the
+        embedding FormModel's attribute name -- to tell them apart.
         """
-        from .form_data import decode_submission
+        found: list[tuple[str, dict[str, Any]]] = []
 
-        nested = decode_submission(form_data)
-        records = nested.get('rows') or []
-        return cls._validate_rows(records)
+        def walk(node: Any) -> None:
+            if isinstance(node, dict):
+                for key, child in node.items():
+                    if isinstance(child, dict) and MODEL_MARKER_KEY in child:
+                        found.append((key, child))
+                    walk(child)
+            elif isinstance(node, list):
+                for child in node:
+                    walk(child)
+
+        walk(nested)
+        if field is not None:
+            found = [(key, section) for key, section in found if key == field]
+        elif len(found) > 1:
+            found = [
+                (key, section)
+                for key, section in found
+                if section.get(MODEL_MARKER_KEY) == cls.__name__
+            ]
+        if len(found) > 1:
+            names = ', '.join(sorted(key for key, _ in found))
+            raise ValueError(
+                f'{cls.__name__}: the submission holds several tables ({names}); '
+                'pass field= to say which one to read.'
+            )
+        return found[0][1] if found else {}
+
+    @classmethod
+    def parse_submitted_rows(
+        cls, form_data: Any, *, field: str | None = None
+    ) -> tuple[list['DataTableLayout'], list[RowError]]:
+        """Validate the edited cell values of this table from the raw
+        request form; each row is validated independently, same as
+        ``parse_csv_rows``. ``field`` is only needed when one page holds two
+        tables of this same row model -- see ``handle_import_post()``.
+        """
+        section = cls._submitted_section(decode_submission(form_data), field)
+        return cls._validate_rows(section.get('rows') or [])
 
     @classmethod
     def csv_template_bytes(cls) -> bytes:
@@ -304,12 +341,12 @@ class DataTableLayout(CompositeLayoutModel):
         ]
 
     @classmethod
-    async def _read_uploaded_csv(cls, form_data: Any) -> bytes:
-        csv_upload = form_data.get('csv_file')
+    async def _read_uploaded_csv(cls, section: dict[str, Any]) -> bytes:
+        csv_upload = section.get('csv_file')
         return await csv_upload.read() if hasattr(csv_upload, 'read') else b''
 
     @classmethod
-    async def handle_import_post(cls, form_data: Any) -> ImportResult:
+    async def handle_import_post(cls, form_data: Any, *, field: str | None = None) -> ImportResult:
         """Figure out which button was clicked (``datatable_action`` --
         emitted automatically by the layout field's own rendered controls
         when ``model_config['csv_upload']`` is enabled, see the module
@@ -334,9 +371,15 @@ class DataTableLayout(CompositeLayoutModel):
         Either way, rows/row_errors come back already merged into their
         original order via ``merge_rows()``, ready to pass straight to
         ``as_layout_value()`` for re-display.
+
+        ``field`` is the embedding FormModel's attribute name for this
+        table. Leave it out unless one page holds two tables of this same
+        row model; a table only reacts to its own buttons, so clicking
+        "Load CSV" on one table reports ``'submit'`` for the other.
         """
+        section = cls._submitted_section(decode_submission(form_data), field)
         if not cls.datatable_options().get('editable', True):
-            raw = await cls._read_uploaded_csv(form_data)
+            raw = await cls._read_uploaded_csv(section)
             if not raw:
                 return ImportResult(
                     action='reload',
@@ -349,10 +392,10 @@ class DataTableLayout(CompositeLayoutModel):
             row_errors_by_index = {err.row_index: err.errors for err in row_errors}
             return ImportResult(action='reload', rows=merged_rows, row_errors=row_errors_by_index)
 
-        action = form_data.get('datatable_action') or 'submit'
+        action = section.get('datatable_action') or 'submit'
 
         if action == 'load':
-            raw = await cls._read_uploaded_csv(form_data)
+            raw = await cls._read_uploaded_csv(section)
             if not raw:
                 return ImportResult(
                     action='load',
@@ -363,7 +406,7 @@ class DataTableLayout(CompositeLayoutModel):
             rows, row_errors = cls.parse_csv_rows(raw)
         else:
             action = 'submit'
-            rows, row_errors = cls.parse_submitted_rows(form_data)
+            rows, row_errors = cls._validate_rows(section.get('rows') or [])
 
         merged_rows = cls.merge_rows(rows, row_errors)
         row_errors_by_index = {err.row_index: err.errors for err in row_errors}
@@ -400,7 +443,7 @@ class DataTableLayout(CompositeLayoutModel):
             'model_cls': cls,
             'rows': rows,
             'row_errors': row_errors,
-            'table_id': table_id or f'{cls.__name__.lower()}_datatable',
+            'table_id': table_id,
             'asset_mode': asset_mode,
             'include_assets': include_assets,
             'reviewing': reviewing,

@@ -180,6 +180,25 @@ class EmployeeImportForm(FormModel):
     )
 
 
+class TeamTransferForm(FormModel):
+    """Two tables of the same row model in one form. Each renders its own
+    upload controls under its own field name, so loading a CSV into one
+    leaves the other alone; the POST route passes field= to tell them apart."""
+
+    leaving: Any = FormField(
+        default_factory=dict,
+        title='Leaving the team',
+        input_type='layout',
+        layout_handler='datatable',
+    )
+    joining: Any = FormField(
+        default_factory=dict,
+        title='Joining the team',
+        input_type='layout',
+        layout_handler='datatable',
+    )
+
+
 # In-memory demo store standing in for a real database.
 _IMPORTED_ROWS: list[dict[str, str]] = [
     {
@@ -436,9 +455,7 @@ async def import_or_save(
     with log_timing('request.form()'):
         form = await request.form(max_fields=200_000)
 
-    with log_timing(
-        f'{row_model.__name__}.handle_import_post', action=form.get('datatable_action')
-    ):
+    with log_timing(f'{row_model.__name__}.handle_import_post'):
         result = await row_model.handle_import_post(form)
 
     if result.action == 'load':
@@ -525,6 +542,99 @@ def download_sample_csv(size: int) -> FileResponse:
             detail='Sample file not generated -- run `python examples/generate_sample_csv.py`',
         )
     return FileResponse(path, media_type='text/csv', filename=path.name)
+
+
+_TEAMS_URL = '/employees/teams'
+_TEAM_FIELDS = ('leaving', 'joining')
+_TEAM_STARTING_ROWS = {'leaving': _IMPORTED_ROWS[:1], 'joining': _IMPORTED_ROWS[1:]}
+
+
+async def _render_teams_page(
+    request: Request,
+    *,
+    style: str,
+    rows: dict[str, list[dict[str, Any]]],
+    row_errors: dict[str, dict[int, dict[str, str]]] | None = None,
+    reviewing: dict[str, bool] | None = None,
+    notices: dict[str, str] | None = None,
+):
+    row_errors = row_errors or {}
+    reviewing = reviewing or {}
+    notices = notices or {}
+    form_html = await render_form_html_async(
+        TeamTransferForm,
+        framework=style,
+        form_data={
+            field: EmployeeImport.as_layout_value(
+                rows=rows.get(field, []),
+                row_errors=row_errors.get(field),
+                reviewing=reviewing.get(field, False),
+                notice=notices.get(field, ''),
+                # The first table already loaded the DataTables assets.
+                include_assets=field == _TEAM_FIELDS[0],
+            )
+            for field in _TEAM_FIELDS
+        },
+        submit_url=f'{_TEAMS_URL}?style={style}',
+        include_submit_button=False,
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Team Transfer - two DataTableLayouts on one page',
+            'description': 'Two tables of the same row model in one form. Each one has its '
+            'own CSV upload and buttons; loading a file into one leaves the other unchanged. '
+            'Submit saves both.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'form_html': form_html,
+        },
+        headers={'Cache-Control': 'no-store'},
+    )
+
+
+@router.get('/teams', response_class=HTMLResponse)
+async def show_teams_page(request: Request, style: str = 'bootstrap'):
+    return await _render_teams_page(request, style=style, rows=_TEAM_STARTING_ROWS)
+
+
+@router.post('/teams', response_class=HTMLResponse)
+async def save_teams(request: Request, style: str = 'bootstrap'):
+    form = await request.form(max_fields=200_000)
+    # Both tables use EmployeeImport, so field= says which table to read.
+    results = {
+        field: await EmployeeImport.handle_import_post(form, field=field) for field in _TEAM_FIELDS
+    }
+
+    if any(result.action == 'load' or result.has_errors for result in results.values()):
+        return await _render_teams_page(
+            request,
+            style=style,
+            rows={field: result.rows for field, result in results.items()},
+            row_errors={field: result.row_errors for field, result in results.items()},
+            reviewing={field: result.action == 'load' for field, result in results.items()},
+            notices={field: result.notice for field, result in results.items()},
+        )
+
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': 'Team Transfer Saved',
+            'message': ', '.join(
+                f'{len(result.rows)} {field}' for field, result in results.items()
+            ),
+            'data': {field: result.rows for field, result in results.items()},
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'try_again_url': _TEAMS_URL,
+        },
+        headers={'Cache-Control': 'no-store'},
+    )
 
 
 async def _print_standalone_html() -> None:

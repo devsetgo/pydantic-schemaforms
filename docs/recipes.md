@@ -809,6 +809,27 @@ yourself whether that's acceptable for your app; if not, check `not result.rows 
 result.has_errors` before calling `save_to_database()` and show a "nothing to submit" message
 instead.
 
+Several tables can share one page, even in one form: each table's cells,
+file input and buttons are named under its own embedding field, so a
+"Load CSV" click on one table leaves the others alone (they report
+`"submit"` with their current rows). `handle_import_post()` finds its own
+table on its own. Only when two tables use the *same* row model does it need
+to be told which one to read, by the embedding field's name:
+
+```python
+class TeamTransferForm(FormModel):
+    leaving: Any = FormField(default_factory=dict, input_type="layout", layout_handler="datatable")
+    joining: Any = FormField(default_factory=dict, input_type="layout", layout_handler="datatable")
+
+form = await request.form(max_fields=200_000)
+leaving = await EmployeeImport.handle_import_post(form, field="leaving")
+joining = await EmployeeImport.handle_import_post(form, field="joining")
+```
+
+Pass `include_assets=False` to every table's `as_layout_value()` but the
+first, so the DataTables scripts load once. The example app's
+`/employees/teams` page runs this end to end.
+
 Every cell renders as its own named `<input>` (read-only columns get a
 hidden one too, see below), so a submit's field count is *rows times
 columns*, not row count. Starlette/FastAPI's `Request.form()` rejects a
