@@ -342,7 +342,7 @@ class DataTableLayout(CompositeLayoutModel):
 
     @classmethod
     async def _read_uploaded_csv(cls, section: dict[str, Any]) -> bytes:
-        csv_upload = section.get('csv_file')
+        csv_upload: Any = section.get('csv_file')
         return await csv_upload.read() if hasattr(csv_upload, 'read') else b''
 
     @classmethod
