@@ -20,6 +20,24 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   libraries, outside this library's server-rendered scope, and had no examples
   or docs. For a JSON Schema of a form, use `FormModel.get_json_schema()`;
   for a plain Pydantic model, use `FormModel.as_api_model()`. (#248)
+- **The builder API is removed; `FormModel` is the only way to build a form.**
+  `FormBuilder`, `AutoFormBuilder`, `create_form_from_model`,
+  `create_login_form`, `create_registration_form`, `create_contact_form`,
+  `render_form_page`, `FormIntegration`, `handle_form` and `handle_form_async`
+  are deleted, along with `ModernFormRenderer`, `FormDefinition` and
+  `FormSection` (which only existed to render builder forms) and the
+  `integration.builder`/`adapters`/`sync`/`async_support` modules. The builder
+  rendered through its own path, so it never got `layout=`, the wizard, nested
+  sub-forms, `model_list` or `DataTableLayout`. To upgrade: declare a
+  `FormModel` (or build one at runtime with Pydantic's
+  `create_model(..., __base__=FormModel)`), render it with `render_form_html()`
+  and handle submissions with `FormModel.validate()` and
+  `result.render_with_errors()`. See `docs/quickstart.md`. Importing any
+  removed name raises an `ImportError` that names its replacement. (#255)
+- **`@form_validator` is removed.** It never ran: nothing called the methods
+  it decorated, so cross-field checks written with it were silently skipped.
+  Use Pydantic's `@model_validator(mode="after")` (its message lands in the
+  form-wide `_errors`) or `FormValidator.add_cross_field_rule`. (#254)
 - **`DataTableLayout` input names are namespaced by the embedding field.**
   Cells, the CSV file input and the Load/Submit buttons used to have fixed
   names (`rows[i].col`, `csv_file`, `datatable_action`), so two tables on one

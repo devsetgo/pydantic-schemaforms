@@ -1,15 +1,9 @@
 # Quick Start
 
-This page shows two common ways to integrate pydantic-schemaforms into an app:
+Every form is a `FormModel`: declare it, render it with `render_form_html()`,
+and validate submissions with `FormModel.validate()`.
 
-- Model-first rendering (`FormModel` + `render_form_html()`)
-- Builder + handlers (legacy):
-    - Build a `FormBuilder` (often via `create_form_from_model()`)
-    - Use exactly one handler per runtime:
-        - Sync: `handle_form()`
-        - Async: `handle_form_async()`
-
-## Option A: Model-first rendering (recommended)
+## Define and render a form
 
 ```python
 from pydantic_schemaforms import Field, FormModel, render_form_html
@@ -104,73 +98,54 @@ Then, in your POST handler, read and validate the submitted token before model v
 
 See the full guide: [csrf.md](csrf.md).
 
-## 1) Build a form from a Pydantic model
-
-```python
-from pydantic import BaseModel, EmailStr
-
-from pydantic_schemaforms import create_form_from_model
-
-
-class User(BaseModel):
-    name: str
-    email: EmailStr
-
-
-builder = create_form_from_model(User, framework="bootstrap")
-```
-
-## 2) Async integration (FastAPI / ASGI)
-
-```python
-from fastapi import FastAPI, Request
-
-from pydantic_schemaforms import create_form_from_model, handle_form_async
-
-app = FastAPI()
-
-
-@app.api_route("/user", methods=["GET", "POST"])
-async def user_form(request: Request):
-    builder = create_form_from_model(User, framework="bootstrap")
-
-    if request.method == "POST":
-        result = await handle_form_async(builder, submitted_data=await request.form())
-        if result.get("success"):
-            return {"ok": True, "data": result["data"]}
-        return result["form_html"]
-
-    result = await handle_form_async(builder)
-    return result["form_html"]
-```
-
-A valid POST returns `{"success": True, "data": ...}`; an invalid one returns
-`{"success": False, "errors": ..., "form_html": ...}`. For a model-backed builder,
-`data` is nested like the model (`{"address": {"city": ...}}`) and `errors` is a
-nested error tree in the same shape (`{"address": {"city": "..."}}`); see
-`docs/complex_forms.md` and `docs/validation_guide.md`.
-
-## 3) Sync integration (Flask / WSGI)
+## Sync (Flask / WSGI)
 
 ```python
 from flask import Flask, request
 
-from pydantic_schemaforms import create_form_from_model, handle_form
+from pydantic_schemaforms import html, render_form_html
 
 app = Flask(__name__)
 
 
 @app.route("/user", methods=["GET", "POST"])
 def user_form():
-    builder = create_form_from_model(User, framework="bootstrap")
-
     if request.method == "POST":
-        result = handle_form(builder, submitted_data=request.form)
-        if result.get("success"):
-            return {"ok": True, "data": result["data"]}
-        return result["form_html"]
+        result = User.validate(request.form, submit_url="/user")
+        if result.is_valid:
+            return str(html(t"<p>Hello {result.data['name']}!</p>"))
+        return result.render_with_errors()
+    return render_form_html(User, submit_url="/user")
+```
 
-    return handle_form(builder)["form_html"]
+`result.data` is nested like the model (`{"address": {"city": ...}}`) and
+`result.errors` is a nested error tree in the same shape; see
+`docs/complex_forms.md` and `docs/validation_guide.md`.
+
+## Forms built at runtime
+
+When the fields are only known at runtime (from a database row, an admin
+screen, a config file), build the `FormModel` subclass with Pydantic's
+`create_model()`. It renders and validates exactly like a declared one:
+
+```python
+from pydantic import create_model
+
+from pydantic_schemaforms import Field, FormModel, render_form_html
+
+spec = [("name", "text", True), ("email", "email", True), ("notes", "textarea", False)]
+
+FeedbackForm = create_model(
+    "FeedbackForm",
+    __base__=FormModel,
+    **{
+        name: (str, Field(... if required else "", ui_element=ui_element, title=name.title()))
+        for name, ui_element, required in spec
+    },
+)
+
+html_out = render_form_html(FeedbackForm, submit_url="/feedback")
+result = FeedbackForm.validate(submitted_form, submit_url="/feedback")
 ```
 
 ## Dual-use: form endpoint + JSON API
@@ -195,5 +170,4 @@ See the full pattern in [tutorial_fastapi.md](tutorial_fastapi.md#dual-use-html-
 
 ## Notes
 
-- `handle_form*()` returns either `{form_html}` (initial render) or `{success: bool, ...}` (submission).
 - Asset delivery (`asset_mode`) and full-page wrappers are documented in [assets.md](assets.md).

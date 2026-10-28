@@ -234,19 +234,32 @@ Notes:
   `result.render_with_errors_async()` re-renders with field errors and the submitted values
   preserved — don't hand-roll try/except ValidationError when this exists.
 
-### Alternative entry point: the builder DSL (FormBuilder)
+### Forms whose fields are only known at runtime
 
-Everything above uses `FormModel` — a typed Pydantic subclass you author. The library also ships
-a second, officially-supported path for *programmatic* form construction where you don't want a
-named model class up front: `FormBuilder`/`AutoFormBuilder` plus `create_form_from_model()`,
-`create_login_form()`, `create_registration_form()`, `create_contact_form()`, and
-`FormIntegration`/`handle_form()`/`handle_form_async()` for wiring the result into a route (all
-top-level exports). **Default to `FormModel` for anything you're generating from a spec/schema/
-description** — it gives you a real, reusable, type-checked class other code can reference. Reach
-for the builder DSL specifically when the caller already has a form built imperatively at runtime
-(e.g. an admin tool that assembles a form's fields from data, not from a fixed schema known ahead
-of time) and explicitly asks for that pattern — don't switch to it as a shortcut for a form you
-could just as well define as a `FormModel`.
+Every form is a `FormModel`; there is no separate builder API. When the fields come from data
+at runtime (an admin tool assembling a form from a database row, a config file), build the
+`FormModel` subclass with Pydantic's own `create_model()`. It renders, validates and re-renders
+errors exactly like a declared class:
+
+```python
+from pydantic import create_model
+
+from pydantic_schemaforms import Field, FormModel
+
+spec = [('name', 'text', True), ('email', 'email', True), ('notes', 'textarea', False)]
+
+FeedbackForm = create_model(
+    'FeedbackForm',
+    __base__=FormModel,
+    **{
+        name: (str, Field(... if required else '', ui_element=ui_element, title=name.title()))
+        for name, ui_element, required in spec
+    },
+)
+```
+
+Still default to a declared `FormModel` for anything known ahead of time, including forms you
+generate from a spec or description: a named class is reusable and type-checked.
 
 ## Supported ui_element values (authoritative)
 
@@ -895,10 +908,9 @@ an arbitrary field. `"_errors"` is where `.validate()` itself puts form-wide err
 ## Rule-based validation (FormValidator and the rule classes)
 
 `Field()` constraints and `@field_validator`/`@model_validator` are the default and cover most
-forms. The rule-based layer exists for three cases: a `FormBuilder` form with no typed model, a
-reusable rule set shared between the HTMX live-validation endpoint and the POST route, or a
-check that is awkward as a Pydantic validator (a DNS lookup, a cross-field rule you want to
-toggle per route). All names are top-level exports.
+forms. The rule-based layer exists for two cases: a reusable rule set shared between the HTMX
+live-validation endpoint and the POST route, or a check that is awkward as a Pydantic validator
+(a DNS lookup, a cross-field rule you want to toggle per route). All names are top-level exports.
 
 | Rule | Checks |
 |---|---|
@@ -1071,7 +1083,7 @@ points here. Convert each pattern as follows.
 | A parent field like `tabs: MyTabs = Field(default_factory=MyTabs, input_type="layout")` | Delete it; the sub-form fields go directly on the parent |
 | `ListLayout(Item, min_items=..., max_items=..., add_button_text=...)` | `items: list[Item] = Field(default_factory=list, min_length=..., max_length=..., ui_add_button_label=...)` |
 | `SectionDesign(section_title=..., section_description=..., collapsible=...)` | `Field(title=..., ui_help_text=..., ui_collapsible=True)` on the sub-form field |
-| `FormDesign(...)` | Arguments to `render_form_html(...)` / `render_form_page(...)` and the app's own page template |
+| `FormDesign(...)` | Arguments to `render_form_html(...)` and the app's own page template |
 | `parse_nested_form_data(...)` / `dict(await request.form())` before validating | `Model.validate(await request.form(), ...)` |
 | `validate(..., flatten=True)` | Removed. `result.data` is always nested |
 | Error keys like `result.errors["pets[0].name"]` or `result.errors["city"]` for a sub-form field | `result.errors["pets"][0]["name"]`, `result.errors["address"]["city"]` |
@@ -1261,7 +1273,7 @@ POST validation:
   just format) by typing the field `DeliverableEmailStr` instead of `EmailStr` — it's a drop-in
   type, so `LiveValidator.for_model(MyForm)` above picks it up automatically with no extra
   FieldValidator code. Reach for `FieldValidator("email").required().email(check_deliverability=True)`
-  instead only if you're building a validator imperatively (FormBuilder, no typed model). Either
+  instead only if you're building a validator imperatively, outside a `FormModel`. Either
   way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email]`)
   and always runs server-side only — there is no way to do a real DNS lookup from browser JS.
 
@@ -1423,14 +1435,12 @@ For complex requests, also provide:
 - Do not pass `max_rating` to `star_rating` (it takes `max_stars`), `min=`/`max=` to
   `NumericRangeRule` (it takes `min_value=`/`max_value=`), or return a list of messages from a
   cross-field rule (one string per field).
-- Do not use the exported `@form_validator` decorator for cross-field checks: nothing in the
-  library invokes a method decorated with it, so the check silently never runs. Use Pydantic's
-  `@model_validator(mode="after")` on the `FormModel` (its message lands in `"_errors"`), or
-  `FormValidator.add_cross_field_rule` for the rule-based layer.
+- For cross-field checks use Pydantic's `@model_validator(mode="after")` on the `FormModel` (its
+  message lands in `"_errors"`), or `FormValidator.add_cross_field_rule` for the rule-based layer.
 - Do not start new code from the compatibility surfaces that are still exported:
-  `ModernFormRenderer`, `FormDefinition`, `FormSection`, `LayoutComposer`, `LayoutFactory`, and
-  the `TextField`/`EmailField`/`SelectField`/... shorthands. Declare a `FormModel` with
-  `Field(ui_element=...)`; `FormBuilder` is the supported path for forms with no typed model.
+  `LayoutComposer`, `LayoutFactory`, and the `TextField`/`EmailField`/`SelectField`/...
+  shorthands. Declare a `FormModel` with `Field(ui_element=...)`, built with `create_model()`
+  when its fields are only known at runtime.
 - Do not invent a new composite rendering mechanism for a table/wizard/repeating structure — use
   `LayoutEngine.layout_renderer`/`register_layout_renderer` (see "Library boundary" above), the
   same mechanism `DataTableLayout` and `model_list` are themselves built on.

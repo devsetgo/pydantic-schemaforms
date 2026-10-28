@@ -97,7 +97,7 @@ pydantic_schemaforms/
     datatable_renderer.py   # DataTableLayout's registered renderer
     model_list_renderer.py  # model_list's registered renderer
   inputs/             # Field-level input classes
-  integration/        # Framework adapters (FastAPI, Flask)
+  integration/        # JSON/OpenAPI schema generators and framework checks
 examples/             # Live usage examples (not part of the package)
 tests/
   test_invariants.py      # ← PROTECTED, see below

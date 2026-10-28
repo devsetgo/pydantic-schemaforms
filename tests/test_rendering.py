@@ -6,7 +6,6 @@ Merged from:
 - test_rendering_integration.py    (10 tests)
 - test_coverage_gap_fillers.py     (10 tests)
 - test_coverage_targeted_modules.py (19 tests)
-- test_modern_renderer.py          (14 tests)
 - test_templates_coverage.py       (11 tests)
 - test_theme_hooks.py               (8 tests)
 """
@@ -66,12 +65,6 @@ from pydantic_schemaforms.inputs.selection_inputs import (
 from pydantic_schemaforms.inputs.text_inputs import CreditCardInput, CurrencyInput, SSNInput
 from pydantic_schemaforms.integration.schema import JSONSchemaGenerator
 from pydantic_schemaforms.live_validation import HTMXValidationConfig, LiveValidator
-from pydantic_schemaforms.modern_renderer import (
-    FormDefinition,
-    FormField as LegacyFormField,
-    FormSection,
-    ModernFormRenderer,
-)
 from pydantic_schemaforms.rendering import form_style as form_style_module
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.field_renderer import FieldRenderer
@@ -1030,29 +1023,52 @@ def test_package_logger_uses_null_handler() -> None:
     )
 
 
-def test_integration_public_api_imports_directly_without_frameworks_shim() -> None:
-    """integration/__init__.py must export all symbols via direct imports, not frameworks/."""
+_REMOVED_BUILDER_API = (
+    'FormBuilder',
+    'AutoFormBuilder',
+    'create_form_from_model',
+    'create_login_form',
+    'create_registration_form',
+    'create_contact_form',
+    'render_form_page',
+    'FormIntegration',
+    'handle_form',
+    'handle_form_async',
+    'ModernFormRenderer',
+    'FormDefinition',
+    'FormSection',
+    'form_validator',
+)
+
+
+@pytest.mark.parametrize('name', _REMOVED_BUILDER_API)
+def test_removed_builder_and_form_validator_api_is_gone(name: str) -> None:
+    """FormModel is the only way to build a form (#254, #255)."""
+    import pydantic_schemaforms
     import pydantic_schemaforms.integration as integ
 
-    # All expected public symbols must be importable from the package
-    expected = [
-        'FormBuilder',
-        'AutoFormBuilder',
-        'FormIntegration',
-        'handle_form',
-        'handle_form_async',
-        'handle_async_form',
-        'handle_sync_form',
-        'normalize_form_data',
-    ]
-    for name in expected:
-        assert hasattr(integ, name), f'integration.{name} is missing'
+    assert name not in pydantic_schemaforms.__all__
+    assert not hasattr(integ, name)
+    for module in ('modern_renderer', 'integration.builder', 'integration.adapters'):
+        assert importlib.util.find_spec(f'pydantic_schemaforms.{module}') is None
 
-    # The frameworks/ shim subdirectory must no longer exist
-    spec = importlib.util.find_spec('pydantic_schemaforms.integration.frameworks')
-    assert spec is None, (
-        'integration.frameworks shim package still exists — it should have been deleted'
-    )
+
+@pytest.mark.parametrize('name', _REMOVED_BUILDER_API)
+def test_importing_removed_api_explains_the_replacement(name: str) -> None:
+    # `from x import y` replaces an AttributeError's message with a bare
+    # "cannot import name", so the pointer must survive as an ImportError.
+    with pytest.raises(ImportError, match=rf'{name} was removed\..*Instead, .*See docs/'):
+        exec(f'from pydantic_schemaforms import {name}')
+
+    import pydantic_schemaforms
+
+    with pytest.raises(ImportError, match=f'{name} was removed'):
+        getattr(pydantic_schemaforms, name)
+
+
+def test_removed_form_validator_points_to_model_validator() -> None:
+    with pytest.raises(ImportError, match='model_validator'):
+        from pydantic_schemaforms import form_validator  # noqa: F401
 
 
 # ===========================================================================
@@ -1406,105 +1422,6 @@ def test_form_field_convenience_helpers_and_optional_validation() -> None:
     assert textarea_field.json_schema_extra.get('rows') == 7
 
 
-def test_modern_renderer_legacy_field_and_model_definition_paths() -> None:
-    def _false_validator(_value: object) -> bool:
-        return False
-
-    def _error_validator(_value: object) -> bool:
-        raise ValueError('bad value')
-
-    legacy = LegacyFormField(
-        'city',
-        required=True,
-        validators=[_false_validator, _error_validator],
-        options=[{'value': 'nyc', 'label': 'NYC'}],
-        attributes={'maxlength': 30},
-        **{
-            'class': 'x',
-            'style': 'y',
-            'order': 9,
-            'meta': 'v',
-            'ignored_list': [1],
-            'ignored_dict': {'k': 'v'},
-        },
-    )
-
-    assert not legacy.validate('')
-    legacy.required = False
-    assert not legacy.validate('ok')
-    assert any('failed validation' in msg for msg in legacy.errors)
-    assert any('bad value' in msg for msg in legacy.errors)
-
-    _annotation, schema_field = legacy.as_model_field(order=1, section='Section A')
-    assert schema_field.json_schema_extra.get('ui_section') == 'Section A'
-    assert schema_field.json_schema_extra.get('ui_order') == 1
-
-    form_def = FormDefinition(
-        title='My Form!',
-        sections=[FormSection('Main', [LegacyFormField('name', required=True)])],
-        honeypot_protection=True,
-    )
-    model_cls_1 = form_def.to_form_model_class()
-    model_cls_2 = form_def.to_form_model_class()
-    assert model_cls_1 is model_cls_2
-    assert 'honeypot_trap' in model_cls_1.model_fields
-
-    with pytest.raises(ValueError, match='at least one field'):
-        FormDefinition(title='Empty').to_form_model_class()
-
-
-def test_modern_renderer_aliases_extract_and_theme_clone_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    renderer = ModernFormRenderer()
-    form_def = FormDefinition(
-        sections=[FormSection('Main', [LegacyFormField('name', required=True)])]
-    )
-
-    async def _fake_render_form_async(*_args, **_kwargs) -> str:
-        return 'ok'
-
-    monkeypatch.setattr(renderer, 'render_form_async', _fake_render_form_async)
-    assert asyncio.run(renderer.render_async(form_def)) == 'ok'
-    assert asyncio.run(renderer.async_render(form_def)) == 'ok'
-
-    fake_metadata = SimpleNamespace(
-        fields=[
-            (
-                'choice',
-                {
-                    'title': 'Choice',
-                    'description': 'desc',
-                    'ui': {'options': 'x', 'ui_section': 'sec'},
-                },
-            )
-        ],
-        required_fields={'choice'},
-    )
-    monkeypatch.setattr(
-        'pydantic_schemaforms.modern_renderer.build_schema_metadata', lambda _model: fake_metadata
-    )
-    monkeypatch.setattr(
-        'pydantic_schemaforms.modern_renderer.resolve_ui_element', lambda _schema: None
-    )
-    extracted = renderer.extract_form_fields(_SimpleFormWithTitle)
-    assert extracted[0].field_type == 'text'
-    assert extracted[0].options == []
-
-    class _NeedsArgTheme(RendererTheme):
-        def __init__(self, submit_label: str) -> None:
-            super().__init__(submit_label=submit_label)
-
-    renderer_with_custom_theme = ModernFormRenderer(theme=_NeedsArgTheme('Send'))
-    cloned = renderer_with_custom_theme._clone_theme()
-    assert isinstance(cloned, RendererTheme)
-    assert cloned.submit_label == 'Send'
-
-    switched = renderer._ensure_renderer('material')
-    assert switched is not renderer
-    assert isinstance(switched, ModernFormRenderer)
-
-
 def test_enhanced_renderer_branches_and_wrappers(monkeypatch: pytest.MonkeyPatch) -> None:
     error = SchemaFormValidationError([{'name': 'field', 'message': 'problem'}])
     assert 'Schema form validation error' in str(error)
@@ -1624,329 +1541,6 @@ def test_render_form_html_async_falls_back_to_get_event_loop(
 
     html = asyncio.run(_run())
     assert '<form' in html
-
-
-# ===========================================================================
-# Tests from test_modern_renderer.py
-# ===========================================================================
-
-
-class TestModernFormRenderer:
-    """Test the ModernFormRenderer class."""
-
-    def test_renderer_initialization(self):
-        """Test basic ModernFormRenderer initialization."""
-        renderer = ModernFormRenderer()
-        assert renderer is not None
-        # Check if it has expected methods
-        assert hasattr(renderer, 'render_form')
-
-    def test_basic_form_rendering(self):
-        """Test basic form rendering with ModernFormRenderer."""
-
-        class SimpleForm(FormModel):
-            name: str = Field(..., ui_element='text')
-            email: str = Field(..., ui_element='email')
-            age: int = Field(..., ui_element='number', ge=18)
-
-        renderer = ModernFormRenderer()
-
-        # Test if renderer can process the form model
-        # Note: Actual implementation may vary based on ModernFormRenderer's interface
-        try:
-            form_fields = renderer.extract_form_fields(SimpleForm)
-            assert len(form_fields) == 3
-
-            # Check field names
-            field_names = [field.name for field in form_fields]
-            assert 'name' in field_names
-            assert 'email' in field_names
-            assert 'age' in field_names
-
-        except AttributeError:
-            # If extract_form_fields doesn't exist, test other methods
-            pass
-
-    def test_form_field_configuration(self):
-        """Test FormField configuration and validation."""
-        from pydantic_schemaforms.modern_renderer import FormField
-
-        # Test basic field creation
-        field = FormField('username', field_type='text', required=True)
-        assert field.name == 'username'
-        assert field.field_type == 'text'
-        assert field.required is True
-        assert field.label == 'Username'  # Auto-generated from name
-
-    def test_form_field_with_options(self):
-        """Test FormField with options for select fields."""
-        from pydantic_schemaforms.modern_renderer import FormField
-
-        options = [
-            {'value': 'small', 'label': 'Small'},
-            {'value': 'medium', 'label': 'Medium'},
-            {'value': 'large', 'label': 'Large'},
-        ]
-
-        field = FormField('size', field_type='select', options=options, placeholder='Choose size')
-
-        assert field.name == 'size'
-        assert field.field_type == 'select'
-        assert len(field.options) == 3
-        assert field.placeholder == 'Choose size'
-
-    def test_form_field_validation(self):
-        """Test FormField validation functionality."""
-        from pydantic_schemaforms.modern_renderer import FormField
-
-        # Create field with validators
-        def min_length_validator(value):
-            return len(value) >= 3
-
-        field = FormField(
-            'password', field_type='password', required=True, validators=[min_length_validator]
-        )
-
-        # Test validation
-        assert field.validate('abc') is True  # Should pass
-        field.errors = []  # Reset errors
-        assert field.validate('ab') is False  # Should fail
-
-    def test_async_rendering_support(self):
-        """Test async rendering capabilities if available."""
-        renderer = ModernFormRenderer()
-
-        # Check if async methods exist
-        has_async_methods = any(
-            method.startswith('async_') or method.endswith('_async') for method in dir(renderer)
-        )
-
-        # If async methods exist, they should be callable
-        if has_async_methods:
-            assert hasattr(renderer, 'render_async') or hasattr(renderer, 'async_render')
-
-    def test_performance_rendering(self):
-        """Test performance-oriented rendering features."""
-        renderer = ModernFormRenderer()
-
-        # Check for performance-related attributes
-        performance_features = ['use_thread_pool', 'cache_templates', 'optimize_rendering']
-
-        # At least one performance feature should be available
-        has_performance_features = any(
-            hasattr(renderer, feature) for feature in performance_features
-        )
-
-        # This is more of a feature check than assertion
-        # as performance features are optional
-        if has_performance_features:
-            print('ModernFormRenderer has performance features')
-
-    def test_framework_compatibility(self):
-        """Test framework compatibility features."""
-
-        class TestForm(FormModel):
-            name: str = Field(..., ui_element='text')
-            email: str = Field(..., ui_element='email')
-
-        renderer = ModernFormRenderer()
-
-        # Test if renderer can handle different frameworks
-        frameworks = ['bootstrap', 'material', 'plain', 'custom']
-
-        try:
-            for framework in frameworks:
-                # If renderer has framework support, test it
-                if hasattr(renderer, 'set_framework'):
-                    renderer.set_framework(framework)
-                elif hasattr(renderer, 'render_with_framework'):
-                    result = renderer.render_with_framework(TestForm, framework)
-                    assert result is not None
-        except AttributeError, NotImplementedError:
-            # Framework support might not be implemented yet
-            pass
-
-    def test_layout_integration_basic(self):
-        """Test basic layout integration concepts."""
-
-        # Since complex layouts have template issues, test basic concepts
-        class FormWithLayout(FormModel):
-            personal_info_section: str = Field(default='', ui_section='Personal')
-            name: str = Field(..., ui_element='text', ui_section='Personal')
-            email: str = Field(..., ui_element='email', ui_section='Personal')
-
-            preferences_section: str = Field(default='', ui_section='Preferences')
-            newsletter: bool = Field(default=False, ui_element='checkbox', ui_section='Preferences')
-            theme: str = Field(..., ui_element='select', ui_section='Preferences')
-
-        renderer = ModernFormRenderer()
-
-        # Test that form can be processed
-        try:
-            if hasattr(renderer, 'extract_form_fields'):
-                fields = renderer.extract_form_fields(FormWithLayout)
-
-                # Group fields by section
-                sections = {}
-                for field in fields:
-                    section = getattr(field, 'ui_section', 'default')
-                    if section not in sections:
-                        sections[section] = []
-                    sections[section].append(field)
-
-                # Should have personal and preferences sections
-                assert len(sections) >= 2
-        except AttributeError:
-            # Method might not be implemented
-            pass
-
-    def test_input_component_integration(self):
-        """Test integration with input components."""
-        ModernFormRenderer()
-
-        # Test that renderer can work with various input types
-        input_types = [
-            'text',
-            'email',
-            'password',
-            'number',
-            'date',
-            'datetime-local',
-            'select',
-            'checkbox',
-            'radio',
-            'textarea',
-            'file',
-            'color',
-            'range',
-        ]
-
-        for input_type in input_types:
-            try:
-                from pydantic_schemaforms.modern_renderer import FormField
-
-                field = FormField(f'test_{input_type}', field_type=input_type)
-                assert field.field_type == input_type
-            except ImportError:
-                # FormField might not be available
-                pass
-
-    def test_custom_validation_integration(self):
-        """Test custom validation integration."""
-
-        class FormWithValidation(FormModel):
-            username: str = Field(
-                ...,
-                min_length=3,
-                max_length=20,
-                ui_element='text',
-                description='Username must be 3-20 characters',
-            )
-
-            password: str = Field(
-                ...,
-                min_length=8,
-                ui_element='password',
-                description='Password must be at least 8 characters',
-            )
-
-            confirm_password: str = Field(
-                ..., ui_element='password', description='Must match password'
-            )
-
-        renderer = ModernFormRenderer()
-
-        # Test that validation constraints are preserved
-        try:
-            if hasattr(renderer, 'extract_form_fields'):
-                fields = renderer.extract_form_fields(FormWithValidation)
-
-                username_field = next((f for f in fields if f.name == 'username'), None)
-                if username_field:
-                    assert username_field.required is True
-
-                password_field = next((f for f in fields if f.name == 'password'), None)
-                if password_field:
-                    assert password_field.field_type == 'password'
-        except AttributeError:
-            pass
-
-    def test_error_handling(self):
-        """Test error handling in ModernFormRenderer."""
-        renderer = ModernFormRenderer()
-
-        # Test with invalid form model
-        try:
-
-            class InvalidForm:  # Not inheriting from FormModel
-                name = 'not a field'
-
-            if hasattr(renderer, 'extract_form_fields'):
-                # Should handle invalid models gracefully
-                fields = renderer.extract_form_fields(InvalidForm)
-                # Might return empty list or raise informative error
-                assert isinstance(fields, (list, type(None)))
-        except AttributeError, TypeError, ValueError:
-            # Expected to fail gracefully
-            pass
-
-    def test_html_output_safety(self):
-        """Test HTML output safety and escaping."""
-        from pydantic_schemaforms.modern_renderer import FormField
-
-        # Test with potentially dangerous input
-        dangerous_input = "<script>alert('xss')</script>"
-
-        field = FormField(
-            'test_field',
-            field_type='text',
-            placeholder=dangerous_input,
-            help_text=dangerous_input,
-        )
-
-        # If field has render method, test HTML safety
-        if hasattr(field, 'render'):
-            html = field.render()
-            # Should escape dangerous content
-            assert '<script>' not in html
-            assert '&lt;script&gt;' in html or 'alert' not in html
-
-    def test_accessibility_features(self):
-        """Test accessibility features in rendered forms."""
-
-        class AccessibleForm(FormModel):
-            name: str = Field(
-                ...,
-                ui_element='text',
-                description='Your full name',
-                ui_options={'aria-label': 'Full name input'},
-            )
-
-            email: str = Field(
-                ...,
-                ui_element='email',
-                description='Valid email address',
-                ui_options={'aria-describedby': 'email-help'},
-            )
-
-        renderer = ModernFormRenderer()
-
-        # Test that accessibility attributes can be handled
-        try:
-            if hasattr(renderer, 'extract_form_fields'):
-                fields = renderer.extract_form_fields(AccessibleForm)
-
-                # Check if UI options are preserved
-                for field in fields:
-                    if hasattr(field, 'extra_attrs') and field.extra_attrs:
-                        # Should have accessibility attributes
-                        attrs = field.extra_attrs
-                        has_aria = any(key.startswith('aria-') for key in attrs.keys())
-                        # Accessibility is a good practice but not required
-                        if has_aria:
-                            print(f'Field {field.name} has accessibility attributes')
-        except AttributeError:
-            pass
 
 
 # ===========================================================================

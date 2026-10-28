@@ -2076,28 +2076,6 @@ def test_material_theme_does_not_include_bootstrap_icons() -> None:
     assert 'data:font/woff2;base64,' not in html
 
 
-def test_form_builder_include_assets_requires_cdn_mode() -> None:
-    from pydantic_schemaforms.integration.builder import FormBuilder
-
-    builder = FormBuilder(
-        framework='bootstrap',
-        include_framework_assets=True,
-        asset_mode='vendored',
-    ).text_input('name', 'Name')
-
-    html = builder.render()
-    assert 'cdn.jsdelivr.net' not in html
-
-    builder_cdn = FormBuilder(
-        framework='bootstrap',
-        include_framework_assets=True,
-        asset_mode='cdn',
-    ).text_input('name', 'Name')
-
-    html_cdn = builder_cdn.render()
-    assert 'cdn.jsdelivr.net/npm/bootstrap@5.3.0' in html_cdn
-
-
 def test_render_form_html_material_uses_single_dispatch_path() -> None:
     """render_form_html(framework='material') must go through EnhancedFormRenderer.
 
@@ -2209,40 +2187,6 @@ def test_bootstrap_icons_vendored_version_is_recorded() -> None:
 # ===========================================================================
 # Tests from test_no_external_cdn_more.py
 # ===========================================================================
-
-
-def test_render_form_page_offline_by_default() -> None:
-    from pydantic_schemaforms.integration.builder import create_login_form, render_form_page
-
-    html = render_form_page(create_login_form(), title='Login')
-    assert 'cdn.jsdelivr.net' not in html
-    assert 'fonts.googleapis.com' not in html
-
-
-def test_render_form_page_cdn_opt_in_includes_bootstrap() -> None:
-    from pydantic_schemaforms.integration.builder import create_login_form, render_form_page
-
-    html = render_form_page(
-        create_login_form(),
-        title='Login',
-        include_framework_assets=True,
-        asset_mode='cdn',
-    )
-    assert 'cdn.jsdelivr.net/npm/bootstrap@5.3.0' in html
-    assert 'cdn.jsdelivr.net/npm/bootstrap-icons@' in html
-
-
-def test_render_form_page_vendored_includes_bootstrap_icons() -> None:
-    from pydantic_schemaforms.integration.builder import create_login_form, render_form_page
-
-    html = render_form_page(
-        create_login_form(),
-        title='Login',
-        include_framework_assets=True,
-        asset_mode='vendored',
-    )
-    assert 'cdn.jsdelivr.net' not in html
-    assert 'data:font/woff2;base64,' in html
 
 
 def test_material_theme_css_has_no_google_fonts_imports() -> None:

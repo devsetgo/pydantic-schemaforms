@@ -84,36 +84,6 @@ renderer = EnhancedFormRenderer(
 html = renderer.render_form_from_model(MyForm, submit_url='/submit')
 ```
 
-### Modern/builder path: `FormBuilder` + `render_form_page()`
-
-File: `pydantic_schemaforms/integration/builder.py`
-
-- `FormBuilder(..., include_framework_assets=..., asset_mode=...)` controls how the builder’s form HTML is rendered.
-- `render_form_page(..., include_framework_assets=..., asset_mode=...)` controls the full-page wrapper’s CSS/JS emission.
-
-Example:
-
-```python
-from pydantic_schemaforms import FormBuilder, render_form_page
-
-builder = (
-    FormBuilder(
-        framework='bootstrap',
-        include_framework_assets=True,
-        asset_mode='vendored',
-    )
-    .text_input('ssn', 'SSN')
-    .set_form_attributes(submit_url='/signup')
-)
-
-page = render_form_page(
-    builder,
-    title='Signup',
-    include_framework_assets=True,
-    asset_mode='vendored',
-)
-```
-
 ## What’s currently vendored
 
 | Asset | Files |

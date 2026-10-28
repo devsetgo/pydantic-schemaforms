@@ -44,8 +44,8 @@ _EXTRA_HINTS = {
         '    address: Address = Field(title="Address", ui_help_text="...", ui_collapsible=True)'
     ),
     'FormDesign': (
-        'Page chrome (theme, width, action URL) is set on render_form_html(...) / '
-        'render_form_page(...) and your own page template.'
+        'Page chrome (theme, width, action URL) is set on render_form_html(...) '
+        'and your own page template.'
     ),
 }
 

@@ -212,7 +212,7 @@ raises `FormLayoutRemovedError` whose message contains these steps.
 | `TabbedLayout`, `VerticalLayout`, `HorizontalLayout` wrapper classes | Nested `FormModel` fields plus `layout="tabbed"` / `"vertical"` / `"side-by-side"` |
 | `ListLayout(Item, ...)` | `items: list[Item] = Field(default_factory=list, title="Items")` |
 | `SectionDesign(section_title=..., ...)` | `Field(title=..., ui_help_text=..., ui_collapsible=True)` on the sub-form field |
-| `FormDesign(...)` | Arguments to `render_form_html(...)` / `render_form_page(...)` and your page template |
+| `FormDesign(...)` | Arguments to `render_form_html(...)` and your page template |
 | `parse_nested_form_data(...)` in routes | Pass the request form straight to `validate()` |
 | `validate(..., flatten=True)` | Removed; `result.data` is always nested |
 | Error keys like `"pets[0].name"` | `result.errors["pets"][0]["name"]` |
