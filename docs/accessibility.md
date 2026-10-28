@@ -16,7 +16,7 @@ pass CI with a serious or critical violation on any example page.
 
 ## What is tested
 
-| | |
+| Aspect | Detail |
 |---|---|
 | **Engine** | axe-core 4.14.0, pinned by version and SHA-256 |
 | **Rule sets** | WCAG 2.0, 2.1 and 2.2 at levels A and AA, plus axe's best-practice rules. axe maps the same rules to Section 508 and EN 301 549. |

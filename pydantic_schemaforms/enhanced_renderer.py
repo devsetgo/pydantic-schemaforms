@@ -915,8 +915,9 @@ class EnhancedFormRenderer:
             attributes=attrs,
         )
 
-    def _render_material_checkbox_field(
+    def _render_material_boolean_field(
         self,
+        template: Any,
         field_name: str,
         label: str,
         value: Any,
@@ -924,7 +925,7 @@ class EnhancedFormRenderer:
         help_text: str | None,
         is_required: bool,
     ) -> str:
-        required_text = ' *' if is_required else ''
+        """Shared by the checkbox and toggle templates, which take the same slots."""
         checked_attr = (
             'checked="checked"'
             if value is True or str(value).lower() in {'true', '1', 'on'}
@@ -941,48 +942,11 @@ class EnhancedFormRenderer:
             if part
         )
         return render_template(
-            FormTemplates.MATERIAL_CHECKBOX_FIELD,
+            template,
             name=self._attr(field_name),
             field_id=self._attr(field_name),
             label=label,
-            required_indicator=required_text,
-            checked=checked_attr,
-            required=required_attr,
-            help_text=self._render_material_help_block(help_text, field_name),
-            error_text=self._render_material_error_block(error, field_name),
-        )
-
-    def _render_material_toggle_field(
-        self,
-        field_name: str,
-        label: str,
-        value: Any,
-        error: str | None,
-        help_text: str | None,
-        is_required: bool,
-    ) -> str:
-        required_text = ' *' if is_required else ''
-        checked_attr = (
-            'checked="checked"'
-            if value is True or str(value).lower() in {'true', '1', 'on'}
-            else ''
-        )
-        # The template's `required` slot sits on the <input>, so the ARIA
-        # wiring rides along with it.
-        required_attr = ' '.join(
-            part
-            for part in (
-                self._MATERIAL_REQUIRED if is_required else '',
-                self._material_described_by(field_name, help_text, error),
-            )
-            if part
-        )
-        return render_template(
-            FormTemplates.MATERIAL_TOGGLE_FIELD,
-            name=self._attr(field_name),
-            field_id=self._attr(field_name),
-            label=label,
-            required_indicator=required_text,
+            required_indicator=' *' if is_required else '',
             checked=checked_attr,
             required=required_attr,
             help_text=self._render_material_help_block(help_text, field_name),
@@ -1070,8 +1034,14 @@ class EnhancedFormRenderer:
         is_required = field_name in (required_fields or [])
 
         if input_type == 'checkbox':
-            return self._render_material_checkbox_field(
-                field_name, label, value, error, help_text, is_required
+            return self._render_material_boolean_field(
+                FormTemplates.MATERIAL_CHECKBOX_FIELD,
+                field_name,
+                label,
+                value,
+                error,
+                help_text,
+                is_required,
             )
 
         if input_type in ('toggle', 'toggle_switch', 'checkbox_toggle'):
@@ -1079,8 +1049,14 @@ class EnhancedFormRenderer:
             # (unlike Bootstrap, which dispatches through get_input_component()),
             # so this mirrors Bootstrap's ToggleSwitch with a dedicated
             # Material-styled switch instead of just reusing the plain checkbox.
-            return self._render_material_toggle_field(
-                field_name, label, value, error, help_text, is_required
+            return self._render_material_boolean_field(
+                FormTemplates.MATERIAL_TOGGLE_FIELD,
+                field_name,
+                label,
+                value,
+                error,
+                help_text,
+                is_required,
             )
 
         fmt_key = _MATERIAL_DATE_TIME_FORMAT_KEYS.get(input_type)
