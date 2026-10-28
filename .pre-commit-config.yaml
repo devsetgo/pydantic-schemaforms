@@ -7,9 +7,9 @@ repos:
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
-        exclude: ^pydantic_schemaforms/assets/vendor/
+        exclude: ^(pydantic_schemaforms/assets/vendor/|tests/playwright/vendor/)
       - id: trailing-whitespace
-        exclude: ^pydantic_schemaforms/assets/vendor/
+        exclude: ^(pydantic_schemaforms/assets/vendor/|tests/playwright/vendor/)
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.13

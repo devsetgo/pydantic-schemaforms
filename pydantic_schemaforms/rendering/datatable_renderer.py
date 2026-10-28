@@ -204,7 +204,12 @@ def _render_cell_content(
 
     name = _cell_name(prefix, row_index, field_name)
     instance = input_cls()
-    kwargs: dict[str, Any] = {'name': name, 'id': name}
+    # The column header isn't a <label>, so each cell names itself.
+    kwargs: dict[str, Any] = {
+        'name': name,
+        'id': name,
+        'aria-label': f'{_field_label(field_name, field_info)}, row {row_index + 1}',
+    }
 
     if ui_element in _OPTION_BASED_UI_ELEMENTS:
         extra = (

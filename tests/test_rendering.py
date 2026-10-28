@@ -963,8 +963,8 @@ def test_material_embedded_theme_and_renderer_branches() -> None:
     # Material field helpers now live on EnhancedFormRenderer(framework="material")
     renderer = EnhancedFormRenderer(framework='material')
     assert renderer._attr(None) == ''
-    assert renderer._render_material_help_block(None) == ''
-    assert renderer._render_material_error_block(None) == ''
+    assert renderer._render_material_help_block(None, 'f') == ''
+    assert renderer._render_material_error_block(None, 'f') == ''
     assert renderer._model_list_framework() == 'bootstrap'
 
     # enum fallback for select options and scalar option normalization

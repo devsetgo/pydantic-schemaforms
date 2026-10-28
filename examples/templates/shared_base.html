@@ -30,6 +30,33 @@
             background-color: #f8f9fa;
         }
 
+        /* Bootstrap's default primary, info and code colors fall below the
+           WCAG AA 4.5:1 text contrast on this page's light-gray surfaces
+           (tests/playwright/test_accessibility.py). */
+        :root {
+            --bs-link-color: #0a58ca;
+            --bs-link-color-rgb: 10, 88, 202;
+            --bs-code-color: #a61e4d;
+        }
+
+        .btn-outline-primary {
+            --bs-btn-color: #0a58ca;
+            --bs-btn-border-color: #0a58ca;
+            --bs-btn-hover-bg: #0a58ca;
+            --bs-btn-hover-border-color: #0a58ca;
+            --bs-btn-active-bg: #0a58ca;
+        }
+
+        .btn-outline-info {
+            --bs-btn-color: #087990;
+            --bs-btn-border-color: #087990;
+            --bs-btn-hover-color: #ffffff;
+            --bs-btn-hover-bg: #087990;
+            --bs-btn-hover-border-color: #087990;
+            --bs-btn-active-color: #ffffff;
+            --bs-btn-active-bg: #087990;
+        }
+
         .site-brand {
             display: inline-flex;
             align-items: center;
@@ -218,11 +245,11 @@
     <div class="{% if request and 'organization' in request.path %}container-fluid{% else %}container{% endif %} py-4">
         {% if not request or request.url.path != '/' %}
         <div class="site-brand-shell">
-            <a class="site-brand" href="/" aria-label="Pydantic Schemaform home">
+            <a class="site-brand" href="/">
                 <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}"
-                    alt="Pydantic Schemaform logo">
+                    alt="">
                 <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}"
-                    alt="Pydantic Schemaform icon">
+                    alt="">
                 <span class="site-brand-copy">
                     <span class="site-brand-title d-block">Pydantic Schemaform</span>
                     <span class="site-brand-subtitle d-block">Pydantic models to polished forms</span>

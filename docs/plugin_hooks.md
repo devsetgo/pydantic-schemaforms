@@ -24,6 +24,14 @@ register_input_class(ColorSwatchInput)
 
 Once registered, any field with `input_type="color_swatch"` (or alias) will resolve to your component.
 
+Keep custom inputs to the accessibility baseline in `docs/accessibility.md`: inherit
+`render_with_label()` (from `FormInput`) rather than writing your own, so the label,
+help text and error get their ids and the control gets `aria-invalid`/`aria-describedby`;
+make sure `render()` passes `aria-*` keyword arguments through to the control (the
+`validate_attributes()` helper does this); and keep text at 4.5:1 contrast. A built-in
+input also needs a widget-gallery entry, which puts it under the axe-core gate in
+`tests/playwright/test_example_pages.py`.
+
 ## Registering Custom Layout Renderers
 
 `LayoutEngine` dispatches a field to a registered custom renderer through

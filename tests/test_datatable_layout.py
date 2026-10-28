@@ -836,3 +836,14 @@ async def test_handle_import_post_finds_a_table_inside_a_sub_form() -> None:
     }
     result = await PlainImport.handle_import_post(form_data)
     assert [row['name'] for row in result.rows] == ['Alice']
+
+
+def test_editable_cells_have_an_accessible_name() -> None:
+    # The column header is a <th>, not a <label>, so each cell names itself.
+    html_out = _render(
+        ContactImport,
+        rows=[{'name': 'Alice', 'address': '1 Main St', 'favorite_color': 'blue'}],
+        include_assets=False,
+    )
+    assert 'name="contacts.rows[0].favorite_color"' in html_out
+    assert 'aria-label="Favorite Color, row 1"' in html_out

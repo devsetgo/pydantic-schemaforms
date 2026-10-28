@@ -111,7 +111,10 @@ def _code_area_enhancement(
     _highlight_layer: SafeHTML | str = ''
     if highlight_js:
         _highlight_layer = html(
-            t'<pre class="code-highlight-layer" id="{field_id}_code_layer" aria-hidden="true">'
+            # tabindex="-1": Prism makes a <pre> without one keyboard-focusable,
+            # and this layer is aria-hidden, so it must never take focus.
+            t'<pre class="code-highlight-layer" id="{field_id}_code_layer" aria-hidden="true" '
+            t'tabindex="-1">'
             t'<code id="{field_id}_code_layer_inner" class="language-{language}"></code></pre>'
         )
 
@@ -260,6 +263,11 @@ def _code_area_enhancement(
     overflow: hidden;
     z-index: 0;
     border-color: transparent;
+}}
+.code-highlight-layer .token.constant, .code-highlight-layer .token.deleted,
+.code-highlight-layer .token.property, .code-highlight-layer .token.symbol,
+.code-highlight-layer .token.tag {{
+    color: #ff79a8;  /* the vendored Prism theme's #f92672 is under 4.5:1 on its background */
 }}
 .code-textarea-stack textarea.code-highlight-active {{
     position: relative;

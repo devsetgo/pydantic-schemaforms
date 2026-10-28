@@ -51,6 +51,37 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   the new names. When two tables share a row model, pass the new
   `field=` argument to say which one to read. (#253)
 
+### Added
+
+- **Accessibility gate.** The Playwright suite runs axe-core 4.14 against
+  WCAG 2.0, 2.1 and 2.2 A and AA rules plus axe best practices on every
+  example page under Bootstrap and Material, plus the validation page's error
+  state, and fails on any serious or critical violation. axe-core is vendored
+  for tests only (`tests/playwright/vendor/`, pinned by version and SHA-256);
+  it is not shipped in the package. What is tested, the baseline the inputs
+  meet, and what automated testing does not cover are in the new
+  `docs/accessibility.md` page and the README. This is testing, not a claim of
+  ADA, Section 508 or WCAG conformance. (#246)
+
+### Fixed
+
+- **Invalid fields are announced.** After a failed submit, a field's control
+  gets `aria-invalid="true"` and an `aria-describedby` pointing at its error
+  message, and at its help text whenever it has one, under Bootstrap,
+  Material and plain HTML. Help and error elements now carry matching
+  `<id>-help` / `<id>-error` ids. (#246)
+- **`DataTableLayout` cells have accessible names.** Each editable cell gets
+  an `aria-label` such as "Email, row 3", since its column header is not a
+  `<label>`. (#246)
+- **The tags input's label names its text box.** The visible text box now
+  takes the field's id, so `<label for=...>` points at it, and it receives
+  the `aria-*` wiring above. (#246)
+- **The code editor's highlight layer no longer takes keyboard focus.** It is
+  `aria-hidden`, but Prism made it tabbable. (#246)
+- **Contrast meets WCAG AA (4.5:1)** for tag chips, the code editor's
+  property/tag syntax color and the "Rendered in" timing line. (#246)
+- **The date picker toggle is a 24×24 px target** (WCAG 2.2 target size). (#246)
+
 ## [26.4.1] — 2026-10-12
 
 Complex forms are now built one way: nest `FormModel`s as fields of a parent

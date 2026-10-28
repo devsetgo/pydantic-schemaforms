@@ -1,5 +1,6 @@
 """
-Every example page must load in a real browser without a JavaScript error.
+Every example page must load in a real browser without a JavaScript error,
+and pass axe-core with no serious or critical accessibility violation.
 
 Inline scripts are built inside Python strings, where a stray Python-style
 `# comment` is a syntax error that silently disables the whole script (this
@@ -7,14 +8,20 @@ happened to the Material theme script and to the file-input preview). Only a
 browser catches that, so this loads every example GET route under Bootstrap
 and Material.
 
+axe-core is vendored for tests only (tests/playwright/vendor/axe.min.js,
+MPL-2.0, not shipped in the package). To update it, download axe.min.js from
+the axe-core npm tarball and update _AXE_VERSION and _AXE_SHA256 below.
+
 Requires: playwright install chromium
 Run:      pytest tests/playwright/test_example_pages.py -v
 """
 
+import hashlib
 import re
 import socket
 import threading
 import time
+from pathlib import Path
 
 import pytest
 import uvicorn
@@ -23,6 +30,15 @@ from playwright.sync_api import Page, expect
 import examples.main
 
 TIMEOUT = 3_000  # ms — generous for CI latency
+
+_AXE_PATH = Path(__file__).parent / 'vendor' / 'axe.min.js'
+_AXE_VERSION = '4.14.0'
+_AXE_SHA256 = '20c09fe157a8a34a30e241aaa1fcdade657734f08ab379ecfbeb7d45cc46e878'
+_BLOCKING_IMPACTS = ('serious', 'critical')
+# Named explicitly so docs/accessibility.md's claim can't drift with axe's
+# defaults (which leave out WCAG 2.2). axe maps these rules to Section 508
+# and EN 301 549 as well.
+_AXE_RULE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']
 
 
 def _free_port() -> int:
@@ -75,6 +91,53 @@ def test_example_page_has_no_javascript_errors(
     page.goto(f'{examples_server_url}{path}?style={style}', wait_until='domcontentloaded')
     page.wait_for_timeout(200)
     assert errors == [], f'{path} ({style}): {errors}'
+
+
+def _axe_source() -> str:
+    data = _AXE_PATH.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == _AXE_SHA256, 'vendored axe.min.js changed'
+    assert data.startswith(f'/*! axe v{_AXE_VERSION}'.encode())
+    return data.decode()
+
+
+def _blocking_violations(page: Page) -> list[str]:
+    page.add_script_tag(content=_axe_source())
+    results = page.evaluate(
+        "tags => axe.run(document, {runOnly: {type: 'tag', values: tags}, "
+        "resultTypes: ['violations']})",
+        _AXE_RULE_TAGS,
+    )
+    return [
+        f'[{violation["impact"]}] {violation["id"]}: {violation["help"]} -> '
+        + ', '.join(str(node['target']) for node in violation['nodes'][:5])
+        for violation in results['violations']
+        if violation['impact'] in _BLOCKING_IMPACTS
+    ]
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+@pytest.mark.parametrize('path', _html_pages())
+def test_example_page_has_no_serious_accessibility_violations(
+    page: Page, examples_server_url: str, path: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}{path}?style={style}', wait_until='load')
+    violations = _blocking_violations(page)
+    assert violations == [], f'{path} ({style}):\n' + '\n'.join(violations)
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_validation_errors_have_no_serious_accessibility_violations(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    # The error state (messages, aria-invalid, the error summary) only exists
+    # after a failed submit. form.submit() skips the browser's own constraint
+    # checks so the server's errors are what gets rendered.
+    page.goto(f'{examples_server_url}/validation?style={style}', wait_until='load')
+    with page.expect_navigation(wait_until='load'):
+        page.evaluate("document.querySelector('form').submit()")
+    expect(page.locator('[aria-invalid="true"]').first).to_be_attached(timeout=TIMEOUT)
+    violations = _blocking_violations(page)
+    assert violations == [], f'/validation errors ({style}):\n' + '\n'.join(violations)
 
 
 def test_file_input_preview_lists_the_chosen_file(page: Page, examples_server_url: str) -> None:

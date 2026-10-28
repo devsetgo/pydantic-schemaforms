@@ -108,6 +108,22 @@ class BaseInput(ABC):
         """Concrete inputs must implement HTML rendering."""
 
 
+def _describe_field(
+    kwargs: dict[str, Any], help_text: str | None, error: str | None
+) -> tuple[str, str]:
+    """Point the control at its help text and error so screen readers announce
+    them with it, and flag it invalid; returns the (help, error) element ids."""
+    field_id = str(kwargs.get('id') or kwargs.get('name') or 'field')
+    help_id, error_id = f'{field_id}-help', f'{field_id}-error'
+    described_by = [help_id] if help_text else []
+    if error:
+        described_by.append(error_id)
+        kwargs['aria-invalid'] = 'true'
+    if described_by:
+        kwargs['aria-describedby'] = ' '.join(described_by)
+    return help_id, error_id
+
+
 class FormInput(BaseInput):
     """Base class for form input elements with form-specific attributes."""
 
@@ -161,6 +177,8 @@ class FormInput(BaseInput):
         if icon:
             icon = map_icon_for_framework(icon, framework)
 
+        help_id, error_id = _describe_field(kwargs, help_text, error)
+
         if hasattr(self, 'render'):
             if options is not None:
                 input_html = self.render(options=options, **kwargs)
@@ -189,10 +207,12 @@ class FormInput(BaseInput):
             field_parts.append(_input_html)
 
             if help_text:
-                field_parts.append(html(t'<div class="form-text">{help_text}</div>'))
+                field_parts.append(html(t'<div id="{help_id}" class="form-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(html(t'<div class="invalid-feedback d-block">{error}</div>'))
+                field_parts.append(
+                    html(t'<div id="{error_id}" class="invalid-feedback d-block">{error}</div>')
+                )
         else:
             if label:
                 label_html = build_label(
@@ -207,10 +227,10 @@ class FormInput(BaseInput):
             field_parts.append(_input_html)
 
             if help_text:
-                field_parts.append(html(t'<div class="help-text">{help_text}</div>'))
+                field_parts.append(html(t'<div id="{help_id}" class="help-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(html(t'<div class="error-text">{error}</div>'))
+                field_parts.append(html(t'<div id="{error_id}" class="error-text">{error}</div>'))
 
         return '\n'.join(field_parts)
 
@@ -305,6 +325,8 @@ class SelectInputBase(BaseInput):
         if icon:
             icon = map_icon_for_framework(icon, framework)
 
+        help_id, error_id = _describe_field(kwargs, help_text, error)
+
         if hasattr(self, 'render') and options is not None:
             input_html = SafeHTML(str(self.render(options=options, **kwargs)))
         else:
@@ -336,10 +358,12 @@ class SelectInputBase(BaseInput):
                 field_parts.append(input_html)
 
             if help_text:
-                field_parts.append(html(t'<div class="form-text">{help_text}</div>'))
+                field_parts.append(html(t'<div id="{help_id}" class="form-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(html(t'<div class="invalid-feedback d-block">{error}</div>'))
+                field_parts.append(
+                    html(t'<div id="{error_id}" class="invalid-feedback d-block">{error}</div>')
+                )
 
             field_parts.append(_CLOSE_DIV)
 
@@ -376,10 +400,14 @@ class SelectInputBase(BaseInput):
                 field_parts.append(_CLOSE_DIV)
 
             if help_text:
-                field_parts.append(html(t'<div class="md-help-text">{help_text}</div>'))
+                field_parts.append(
+                    html(t'<div id="{help_id}" class="md-help-text">{help_text}</div>')
+                )
 
             if error:
-                field_parts.append(html(t'<div class="md-error-text">{error}</div>'))
+                field_parts.append(
+                    html(t'<div id="{error_id}" class="md-error-text">{error}</div>')
+                )
 
             field_parts.append(_CLOSE_DIV)
 
@@ -403,10 +431,12 @@ class SelectInputBase(BaseInput):
                 field_parts.append(input_html)
 
             if help_text:
-                field_parts.append(html(t'<div class="help-text">{help_text}</div>'))
+                field_parts.append(html(t'<div id="{help_id}" class="help-text">{help_text}</div>'))
 
             if error:
-                field_parts.append(html(t'<div class="error-message">{error}</div>'))
+                field_parts.append(
+                    html(t'<div id="{error_id}" class="error-message">{error}</div>')
+                )
 
             field_parts.append(_CLOSE_DIV)
 
