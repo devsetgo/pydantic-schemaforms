@@ -103,3 +103,30 @@ jobs:
 
       - name: Run Playwright tests
         run: pytest tests/playwright/ -v --no-cov -p no:xdist
+
+  docs-zensical:
+    # Early warning for the planned move off MkDocs Material (#147): builds the
+    # docs with Zensical, which reads mkdocs.yml as-is. Not required to pass;
+    # the published docs still build with MkDocs.
+    name: Docs build (Zensical, non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Install Zensical
+        run: pip install zensical==0.0.73
+
+      - name: Prepare documentation files
+        run: |
+          cp README.md docs/index.md
+          cp CONTRIBUTING.md docs/contribute.md
+          cp CHANGELOG.md docs/release-notes.md
+
+      - name: Build docs with Zensical
+        run: zensical build
