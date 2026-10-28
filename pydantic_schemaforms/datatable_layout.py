@@ -53,6 +53,7 @@ from __future__ import annotations
 import csv
 import io
 from dataclasses import dataclass, field
+from collections.abc import Iterator
 from typing import Any, ClassVar, Literal, TypedDict
 
 from pydantic import ValidationError
@@ -119,6 +120,19 @@ _DATATABLE_DEFAULTS: dict[str, Any] = {
     'editable': True,
     'style': dict(_DATATABLE_STYLE_DEFAULTS),
 }
+
+
+def _marked_sections(node: Any) -> Iterator[tuple[str, dict[str, Any]]]:
+    """Yield (key, section) for every rendered table in a decoded submission,
+    at any depth (a table can sit inside a sub-form or list item)."""
+    if isinstance(node, list):
+        for child in node:
+            yield from _marked_sections(child)
+    elif isinstance(node, dict):
+        for key, child in node.items():
+            if isinstance(child, dict) and MODEL_MARKER_KEY in child:
+                yield key, child
+            yield from _marked_sections(child)
 
 
 @dataclass
@@ -275,19 +289,7 @@ class DataTableLayout(CompositeLayoutModel):
         Two tables of the same row model on one page need ``field`` -- the
         embedding FormModel's attribute name -- to tell them apart.
         """
-        found: list[tuple[str, dict[str, Any]]] = []
-
-        def walk(node: Any) -> None:
-            if isinstance(node, dict):
-                for key, child in node.items():
-                    if isinstance(child, dict) and MODEL_MARKER_KEY in child:
-                        found.append((key, child))
-                    walk(child)
-            elif isinstance(node, list):
-                for child in node:
-                    walk(child)
-
-        walk(nested)
+        found = list(_marked_sections(nested))
         if field is not None:
             found = [(key, section) for key, section in found if key == field]
         elif len(found) > 1:

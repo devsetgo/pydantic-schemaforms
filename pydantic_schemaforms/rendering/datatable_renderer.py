@@ -270,7 +270,7 @@ def _render_csv_upload_block(*, prefix: str, reviewing: bool, editable: bool) ->
     # NOSONAR comments below: read via {expr} interpolation in the t-string.
     file_name = f'{prefix}.csv_file'  # NOSONAR
     action_name = f'{prefix}.datatable_action'  # NOSONAR
-    file_input_html = SafeHTML(FileInput().render(name=file_name, id=file_name))
+    file_input_html = SafeHTML(FileInput().render(name=file_name, id=file_name))  # NOSONAR
     if not editable:
         load_label = 'Reload CSV'
         action_value = 'reload'
