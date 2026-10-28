@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from html import escape
 from typing import TYPE_CHECKING, Any, Union
 from collections.abc import Callable
@@ -32,6 +33,12 @@ IN_GROUP_FLAG = '_in_group'
 
 # Leading space: appended directly after another class in the templates.
 _ACTIVE_CLASS = ' active'
+
+
+def _unique_id_prefix(kind: str) -> str:
+    """Fresh per render, so two tabbed or accordion layouts on one page (or one
+    layout rendered twice) never share element ids."""
+    return f'{kind}-{secrets.token_hex(4)}'
 
 
 def _wrap_side_by_side_column(col: str) -> str:
@@ -175,7 +182,8 @@ ${component_assets}
         renderer = attrs.get('renderer')
         theme = getattr(renderer, 'theme', None) if renderer else None
 
-        tab_ids = [f'tab-{i}' for i in range(len(self.tabs))]
+        prefix = _unique_id_prefix('tab')
+        tab_ids = [f'{prefix}-{i}' for i in range(len(self.tabs))]
 
         tab_buttons: list[str] = []
         for i, (tab_id, tab) in enumerate(zip(tab_ids, self.tabs, strict=False)):
@@ -259,7 +267,8 @@ ${component_assets}
         renderer = attrs.get('renderer')
         theme = getattr(renderer, 'theme', None) if renderer else None
 
-        section_ids = [f'accordion-{i}' for i in range(len(self.sections))]
+        prefix = _unique_id_prefix('accordion')
+        section_ids = [f'{prefix}-{i}' for i in range(len(self.sections))]
         accordion_sections: list[str] = []
         for _i, (section_id, section) in enumerate(zip(section_ids, self.sections, strict=False)):
             is_expanded = section.get('expanded', False)

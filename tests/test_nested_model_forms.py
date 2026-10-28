@@ -183,6 +183,19 @@ def test_tabbed_layout_has_one_tab_per_sub_form_in_declaration_order() -> None:
     assert _tab_titles(html) == ['General', 'Contact details', 'Home address', 'Pets']
 
 
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+@pytest.mark.parametrize('layout', ['tabbed', 'accordion'])
+def test_two_grouped_forms_on_one_page_do_not_share_layout_ids(framework: str, layout: str) -> None:
+    page = render_form_html(
+        ProfileForm, layout=layout, submit_url='/p', framework=framework
+    ) + render_form_html(OnlyGroups, layout=layout, submit_url='/o', framework=framework)
+
+    ids = re.findall(r'\bid="((?:tab|accordion)-[^"]+)"', page)
+    targets = re.findall(r'(?:aria-controls|data-bs-target)="#?((?:tab|accordion)-[^"]+)"', page)
+    assert len(ids) == len(set(ids)) > 0
+    assert set(targets) <= set(ids)
+
+
 def test_general_tab_only_appears_when_the_parent_has_plain_fields() -> None:
     html = render_form_html(OnlyGroups, layout='tabbed', submit_url='/o')
     assert _tab_titles(html) == ['Contact details', 'Home address']
@@ -222,7 +235,8 @@ def test_accordion_renders_one_panel_per_group_first_open() -> None:
     assert 'form-groups-accordion' in html
     panel_buttons = re.findall(r'class="accordion-button[^"]*"', html)
     assert len(panel_buttons) == 4
-    assert panel_buttons.count('class="accordion-button expanded"') == 1
+    assert panel_buttons.count('class="accordion-button"') == 1
+    assert html.count('accordion-collapse collapse show') == 1
 
 
 @pytest.mark.parametrize('layout', ['tabbed', 'side-by-side', 'accordion', 'wizard'])

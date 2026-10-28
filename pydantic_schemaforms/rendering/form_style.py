@@ -339,20 +339,21 @@ def _bootstrap_accordion_section(
     section_id: str = '',
     title: str = '',
     content: str = '',
-    expanded_class: str = '',
     aria_expanded: str = 'false',
     **_: Any,
 ) -> SafeHTML:
-    _expanded_class = SafeHTML(expanded_class)
+    is_expanded = aria_expanded == 'true'
+    _button_class = SafeHTML('' if is_expanded else ' collapsed')
+    _collapse_class = SafeHTML(' show' if is_expanded else '')
     return html(t'''
 <div class="accordion-item">
     <h2 class="accordion-header" id="{section_id}-header">
-        <button class="accordion-button{_expanded_class}" type="button" data-bs-toggle="collapse" data-bs-target="#{section_id}"
+        <button class="accordion-button{_button_class}" type="button" data-bs-toggle="collapse" data-bs-target="#{section_id}"
             aria-expanded="{aria_expanded}" aria-controls="{section_id}">
             {title}
         </button>
     </h2>
-    <div id="{section_id}" class="accordion-collapse collapse{_expanded_class}" aria-labelledby="{section_id}-header">
+    <div id="{section_id}" class="accordion-collapse collapse{_collapse_class}" aria-labelledby="{section_id}-header">
         <div class="accordion-body">{SafeHTML(content)}</div>
     </div>
 </div>
@@ -492,7 +493,7 @@ def _material_accordion_section(
     _expanded_class = SafeHTML(expanded_class)
     return html(t'''
 <div class="md-accordion-section">
-    <button class="md-accordion-header{_expanded_class}" aria-expanded="{aria_expanded}"
+    <button class="md-accordion-header{_expanded_class}" type="button" aria-expanded="{aria_expanded}"
             aria-controls="{section_id}" onclick="toggleAccordion(&#39;{section_id}&#39;, this)">
         {title}
     </button>
