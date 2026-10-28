@@ -686,24 +686,42 @@ class EnhancedFormRenderer:
     def _attr(value: Any) -> str:
         return html.escape(str(value)) if value is not None else ''
 
-    def _render_material_help_block(self, help_text: str | None) -> str:
+    def _render_material_help_block(self, help_text: str | None, field_name: str) -> str:
         if not help_text:
             return ''
-        return render_template(FormTemplates.MATERIAL_HELP_TEXT, help_content=str(help_text))
+        return render_template(
+            FormTemplates.MATERIAL_HELP_TEXT, help_content=str(help_text), field_id=field_name
+        )
 
-    def _render_material_error_block(self, error: str | None) -> str:
+    def _render_material_error_block(self, error: str | None, field_name: str) -> str:
         if not error:
             return ''
-        return render_template(FormTemplates.MATERIAL_ERROR_TEXT, error_content=str(error))
+        return render_template(
+            FormTemplates.MATERIAL_ERROR_TEXT, error_content=str(error), field_id=field_name
+        )
+
+    def _material_described_by(
+        self, field_name: str, help_text: str | None, error: str | None
+    ) -> str:
+        """aria-invalid/aria-describedby tying the control to the ids
+        _render_material_help_block/_render_material_error_block emit."""
+        ids = [f'{field_name}-help'] if help_text else []
+        if error:
+            ids.append(f'{field_name}-error')
+        if not ids:
+            return ''
+        described_by = self._attr(' '.join(ids))
+        invalid = 'aria-invalid="true" ' if error else ''
+        return f'{invalid}aria-describedby="{described_by}"'
 
     def _wrap_material_field_body(
-        self, *, field_body: str, help_text: str | None, error: str | None
+        self, *, field_name: str, field_body: str, help_text: str | None, error: str | None
     ) -> str:
         return render_template(
             FormTemplates.MATERIAL_FIELD_CONTAINER,
             field_body=field_body,
-            help_text=self._render_material_help_block(help_text),
-            error_text=self._render_material_error_block(error),
+            help_text=self._render_material_help_block(help_text, field_name),
+            error_text=self._render_material_error_block(error, field_name),
         )
 
     def _wrap_material_with_icon(self, icon: str | None, input_wrapper: str) -> str:
@@ -805,11 +823,13 @@ class EnhancedFormRenderer:
         error: str | None,
         ui_info: dict[str, Any],
         is_required: bool,
+        described_by: str = '',
     ) -> str:
         error_class = _ERROR_CLASS if error else ''
         attrs = self._build_material_text_input_attributes(ui_info)
         if is_required:
             attrs = f'{attrs} {self._MATERIAL_REQUIRED}'.strip()
+        attrs = f'{attrs} {described_by}'.strip()
         value_attr = self._attr(value) if value is not None else ''
         return render_template(
             FormTemplates.MATERIAL_TEXT_INPUT,
@@ -827,9 +847,10 @@ class EnhancedFormRenderer:
         value: Any,
         error: str | None,
         is_required: bool,
+        described_by: str = '',
     ) -> str:
         error_class = _ERROR_CLASS if error else ''
-        attrs = self._MATERIAL_REQUIRED if is_required else ''
+        attrs = f'{self._MATERIAL_REQUIRED if is_required else ""} {described_by}'.strip()
         value_content = str(value) if value is not None else ''
         return render_template(
             FormTemplates.MATERIAL_TEXTAREA,
@@ -848,9 +869,10 @@ class EnhancedFormRenderer:
         ui_info: dict[str, Any],
         field_schema: dict[str, Any],
         is_required: bool,
+        described_by: str = '',
     ) -> str:
         error_class = _ERROR_CLASS if error else ''
-        attrs = self._MATERIAL_REQUIRED if is_required else ''
+        attrs = f'{self._MATERIAL_REQUIRED if is_required else ""} {described_by}'.strip()
         options = self._build_material_select_options(ui_info, field_schema)
 
         # ui_options={'placeholder': '...'} (see FieldRenderer._build_placeholder_option
@@ -893,8 +915,9 @@ class EnhancedFormRenderer:
             attributes=attrs,
         )
 
-    def _render_material_checkbox_field(
+    def _render_material_boolean_field(
         self,
+        template: Any,
         field_name: str,
         label: str,
         value: Any,
@@ -902,51 +925,32 @@ class EnhancedFormRenderer:
         help_text: str | None,
         is_required: bool,
     ) -> str:
-        required_text = ' *' if is_required else ''
+        """Shared by the checkbox and toggle templates, which take the same slots."""
         checked_attr = (
             'checked="checked"'
             if value is True or str(value).lower() in {'true', '1', 'on'}
             else ''
         )
-        required_attr = self._MATERIAL_REQUIRED if is_required else ''
+        # The template's `required` slot sits on the <input>, so the ARIA
+        # wiring rides along with it.
+        required_attr = ' '.join(
+            part
+            for part in (
+                self._MATERIAL_REQUIRED if is_required else '',
+                self._material_described_by(field_name, help_text, error),
+            )
+            if part
+        )
         return render_template(
-            FormTemplates.MATERIAL_CHECKBOX_FIELD,
+            template,
             name=self._attr(field_name),
             field_id=self._attr(field_name),
             label=label,
-            required_indicator=required_text,
+            required_indicator=' *' if is_required else '',
             checked=checked_attr,
             required=required_attr,
-            help_text=self._render_material_help_block(help_text),
-            error_text=self._render_material_error_block(error),
-        )
-
-    def _render_material_toggle_field(
-        self,
-        field_name: str,
-        label: str,
-        value: Any,
-        error: str | None,
-        help_text: str | None,
-        is_required: bool,
-    ) -> str:
-        required_text = ' *' if is_required else ''
-        checked_attr = (
-            'checked="checked"'
-            if value is True or str(value).lower() in {'true', '1', 'on'}
-            else ''
-        )
-        required_attr = self._MATERIAL_REQUIRED if is_required else ''
-        return render_template(
-            FormTemplates.MATERIAL_TOGGLE_FIELD,
-            name=self._attr(field_name),
-            field_id=self._attr(field_name),
-            label=label,
-            required_indicator=required_text,
-            checked=checked_attr,
-            required=required_attr,
-            help_text=self._render_material_help_block(help_text),
-            error_text=self._render_material_error_block(error),
+            help_text=self._render_material_help_block(help_text, field_name),
+            error_text=self._render_material_error_block(error, field_name),
         )
 
     def _render_material_outlined_field(
@@ -966,17 +970,18 @@ class EnhancedFormRenderer:
         if icon:
             icon = map_icon_for_framework(icon, 'material')
 
+        described_by = self._material_described_by(field_name, help_text, error)
         if input_type == 'textarea':
             control_html = self._render_material_textarea_input(
-                field_name, value, error, is_required
+                field_name, value, error, is_required, described_by
             )
         elif input_type == 'select':
             control_html = self._render_material_select_input(
-                field_name, value, error, ui_info, field_schema, is_required
+                field_name, value, error, ui_info, field_schema, is_required, described_by
             )
         else:
             control_html = self._render_material_text_input(
-                field_name, input_type, value, error, ui_info, is_required
+                field_name, input_type, value, error, ui_info, is_required, described_by
             )
 
         input_wrapper = render_template(
@@ -988,7 +993,7 @@ class EnhancedFormRenderer:
         )
         field_body = self._wrap_material_with_icon(icon, input_wrapper)
         return self._wrap_material_field_body(
-            field_body=field_body, help_text=help_text, error=error
+            field_name=field_name, field_body=field_body, help_text=help_text, error=error
         )
 
     def _render_material_field(
@@ -1029,8 +1034,14 @@ class EnhancedFormRenderer:
         is_required = field_name in (required_fields or [])
 
         if input_type == 'checkbox':
-            return self._render_material_checkbox_field(
-                field_name, label, value, error, help_text, is_required
+            return self._render_material_boolean_field(
+                FormTemplates.MATERIAL_CHECKBOX_FIELD,
+                field_name,
+                label,
+                value,
+                error,
+                help_text,
+                is_required,
             )
 
         if input_type in ('toggle', 'toggle_switch', 'checkbox_toggle'):
@@ -1038,8 +1049,14 @@ class EnhancedFormRenderer:
             # (unlike Bootstrap, which dispatches through get_input_component()),
             # so this mirrors Bootstrap's ToggleSwitch with a dedicated
             # Material-styled switch instead of just reusing the plain checkbox.
-            return self._render_material_toggle_field(
-                field_name, label, value, error, help_text, is_required
+            return self._render_material_boolean_field(
+                FormTemplates.MATERIAL_TOGGLE_FIELD,
+                field_name,
+                label,
+                value,
+                error,
+                help_text,
+                is_required,
             )
 
         fmt_key = _MATERIAL_DATE_TIME_FORMAT_KEYS.get(input_type)

@@ -19,6 +19,15 @@ class Example(FormModel):
     email: str = Field(..., ui_element="email")
 ```
 
+## Accessibility
+
+Every built-in input is tested with axe-core against the WCAG 2.0–2.2 A and AA
+rules on every pull request, and meets a documented baseline: an accessible
+name for every control, help and errors announced with the field
+(`aria-describedby`, `aria-invalid`), AA contrast and 24×24 px targets. See
+`docs/accessibility.md` for the details and what automated testing does not
+cover.
+
 ## Common Field Metadata (Optional)
 
 These are available on any element type:

@@ -16,7 +16,7 @@ import pytest
 from pydantic import AnyUrl, BaseModel
 from pydantic.fields import FieldInfo
 
-from pydantic_schemaforms import FormModel
+from pydantic_schemaforms import Field, FormModel
 
 
 # ---------------------------------------------------------------------------
@@ -1065,3 +1065,54 @@ class TestSchemaParserRemainder:
         _inject_dynamic_fields(ModelReq, props, required)
         assert 'req_col' in required
         del ModelReq.__runtime_fields__
+
+
+# ---------------------------------------------------------------------------
+# Accessibility: errors and help are tied to the control (#246)
+# ---------------------------------------------------------------------------
+
+
+class _AriaForm(FormModel):
+    name: str = Field(..., min_length=3, description='Your full name')
+    color: str = Field(..., ui_element='select', ui_options={'choices': ['red', 'blue']})
+    agree: bool = Field(..., ui_element='checkbox', description='Required to continue')
+    tags: str = Field(..., ui_element='tags', min_length=3)
+
+
+def _control_tag(html_out: str, field_id: str) -> str:
+    # By id, not name: the id is what the <label for=...> points at, and for a
+    # widget like tags the named element is a hidden input, not the control.
+    import re
+
+    match = re.search(rf'<(?:input|select|textarea)\b[^>]*\bid="{field_id}"[^>]*>', html_out, re.S)
+    assert match, f'no control with id {field_id}'
+    return match.group(0)
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+def test_invalid_fields_are_flagged_and_described(framework: str) -> None:
+    import re
+
+    result = _AriaForm.validate(
+        {'name': 'x', 'color': '', 'tags': 'a'}, submit_url='/x', framework=framework
+    )
+    html_out = result.render_with_errors()
+
+    for name in ('name', 'agree', 'tags'):
+        tag = _control_tag(html_out, name)
+        assert 'aria-invalid="true"' in tag, (framework, name, tag)
+        described_by = re.search(r'aria-describedby="([^"]+)"', tag)
+        assert described_by, (framework, name, tag)
+        assert f'{name}-error' in described_by.group(1).split()
+        for element_id in described_by.group(1).split():
+            assert f'id="{element_id}"' in html_out, (framework, element_id)
+    assert 'name-help' in _control_tag(html_out, 'name')
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+def test_valid_fields_are_not_flagged_invalid(framework: str) -> None:
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_AriaForm, submit_url='/x', framework=framework)
+    assert 'aria-invalid="true"' not in html_out
+    assert 'aria-describedby="name-help"' in _control_tag(html_out, 'name')

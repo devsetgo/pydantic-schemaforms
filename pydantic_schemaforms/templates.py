@@ -839,12 +839,14 @@ def _material_select_option(
     return html(t'<option value="{value}"{_selected}{_disabled}>{label}</option>')
 
 
-def _material_help_text(*, help_content: str = '') -> SafeHTML:
-    return html(t'<div class="md-help-text">{help_content}</div>')
+def _material_help_text(*, help_content: str = '', field_id: str = '') -> SafeHTML:
+    help_id = f'{field_id}-help'  # NOSONAR - read via {help_id} below
+    return html(t'<div id="{help_id}" class="md-help-text">{help_content}</div>')
 
 
-def _material_error_text(*, error_content: str = '') -> SafeHTML:
-    return html(t'<div class="md-error-text">{error_content}</div>')
+def _material_error_text(*, error_content: str = '', field_id: str = '') -> SafeHTML:
+    error_id = f'{field_id}-error'  # NOSONAR - read via {error_id} below
+    return html(t'<div id="{error_id}" class="md-error-text">{error_content}</div>')
 
 
 def _material_checkbox_field(

@@ -22,6 +22,7 @@ nav:
       - Configuration: 'configuration.md'
       - CSRF Protection: 'csrf.md'
       - Inputs (UI Elements): 'inputs.md'
+      - Accessibility: 'accessibility.md'
       - Layouts: 'layouts.md'
       - Assets: 'assets.md'
       - Render Timing: 'timing.md'

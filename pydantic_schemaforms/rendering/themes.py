@@ -138,7 +138,7 @@ class RendererTheme:
         if render_time is not None:
             render_time_str = f'{render_time:.3f}'
             timing_display = html(
-                t'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #6c757d; '
+                t'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #5c636a; '
                 t'text-align: right;">Rendered in {render_time_str}s</div>'
             )
 

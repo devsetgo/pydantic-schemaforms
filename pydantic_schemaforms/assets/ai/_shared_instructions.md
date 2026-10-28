@@ -1379,12 +1379,28 @@ For complex requests, also provide:
   regex/pattern).
 - Sticky value handling and field error mapping.
 
+## Accessibility
+
+The library's own form markup is tested with axe-core against WCAG 2.0–2.2 A and AA rules on
+every release: each control has an accessible name, help text and errors are linked with
+`aria-describedby`, an invalid field gets `aria-invalid="true"`, and text meets AA contrast. Keep
+it that way in the app you generate:
+
+- Give every field a meaningful `title` (it becomes the `<label>`); never hide a label without
+  giving the control another accessible name.
+- Don't strip or rewrite the `aria-*`/`id` attributes in rendered form HTML.
+- The page template around the form is the app's responsibility: one `<h1>`, `<html lang=...>`,
+  landmarks (`<main>`), and AA contrast for any colors the app adds.
+- Don't describe the generated app as ADA/Section 508/WCAG compliant: the library is tested, not
+  certified, and conformance depends on the whole app. If the user cares about compliance,
+  suggest adding axe-core to their end-to-end tests.
+
 ## Quality gates before completion
 
 - Generated code is runnable with no placeholder TODO blocks.
 - submit_url and route path align.
 - Every rendered field exists in model definition.
-- Every required field has sensible label/title metadata.
+- Every required field has sensible label/title metadata (it is the field's accessible name).
 - No manual field-by-field HTML when schema-driven rendering is enough.
 - No import from a `pydantic_schemaforms` internal submodule (see "Library boundary" above).
 - No f-string/`.format()` interpolation of submitted or validated user data into HTML anywhere in

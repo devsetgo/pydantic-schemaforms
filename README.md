@@ -43,7 +43,8 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 - 🎨 **Multi-Framework Support**: Bootstrap, Material Design, and plain HTML (`framework="none"`)
 - ✅ **Built-in Validation**: Client-side HTML5 + server-side Pydantic validation
 - 🔧 **JSON-Schema-form style UI hints**: Uses a familiar `ui_element`, `ui_autofocus`, `ui_options` vocabulary
-- 📱 **Responsive & Accessible**: Mobile-first design with full ARIA support
+- ♿ **Accessibility-tested**: every input, layout and error state is checked with axe-core against WCAG 2.0–2.2 A and AA rules on every pull request; a serious or critical violation fails the build
+- 📱 **Responsive**: Mobile-first design across Bootstrap, Material and plain HTML
 - 🌐 **Framework Ready**: First-class Flask and FastAPI helpers, plus plain HTML for other stacks
 - 🔀 **Dual-use form + JSON API**: `as_api_model()` returns a clean Pydantic `BaseModel` — one model class drives both the HTML form and a typed JSON API, with UI metadata stripped from OpenAPI docs
 - 🧬 **Standard JSON Schema output**: `get_pydantic_json_schema()` returns spec-compliant JSON Schema (`$defs`/`$ref`) for the underlying Pydantic model, including nested `BaseModel`/`List[BaseModel]` fields
@@ -55,6 +56,32 @@ It is designed for server-rendered apps: you define a model (and optional UI hin
 > **Important**: `submit_url` is required when rendering forms. The library does not choose a default submit target.
 
 ---
+
+## Accessibility Testing
+
+Forms are often where accessibility audits fail, so this library tests for it
+on every pull request rather than leaving it to each app:
+
+- **axe-core 4.14** (the engine behind many enterprise audit tools) runs against
+  every example page, which together render every input type, widget option,
+  layout and composite control the library supports.
+- **WCAG 2.0, 2.1 and 2.2, levels A and AA**, plus axe best practices. axe maps
+  the same rules to Section 508 and EN 301 549.
+- **Bootstrap and Material**, in both the initial form and the error state
+  after a failed submit.
+- **Any serious or critical violation fails CI.**
+
+Built-in inputs meet a documented baseline: every control has an accessible
+name, help text and errors are announced with their field (`aria-describedby`,
+`aria-invalid`), text meets AA contrast and click targets are at least 24×24 px.
+
+> **Testing, not a compliance claim.** pydantic-schemaforms does not claim ADA,
+> Section 508 or WCAG conformance; that depends on your whole application and
+> needs manual review with assistive technology. The library gives you form
+> markup that is automatically tested, so your forms start from a sound base.
+
+Details, what automated testing does not cover, and how to run axe in your own
+tests: see `docs/accessibility.md`.
 
 ## Documentation
 

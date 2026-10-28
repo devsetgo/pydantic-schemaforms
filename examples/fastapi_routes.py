@@ -409,6 +409,7 @@ def render_self_contained_demo_page(selected_style: str, form_html: str, rendere
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self-Contained Form Demo</title>
+    <style>body code {{ color: #a61e4d; }}</style>
 </head>
 <body style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui;">
     <h1>Self-Contained Form Demo (FastAPI)</h1>

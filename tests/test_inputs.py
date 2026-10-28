@@ -217,6 +217,8 @@ class TestTextInputs:
         html = input_field.render(name='cfg', id='cfg', value='{}', language='json')
 
         assert '<pre class="code-highlight-layer" id="cfg_code_layer"' in html
+        # Prism makes a <pre> without a tabindex focusable; this one is aria-hidden.
+        assert 'aria-hidden="true" tabindex="-1"' in html
         assert 'id="cfg_code_layer_inner" class="language-json"' in html
         assert 'window.Prism' in html
         # the native control appears before the highlight-activation logic

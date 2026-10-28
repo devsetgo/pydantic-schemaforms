@@ -342,7 +342,7 @@ def _wrap_with_picker_toggle(input_html: str, field_id: str, fmt: str, native_ty
     wrapper_html = html(t'''
 <div class="schemaforms-picker-wrap" style="position: relative; display: inline-block; width: 100%;">
 {_input_html}
-<button type="button" id="{toggle_id}" aria-label="{aria_label}" class="schemaforms-picker-toggle" style="position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%); background: transparent; border: none; padding: 0.15rem; margin: 0; cursor: pointer; line-height: 0; color: inherit; opacity: 0.6;">{icon}</button>
+<button type="button" id="{toggle_id}" aria-label="{aria_label}" class="schemaforms-picker-toggle" style="position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%); background: transparent; border: none; padding: 0.15rem; margin: 0; cursor: pointer; line-height: 0; color: inherit; opacity: 0.6; min-width: 24px; min-height: 24px; display: inline-flex; align-items: center; justify-content: center;">{icon}</button>
 <input type="{native_type}" id="{picker_id}" tabindex="-1" aria-hidden="true" style="position: absolute; inset: 0; opacity: 0; width: 1px; height: 1px; border: 0; padding: 0; pointer-events: none;" />
 </div>
 ''')

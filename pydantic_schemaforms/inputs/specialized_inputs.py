@@ -585,8 +585,11 @@ class TagsInput(FormInput):
             hidden_input.render(name=name, id=f'{field_id}_value', value=initial_tags)
         )
 
+        # The visible text box takes the field's own id so its <label for=...>
+        # names it, and gets the aria-* wiring (aria-invalid/aria-describedby).
+        aria_attrs = {key: value for key, value in kwargs.items() if key.startswith('aria-')}
         text_attrs = self.validate_attributes(
-            id=f'{field_id}_input', placeholder=placeholder, autocomplete='off'
+            id=field_id, placeholder=placeholder, autocomplete='off', **aria_attrs
         )
         text_attrs['type'] = 'text'
         text_input_html = SafeHTML(  # NOSONAR
@@ -613,7 +616,7 @@ class TagsInput(FormInput):
                 min-width: 100px;
             }}
             .tag {{
-                background: #007bff;
+                background: #0a58ca;
                 color: white;
                 padding: 2px 8px;
                 border-radius: 12px;
@@ -630,7 +633,7 @@ class TagsInput(FormInput):
             <script>
             document.addEventListener('DOMContentLoaded', function() {{
                 const container = document.getElementById('{field_id}_container');
-                const input = document.getElementById('{field_id}_input');
+                const input = document.getElementById('{field_id}');
                 const hiddenInput = document.getElementById('{field_id}_value');
                 let tags = [];
 
