@@ -11,12 +11,13 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
+from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Union, get_args, get_origin
 from collections.abc import Callable
 
 from pydantic import AfterValidator, BaseModel, EmailStr, ValidationError
-from pydantic_core import PydanticCustomError
+from pydantic_core import PydanticCustomError, PydanticUndefined, to_jsonable_python
 
 from .tstring import SafeHTML
 
@@ -145,8 +146,8 @@ class MinLengthRule(ValidationRule):
         super().__init__(message)
 
     def validate(self, value: Any, field_name: str = '') -> tuple[bool, str]:
-        if value is None:
-            return True, ''  # Let RequiredRule handle None values
+        if value is None or value == '':
+            return True, ''  # Let RequiredRule handle missing values, as the JS check does
 
         if len(str(value)) < self.min_length:
             return False, self.message
@@ -1076,6 +1077,48 @@ class ValidationResult:
         return f'ValidationResult(valid=False, errors={self.errors})'
 
 
+_CHECKBOX_ELEMENTS = {None, 'checkbox', 'toggle', 'toggle_switch', 'checkbox_toggle'}
+_CURRENCY_ELEMENTS = {'currency', 'money'}
+
+
+def _ui_element(field_info: Any) -> str | None:
+    extra = getattr(field_info, 'json_schema_extra', None)
+    return extra.get('ui_element') if isinstance(extra, dict) else None
+
+
+def _renders_as_checkbox(field_info: Any) -> bool:
+    return _ui_element(field_info) in _CHECKBOX_ELEMENTS
+
+
+def _left_blank(data: dict[str, Any], model: type[BaseModel]) -> bool:
+    for key, value in data.items():
+        info = model.model_fields.get(key)
+        if info is None or value in ('', None, []):
+            continue
+        if isinstance(value, dict):
+            sub_model = next(
+                (
+                    t
+                    for t in (get_args(info.annotation) or (info.annotation,))
+                    if isinstance(t, type) and issubclass(t, BaseModel)
+                ),
+                None,
+            )
+            if sub_model is None or not _left_blank(value, sub_model):
+                return False
+            continue
+        default = info.default
+        if isinstance(default, bool):
+            if default:  # a ticked checkbox that starts ticked
+                continue
+            return False
+        if default is PydanticUndefined or isinstance(value, list):
+            return False
+        if str(to_jsonable_python(default)) != str(value):
+            return False
+    return True
+
+
 def _coerce_html_form_values(
     data: dict[str, Any], model_fields: dict[str, Any], *, from_form: bool = False
 ) -> dict[str, Any]:
@@ -1105,6 +1148,16 @@ def _coerce_html_form_values(
        submits no inputs at all, so the field falls back to its default and
        Pydantic, which never validates defaults, skips ``min_length``. An
        absent ``list[Model]`` field is submitted as ``[]`` instead.
+    5. (``from_form`` only) An unticked checkbox submits nothing, so a ``bool``
+       field defaulting to ``True`` could never be unticked. An absent
+       checkbox-rendered ``bool`` with a default is submitted as ``False``
+       instead; one without a default must be ticked, so it stays missing.
+    6. (``from_form`` only) An optional sub-form (``Address | None``) is
+       always rendered, so it is always submitted. When every one of its
+       inputs is blank or still at its default, it was left empty: ``None``.
+    7. (``from_form`` only) A ``currency`` input shows ``$1,234.50`` as it is
+       typed. For a numeric field (``Decimal``, ``float``, ``int``) the
+       symbol and thousands separators are stripped so it parses.
     """
     result = dict(data)
 
@@ -1127,6 +1180,13 @@ def _coerce_html_form_values(
         if field_name not in result:
             if from_form and list_item_model is not None:
                 result[field_name] = []
+            elif (
+                from_form
+                and non_none_types == [bool]
+                and not field_info.is_required()
+                and _renders_as_checkbox(field_info)
+            ):
+                result[field_name] = False
             continue
 
         value = result[field_name]
@@ -1139,6 +1199,9 @@ def _coerce_html_form_values(
         if isinstance(value, dict):
             for candidate in non_none_types:
                 if isinstance(candidate, type) and issubclass(candidate, BaseModel):
+                    if from_form and is_optional and _left_blank(value, candidate):
+                        result[field_name] = None
+                        break
                     result[field_name] = _coerce_html_form_values(
                         value, candidate.model_fields, from_form=from_form
                     )
@@ -1167,6 +1230,17 @@ def _coerce_html_form_values(
             if not allows_string:
                 result[field_name] = None
             continue
+
+        if (
+            from_form
+            and isinstance(value, str)
+            and _ui_element(field_info) in _CURRENCY_ELEMENTS
+            and any(
+                isinstance(t, type) and issubclass(t, (Decimal, float, int)) and t is not bool
+                for t in non_none_types
+            )
+        ):
+            value = result[field_name] = re.sub(r'[^\d.\-]', '', value)
 
         if isinstance(value, str) and value != '':
             # time is NOT a subclass of date (only datetime is) -- must check

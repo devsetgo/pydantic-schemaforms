@@ -276,6 +276,13 @@ class TestMinLengthRule:
         assert rule.validate('exact')[0] is True
         assert rule.validate('tiny')[0] is False
 
+    def test_empty_value_is_left_to_required_rule(self):
+        # Like every other rule (and its own JS check), so an optional field
+        # is only checked once it's filled in.
+        rule = MinLengthRule(min_length=3)
+        assert rule.validate('') == (True, '')
+        assert rule.validate(None) == (True, '')
+
     def test_descriptor(self):
         """Test min length rule descriptor."""
         rule = MinLengthRule(min_length=3)
@@ -1891,3 +1898,17 @@ def test_validator_messages_are_shown_without_pydantics_value_error_prefix() -> 
 
     result = _Form.validate({'code': 'abc'}, submit_url='/x')
     assert result.errors == {'code': 'Use capital letters'}
+
+
+def test_currency_input_formatting_is_stripped_for_numeric_fields() -> None:
+    from decimal import Decimal
+
+    from pydantic_schemaforms import Field as FormField
+
+    class _Price(FormModel):
+        amount: Decimal = FormField(ui_element='currency')
+        budget: float | None = FormField(None, ui_element='money')
+        label: str = FormField('', ui_element='currency')
+
+    result = _Price.validate([('amount', '$1,012.50'), ('budget', '€2,000'), ('label', '$5.00')])
+    assert result.data == {'amount': Decimal('1012.50'), 'budget': 2000.0, 'label': '$5.00'}

@@ -105,6 +105,32 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   used to fall back to the field name. (#258)
 - **Material renders datetime fields as `datetime-local`**, not the invalid
   `datetime` input type. (#258)
+- **Pre-filling an `Enum` field selects its option.** `form_data` holding an
+  Enum member, as a database row or `model_dump()` does, used to leave the
+  select (or radio) with nothing chosen. (#258)
+- **A checkbox that defaults to `True` can be unticked.** An unticked
+  checkbox sends nothing, so `validate()` used to fill in the default and
+  return `True`. In a form submission, a missing checkbox that has a default
+  is now `False`; one without a default is still required, and nested JSON
+  that omits it still gets the default. (#258)
+- **An optional sub-form (`Address | None`) can be left empty.** Its inputs
+  are no longer `required`, and when every one of them is blank or still at
+  its default, `validate()` returns `None` for it instead of field errors.
+  (#258)
+- **A `currency` input works on a `Decimal`, `float` or `int` field.** The
+  input formats what is typed as `$1,234.50`, which used to fail validation
+  as "Input should be a valid decimal". In a form submission the symbol and
+  thousands separators are now stripped first. (#258)
+- **A `float` field accepts decimals in the browser.** Number inputs always
+  had `step="1"`, so the browser refused 39.50. A `float` field now gets
+  `step="any"`, and `multiple_of` sets the step. (#258)
+- **Material inputs carry the field's constraints.** `min_length`,
+  `max_length`, `ge`, `le` and `pattern` now become `minlength`, `maxlength`,
+  `min`, `max` and `pattern` attributes under Material too, as they already
+  did under Bootstrap and plain HTML. (#258)
+- **`MinLengthRule` skips an empty value**, like every other rule except
+  `RequiredRule` and like its own client-side check. It used to reject `""`,
+  so an optional field with a minimum length couldn't be left blank. (#258)
 
 ## [26.4.1] — 2026-10-12
 

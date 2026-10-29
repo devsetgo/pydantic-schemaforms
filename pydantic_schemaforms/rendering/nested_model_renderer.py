@@ -84,7 +84,10 @@ def render_nested_model_field(
 
     data = _normalize_value(value)
     child_errors = context.child_errors or {}
-    required = set(schema_def.get('required') or [])
+    # An optional sub-form (``Address | None``) can be left blank, so the
+    # browser must not insist on its fields; validation turns it into None.
+    optional = any(o.get('type') == 'null' for o in field_schema.get('anyOf') or [])
+    required = set() if optional else set(schema_def.get('required') or [])
     renderer = engine._renderer  # noqa: SLF001 - composite renderers render children through it
 
     parts: list[str] = [str(_render_error(context.error))]

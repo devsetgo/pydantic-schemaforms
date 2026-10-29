@@ -140,6 +140,18 @@ def _general_group_title(model_cls: type[FormModel], metadata: SchemaMetadata) -
     return title if title and title != model_cls.__name__ else 'General'
 
 
+def _enum_values(value: Any) -> Any:
+    # Data from a database row or a model_dump() holds Enum members, while
+    # every option, radio and checkbox carries the member's value.
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, dict):
+        return {key: _enum_values(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_enum_values(item) for item in value]
+    return value
+
+
 def _schema_has_file_input(
     schema: dict[str, Any], schema_defs: dict[str, Any], seen: frozenset[str] = frozenset()
 ) -> bool:
@@ -250,7 +262,7 @@ class EnhancedFormRenderer:
         # filling in its default would tick it again.
         if data is None:
             data = self._model_defaults(model_cls)
-        data = decode_submission(data)
+        data = _enum_values(decode_submission(data))
 
         # Keep backward compatibility for callers still passing these via kwargs.
         include_csrf = bool(kwargs.pop('include_csrf', False))
@@ -390,7 +402,7 @@ class EnhancedFormRenderer:
         """Render only the field markup for nested usage."""
 
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
-        data = decode_submission(data)
+        data = _enum_values(decode_submission(data))
         errors = normalize_error_tree(errors)
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
@@ -783,17 +795,49 @@ class EnhancedFormRenderer:
         'attributes',
     }
 
-    def _build_material_text_input_attributes(self, ui_info: dict[str, Any]) -> str:
-        attrs = []
-        for source, attr_name in (
-            ('min_value', 'min'),
-            ('max_value', 'max'),
-            ('min_length', 'minlength'),
-            ('max_length', 'maxlength'),
-            ('step', 'step'),
+    @staticmethod
+    def _material_constraint_attributes(
+        field_schema: dict[str, Any], input_type: str
+    ) -> dict[str, Any]:
+        # The same Pydantic constraints FieldRenderer turns into attributes
+        # for Bootstrap and plain HTML, so the browser checks them here too.
+        constraints: dict[str, Any] = {}
+        for key, attr_name in (
+            ('minLength', 'minlength'),
+            ('maxLength', 'maxlength'),
+            ('minimum', 'min'),
+            ('maximum', 'max'),
+            ('pattern', 'pattern'),
         ):
-            if ui_info.get(source) is not None:
-                attrs.append(f'{attr_name}="{html.escape(str(ui_info[source]))}"')
+            if key in field_schema:
+                constraints[attr_name] = field_schema[key]
+        if input_type == 'number':
+            if 'multipleOf' in field_schema:
+                constraints['step'] = field_schema['multipleOf']
+            elif field_schema.get('type') == 'number':
+                constraints['step'] = 'any'
+        return constraints
+
+    def _build_material_text_input_attributes(
+        self, ui_info: dict[str, Any], constraints: dict[str, Any] | None = None
+    ) -> str:
+        attrs = []
+        explicit = {
+            attr_name: ui_info[source]
+            for source, attr_name in (
+                ('min_value', 'min'),
+                ('max_value', 'max'),
+                ('min_length', 'minlength'),
+                ('max_length', 'maxlength'),
+                ('step', 'step'),
+            )
+            if ui_info.get(source) is not None
+        }
+        ui_options = ui_info.get('options')
+        option_keys = set(ui_options) if isinstance(ui_options, dict) else set()
+        for attr_name, attr_value in {**(constraints or {}), **explicit}.items():
+            if attr_name not in option_keys:
+                attrs.append(f'{attr_name}="{html.escape(str(attr_value))}"')
         extra = ui_info.get('attributes')
         if isinstance(extra, dict):
             for attr_name, attr_value in extra.items():
@@ -805,7 +849,6 @@ class EnhancedFormRenderer:
         # 'options'. Mirror that flat-dict convention here so e.g. hx-post/
         # data-* attributes used for live-validation wiring work identically
         # under Material instead of silently being dropped.
-        ui_options = ui_info.get('options')
         if isinstance(ui_options, dict):
             for attr_name, attr_value in ui_options.items():
                 if attr_name in self._MATERIAL_UI_OPTION_SKIP_KEYS or isinstance(
@@ -865,9 +908,12 @@ class EnhancedFormRenderer:
         ui_info: dict[str, Any],
         is_required: bool,
         described_by: str = '',
+        field_schema: dict[str, Any] | None = None,
     ) -> str:
         error_class = _ERROR_CLASS if error else ''
-        attrs = self._build_material_text_input_attributes(ui_info)
+        attrs = self._build_material_text_input_attributes(
+            ui_info, self._material_constraint_attributes(field_schema or {}, input_type)
+        )
         if is_required:
             attrs = f'{attrs} {self._MATERIAL_REQUIRED}'.strip()
         attrs = f'{attrs} {described_by}'.strip()
@@ -1032,7 +1078,14 @@ class EnhancedFormRenderer:
             )
         else:
             control_html = self._render_material_text_input(
-                field_name, input_type, value, error, ui_info, is_required, described_by
+                field_name,
+                input_type,
+                value,
+                error,
+                ui_info,
+                is_required,
+                described_by,
+                field_schema,
             )
 
         input_wrapper = render_template(

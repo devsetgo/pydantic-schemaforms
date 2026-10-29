@@ -166,6 +166,14 @@ class FieldRenderer:
             field_attrs['max'] = field_schema['maximum']
         if 'pattern' in field_schema:
             field_attrs['pattern'] = field_schema['pattern']
+        if ui_element == 'number':
+            # NumberInput defaults to step="1", which makes the browser
+            # reject any decimal typed into a float field.
+            if 'multipleOf' in field_schema:
+                field_attrs['step'] = field_schema['multipleOf']
+            elif field_schema.get('type') == 'number':
+                field_attrs['step'] = 'any'
+                field_attrs['inputmode'] = 'decimal'
 
         if ui_info.get('autofocus'):
             field_attrs['autofocus'] = True

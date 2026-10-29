@@ -1193,6 +1193,24 @@ def test_blank_optional_enum_validates_to_none() -> None:
     assert result.data['plan_or_none'] is None
 
 
+@pytest.mark.parametrize('framework', ['bootstrap', 'material'])
+def test_enum_member_in_form_data_selects_its_option(framework: str) -> None:
+    # Prefilling from a database row or model_dump() passes Enum members,
+    # whose str() is 'Plan.pro', not the option value 'pro'.
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(
+        _InferredForm,
+        form_data={'plan': _Plan.pro},
+        submit_url='/x',
+        framework=framework,
+    )
+    plan = re.search(r'<select[^>]*name="plan"[^>]*>(.*?)</select>', html_out, re.S)
+    assert plan and re.search(r'<option value="pro"[^>]*selected', plan.group(1)), plan
+
+
 class _Size(str, Enum):
     small = 'small'
     large = 'large'
@@ -1251,3 +1269,35 @@ def test_passed_data_is_used_as_is_without_defaults() -> None:
     html_out = render_form_html(_DefaultsForm, submit_url='/x', form_data={'team_size': '7'})
     assert 'value="7"' in html_out
     assert not re.search(r'name="newsletter"[^>]*checked', html_out)
+
+
+class _NumbersForm(FormModel):
+    count: int = Field(0, ge=1, le=5)
+    price: float = 0
+    quarter: float = Field(0, multiple_of=0.25)
+    code: str = Field('', min_length=2, max_length=8, pattern='^[a-z]+$')
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+@pytest.mark.parametrize(
+    ('name', 'expected'),
+    [
+        ('count', ['min="1"', 'max="5"']),
+        ('price', ['step="any"']),
+        ('quarter', ['step="0.25"']),
+        ('code', ['minlength="2"', 'maxlength="8"', 'pattern="^[a-z]+$"']),
+    ],
+)
+def test_constraints_become_input_attributes(
+    framework: str, name: str, expected: list[str]
+) -> None:
+    # A float field must accept decimals: NumberInput's own default is step="1".
+    import re
+
+    from pydantic_schemaforms import render_form_html
+
+    html_out = render_form_html(_NumbersForm, submit_url='/x', framework=framework)
+    control = re.search(rf'<input\b[^>]*\bname="{name}"[^>]*>', html_out, re.S)
+    assert control, (framework, name)
+    for attr in expected:
+        assert attr in control.group(0), (framework, name, control.group(0))
