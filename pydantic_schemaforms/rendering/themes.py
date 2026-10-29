@@ -236,6 +236,36 @@ class RendererTheme:
 
         return ''
 
+    def alert_class(self, kind: str) -> str:
+        """Classes for an inline message box; kind is 'danger', 'warning' or 'info'."""
+
+        return f'alert alert-{kind}'
+
+    def render_collapsible_section(
+        self, *, title: str, body_html: str, is_open: bool, field_name: str
+    ) -> str:
+        """A sub-form shown as a section the user can fold away."""
+
+        _body = SafeHTML(body_html)
+        if is_open:
+            return html(t'''<details class="nested-model-section" data-field-name="{field_name}" open>
+    <summary class="nested-model-summary">{title}</summary>
+    <div class="nested-model-body">{_body}</div>
+</details>''')
+        return html(t'''<details class="nested-model-section" data-field-name="{field_name}">
+    <summary class="nested-model-summary">{title}</summary>
+    <div class="nested-model-body">{_body}</div>
+</details>''')
+
+    def render_error_summary(self, items_html: str) -> str:
+        """The list of every error, shown at the top of a form that failed."""
+
+        _items = SafeHTML(items_html)
+        return html(t"""<div class="alert alert-danger schemaforms-error-summary" role="alert" aria-live="polite">
+<strong>Submission failed.</strong> Please correct the following:
+<ul class="mb-0 mt-2">{_items}</ul>
+</div>""")
+
     def render_model_list_item(self, item: ModelListItem) -> str:
         """One repeating sub-form item (its header, remove button and fields)."""
 
@@ -382,6 +412,15 @@ class MaterialEmbeddedTheme(RendererTheme):
         super().__init__(submit_label='Submit')
         self._css = self._build_css()
         self._js = self._build_js()
+
+    def render_error_summary(self, items_html: str) -> str:
+        _items = SafeHTML(items_html)
+        return html(t"""<section class="md-field">
+<div class="md-error-summary" role="alert" aria-live="polite">
+<div class="md-error-summary__title">Submission failed. Please correct the following:</div>
+<ul class="md-error-summary__list">{_items}</ul>
+</div>
+</section>""")
 
     def button_class(self) -> str:
         return ''
