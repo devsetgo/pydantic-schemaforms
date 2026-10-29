@@ -3,7 +3,7 @@
 Breaking changes that need more than a one-line fix, with the steps to
 upgrade. Every release's changes are in the [Release Notes](release-notes.md).
 
-## Next release: one way to build a form
+## To 26.4.3: one way to build a form
 
 The builder API, the React and Vue adapters and `@form_validator` are
 removed. Importing a removed name raises an `ImportError` that names its

@@ -15,6 +15,8 @@ Last updated: 2026-10-29.
 Small fixes and decisions that the later phases build on. Do these first so new
 features aren't layered on known bugs. Phase 1 ships as its own release.
 
+All phase 1 items are done; they ship as release 26.4.3.
+
 | # | Item | Status | Why now |
 |---|---|---|---|
 | 1 | [#252](https://github.com/devsetgo/pydantic-schemaforms/issues/252) Fix fixed element IDs in tabbed and accordion layouts | Done ([#257](https://github.com/devsetgo/pydantic-schemaforms/pull/257)) | Two grouped forms on one page collide. Conditional fields (#237) and field groups (#241) both change the layout engine, so fix this before they land. Copy the wizard's ID-free, data-attribute approach. |
@@ -22,7 +24,7 @@ features aren't layered on known bugs. Phase 1 ships as its own release.
 | 3 | [#254](https://github.com/devsetgo/pydantic-schemaforms/issues/254) Remove or wire up `@form_validator` | Done ([#261](https://github.com/devsetgo/pydantic-schemaforms/pull/261)) | It's a top-level export that does nothing, so decorated checks never run. Removing it is breaking, so batch it with item 4 (#255) into one breaking release. |
 | 4 | [#255](https://github.com/devsetgo/pydantic-schemaforms/issues/255) Decide on `FormBuilder` and the prebuilt login, registration and contact forms (left open from #248) | Done ([#261](https://github.com/devsetgo/pydantic-schemaforms/pull/261)) | #248 closed when the React/Vue removal merged, but this half was never decided. The answer shapes #235 and #190: keep and document them as the "form without a model" path, or remove them and let JSON Schema import fill that role. |
 | 5 | [#246](https://github.com/devsetgo/pydantic-schemaforms/issues/246) Accessibility gate with axe-core | Done ([#262](https://github.com/devsetgo/pydantic-schemaforms/pull/262)) | Low effort. Landing it before the new widgets in phases 2 and 3 means each one is checked as it's built instead of fixed later. |
-| 6 | [#264](https://github.com/devsetgo/pydantic-schemaforms/issues/264) Ship library skills ([library-skills.io](https://library-skills.io/)) inside the package | In progress | Lets `uvx library-skills` install version-matched agent guidance from the installed package, so AI agents stop suggesting removed APIs. Five skills: build and fix forms, create, convert, upgrade and document. Ships with the phase 1 release, right after the breaking removals in #254 and #255. |
+| 6 | [#264](https://github.com/devsetgo/pydantic-schemaforms/issues/264) Ship library skills ([library-skills.io](https://library-skills.io/)) inside the package | Done ([#269](https://github.com/devsetgo/pydantic-schemaforms/pull/269)) | Lets `uvx library-skills` install version-matched agent guidance from the installed package, so AI agents stop suggesting removed APIs. Five skills: build and fix forms, create, convert, upgrade and document. Ships with the phase 1 release, right after the breaking removals in #254 and #255. |
 | 7 | [#258](https://github.com/devsetgo/pydantic-schemaforms/issues/258) Reorganize the documentation | Done ([#267](https://github.com/devsetgo/pydantic-schemaforms/pull/267)) | Do it with #147 or straight after it, so the new navigation is built once in the new tool. Content work (merging duplicate pages, shortening the README) can start before the tool is chosen. Docs aren't part of the package, so this doesn't hold up the phase 1 library release. |
 
 ## Phase 2: Core form features

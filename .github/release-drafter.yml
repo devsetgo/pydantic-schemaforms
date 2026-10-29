@@ -43,6 +43,8 @@ categories:
   - title: "Breaking Changes"
     labels:
       - "breaking"
+      - "breaking-change"
+      - "Breaking Change"
   - title: "Features"
     labels:
       - "feature"
