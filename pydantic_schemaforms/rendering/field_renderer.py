@@ -12,6 +12,7 @@ from pydantic_schemaforms.rendering.frameworks import get_input_component
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 from pydantic_schemaforms.error_tree import child_errors, field_message
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info, resolve_ui_element
+from pydantic_schemaforms.rendering.themes import RendererTheme
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 # Importing this registers the 'model_list' ui_element renderer (LayoutEngine
@@ -81,6 +82,13 @@ class FieldRenderer:
     @property
     def theme(self):
         return getattr(self._renderer, 'theme', None)
+
+    @property
+    def _shell_theme(self) -> RendererTheme | None:
+        # Only a real theme supplies the field shell; anything else (a bare
+        # renderer stand-in) falls back to the framework string.
+        theme = self.theme
+        return theme if isinstance(theme, RendererTheme) else None
 
     def render_field(
         self,
@@ -265,6 +273,7 @@ class FieldRenderer:
                         error=error,
                         icon=icon,
                         framework=self.framework,
+                        theme=self._shell_theme,
                         options=formatted_options,
                         **field_attrs,
                     )
@@ -275,6 +284,7 @@ class FieldRenderer:
                     error=error,
                     icon=icon,
                     framework=self.framework,
+                    theme=self._shell_theme,
                     **field_attrs,
                 )
 
