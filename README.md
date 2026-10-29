@@ -122,14 +122,20 @@ layout and kind of validation.
 
 ## Using an AI coding assistant?
 
-The package ships instructions for coding assistants that match the installed
-version, so they don't suggest removed APIs:
+The package ships [Agent Skills](https://agentskills.io) that match the installed version, so
+assistants don't suggest removed APIs. Install them into your project with
+[library-skills](https://library-skills.io/):
 
 ```bash
-python -m pydantic_schemaforms.ai_instructions claude --write     # writes ./CLAUDE.md
-python -m pydantic_schemaforms.ai_instructions copilot --write    # writes ./.github/copilot-instructions.md
-python -m pydantic_schemaforms.ai_instructions generic > AI_INSTRUCTIONS.md
+uvx library-skills --claude
 ```
+
+You get `pydantic-schemaforms` (build and fix forms), `schemaforms-create` ("create a login
+form"), `schemaforms-convert` (from Pydantic, WTForms, Django or JSON Schema),
+`schemaforms-upgrade` (from removed APIs) and `schemaforms-document` (document your forms).
+For assistants without skills support, `python -m pydantic_schemaforms.ai_instructions claude
+--write` writes the same guidance to `CLAUDE.md`; see the
+[AI Assistant Instructions](https://devsetgo.github.io/pydantic-schemaforms/advanced/ai-instructions/) page.
 
 ## Accessibility
 

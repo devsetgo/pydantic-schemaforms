@@ -1,97 +1,47 @@
 # AI Assistant Instructions
 
-`pydantic-schemaforms` ships packaged, verified integration instructions for AI coding
-assistants (Claude, GitHub Copilot, and a generic profile), so an assistant working in an
-app repo that depends on this library can produce correct, idiomatic integrations without
-reverse-engineering package internals or guessing at deprecated patterns.
+AI coding assistants are trained on older code, so they tend to suggest APIs this library has
+removed. pydantic-schemaforms ships its own instructions for them, inside the package, so they
+always match the version you have installed.
 
-Two things make this different from a normal docs page copied into a prompt:
+## Agent skills (recommended)
 
-- **It ships with the library.** Every install of `pydantic-schemaforms` carries the current
-  instructions as packaged data — they can't drift out of sync the way a copy-pasted snippet
-  in someone's `CLAUDE.md` can.
-- **It's discoverable without being asked.** The top-level package docstring and
-  `FormModel`'s class docstring both point an AI assistant at this feature, so it can find
-  it on its own the first time it inspects the library — see `pydantic_schemaforms/__init__.py`.
-
-## What's covered
-
-Each profile documents the same underlying integration contract:
-
-- A complete, verified worked example: a `FormModel` + FastAPI GET/POST route pair that
-  renders, re-renders with errors on invalid submission, and succeeds on valid submission
-  — checked end-to-end with a `TestClient`, not just read from source.
-- An authoritative table of every valid `ui_element` string (grouped by category, aliases
-  included), so an assistant never has to guess at or invent a plausible-sounding widget
-  name. Each profile calls out explicitly that an unrecognized `ui_element` does **not**
-  raise an error — it silently falls back to a plain text input.
-- The `FormModel` + `Field()` + `render_form_html()` pattern, and the lower-boilerplate
-  `FormModel.validate()` / `render_with_errors()` alternative.
-- CSRF protection (`csrf_mode`, `csrf_token_provider`, verification before validation).
-- Repeating sub-forms (`model_list`): resolving the item model from a `list[ItemModel]`
-  annotation, and the `ui_add_button_label` / `ui_item_title_template` /
-  `ui_collapsible_items` / `ui_items_expanded` customization knobs.
-- Dual-use JSON + HTML models via `as_api_model()`.
-- The distinction between Field constraints (`min_length`, `max_length`, `pattern`, `ge`/`le`
-  — enforced server-side and reflected in HTML automatically) and `ui_options` (UI-only
-  knobs with no constraint equivalent) — getting this wrong produces a form that *looks*
-  validated but isn't.
-- The distinction between `ui_element` (which widget renders) and the field's Pydantic
-  type (what's actually validated) — e.g. `ui_element="email"` only picks the HTML5 email
-  input; `EmailStr` is what makes the address format actually enforced on `.validate()`.
-- Deterministic field-mapping rules (Python type → `ui_element`) so repeated runs converge
-  on the same output instead of drifting between requests.
-
-HTMX live validation (`LiveValidator`) is intentionally **not** yet part of the packaged
-instructions — see [Validation](../tutorial/validation.md) for that.
-
-## Python API
-
-```python
-from pydantic_schemaforms import (
-    available_instruction_profiles,
-    get_app_instructions,
-    suggested_instruction_filename,
-)
-
-available_instruction_profiles()
-# ('claude', 'copilot', 'generic')
-
-suggested_instruction_filename('claude')
-# 'CLAUDE.md'
-suggested_instruction_filename('copilot')
-# '.github/copilot-instructions.md'
-suggested_instruction_filename('generic')
-# 'AI_INSTRUCTIONS.md'
-
-get_app_instructions('claude')
-# full instructions text for the Claude profile
-```
-
-Aliases are accepted where they're unambiguous — `get_app_instructions('github-copilot')`
-and `get_app_instructions('anthropic-claude')` both resolve to the same profile as
-`'copilot'` / `'claude'`.
-
-An unsupported profile raises `ValueError` naming the supported profiles, rather than
-silently falling back to one.
-
-## CLI
-
-Bootstrap an app repo's instruction file in one command instead of writing a throwaway
-script:
+The package includes five [Agent Skills](https://agentskills.io). Install them into your project
+with [library-skills](https://library-skills.io/):
 
 ```bash
-python -m pydantic_schemaforms.ai_instructions claude --write
-# writes ./CLAUDE.md
-
-python -m pydantic_schemaforms.ai_instructions copilot --write
-# writes ./.github/copilot-instructions.md (parent dirs created as needed)
-
-python -m pydantic_schemaforms.ai_instructions generic > AI_INSTRUCTIONS.md
-# or redirect stdout yourself
+uvx library-skills --claude
 ```
 
-Full CLI usage:
+It finds the skills in your installed packages and links them into `.agents/skills/`, and into
+`.claude/skills/` with `--claude` (Claude Code reads only that folder). The links point into the
+installed package, so upgrading pydantic-schemaforms updates the skills too; run the command
+again after adding or removing packages. On Windows without symlink permission, add `--copy`.
+
+| Skill | Your assistant uses it when you… |
+|---|---|
+| `pydantic-schemaforms` | build or change forms: fields, validation, nested forms, layouts, CSV import tables, live validation, CSRF, styling, or a form that misbehaves |
+| `schemaforms-create` | ask for a new form from a description: "create a login form", "create a tabbed layout for a customer profile". The code comes commented like a tutorial. |
+| `schemaforms-convert` | turn a Pydantic model, dataclass, JSON Schema, WTForms or Django form into a `FormModel` |
+| `schemaforms-upgrade` | upgrade code that uses removed APIs such as `FormBuilder` or `TabbedLayout` |
+| `schemaforms-document` | document the app's forms: docstrings and help text in the code, and a Markdown page describing every form |
+
+In Claude Code you can also call one directly, for example `/schemaforms-create a contact form`.
+
+## Single-file instructions
+
+For assistants that don't read skills, the same guidance is available as one file to put in your
+repository:
+
+```bash
+python -m pydantic_schemaforms.ai_instructions claude --write     # writes ./CLAUDE.md
+python -m pydantic_schemaforms.ai_instructions copilot --write    # writes ./.github/copilot-instructions.md
+python -m pydantic_schemaforms.ai_instructions generic > AI_INSTRUCTIONS.md
+```
+
+The file holds the shared rules, everything in the `pydantic-schemaforms` skill and its
+references, and the convert and upgrade skills. Unlike the skills, a copied file doesn't update
+with the package: write it again after upgrading.
 
 ```
 usage: python -m pydantic_schemaforms.ai_instructions [-h] [--write]
@@ -110,39 +60,56 @@ options:
                  destination.
 ```
 
+The same text is available from Python:
+
+```python
+from pydantic_schemaforms import (
+    available_instruction_profiles,
+    get_app_instructions,
+    suggested_instruction_filename,
+)
+
+available_instruction_profiles()           # ('claude', 'copilot', 'generic')
+suggested_instruction_filename('copilot')  # '.github/copilot-instructions.md'
+get_app_instructions('claude')             # the full text
+```
+
+Aliases such as `'github-copilot'` and `'anthropic-claude'` are accepted; an unknown profile
+raises `ValueError`.
+
+## What the instructions cover
+
+- The rules that matter most: import only from the top-level package, use the built-in inputs
+  and composites instead of hand-written HTML or JavaScript, put limits in `Field()` constraints
+  (not `ui_options`), and build HTML around submitted data with `html(t'...')`.
+- The route pattern (`render_form_html()`, `validate()`, `render_with_errors()`) for FastAPI and
+  Flask, taken from the tested examples in these docs.
+- Every `ui_element`, every `ui_options` key and every `Field()` setting.
+- Nested, optional and repeating sub-forms, layouts and the wizard; rule-based and live HTMX
+  validation; data tables; CSRF, captcha, honeypot and uploads; JSON APIs; extending the library.
+- Mapping tables for converting from Pydantic, WTForms, Django and JSON Schema, and upgrade
+  tables for every removed API.
+
 ## Try it in the example app
 
-The FastAPI example app renders all three profiles as tabs at `/ai-instructions` (linked
-from the "AI Assistant Instructions" card on the home page) — the same content
-`get_app_instructions()` returns, rendered from the packaged markdown files.
+The FastAPI example app renders all three single-file profiles at `/ai-instructions`.
 
-## Authoring the packaged instructions
+## Maintaining the instructions
 
-The 3 files under `pydantic_schemaforms/assets/ai/` (`generic_app_instructions.md`,
-`copilot_app_instructions.md`, `claude_app_instructions.md`) are **generated** — never
-hand-edit them directly, the same rule CLAUDE.md documents for `docs/index.md` etc. Edit
-`pydantic_schemaforms/assets/ai/_shared_instructions.md` (the ~90% common body — contract,
-library boundary, worked example, ui_element table, field cookbook, mapping, layout, CSRF,
-model_list, live validation, common mistakes) or `_profile_{generic,copilot,claude}.md` (the
-small per-profile title/intro and closing prompt-starter, containing an
-`<!-- INCLUDE: _shared_instructions.md -->` marker) instead, then run `make ai-instructions`
-(`scripts/build_ai_instructions.py`) to regenerate the 3 packaged files. This also runs as part
-of `make docs-deploy`/`docs-build`.
+Everything shipped is generated; never edit it directly:
 
-## Keeping this feature honest
+| Generated | Source |
+|---|---|
+| `pydantic_schemaforms/.agents/skills/<name>/` | `ai/skills/<name>/` |
+| `pydantic_schemaforms/assets/ai/*_app_instructions.md` | `ai/profiles/<profile>.md`, `ai/_shared.md` and `ai/skills/` |
 
-The packaged instructions are cross-checked against the library's actual behavior, not
-just written once and left to drift — every claim in them (which `ui_*` kwargs exist,
-what `model_list` options do, how CSRF verification works) has been verified by running
-the corresponding code, not just read from source. If you add a Field kwarg or change
-`model_list` behavior, update `pydantic_schemaforms/assets/ai/_shared_instructions.md` (or
-the relevant `_profile_*.md`) and re-run `make ai-instructions` in the same change.
+Edit the sources, then run `make ai-instructions` (`scripts/build_ai_instructions.py`). In the
+sources, `<!-- INCLUDE: _shared.md -->` inserts the rules every skill shares, and
+`<!-- INCLUDE-CODE: docs_src/... -->` inserts an example file from `docs_src/`, which
+`tests/test_docs_examples.py` runs, so the skills' examples can't go stale.
 
-The "Supported ui_element values (authoritative)" table in each profile doc is checked
-automatically: `tests/test_ai_instructions.py::test_authoritative_ui_element_table_matches_registry`
-parses every backticked token out of that section and asserts it exists in
-`get_input_component_map()`. If you add a new input class, give it its own `ui_element`
-(see `tests/test_input_registry.py` — the registry rejects two classes silently sharing
-one `ui_element`, which previously caused `ui_element="hidden"`/`"date"`/`"number"`/`"range"`
-to resolve to the wrong widget) and add it to the three doc tables in the same change, or
-this test will fail.
+`tests/test_ai_skills.py` checks that each skill has a valid name and description, stays under
+500 lines, links only to files that exist, imports only from the top-level package, and matches
+its sources. It also checks that every value in the `ui_element` table is a registered input. The
+"Agent skills install from the wheel" CI job builds the wheel and installs the skills with the
+real `library-skills` CLI.

@@ -47,16 +47,20 @@ To verify a doc change (including regenerating the three copies above from
 their sources) without touching the deploy pipeline: `make docs-build`
 (runs `scripts/changelog.py`, copies the three files, then `mkdocs build`).
 
-The 3 packaged AI-assistant instruction files under
-`pydantic_schemaforms/assets/ai/` (`generic_app_instructions.md`,
-`copilot_app_instructions.md`, `claude_app_instructions.md` — read by
-`pydantic_schemaforms/ai_instructions.py`'s `get_app_instructions()`/CLI) are
-**also build artifacts**, same rule: never hand-edit them directly. Edit
-`pydantic_schemaforms/assets/ai/_shared_instructions.md` (the common body) or
-`_profile_{generic,copilot,claude}.md` (the small per-profile intro/outro,
-each containing an `<!-- INCLUDE: _shared_instructions.md -->` marker)
-instead, then run `make ai-instructions` (`scripts/build_ai_instructions.py`
-— also runs automatically as part of `make docs-deploy`/`docs-build`).
+The AI-assistant files shipped in the package are **also build artifacts**,
+same rule: never hand-edit them directly.
+
+| Generated (in the package, don't edit) | Source of truth (edit this instead) |
+|---|---|
+| `pydantic_schemaforms/.agents/skills/<name>/` — the Agent Skills `uvx library-skills` installs into app projects | `ai/skills/<name>/` |
+| `pydantic_schemaforms/assets/ai/{generic,copilot,claude}_app_instructions.md` — read by `get_app_instructions()`/the CLI | `ai/profiles/<profile>.md` + `ai/_shared.md` + `ai/skills/` |
+
+`ai/_shared.md` holds the rules every skill repeats (inserted by a
+`<!-- INCLUDE: _shared.md -->` marker); `<!-- INCLUDE-CODE: docs_src/... -->`
+inserts a tested example file. Run `make ai-instructions`
+(`scripts/build_ai_instructions.py` — also runs as part of
+`make docs-deploy`/`docs-build`) after editing; `tests/test_ai_skills.py` and
+`tests/test_ai_instructions.py` fail if the output drifts from its sources.
 Cross-links between `README.md`/`docs/index.md` and other `docs/*.md` files
 can't use a single relative path that resolves correctly in both GitHub's
 README rendering and mkdocs' site (the same file serves both), so prefer
@@ -65,7 +69,7 @@ links there.
 
 ## Public API surface — keep exports and AI instructions honest
 
-`pydantic_schemaforms/assets/ai/_shared_instructions.md` tells AI agents building apps with this
+The packaged AI instructions (`ai/_shared.md`, rule 1) tell AI agents building apps with this
 library that **the only supported import surface is the top-level package**
 (`from pydantic_schemaforms import ...`) — never an internal submodule. That promise is only true
 if every name the instructions reference is actually re-exported top-level. When adding a new
@@ -76,9 +80,10 @@ public class/function meant for app-author use:
    list in `inputs/__init__.py` (`UTILITIES`/`SPECIALIZED_UTILITIES`/`REGISTRY_UTILITIES`) and map
    it to its defining module in `_MODULE_MAP` right below; the top-level package then forwards it
    automatically via its own lazy `__getattr__`, no separate top-level import needed.
-2. If it's something an app-building agent would plausibly need, document it in
-   `pydantic_schemaforms/assets/ai/_shared_instructions.md` and run `make ai-instructions`.
-3. Never let an example inside `_shared_instructions.md`, `docs/*.md`, or `examples/*.py` import
+2. If it's something an app-building agent would plausibly need, document it in the right
+   skill under `ai/skills/` (usually a `pydantic-schemaforms/references/` file) and run
+   `make ai-instructions`.
+3. Never let an example inside `ai/`, `docs/*.md`, `docs_src/` or `examples/*.py` import
    from an internal submodule to work around a missing top-level export — that means the export
    is missing, not that the example needs a workaround. Add the export instead.
 
@@ -103,6 +108,8 @@ pydantic_schemaforms/
   inputs/             # Field-level input classes
   integration/        # JSON/OpenAPI schema generators and framework checks
 examples/             # Live usage examples (not part of the package)
+ai/                   # Sources of the packaged AI skills and instructions (see above)
+docs_src/             # Tested code examples included into docs/ and ai/
 tests/
   test_invariants.py      # ← PROTECTED, see below
   test_meta_invariants.py # ← PROTECTED, see below
@@ -140,8 +147,8 @@ html_out = html(t'<input value="{user_input}">')   # user_input auto-escaped
 4. JavaScript generation (validation scripts, not HTML) may use f-strings —
    that's not an HTML context, so the html() processor doesn't apply there.
 5. **This bar applies equally to every example this project ships, not just
-   `pydantic_schemaforms/` source** — `pydantic_schemaforms/assets/ai/*.md`,
-   `docs/*.md`, and `examples/*.py`. These are literally copy-paste templates
+   `pydantic_schemaforms/` source** — the AI skills and instructions (`ai/`),
+   `docs/*.md`, `docs_src/` and `examples/*.py`. These are literally copy-paste templates
    for real apps; a vulnerable example is exactly as dangerous as a
    vulnerable library function. Any example that builds HTML from
    submitted/validated form data must use `html(t'...')`, never an f-string
@@ -225,7 +232,7 @@ Full details and worked examples: `docs/advanced/plugin-hooks.md`. This section 
 about *this library* shipping a new built-in composite (`builtin=True`); an
 *app author* registering their own composite via this same `LayoutEngine`
 mechanism (`builtin=False`) is the AI-instructions-facing use case — see
-"Public API surface" above and `_shared_instructions.md`'s own coverage of it.
+"Public API surface" above and `ai/skills/pydantic-schemaforms/references/extending.md`.
 
 - **`CompositeLayoutModel`** (`pydantic_schemaforms/composite_layout.py`) —
   subclass this instead of `FormModel` directly when the composite's *own

@@ -104,6 +104,39 @@ jobs:
       - name: Run Playwright tests
         run: pytest tests/playwright/ -v --no-cov -p no:xdist
 
+  library-skills:
+    # The Agent Skills in pydantic_schemaforms/.agents/skills/ must survive the
+    # wheel build and be found by the real library-skills CLI (#264).
+    name: Agent skills install from the wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Build the wheel
+        run: pip wheel --no-deps -w dist .
+
+      - name: Install the skills into a scratch project
+        run: |
+          mkdir -p /tmp/app/.claude && cd /tmp/app
+          printf '[project]\nname = "app"\nversion = "0"\ndependencies = ["pydantic-schemaforms"]\n' > pyproject.toml
+          python -m venv .venv
+          .venv/bin/pip install --no-deps "$GITHUB_WORKSPACE"/dist/pydantic_schemaforms-*.whl
+          .venv/bin/pip install library-skills==0.0.19
+          .venv/bin/python -m library_skills --claude --all --yes --no-tool-skill
+
+      - name: Check every skill is installed
+        run: |
+          cd /tmp/app
+          for skill in pydantic-schemaforms schemaforms-create schemaforms-convert schemaforms-upgrade schemaforms-document; do
+            test -f ".claude/skills/$skill/SKILL.md" || { echo "missing $skill"; exit 1; }
+          done
+          .venv/bin/python -m library_skills --claude --check
+
   docs-zensical:
     # Early warning for the planned move off MkDocs Material (#147): builds the
     # docs with Zensical, which reads mkdocs.yml as-is. Not required to pass;
