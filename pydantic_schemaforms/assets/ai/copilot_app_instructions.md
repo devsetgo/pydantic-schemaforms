@@ -1,276 +1,707 @@
-<!-- GENERATED FILE -- do not edit directly. Source: _shared_instructions.md + _profile_copilot.md. Regenerate with `make ai-instructions` (scripts/build_ai_instructions.py). -->
+<!-- GENERATED FILE -- do not edit directly. Source: ai/profiles/copilot.md + ai/_shared.md + ai/skills/. Regenerate with `make ai-instructions` (scripts/build_ai_instructions.py). -->
 # Copilot instructions for app teams using pydantic-schemaforms
 
-Goal: produce complete, runnable form integrations without reverse-engineering package internals.
+## Rules for any code that uses pydantic-schemaforms
 
-## Output contract (always deliver all items)
+These apply to every task. Read them before writing code.
 
-1. A FormModel class with field metadata.
-2. A full route handler with GET and POST flow.
-3. render_form_html call with explicit framework, layout, and submit_url.
-4. Validation loop that maps ValidationError to field errors.
-5. Sticky form values via form_data.
-6. A short explanation of mapping choices for non-obvious fields.
+1. **Treat the library as a dependency.** Never edit, copy or vendor its source into the app, and
+   never import from its submodules (`pydantic_schemaforms.inputs`, `.rendering`, `.templates`,
+   `.tstring`, `.validation`, `.live_validation`, ...). Everything app code needs is exported from
+   the top level: `from pydantic_schemaforms import FormModel, Field, html, ...`. If a name won't
+   import from there, re-check its spelling before looking anywhere else.
+2. **A form is a `FormModel`.** It's a Pydantic `BaseModel` subclass, so the model is the form, its
+   validation and its data. Ordinary Pydantic is expected: `@field_validator`,
+   `@model_validator`, `EmailStr`, `Enum`, `Literal`, `Optional`, `create_model()`.
+3. **Use what's built in before writing code.** Formatted inputs (phone, currency, tags, ratings,
+   date formats, file upload), repeating sub-forms, layouts, wizards and CSV-import tables are all
+   `Field(...)` settings or nested models, not HTML or JavaScript you write.
+4. **Constraints validate; `ui_options` only decorates.** `min_length`, `max_length`, `pattern`,
+   `ge`, `le`, `gt`, `lt` and `multiple_of` go on `Field()`: they're checked on submit, and most
+   also become HTML attributes so the browser checks them first. The same value in `ui_options` is never checked on the server.
+5. **Build HTML around user data with `html(t'...')`.** A value that passed `validate()` can still
+   contain `<script>`. `html()` takes a Python 3.14 t-string and escapes every interpolated
+   value; an f-string or `.format()` doesn't. Output the library rendered (`render_form_html()`,
+   `render_with_errors()`) is already safe and can be placed as is.
+6. **Mistakes fail silently, so check names.** An unknown `ui_element` renders a plain text box, an
+   unknown `ui_options` key becomes an HTML attribute, and a misspelled `framework` falls back
+   to another style. None of them raise. The frameworks are `"bootstrap"`, `"material"` and
+   `"none"`.
+7. **`EmailStr` needs the `email` extra** (`pydantic-schemaforms[email]`) just to define the
+   model. Add it to the app's dependencies whenever a form has an email field typed `EmailStr`.
 
-Do not return partial snippets unless the user explicitly asks for partial output.
+## pydantic-schemaforms
 
-## Library boundary — treat pydantic-schemaforms as a dependency, not app code
+pydantic-schemaforms turns a Pydantic model into a server-rendered HTML form and validates the
+submission with the same model. This skill covers building and changing forms in an app.
 
-This is the single most important rule in this document. Read it before writing any code.
-
-**`pydantic_schemaforms` is an external library. Never edit, copy, or vendor its source files
-into the app repo, and never import from its internal submodules** —
-`pydantic_schemaforms.inputs.*`, `pydantic_schemaforms.rendering.*`,
-`pydantic_schemaforms.templates`, `pydantic_schemaforms.tstring`, and similar — **even for names
-that are actually defined there**. `SafeHTML`, `html`, `FormTemplates`, `TemplateString`,
-`FormInput`/`BaseInput`, `register_input_class`, `LayoutEngine`, and everything else this document
-references are all re-exported at the top level specifically so app code never needs the internal
-path: `from pydantic_schemaforms import html, SafeHTML, FormInput, register_input_class,
-LayoutEngine`. If a name you need doesn't import from the top-level package, that's a signal to
-re-check the name/spelling before reaching into an internal module as a workaround.
-(`pydantic_schemaforms.live_validation` is the one documented exception — see the HTMX section
-below.)
-
-**Before writing any custom Python or HTML for a form field, check whether an existing
-`ui_element`, `ui_options` key, or `Field()` constraint already does it.** The "Supported
-ui_element values" table and "Field cookbook" sections below cover the overwhelming majority of
-real-world form fields — formatted text (phone/currency/SSN/credit card), tags, ratings, sliders,
-file upload with drag-and-drop, captcha, repeating sub-forms, and custom date/time display
-formats are all declarative `Field(...)` configuration, not code you write.
-
-**This is not a rule against using Pydantic — it is the opposite.** `FormModel` subclasses
-`pydantic.BaseModel` directly, so ordinary Pydantic features are completely normal and expected
-on a `FormModel` subclass, and are the *correct* tool for anything not already covered below:
-
-- **Cross-field/business validation** (e.g. "password confirmation must match", "end date must
-  be after start date") → a standard Pydantic `@model_validator` on the `FormModel` subclass, no
-  library-specific step needed:
-
-  ```python
-  from pydantic import model_validator
-  from pydantic_schemaforms import Field, FormModel
+Related skills, when installed: `schemaforms-create` (a new form from a short description),
+`schemaforms-convert` (an existing model, schema or form library to a `FormModel`),
+`schemaforms-upgrade` (code using removed APIs) and `schemaforms-document` (document an app's forms).
 
 
-  class SignupForm(FormModel):
-      password: str = Field(..., ui_element='password')
-      password_confirm: str = Field(..., ui_element='password')
 
-      @model_validator(mode='after')
-      def passwords_match(self):
-          if self.password != self.password_confirm:
-              raise ValueError('Passwords do not match')
-          return self
-  ```
+### What to deliver
 
-  `.validate()` surfaces this as a normal validation error automatically — no extra wiring.
+For a new or changed form, deliver all of these unless the user asks for less:
 
-The rule is specifically about *not reimplementing what this library already provides on top of
-Pydantic* (hand-rolled widget HTML/JS instead of `ui_element`, a bespoke validation-result/form-
-submission pipeline instead of `.validate()`/`ValidationResult`, hand-written add/remove-item
-JavaScript instead of `model_list`) and *not reaching into the library's private internals* as if
-they were part of the app's own codebase to extend or monkeypatch. When a genuinely custom
-*rendering* need falls outside everything built in, the library has one supported extension
-point — use it, do not invent something else:
+1. A `FormModel` with a `title` on every field and constraints on `Field()`.
+2. Both routes: GET renders the form, POST validates it.
+3. `render_form_html()` (or `render_form_html_async()` in an `async def` route) with
+   `submit_url=` matching the route. Pass `framework=` and `layout=` when they aren't the defaults.
+4. POST handled with `Model.validate(request_form, ...)` and, on failure,
+   `result.render_with_errors()`. Never `Model(**data)` with `try/except ValidationError`.
+5. Any HTML built around submitted data uses `html(t'...')`.
+6. A sentence on each non-obvious choice (an input type, a layout, a validator).
 
-- **A genuinely new widget with no matching `ui_element`** → subclass `BaseInput` (or
-  `FormInput`) and register it once, at app startup, before serving any requests — do not
-  hand-write `<input>` HTML in a route or template:
+### The pattern
 
-   ```python
-   from pydantic_schemaforms import FormInput, html, register_input_class
-
-
-   class ColorSwatchInput(FormInput):
-       ui_element = 'color_swatch'
-
-       def get_input_type(self) -> str:
-           return 'text'
-
-       def render(self, **kwargs) -> str:
-           value = kwargs.get('value', '')
-           name = kwargs.get('name', '')
-           return html(t'<input type="text" name="{name}" value="{value}" class="color-swatch">')
-
-
-   register_input_class(ColorSwatchInput, aliases=['color_swatch'])
-   ```
-
-  Do this once at module import time (e.g. in the module that defines your `FormModel`s, before
-  the app starts serving requests) — then use `ui_element="color_swatch"` in any `Field(...)`
-  exactly like a built-in widget. This is genuinely the exception, not the default path: reach
-  for it only after confirming nothing in the "Supported ui_element values" table fits. `render()`
-  must build HTML through `html(t'...')` (a t-string), never an f-string or `.format()` — that's
-  what auto-escapes `value`/`name`; the same rule that applies to route handlers below applies
-  here.
-
-- **A genuinely new composite control** (something bigger than one input — a whole table, a
-  repeating wizard, anything that doesn't fit a single `ui_element`) → this is what
-  `DataTableLayout` (see its own section below) and `model_list` are themselves built on, and
-  it's the same mechanism you should reuse rather than hand-rolling a bespoke rendering path.
-  Register via the `LayoutEngine` class (top-level export):
-
-  ```python
-  from pydantic_schemaforms import LayoutEngine
-
-
-  @LayoutEngine.layout_renderer('kanban_board', builtin=False)
-  def render_kanban_board(
-      field_name, field_schema, value, ui_info, context, engine
-  ) -> str: ...  # build and return the composite's HTML with html(t'...')
-  ```
-
-  The engine calls the renderer with exactly these six positional arguments; the field's own
-  error message is `context.error` and its nested errors are `context.child_errors`. Then
-  declare the field as `Field(default_factory=dict, input_type="layout",
-  layout_handler="kanban_board")` and build its value with your own class method (mirroring
-  `DataTableLayout.as_layout_value()`'s convention) — the field's *value* carries whatever the
-  renderer needs. `builtin=False` is correct for an app-level renderer like this (only the
-  library's own shipped renderers use `builtin=True`). If the composite's own fields ARE its
-  structure (table columns, board lanes — not a `list[ItemModel]` like `model_list`), subclass
-  `CompositeLayoutModel` (also a top-level export) instead of `FormModel` for that structure
-  class; it disables `render_form()` since a composite isn't meant to render as one standalone
-  instance's inputs. This is a deep extension point — reach for it only when the "Supported
-  ui_element values" table and existing composites (`DataTableLayout`, `model_list`) genuinely
-  don't fit, and prefer sticking with those two over inventing a new composite when either
-  already covers the need.
-
-For the optional HTMX live-validation subsystem specifically (not the primary `.validate()`
-path — see that section below), a reusable custom check is `CustomRule(func)` from
-`pydantic_schemaforms`, registered on a `FieldValidator`/`FormValidator`. Do not reach for this
-for ordinary server-side validation — `Field()` constraints and `@model_validator` above cover
-that.
-
-There is also a separate, standalone **imperative validation subsystem** (`ValidationSchema`,
-`FormValidator`, `FieldValidator`'s fluent API, `ValidationResponse`, plus convenience factories
-`create_email_validator()`/`create_password_strength_validator()`/`create_validator()`) for
-building/composing validation rules at runtime rather than through `Field()` constraints on a
-typed model — e.g. `FieldValidator("email").required().email(check_deliverability=True)`,
-cross-field rules via `FormValidator`, or conditional validation. This is the same subsystem the
-HTMX live-validation section reaches for `CustomRule`/`FieldValidator` from. **Default to `Field()`
-constraints + `@model_validator` on a `FormModel` for anything with a known schema — that's what
-every other section of this document assumes** — and reach for this fluent API only when you
-genuinely don't have (or don't want) a typed model for the validation rules themselves, e.g. rules
-assembled dynamically or shared across forms that aren't the same `FormModel`. All of these names
-are top-level exports; the full API is documented in `docs/reference/validation-rules.md`, not repeated here.
-
-An unrecognized `ui_element` value does not raise an error — it silently falls back to a plain
-text input, which is easy to miss in review. If a field's semantics don't cleanly match anything
-in the table below, use the closest built-in primitive rather than guessing at a plausible-
-sounding custom name, and only write a real custom widget (`register_input_class`, above) if the
-mismatch actually matters to the user.
-
-## Complete worked example (FastAPI)
-
-Verified end-to-end (GET renders, invalid POST re-renders with errors, valid POST succeeds). Use
-this as the template for new form endpoints instead of inventing a different model/route shape:
+Every form route looks like this. FastAPI:
 
 ```python
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from pydantic import EmailStr
 
-from pydantic_schemaforms import Field, FormModel, html
+from pydantic_schemaforms import Field, FormModel, html, render_form_html_async
+
+
+class SignupForm(FormModel):
+    name: str = Field(title='Full name', min_length=2)
+    email: str = Field(title='Email', ui_element='email')
+
 
 app = FastAPI()
+RENDER_OPTIONS = {'include_framework_assets': True, 'asset_mode': 'cdn'}
 
 
-class EventRegistration(FormModel):
-    full_name: str = Field(..., min_length=2, max_length=80, title='Full Name', ui_element='text')
-    email: EmailStr = Field(..., title='Email Address', ui_element='email')
-    age: int = Field(..., ge=13, le=120, title='Age', ui_element='number')
-    ticket_type: str = Field(
-        ...,
-        title='Ticket Type',
-        ui_element='select',
-        ui_options={'choices': ['standard', 'vip', 'student']},
-    )
-    dietary_notes: str = Field(
-        '', title='Dietary Notes', ui_element='textarea', ui_options={'rows': 3}
-    )
-    newsletter_opt_in: bool = Field(False, title='Subscribe to newsletter', ui_element='checkbox')
+@app.get('/signup', response_class=HTMLResponse)
+async def show_signup():
+    return await render_form_html_async(SignupForm, submit_url='/signup', **RENDER_OPTIONS)
 
 
-@app.get('/register', response_class=HTMLResponse)
-async def register_get():
-    form_html = await EventRegistration.render_form_async(
-        submit_url='/register', framework='bootstrap'
-    )
-    return f'<html><body>{form_html}</body></html>'
+@app.post('/signup', response_class=HTMLResponse)
+async def submit_signup(request: Request):
+    result = SignupForm.validate(await request.form(), submit_url='/signup', **RENDER_OPTIONS)
+    if not result.is_valid:
+        return await result.render_with_errors_async()
 
-
-@app.post('/register', response_class=HTMLResponse)
-async def register_post(request: Request):
-    result = EventRegistration.validate(
-        await request.form(), submit_url='/register', framework='bootstrap'
-    )
-    if result.is_valid:
-        return HTMLResponse(html(t'<h1>Thanks, {result.data["full_name"]}!</h1>'))
-    form_html = await result.render_with_errors_async()
-    return HTMLResponse(f'<html><body>{form_html}</body></html>')
+    name = result.data['name']
+    return html(t'<p>Thanks for signing up, {name}!</p>')
 ```
 
-Notes:
-
-- **Never interpolate submitted/validated data into HTML with an f-string or `.format()`,
-  even after `.validate()` succeeded** — validation confirms the value satisfies Pydantic type/
-  constraint rules, it does not make the value safe to place in HTML (a `full_name` of
-  `<script>...</script>` is a perfectly valid `str`). Wrap any hand-built HTML that includes such
-  a value in `html(t'...')` (a t-string, not an f-string) as shown above — this is the library's
-  structural XSS defense and it applies to every byte of hand-written HTML in your route code,
-  not just to what the library itself renders. `form_html`/`VALIDATOR_SCRIPT`-style variables that
-  are *already-rendered output from this library* (e.g. `result.render_with_errors_async()`'s
-  return value) are safe to drop into an f-string as-is — they're pre-escaped HTML, not raw user
-  input.
-- `FormModel` subclasses `pydantic.BaseModel` directly — it is the schema, the validator, and
-  the render target. There is no separate form-model abstraction to design or invent.
-- `ui_element` picks the widget and browser hint (`type="email"`, etc.) — it does not add
-  server-side format validation. Use the matching Pydantic type for that (`EmailStr`,
-  `AnyUrl`/`HttpUrl`); `Field()` constraints (`min_length`, `ge`, `le`, `pattern`, ...) are what
-  `.validate()` actually enforces.
-- `EmailStr` (used above, and in every email field in this document) requires the optional
-  `email-validator` package **just to define the model class**, not only to validate a value —
-  a `FormModel` with an `EmailStr` field raises `ImportError` at class-definition time without
-  it. If the app you're generating has any email field, add
-  `pydantic-schemaforms[email]` to its dependencies (or plain `email-validator`) rather than
-  assuming the base `pydantic-schemaforms` install covers it.
-- `FormModel.validate(data, submit_url=...)` returns a `ValidationResult`;
-  `result.render_with_errors_async()` re-renders with field errors and the submitted values
-  preserved — don't hand-roll try/except ValidationError when this exists.
-
-### Forms whose fields are only known at runtime
-
-Every form is a `FormModel`; there is no separate builder API. When the fields come from data
-at runtime (an admin tool assembling a form from a database row, a config file), build the
-`FormModel` subclass with Pydantic's own `create_model()`. It renders, validates and re-renders
-errors exactly like a declared class:
+Flask:
 
 ```python
-from pydantic import create_model
+from flask import Flask, request
 
-from pydantic_schemaforms import Field, FormModel
+from pydantic_schemaforms import Field, FormModel, html, render_form_html
 
-spec = [('name', 'text', True), ('email', 'email', True), ('notes', 'textarea', False)]
 
-FeedbackForm = create_model(
-    'FeedbackForm',
-    __base__=FormModel,
-    **{
-        name: (str, Field(... if required else '', ui_element=ui_element, title=name.title()))
-        for name, ui_element, required in spec
-    },
+class SignupForm(FormModel):
+    name: str = Field(title='Full name', min_length=2)
+    email: str = Field(title='Email', ui_element='email')
+
+
+app = Flask(__name__)
+RENDER_OPTIONS = {'include_framework_assets': True, 'asset_mode': 'cdn'}
+
+
+@app.get('/signup')
+def show_signup():
+    return render_form_html(SignupForm, submit_url='/signup', **RENDER_OPTIONS)
+
+
+@app.post('/signup')
+def submit_signup():
+    result = SignupForm.validate(request.form, submit_url='/signup', **RENDER_OPTIONS)
+    if not result.is_valid:
+        return result.render_with_errors()
+
+    name = result.data['name']
+    return html(t'<p>Thanks for signing up, {name}!</p>')
+```
+
+- **`validate()` takes the raw request form** (`await request.form()`, `request.form`) or a nested
+  dict such as a JSON body. Don't convert it first: `dict(...)` and `to_dict()` drop repeated
+  values from multi-selects and checkbox groups.
+- **Pass the same render options to `validate()`** (`layout=`, `framework=`, `csrf_mode=`, ...).
+  `render_with_errors()` reuses them, so the failed form comes back looking the same.
+- **`include_framework_assets=True, asset_mode="cdn"`** makes the response a complete styled page.
+  In an app whose base template already loads Bootstrap, drop both and put the form string into
+  the template (`{{ form_html | safe }}` in Jinja).
+- **`result.data`** is a plain dict nested like the model. `result.instance` is the validated
+  model object. `result.errors` is nested the same way: `{"email": "..."}`,
+  `{"address": {"city": "..."}}`, `{"pets": {1: {"name": "..."}}}`, plus `"_errors"` for
+  form-wide messages.
+
+### Choosing inputs
+
+Without `ui_element`, the input comes from the field's type:
+
+| Type | Input |
+|---|---|
+| `str` | text box |
+| `int`, `float` | number box (`float` accepts decimals) |
+| `bool` | checkbox |
+| `date`, `datetime`, `time` | date, date-and-time, time picker |
+| `EmailStr`, `AnyUrl` | email box, URL box |
+| `Enum`, `Literal[...]` | dropdown of the values; `list[...]` of either is a multi-select |
+| `X \| None` | the same input, optional; an optional dropdown gets an empty first choice |
+| another `FormModel` | a sub-form |
+| `list[FormModel]` | a repeating sub-form with Add and Remove buttons |
+
+Set `ui_element=` for anything else, for example `"textarea"`, `"password"`, `"radio"`,
+`"toggle"`, `"tags"`, `"currency"`, `"phone"`, `"file"`, `"rating"`, `"color"`. The complete list,
+with every `ui_options` key, is in the inputs reference (see "Inputs reference" below). Check it before
+using a value: an unknown one silently renders a text box.
+
+Field settings used most:
+
+| `Field(...)` argument | Effect |
+|---|---|
+| `title="Full name"` | The label; without it, the field name is used |
+| `description="..."` | Help text under the input |
+| `ui_placeholder="..."` | Placeholder text |
+| `ui_autofocus=True` | Cursor starts here |
+| `ui_options={...}` | Settings for the chosen input (`rows`, `choices`, `language`, ...) |
+| a default value | The value a fresh form starts with; a field without one is required |
+
+### Validation
+
+- **Field rules:** Pydantic constraints on `Field()` (`min_length`, `ge`, `pattern`, ...) and the
+  type itself (`EmailStr`, `date`, `Enum`).
+- **Your own checks:** `@field_validator` for one field (its message goes under that field),
+  `@model_validator(mode="after")` for rules across fields (its message is form-wide, under
+  `"_errors"`). Raise `ValueError("message")`; the message is shown as written.
+- **Errors your route finds after validation** (a taken username, a wrong password): render again
+  with `render_form_html(Model, form_data=submitted, errors={"username": "..."}, ...)`, or
+  `errors={"_errors": "..."}` for a message about the whole form.
+- Live as-you-type checks, rule classes such as `PhoneRule`, and cross-field rule sets: see
+  the validation reference (see "Validation reference" below).
+
+### Pre-filling a form
+
+A fresh form starts from the field defaults. To edit saved data, pass it as `form_data`: dates,
+`Enum` members and nested dicts can be passed as they are. Passed data is used as is, so fields
+left out are empty, not defaulted.
+
+```python
+form_html = render_form_html(
+    ProductForm,
+    form_data={name: row[name] for name in ProductForm.model_fields},
+    submit_url=f'/products/{product_id}/edit',
 )
 ```
 
-Still default to a declared `FormModel` for anything known ahead of time, including forms you
-generate from a spec or description: a named class is reusable and type-checked.
+### More
 
-## Supported ui_element values (authoritative)
+| Task | Reference |
+|---|---|
+| Every input, every `ui_options` key, every `Field()` setting | inputs (see "Inputs reference" below) |
+| Sub-forms, optional sub-forms, repeating sub-forms, tabbed/accordion/side-by-side/wizard layouts | complex forms (see "Complex forms reference" below) |
+| Rule classes, live HTMX validation, the two error shapes | validation (see "Validation reference" below) |
+| CSV import into an editable, validated table | data tables (see "Data tables reference" below) |
+| CSRF, captcha, honeypot, file uploads, safe HTML | security (see "Security reference" below) |
+| Styling, assets, async rendering, JSON API from the same model, JSON Schema | rendering (see "Rendering reference" below) |
+| A custom input or a custom composite control | extending (see "Extending reference" below) |
+
+### Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| The form has no styling | The page doesn't load the CSS framework. Load Bootstrap in the page template, or pass `include_framework_assets=True` (with `asset_mode="cdn"` or the default inlined files). |
+| A field renders as a plain text box | Misspelled or unsupported `ui_element`, or a type with no inferred input. Check the inputs reference. |
+| A failed submit comes back in a different layout or style | `layout=`/`framework=` were passed to `render_form_html()` but not to `validate()`. |
+| `layout="tabbed"` raises `ValueError` | The grouped layouts arrange sub-forms. Split the fields into nested `FormModel`s. |
+| A validator's message isn't next to the field | `@model_validator` messages are form-wide. Use `@field_validator` to attach it to one field. |
+| A limit isn't enforced on the server | It's in `ui_options` instead of on `Field()`. |
+| Values are missing from multi-selects or checkbox groups | The request form was converted with `dict()`/`to_dict()` before `validate()`. |
+| `ImportError` mentioning `email-validator` | A field is typed `EmailStr`; install `pydantic-schemaforms[email]`. |
+| `ImportError` or `FormLayoutRemovedError` naming a replacement | The code uses a removed API; follow the message, or use the `schemaforms-upgrade` skill. |
+
+### Before finishing
+
+- `submit_url` matches the POST route, and both routes exist.
+- Every `ui_element` and `ui_options` key used is in the inputs reference.
+- Limits are `Field()` constraints, not `ui_options`.
+- No import from a `pydantic_schemaforms.` submodule.
+- No f-string or `.format()` around submitted values; `html(t'...')` instead.
+- State-changing forms behind a login use CSRF protection (see the security reference).
+- No hand-written input HTML, add/remove JavaScript or CSV upload handling for something the
+  library already renders.
+
+## Complex forms reference
+
+A bigger form is several `FormModel`s nested as fields of a parent `FormModel`. There are no
+wrapper or layout classes: a sub-form is an ordinary typed field, and how the groups are shown is
+one `layout=` argument.
+
+### Sub-forms and repeating sub-forms
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+
+class Address(FormModel):
+    street: str = Field(title='Street')
+    city: str = Field(title='City', min_length=2)
+
+
+class Pet(FormModel):
+    name: str = Field(title='Name')
+    age: int = Field(0, title='Age', ge=0)
+
+
+class ProfileForm(FormModel):
+    nickname: str = Field(title='Nickname')
+    address: Address = Field(title='Home address')
+    pets: list[Pet] = Field(
+        default_factory=list,
+        title='Pets',
+        max_length=5,
+        ui_add_button_label='Add a pet',
+        ui_item_title_template='{name}',
+    )
+```
+
+- **`address: Address`** renders the `Address` fields as a titled section, inputs named
+  `address.street`, `address.city`. Its own rules apply as usual, and it can nest further.
+- **`pets: list[Pet]`** renders one card per item with Add and Remove buttons. `min_length` and
+  `max_length` on the list count items, are checked on submit, and are enforced by the buttons.
+  With `min_length=n`, an empty list starts with `n` blank items.
+- **Never hand-write add/remove JavaScript**; a `list[FormModel]` field already does it.
+
+| Option on a sub-form field | Effect |
+|---|---|
+| `title="..."` | Section heading, and the tab, column, panel or step title in grouped layouts |
+| `ui_help_text="..."` | Help text under the heading |
+| `ui_collapsible=True` | Under `layout="vertical"`, a collapsible section |
+| `ui_collapsed=True` | Starts collapsed; opens by itself when it contains an error |
+| `ui_order=n` | Position among the groups (lower first) |
+| `ui_step_title="..."` | Step title under `layout="wizard"` only |
+
+| Option on a `list[FormModel]` field | Effect |
+|---|---|
+| `ui_add_button_label="Add a pet"` | Text of the Add button |
+| `ui_item_title_template="{name}"` | Each card's title, filled from the item's fields; `{index}` is the 1-based position |
+| `ui_collapsible_items=False` | Plain cards instead of collapsible ones |
+| `ui_items_expanded=False` | Cards start collapsed |
+
+These are `Field()` arguments, not `ui_options` keys.
+
+### Optional sub-forms
+
+A sub-form typed `Address | None` can be left empty. Its inputs aren't required in the browser,
+and when every one of them comes back blank or still at its default, `validate()` returns `None`
+for it. Once the user fills in part of it, the whole sub-form is validated. A common use is a
+billing address that's only needed when it differs:
+
+```python
+from typing import Literal, Self
+
+from pydantic import EmailStr, model_validator
+
+from pydantic_schemaforms import Field, FormModel
+
+
+class Address(FormModel):
+    street: str = Field(title='Street')
+    city: str = Field(title='City', min_length=2)
+    postal_code: str = Field(title='Postal code', pattern=r'^[A-Za-z0-9 -]{3,10}$')
+    country: Literal['US', 'CA', 'GB', 'FR', 'DE'] = Field('US', title='Country')
+
+
+class CheckoutForm(FormModel):
+    email: EmailStr = Field(title='Email for the receipt')
+    shipping: Address = Field(title='Shipping address')
+    billing_same_as_shipping: bool = Field(True, title='Bill to the shipping address')
+    billing: Address | None = Field(None, title='Billing address', ui_collapsed=True)
+
+    @model_validator(mode='after')
+    def billing_given(self) -> Self:
+        if not self.billing_same_as_shipping and self.billing is None:
+            raise ValueError('Enter a billing address, or bill to the shipping address')
+        return self
+
+    def billing_address(self) -> Address:
+        return self.shipping if self.billing_same_as_shipping else self.billing
+```
+
+### Layouts
+
+Pass `layout=` to `render_form_html()` **and** to `validate()`, so a failed submit comes back in
+the same layout.
+
+| `layout=` | Result |
+|---|---|
+| `"vertical"` (default) | The form's own fields, then each sub-form as a titled section |
+| `"tabbed"` | One tab for the form's own fields, then one tab per sub-form |
+| `"accordion"` | The same groups as collapsible panels, the first open |
+| `"side-by-side"` | The same groups as columns in one row |
+| `"wizard"` | The same groups as steps with Back and Next |
+
+- The grouped layouts arrange **sub-forms**. On a form with only plain fields they raise
+  `ValueError`: split the fields into nested models, one per section.
+- The first group holds the parent's own plain fields, titled by
+  `model_config = {"title": "..."}` or "General". Each sub-form (or list of sub-forms) is one
+  group, in declaration order unless `ui_order` says otherwise.
+- After a failed submit, the first tab, panel or step with an error opens.
+- Use `tabbed` or `accordion` for long forms with distinct sections (account, profile,
+  preferences), `side-by-side` for a few short groups, `wizard` for a flow filled in order
+  (signup, onboarding, checkout, applications).
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+
+class Contact(FormModel):
+    email: str = Field(title='Email', ui_element='email')
+    phone: str = Field('', title='Phone', ui_element='tel')
+
+
+class Address(FormModel):
+    street: str = Field(title='Street')
+    city: str = Field(title='City')
+
+
+class Preferences(FormModel):
+    newsletter: bool = Field(False, title='Send me the newsletter')
+    language: str = Field(
+        'en', title='Language', ui_element='select', ui_options={'choices': ['en', 'fr', 'de']}
+    )
+
+
+class AccountForm(FormModel):
+    model_config = {'title': 'About you'}
+
+    name: str = Field(title='Full name')
+    contact: Contact = Field(title='Contact details')
+    address: Address = Field(title='Address')
+    preferences: Preferences = Field(title='Preferences', ui_order=1)
+```
+
+### Wizard
+
+```python
+from models import AccountForm
+
+from pydantic_schemaforms import render_form_html
+
+form_html = render_form_html(
+    AccountForm,
+    layout='wizard',
+    wizard_options={'next_label': 'Continue', 'linear': True},
+    submit_url='/account',
+)
+```
+
+- **One `<form>`, one POST.** The routes are the same as for any layout. Never build a route per
+  step or keep step state in the session.
+- **Next checks the current step** with the browser's own validation; the server checks
+  everything on submit. The submit button is on the last step. Without JavaScript, all steps show
+  stacked.
+- `wizard_options`: `linear` (default `True`; `False` lets the progress header jump to any step),
+  `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`). An unknown key
+  raises `ValueError`. Pass it to `validate()` too.
+
+### Nested data and errors
+
+`result.data` is nested exactly like the model:
+
+```python
+{
+    'nickname': 'mk',
+    'address': {'street': '1 Main', 'city': 'Paris'},
+    'pets': [{'name': 'Rex', 'age': 3}],
+}
+```
+
+`result.errors` is nested the same way, so an error sits at the same path as its value:
+
+```python
+{
+    'address': {'city': 'String should have at least 2 characters'},
+    'pets': {1: {'age': 'Must be 0 or greater'}},
+}
+```
+
+- A list's errors are keyed by item index; only failing items appear.
+- A message about a whole list or sub-form (such as too many items) is a string at its key, or
+  under `"_errors"` there when its children also have errors. Form-wide messages are under the
+  top-level `"_errors"`.
+- A node can be a string or a dict, so read defensively:
+  `result.errors.get("address", {}).get("city")` only works when `address` has child errors.
+- `result.error_list()` gives a flat `[{"loc": ["pets", 1, "age"], "msg": "..."}]` list for logs
+  and API responses.
+- Pre-fill nested forms with nested data:
+  `form_data={"address": {"city": "Paris"}, "pets": [{"name": "Rex"}]}`.
+- Inputs are named `address.city` and `pets[0].name` in the HTML. The library builds and decodes
+  those names; **never construct or parse them in app code**, and never decode the form yourself
+  before `validate()`.
+
+## Data tables reference
+
+`DataTableLayout` imports a CSV file into an editable, validated table inside a form: file
+upload, a review step, per-row errors, search, sorting and paging. Don't hand-build the upload
+UI, per-row validation or load/submit branching.
+
+### Complete example (FastAPI)
+
+```python
+from enum import Enum
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, Response
+from pydantic import EmailStr
+
+from pydantic_schemaforms import DataTableLayout, Field, FormModel, html, render_form_html_async
+
+
+class Department(str, Enum):
+    engineering = 'engineering'
+    sales = 'sales'
+    support = 'support'
+
+
+class EmployeeImport(DataTableLayout):
+    name: str = Field(..., input_type='text')
+    email: EmailStr = Field(..., input_type='email')
+    department: Department = Field(Department.engineering, input_type='select')
+
+    model_config = {
+        'buttons': ['csv', 'copy'],
+        'page_length': 25,
+        'csv_template': True,
+        'style': {'striped': True, 'bordered': True},
+    }
+
+
+class EmployeeImportForm(FormModel):
+    employees: Any = Field(
+        default_factory=dict,
+        title='Employees',
+        input_type='layout',
+        layout_handler='datatable',
+    )
+
+
+saved_rows: list[dict] = []  # stand-in for a database
+app = FastAPI()
+
+
+async def render_page(*, rows=None, row_errors=None, reviewing=False, notice='') -> str:
+    table = EmployeeImport.as_layout_value(
+        rows=saved_rows if rows is None else rows,
+        row_errors=row_errors,
+        reviewing=reviewing,
+        notice=notice,
+        discard_url='/employees/import',
+    )
+    return await render_form_html_async(
+        EmployeeImportForm,
+        form_data={'employees': table},
+        submit_url='/employees/import',
+        include_submit_button=False,  # the table has its own Submit
+        include_framework_assets=True,
+        asset_mode='cdn',
+    )
+
+
+@app.get('/employees/import', response_class=HTMLResponse)
+async def show_import():
+    return await render_page()
+
+
+@app.post('/employees/import', response_class=HTMLResponse)
+async def import_or_save(request: Request):
+    result = await EmployeeImport.handle_import_post(await request.form(max_fields=200_000))
+
+    if result.action == 'load':  # a CSV was loaded for review; nothing saved yet
+        return await render_page(
+            rows=result.rows, row_errors=result.row_errors, reviewing=True, notice=result.notice
+        )
+    if result.has_errors:  # keep reviewing until every row is valid
+        return await render_page(rows=result.rows, row_errors=result.row_errors)
+
+    saved_rows[:] = result.rows
+    count = len(result.rows)
+    return html(t'<p>Saved {count} rows.</p>')
+
+
+@app.get('/employees/import/template.csv')
+def download_template() -> Response:
+    return Response(
+        content=EmployeeImport.csv_template_bytes(),
+        media_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="employees_template.csv"'},
+    )
+```
+
+### Rules
+
+- Subclass `DataTableLayout` with one field per table column. A column declared with
+  `Field(..., input_type=...)` renders as a real editable widget per cell (e.g. a dropdown
+  for an `Enum`); a plain field with no `input_type` renders as read-only, escaped text (still
+  round-trips correctly on submit via a hidden input per cell).
+- Embed it as a layout field on a plain `FormModel`: `Any = Field(default_factory=dict,
+  input_type="layout", layout_handler="datatable")`, built via
+  `YourImportModel.as_layout_value(rows=..., row_errors=...)`. Pass
+  `include_submit_button=False` to `render_form_html_async()` — the rendered field already
+  includes its own file input and "Load CSV"/"Submit" buttons when `model_config["csv_upload"]`
+  is on (the default).
+- Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
+  `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
+  `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
+  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`["csv",
+  "copy"]`; `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
+  `True` links a downloadable header-only CSV), and `style` (`{"striped", "bordered", "hover",
+  "compact"}` booleans). Per-row errors are `dict[int, dict[str, str]]` (row index →
+  field → message), the shape `ImportResult.row_errors` and `as_layout_value(row_errors=...)`
+  share; `RowError(row_index, errors, raw)` is the per-row record `parse_submitted_rows()`
+  returns.
+- `as_layout_value()`'s full signature is `as_layout_value(rows=None, row_errors=None, *,
+  table_id=None, asset_mode="vendored", include_assets=True, reviewing=False, notice="",
+  discard_url=None)`. The keyword-only ones control the built-in review UI specifically: pass
+  `reviewing=True` after a "Load CSV" click so the button relabels to "Reload CSV" and an info
+  banner explains nothing is saved yet; `notice=` shows a one-off warning banner (e.g. "Choose a
+  CSV file first"); `discard_url=` adds a "discard and start over" link. `table_id` defaults to
+  one derived from the embedding field's name, so you rarely need it.
+- Several `DataTableLayout` fields can share one page or form: each table's inputs and buttons
+  are namespaced by its own field, so loading a CSV into one leaves the others alone. If two of
+  them use the *same* row model, pass the embedding field's name to tell them apart:
+  `await EmployeeImport.handle_import_post(form, field="joining")` (same `field=` on
+  `parse_submitted_rows()`). With one table per row model, leave `field` out.
+- On POST, call `await YourImportModel.handle_import_post(await request.form(max_fields=...))`
+  instead of hand-rolling load-vs-submit branching — it parses/validates, merges rows back into
+  their original order (an invalid row keeps its raw values instead of vanishing), and returns
+  an `ImportResult` with `action: Literal["load", "submit", "reload"]`. Handle it as: `"load"` —
+  preview only, nothing committed, re-render with `reviewing=True`; `"submit"` — a normal
+  Load-then-Submit commit; `"reload"` — commit exactly like `"submit"` (this is the action
+  `model_config["editable"] = False` tables always return instead of `"submit"`, since there's no
+  separate review step for them — see the performance note below). **Branching on only `"load"`
+  vs `"submit"` and ignoring `"reload"` means an `editable=False` table's imports silently never
+  get committed.**
+- `handle_import_post()` is `async def`-only (it awaits the uploaded file's `.read()`), which
+  assumes a Starlette/FastAPI-style async `UploadFile`. **It does not work unmodified on Flask**
+  (WSGI, sync) — Flask's uploaded file is a sync `FileStorage` whose `.read()` is
+  not awaitable. `DataTableLayout` is a FastAPI/Starlette-oriented feature; for a Flask app that
+  needs CSV import, either run it under an ASGI adapter or handle the CSV upload/parsing
+  yourself with `DataTableLayout.parse_csv_rows(raw_bytes)` (sync, safe to call directly) instead
+  of `handle_import_post()`.
+- Pass a real `max_fields` to `request.form()` — every cell is its own named form field, so
+  field count is rows × columns, not row count; Starlette/FastAPI's default `max_fields=1000`
+  rejects a plain 5-column table past ~200 rows.
+- Treat a `result.action == "submit"` with zero rows and no errors as "nothing to submit," not
+  as a successful save of an empty table — `handle_import_post()` reports what was submitted
+  faithfully; deciding whether an empty result is meaningful is the app's job.
+- Past roughly 100 rows, editable per-cell widgets (real `<select>`/`<input>` per cell, no
+  virtualization) get noticeably slower to render/submit than read-only cells. For larger
+  imports, prefer declaring columns without `input_type` (keeps the Load-then-Submit review
+  step, just with no cell hand-editable), or `model_config["editable"] = False` for a
+  bulk-replace-only table with no review step at all (single "Reload CSV" button that parses
+  and commits in one click — see the `"reload"` action above).
+
+A different kind of composite control (not a table): see the extending reference.
+
+## Extending reference
+
+Reach for these only after checking the inputs reference and the existing composites
+(`list[FormModel]` repeating sub-forms, `DataTableLayout`): most "custom" needs are a
+`ui_element`, a `ui_options` key or a nested model.
+
+### A custom input
+
+Subclass an existing input and register it once at import time, before the app serves requests.
+Subclassing a built-in keeps its escaping, label, help text, error message and accessibility
+wiring; override `render()` to adjust attributes and hand off to `super().render()`.
+
+```python
+from typing import Any
+
+from pydantic_schemaforms import Field, FormModel, TextInput, register_input_class, render_form_html
+
+
+class ExtensionInput(TextInput):
+    """A phone extension: up to six digits, with a numeric keypad on phones."""
+
+    ui_element = 'extension'
+
+    def render(self, **kwargs: Any) -> str:
+        kwargs.setdefault('inputmode', 'numeric')
+        kwargs.setdefault('pattern', r'\d{1,6}')
+        kwargs.setdefault('maxlength', 6)
+        return super().render(**kwargs)
+
+
+register_input_class(ExtensionInput, aliases=('phone_extension',))
+
+
+class DirectoryEntry(FormModel):
+    name: str = Field(title='Name')
+    extension: str = Field('', title='Extension', ui_element='extension')
+
+
+form_html = render_form_html(DirectoryEntry, submit_url='/directory')
+```
+
+- `register_input_class(cls, aliases=(...))` registers it under its `ui_element` and any aliases;
+  `register_inputs([...])` registers several; `reset_input_registry()` removes custom ones (tests).
+- If `render()` writes its own HTML, build it with `html(t'...')`, never an f-string, and pass
+  `aria-*` keyword arguments through to the control. Prefer `FormInput.render_with_label()` over
+  writing your own label markup; `build_label()`, `build_help_text()` and
+  `build_error_message()` produce markup matching the built-ins.
+- Base classes: `BaseInput`, `FormInput`, `NumericInput`, `SelectInputBase`, `FileInputBase`.
+
+### A custom composite control
+
+Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer, the
+same mechanism `DataTableLayout` and repeating sub-forms are built on. Don't invent another.
+
+```python
+from pydantic_schemaforms import Field, FormModel, LayoutEngine, SafeHTML, html, render_form_html
+
+
+@LayoutEngine.layout_renderer('step_list', builtin=False)
+def render_step_list(field_name, field_schema, value, ui_info, context, engine) -> str:
+    items = SafeHTML(''.join(html(t'<li>{step}</li>') for step in (value or [])))
+    return html(t'<ol class="step-list" data-field="{field_name}">{items}</ol>')
+
+
+class OnboardingForm(FormModel):
+    steps: list[str] = Field(
+        ['Account', 'Billing', 'Review'],
+        title='Steps',
+        input_type='layout',
+        layout_handler='step_list',
+    )
+
+
+form_html = render_form_html(OnboardingForm, submit_url='/onboarding')
+```
+
+- The renderer is called with exactly `(field_name, field_schema, value, ui_info, context,
+  engine)`. The field's own error is `context.error`; its nested errors are
+  `context.child_errors` (a `RenderContext`).
+- App code registers with `builtin=False`.
+- A renderer that outputs its own file input must pass `requires_multipart=` so the form gets
+  `enctype="multipart/form-data"`.
+- When the composite's own fields are its structure (table columns, board lanes), subclass
+  `CompositeLayoutModel` for that class instead of `FormModel`.
+- Build every piece of HTML with `html(t'...')`.
+
+## Inputs reference
+
+Every `ui_element` value, every `ui_options` key and every `Field()` setting. Pass input settings
+as `Field(..., ui_element="...", ui_options={...})`.
+
+### Supported ui_element values (authoritative)
 
 This is the complete, current list of valid `ui_element` strings. **Do not invent a value not
 on this list.** An unrecognized `ui_element` does not raise an error — it silently falls back to
 a plain text input, which is easy to miss in review. If a field's semantics don't match anything
 below, use the closest primitive rather than guessing at a plausible-sounding name — see the
-"Library boundary" section above for what to do if nothing genuinely fits.
+extending reference if nothing genuinely fits.
 
 | Category | Values |
 |---|---|
@@ -302,11 +733,10 @@ registry listing) — using one of those non-widget names as a `ui_element` valu
 exact silent plain-text fallback this section warns about. The table above, not those constants,
 is the accurate, current source of real `ui_element` values.
 
-## Field cookbook: widgets that need more than a bare ui_element
+### Field cookbook: inputs that need more than a bare ui_element
 
 These are the widgets most likely to tempt an assistant into hand-rolling something the library
-already does declaratively. Every example below is verified against the library's own docs, not
-guessed — copy the shape, adjust the values.
+already does declaratively. Copy the shape and adjust the values.
 
 **Custom date/time display format** (military time, DD/MM/YYYY, or any other locale/shape) — the
 field still validates as a normal `date`/`time`/`datetime` Python type; only the *displayed and
@@ -353,8 +783,12 @@ validate the submitted value server-side with a real `Field()` constraint):
 
 ```python
 contact_phone: str = Field(..., ui_element='phone', ui_options={'phone_format': '(###) ###-####'})
-budget: str = Field(..., ui_element='currency', ui_options={'currency_symbol': '$'})
+budget: Decimal = Field(..., ui_element='currency', ui_options={'currency_symbol': '$'})
 ```
+
+On a `Decimal`, `float` or `int` field, `validate()` strips the currency symbol and thousands
+separators the input adds while typing (`$1,234.50` → `Decimal("1234.50")`). On a `str` field
+the formatted text is kept as typed.
 
 **captcha** — renders an arithmetic challenge; verify it at the route level with the library's
 own `verify_captcha()`, before model validation, and declare only the answer field (not a
@@ -377,35 +811,25 @@ if not verify_captcha(token=token, answer=form.get('captcha_answer'), secret_key
     ...  # re-render with errors={"_errors": "..."}; a fresh challenge renders automatically
 ```
 
-**file with drag-and-drop** — on by default, no extra wiring needed:
+**file upload** (drag-and-drop on by default). Type the field `Any`: the upload arrives as the
+framework's own file object (Starlette's `UploadFile`, Werkzeug's `FileStorage`), and `validate()`
+passes it through. Check the file yourself (chosen at all, extension, size) and add your message
+to the errors. Flask keeps files apart from fields, so combine them before validating:
 
 ```python
-attachments: str = Field(
-    ..., ui_element='file', ui_options={'accept': '.pdf,.docx,image/*', 'multiple': True}
+from typing import Any
+
+document: Any = Field(
+    None, title='Document', ui_element='file', ui_options={'accept': '.pdf,.docx'}
 )
+
+# FastAPI: form = await request.form(); upload = form.get('document')  (starlette.datastructures.UploadFile)
+# Flask:   form = CombinedMultiDict([request.form, request.files])  (werkzeug.datastructures)
 ```
 
-The model field's own type is `str` (a filename, an identifier, whatever you assign it after
-saving the upload) — **the actual uploaded file never goes through `.validate()`/Pydantic at
-all**, so pop it out of the submitted data before calling `.validate()`:
-
-```python
-form = await request.form()  # FastAPI/Starlette: an UploadFile object for the file key
-upload = form.get('attachments')  # UploadFile, not a str -- do not pass this into .validate()
-submitted = {k: v for k, v in form.items() if k != 'attachments'}
-if upload and upload.filename:
-    contents = await upload.read()  # bytes -- save it, then put a filename/path/id into submitted
-    submitted['attachments'] = save_uploaded_file(upload.filename, contents)  # -> str for the model
-result = MyForm.validate(submitted, submit_url='/submit')
-```
-
-Rendering with a file field also requires `enctype="multipart/form-data"` on the `<form>` tag —
-`render_form_html()` sets this automatically whenever a `file` field is present, so this is only
-worth knowing if you're hand-assembling a `<form>` tag around library-rendered field HTML instead
-of using `render_form_html()`'s own complete output (the recommended path — don't do this). Flask
-uses a different API for the same upload (`request.files['attachments']`, a `FileStorage`, not
-`request.form`) — mixing it into `dict(request.form.to_dict())` the way other fields are read
-will not pick up the file at all.
+`render_form_html()` sets `enctype="multipart/form-data"` by itself when a form has a file field.
+The browser can't keep a chosen file across a re-render, so after an error the user picks it
+again. See the security reference for checking uploads.
 
 **quantity** — ships +/- stepper buttons automatically:
 
@@ -473,10 +897,12 @@ equivalent to `black`/`shfmt` exists), so don't promise real code formatting for
 Invalid input on Format never throws — it flags the field with a CSS class and inline error
 instead, leaving the textarea's content untouched.
 
-## Every widget option (`ui_options` keys)
+
+### Every widget option (`ui_options` keys)
 
 Pass these as `Field(..., ui_options={...})`. Defaults are what you get without the key. The
-example app's widget gallery (`/gallery`) renders every row of this table.
+live demo's widget gallery (https://pydantic-schemaforms.devsetgo.com/gallery) shows every row
+of this table.
 
 | ui_element | Key | Default | Effect |
 |---|---|---|---|
@@ -522,10 +948,9 @@ example app's widget gallery (`/gallery`) renders every row of this table.
 | `radio`, `checkbox_group` | `collapsed` | `False` | Start closed (with `collapsible`) |
 
 The `segmented`/`button_group` variants only add CSS classes (`radio-item-segmented`,
-`checkbox-item-button-group`); the app styles them. The gallery route in
-`examples/fastapi_routes.py` has a copyable stylesheet.
+`checkbox-item-button-group`); the app styles them.
 
-## Field-level options (work on every widget)
+### Field-level options (work on every widget)
 
 These are `Field()` keyword arguments, not `ui_options` keys:
 
@@ -549,13 +974,12 @@ These are `Field()` keyword arguments, not `ui_options` keys:
 Every keyword Pydantic's own `Field()` doesn't know (all of the above plus anything else) is
 stored in the field's `json_schema_extra`, so they combine freely with Pydantic constraints.
 
-### The widget classes behind the strings
+#### The widget classes behind the strings
 
 Each `ui_element` value maps to an exported input class (`TextInput`, `TextArea`, `SelectInput`,
 `RadioGroup`, `CheckboxGroup`, `MultiSelectInput`, `ComboBoxInput`, `DateInput`, `FileInput`,
 `ToggleSwitch`, `TagsInput`, `CurrencyInput`, ...). App code names the string on the field and
-never instantiates these, with two exceptions: subclassing one for `register_input_class` (see
-"Library boundary"), and rendering a lone input outside any model,
+never instantiates these, with two exceptions: subclassing one for `register_input_class` (see the extending reference), and rendering a lone input outside any model,
 `TextInput().render_with_label(name="q", label="Search", framework="bootstrap")`. Inside a
 custom widget's `render()`, `build_label(field_name, label, required, icon, framework)`,
 `build_help_text(field_name, text)` and `build_error_message(field_name, error)` return the
@@ -565,492 +989,924 @@ framework-correct label/help/error markup so it matches the built-ins. `BaseInpu
 exported but **not registered as `ui_element` values** — they only work through
 `register_input_class` or a direct `.render()`.
 
-A custom composite renderer's `context` argument (see the `LayoutEngine` sample in "Library
-boundary") is a `RenderContext` (top-level export) carrying `form_data`, `schema_defs`,
+A custom composite renderer's `context` argument (see the extending reference) is a `RenderContext` (top-level export) carrying `form_data`, `schema_defs`,
 `error` (the field's own message) and `child_errors` (its nested error tree).
 
-## Accepted input sources
+## Rendering reference
 
-- JSON sample payload
-- JSON Schema
-- Existing Pydantic BaseModel
-- Existing FormModel to be refactored/extended
+### `render_form_html()` options
 
-When input is ambiguous, preserve source structure and avoid inventing fields.
+`render_form_html(Model, form_data=None, errors=None, framework="bootstrap", *, submit_url, ...)`
+returns the `<form>` with its fields, error summary, submit button and the small scripts its
+inputs need. It's a fragment for a page, not a whole page. `render_form_html_async()` takes the
+same arguments and renders in a worker thread; use it in `async def` routes.
+`Model.render_form(...)` is the same as `render_form_html(Model, ...)`.
 
-## Deterministic field mapping
+| Option | Default | Effect |
+|---|---|---|
+| `submit_url` | required | The form's `action`; never guessed |
+| `form_data` | `None` | Values to show; `None` starts from field defaults |
+| `errors` | `None` | Messages shaped like the data; `"_errors"` for the whole form |
+| `framework` | `"bootstrap"` | `"bootstrap"`, `"material"` or `"none"` |
+| `layout` | `"vertical"` | See the complex forms reference |
+| `wizard_options` | `None` | With `layout="wizard"` |
+| `method` | `"POST"` | The form's method |
+| `include_submit_button` | `True` | `False` when the form is submitted another way |
+| `csrf_mode`, `csrf_token_provider`, `csrf_field_name` | `"off"` | See the security reference |
+| `include_framework_assets` | `False` | Add the framework's CSS and JavaScript |
+| `asset_mode` | `"vendored"` | With assets: `"vendored"` inlines packaged copies, `"cdn"` links pinned CDN URLs |
+| `self_contained` | `False` | Assets inlined, Bootstrap Icons included: no external requests at all |
+| `show_timing` / `debug` / `enable_logging` | `False` | Render time under the form / a debug panel / DEBUG log lines |
+| `include_html_markers` | `True` | `<!--- Start/End Pydantic-SchemaForms -->` comments around the output |
 
-Apply this order of precedence when converting models/schemas:
+Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
+`**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
 
-1. Explicit source hint (existing ui_element, widget annotation, schema format)
-2. Strong semantic type (EmailStr, date, datetime, bool, enum)
-3. Naming heuristic (field names like email, phone, website)
-4. Fallback by primitive type
+### Styling and assets
 
-### Primitive and semantic mapping
+- **`framework="bootstrap"`** (default) uses Bootstrap 5 classes. **`"material"`** is a
+  self-contained Material Design 3 style with its own CSS; it needs no external framework.
+  **`"none"`** is plain semantic HTML with no framework classes.
+- By default **no framework CSS is included**: the app's page template is expected to load it.
+  `include_framework_assets=True` adds it (inlined by default, or `asset_mode="cdn"`).
+- Use the same `framework=` in `validate()`, so the failed form comes back in the same style.
+- HTMX (live validation) and IMask are not included by `render_form_html()`. Load them in the
+  page, or serve the packaged copies:
+  `read_asset_text("assets/vendor/htmx/htmx.min.js")`.
 
-- str -> text
-- long descriptive str -> textarea
-- EmailStr or email-like field -> email
-- AnyUrl or URL-like field -> url
-- bool -> checkbox
-- int/float/Decimal -> number
-- enum/Literal -> select
-- list with constrained options -> multiselect
-- date -> date
-- time -> time
-- datetime -> datetime
-- bytes/file-like metadata -> file (when upload is intended)
+### Putting the form in a page template
 
-### Constraints vs. ui_options — do not confuse these
+`render_form_html()` returns trusted HTML, so mark it safe in the template and nothing else:
 
-min_length, max_length, pattern, ge/le/gt/lt are Pydantic Field constraints, not ui_options. Set
-them directly on Field(...) and the renderer auto-derives minlength/maxlength/pattern/min/max
-HTML attributes AND real server-side validation from them:
-
-- Field(min_length=2, max_length=50) -> minlength/maxlength + enforced length
-- Field(pattern=r'^[A-Z]') -> pattern attribute + enforced regex
-- Field(ge=1, le=5) -> min/max attributes + enforced numeric range
-
-Putting these in ui_options instead only decorates the HTML — it does NOT validate anything
-server-side. Never use ui_options as a substitute for a real Field constraint; that produces a
-form that looks validated but silently accepts out-of-range or malformed data on POST.
-
-**The reverse mistake is just as real and easier to miss**: a numeric `select`/`radio` with
-explicit `ui_options={'choices': [...]}` *and* a `ge`/`le` constraint must keep both in sync. If
-`choices` ever lists a value outside the `ge`/`le` range (e.g. adding a 4th option to a field still
-constrained to `le=3`), that option renders as a normal, selectable, apparently-valid choice —
-and then fails validation on submit with a confusing error, since picking it looked completely
-legitimate. This isn't hypothetical — it's an easy edit-time drift (add a choice, forget to widen
-the range) worth double-checking whenever either one changes.
-
-`Literal[...]` and `Enum` fields both auto-populate select/radio/multiselect options from the
-type itself, and an `Optional` one gets an empty first choice so it can be left blank (submitting
-it validates to `None`). Only pass `ui_options` choices for plain `str`/`int` fields, or to give
-options different labels from their values.
-
-## Form configuration checklist
-
-- Always pass submit_url and keep it route-matched.
-- Set framework explicitly: "bootstrap" (recommended), "material", "plain", or "none". `"plain"`
-  and `"none"` both render with no framework CSS classes (bring your own styling); they are two
-  separate registered styles today but currently produce equivalent output, so either is fine —
-  prefer `"none"` since it's the one already documented elsewhere in this file and in `docs/`. An
-  unrecognized framework string silently falls back to this same unstyled rendering rather than
-  raising an error, so a typo (e.g. `"boostrap"`) fails silently, not loudly — double check the
-  spelling against this list.
-- Use layout explicitly for non-default structure: "vertical" (default), "tabbed", "side-by-side",
-  "accordion", or "wizard". The last four arrange sub-forms, so they need a form built from nested
-  `FormModel` fields (see "Composing complex forms" below).
-- Pass form_data on both GET defaults and failed POST validation so fields are sticky.
-- Pass errors as the nested error tree `.validate()` returns (see "Data and errors are nested
-  JSON" below); `result.render_with_errors()` does this for you.
-- Keep one coherent framework/layout strategy per endpoint.
-- For first pass implementations, prefer readability over over-customized markup.
-- Prefer the synchronous `render_form_html()`/`FormModel.render_form()` inside a sync route
-  handler, and the `_async` variant inside an `async def` route — the async variant runs the
-  (CPU-bound, synchronous) rendering work in the default executor so it doesn't block the event
-  loop, which matters most for larger forms/tables; for a small form the difference is
-  negligible either way, so match the variant to whether the route itself is `async def`, not to
-  form size.
-- By default, `render_form_html()`/`render_form_html_async()` include **no** framework CSS/JS tags
-  at all in the returned HTML — the assumption is your own page template already loads Bootstrap/
-  Material itself (the pattern every worked example in this document uses: the app's own
-  `<html>`/base template provides the CDN `<link>`/`<script>` tags, separately from the form
-  fragment this library returns). Pass `include_framework_assets=True` to have the library emit
-  those tags itself instead, with `asset_mode="vendored"` (the default — inlines the library's own
-  bundled copy, no third-party request) or `asset_mode="cdn"` (pinned `<link>`/`<script src>` tags
-  to a public CDN).
-  For an air-gapped deployment, a strict CSP blocking third-party origins, or embedding the form's
-  HTML completely standalone with no other page assets, pass `self_contained=True` instead — it
-  implies `include_framework_assets=True` and inlines the CSS/JS directly into the returned HTML
-  (no extra request of any kind, vendored or CDN).
-- To serve the vendored assets from your own routes instead, the top-level helpers are
-  `read_asset_text("assets/vendor/htmx/htmx.min.js")` (any file under the package's
-  `assets/vendor/`), `bootstrap_icons_css_tag(asset_mode=...)` / `bootstrap_icons_css_content()`
-  (the icon font used by `icon=`), and `wrap_with_schemaforms_markers(html)` (wraps a fragment
-  in `<!--- Start/End Pydantic-SchemaForms -->` comments; `render_form_html()` already does this
-  unless `include_html_markers=False`).
-- Other render options, all keyword arguments to `render_form_html()`/`render_form()`/
-  `validate()`: `include_submit_button=False` (a composite such as `DataTableLayout` renders its
-  own buttons), `method=`, `wizard_options=` (see "Composing complex forms"), `debug=True` (adds a
-  collapsed panel with the rendered HTML, model source, schema, and errors; also the only mode
-  that allows `csrf_mode="field-only"`), `show_timing=True` (prints the render time under the
-  form), `enable_logging=True` (logs it), `inject_layout_styles=False` (omit the small layout
-  support `<style>`). Any other keyword becomes an attribute on the `<form>` tag; `enctype` is set
-  to `multipart/form-data` automatically when the model (or a sub-form) has a `file` field.
-
-## Layout guidance
-
-- Use layout="vertical" for most CRUD and simple forms.
-- For long forms (more than about 12 user-facing fields), distinct business sections
-  (Account/Profile/Preferences/Security/Billing), or high cognitive load workflows (onboarding,
-  account setup, compliance), split the form into one `FormModel` per section, nest them as
-  fields of a parent `FormModel`, and render with layout="tabbed" (or "accordion"). Each
-  sub-form becomes a tab titled by its field's `title=`, in declaration order.
-- Use layout="side-by-side" to show a few short sub-forms as columns (dense admin pages).
-- Use layout="wizard" for a linear flow the user should fill in order (signup, onboarding,
-  checkout): one step per sub-form, Back/Next, submit on the last step. It is still one `<form>`
-  and one POST, so the route is identical to any other layout; do not build per-step routes or
-  session state for it. Next checks only the browser's HTML5 constraints for the current step;
-  Pydantic validates everything on submit.
-- Order groups by declaring fields in the order you want, or with `ui_order=`. Put required
-  identity sections first and optional/advanced settings last.
-- Use the lower-level layout primitives only when required: `GridLayout`,
-  `ResponsiveGridLayout`, `HorizontalLayout`, `VerticalLayout`, `CardLayout`, `TabLayout`,
-  `AccordionLayout`, `ModalLayout` (all top-level exports) wrap already-rendered
-  HTML fragments; they are not how forms are composed — see `docs/advanced/layout-primitives.md`.
-
-## Framework route contract
-
-### FastAPI
-
-- Route supports both GET and POST.
-- Pass the request form straight to validation: FormModel.validate(await request.form(), ...).
-  Do not convert it with `dict(...)` first: that drops repeated values (multi-selects, checkbox
-  groups). See "Lower-boilerplate alternative" below for why `.validate()` is the default, not
-  the manual `FormModel(**submitted)` + try/except path.
-- Re-render with errors + form_data on failure.
-- Return HTMLResponse.
-
-### Flask
-
-- Route supports both GET and POST.
-- Pass the request form straight to validation: FormModel.validate(request.form, ...). Do not
-  call `request.form.to_dict()` first: that drops repeated values.
-- Re-render with errors + form_data on failure.
-- Return HTML markup or template response.
-
-### Complete worked example (Flask)
-
-Verified end-to-end (GET renders, invalid POST re-renders with errors, valid POST succeeds — same
-three checks as the FastAPI example). A trimmed `EventRegistration` model wired into a sync Flask
-route — `FormModel.render_form()`/`.validate()` are already synchronous, so there is no `_async`
-variant to reach for here (that's a FastAPI/async-route-only concern, see the "Form configuration
-checklist" section above):
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign up</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+  <main class="container py-4" style="max-width: 40rem">
+    <h1>Sign up</h1>
+    {% if name %}
+      <div class="alert alert-success">Welcome aboard, {{ name }}!</div>
+    {% endif %}
+    {{ form_html | safe }}
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+```
 
 ```python
-from flask import Flask, request
+from pathlib import Path
 
-from pydantic_schemaforms import Field, FormModel, html
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from models import SignupForm
 
-app = Flask(__name__)
+from pydantic_schemaforms import render_form_html_async
+
+app = FastAPI()
+templates = Jinja2Templates(directory=Path(__file__).parent / 'templates')
 
 
-class EventRegistration(FormModel):
-    full_name: str = Field(..., min_length=2, max_length=80, title='Full Name', ui_element='text')
-    email: str = Field(..., title='Email Address', ui_element='email')  # use EmailStr for real
-    # server-side format validation, as the FastAPI example above does (needs email-validator) --
-    # plain str here only to keep this second example dependency-free.
-    ticket_type: str = Field(
-        ...,
-        title='Ticket Type',
-        ui_element='select',
-        ui_options={'choices': ['standard', 'vip', 'student']},
+@app.get('/signup', response_class=HTMLResponse)
+async def show_signup(request: Request):
+    form_html = await render_form_html_async(SignupForm, submit_url='/signup')
+    return templates.TemplateResponse(request, 'signup.html', {'form_html': form_html})
+
+
+@app.post('/signup', response_class=HTMLResponse)
+async def signup(request: Request):
+    result = SignupForm.validate(await request.form(), submit_url='/signup')
+    if not result.is_valid:
+        form_html = await result.render_with_errors_async()
+        return templates.TemplateResponse(
+            request, 'signup.html', {'form_html': form_html}, status_code=422
+        )
+    form_html = await render_form_html_async(SignupForm, submit_url='/signup')
+    context = {'form_html': form_html, 'name': result.data['name']}
+    return templates.TemplateResponse(request, 'signup.html', context)
+```
+
+### One model for an HTML form and a JSON API
+
+```python
+from pydantic_schemaforms import Field, FormModel
+
+
+class ContactForm(FormModel):
+    name: str = Field(title='Full name', min_length=2, examples=['Ada Lovelace'], ui_autofocus=True)
+    email: str = Field(title='Email', examples=['ada@example.com'], ui_element='email')
+    message: str = Field(title='Message', min_length=10, ui_element='textarea')
+```
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import ContactForm
+
+from pydantic_schemaforms import html, render_form_html_async
+
+ContactSchema = ContactForm.as_api_model()  # same fields and rules, no ui_* settings
+app = FastAPI()
+
+
+@app.get('/contact', response_class=HTMLResponse)
+async def show_contact():
+    return await render_form_html_async(ContactForm, submit_url='/contact')
+
+
+@app.post('/contact', response_class=HTMLResponse)
+async def submit_contact(request: Request):
+    result = ContactForm.validate(await request.form(), submit_url='/contact')
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+    name = result.data['name']
+    return html(t'<p>Thanks, {name}!</p>')
+
+
+@app.post('/api/contact', response_model=ContactSchema)
+async def api_contact(contact: ContactSchema):
+    return contact
+```
+
+- `as_api_model()` returns a plain Pydantic model with the same fields and validation but none of
+  the form settings, for request bodies and `response_model`. Create it once at import time.
+- `validate()` also accepts a parsed JSON body and returns the same nested errors, so a non-FastAPI
+  API route can answer with `result.errors` and status 422.
+- `get_pydantic_json_schema()` returns standard JSON Schema with sub-forms as `$defs`; Pydantic's
+  `model_json_schema()` options pass through (for example
+  `ref_template="#/components/schemas/{model}"`). `get_json_schema()` is the renderer's internal
+  shape, form settings included.
+
+### Other tools
+
+- `EnhancedFormRenderer(framework=..., include_framework_assets=..., asset_mode=...)` with
+  `.render_form_from_model(Model, data, errors, submit_url=..., layout=...)` renders many forms
+  with one set of options.
+- `GridLayout`, `ResponsiveGridLayout`, `HorizontalLayout`, `VerticalLayout`, `CardLayout`,
+  `TabLayout`, `AccordionLayout` and `ModalLayout` arrange **already-rendered HTML** on a page
+  (for example two forms side by side). They are not how a form's own fields are grouped; that's
+  nested models and `layout=`.
+
+## Security reference
+
+### HTML built around submitted data
+
+The library escapes everything it renders. HTML that app code writes around submitted values
+must be escaped too, even after `validate()` succeeded: a valid `str` can be
+`<script>alert(1)</script>`.
+
+```python
+from pydantic_schemaforms import SafeHTML, html
+
+name = result.data['name']
+page = html(t'<p>Thanks, {name}!</p>')  # name is escaped
+
+form = SafeHTML(form_html)  # library output: trusted, not escaped again
+page = html(t'<main>{form}</main>')
+```
+
+- `html()` takes a t-string (`t"..."`, Python 3.14) and returns a `SafeHTML` (a `str`).
+- Never build HTML from user data with an f-string, `.format()` or `+`.
+- Wrap only HTML you trust in `SafeHTML(...)`: library output, or your own constant markup.
+- In Jinja templates, `{{ form_html | safe }}` for the library's output only; everything else stays
+  auto-escaped.
+
+### CSRF
+
+Forms that change something on a site with cookie logins need a CSRF token. The library renders
+the hidden field; the app creates the token, keeps it in the session and checks it.
+
+```python
+import hmac
+import secrets
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
+
+from pydantic_schemaforms import Field, FormModel, html, render_form_html_async
+
+
+class TransferForm(FormModel):
+    to_account: str = Field(title='To account')
+    amount: int = Field(title='Amount', ge=1)
+
+
+app = FastAPI()
+app.add_middleware(SessionMiddleware, secret_key='change-me')  # load from your settings
+
+
+def issue_csrf_token(request: Request) -> str:
+    token = secrets.token_urlsafe(32)
+    request.session['csrf_token'] = token
+    return token
+
+
+def csrf_token_is_valid(request: Request, submitted: object) -> bool:
+    expected = request.session.get('csrf_token')
+    return bool(expected and isinstance(submitted, str)) and hmac.compare_digest(
+        expected, submitted
     )
 
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        result = EventRegistration.validate(
-            request.form, submit_url='/register', framework='bootstrap'
-        )
-        if result.is_valid:
-            return html(t'<h1>Thanks, {result.data["full_name"]}!</h1>')
-        return result.render_with_errors()  # sync -- no "_async" suffix on the Flask path
-    form_html = EventRegistration.render_form(submit_url='/register', framework='bootstrap')
-    return f'<html><body>{form_html}</body></html>'
+def form_options(request: Request) -> dict:
+    return {
+        'submit_url': '/transfer',
+        'csrf_mode': 'required-provider',
+        'csrf_token_provider': issue_csrf_token(request),
+        'include_framework_assets': True,
+        'asset_mode': 'cdn',
+    }
+
+
+@app.get('/transfer', response_class=HTMLResponse)
+async def show_transfer(request: Request):
+    return await render_form_html_async(TransferForm, **form_options(request))
+
+
+@app.post('/transfer', response_class=HTMLResponse)
+async def submit_transfer(request: Request):
+    form = await request.form()
+    if not csrf_token_is_valid(request, form.get('csrf_token')):
+        raise HTTPException(status_code=403, detail='Invalid or expired form; reload the page.')
+
+    result = TransferForm.validate(form, **form_options(request))
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+
+    amount = result.data['amount']
+    return html(t'<p>Transferred {amount}.</p>')
 ```
 
-The same XSS caution from the FastAPI example applies here identically: `result.data["full_name"]`
-is user-submitted text, so it goes through `html(t'...')`, never an f-string, the moment it's
-placed into hand-written HTML — Flask's `render_template_string`/Jinja2 auto-escapes by default
-if you use a real template instead, but a plain returned string like this one does not.
+- `csrf_mode="required-provider"` with `csrf_token_provider=` (the token or a function returning
+  it) renders a hidden `csrf_token` field and refuses to render without a token.
+  `csrf_field_name=` renames the field.
+- Check the token **before** validating, with `hmac.compare_digest`, and answer 403 (or re-render
+  with `errors={"_errors": "..."}`) when it doesn't match.
+- Pass the same options to `validate()`, so a re-rendered form gets a new token.
+- Never declare the token as a model field. `validate()` drops unknown keys.
+- `csrf_mode="field-only"` is for debugging and raises `ValueError` unless `debug=True`. Don't
+  generate it for real routes.
+- Keep the session secret out of code; serve the site over HTTPS.
 
-## Lower-boilerplate alternative: FormModel.validate()
+### Spam protection
 
-**Prefer `FormModel.validate()` over `FormModel(**submitted)` + manual `try/except
-ValidationError` as the default for every route, not just an optional shortcut.** The manual path
-means hand-reimplementing this library's own work yourself: decoding the submitted input names
-into nested data, and turning Pydantic's `ValidationError.errors()` into the nested error tree
-the renderer understands, plus a form-level (non-field) error convention (see "Form-level errors"
-below). `.validate()` already does all of that:
+- **Honeypot:** `website: str = Field('', ui_element='honeypot')` renders an input people can't
+  see. When it comes back filled in, answer as if the submission worked and drop it.
+- **Captcha:** a self-hosted arithmetic question. Declare only the answer field; the signed token
+  is added for you. Check it in the route before validating:
 
-    result = MyForm.validate(await request.form(), submit_url="/submit")
-    if result.is_valid:
-        return success(result.data)
-    return result.render_with_errors()  # or await result.render_with_errors_async()
+```python
+from pydantic_schemaforms import Field, FormModel, verify_captcha
 
-`FormModel.validate(data, submit_url=..., framework=..., layout=...)` wraps the same validation
-and returns a `ValidationResult` that remembers `submit_url`/`framework`, so re-rendering on
-failure needs no repeated arguments — this matters even more once a route re-renders the same
-form in more than one place (e.g. a shared CSRF-failure branch and a validation-failure branch).
-Reach for the manual `FormModel(**submitted)` + try/except route only if you specifically need the
-raw Pydantic model instance and are prepared to build your own error-rendering path — it is not
-the recommended default despite being listed first in some framework quick-reference bullets.
 
-`result.data` is a plain nested `dict`, not a `FormModel` instance. If you need the validated
-model object itself (e.g. to pass to an ORM constructor), use `result.instance`, which is set
-when `result.is_valid` is `True`.
+class SignupForm(FormModel):
+    captcha_answer: str = Field('', ui_element='captcha', ui_options={'secret_key': CAPTCHA_SECRET})
 
-## FormModel and ValidationResult at a glance
 
-`FormModel` adds to a Pydantic `BaseModel`:
+# in the POST route:
+form = await request.form()
+if not verify_captcha(
+    token=form.get('captcha_answer_token'),
+    answer=form.get('captcha_answer'),
+    secret_key=CAPTCHA_SECRET,
+):
+    ...  # re-render with errors={"captcha_answer": "Wrong answer"}; a new question is generated
+```
 
-- `Model.render_form(data=None, errors=None, framework="bootstrap", *, submit_url, **render_kwargs)` and `render_form_async(...)` — same as `render_form_html(Model, ...)`; `layout=`, `wizard_options=`, `csrf_mode=` and the rest go in `render_kwargs`.
-- `Model.validate(data, *, submit_url=None, framework="bootstrap", **render_kwargs)` — the POST
-  path; `render_kwargs` such as `layout=`/`wizard_options=` are remembered for re-rendering.
-- `Model.as_api_model()` — the same fields without UI metadata, for JSON endpoints.
-- `Model.get_json_schema()` — the JSON schema with the `ui_*` keys kept (what the renderer reads);
-  `Model.model_json_schema()` is Pydantic's.
-- `Model.get_example_form_data()` — plausible sample values per field, handy for demo pages
-  and tests.
-- `Model.register_field(name, annotation=..., field=...)` — add a field at runtime (advanced:
-  forms whose fields come from configuration).
+Load `CAPTCHA_SECRET` from the app's configuration, never a literal in code.
 
-`validate_form_data(Model, data)` is the function form of `Model.validate(data)` and also
-accepts a plain Pydantic `BaseModel` class. `EnhancedFormRenderer(framework=...,
-include_framework_assets=..., asset_mode=...)` with `.render_form_from_model(Model, data,
-errors, submit_url=..., layout=...)` is the object behind `render_form_html()`; use it to render
-several forms through one configured renderer.
+### File uploads
 
-`ValidationResult` (from `validate()`): `is_valid`, `data`, `errors`, `error_list()`,
-`original_data`, `instance`, `render_with_errors(framework=None, *, submit_url=None, errors=None,
-**render_kwargs)` and `render_with_errors_async(...)`.
+```python
+from pathlib import Path
 
-## Data and errors are nested JSON
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import ALLOWED_TYPES, MAX_BYTES, UploadForm
+from starlette.datastructures import UploadFile
 
-`FormModel.validate()` accepts the raw request form (`await request.form()` in FastAPI,
-`request.form` in Flask), a list of `(name, value)` pairs, or an already nested dict such as a
-JSON API body (`MyForm.validate(await request.json())`). It always returns:
+from pydantic_schemaforms import html, render_form_html_async
 
-- `result.data`: nested exactly like the model. Sub-forms are dicts, lists of sub-forms are
-  lists: `result.data["address"]["city"]`, `result.data["pets"][0]["name"]`. Keys that are not
-  fields of the model (CSRF tokens, honeypots) are dropped at every level.
-- `result.errors`: nested exactly like `result.data`. A node is either a message string or a
-  dict of child errors. A list's errors are a dict keyed by item index (only failing items
-  appear; JSON turns the keys into strings), so `result.errors["pets"][1]["name"]` sits where
-  `result.data["pets"][1]["name"]` does. A message about a whole list or sub-form (e.g.
-  `min_length` on the list) is a plain string, or sits under the reserved key `"_errors"` when
-  that container also has child errors. Form-wide messages (e.g. from a `@model_validator`) are
-  under the top-level `"_errors"`.
-- `result.error_list()`: the same errors as a flat `[{"loc": ["pets", 1, "name"], "msg": ...}]`
-  list, for API responses and logging.
-- `result.original_data`: the decoded submission before validation, nested like the model and
-  including fields that failed — what `render_with_errors()` uses for sticky values, and what to
-  hand to a rule-based `FormValidator` (see "Rule-based validation").
-- `result.instance`: the validated model object, set only when `result.is_valid`.
+app = FastAPI()
+FORM_OPTIONS = {'submit_url': '/upload', 'include_framework_assets': True, 'asset_mode': 'cdn'}
 
-`render_form_html(errors=...)` also accepts the older `{"errors": [{"name": "address.city",
-"message": "..."}]}` contract and a `SchemaFormValidationError` carrying it; both are converted to
-the tree. Prefer the tree in new code.
 
-Read errors defensively, since a node can be a string or a dict:
-`result.errors.get("address", {}).get("city")` only works when `address` has child errors.
+def check_upload(upload: object) -> tuple[str | None, bytes]:
+    if not isinstance(upload, UploadFile) or not upload.filename:
+        return 'Choose a file to upload', b''
+    if Path(upload.filename).suffix.lower() not in ALLOWED_TYPES:
+        return 'Upload a PDF or Word document', b''
+    content = upload.file.read(MAX_BYTES + 1)
+    if len(content) > MAX_BYTES:
+        return 'The file is larger than 5 MB', b''
+    return None, content
 
-HTML inputs are named `address.city` and `pets[0].name` on the wire; the library builds and
-decodes those names itself. **Never construct or parse those names in app code**, and never call
-`parse_nested_form_data()` before `.validate()`: pass the request form straight in.
-`DataTableLayout.handle_import_post()` likewise takes the raw request form.
 
-## Two different `errors` shapes — do not conflate them
+@app.get('/upload', response_class=HTMLResponse)
+async def show_upload():
+    return await render_form_html_async(UploadForm, **FORM_OPTIONS)
 
-Two different result types both have an `.errors` attribute with **incompatible shapes** — mixing
-them up produces a `TypeError` or silently wrong text, not a clean failure:
 
-- `ValidationResult.errors` (from `FormModel.validate()`, the primary server-side path) is a
-  **nested error tree** shaped like the data (see above): a top-level field's message is
-  `result.errors.get("email")`, a sub-form field's is `result.errors["address"]["city"]`, plus
-  `"_errors"` for form-level errors (see below).
-- `ValidationResponse.errors` (from `LiveValidator`/`FieldValidator`, the HTMX live-validation
-  path — see that section below) is a **`list[str]`** — zero or more messages for the one field
-  that response is about. Access the first message with `result.errors[0]` (as the HTMX worked
-  example below does) — indexing a `ValidationResult.errors` value the same way is a bug (it
-  would index into a message *string*, not a list of messages).
+@app.post('/upload', response_class=HTMLResponse)
+async def upload(request: Request):
+    form = await request.form()
+    result = UploadForm.validate(form, **FORM_OPTIONS)
+    file_error, content = check_upload(form.get('document'))
+    if not result.is_valid or file_error:
+        errors = {**result.errors, **({'document': file_error} if file_error else {})}
+        return await render_form_html_async(
+            UploadForm, form_data={'title': form.get('title')}, errors=errors, **FORM_OPTIONS
+        )
+    size = len(content)
+    return html(t'<p>Stored "{result.data["title"]}" ({size} bytes).</p>')
+```
 
-If you write one shared error-rendering helper meant to serve both paths, branch on which result
-type you actually have rather than assuming a shape.
+- Type the file field `Any`; `validate()` passes the upload object through. In FastAPI it's
+  `starlette.datastructures.UploadFile` (not `fastapi.UploadFile`, so `isinstance` against the
+  FastAPI class fails). In Flask, validate `CombinedMultiDict([request.form, request.files])`;
+  the file is a `FileStorage`, and set `app.config["MAX_CONTENT_LENGTH"]`.
+- Check that a file was chosen (`upload.filename`), its extension and its size, reading at most
+  one byte more than the limit. `accept` in `ui_options` only filters the file picker.
+- Store files outside the web root under names you generate; never show a file name in HTML
+  without `html(t'...')`.
 
-## Form-level (non-field) errors
+### Accessibility
 
-Some failures aren't about any one field — a CSRF mismatch, a rate limit, a backend outage. Report
-these with the reserved `"_errors"` key in the errors passed to `render_form_html()`
-(`errors={"_errors": "Session expired, please try again."}`) rather than attaching the message to
-an arbitrary field. `"_errors"` is where `.validate()` itself puts form-wide errors (such as a
-`@model_validator` failure), and the error summary shows it as "Form: ...".
+Every built-in input is tested with axe-core against WCAG 2.0–2.2 A and AA: each control has a
+label, help and errors are linked with `aria-describedby`, and invalid fields get
+`aria-invalid="true"`. Keep it that way:
 
-## Rule-based validation (FormValidator and the rule classes)
+- Give every field a meaningful `title`; it's the label.
+- Don't remove or rewrite the `id`/`aria-*` attributes in rendered HTML.
+- The page around the form is the app's job: `<html lang>`, one `<h1>`, `<main>`, contrast.
+- Don't call the app WCAG, ADA or Section 508 compliant: the library is tested, not certified.
 
-`Field()` constraints and `@field_validator`/`@model_validator` are the default and cover most
-forms. The rule-based layer exists for two cases: a reusable rule set shared between the HTMX
-live-validation endpoint and the POST route, or a check that is awkward as a Pydantic validator
-(a DNS lookup, a cross-field rule you want to toggle per route). All names are top-level exports.
+## Validation reference
 
-| Rule | Checks |
-|---|---|
-| `RequiredRule(message=...)` | Non-empty |
-| `MinLengthRule(n)` / `MaxLengthRule(n)` | String length (there is no `LengthRule`) |
-| `RegexRule(pattern, message)` | Full-match against a pattern |
-| `EmailRule()` | Email format |
-| `EmailDeliverabilityRule()` | Format plus a DNS/MX lookup of the domain (`pip install pydantic-schemaforms[email]`); reserved names like `.invalid` fail without a lookup |
-| `PhoneRule()` | Phone-number shape |
-| `NumericRangeRule(min_value=, max_value=)` | Numeric bounds (keywords are `min_value`/`max_value`, not `min`/`max`) |
-| `DateRangeRule(min_date=, max_date=)` | Date bounds; accepts `date` objects or ISO strings |
-| `CustomRule(func, message)` | `func(value) -> bool` or `-> (bool, message)` |
+Validation comes from the model first: the field types, `Field()` constraints and Pydantic
+validators. The rule classes and live HTMX checks below are extras for when the model isn't
+enough. All names are imported from the top-level package.
+
+### Constraints and validators on the model
 
 ```python
 from datetime import date
 
-from pydantic_schemaforms import (
-    DateRangeRule,
-    EmailRule,
-    FormValidator,
-    NumericRangeRule,
-    PhoneRule,
-    RequiredRule,
-)
+from pydantic import ValidationInfo, field_validator, model_validator
 
-rules = FormValidator()
-rules.field('phone').add_rule(RequiredRule('Phone is required')).add_rule(PhoneRule())
-rules.field('backup_email').add_rule(EmailRule())
-rules.field('budget').add_rule(NumericRangeRule(min_value=100, max_value=10000))
-rules.field('start_date').add_rule(DateRangeRule(min_date=date(2025, 1, 1)))
+from pydantic_schemaforms import Field, FormModel
 
 
-def end_after_start(data: dict) -> tuple[bool, dict[str, str]]:
-    # Return one message per field (a string, not a list).
-    if data.get('end_date') and data.get('end_date') <= data.get('start_date', ''):
-        return False, {'end_date': 'End date must be after the start date'}
+class RegistrationForm(FormModel):
+    username: str = Field(title='Username', min_length=3, max_length=20, pattern=r'^[a-z0-9_]+$')
+    password: str = Field(title='Password', ui_element='password', min_length=8)
+    confirm_password: str = Field(title='Confirm password', ui_element='password')
+    age: int = Field(title='Age', ge=13, le=120)
+    start_date: date = Field(title='Start date')
+    end_date: date = Field(title='End date')
+
+    @field_validator('username', mode='before')
+    @classmethod
+    def lowercase_username(cls, value: str) -> str:
+        return value.strip().lower()
+
+    @field_validator('confirm_password')
+    @classmethod
+    def passwords_match(cls, value: str, info: ValidationInfo) -> str:
+        if value != info.data.get('password'):
+            raise ValueError('Passwords do not match')
+        return value
+
+    @model_validator(mode='after')
+    def end_after_start(self) -> 'RegistrationForm':
+        if self.end_date < self.start_date:
+            raise ValueError('The end date must be after the start date')
+        return self
+```
+
+| Constraint | Applies to | In the browser |
+|---|---|---|
+| `min_length`, `max_length` | text (characters), lists (items) | `minlength`, `maxlength` |
+| `pattern` | text | `pattern` |
+| `ge`, `le` | numbers | `min`, `max` |
+| `gt`, `lt` | numbers | server only |
+| `multiple_of` | numbers | `step` |
+
+- `@field_validator("name")` attaches its message to that field. `mode="before"` runs on the raw
+  submitted value first, for cleaning it up (trim, lowercase).
+- `@model_validator(mode="after")` is for rules across fields. Its message is form-wide, under
+  `result.errors["_errors"]`, shown at the top of the form.
+- A check that needs the request (a username already taken, a wrong password, a failed captcha)
+  belongs in the route after `validate()`: render again with
+  `render_form_html(Model, form_data=submitted, errors={"username": "That username is taken"}, ...)`.
+- A required checkbox ("I accept the terms") with a custom message: give it a `False` default,
+  `validate_default=True`, and a `@field_validator` that raises when it's `False`. An unticked
+  box sends nothing, so without `validate_default` the validator never runs.
+
+### Rule-based validation
+
+`FormValidator` holds a set of rules that run on the submitted data alongside the model. Use it
+for a ready-made check that isn't a Pydantic type (`PhoneRule`), rules switched per route, or the
+same rules behind live validation and the submit route.
+
+```python
+from pydantic_schemaforms import Field, FormModel, FormValidator, PhoneRule
+
+
+class SignupForm(FormModel):
+    username: str = Field(title='Username', min_length=3)
+    phone: str = Field('', title='Phone', ui_element='tel')
+    age: int = Field(title='Age', ge=0)
+    parental_consent: bool = Field(False, title='A parent agrees')
+
+
+def minors_need_consent(data: dict) -> tuple[bool, dict]:
+    age = data.get('age')
+    if age is not None and int(age) < 18 and not data.get('parental_consent'):
+        return False, {'parental_consent': 'A parent must agree for anyone under 18'}
     return True, {}
 
 
-rules.add_cross_field_rule(end_after_start)
-
-is_valid, errors = rules.validate({'phone': '123', 'budget': '50'})
-# errors == {"phone": ["Please enter a valid phone number"], "budget": ["Must be between 100 and 10000"]}
+rules = FormValidator()
+rules.field('phone').add_rule(PhoneRule())
+rules.add_cross_field_rule(minors_need_consent)
 ```
 
-`FieldValidator("email").required().email()` is the fluent equivalent for one field, and
-`validator.to_schema()`/`ValidationSchema` bundle validators for `LiveValidator`. Two cross-field
-rules come ready-made: `CrossFieldRules.password_confirmation(password_field="password",
-confirm_field="confirm_password")` and `CrossFieldRules.date_range_validation(start_field,
-end_field)`, each returning a function for `add_cross_field_rule()`. For a reusable rule with
-client-side support, subclass `ValidationRule` (implement `rule_name`, `validate(value) ->
-(bool, message)` and optionally `get_client_validation()`); `CustomRule` is the shortcut when a
-plain function is enough.
-
-To run rules on a submission a `FormModel` also validates, give them `result.original_data` (the
-decoded submission, nested like the model) and merge the two error sets; `render_form_html()`
-accepts either shape in one tree:
+Run the rules on `result.original_data` (the decoded submission, nested like the model) and
+merge both sets of errors into one re-render:
 
 ```python
-result = ProfileForm.validate(await request.form(), submit_url='/profile')
-rules_ok, rule_errors = rules.validate(result.original_data)
-if not (result.is_valid and rules_ok):
-    html_out = result.render_with_errors(errors={**rule_errors, **result.errors})
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import SignupForm, rules
+
+from pydantic_schemaforms import html, render_form_html_async
+
+app = FastAPI()
+
+
+@app.get('/signup', response_class=HTMLResponse)
+async def show_signup():
+    return await render_form_html_async(SignupForm, submit_url='/signup')
+
+
+@app.post('/signup', response_class=HTMLResponse)
+async def submit_signup(request: Request):
+    result = SignupForm.validate(await request.form(), submit_url='/signup')
+    rules_ok, rule_errors = rules.validate(result.original_data)
+    if not (result.is_valid and rules_ok):
+        return await result.render_with_errors_async(errors={**rule_errors, **result.errors})
+    username = result.data['username']
+    return html(t'<p>Welcome, {username}!</p>')
 ```
 
-The example app's `/validation` page shows every rule class, every `Field()` constraint, and
-both validator decorators failing on one form.
+| Rule | Checks |
+|---|---|
+| `RequiredRule(message=...)` | Present and not blank |
+| `MinLengthRule(n)` / `MaxLengthRule(n)` | Length (there is no `LengthRule`) |
+| `RegexRule(pattern, message)` | Matches the pattern |
+| `EmailRule()` | Email format |
+| `EmailDeliverabilityRule()` | The domain exists and accepts mail (a DNS lookup, server only, needs the `email` extra) |
+| `PhoneRule()` | Phone-number shape |
+| `NumericRangeRule(min_value=, max_value=)` | Number in range (keywords are `min_value`/`max_value`) |
+| `DateRangeRule(min_date=, max_date=)` | Date in range (`date` objects or ISO strings) |
+| `CustomRule(func, message)` | `func(value)` returns `True`, or `(is_valid, message)` |
 
-## CSRF protection
+- Every rule takes `message=` to replace its default text.
+- Rules other than `RequiredRule` pass an empty value, so optional fields are only checked when
+  filled in. A `CustomRule` function is called for empty values too.
+- `rules.field("x")` returns that field's `FieldValidator`. It also has a fluent form:
+  `FieldValidator("username").required().min_length(3).max_length(20)`.
+- A cross-field rule gets the whole data dict and returns `(is_valid, {field: "message"})`: one
+  string per field, not a list. Ready-made ones:
+  `CrossFieldRules.password_confirmation(password_field="password", confirm_field="confirm_password")`
+  and `CrossFieldRules.date_range_validation(start_field, end_field)`.
+- `rules.validate(data)` returns `(is_valid, {field: [messages]})`: a list per field, unlike the
+  model's errors.
 
-For any form that changes state (login, registration, anything behind auth, anything mutating
-data), add CSRF protection instead of skipping it:
+### Live validation (HTMX)
 
-- Issue a per-session token on GET, store it server-side (session/cache).
-- Pass csrf_mode="required-provider", csrf_token_provider=<token>, and csrf_field_name to
-  render_form_html/FormModel.render_form/FormModel.validate.
-- **Do not declare a CSRF token field on the `FormModel` itself** — it's injected/rendered by the
-  library based on `csrf_mode`/`csrf_token_provider`, the same way `captcha`'s answer field is
-  declared but its accompanying token is not (see the Field cookbook's captcha entry). `FormModel`
-  uses Pydantic's `extra='ignore'`, so an unexpected token field in submitted data is harmless
-  either way, but don't add one as if it were a normal form field.
-- On POST, verify the submitted token against the stored one with a constant-time comparison
-  before validating form data.
-- On mismatch, re-render with a form-level error (`errors={"_errors": "..."}`, see above — not a
-  field error) and issue a fresh token; do not proceed to model validation.
-- csrf_mode accepts the `CSRFMode` enum (`CSRFMode.OFF`/`FIELD_ONLY`/`REQUIRED_PROVIDER`, a
-  top-level export) or its string values: "off" (no token), "field-only" (renders a field but does not require server
-  verification — **only allowed when `debug=True`**; passing it explicitly outside `debug=True`
-  raises `ValueError`, so never generate `csrf_mode="field-only"` for anything but a throwaway
-  local demo route), and "required-provider" (renders + the app must verify it) — default to
-  "required-provider" for anything beyond a throwaway demo form.
-- Treat this as part of the completion contract for stateful forms, not an optional extra — do
-  not skip it just because it wasn't explicitly requested.
-
-## Composing complex forms from multiple FormModels
-
-A complex form is several `FormModel`s nested as fields of a parent `FormModel`. There are no
-wrapper or layout classes: a sub-form is an ordinary typed field, and its presentation is one
-`layout=` argument.
+Checks fields on the server while the user types, without reloading the page. It's an addition
+to submit-time validation, never a replacement: the POST route still calls `validate()`.
 
 ```python
-from pydantic_schemaforms import Field, FormModel, html, render_form_html_async
+from pydantic import EmailStr
+
+from pydantic_schemaforms import Field, FormModel, LiveValidator
 
 
-class Contact(FormModel):
-    email: str = Field(..., title='Email', ui_element='email')
-    phone: str = Field('', title='Phone', ui_element='tel')
+def live(field: str) -> dict[str, str]:
+    """HTMX attributes that send the field to /validate/<field> as the user types."""
+    return {
+        'hx-post': f'/validate/{field}',
+        'hx-trigger': 'blur, input delay:600ms',
+        'hx-target': f'#{field}-feedback',
+        'hx-swap': 'innerHTML',
+    }
 
 
-class Address(FormModel):
-    street: str = Field(..., title='Street')
-    city: str = Field(..., title='City', min_length=2)
+class ContactForm(FormModel):
+    name: str = Field(title='Full name', min_length=2, ui_options=live('name'))
+    email: EmailStr = Field(title='Email', ui_options=live('email'))
 
 
-class Pet(FormModel):
-    name: str = Field(..., title='Pet name', min_length=1)
-    age: int = Field(0, title='Age', ge=0)
-
-
-class ProfileForm(FormModel):
-    nickname: str = Field(..., title='Nickname')  # plain field
-    contact: Contact = Field(title='Contact details')  # sub-form
-    address: Address = Field(title='Home address', ui_collapsible=True)  # sub-form
-    pets: list[Pet] = Field(default_factory=list, title='Pets', min_length=1)  # repeating sub-form
-
-
-@app.get('/profile', response_class=HTMLResponse)
-async def profile_get():
-    return await render_form_html_async(ProfileForm, layout='tabbed', submit_url='/profile')
-
-
-@app.post('/profile', response_class=HTMLResponse)
-async def profile_post(request: Request):
-    result = ProfileForm.validate(await request.form(), submit_url='/profile', layout='tabbed')
-    if result.is_valid:
-        save_profile(
-            result.data
-        )  # {"nickname": ..., "contact": {...}, "address": {...}, "pets": [...]}
-        return HTMLResponse(html(t'<h1>Saved {result.data["nickname"]}</h1>'))
-    return HTMLResponse(await result.render_with_errors_async())
+live_validator = LiveValidator.for_model(ContactForm, debounce_ms=600)
 ```
 
-- `layout=`: `"vertical"` (default; sub-forms as titled sections), `"tabbed"` (a "General" tab
-  for the parent's plain fields, then one tab per sub-form), `"side-by-side"` (columns), or
-  `"accordion"` (collapsible panels), or `"wizard"` (one step per group with Back/Next; options
-  `wizard_options={"linear": True, "show_progress": True, "back_label": "Back",
-  "next_label": "Next"}`). Pass the same `layout=` (and `wizard_options=`) to `.validate()` so
-  `render_with_errors()` re-renders identically; it opens the first tab, panel, or step
-  containing an error.
-- Groups follow field declaration order; `ui_order=n` on a field reorders it. The "General"
-  group is always first and is titled by the parent's `model_config = {"title": ...}`, else
-  "General".
-- Per sub-form options go on its field: `title=`, `ui_help_text=`, `ui_collapsible=True`,
-  `ui_collapsed=True` (opens automatically when it holds an error), `ui_order=`, and
-  `ui_step_title=` (wizard step label, falls back to `title=`).
-- The grouped layouts need sub-forms: `layout="tabbed"` on a form with only plain fields raises
-  `ValueError`. Split the form into sub-forms instead of hoping fields get grouped.
-- Nest as deep as needed: a sub-form can contain a list of sub-forms whose items contain
-  sub-forms. Data and errors keep the same nesting.
+```python
+from models import live_validator
 
-## Upgrading to nested forms
+from pydantic_schemaforms import SafeHTML, html
+
+VALIDATOR_SCRIPT = SafeHTML(live_validator.render_htmx_script())
+
+
+def page(form_html: str) -> str:
+    form = SafeHTML(form_html)  # trusted HTML from the library
+    return html(t"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Contact</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://unpkg.com/htmx.org@2.0.7"></script>
+  {VALIDATOR_SCRIPT}
+</head>
+<body>
+  <main class="container my-5">
+    {form}
+    <div id="name-feedback" aria-live="polite"></div>
+    <div id="email-feedback" aria-live="polite"></div>
+  </main>
+</body>
+</html>""")
+
+
+def feedback(errors: list[str]) -> str:
+    if not errors:
+        return html(t'<span class="text-success">Looks good</span>')
+    message = '; '.join(errors)  # may echo what the user typed: html() escapes it
+    return html(t'<span class="text-danger">{message}</span>')
+```
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import ContactForm, live_validator
+from page import feedback, page
+
+from pydantic_schemaforms import html, render_form_html_async, validation_response_headers
+
+app = FastAPI()
+
+
+@app.get('/contact', response_class=HTMLResponse)
+async def show_contact():
+    return page(await render_form_html_async(ContactForm, submit_url='/contact'))
+
+
+@app.post('/contact', response_class=HTMLResponse)
+async def submit_contact(request: Request):
+    result = ContactForm.validate(await request.form(), submit_url='/contact')
+    if not result.is_valid:
+        return page(await result.render_with_errors_async())
+    name = result.data['name']
+    return html(t'<p>Thanks, {name}!</p>')
+
+
+@app.post('/validate/{field_name}', response_class=HTMLResponse)
+async def validate_field(field_name: str, request: Request):
+    value = str((await request.form()).get(field_name, ''))
+    result = live_validator.validate_field(field_name, value)
+    return HTMLResponse(
+        feedback(result.errors),
+        headers=validation_response_headers(field_name, result.is_valid),
+    )
+```
+
+- **`LiveValidator.for_model(Model, debounce_ms=600)`** checks each field against the model's own
+  types and constraints, so there are no rules to repeat. Pass several models to serve several
+  forms from one validator.
+- **The `hx-*` attributes go in `ui_options`**; any key an input doesn't use becomes an HTML
+  attribute. Each `hx-target` needs an element on the page to receive the feedback.
+- **The page loads HTMX** and includes `live_validator.render_htmx_script()` once.
+- **One endpoint serves every field**: `live_validator.validate_field(name, value)` returns a
+  `ValidationResponse`. Build the feedback with `html(t'...')`, since a message can repeat what
+  the user typed, and send `validation_response_headers(name, result.is_valid)` with it.
+- `register_field_validator(FieldValidator(...))` adds rules beyond the model's; pass
+  `config=HTMXValidationConfig(...)` instead of `debounce_ms` to change when checks run
+  (`validate_on_blur`, `validate_on_change`, `validate_on_input`).
+- For an email field, the type `DeliverableEmailStr` adds a DNS/MX check to both live and submit
+  validation.
+
+### Two error shapes
+
+| From | `.errors` is |
+|---|---|
+| `Model.validate()` → `ValidationResult` | a nested tree shaped like the data: `{"email": "...", "address": {"city": "..."}, "_errors": "..."}` |
+| `LiveValidator.validate_field()` / `FieldValidator.validate()` → `ValidationResponse` or tuple | a `list[str]` of messages for one field |
+| `FormValidator.validate()` | `{field: [messages]}` |
+
+Don't index one shape as if it were another. `render_with_errors(errors=...)` and
+`render_form_html(errors=...)` accept the tree and the `{field: [messages]}` form.
+
+## Convert to pydantic-schemaforms
+
+Turn an existing model, schema or form into a `FormModel` and routes, without losing a field or a
+validation rule. The output works the same as before, with the library rendering the form.
+
+
+
+### Steps
+
+1. **Inventory the source.** List every field with its type, required/optional, default, choices,
+   limits, help text, label and custom validation. Also note where the form is rendered and
+   handled (routes, templates, CSRF).
+2. **Map each field** with the tables below, in this order of precedence: an explicit hint in the
+   source (a widget, a format), then the type, then the field's name, then the plain type.
+3. **Carry every rule over** as a `Field()` constraint, a type, or a validator. Never drop one and
+   never move one into `ui_options`.
+4. **Keep the structure.** Groups or fieldsets become nested `FormModel`s (and a `layout=` if
+   they were tabs or steps); repeated groups become `list[ItemForm]`.
+5. **Replace the handling code**: render with `render_form_html()`, validate with
+   `Model.validate(request_form, ...)`, re-render with `result.render_with_errors()`. Remove the
+   old form object, template field loops and error plumbing.
+6. **Show a mapping table** in your reply: source field → new field, type, input and rules, plus
+   anything that couldn't be carried over exactly.
+7. **Test** that the page renders, an invalid POST keeps the values and shows each error under the
+   right field, and a valid POST produces the same data as before.
+
+Don't invent fields that aren't in the source. When the source is ambiguous (a sample payload),
+keep its structure and say what you assumed.
+
+### From a Pydantic model or dataclass
+
+Don't duplicate an existing Pydantic model: inherit from it, `FormModel` first, and redeclare only
+the fields that need form settings.
+
+```python
+from pydantic import BaseModel
+from pydantic import Field as PydanticField
+
+from pydantic_schemaforms import Field, FormModel, render_form_html
+
+
+# The app's existing model, used elsewhere (an API, the database layer). Leave it as it is.
+class User(BaseModel):
+    name: str = PydanticField(min_length=2, title='Name')
+    email: str
+    bio: str = ''
+
+
+# FormModel first, then the existing model: every field and constraint is inherited.
+# Redeclare only the fields that need form settings.
+class UserForm(FormModel, User):
+    email: str = Field(title='Email', ui_element='email')
+    bio: str = Field('', title='About you', max_length=500, ui_element='textarea')
+
+
+form_html = render_form_html(UserForm, submit_url='/users/new')
+```
+
+A standard-library dataclass has no constraints to inherit: write a `FormModel` with the same
+fields, adding constraints the code checks elsewhere.
+
+### From WTForms / Flask-WTF
+
+```python
+from datetime import date
+from typing import Literal
+
+from pydantic import EmailStr, ValidationInfo, field_validator
+
+from pydantic_schemaforms import Field, FormModel
+
+
+# Converted from:
+#   class SignupForm(FlaskForm):
+#       username = StringField('Username', [DataRequired(), Length(min=3, max=25)])
+#       email = EmailField('Email', [DataRequired(), Email()])
+#       password = PasswordField('Password', [DataRequired(), Length(min=12)])
+#       confirm = PasswordField('Repeat password', [EqualTo('password')])
+#       plan = SelectField('Plan', choices=[('free', 'Free'), ('pro', 'Pro')])
+#       birthday = DateField('Birthday', [Optional()])
+#       newsletter = BooleanField('Send me the newsletter')
+class SignupForm(FormModel):
+    username: str = Field(title='Username', min_length=3, max_length=25)
+    email: EmailStr = Field(title='Email')
+    password: str = Field(title='Password', ui_element='password', min_length=12)
+    confirm: str = Field(title='Repeat password', ui_element='password')
+    plan: Literal['free', 'pro'] = Field('free', title='Plan')
+    birthday: date | None = Field(None, title='Birthday')
+    newsletter: bool = Field(False, title='Send me the newsletter')
+
+    @field_validator('confirm')
+    @classmethod
+    def passwords_match(cls, value: str, info: ValidationInfo) -> str:
+        if value != info.data.get('password'):
+            raise ValueError('Passwords do not match')
+        return value
+```
+
+| WTForms | FormModel |
+|---|---|
+| `StringField` | `str` |
+| `TextAreaField` | `str`, `ui_element="textarea"` |
+| `PasswordField` | `str`, `ui_element="password"` |
+| `EmailField` / `Email()` | `EmailStr` |
+| `URLField` / `URL()` | `AnyUrl` |
+| `IntegerField`, `DecimalField`, `FloatField` | `int`, `Decimal`, `float` |
+| `BooleanField` | `bool` with a `False` default |
+| `SelectField(choices=...)` | `Literal[...]` or an `Enum`; `ui_options={"choices": [{"value": ..., "label": ...}]}` when labels differ from values |
+| `RadioField` | the same, `ui_element="radio"` |
+| `SelectMultipleField` | `list[Literal[...]]` |
+| `DateField`, `DateTimeLocalField`, `TimeField` | `date`, `datetime`, `time` |
+| `FileField` / `MultipleFileField` | `Any`, `ui_element="file"`; check the file in the route |
+| `HiddenField` | the type, `ui_hidden=True` |
+| `FormField(Sub)` | a nested `FormModel` |
+| `FieldList(FormField(Item))` | `list[ItemForm]`; `min_entries` → `min_length` |
+| `DataRequired()` / `InputRequired()` | no default |
+| `Optional()` | `X \| None = None` |
+| `Length(min, max)` | `min_length`, `max_length` |
+| `NumberRange(min, max)` | `ge`, `le` |
+| `Regexp(p)` | `pattern=p` |
+| `AnyOf([...])` | `Literal[...]` |
+| `EqualTo("password")` | a `@field_validator` comparing with `info.data` |
+| `validate_<field>()` | `@field_validator("<field>")` |
+| label, `description` | `title`, `description` |
+
+Route changes: `form.validate_on_submit()` → `result = Model.validate(request.form, ...)` and
+`result.is_valid`; `form.data` → `result.data`; `form.errors` → `result.errors` (nested);
+template field loops → `{{ form_html | safe }}`. Flask-WTF's CSRF → `csrf_mode="required-provider"`
+with the token in the session (see the `pydantic-schemaforms` skill's security reference).
+
+### From Django forms
+
+| Django | FormModel |
+|---|---|
+| `CharField(max_length=n)` | `str`, `max_length=n` |
+| `CharField(widget=Textarea)` | `str`, `ui_element="textarea"` |
+| `EmailField`, `URLField` | `EmailStr`, `AnyUrl` |
+| `IntegerField(min_value, max_value)` | `int`, `ge`, `le` |
+| `DecimalField(max_digits, decimal_places)` | `Decimal`, `max_digits`, `decimal_places` |
+| `BooleanField(required=False)` | `bool = False` |
+| `ChoiceField(choices=...)` / `TypedChoiceField` | `Literal[...]` or an `Enum` |
+| `MultipleChoiceField` | `list[Literal[...]]` |
+| `ModelChoiceField(queryset)` | choices built at runtime: `ui_options={"choices": [...]}` from the query, or `create_model()` |
+| `DateField`, `DateTimeField`, `TimeField` | `date`, `datetime`, `time` |
+| `FileField`, `ImageField` | `Any`, `ui_element="file"` |
+| `required=False` | a default (`None` with `X \| None`) |
+| `label`, `help_text`, `initial` | `title`, `description`, the default |
+| `clean_<field>()` | `@field_validator("<field>")` |
+| `clean()` | `@model_validator(mode="after")` (message goes to `"_errors"`) |
+| formsets | `list[ItemForm]` |
+
+A `ModelForm` maps the model's fields the same way, through their form field types. Django's
+CSRF middleware still applies; render its token into the page or use `csrf_mode` with Django's
+token as `csrf_token_provider`.
+
+### From JSON Schema or a sample JSON payload
+
+| JSON Schema | FormModel |
+|---|---|
+| `"type": "string"` | `str`; `minLength`/`maxLength`/`pattern` → `min_length`/`max_length`/`pattern` |
+| `"format": "email"`, `"uri"`, `"date"`, `"date-time"`, `"time"` | `EmailStr`, `AnyUrl`, `date`, `datetime`, `time` |
+| `"type": "integer"` / `"number"` | `int` / `float`; `minimum`/`maximum` → `ge`/`le`; `exclusiveMinimum` → `gt`; `multipleOf` → `multiple_of` |
+| `"type": "boolean"` | `bool` |
+| `"enum": [...]` | `Literal[...]` or an `Enum` |
+| `"type": "array"` of enum | `list[Literal[...]]` |
+| `"type": "array"` of objects | `list[ItemForm]`; `minItems`/`maxItems` → `min_length`/`max_length` |
+| `"type": "object"` / `$ref` | a nested `FormModel` |
+| not in `required` | a default, or `X \| None = None` |
+| `title`, `description`, `default`, `examples` | the same `Field()` arguments |
+
+From a sample payload, infer types from the values (an ISO date string is a `date`, a list of
+objects is a repeating sub-form) and mark every field required unless told otherwise.
+
+### Fields known only at runtime
+
+When the fields come from data (a database table of questions, a config file), build the model
+with Pydantic's `create_model` and `__base__=FormModel`. It renders, validates and re-renders like
+a declared class:
+
+```python
+from pydantic import create_model
+
+from pydantic_schemaforms import Field, FormModel, render_form_html
+
+# Loaded from a database or a config file at runtime
+FIELDS = [
+    {'name': 'name', 'title': 'Your name', 'ui_element': 'text', 'required': True},
+    {'name': 'email', 'title': 'Email', 'ui_element': 'email', 'required': True},
+    {'name': 'rating', 'title': 'Rating', 'ui_element': 'rating', 'required': False},
+    {'name': 'comments', 'title': 'Comments', 'ui_element': 'textarea', 'required': False},
+]
+
+
+def build_form(fields: list[dict]) -> type[FormModel]:
+    return create_model(
+        'FeedbackForm',
+        __base__=FormModel,
+        **{
+            spec['name']: (
+                str,
+                Field(
+                    ... if spec['required'] else '',
+                    title=spec['title'],
+                    ui_element=spec['ui_element'],
+                ),
+            )
+            for spec in fields
+        },
+    )
+
+
+FeedbackForm = build_form(FIELDS)
+form_html = render_form_html(FeedbackForm, submit_url='/feedback')
+```
+
+Build it once (at startup, or cached per definition), not on every request.
+
+### Keeping an API in step
+
+If the same data also has a JSON API, don't keep a second model: `ApiModel = Form.as_api_model()`
+gives a plain Pydantic model with the same fields and rules and no form settings, for request
+bodies and `response_model`.
+
+## Upgrade pydantic-schemaforms code
+
+Bring an app's form code up to the installed version. Every removed API raises an error naming
+its replacement; this skill has the full mapping and the order to do it in.
+
+
+
+### Steps
+
+1. **Find the installed version**: `python -c "import importlib.metadata as m; print(m.version('pydantic-schemaforms'))"`.
+2. **Find every use of a removed API.** Search the app (not the virtual environment) for the names
+   in the tables below, for example:
+   `grep -rnE "FormBuilder|create_(login|registration|contact)_form|create_form_from_model|render_form_page|handle_form|FormIntegration|form_validator|TabbedLayout|ListLayout|SectionDesign|FormDesign|FormLayoutBase|flatten=|parse_nested_form_data|pydantic_schemaforms\.(layouts|integration|form_layouts)|ReactJSONSchemaFormAdapter|VueFormulateAdapter|\"general\"" --include=*.py --include=*.html .`
+3. **Upgrade one form at a time**: the model, then its routes, then everything that reads its data
+   or errors (templates, saving code, tests). Data shapes change with nested forms, so check every
+   consumer of `result.data`.
+4. **Run the app's tests after each form.** Add a test that renders the form and posts an invalid
+   submission if there isn't one.
+5. **Report** what changed per form, and anything that behaves differently (for example data now
+   nested under a sub-form's name).
+
+### Releases after 26.4.2: one way to build a form
+
+The builder API, the React and Vue adapters and `@form_validator` are removed. Importing a removed
+name raises `ImportError: pydantic_schemaforms.<name> was removed. <what to do instead>`.
+
+| Removed | Replacement |
+|---|---|
+| `FormBuilder`, `AutoFormBuilder`, `create_form_from_model`, `FormDefinition`, `FormSection`, `ModernFormRenderer` | A `FormModel` class rendered with `render_form_html()`. For fields known only at runtime, `create_model(name, __base__=FormModel, **fields)`. |
+| `create_login_form`, `create_registration_form`, `create_contact_form` | Declare the `FormModel` (see the example below, or the `schemaforms-create` skill's catalogue) |
+| `render_form_page` | `render_form_html()` inside the app's own page template |
+| `FormIntegration`, `handle_form`, `handle_form_async` | `result = Model.validate(request_form, submit_url=...)`, then `result.is_valid`, `result.data`, `result.render_with_errors()` |
+| `@form_validator` (it never ran) | `@model_validator(mode="after")` on the model (message under `"_errors"`), or `FormValidator.add_cross_field_rule()` |
+| `ReactJSONSchemaFormAdapter`, `VueFormulateAdapter`, `map_ui_element_to_framework`, `convert_validation_rules` | `Model.get_pydantic_json_schema()` for a JSON Schema, `Model.as_api_model()` for a plain Pydantic model |
+| `DataTableLayout` inputs named `rows[i].col`, `csv_file`, `datatable_action` | Named under the embedding field: `employees.rows[i].col`, `employees.csv_file`. Only code that reads these keys directly or posts them in tests changes; `handle_import_post()` finds them itself. With two tables on the same row model, pass `field="employees"`. |
+
+Before and after for a builder-made form:
+
+```python
+# before
+form = create_registration_form(framework='bootstrap')
+html_out = form.render(data=submitted, errors=errors)
+
+
+# after
+class RegistrationForm(FormModel):
+    username: str = Field(title='Username', min_length=3)
+    email: EmailStr = Field(title='Email')
+    password: str = Field(title='Password', ui_element='password', min_length=12)
+    confirm_password: str = Field(title='Confirm password', ui_element='password')
+
+    @field_validator('confirm_password')
+    @classmethod
+    def passwords_match(cls, value: str, info: ValidationInfo) -> str:
+        if value != info.data.get('password'):
+            raise ValueError('Passwords do not match')
+        return value
+
+
+html_out = render_form_html(RegistrationForm, submit_url='/register')
+```
+
+### Upgrading to nested forms
 
 Version 26.4.1 removed the older ways of combining forms. Code using them fails with
-`FormLayoutRemovedError` (a `TypeError`) at class definition or call time, and the error message
-points here. Convert each pattern as follows.
+`FormLayoutRemovedError` (a `TypeError`) at class definition or call time.
 
 | Removed | Replace with |
 |---|---|
@@ -1107,334 +1963,21 @@ city_error = result.errors.get('address', {}).get('city')
 email = result.data['contact']['email']
 ```
 
-Data shape changes too: each sub-form's values now arrive under its field name
-(`result.data["contact"]["email"]`, not `result.data["email"]`). Update anything that reads
-`result.data`, saves it, or pre-fills `form_data`. Prefill with the same nested shape:
-`render_form_html(ProfileForm, form_data={"contact": {"email": ...}}, ...)`.
+**Data changes shape:** each sub-form's values arrive under its field name
+(`result.data["contact"]["email"]`, not `result.data["email"]`). Update everything that reads
+`result.data`, saves it, or pre-fills `form_data`, and pre-fill with the same nested shape:
+`form_data={"contact": {"email": ...}}`. Saved records may need a migration or a mapping layer.
 
-## Repeating sub-forms (model_list)
+### Behaviour changes worth checking after any upgrade
 
-When a form needs a user-editable list of sub-records (e.g. "add another item"), do not hand-
-build add/remove JavaScript. Use the library's model_list support instead:
-
-- Define a nested FormModel for one item, then a field typed list[ItemModel]. It renders as a
-  repeating sub-form automatically (`ui_element="model_list"` is optional). The item model class
-  is resolved from the list[ItemModel] annotation.
-- The renderer produces add/remove controls and repeats the sub-form automatically. Customize it
-  with these Field() kwargs (not ui_options — they are named Field parameters, same pattern as
-  ui_help_text):
-  - ui_add_button_label — custom "Add ..." button text.
-  - ui_item_title_template — per-item card title, formatted against the item's own field names,
-    e.g. "{name} (Lead: {lead})".
-  - ui_collapsible_items=False — render items flat instead of collapsible cards.
-  - ui_items_expanded=False — start collapsible items collapsed.
-- Bound the number of items with Field(min_length=..., max_length=...) on the list field itself
-  — same constraint mechanism as string/number bounds, not a separate ui_options setting.
-- Per-item validation errors (`result.errors["items"][0]["name"]`) render inline on the
-  matching item automatically.
-- On POST, pass the request form straight to `.validate()`; `result.data["items"]` comes back
-  as a list of dicts.
-
-## CSV import to a table (DataTableLayout)
-
-When a form needs to import a CSV file into an editable/reviewable table (not just a single
-`file` upload field), do not hand-build the upload UI, per-row validation, or load/submit
-branching. Use `DataTableLayout` (a top-level export) instead:
-
-- Subclass `DataTableLayout` with one field per table column. A column declared with
-  `FormField(..., input_type=...)` renders as a real editable widget per cell (e.g. a dropdown
-  for an `Enum`); a plain field with no `input_type` renders as read-only, escaped text (still
-  round-trips correctly on submit via a hidden input per cell — see performance note below).
-- Embed it as a layout field on a plain `FormModel`: `Any = Field(default_factory=dict,
-  input_type="layout", layout_handler="datatable")`, built via
-  `YourImportModel.as_layout_value(rows=..., row_errors=...)`. Pass
-  `include_submit_button=False` to `render_form_html_async()` — the rendered field already
-  includes its own file input and "Load CSV"/"Submit" buttons when `model_config["csv_upload"]`
-  is on (the default).
-- Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
-  `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
-  `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
-  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`["csv",
-  "copy"]`; `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
-  `True` links a downloadable header-only CSV), and `style` (`{"striped", "bordered", "hover",
-  "compact"}` booleans). Per-row errors are `dict[int, dict[str, str]]` (row index →
-  field → message), the shape `ImportResult.row_errors` and `as_layout_value(row_errors=...)`
-  share; `RowError(row_index, errors, raw)` is the per-row record `parse_submitted_rows()`
-  returns.
-- `as_layout_value()`'s full signature is `as_layout_value(rows=None, row_errors=None, *,
-  table_id=None, asset_mode="vendored", include_assets=True, reviewing=False, notice="",
-  discard_url=None)`. The keyword-only ones control the built-in review UI specifically: pass
-  `reviewing=True` after a "Load CSV" click so the button relabels to "Reload CSV" and an info
-  banner explains nothing is saved yet; `notice=` shows a one-off warning banner (e.g. "Choose a
-  CSV file first"); `discard_url=` adds a "discard and start over" link. `table_id` defaults to
-  one derived from the embedding field's name, so you rarely need it.
-- Several `DataTableLayout` fields can share one page or form: each table's inputs and buttons
-  are namespaced by its own field, so loading a CSV into one leaves the others alone. If two of
-  them use the *same* row model, pass the embedding field's name to tell them apart:
-  `await EmployeeImport.handle_import_post(form, field="joining")` (same `field=` on
-  `parse_submitted_rows()`). With one table per row model, leave `field` out.
-- On POST, call `await YourImportModel.handle_import_post(await request.form(max_fields=...))`
-  instead of hand-rolling load-vs-submit branching — it parses/validates, merges rows back into
-  their original order (an invalid row keeps its raw values instead of vanishing), and returns
-  an `ImportResult` with `action: Literal["load", "submit", "reload"]`. Handle it as: `"load"` —
-  preview only, nothing committed, re-render with `reviewing=True`; `"submit"` — a normal
-  Load-then-Submit commit; `"reload"` — commit exactly like `"submit"` (this is the action
-  `model_config["editable"] = False` tables always return instead of `"submit"`, since there's no
-  separate review step for them — see the performance note below). **Branching on only `"load"`
-  vs `"submit"` and ignoring `"reload"` means an `editable=False` table's imports silently never
-  get committed.**
-- `handle_import_post()` is `async def`-only (it awaits the uploaded file's `.read()`), which
-  assumes a Starlette/FastAPI-style async `UploadFile`. **It does not work unmodified on Flask**
-  (WSGI, sync) — Flask's uploaded file is a sync `FileStorage` whose `.read()` is
-  not awaitable. `DataTableLayout` is a FastAPI/Starlette-oriented feature; for a Flask app that
-  needs CSV import, either run it under an ASGI adapter or handle the CSV upload/parsing
-  yourself with `DataTableLayout.parse_csv_rows(raw_bytes)` (sync, safe to call directly) instead
-  of `handle_import_post()`.
-- Pass a real `max_fields` to `request.form()` — every cell is its own named form field, so
-  field count is rows × columns, not row count; Starlette/FastAPI's default `max_fields=1000`
-  rejects a plain 5-column table past ~200 rows.
-- Treat a `result.action == "submit"` with zero rows and no errors as "nothing to submit," not
-  as a successful save of an empty table — `handle_import_post()` reports what was submitted
-  faithfully; deciding whether an empty result is meaningful is the app's job.
-- Past roughly 100 rows, editable per-cell widgets (real `<select>`/`<input>` per cell, no
-  virtualization) get noticeably slower to render/submit than read-only cells. For larger
-  imports, prefer declaring columns without `input_type` (keeps the Load-then-Submit review
-  step, just with no cell hand-editable), or `model_config["editable"] = False` for a
-  bulk-replace-only table with no review step at all (single "Reload CSV" button that parses
-  and commits in one click — see the `"reload"` action above).
-- Need a genuinely new composite control instead (not a table)? See "A genuinely new composite
-  control" in the Library boundary section above — `DataTableLayout` and `model_list` are both
-  built on that same `LayoutEngine` mechanism, not a special case of their own.
-
-## Dual-use JSON + HTML models (as_api_model)
-
-When the same data also needs a JSON API endpoint (not just an HTML form), do not maintain two
-separate models:
-
-- Define one FormModel with ui_* metadata for the HTML form.
-- Call `ApiSchema = MyForm.as_api_model()` once at module scope to get a plain Pydantic
-  BaseModel with the same fields/constraints/examples but ui_* keys stripped — use it as the
-  JSON request/response model (e.g. FastAPI's response_model) so OpenAPI docs stay clean.
-- All validation constraints (min_length, ge, pattern, etc.) apply identically to both, since
-  as_api_model() only strips UI metadata.
-
-## Inline live validation via HTMX (optional, additive)
-
-Use this only when asked for inline "validates as you type/blur" feedback without a full page
-reload. It is a separate rendering path layered on top of the normal form, not a replacement for
-POST validation:
-
-- Build `validator = LiveValidator.for_model(MyForm, debounce_ms=600)` — one call that derives
-  every field's live check straight from the FormModel's own Field constraints/types (no
-  duplicated rules) and checks as-you-type (debounced) rather than only on blur. Pass more than
-  one model class to serve several forms' fields from one validator/endpoint:
-  `LiveValidator.for_model(FormA, FormB, debounce_ms=600)`. Use
-  `validator.register_field_validator(...)` on the returned validator — optionally with a
-  `CustomRule(func)` from the "Library boundary" section above for logic the model constraints
-  can't express — only for custom messages/logic beyond what the model already enforces. Pass
-  `config=HTMXValidationConfig(...)` instead of `debounce_ms=` for anything beyond the debounce
-  interval, e.g. blur-only checking.
-- Embed `validator.render_htmx_script()` once per page.
-- Render fields that need live feedback with
-  `validator.render_field_with_live_validation(field_name, field_type=..., value=..., label=...)`.
-- Add one endpoint per validated field, e.g. `POST /validate/{field_name}`, that reads the
-  submitted value, calls `validator.validate_field(field_name, value)`, and returns a small HTML
-  fragment with headers from `validation_response_headers(field_name, result.is_valid)` (a
-  top-level export).
-- Keep the real POST submit route validating with `FormModel.validate()` regardless — live
-  validation is UX sugar; it never replaces server-side validation on submit (JS can be disabled
-  or bypassed).
-- For an email field, add a DNS/MX deliverability check (catches typo'd/non-existent domains, not
-  just format) by typing the field `DeliverableEmailStr` instead of `EmailStr` — it's a drop-in
-  type, so `LiveValidator.for_model(MyForm)` above picks it up automatically with no extra
-  FieldValidator code. Reach for `FieldValidator("email").required().email(check_deliverability=True)`
-  instead only if you're building a validator imperatively, outside a `FormModel`. Either
-  way this needs the optional `email-validator` package (`pip install pydantic-schemaforms[email]`)
-  and always runs server-side only — there is no way to do a real DNS lookup from browser JS.
-
-### Complete worked example (FastAPI, live validation)
-
-Verified end-to-end (GET renders with the HTMX wiring in place, POST /validate/{field} returns
-correct pass/fail HTML for both a plain constraint and a DNS/MX check). Use this as the template
-instead of inventing a different validator/endpoint shape:
-
-```python
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-
-from pydantic_schemaforms import (
-    DeliverableEmailStr,
-    Field,
-    FormModel,
-    LiveValidator,
-    render_form_html_async,
-    validation_response_headers,
-)
-
-app = FastAPI()
-
-
-class SignupForm(FormModel):
-    name: str = Field(..., min_length=2, title='Full Name', ui_element='text')
-    email: DeliverableEmailStr = Field(  # EmailStr + a real DNS/MX lookup, both live-checked below
-        ...,
-        title='Email',
-        ui_element='email',
-        ui_options={
-            'hx-post': '/validate/email',
-            'hx-trigger': 'blur, input delay:600ms',
-            'hx-target': '#email-feedback',
-            'hx-swap': 'innerHTML',
-            'data-validate-endpoint': 'true',
-        },
-    )
-
-
-# Module scope, built once: derives a live check for every field on SignupForm
-# straight from its Field() constraints/types -- no FieldValidator to hand-write.
-live_validator = LiveValidator.for_model(SignupForm, debounce_ms=600)
-VALIDATOR_SCRIPT = live_validator.render_htmx_script()  # embed once per page
-
-
-@app.get('/signup', response_class=HTMLResponse)
-async def signup_get():
-    form_html = await render_form_html_async(SignupForm, submit_url='/signup')
-    return f'<html><body>{form_html}{VALIDATOR_SCRIPT}</body></html>'
-
-
-@app.post('/validate/{field_name}', response_class=HTMLResponse)
-async def validate_field(field_name: str, request: Request):
-    # One route serves every field on the model -- validate_field() dispatches
-    # by name, so adding a field to SignupForm needs no new route here.
-    raw = await request.form()
-    value = str(raw.get(field_name, ''))
-    result = live_validator.validate_field(field_name, value)
-    feedback = (
-        '<span class="text-success">Looks good!</span>'
-        if result.is_valid
-        else f'<span class="text-danger">{result.errors[0]}</span>'
-    )
-    return HTMLResponse(feedback, headers=validation_response_headers(field_name, result.is_valid))
-
-
-@app.post('/signup', response_class=HTMLResponse)
-async def signup_post(request: Request):
-    result = SignupForm.validate(await request.form(), submit_url='/signup')  # the real safety net
-    if result.is_valid:
-        return '<p>Signed up!</p>'
-    return await result.render_with_errors_async()
-```
-
-The `email` field needs an empty `<div id="email-feedback"></div>` on the page for the response
-to swap into (it does not have to sit immediately next to the input — hovering the input itself
-also shows the same text as a tooltip, since the bundled JS mirrors the swapped feedback into the
-input's `title` attribute). `name` has no `ui_options` here, so it has no live feedback target;
-add the same `ui_options` block (with its own `hx-target`) to give it one too.
-
-## Conversion workflows (JSON or Pydantic -> FormModel)
-
-You can provide either a JSON payload/schema or an existing Pydantic model and ask the assistant
-to convert it.
-
-- Input accepted: JSON example payload, JSON Schema, or BaseModel/FormModel code.
-- Output expected:
-	- A FormModel class using Field metadata.
-	- ui_element choices for each field.
-	- ui_options where needed (choices, min/max, rows, pattern, etc.).
-	- A working FastAPI or Flask GET/POST route using render_form_html.
-
-### Complex form expectations
-
-For complex requests, also provide:
-
-- One `FormModel` per section, nested as fields of a parent `FormModel` (for example Account,
-  Profile, Preferences), with an explicit `layout=` ("tabbed", "accordion", or "side-by-side").
-- Section grouping rationale.
-- Field-level constraints mirrored from model/schema (min_length, max_length, ge, le,
-  regex/pattern).
-- Sticky value handling and field error mapping.
-
-## Accessibility
-
-The library's own form markup is tested with axe-core against WCAG 2.0–2.2 A and AA rules on
-every release: each control has an accessible name, help text and errors are linked with
-`aria-describedby`, an invalid field gets `aria-invalid="true"`, and text meets AA contrast. Keep
-it that way in the app you generate:
-
-- Give every field a meaningful `title` (it becomes the `<label>`); never hide a label without
-  giving the control another accessible name.
-- Don't strip or rewrite the `aria-*`/`id` attributes in rendered form HTML.
-- The page template around the form is the app's responsibility: one `<h1>`, `<html lang=...>`,
-  landmarks (`<main>`), and AA contrast for any colors the app adds.
-- Don't describe the generated app as ADA/Section 508/WCAG compliant: the library is tested, not
-  certified, and conformance depends on the whole app. If the user cares about compliance,
-  suggest adding axe-core to their end-to-end tests.
-
-## Quality gates before completion
-
-- Generated code is runnable with no placeholder TODO blocks.
-- submit_url and route path align.
-- Every rendered field exists in model definition.
-- Every required field has sensible label/title metadata (it is the field's accessible name).
-- No manual field-by-field HTML when schema-driven rendering is enough.
-- No import from a `pydantic_schemaforms` internal submodule (see "Library boundary" above).
-- No f-string/`.format()` interpolation of submitted or validated user data into HTML anywhere in
-  the generated route code — always `html(t'...')` for that (see the flagship worked example).
-- Any `DataTableLayout`/`ImportResult.action` handling covers all three values (`"load"`,
-  `"submit"`, `"reload"`), not just `"load"`/`"submit"`.
-- Every `ui_options` key used appears in "Every widget option" for that widget — an unknown or
-  misspelled key is written onto the input as an HTML attribute, never reported.
-- Every `ui_element` value used appears in the "Supported ui_element values" table — an unknown
-  one silently renders a plain text input.
-
-## Common mistakes to avoid
-
-- Do not extend, monkeypatch, or reimplement anything inside `pydantic_schemaforms` — see
-  "Library boundary" above. Standard Pydantic (`@field_validator`, `@model_validator`, etc.) on
-  your own `FormModel` subclass is fine; rewriting what the library already provides is not.
-- Do not hand-build each input manually when render_form_html already handles model fields.
-- Do not omit submit_url.
-- Do not use a plain Pydantic BaseModel when you need ui_element metadata, validate(), or
-  as_api_model() — subclass FormModel instead.
-- Do not discard submitted form values on validation error.
-- Do not silently drop source constraints during conversion.
-- Do not mix multiple conflicting layout styles in one endpoint.
-- Do not put min_length/max_length/pattern/ge/le in ui_options — set them as real Field
-  constraints so they are actually enforced server-side.
-- Do not skip CSRF protection on forms that mutate state or sit behind auth.
-- Do not pass `csrf_mode="field-only"` outside a `debug=True` throwaway route — it raises
-  `ValueError` otherwise.
-- Do not hand-write add/remove list JavaScript — use ui_element="model_list".
-- Do not hand-roll custom date/time formatting (military time, locale-specific shapes) — use
-  ui_options date_format/time_format/datetime_format.
-- Do not use an f-string/`.format()` to interpolate a submitted or validated field value into
-  hand-written HTML — even after `.validate()` succeeds, use `html(t'...')` instead (structural
-  XSS protection; see the flagship worked example's notes).
-- Do not use `TabbedLayout`, `VerticalLayout`/`HorizontalLayout` wrapper subclasses, `ListLayout`,
-  `FormLayoutBase`, `SectionDesign`, or `FormDesign` — they were removed and raise `FormLayoutRemovedError`. Nest
-  `FormModel`s as fields and pass `layout=` (see "Upgrading to nested forms").
-- Do not call `parse_nested_form_data()`, `dict(await request.form())`, or
-  `request.form.to_dict()` before `.validate()`, and do not pass `flatten=` — pass the request
-  form itself and read nested `result.data`/`result.errors`.
-- Do not build or parse wire-format input names (`"pets[0].name"`, `"address.city"`) in app code.
-- Do not index `ValidationResult.errors` (a nested error tree, from `.validate()`) like a list, or
-  index `ValidationResponse.errors` (a `list[str]`, from `LiveValidator`/`FieldValidator`) like a
-  dict — they are unrelated shapes that happen to share an attribute name.
-- Do not hand-build a CSV-import table's upload UI, per-row validation, or load/submit branching —
-  use `DataTableLayout`/`handle_import_post()`, and handle all three `ImportResult.action` values
-  (`"load"`, `"submit"`, `"reload"` — the last needs the same commit handling as `"submit"`).
-- Do not pass `max_rating` to `star_rating` (it takes `max_stars`), `min=`/`max=` to
-  `NumericRangeRule` (it takes `min_value=`/`max_value=`), or return a list of messages from a
-  cross-field rule (one string per field).
-- For cross-field checks use Pydantic's `@model_validator(mode="after")` on the `FormModel` (its
-  message lands in `"_errors"`), or `FormValidator.add_cross_field_rule` for the rule-based layer.
-- Do not start new code from the compatibility surfaces that are still exported:
-  `LayoutComposer`, `LayoutFactory`, and the `TextField`/`EmailField`/`SelectField`/...
-  shorthands. Declare a `FormModel` with `Field(ui_element=...)`, built with `create_model()`
-  when its fields are only known at runtime.
-- Do not invent a new composite rendering mechanism for a table/wizard/repeating structure — use
-  `LayoutEngine.layout_renderer`/`register_layout_renderer` (see "Library boundary" above), the
-  same mechanism `DataTableLayout` and `model_list` are themselves built on.
+- A fresh form now starts from the field defaults; code that passed defaults in `form_data` by
+  hand can drop them.
+- Inputs are inferred from more types (`date`, `Enum`, `Literal`, `EmailStr`, `AnyUrl`,
+  `Optional`). Hand-built `ui_options={"choices": [...]}` for an `Enum` field can be removed.
+- Validator messages are shown without Pydantic's "Value error, " prefix; update tests that
+  assert the old text.
+- A checkbox that defaults to `True` now validates as `False` when unticked.
+- An optional sub-form left blank validates to `None` instead of failing.
 
 ### Copilot conversion prompt starters
 

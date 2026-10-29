@@ -33,8 +33,12 @@ _STRUCTURAL_UI_ELEMENTS = {'model_list', 'nested_model', 'layout'}
 
 def _authoritative_table_tokens(instructions: str) -> set[str]:
     """Extract every backticked token from the "Supported ui_element values" table."""
-    section = instructions.split('## Supported ui_element values (authoritative)', 1)[1]
-    section = section.split('\n## ', 1)[0]
+    heading = re.search(r'^(#+) Supported ui_element values \(authoritative\)$', instructions, re.M)
+    assert heading, 'the ui_element table is missing'
+    section = instructions[heading.end() :]
+    # The table ends at the next heading of the same or a higher level.
+    end = re.search(rf'^#{{1,{len(heading.group(1))}}} ', section, re.M)
+    section = section[: end.start()] if end else section
     tokens = set(re.findall(r'`([a-z0-9_-]+)`', section))
     return tokens - {'ui_element'}
 
@@ -168,7 +172,7 @@ def test_packaged_instructions_match_generated_output(profile: str) -> None:
     """The 3 packaged assets/ai/*_app_instructions.md files are build artifacts
     (see CLAUDE.md's "Documentation pipeline" section and docs/advanced/ai-instructions.md's
     "Authoring the packaged instructions" section) generated from
-    assets/ai/_shared_instructions.md + _profile_{profile}.md by
+    ai/profiles/{profile}.md, ai/_shared.md and ai/skills/ by
     scripts/build_ai_instructions.py. This catches the case where someone hand-edits
     a packaged file directly (or edits a source file and forgets to re-run
     `make ai-instructions`) instead of going through the generator."""

@@ -2,7 +2,7 @@
 
 When asked to build forms in an application using pydantic-schemaforms, follow this contract.
 
-<!-- INCLUDE: _shared_instructions.md -->
+<!-- INCLUDE: instructions -->
 
 ### Claude conversion prompt starters
 

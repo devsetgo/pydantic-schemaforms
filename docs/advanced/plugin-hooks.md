@@ -61,29 +61,13 @@ whose own `input_type`/`ui_element` literally equals `name`), not on
 anything about the registration call itself.
 
 ```python
-from pydantic_schemaforms import LayoutEngine
-
-# signature: (field_name, field_schema, value, ui_info, context, engine) -> str
-def render_steps(field_name, field_schema, value, ui_info, context, engine):
-    # value may be your own layout descriptor; use engine._renderer if needed
-    steps = value or []
-    items = "".join(f"<li>{step}</li>" for step in steps)
-    return f"<ol class='steps'>{items}</ol>"
-
-LayoutEngine.register_layout_renderer("steps", render_steps)
+--8<-- "docs_src/advanced/plugin_hooks/composite.py"
 ```
 
-Attach the handler in your form field (`layout_handler` keyspace):
-
-```python
-class WizardForm(FormModel):
-    steps: list[str] = FormField(
-        ["Account", "Billing", "Review"],
-        input_type="layout",
-        layout_handler="steps",
-        title="Wizard Steps",
-    )
-```
+The renderer builds its HTML with `html(t'...')`, like everything else in the
+library, so each step's text is escaped. The field declares
+`input_type="layout"` and names the renderer with `layout_handler`; its value
+(here the list of steps) is what the renderer receives.
 
 - Names are arbitrary strings; collisions overwrite the previous handler.
 - Call `LayoutEngine.reset_layout_renderers()` in tests to clear
