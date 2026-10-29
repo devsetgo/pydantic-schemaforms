@@ -624,20 +624,7 @@ class EnhancedFormRenderer:
             item_parts.append(
                 render_html(t'<li><strong>{humanized_field}:</strong> {message}</li>')
             )
-        items_html = SafeHTML('\n'.join(item_parts))
-
-        if self.framework == 'material':
-            return render_html(t"""<section class="md-field">
-<div class="md-error-summary" role="alert" aria-live="polite">
-<div class="md-error-summary__title">Submission failed. Please correct the following:</div>
-<ul class="md-error-summary__list">{items_html}</ul>
-</div>
-</section>""")
-
-        return render_html(t"""<div class="alert alert-danger schemaforms-error-summary" role="alert" aria-live="polite">
-<strong>Submission failed.</strong> Please correct the following:
-<ul class="mb-0 mt-2">{items_html}</ul>
-</div>""")
+        return self._theme.render_error_summary('\n'.join(item_parts))
 
     def _resolve_csrf_mode(
         self, *, include_csrf: bool, csrf_mode: CSRFMode | str, debug: bool
