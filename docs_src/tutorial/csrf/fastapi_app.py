@@ -25,7 +25,9 @@ def issue_csrf_token(request: Request) -> str:
 
 def csrf_token_is_valid(request: Request, submitted: object) -> bool:
     expected = request.session.get('csrf_token')
-    return bool(expected and isinstance(submitted, str)) and hmac.compare_digest(expected, submitted)
+    return bool(expected and isinstance(submitted, str)) and hmac.compare_digest(
+        expected, submitted
+    )
 
 
 def form_options(request: Request) -> dict:

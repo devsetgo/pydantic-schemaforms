@@ -13,7 +13,9 @@ class Address(FormModel):
 
 class Preferences(FormModel):
     newsletter: bool = Field(False, title='Send me the newsletter')
-    language: str = Field('en', title='Language', ui_element='select', ui_options={'choices': ['en', 'fr', 'de']})
+    language: str = Field(
+        'en', title='Language', ui_element='select', ui_options={'choices': ['en', 'fr', 'de']}
+    )
 
 
 class AccountForm(FormModel):

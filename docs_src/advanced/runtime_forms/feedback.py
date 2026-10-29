@@ -18,7 +18,11 @@ def build_form(fields: list[dict]) -> type[FormModel]:
         **{
             spec['name']: (
                 str,
-                Field(... if spec['required'] else '', title=spec['title'], ui_element=spec['ui_element']),
+                Field(
+                    ... if spec['required'] else '',
+                    title=spec['title'],
+                    ui_element=spec['ui_element'],
+                ),
             )
             for spec in fields
         },
