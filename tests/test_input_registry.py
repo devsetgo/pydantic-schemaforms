@@ -94,7 +94,7 @@ def test_register_input_class_is_used_by_actual_rendering() -> None:
     """Regression guard: registering a custom BaseInput subclass at runtime must
     actually be picked up by the real render path (not just get_input_component_map()
     in isolation) -- this is the library's documented escape hatch for a genuinely
-    custom widget (docs/inputs.md's "Unknown elements" section), and it silently did
+    custom widget (docs/reference/inputs.md's "Unknown elements" section), and it silently did
     nothing end-to-end because pydantic_schemaforms/rendering/frameworks.py cached a
     snapshot of the registry at import time, which is always before any app code gets
     a chance to register anything (pydantic_schemaforms/__init__.py eagerly imports

@@ -4,7 +4,7 @@ example in the docs can't silently stop working.
 
 - A file with an ``app`` (FastAPI or Flask) has each GET route requested and
   each POST route sent an empty submission; both must render without a server
-  error.
+  error. Path parameters are filled with ``1``.
 - Any other file must at least render every FormModel it defines.
 """
 
@@ -12,13 +12,14 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import re
 import sys
 from pathlib import Path
 from types import ModuleType
 
 import pytest
 
-from pydantic_schemaforms import FormModel, render_form_html
+from pydantic_schemaforms import FormModel, render_form_html, reset_input_registry
 
 DOCS_SRC = Path(__file__).resolve().parent.parent / 'docs_src'
 EXAMPLES = sorted(DOCS_SRC.rglob('*.py'))
@@ -47,17 +48,19 @@ def _get_post_paths(app) -> tuple[list[str], list[str]]:
     posts: list[str] = []
     if hasattr(app, 'url_map'):  # Flask
         for rule in app.url_map.iter_rules():
-            if rule.endpoint == 'static' or rule.arguments:
+            if rule.endpoint == 'static':
                 continue
+            path = re.sub(r'<[^>]+>', '1', rule.rule)
             if 'GET' in rule.methods:
-                gets.append(rule.rule)
+                gets.append(path)
             if 'POST' in rule.methods:
-                posts.append(rule.rule)
+                posts.append(path)
     else:  # FastAPI / Starlette
         for route in app.routes:
             path = getattr(route, 'path', '')
-            if '{' in path or path.startswith(('/docs', '/redoc', '/openapi')):
+            if path.startswith(('/docs', '/redoc', '/openapi')):
                 continue
+            path = re.sub(r'\{[^}]+\}', '1', path)
             methods = getattr(route, 'methods', set()) or set()
             if 'GET' in methods:
                 gets.append(path)
@@ -74,8 +77,10 @@ def _client(app):
     return TestClient(app)
 
 
-def _status(response) -> int:
-    return getattr(response, 'status_code', None) or response.status_code
+@pytest.fixture(autouse=True)
+def _forget_example_inputs():
+    yield
+    reset_input_registry()
 
 
 def test_docs_src_has_examples() -> None:
@@ -108,7 +113,7 @@ def test_docs_example_runs(path: Path) -> None:
     assert gets or posts, f'{path.name}: no routes found'
     for url in gets:
         response = client.get(url)
-        assert _status(response) < 500, f'GET {url} -> {_status(response)}'
+        assert response.status_code < 500, f'GET {url} -> {response.status_code}'
     for url in posts:
         response = client.post(url, data={})
-        assert _status(response) < 500, f'POST {url} -> {_status(response)}'
+        assert response.status_code < 500, f'POST {url} -> {response.status_code}'

@@ -678,7 +678,7 @@ def test_layout_field_without_a_handler_explains_what_to_do() -> None:
 
     html = render_form_html(Orphan, submit_url='/o')
     assert 'Layout field "Rows" has no registered layout_handler' in html
-    assert 'docs/complex_forms.md' in html
+    assert 'docs/tutorial/nested-forms.md' in html
 
 
 def test_container_message_and_child_errors_share_one_node_in_either_order() -> None:

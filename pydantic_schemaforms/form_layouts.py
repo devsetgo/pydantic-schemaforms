@@ -32,7 +32,7 @@ Inputs are named contact.email; result.data and result.errors are nested JSON
 ({"contact": {"email": ...}}). layout= is "vertical", "tabbed", "side-by-side", "accordion" or "wizard".
 
 Full guide: python -m pydantic_schemaforms.ai_instructions claude  (section "Upgrading to nested forms")
-            or docs/complex_forms.md#upgrading"""
+            or docs/upgrading.md"""
 
 _EXTRA_HINTS = {
     'ListLayout': (

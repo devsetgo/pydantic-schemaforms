@@ -74,7 +74,7 @@ Tests are organized in `tests/` by domain — one file per subject area:
 | `test_invariants.py` + `test_meta_invariants.py` | **Protected.** Enforce the t-string / no-`string.Template` rule; never remove or weaken | 6 |
 | Smaller focused files | CSRF, debug mode, model lists, plugin hooks, AI instructions, benchmarks, etc. | ~100 |
 
-`tests/playwright/` holds browser tests: every example page must load without a JavaScript error and pass axe-core (WCAG 2.0–2.2 A/AA plus best practices) with no serious or critical accessibility violation (both styles, plus the validation error state); see `docs/accessibility.md`. axe-core is vendored for tests only in `tests/playwright/vendor/`, pinned by version and SHA-256. CI runs these in their own job.
+`tests/playwright/` holds browser tests: every example page must load without a JavaScript error and pass axe-core (WCAG 2.0–2.2 A/AA plus best practices) with no serious or critical accessibility violation (both styles, plus the validation error state); see `docs/reference/accessibility.md`. axe-core is vendored for tests only in `tests/playwright/vendor/`, pinned by version and SHA-256. CI runs these in their own job.
 
 ## Linting Rules (Ruff)
 

@@ -2,7 +2,7 @@
 DataTables.js wired in client-side as progressive enhancement over the
 plain <table> the server emits.
 
-This is a *layout field* renderer (see docs/plugin_hooks.md): registered
+This is a *layout field* renderer (see docs/advanced/plugin-hooks.md): registered
 under the name 'datatable' via the @LayoutEngine.layout_renderer('datatable')
 decorator (builtin=True, so it survives LayoutEngine.reset_layout_renderers()
 -- this module-level registration only ever runs once per process), it
@@ -25,7 +25,7 @@ second, redundant one from the embedding form itself.
 
 See DataTableLayout.as_layout_value() for building this field's value and
 DataTableLayout.handle_import_post() for the server side, and
-docs/recipes.md for the full pattern.
+docs/advanced/data-tables.md for the full pattern.
 """
 
 from __future__ import annotations
@@ -160,7 +160,7 @@ def _render_read_only_cell(prefix: str, field_name: str, row_index: int, value: 
 
     The hidden input matters whenever this table sits inside a save form
     (a column declared with FormField(input_type=...) elsewhere on the same
-    row -- see render_datatable_layout_field/the recipe in docs/recipes.md):
+    row -- see render_datatable_layout_field/docs/advanced/data-tables.md):
     a real browser submit only sends fields that have a name=
     attribute, so a read-only column with *no* input at all would vanish
     from the submitted data entirely, failing that row's validation for a

@@ -243,12 +243,12 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
 _BUILD_WITH_FORMMODEL = (
     'FormModel is the only way to build a form now. Instead, declare a FormModel (or build one '
     'at runtime with pydantic.create_model(..., __base__=FormModel)) and render it with '
-    'render_form_html(). See docs/quickstart.md.'
+    'render_form_html(). See docs/upgrading.md.'
 )
 _VALIDATE_WITH_FORMMODEL = (
     'Instead, validate with FormModel.validate(request_form, submit_url=...) and re-render '
     'failures with result.render_with_errors() / render_with_errors_async(). '
-    'See docs/quickstart.md.'
+    'See docs/upgrading.md.'
 )
 
 # Removed with no replacement stub; this only turns the bare "cannot import
@@ -271,7 +271,7 @@ _REMOVED_API = {
     ),
     'render_form_page': (
         'Instead, render the form with render_form_html() inside your own page template. '
-        'See docs/quickstart.md.'
+        'See docs/upgrading.md.'
     ),
     **dict.fromkeys(
         ('FormIntegration', 'handle_form', 'handle_form_async'), _VALIDATE_WITH_FORMMODEL
@@ -279,7 +279,7 @@ _REMOVED_API = {
     'form_validator': (
         "It never ran. Instead, use Pydantic's @model_validator(mode='after') on the FormModel "
         "(its message lands in the form-wide '_errors'), or FormValidator.add_cross_field_rule. "
-        'See docs/validation_guide.md.'
+        'See docs/upgrading.md.'
     ),
 }
 

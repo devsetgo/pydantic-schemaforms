@@ -51,7 +51,7 @@ What it demonstrates:
 `/layouts` shows the same composed form under every presentation: append
 `?layout=vertical`, `tabbed`, `side-by-side`, `accordion`, or `wizard`. For the
 wizard, `&linear=false`, `&progress=false`, and `&labels=true` exercise every
-`wizard_options` key. The guide is `docs/complex_forms.md`.
+`wizard_options` key. The guide is `docs/tutorial/layouts.md`.
 
 This module is imported by the FastAPI example to generate rich nested sample payloads.
 
@@ -123,9 +123,9 @@ The examples show both patterns:
 
 Related docs:
 
-- docs/assets.md
-- docs/configuration.md
-- docs/csrf.md
+- docs/advanced/assets.md
+- docs/reference/rendering-api.md
+- docs/tutorial/csrf.md
 
 ## Local verification
 

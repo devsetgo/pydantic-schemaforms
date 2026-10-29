@@ -8,7 +8,7 @@ Every item follows the "Examples must cover every layout, input, and
 validation" rule in `CLAUDE.md`: a feature isn't done until it's demonstrated
 on an example page under both Bootstrap and Material.
 
-Last updated: 2026-10-28.
+Last updated: 2026-10-29.
 
 ## Phase 1: Clear the ground
 
@@ -24,7 +24,7 @@ features aren't layered on known bugs. Phase 1 ships as its own release.
 | 5 | [#246](https://github.com/devsetgo/pydantic-schemaforms/issues/246) Accessibility gate with axe-core | Done ([#262](https://github.com/devsetgo/pydantic-schemaforms/pull/262)) | Low effort. Landing it before the new widgets in phases 2 and 3 means each one is checked as it's built instead of fixed later. |
 | 6 | [#264](https://github.com/devsetgo/pydantic-schemaforms/issues/264) Ship a library skill ([library-skills.io](https://library-skills.io/)) inside the package | Not started | Lets `uvx library-skills` install version-matched agent guidance from the installed package, so AI agents stop suggesting removed APIs. Generated from `_shared_instructions.md`, so it's small. Ships with the phase 1 release, right after the breaking removals in #254 and #255. |
 | 7 | [#147](https://github.com/devsetgo/pydantic-schemaforms/issues/147) Replace MkDocs Material | Research done; migrate spring 2027 | MkDocs 2.0 breaks MkDocs Material, which reaches end of life on 2027-05-05. Decision: move to [Zensical](https://zensical.org/docs/compatibility/mkdocs/), which builds our `mkdocs.yml` as-is (tested), once it leaves alpha. A non-blocking CI job builds the docs with Zensical on every PR in the meantime. |
-| 8 | [#258](https://github.com/devsetgo/pydantic-schemaforms/issues/258) Reorganize the documentation | In progress | Do it with #147 or straight after it, so the new navigation is built once in the new tool. Content work (merging duplicate pages, shortening the README) can start before the tool is chosen. Docs aren't part of the package, so this doesn't hold up the phase 1 library release. |
+| 8 | [#258](https://github.com/devsetgo/pydantic-schemaforms/issues/258) Reorganize the documentation | In progress: new navigation, Tutorial, Advanced User Guide, Recipes and Reference written, old pages removed, README shortened | Do it with #147 or straight after it, so the new navigation is built once in the new tool. Content work (merging duplicate pages, shortening the README) can start before the tool is chosen. Docs aren't part of the package, so this doesn't hold up the phase 1 library release. |
 
 ## Phase 2: Core form features
 
@@ -60,7 +60,7 @@ touches every widget, so doing them after phases 2 and 3 means less retrofitting
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 18 | [#235](https://github.com/devsetgo/pydantic-schemaforms/issues/235) Build a FormModel from JSON Schema | Not started | The library-sized answer to [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190). Close #190 when this ships. With `FormBuilder` removed (#255), this is the friendly way to build a form at runtime; until it ships, the `create_model(..., __base__=FormModel)` recipe in `docs/quickstart.md` covers it. |
+| 18 | [#235](https://github.com/devsetgo/pydantic-schemaforms/issues/235) Build a FormModel from JSON Schema | Not started | The library-sized answer to [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190). Close #190 when this ships. With `FormBuilder` removed (#255), this is the friendly way to build a form at runtime; until it ships, the `create_model(..., __base__=FormModel)` recipe in `docs/advanced/runtime-forms.md` covers it. |
 | 19 | [#240](https://github.com/devsetgo/pydantic-schemaforms/issues/240) Internationalization | Not started | Wraps every library-generated string and display format. Doing it after the new widgets and display mode means doing it once. |
 | 20 | [#247](https://github.com/devsetgo/pydantic-schemaforms/issues/247) CSS-variables theme and the Materialize decision | Not started | A new style multiplies the work for every widget, so add it once the widget set has settled. Decide Materialize's future at the same time. |
 | 21 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |

@@ -151,7 +151,7 @@ constraints + `@model_validator` on a `FormModel` for anything with a known sche
 every other section of this document assumes** — and reach for this fluent API only when you
 genuinely don't have (or don't want) a typed model for the validation rules themselves, e.g. rules
 assembled dynamically or shared across forms that aren't the same `FormModel`. All of these names
-are top-level exports; the full API is documented in `docs/validation_guide.md`, not repeated here.
+are top-level exports; the full API is documented in `docs/reference/validation-rules.md`, not repeated here.
 
 An unrecognized `ui_element` value does not raise an error — it silently falls back to a plain
 text input, which is easy to miss in review. If a field's semantics don't cleanly match anything
@@ -699,7 +699,7 @@ options different labels from their values.
 - Use the lower-level layout primitives only when required: `GridLayout`,
   `ResponsiveGridLayout`, `HorizontalLayout`, `VerticalLayout`, `CardLayout`, `TabLayout`,
   `AccordionLayout`, `ModalLayout` (all top-level exports) wrap already-rendered
-  HTML fragments; they are not how forms are composed — see `docs/layouts.md`.
+  HTML fragments; they are not how forms are composed — see `docs/advanced/layout-primitives.md`.
 
 ## Framework route contract
 

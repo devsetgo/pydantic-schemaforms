@@ -32,7 +32,7 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   `FormModel` (or build one at runtime with Pydantic's
   `create_model(..., __base__=FormModel)`), render it with `render_form_html()`
   and handle submissions with `FormModel.validate()` and
-  `result.render_with_errors()`. See `docs/quickstart.md`. Importing any
+  `result.render_with_errors()`. See `docs/upgrading.md`. Importing any
   removed name raises an `ImportError` that names its replacement. (#255)
 - **`@form_validator` is removed.** It never ran: nothing called the methods
   it decorated, so cross-field checks written with it were silently skipped.
@@ -60,7 +60,7 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   for tests only (`tests/playwright/vendor/`, pinned by version and SHA-256);
   it is not shipped in the package. What is tested, the baseline the inputs
   meet, and what automated testing does not cover are in the new
-  `docs/accessibility.md` page and the README. This is testing, not a claim of
+  `docs/reference/accessibility.md` page and the README. This is testing, not a claim of
   ADA, Section 508 or WCAG conformance. (#246)
 
 ### Fixed
@@ -136,7 +136,7 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 Complex forms are now built one way: nest `FormModel`s as fields of a parent
 `FormModel` and pick a `layout=`. Data in and out is nested JSON. This is a
-breaking release; see `docs/complex_forms.md#upgrading`.
+breaking release; see `docs/upgrading.md`.
 
 ### Breaking Changes
 

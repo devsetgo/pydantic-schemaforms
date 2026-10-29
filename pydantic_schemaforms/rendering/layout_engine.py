@@ -738,7 +738,7 @@ class LayoutEngine:
                 f"layout='{mode}' needs groups to arrange, but this form has no sub-form "
                 'fields. Split it into nested FormModel fields, e.g. '
                 '`contact: Contact = Field(title="Contact")`, or use layout="vertical". '
-                'See docs/complex_forms.md.'
+                'See docs/tutorial/layouts.md.'
             )
 
         group_names = {name for name, _schema in metadata.group_fields}
@@ -841,7 +841,7 @@ class LayoutEngine:
     <p>Layout field "{title}" has no registered layout_handler.</p>
     <small>input_type="layout" needs layout_handler=... naming a renderer registered with
     LayoutEngine.layout_renderer(). To compose forms, nest FormModels as fields instead
-    (see docs/complex_forms.md).</small>
+    (see docs/tutorial/nested-forms.md).</small>
 </div>""")
         try:
             return handler(field_name, field_schema, value, ui_info, context, self)

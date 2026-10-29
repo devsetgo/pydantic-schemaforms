@@ -4,17 +4,13 @@
 
 It focuses on:
 
-- A simple model → schema → HTML pipeline
-- First-class sync (WSGI) and async (ASGI) integration helpers
+- One Pydantic model for the form, its validation and its data
+- HTML that is escaped by construction, built with Python 3.14 t-strings
+- Sync (WSGI) and async (ASGI) rendering, tested with FastAPI and Flask
 - Offline-by-default asset delivery (vendored/inlined assets), with explicit opt-in for CDNs
 
-If you’re new, start here:
-
-- [Quick Start](quickstart.md)
-- [Configuration](configuration.md)
-- [Inputs (UI Elements)](inputs.md)
-- [Layouts](layouts.md)
-- [Assets](assets.md)
+If you're new, start with the [Tutorial](tutorial/index.md). The
+[Reference](reference/index.md) lists every input, layout and option.
 
 Project links:
 

@@ -29,9 +29,13 @@ overwritten the next time docs are built:
 | `docs/contribute.md`    | `CONTRIBUTING.md` |
 | `docs/release-notes.md` | `CHANGELOG.md` (its `## Latest Changes` section is further regenerated from GitHub Releases by `scripts/changelog.py` — don't hand-edit that section either; edit the static part above the sentinel if you need a permanent entry) |
 
-Everything else under `docs/` (`recipes.md`, `validation_guide.md`,
-`quickstart.md`, `tutorial_fastapi.md`, etc.) is genuinely hand-maintained —
-edit those directly. One exception: `docs/recipes.md`'s "Every input type"
+Everything else under `docs/` (`tutorial/`, `advanced/`, `recipes/`,
+`reference/`, etc.) is genuinely hand-maintained — edit those directly.
+`docs/roadmap.md` only includes `ROADMAP.md` via a snippet; edit the root
+file. Code examples in those pages live under `docs_src/` and are included
+with `--8<--`; `tests/test_docs_examples.py` runs every one (each app's GET
+and POST routes), so edit the `docs_src/` file, not a copy in the page.
+One exception: `docs/reference/inputs.md`'s "Every input type"
 section (between the `<!-- BEGIN/END GENERATED: input-type-reference -->`
 markers) is generated from `examples/input_type_reference.py` — the same
 data backing the FastAPI demo's `/input-types` page — by
@@ -56,7 +60,7 @@ instead, then run `make ai-instructions` (`scripts/build_ai_instructions.py`
 Cross-links between `README.md`/`docs/index.md` and other `docs/*.md` files
 can't use a single relative path that resolves correctly in both GitHub's
 README rendering and mkdocs' site (the same file serves both), so prefer
-plain-text references (e.g. "see `docs/recipes.md`") over `[text](path)`
+plain-text references (e.g. "see `docs/reference/inputs.md`") over `[text](path)`
 links there.
 
 ## Public API surface — keep exports and AI instructions honest
@@ -217,7 +221,7 @@ mechanism instead of hand-rolling a bespoke rendering path** — this
 codebase used to have three inconsistent ones (DataTableLayout's registry,
 model_list's hardcoded dispatch branch, `form_layouts.py`'s unrelated
 multi-FormModel orchestrators) before they were consolidated into this.
-Full details and worked examples: `docs/plugin_hooks.md`. This section is
+Full details and worked examples: `docs/advanced/plugin-hooks.md`. This section is
 about *this library* shipping a new built-in composite (`builtin=True`); an
 *app author* registering their own composite via this same `LayoutEngine`
 mechanism (`builtin=False`) is the AI-instructions-facing use case — see
@@ -257,7 +261,7 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
 - **Composing several `FormModel`s into one form is nesting, not a
   composite.** A parent `FormModel` declares sub-forms as typed fields and
   the parent's `layout=` (`vertical`/`tabbed`/`side-by-side`/`accordion`/`wizard`,
-  `LayoutEngine.render_groups`) arranges them; see `docs/complex_forms.md`.
+  `LayoutEngine.render_groups`) arranges them; see `docs/tutorial/nested-forms.md`.
   The old `form_layouts.py` orchestrators (`TabbedLayout`, `ListLayout`,
   ...) were removed in 26.4.1 and are now stubs raising
   `FormLayoutRemovedError`. Don't reintroduce a wrapper-class way to
@@ -292,7 +296,7 @@ A feature without a working example is not done.
   `examples/input_type_reference.py` (the `/input-types` cheatsheet, which
   is static text, so it alone does not count as rendered). After editing
   that file, run `scripts/generate_input_type_reference.py` so the generated
-  section of `docs/recipes.md` stays in sync.
+  section of `docs/reference/inputs.md` stays in sync.
 - **Validation:** every kind of validation the library supports is shown
   failing and re-rendering on an example form: each Pydantic `Field`
   constraint (`min_length`, `max_length`, `ge`, `le`, `gt`, `lt`, `pattern`,
