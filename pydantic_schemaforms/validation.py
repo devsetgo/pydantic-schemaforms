@@ -1090,33 +1090,38 @@ def _renders_as_checkbox(field_info: Any) -> bool:
     return _ui_element(field_info) in _CHECKBOX_ELEMENTS
 
 
+def _sub_model(annotation: Any) -> type[BaseModel] | None:
+    return next(
+        (
+            t
+            for t in (get_args(annotation) or (annotation,))
+            if isinstance(t, type) and issubclass(t, BaseModel)
+        ),
+        None,
+    )
+
+
+def _value_left_blank(value: Any, info: Any) -> bool:
+    """Whether one submitted value is empty or still the field's default."""
+    if value in ('', None, []):
+        return True
+    if isinstance(value, dict):
+        sub_model = _sub_model(info.annotation)
+        return sub_model is not None and _left_blank(value, sub_model)
+    default = info.default
+    if isinstance(default, bool):
+        return default  # a ticked checkbox is untouched only if it starts ticked
+    if default is PydanticUndefined or isinstance(value, list):
+        return False
+    return str(to_jsonable_python(default)) == str(value)
+
+
 def _left_blank(data: dict[str, Any], model: type[BaseModel]) -> bool:
-    for key, value in data.items():
-        info = model.model_fields.get(key)
-        if info is None or value in ('', None, []):
-            continue
-        if isinstance(value, dict):
-            sub_model = next(
-                (
-                    t
-                    for t in (get_args(info.annotation) or (info.annotation,))
-                    if isinstance(t, type) and issubclass(t, BaseModel)
-                ),
-                None,
-            )
-            if sub_model is None or not _left_blank(value, sub_model):
-                return False
-            continue
-        default = info.default
-        if isinstance(default, bool):
-            if default:  # a ticked checkbox that starts ticked
-                continue
-            return False
-        if default is PydanticUndefined or isinstance(value, list):
-            return False
-        if str(to_jsonable_python(default)) != str(value):
-            return False
-    return True
+    return all(
+        _value_left_blank(value, model.model_fields[key])
+        for key, value in data.items()
+        if key in model.model_fields
+    )
 
 
 def _coerce_html_form_values(

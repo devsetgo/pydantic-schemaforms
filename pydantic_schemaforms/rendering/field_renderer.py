@@ -23,6 +23,18 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 from . import model_list_renderer as _model_list_renderer  # noqa: F401
 from . import nested_model_renderer as _nested_model_renderer  # noqa: F401
 
+
+def _infer_string_element(field_schema: dict[str, Any]) -> str:
+    if field_schema.get('maxLength', 0) > 200:
+        return 'textarea'
+    title = field_schema.get('title', '').lower()
+    if 'email' in title:
+        return 'email'
+    if 'password' in title:
+        return 'password'
+    return 'text'
+
+
 # ui_element values that render as an HTML checkbox under the hood and so
 # need the same boolean checked/value handling ('toggle' is CheckboxInput's
 # styled-as-a-switch subclass -- functionally a checkbox, see ToggleSwitch's
@@ -463,14 +475,7 @@ class FieldRenderer:
         if field_type == 'string' and field_schema.get('format') in _FORMAT_UI_ELEMENTS:
             return _FORMAT_UI_ELEMENTS[field_schema['format']]
         if field_type == 'string':
-            max_length = field_schema.get('maxLength', 0)
-            if max_length > 200:
-                return 'textarea'
-            if 'email' in field_schema.get('title', '').lower():
-                return 'email'
-            if 'password' in field_schema.get('title', '').lower():
-                return 'password'
-            return 'text'
+            return _infer_string_element(field_schema)
         if field_type in ('integer', 'number'):
             return 'number'
         if field_type == 'boolean':
