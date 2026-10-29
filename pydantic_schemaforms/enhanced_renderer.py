@@ -392,7 +392,7 @@ class EnhancedFormRenderer:
         if has_model_list_fields:
             from .model_list import ModelListRenderer
 
-            list_renderer = ModelListRenderer(framework=self._model_list_framework())
+            list_renderer = ModelListRenderer()
             output_parts.append(list_renderer.get_model_list_javascript())
 
         combined_output = '\n'.join(output_parts)
@@ -726,12 +726,6 @@ class EnhancedFormRenderer:
     def _render_submit_button(self) -> str:
         button_class = self._theme.button_class() or self.config.get('button_class', '')
         return self._theme.render_submit_button(button_class)
-
-    def _model_list_framework(self) -> str:
-        """Allow subclasses to control which framework powers model list assets."""
-        if self.framework == 'material':
-            return 'bootstrap'
-        return self.framework
 
     # ------------------------------------------------------------------ #
     #  Material Design field rendering                                     #

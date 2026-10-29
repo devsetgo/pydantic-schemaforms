@@ -17,14 +17,6 @@ from __future__ import annotations
 class ModelListRenderer:
     """Provides the shared add/remove/collapse JavaScript for model_list fields."""
 
-    def __init__(self, framework: str = 'bootstrap'):
-        """Initialize the model list renderer.
-
-        Args:
-            framework: UI framework to use ("bootstrap" or "material")
-        """
-        self.framework = framework
-
     def get_model_list_javascript(self) -> str:
         """Return JavaScript for model list functionality with collapsible card support."""
         return """
@@ -268,7 +260,7 @@ class ModelListRenderer:
         function updateItemTitleFromData(item, forceIndex = null) {
             const index = forceIndex !== null ? forceIndex : parseInt(item.dataset.index);
             const titleTemplate = item.dataset.titleTemplate || 'Item #{index}';
-            const titleElement = item.querySelector('h6 button, h6 span');
+            const titleElement = item.querySelector('[data-model-list-title]');
 
             if (!titleElement) return;
 
@@ -299,15 +291,8 @@ class ModelListRenderer:
                 newTitle = `Item #${index + 1}`;
             }
 
-            // Update the title while preserving icons
-            const cardIcon = '<i class="bi bi-card-list me-2"></i>';
-            if (titleElement.tagName === 'BUTTON') {
-                const chevronIcon = titleElement.querySelector('.bi-chevron-down, .bi-chevron-right');
-                const chevronHtml = chevronIcon ? chevronIcon.outerHTML : '<i class="bi bi-chevron-down me-2"></i>';
-                titleElement.innerHTML = `${chevronHtml}${cardIcon}${newTitle}`;
-            } else {
-                titleElement.innerHTML = `${cardIcon}${newTitle}`;
-            }
+            // textContent, never innerHTML: the title is built from what the user typed.
+            titleElement.textContent = newTitle;
         }
         </script>
         """
