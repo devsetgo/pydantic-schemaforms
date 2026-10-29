@@ -11,6 +11,7 @@ from pydantic_schemaforms.assets.runtime import (
     framework_css_tag,
     framework_js_tag,
 )
+from .field_shell import FieldShellRenderer, field_shell_for_framework
 from .form_style import FormStyle, get_form_style
 from .frameworks import get_framework_config
 from .material_icons import render_material_icon
@@ -170,6 +171,15 @@ class RendererTheme:
         )
 
     # --- Framework-specific extension hooks -------------------------------------------------
+    def field_shell(self, framework: str) -> FieldShellRenderer:
+        """The markup around each control (label, help, error, wrapper).
+
+        By default the renderer's framework string picks it, so a custom theme
+        renders fields exactly as its framework always has.
+        """
+
+        return field_shell_for_framework(framework)
+
     def form_class(self) -> str:
         """Return the base CSS class for <form> elements (if any)."""
 

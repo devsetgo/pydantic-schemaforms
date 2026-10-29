@@ -6,10 +6,19 @@ from abc import ABC, abstractmethod
 from html import escape
 from typing import Any
 
+from pydantic_schemaforms.rendering.field_shell import (
+    FieldShell,
+    FieldShellRenderer,
+    build_label,  # noqa: F401  (defined with the shells; public via inputs)
+    field_shell_for_framework,
+)
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 
-_CLOSE_DIV = '</div>'
+def _shell_renderer(theme: Any, framework: str) -> FieldShellRenderer:
+    if theme is not None:
+        return theme.field_shell(framework)
+    return field_shell_for_framework(framework)
 
 
 def _render_input_tag(attributes_str: str) -> str:
@@ -169,6 +178,8 @@ class FormInput(BaseInput):
         icon: str | None = None,
         framework: str = 'bootstrap',
         options: list[dict[str, Any]] | None = None,
+        *,
+        theme: Any = None,
         **kwargs: Any,
     ) -> str:
         """Render the input with its label, help text, and error message."""
@@ -190,73 +201,21 @@ class FormInput(BaseInput):
             attrs['type'] = input_type
             input_html = _render_input_tag(self._build_attributes_string(attrs))
 
-        _input_html = SafeHTML(str(input_html))
-        field_parts: list[str] = []
-
-        if framework == 'bootstrap':
-            if label:
-                label_html = build_label(
-                    kwargs.get('name', 'field'),
-                    label,
-                    kwargs.get('required', False),
-                    icon,
-                    framework,
-                )
-                field_parts.append(label_html)
-
-            field_parts.append(_input_html)
-
-            if help_text:
-                field_parts.append(html(t'<div id="{help_id}" class="form-text">{help_text}</div>'))
-
-            if error:
-                field_parts.append(
-                    html(t'<div id="{error_id}" class="invalid-feedback d-block">{error}</div>')
-                )
-        else:
-            if label:
-                label_html = build_label(
-                    kwargs.get('name', 'field'),
-                    label,
-                    kwargs.get('required', False),
-                    icon,
-                    framework,
-                )
-                field_parts.append(label_html)
-
-            field_parts.append(_input_html)
-
-            if help_text:
-                field_parts.append(html(t'<div id="{help_id}" class="help-text">{help_text}</div>'))
-
-            if error:
-                field_parts.append(html(t'<div id="{error_id}" class="error-text">{error}</div>'))
-
-        return '\n'.join(field_parts)
-
-
-def build_label(
-    field_name: str,
-    label: str | None = None,
-    required: bool = False,
-    icon: str | None = None,
-    framework: str = 'bootstrap',
-) -> str:
-    """Build label element with optional icon support."""
-    display_label = label or field_name.replace('_', ' ').title()
-    required_indicator = ' *' if required else ''
-    icon_html: SafeHTML = SafeHTML('')
-    if icon:
-        if framework == 'bootstrap':
-            icon_class = icon if icon.startswith('bi bi-') else f'bi bi-{icon}'
-            icon_html = html(t'<i class="{icon_class}"></i> ')
-        elif framework == 'material':
-            icon_html = html(t'<i class="material-icons">{icon}</i> ')
-        elif framework == 'fontawesome':
-            icon_class = icon if icon.startswith('fas fa-') else f'fas fa-{icon}'
-            icon_html = html(t'<i class="{icon_class}"></i> ')
-
-    return html(t'<label for="{field_name}">{icon_html}{display_label}{required_indicator}</label>')
+        shell = FieldShell(
+            family='input',
+            ui_element=self.ui_element or '',
+            name=kwargs.get('name', 'field'),
+            field_id=str(kwargs.get('id', '')),
+            control_html=str(input_html),
+            label=label,
+            required=bool(kwargs.get('required', False)),
+            help_text=help_text,
+            error=error,
+            help_id=help_id,
+            error_id=error_id,
+            icon=icon,
+        )
+        return _shell_renderer(theme, framework).render(shell)
 
 
 def build_error_message(field_name: str, error: str) -> str:
@@ -315,6 +274,8 @@ class SelectInputBase(BaseInput):
         icon: str | None = None,
         framework: str = 'bootstrap',
         options: list[dict[str, Any]] | None = None,
+        *,
+        theme: Any = None,
         **kwargs: Any,
     ) -> str:
         """Render the selection input with its label, help text, and error message."""
@@ -328,116 +289,24 @@ class SelectInputBase(BaseInput):
         help_id, error_id = _describe_field(kwargs, help_text, error)
 
         if hasattr(self, 'render') and options is not None:
-            input_html = SafeHTML(str(self.render(options=options, **kwargs)))
+            input_html = str(self.render(options=options, **kwargs))
         else:
             attrs = self.validate_attributes(**kwargs)
             _attrs = SafeHTML(self._build_attributes_string(attrs))
             input_html = html(t'<select {_attrs}></select>')
 
-        field_id = kwargs.get('id', '')
-        field_parts: list[str] = []
-
-        if framework == 'bootstrap':
-            field_parts.append('<div class="mb-3">')
-
-            if label:
-                field_parts.append(
-                    html(t'<label for="{field_id}" class="form-label">{label}</label>')
-                )
-
-            if icon:
-                field_parts.extend(
-                    [
-                        '<div class="input-group">',
-                        html(t'<span class="input-group-text"><i class="bi bi-{icon}"></i></span>'),
-                        input_html,
-                        _CLOSE_DIV,
-                    ]
-                )
-            else:
-                field_parts.append(input_html)
-
-            if help_text:
-                field_parts.append(html(t'<div id="{help_id}" class="form-text">{help_text}</div>'))
-
-            if error:
-                field_parts.append(
-                    html(t'<div id="{error_id}" class="invalid-feedback d-block">{error}</div>')
-                )
-
-            field_parts.append(_CLOSE_DIV)
-
-        elif framework == 'material':
-            field_parts.append('<div class="md-field">')
-
-            if icon:
-                field_parts.extend(
-                    [
-                        '<div class="md-field-with-icon">',
-                        html(t'<span class="md-icon material-icons">{icon}</span>'),
-                        '<div class="md-input-wrapper">',
-                    ]
-                )
-
-            # A floating label (.md-floating-label, absolutely positioned on
-            # top of the control until CSS ":not(:placeholder-shown)"/":focus"
-            # animates it out of the way) only works when paired with
-            # Material's own bespoke .md-select/.md-input classes -- this
-            # method is also reached for widgets without a bespoke Material
-            # template (multiselect, combobox) whose controls carry none of
-            # those classes, so the label would sit frozen on top of the
-            # control forever. Use the static .md-field-label style instead
-            # (already used for the same purpose by model-list containers).
-            if label:
-                field_parts.append(
-                    html(t'<label class="md-field-label" for="{field_id}">{label}</label>')
-                )
-
-            field_parts.append(input_html)
-
-            if icon:
-                field_parts.append(_CLOSE_DIV)
-                field_parts.append(_CLOSE_DIV)
-
-            if help_text:
-                field_parts.append(
-                    html(t'<div id="{help_id}" class="md-help-text">{help_text}</div>')
-                )
-
-            if error:
-                field_parts.append(
-                    html(t'<div id="{error_id}" class="md-error-text">{error}</div>')
-                )
-
-            field_parts.append(_CLOSE_DIV)
-
-        else:
-            field_parts.append('<div class="field">')
-
-            if label:
-                field_parts.append(html(t'<label for="{field_id}">{label}</label>'))
-
-            if icon:
-                field_parts.extend(
-                    [
-                        html(
-                            t'<div class="input-with-icon"><span class="input-icon">{icon}</span>'
-                        ),
-                        input_html,
-                        _CLOSE_DIV,
-                    ]
-                )
-            else:
-                field_parts.append(input_html)
-
-            if help_text:
-                field_parts.append(html(t'<div id="{help_id}" class="help-text">{help_text}</div>'))
-
-            if error:
-                field_parts.append(
-                    html(t'<div id="{error_id}" class="error-message">{error}</div>')
-                )
-
-            field_parts.append(_CLOSE_DIV)
-
-        return '\n'.join(field_parts)
+        shell = FieldShell(
+            family='choice',
+            ui_element=self.ui_element or '',
+            name=kwargs.get('name', 'field'),
+            field_id=kwargs.get('id', ''),
+            control_html=str(input_html),
+            label=label,
+            required=bool(kwargs.get('required', False)),
+            help_text=help_text,
+            error=error,
+            help_id=help_id,
+            error_id=error_id,
+            icon=icon,
+        )
+        return _shell_renderer(theme, framework).render(shell)
