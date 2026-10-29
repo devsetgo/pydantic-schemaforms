@@ -137,7 +137,7 @@ def test_cli_output_flag_allows_dotdot_that_stays_inside_cwd(tmp_path, monkeypat
 def test_authoritative_ui_element_table_matches_registry(profile: str) -> None:
     """Every ui_element/alias claimed in the docs must actually be registered.
 
-    This is the guard the packaged docs promise in docs/ai_instructions.md's
+    This is the guard the packaged docs promise in docs/advanced/ai-instructions.md's
     "Keeping this feature honest" section: the table is checked against the
     real registry, not just written once and left to drift.
     """
@@ -166,7 +166,7 @@ def test_resolve_output_path_rejects_sibling_directory_with_shared_prefix(tmp_pa
 @pytest.mark.parametrize('profile', ['claude', 'copilot', 'generic'])
 def test_packaged_instructions_match_generated_output(profile: str) -> None:
     """The 3 packaged assets/ai/*_app_instructions.md files are build artifacts
-    (see CLAUDE.md's "Documentation pipeline" section and docs/ai_instructions.md's
+    (see CLAUDE.md's "Documentation pipeline" section and docs/advanced/ai-instructions.md's
     "Authoring the packaged instructions" section) generated from
     assets/ai/_shared_instructions.md + _profile_{profile}.md by
     scripts/build_ai_instructions.py. This catches the case where someone hand-edits

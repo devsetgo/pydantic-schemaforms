@@ -2560,7 +2560,7 @@ class AccountSettingsForm(FormModel):
 # Each category is its own FormModel, nested as a field of WidgetGalleryForm
 # and rendered with layout="tabbed", one tab per category in declaration
 # order. Every field has a default, and those defaults are the page's demo
-# values (see widget_gallery_demo_data()), so a field and its demo value can
+# values (a fresh render starts from them), so a field and its demo value can
 # never drift apart. CLAUDE.md requires every registered ui_element and each
 # of its options to appear here; tests/test_examples_coverage.py checks it.
 
@@ -3075,15 +3075,6 @@ class WidgetGalleryForm(FormModel):
     date_time: DateTimeGalleryForm = Field(title='Date & Time')
     files_specialized: SpecializedGalleryForm = Field(title='Files & Specialized')
     field_options: FieldOptionsGalleryForm = Field(title='Field Options')
-
-
-def widget_gallery_demo_data() -> dict:
-    """The gallery's demo values: every tab's field defaults, as nested JSON."""
-
-    return {
-        name: info.annotation().model_dump(mode='json')
-        for name, info in WidgetGalleryForm.model_fields.items()
-    }
 
 
 # ============================================================================

@@ -181,7 +181,7 @@ def test_bench_fields_only_large(benchmark) -> None:
 
 # ---------------------------------------------------------------------------
 # Benchmarks: DataTableLayout (CSV parse+validate, and table rendering) at
-# increasing row counts. See docs/recipes.md's "Large-file uploads" section
+# increasing row counts. See docs/advanced/data-tables.md's "Performance" section
 # for the user-facing performance note these numbers back up -- rendering
 # (not parsing) dominates at scale, since every editable cell instantiates
 # and renders its own input widget.

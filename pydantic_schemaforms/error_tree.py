@@ -40,6 +40,10 @@ def _friendly_message(error: Mapping[str, Any]) -> str:
         return f'Must be {ctx["ge"]} or greater'
     if 'less_than_equal' in error_type and ctx.get('le') is not None:
         return f'Must be {ctx["le"]} or less'
+    # Pydantic prefixes a ValueError raised in a validator; the form shows
+    # the validator's own message.
+    if error_type == 'value_error':
+        return message.removeprefix('Value error, ')
     return message
 
 

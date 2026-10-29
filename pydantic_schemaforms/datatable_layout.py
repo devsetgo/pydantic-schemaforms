@@ -12,7 +12,7 @@ A ``DataTableLayout`` subclass is embedded as one *layout field* on a plain
 ``FormModel`` (``input_type="layout", layout_handler="datatable"`` --
 registered automatically at import time, see ``rendering/datatable_renderer.py``),
 built via ``as_layout_value()``, exactly like any other layout field
-(``docs/plugin_hooks.md``). It is not rendered through a separate bespoke
+(``docs/advanced/plugin-hooks.md``). It is not rendered through a separate bespoke
 entry point -- the embedding FormModel's own ``render_form_html_async()``
 call is all there is.
 
@@ -45,7 +45,7 @@ which button was clicked, parses accordingly (``parse_csv_rows()`` for
 "Load", ``parse_submitted_rows()`` for "Submit"), and returns rows merged
 back into their original submitted order (see ``merge_rows()`` -- an
 invalid row keeps its raw, as-typed values instead of vanishing). See
-``docs/recipes.md`` for the full pattern and a complete example route.
+``docs/advanced/data-tables.md`` for the full pattern and a complete example route.
 """
 
 from __future__ import annotations
@@ -172,7 +172,7 @@ class ImportResult:
 class DataTableLayout(CompositeLayoutModel):
     """FormModel whose fields are table columns instead of one instance's
     inputs -- embedded as a layout field on a plain FormModel, not rendered
-    on its own. See the module docstring and ``docs/recipes.md``.
+    on its own. See the module docstring and ``docs/advanced/data-tables.md``.
 
     Example::
 
@@ -220,7 +220,7 @@ class DataTableLayout(CompositeLayoutModel):
     larger imports -- either ``model_config['editable'] = False`` for a
     bulk-replace-only flow, or declare columns without ``input_type`` to
     keep the Load-then-Submit review step without any cell being editable.
-    See ``docs/recipes.md``'s Performance note for the full tradeoff.
+    See ``docs/advanced/data-tables.md``'s Performance section for the full tradeoff.
     """
 
     __is_datatable_layout__: ClassVar[bool] = True

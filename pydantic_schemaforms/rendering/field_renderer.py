@@ -23,6 +23,18 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 from . import model_list_renderer as _model_list_renderer  # noqa: F401
 from . import nested_model_renderer as _nested_model_renderer  # noqa: F401
 
+
+def _infer_string_element(field_schema: dict[str, Any]) -> str:
+    if field_schema.get('maxLength', 0) > 200:
+        return 'textarea'
+    title = field_schema.get('title', '').lower()
+    if 'email' in title:
+        return 'email'
+    if 'password' in title:
+        return 'password'
+    return 'text'
+
+
 # ui_element values that render as an HTML checkbox under the hood and so
 # need the same boolean checked/value handling ('toggle' is CheckboxInput's
 # styled-as-a-switch subclass -- functionally a checkbox, see ToggleSwitch's
@@ -40,6 +52,16 @@ _CHECKBOX_LIKE_ELEMENTS = {'checkbox', 'toggle', 'toggle_switch', 'checkbox_togg
 # chevron -- directly onto a radio/checkbox <input> makes it look like a
 # broken dropdown arrow instead of a radio button).
 _CHECKBOX_FAMILY_ELEMENTS = _CHECKBOX_LIKE_ELEMENTS | {'radio', 'checkbox_group'}
+
+# JSON Schema string formats Pydantic emits for these types -> the input they
+# should render as when no ui_element is given.
+_FORMAT_UI_ELEMENTS = {
+    'date': 'date',
+    'date-time': 'datetime',
+    'time': 'time',
+    'email': 'email',
+    'uri': 'url',
+}
 
 
 class FieldRenderer:
@@ -156,6 +178,14 @@ class FieldRenderer:
             field_attrs['max'] = field_schema['maximum']
         if 'pattern' in field_schema:
             field_attrs['pattern'] = field_schema['pattern']
+        if ui_element == 'number':
+            # NumberInput defaults to step="1", which makes the browser
+            # reject any decimal typed into a float field.
+            if 'multipleOf' in field_schema:
+                field_attrs['step'] = field_schema['multipleOf']
+            elif field_schema.get('type') == 'number':
+                field_attrs['step'] = 'any'
+                field_attrs['inputmode'] = 'decimal'
 
         if ui_info.get('autofocus'):
             field_attrs['autofocus'] = True
@@ -202,6 +232,13 @@ class FieldRenderer:
                 else:
                     if ui_element == 'select':
                         placeholder_option = self._build_placeholder_option(ui_options_dict, value)
+                        if placeholder_option is None and field_schema.get('nullable'):
+                            # An Optional select must be able to stay empty.
+                            placeholder_option = {
+                                'value': '',
+                                'label': '',
+                                'selected': value in (None, ''),
+                            }
                         if placeholder_option is not None:
                             formatted_options = [placeholder_option, *formatted_options]
 
@@ -431,15 +468,14 @@ class FieldRenderer:
             return composite
         field_type = field_schema.get('type', 'string')
 
+        if field_schema.get('enum'):
+            return 'select'
+        if field_type == 'array' and (field_schema.get('items') or {}).get('enum'):
+            return 'multiselect'
+        if field_type == 'string' and field_schema.get('format') in _FORMAT_UI_ELEMENTS:
+            return _FORMAT_UI_ELEMENTS[field_schema['format']]
         if field_type == 'string':
-            max_length = field_schema.get('maxLength', 0)
-            if max_length > 200:
-                return 'textarea'
-            if 'email' in field_schema.get('title', '').lower():
-                return 'email'
-            if 'password' in field_schema.get('title', '').lower():
-                return 'password'
-            return 'text'
+            return _infer_string_element(field_schema)
         if field_type in ('integer', 'number'):
             return 'number'
         if field_type == 'boolean':

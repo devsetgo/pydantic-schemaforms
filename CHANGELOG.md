@@ -32,7 +32,7 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   `FormModel` (or build one at runtime with Pydantic's
   `create_model(..., __base__=FormModel)`), render it with `render_form_html()`
   and handle submissions with `FormModel.validate()` and
-  `result.render_with_errors()`. See `docs/quickstart.md`. Importing any
+  `result.render_with_errors()`. See `docs/upgrading.md`. Importing any
   removed name raises an `ImportError` that names its replacement. (#255)
 - **`@form_validator` is removed.** It never ran: nothing called the methods
   it decorated, so cross-field checks written with it were silently skipped.
@@ -60,7 +60,7 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   for tests only (`tests/playwright/vendor/`, pinned by version and SHA-256);
   it is not shipped in the package. What is tested, the baseline the inputs
   meet, and what automated testing does not cover are in the new
-  `docs/accessibility.md` page and the README. This is testing, not a claim of
+  `docs/reference/accessibility.md` page and the README. This is testing, not a claim of
   ADA, Section 508 or WCAG conformance. (#246)
 
 ### Fixed
@@ -81,12 +81,62 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 - **Contrast meets WCAG AA (4.5:1)** for tag chips, the code editor's
   property/tag syntax color and the "Rendered in" timing line. (#246)
 - **The date picker toggle is a 24×24 px target** (WCAG 2.2 target size). (#246)
+- **Inputs are inferred from more field types.** Without a `ui_element`,
+  `date`, `datetime`, `time`, `EmailStr` and `AnyUrl` fields render as date,
+  datetime-local, time, email and URL inputs; `Enum` and `Literal` fields render
+  as a select with their values; and a `list` of either renders as a
+  multiselect. `Optional` fields keep their input type instead of falling back
+  to a text box. Previously an `Enum` field rendered an empty section (or a
+  select with no options), so its choices had to be built by hand. (#258)
+- **A fresh form shows the model's defaults.** When no `form_data` is
+  passed, every field starts at its default (an `int = 1` shows 1, an Enum or
+  `Literal` default is selected, a `bool = True` checkbox is ticked,
+  `default_factory` values included). Passed data, such as a submission being
+  re-rendered or an edit form, is still used as is. Previously defaults were
+  never rendered, so they had to be passed in `form_data` by hand. (#258)
+- **Validator messages are shown as written.** A `ValueError` raised in a
+  `@field_validator` or `@model_validator` shows its own message, without
+  Pydantic's "Value error, " prefix. (#258)
+- **Optional selects can be left empty.** An `Optional` select gets an empty
+  first choice, and submitting it validates to `None`, including for
+  `str`-based enums. (#258)
+- **An `Enum` field keeps its title** when it matches the Enum class's name
+  (`Field(title="Size")` on a `Size` enum), including inside list items; it
+  used to fall back to the field name. (#258)
+- **Material renders datetime fields as `datetime-local`**, not the invalid
+  `datetime` input type. (#258)
+- **Pre-filling an `Enum` field selects its option.** `form_data` holding an
+  Enum member, as a database row or `model_dump()` does, used to leave the
+  select (or radio) with nothing chosen. (#258)
+- **A checkbox that defaults to `True` can be unticked.** An unticked
+  checkbox sends nothing, so `validate()` used to fill in the default and
+  return `True`. In a form submission, a missing checkbox that has a default
+  is now `False`; one without a default is still required, and nested JSON
+  that omits it still gets the default. (#258)
+- **An optional sub-form (`Address | None`) can be left empty.** Its inputs
+  are no longer `required`, and when every one of them is blank or still at
+  its default, `validate()` returns `None` for it instead of field errors.
+  (#258)
+- **A `currency` input works on a `Decimal`, `float` or `int` field.** The
+  input formats what is typed as `$1,234.50`, which used to fail validation
+  as "Input should be a valid decimal". In a form submission the symbol and
+  thousands separators are now stripped first. (#258)
+- **A `float` field accepts decimals in the browser.** Number inputs always
+  had `step="1"`, so the browser refused 39.50. A `float` field now gets
+  `step="any"`, and `multiple_of` sets the step. (#258)
+- **Material inputs carry the field's constraints.** `min_length`,
+  `max_length`, `ge`, `le` and `pattern` now become `minlength`, `maxlength`,
+  `min`, `max` and `pattern` attributes under Material too, as they already
+  did under Bootstrap and plain HTML. (#258)
+- **`MinLengthRule` skips an empty value**, like every other rule except
+  `RequiredRule` and like its own client-side check. It used to reject `""`,
+  so an optional field with a minimum length couldn't be left blank. (#258)
 
 ## [26.4.1] — 2026-10-12
 
 Complex forms are now built one way: nest `FormModel`s as fields of a parent
 `FormModel` and pick a `layout=`. Data in and out is nested JSON. This is a
-breaking release; see `docs/complex_forms.md#upgrading`.
+breaking release; see `docs/upgrading.md`.
 
 ### Breaking Changes
 

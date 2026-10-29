@@ -245,7 +245,7 @@ _SAMPLE_SIZES = (10, 100, 1000, 10000)
 
 # Past this many rows, editable mode's per-cell <select>/<input> widgets are
 # noticeably slower to render/paginate/submit than plain read-only cells --
-# see the performance note above and docs/recipes.md's DataTableLayout
+# see the performance note above and docs/advanced/data-tables.md's
 # section. Purely a demo-page UX nudge, not a hard cutoff the library enforces.
 _EDITABLE_ROW_RECOMMENDATION_THRESHOLD = 100
 

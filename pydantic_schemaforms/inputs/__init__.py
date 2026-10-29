@@ -79,7 +79,7 @@ SPECIALIZED_UTILITIES = ['verify_captcha']
 # The one supported extension point for registering a custom input class --
 # exported top-level so app code never has to import the internal
 # `pydantic_schemaforms.inputs.registry` module directly to reach it.
-REGISTRY_UTILITIES = ['register_input_class']
+REGISTRY_UTILITIES = ['register_input_class', 'register_inputs', 'reset_input_registry']
 
 # All available inputs
 ALL_INPUTS = TEXT_INPUTS + NUMERIC_INPUTS + SELECTION_INPUTS + DATETIME_INPUTS + SPECIALIZED_INPUTS

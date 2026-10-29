@@ -16,10 +16,14 @@ from functools import partial
 from typing import Any
 from collections.abc import Callable
 
+from pydantic import BaseModel
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticSerializationError, PydanticUndefined, to_jsonable_python
+
 from .html_markers import wrap_with_schemaforms_markers
 from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
-from .rendering.field_renderer import FieldRenderer
+from .rendering.field_renderer import _FORMAT_UI_ELEMENTS, FieldRenderer
 from .rendering.frameworks import get_framework_config
 from .inputs.registry import get_input_component_map
 from .error_tree import field_message, iter_errors, normalize_error_tree
@@ -72,6 +76,7 @@ CSRF_MODE_FIELD_ONLY = CSRFMode.FIELD_ONLY.value
 CSRF_MODE_REQUIRED_PROVIDER = CSRFMode.REQUIRED_PROVIDER.value
 CSRF_MODES = {mode.value for mode in CSRFMode}
 
+_MATERIAL_SELECTED = ' selected="selected"'
 _ERROR_CLASS = ' error'
 
 # ui_element values Material has genuine bespoke rendering for as a plain
@@ -135,6 +140,37 @@ def _general_group_title(model_cls: type[FormModel], metadata: SchemaMetadata) -
     grouped layout: the model's explicit title, else "General"."""
     title = metadata.schema.get('title')
     return title if title and title != model_cls.__name__ else 'General'
+
+
+def _field_default(info: FieldInfo) -> Any:
+    """A field's starting value, or None when it has none to show."""
+    if info.default_factory is not None:
+        if info.default_factory_takes_validated_data:
+            return None
+        return info.default_factory()  # type: ignore[call-arg]
+    if info.default is not PydanticUndefined:
+        return info.default
+    if isinstance(info.annotation, type) and issubclass(info.annotation, BaseModel):
+        return EnhancedFormRenderer._model_defaults(info.annotation)
+    return None
+
+
+def _render_values(raw: Any) -> dict[str, Any]:
+    """Submitted or app-supplied data, decoded into the nested shape the
+    renderer reads."""
+    return _enum_values(decode_submission(raw))
+
+
+def _enum_values(value: Any) -> Any:
+    # Data from a database row or a model_dump() holds Enum members, while
+    # every option, radio and checkbox carries the member's value.
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, dict):
+        return {key: _enum_values(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_enum_values(item) for item in value]
+    return value
 
 
 def _schema_has_file_input(
@@ -241,7 +277,13 @@ class EnhancedFormRenderer:
         check_layout(layout)
         wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
-        data = decode_submission(data)
+        # A fresh form (no data passed) starts from the model's defaults. Data
+        # that was passed, such as a submission being re-rendered, is used as
+        # is: an unticked checkbox is simply absent from a submission, so
+        # filling in its default would tick it again.
+        if data is None:
+            data = self._model_defaults(model_cls)
+        data = _render_values(data)
 
         # Keep backward compatibility for callers still passing these via kwargs.
         include_csrf = bool(kwargs.pop('include_csrf', False))
@@ -381,7 +423,7 @@ class EnhancedFormRenderer:
         """Render only the field markup for nested usage."""
 
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
-        data = decode_submission(data)
+        data = _render_values(data)
         errors = normalize_error_tree(errors)
         context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
 
@@ -441,6 +483,24 @@ class EnhancedFormRenderer:
         return await loop.run_in_executor(None, render_callable)
 
     @staticmethod
+    def _model_defaults(model_cls: type[BaseModel]) -> dict[str, Any]:
+        """The values a fresh form starts with: each field's default, in the
+        same JSON-ish shape a submission has (an Enum as its value, a date as
+        ISO text). A required sub-form starts with its own defaults."""
+        defaults: dict[str, Any] = {}
+        if not (isinstance(model_cls, type) and issubclass(model_cls, BaseModel)):
+            return defaults
+        for name, info in model_cls.model_fields.items():
+            value = _field_default(info)
+            if value is None:
+                continue
+            try:
+                defaults[info.alias or name] = to_jsonable_python(value)
+            except PydanticSerializationError:
+                defaults[info.alias or name] = value  # e.g. a layout value holding a model class
+        return defaults
+
+    @staticmethod
     def _prefill_layout_field_defaults(
         model_cls: type[FormModel], metadata: SchemaMetadata, data: dict[str, Any]
     ) -> None:
@@ -456,7 +516,7 @@ class EnhancedFormRenderer:
             default_factory = getattr(field_info, 'default_factory', None)
             if default_factory is not None:
                 # A factory taking validated data can't run before validation.
-                if not getattr(field_info, 'default_factory_takes_data', False):
+                if not getattr(field_info, 'default_factory_takes_validated_data', False):
                     data[field_name] = default_factory()
             elif not field_info.is_required():
                 default_value = getattr(field_info, 'default', None)
@@ -745,22 +805,42 @@ class EnhancedFormRenderer:
         'attributes',
     }
 
-    def _build_material_text_input_attributes(self, ui_info: dict[str, Any]) -> str:
-        attrs = []
-        for source, attr_name in (
-            ('min_value', 'min'),
-            ('max_value', 'max'),
-            ('min_length', 'minlength'),
-            ('max_length', 'maxlength'),
-            ('step', 'step'),
+    @staticmethod
+    def _material_constraint_attributes(
+        field_schema: dict[str, Any], input_type: str
+    ) -> dict[str, Any]:
+        # The same Pydantic constraints FieldRenderer turns into attributes
+        # for Bootstrap and plain HTML, so the browser checks them here too.
+        constraints: dict[str, Any] = {}
+        for key, attr_name in (
+            ('minLength', 'minlength'),
+            ('maxLength', 'maxlength'),
+            ('minimum', 'min'),
+            ('maximum', 'max'),
+            ('pattern', 'pattern'),
         ):
-            if ui_info.get(source) is not None:
-                attrs.append(f'{attr_name}="{html.escape(str(ui_info[source]))}"')
+            if key in field_schema:
+                constraints[attr_name] = field_schema[key]
+        if input_type == 'number':
+            if 'multipleOf' in field_schema:
+                constraints['step'] = field_schema['multipleOf']
+            elif field_schema.get('type') == 'number':
+                constraints['step'] = 'any'
+        return constraints
+
+    _MATERIAL_EXPLICIT_ATTRS = (
+        ('min_value', 'min'),
+        ('max_value', 'max'),
+        ('min_length', 'minlength'),
+        ('max_length', 'maxlength'),
+        ('step', 'step'),
+    )
+
+    def _build_material_text_input_attributes(
+        self, ui_info: dict[str, Any], constraints: dict[str, Any] | None = None
+    ) -> str:
+        explicit = {name: ui_info.get(source) for source, name in self._MATERIAL_EXPLICIT_ATTRS}
         extra = ui_info.get('attributes')
-        if isinstance(extra, dict):
-            for attr_name, attr_value in extra.items():
-                if attr_value is not None:
-                    attrs.append(f'{attr_name}="{html.escape(str(attr_value))}"')
         # ui_options (the documented, framework-agnostic way to attach extra
         # HTML attributes -- see FieldRenderer._apply_ui_option_attributes,
         # the Bootstrap/plain equivalent) strips its `ui_` prefix down to
@@ -768,15 +848,28 @@ class EnhancedFormRenderer:
         # data-* attributes used for live-validation wiring work identically
         # under Material instead of silently being dropped.
         ui_options = ui_info.get('options')
-        if isinstance(ui_options, dict):
-            for attr_name, attr_value in ui_options.items():
-                if attr_name in self._MATERIAL_UI_OPTION_SKIP_KEYS or isinstance(
-                    attr_value, (list, dict)
-                ):
-                    continue
-                if attr_value is not None:
-                    attrs.append(f'{attr_name}="{html.escape(str(attr_value))}"')
-        return ' '.join(attrs)
+        options = (
+            {
+                key: value
+                for key, value in ui_options.items()
+                if key not in self._MATERIAL_UI_OPTION_SKIP_KEYS
+                and not isinstance(value, (list, dict))
+            }
+            if isinstance(ui_options, dict)
+            else {}
+        )
+        # Later sources win: an explicit ui_options value replaces a constraint.
+        merged = {
+            **(constraints or {}),
+            **{key: value for key, value in explicit.items() if value is not None},
+            **(extra if isinstance(extra, dict) else {}),
+            **options,
+        }
+        return ' '.join(
+            f'{name}="{html.escape(str(value))}"'
+            for name, value in merged.items()
+            if value is not None
+        )
 
     def _build_material_select_options(
         self, ui_info: dict[str, Any], field_schema: dict[str, Any]
@@ -803,16 +896,19 @@ class EnhancedFormRenderer:
     def _infer_material_input_type(self, field_schema: dict[str, Any]) -> str:
         field_type = field_schema.get('type', 'string')
         field_format = field_schema.get('format', '')
-        if field_format == 'email':
-            return 'email'
-        if field_format == 'date':
-            return 'date'
+        if field_schema.get('enum'):
+            return 'select'
+        if field_type == 'array' and (field_schema.get('items') or {}).get('enum'):
+            return 'multiselect'
+        if field_type == 'string' and field_format in _FORMAT_UI_ELEMENTS:
+            # "datetime" is not a valid HTML input type; Material renders the
+            # type attribute directly.
+            inferred = _FORMAT_UI_ELEMENTS[field_format]
+            return 'datetime-local' if inferred == 'datetime' else inferred
         if field_type in ('integer', 'number'):
             return 'number'
         if field_type == 'boolean':
             return 'checkbox'
-        if field_schema.get('enum'):
-            return 'select'
         return 'text'
 
     def _render_material_text_input(
@@ -824,9 +920,12 @@ class EnhancedFormRenderer:
         ui_info: dict[str, Any],
         is_required: bool,
         described_by: str = '',
+        field_schema: dict[str, Any] | None = None,
     ) -> str:
         error_class = _ERROR_CLASS if error else ''
-        attrs = self._build_material_text_input_attributes(ui_info)
+        attrs = self._build_material_text_input_attributes(
+            ui_info, self._material_constraint_attributes(field_schema or {}, input_type)
+        )
         if is_required:
             attrs = f'{attrs} {self._MATERIAL_REQUIRED}'.strip()
         attrs = f'{attrs} {described_by}'.strip()
@@ -885,13 +984,23 @@ class EnhancedFormRenderer:
         )
 
         rendered_options = []
+        if not placeholder_text and field_schema.get('nullable'):
+            # An Optional select must be able to stay empty.
+            rendered_options.append(
+                render_template(
+                    FormTemplates.MATERIAL_SELECT_OPTION,
+                    value='',
+                    selected=_MATERIAL_SELECTED if value in (None, '') else '',
+                    label='',
+                )
+            )
         if placeholder_text:
             is_placeholder_selected = value is None or str(value) == ''
             rendered_options.append(
                 render_template(
                     FormTemplates.MATERIAL_SELECT_OPTION,
                     value='',
-                    selected=' selected="selected"' if is_placeholder_selected else '',
+                    selected=_MATERIAL_SELECTED if is_placeholder_selected else '',
                     disabled=' disabled="disabled"',
                     label=str(placeholder_text),
                 )
@@ -902,7 +1011,7 @@ class EnhancedFormRenderer:
                 render_template(
                     FormTemplates.MATERIAL_SELECT_OPTION,
                     value=self._attr(opt_value),
-                    selected=' selected="selected"' if is_selected else '',
+                    selected=_MATERIAL_SELECTED if is_selected else '',
                     label=str(opt_label),
                 )
             )
@@ -981,7 +1090,14 @@ class EnhancedFormRenderer:
             )
         else:
             control_html = self._render_material_text_input(
-                field_name, input_type, value, error, ui_info, is_required, described_by
+                field_name,
+                input_type,
+                value,
+                error,
+                ui_info,
+                is_required,
+                described_by,
+                field_schema,
             )
 
         input_wrapper = render_template(

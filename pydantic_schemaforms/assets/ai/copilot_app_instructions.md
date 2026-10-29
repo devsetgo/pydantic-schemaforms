@@ -151,7 +151,7 @@ constraints + `@model_validator` on a `FormModel` for anything with a known sche
 every other section of this document assumes** — and reach for this fluent API only when you
 genuinely don't have (or don't want) a typed model for the validation rules themselves, e.g. rules
 assembled dynamically or shared across forms that aren't the same `FormModel`. All of these names
-are top-level exports; the full API is documented in `docs/validation_guide.md`, not repeated here.
+are top-level exports; the full API is documented in `docs/reference/validation-rules.md`, not repeated here.
 
 An unrecognized `ui_element` value does not raise an error — it silently falls back to a plain
 text input, which is easy to miss in review. If a field's semantics don't cleanly match anything
@@ -624,38 +624,10 @@ and then fails validation on submit with a confusing error, since picking it loo
 legitimate. This isn't hypothetical — it's an easy edit-time drift (add a choice, forget to widen
 the range) worth double-checking whenever either one changes.
 
-Similarly, `Literal[...]` fields auto-populate select/radio/multiselect options from the type
-itself — only pass ui_options choices for plain str/int fields that aren't already `Literal`.
-
-**A real `enum.Enum`/`StrEnum` field does NOT auto-populate, despite looking like it should —
-verified directly, not assumed.** Pydantic's JSON schema for a `Literal[...]` field inlines its
-values straight into the field's own schema entry, which is what the auto-population check reads;
-for an actual `Enum` class, Pydantic instead emits a `$ref` pointing at a separate `$defs` entry,
-and this library does no `$ref` resolution before that same check runs. The result isn't a wrong
-label or a plain-text fallback — it's a silently empty `<select>` with an HTML comment
-(`<!-- Warning: No options provided for select field '...' -->`) where the options should be,
-which is easy to miss in review. Always pass `ui_options={'choices': [e.value for e in MyEnum]}`
-explicitly for a real `Enum` field — never rely on it auto-populating the way `Literal` does. If a
-field's semantics don't require pinning specific literal string values in the type itself, prefer
-`Literal[...]` over `Enum` for this exact reason.
-
-**A second, subtler trap with `Enum` fields**: if `Field(..., title=X)`'s title is set to the
-exact same string as the Enum class's own name-derived title (e.g. a class `Size` with
-`Field(title='Size', ...)`), Pydantic omits the property-level `title` from the schema entirely as
-a redundancy optimization — even with the `choices` fix above. Every widget's label/legend falls
-back to a name synthesized from the field's own Python attribute name when `title` is missing
-(`field_name.replace('_', ' ').title()`), so this is silently masked whenever that synthesized
-text happens to match the real title anyway (a field literally named `size` synthesizes back to
-"Size" by coincidence) — verified this genuinely affects `select`'s outer `<label>` too, not just
-`checkbox_group`/`radio`'s `<legend>`, once the field's name doesn't coincidentally match (e.g. a
-field named `sz` titled `'Size'` renders the label "Sz"). It becomes obviously wrong inside a
-`model_list` item specifically, because the name synthesis there uses the item's full indexed
-field name, not just the attribute name (field `size` inside list field `items` renders
-`<legend>Items[0].Size</legend>`, never coincidentally correct). Fix by passing
-`ui_options={'legend': '...'}` (for `checkbox_group`/`radio`) explicitly rather than relying on
-`title=` alone — this sidesteps the schema-title question entirely. (`select`/other widgets have
-no equivalent `ui_options` override for their outer label — for those, avoid giving an `Enum`
-field's `Field(title=...)` the exact same text as its `Enum` class's name instead.)
+`Literal[...]` and `Enum` fields both auto-populate select/radio/multiselect options from the
+type itself, and an `Optional` one gets an empty first choice so it can be left blank (submitting
+it validates to `None`). Only pass `ui_options` choices for plain `str`/`int` fields, or to give
+options different labels from their values.
 
 ## Form configuration checklist
 
@@ -727,7 +699,7 @@ field's `Field(title=...)` the exact same text as its `Enum` class's name instea
 - Use the lower-level layout primitives only when required: `GridLayout`,
   `ResponsiveGridLayout`, `HorizontalLayout`, `VerticalLayout`, `CardLayout`, `TabLayout`,
   `AccordionLayout`, `ModalLayout` (all top-level exports) wrap already-rendered
-  HTML fragments; they are not how forms are composed — see `docs/layouts.md`.
+  HTML fragments; they are not how forms are composed — see `docs/advanced/layout-primitives.md`.
 
 ## Framework route contract
 

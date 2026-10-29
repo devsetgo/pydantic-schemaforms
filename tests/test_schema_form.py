@@ -126,7 +126,7 @@ class TestField:
         declared parameter either, so it fell into **kwargs and was
         silently dropped whenever combined with input_type='layout' --
         which is *required* to dispatch to the layout system at all, so
-        docs/plugin_hooks.md's own documented example
+        docs/advanced/plugin-hooks.md's own documented example
         (Field(..., input_type="layout", layout_handler="steps")) never
         actually worked."""
         field = Field(

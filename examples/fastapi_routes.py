@@ -57,7 +57,6 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     ValidationShowcaseForm,
     WidgetGalleryForm,
     validation_showcase_rules,
-    widget_gallery_demo_data,
     create_sample_nested_data,
 )
 from examples.nested_forms_example import create_comprehensive_sample_data
@@ -1083,7 +1082,9 @@ async def gallery_get(
     Demo data is every field's default, nested one dict per tab -- the same
     shape validate() returns.
     """
-    form_data = {}
+    # No form_data renders a fresh form from the field defaults, which are the
+    # gallery's demo values; an empty dict renders it blank.
+    form_data = None if demo else {}
     if data:
         try:
             import json
@@ -1091,11 +1092,6 @@ async def gallery_get(
             form_data = json.loads(data)
         except Exception:
             pass  # Ignore invalid JSON
-    elif demo:
-        # Rendering only pre-fills values present in form_data; it never falls
-        # back to a field's own default. The gallery's defaults are its demo
-        # values, so pass them explicitly.
-        form_data = widget_gallery_demo_data()
 
     form_html = await render_form_html_async(
         WidgetGalleryForm,

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any
+from typing import Any, get_args
 
+from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from pydantic_schemaforms.schema_form import FormModel
@@ -107,6 +108,79 @@ def resolve_ui_element(field_schema: dict[str, Any]) -> str | None:
     return None
 
 
+def _is_enum_def(definition: Any) -> bool:
+    return isinstance(definition, dict) and 'enum' in definition and 'properties' not in definition
+
+
+def normalize_field_schema(
+    field_schema: dict[str, Any], schema_defs: dict[str, Any]
+) -> dict[str, Any]:
+    """Flatten the two shapes Pydantic gives common field types, so input
+    inference sees the real type:
+
+    - ``Optional[T]`` arrives as ``anyOf: [T, {"type": "null"}]``; a scalar
+      ``T`` is unwrapped and marked ``nullable`` (so a select can offer an
+      empty choice). Optional sub-models are left alone, since the
+      nested-form code already resolves them through ``anyOf``.
+    - An ``Enum`` arrives as a ``$ref`` to ``$defs``; its values are inlined
+      as ``enum`` so it renders as a select. The definition's own title (the
+      Enum class name) is not copied, so the label still comes from the field.
+    """
+
+    options = field_schema.get('anyOf')
+    if isinstance(options, list):
+        non_null = [o for o in options if not (isinstance(o, dict) and o.get('type') == 'null')]
+        member = non_null[0] if len(non_null) == 1 and len(non_null) < len(options) else None
+        member_ref = _ref_name(member.get('$ref')) if isinstance(member, dict) else None
+        if isinstance(member, dict) and (
+            member_ref is None or _is_enum_def(schema_defs.get(member_ref))
+        ):
+            rest = {key: value for key, value in field_schema.items() if key != 'anyOf'}
+            field_schema = {**member, **rest, 'nullable': True}
+
+    ref = _ref_name(field_schema.get('$ref'))
+    definition = schema_defs.get(ref) if ref else None
+    if isinstance(definition, dict) and _is_enum_def(definition):
+        inlined = {k: v for k, v in definition.items() if k not in ('title', 'description')}
+        rest = {key: value for key, value in field_schema.items() if key != '$ref'}
+        field_schema = {**inlined, **rest}
+    return field_schema
+
+
+def _normalize_properties(properties: dict[str, Any], schema_defs: dict[str, Any]) -> None:
+    for name, field_schema in properties.items():
+        if isinstance(field_schema, dict):
+            properties[name] = normalize_field_schema(field_schema, schema_defs)
+
+
+def _models_by_name(model_cls: type[BaseModel]) -> dict[str, type[BaseModel]]:
+    """Every model reachable from ``model_cls`` (sub-models, list items),
+    keyed by name the way Pydantic keys ``$defs``."""
+
+    found: dict[str, type[BaseModel]] = {}
+    pending: list[Any] = [model_cls]
+    while pending:
+        candidate = pending.pop()
+        if isinstance(candidate, type) and issubclass(candidate, BaseModel):
+            if candidate.__name__ in found:
+                continue
+            found[candidate.__name__] = candidate
+            pending.extend(info.annotation for info in candidate.model_fields.values())
+        else:
+            pending.extend(get_args(candidate))
+    return found
+
+
+def _restore_titles(properties: dict[str, Any], model_fields: dict[str, FieldInfo]) -> None:
+    # Pydantic drops a $ref field's title when it equals the referenced
+    # class's own title (Field(title="Size") on a `Size` enum), which would
+    # otherwise leave the label to fall back to the field name.
+    for name, info in model_fields.items():
+        field_schema = properties.get(info.alias or name)
+        if isinstance(field_schema, dict) and info.title and 'title' not in field_schema:
+            field_schema['title'] = info.title
+
+
 def ordered_properties(schema: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     """A schema's properties in render order: declaration order, then ``ui_order``."""
 
@@ -139,6 +213,16 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     _inject_dynamic_fields(model_cls, properties, required_fields)
     schema['required'] = required_fields
 
+    schema_defs = schema.get('$defs', {}) or {}
+    models = _models_by_name(model_cls)
+    _restore_titles(properties, model_cls.model_fields)
+    _normalize_properties(properties, schema_defs)
+    for def_name, definition in schema_defs.items():
+        if isinstance(definition, dict) and isinstance(definition.get('properties'), dict):
+            if def_name in models:
+                _restore_titles(definition['properties'], models[def_name].model_fields)
+            _normalize_properties(definition['properties'], schema_defs)
+
     fields = ordered_properties(schema)
 
     layout_fields: list[tuple[str, dict[str, Any]]] = []
@@ -151,7 +235,6 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
         else:
             non_layout_fields.append((field_name, field_schema))
 
-    schema_defs = schema.get('$defs', {}) or {}
     group_fields = tuple(
         (field_name, field_schema)
         for field_name, field_schema in fields

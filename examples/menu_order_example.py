@@ -60,18 +60,7 @@ class MenuItem(FormModel):
     whether the checkboxes are visible by default, never whether they're
     required."""
 
-    # Real Enum types don't auto-populate select/radio choices the way
-    # Literal[...] does (Pydantic puts an Enum's members in a $ref'd $defs
-    # entry, not inlined into the field's own schema, and this library does
-    # no $ref resolution before choice-inference runs) -- pass
-    # ui_options={'choices': [...]} explicitly, same as docs/recipes.md's
-    # own Enum examples do.
-    item: MenuItemName = Field(
-        MenuItemName.cheeseburger,
-        title='Item',
-        ui_element='select',
-        ui_options={'choices': [e.value for e in MenuItemName]},
-    )
+    item: MenuItemName = Field(MenuItemName.cheeseburger, title='Item')
     # ge/le must bound the same range as the choices below -- ui_options only
     # decorates the rendered <input>s, it never validates anything server-side
     # (see CLAUDE.md/the AI instructions' "Constraints vs. ui_options" rule),

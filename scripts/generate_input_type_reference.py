@@ -1,13 +1,13 @@
-"""Regenerate the "Every input type" section of docs/recipes.md.
+"""Regenerate the "Every input type" section of docs/reference/inputs.md.
 
 Single source of truth is examples/input_type_reference.py -- the same
 data backing the FastAPI demo's /input-types page. Run this after editing
-that file so docs/recipes.md doesn't drift out of sync:
+that file so docs/reference/inputs.md doesn't drift out of sync:
 
     python scripts/generate_input_type_reference.py
 
 Everything outside the BEGIN/END GENERATED sentinel markers in
-docs/recipes.md is left untouched.
+docs/reference/inputs.md is left untouched.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ BEGIN_MARKER = (
 )
 END_MARKER = '<!-- END GENERATED: input-type-reference -->'
 
-RECIPES_PATH = Path(__file__).resolve().parents[1] / 'docs' / 'recipes.md'
+REFERENCE_PATH = Path(__file__).resolve().parents[1] / 'docs' / 'reference' / 'inputs.md'
 
 
 def render_markdown() -> str:
@@ -59,26 +59,16 @@ def render_markdown() -> str:
     return '\n'.join(lines) + '\n'
 
 
-def update_recipes() -> None:
-    text = RECIPES_PATH.read_text(encoding='utf-8')
-    generated = render_markdown()
-
+def update_reference() -> None:
+    text = REFERENCE_PATH.read_text(encoding='utf-8')
     pattern = re.compile(
         re.escape(BEGIN_MARKER) + r'.*?' + re.escape(END_MARKER) + r'\n?', re.DOTALL
     )
-
-    if pattern.search(text):
-        new_text = pattern.sub(generated, text)
-    else:
-        # First run: insert right after "## Field types", before "## Optional fields".
-        anchor = '\n---\n\n## Optional fields\n'
-        if anchor not in text:
-            raise RuntimeError('could not find insertion anchor in docs/recipes.md')
-        new_text = text.replace(anchor, f'\n---\n\n{generated}\n---\n\n## Optional fields\n')
-
-    RECIPES_PATH.write_text(new_text, encoding='utf-8')
+    if not pattern.search(text):
+        raise RuntimeError(f'{REFERENCE_PATH} has no BEGIN/END GENERATED markers')
+    REFERENCE_PATH.write_text(pattern.sub(lambda _: render_markdown(), text), encoding='utf-8')
 
 
 if __name__ == '__main__':
-    update_recipes()
-    print(f'Updated {RECIPES_PATH}')
+    update_reference()
+    print(f'Updated {REFERENCE_PATH}')

@@ -9,7 +9,7 @@ the browser's own locale-controlled native picker by default, and only
 switches to a live-formatted text input when a custom `strftime` format is
 configured (native `<input type="date"/"time"/"datetime-local">` can't be
 forced into a custom *display* format -- the browser always controls that;
-see `docs/inputs.md` and `docs/recipes.md` for the full explanation).
+see `docs/reference/inputs.md` for the full explanation).
 
 Every field below holds the exact same kind of value, formatted a different
 way -- so this file doubles as a copy-paste-able reference for "what format

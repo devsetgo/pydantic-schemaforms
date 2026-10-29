@@ -30,6 +30,17 @@ from pydantic_schemaforms import FormModel, validation
 from pydantic_schemaforms.inputs.registry import get_input_component_map
 from pydantic_schemaforms.rendering.layout_engine import LAYOUTS, WIZARD_OPTIONS
 
+
+def _library_inputs() -> dict[str, type]:
+    # The registry also finds inputs by subclass, so a custom input defined
+    # by another test module would show up here depending on test order.
+    return {
+        name: cls
+        for name, cls in get_input_component_map().items()
+        if cls.__module__.startswith('pydantic_schemaforms.')
+    }
+
+
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent / 'examples'
 # Static cheatsheet text, not a rendered form; it must not count as coverage.
 CHEATSHEET = 'input_type_reference.py'
@@ -83,7 +94,7 @@ def _field_schemas(model: type[FormModel]) -> list[dict[str, Any]]:
 
 def _used_options() -> dict[str, set[str]]:
     """{input class name: option keys some example field passes it}."""
-    component_map = get_input_component_map()
+    component_map = _library_inputs()
     used: dict[str, set[str]] = {}
     for model in _example_models():
         for prop in _field_schemas(model):
@@ -116,7 +127,7 @@ def _declared_options(cls: type) -> set[str]:
 def test_every_registered_input_name_and_alias_is_used_by_an_example() -> None:
     source = _example_source()
     used = set(re.findall(r"(?:ui_element|input_type)\s*=\s*['\"]([\w-]+)['\"]", source))
-    missing = sorted(set(get_input_component_map()) - used - SECURITY_ELEMENTS)
+    missing = sorted(set(_library_inputs()) - used - SECURITY_ELEMENTS)
     assert not missing, f'No example form uses these ui_elements: {missing}'
 
 
@@ -129,7 +140,7 @@ def test_security_inputs_are_demonstrated() -> None:
 
 @pytest.mark.parametrize(
     'cls',
-    sorted(set(get_input_component_map().values()), key=lambda c: c.__name__),
+    sorted(set(_library_inputs().values()), key=lambda c: c.__name__),
     ids=lambda cls: cls.__name__,
 )
 def test_every_widget_option_is_used_by_an_example(cls: type) -> None:

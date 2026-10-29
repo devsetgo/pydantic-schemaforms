@@ -35,7 +35,7 @@ _AXE_PATH = Path(__file__).parent / 'vendor' / 'axe.min.js'
 _AXE_VERSION = '4.14.0'
 _AXE_SHA256 = '20c09fe157a8a34a30e241aaa1fcdade657734f08ab379ecfbeb7d45cc46e878'
 _BLOCKING_IMPACTS = ('serious', 'critical')
-# Named explicitly so docs/accessibility.md's claim can't drift with axe's
+# Named explicitly so docs/reference/accessibility.md's claim can't drift with axe's
 # defaults (which leave out WCAG 2.2). axe maps these rules to Section 508
 # and EN 301 549 as well.
 _AXE_RULE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']

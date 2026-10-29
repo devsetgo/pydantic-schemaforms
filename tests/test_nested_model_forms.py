@@ -601,6 +601,75 @@ def test_removing_every_item_of_a_repeating_sub_form_still_checks_min_length() -
     assert ProfileForm.validate({k: v for k, v in VALID_JSON.items() if k != 'pets'}).is_valid
 
 
+def test_unticked_checkbox_that_defaults_to_true_validates_as_false() -> None:
+    class Prefs(FormModel):
+        newsletter: bool = True
+        alerts: bool = Field(True, ui_element='toggle')
+
+    class Account(FormModel):
+        name: str
+        prefs: Prefs
+        backup: Prefs | None = None
+
+    result = Account.validate([('name', 'Ada'), ('prefs.alerts', 'on')])
+    assert result.data == {
+        'name': 'Ada',
+        'prefs': {'newsletter': False, 'alerts': True},
+        'backup': None,
+    }
+
+    # Nested JSON that omits the key keeps the field's default, as Pydantic does.
+    assert Account.validate({'name': 'Ada', 'prefs': {}}).data['prefs']['newsletter'] is True
+
+
+def test_unticked_checkbox_without_a_default_is_still_required() -> None:
+    class Consent(FormModel):
+        agree: bool
+
+    assert Consent.validate([('other', 'x')]).errors == {'agree': 'Field required'}
+
+
+class _Billing(FormModel):
+    street: str
+    city: str = Field(min_length=2)
+    country: str = 'US'
+
+
+class _Checkout(FormModel):
+    name: str
+    billing: _Billing | None = None
+
+
+def test_optional_sub_form_inputs_are_not_required() -> None:
+    html_out = render_form_html(_Checkout, submit_url='/c')
+    street = re.search(r'<input[^>]*name="billing\.street"[^>]*>', html_out)
+    assert street and 'required' not in street.group(0)
+    assert re.search(r'<input[^>]*name="name"[^>]*required', html_out)
+
+
+@pytest.mark.parametrize(
+    ('billing', 'expected'),
+    [
+        ([('billing.street', ''), ('billing.city', ''), ('billing.country', 'US')], None),
+        (
+            [('billing.street', '1 Main'), ('billing.city', 'Paris'), ('billing.country', 'US')],
+            {'street': '1 Main', 'city': 'Paris', 'country': 'US'},
+        ),
+    ],
+)
+def test_optional_sub_form_left_blank_validates_to_none(billing, expected) -> None:
+    result = _Checkout.validate([('name', 'Ada'), *billing])
+    assert result.is_valid, result.errors
+    assert result.data['billing'] == expected
+
+
+def test_partly_filled_optional_sub_form_is_still_validated() -> None:
+    result = _Checkout.validate(
+        [('name', 'Ada'), ('billing.street', '1 Main'), ('billing.city', '')]
+    )
+    assert result.errors == {'billing': {'city': 'String should have at least 2 characters'}}
+
+
 def test_layout_field_without_a_handler_explains_what_to_do() -> None:
     from typing import Any
 
@@ -609,7 +678,7 @@ def test_layout_field_without_a_handler_explains_what_to_do() -> None:
 
     html = render_form_html(Orphan, submit_url='/o')
     assert 'Layout field "Rows" has no registered layout_handler' in html
-    assert 'docs/complex_forms.md' in html
+    assert 'docs/tutorial/nested-forms.md' in html
 
 
 def test_container_message_and_child_errors_share_one_node_in_either_order() -> None:

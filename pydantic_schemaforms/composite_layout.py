@@ -6,7 +6,7 @@ rendered through ``FormModel.render_form()``'s single-instance
 data/errors/submit_url shape, which doesn't apply to them.
 
 ``DataTableLayout`` (see ``datatable_layout.py``) is the reference example.
-See ``docs/plugin_hooks.md`` for the ``layout_handler``/
+See ``docs/advanced/plugin-hooks.md`` for the ``layout_handler``/
 ``LayoutEngine.register_layout_renderer`` mechanism this relies on, and
 ``LayoutEngine.layout_renderer`` for the registration decorator a composite's
 renderer module uses to hook itself up at import time.
