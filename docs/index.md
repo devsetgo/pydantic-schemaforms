@@ -135,7 +135,7 @@ form"), `schemaforms-convert` (from Pydantic, WTForms, Django or JSON Schema),
 `schemaforms-upgrade` (from removed APIs) and `schemaforms-document` (document your forms).
 For assistants without skills support, `python -m pydantic_schemaforms.ai_instructions claude
 --write` writes the same guidance to `CLAUDE.md`; see the
-[AI Assistant Instructions](https://devsetgo.github.io/pydantic-schemaforms/advanced/ai-instructions/) page.
+[AI Assistants and Agent Skills](https://devsetgo.github.io/pydantic-schemaforms/advanced/ai-instructions/) page.
 
 ## Accessibility
 
