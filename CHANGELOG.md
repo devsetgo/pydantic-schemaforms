@@ -7,7 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
-## [Unreleased]
+## [26.4.3] — 2026-10-29
+
+`FormModel` is now the only way to build a form: the builder API, the
+prebuilt forms, `@form_validator` and the React/Vue adapters are removed.
+Five Agent Skills ship inside the package, and a long list of form bugs is
+fixed. This is a breaking release; see `docs/upgrading.md`.
 
 ### Breaking Changes
 
@@ -76,6 +81,15 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Fixed
 
+- **Two tabbed or accordion forms on one page no longer collide.** Tab and
+  accordion ids were numbered from `tab-0`/`accordion-0` in every form, so
+  the second form's tabs and panels controlled the first form's. Each layout
+  now gets its own id prefix, and tab and accordion scripts only act inside
+  their own layout (which also stops an outer tab hiding a nested tabbed
+  sub-form). (#252)
+- **Accordion fixes:** under Bootstrap the open section rendered closed, and
+  under plain HTML and Material clicking a section header submitted the
+  form. (#252)
 - **Invalid fields are announced.** After a failed submit, a field's control
   gets `aria-invalid="true"` and an `aria-describedby` pointing at its error
   message, and at its help text whenever it has one, under Bootstrap,

@@ -24,7 +24,7 @@ its replacement; this skill has the full mapping and the order to do it in.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
 
-## Releases after 26.4.2: one way to build a form
+## 26.4.3: one way to build a form
 
 The builder API, the React and Vue adapters and `@form_validator` are removed. Importing a removed
 name raises `ImportError: pydantic_schemaforms.<name> was removed. <what to do instead>`.
