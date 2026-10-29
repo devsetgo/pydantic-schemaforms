@@ -1374,17 +1374,10 @@ def test_runtime_asset_helpers_cover_modes_and_fallbacks(monkeypatch: pytest.Mon
     assert 'unpkg.com' in runtime_assets.imask_script_tag(asset_mode='cdn')
     assert '<script>' in runtime_assets.imask_script_tag(asset_mode='vendored')
 
-    monkeypatch.setattr(runtime_assets, '_vendored_text_or_empty', lambda _path: '/*css*/')
-    css_material = runtime_assets.framework_css_tag(framework='material', asset_mode='vendored')
-    css_cdn = runtime_assets.framework_css_tag(framework='material', asset_mode='cdn')
-    assert '<style>' in css_material
-    assert 'cdn.jsdelivr.net' in css_cdn
-
-    monkeypatch.setattr(runtime_assets, '_vendored_text_or_empty', lambda _path: '//js')
-    js_material = runtime_assets.framework_js_tag(framework='material', asset_mode='vendored')
-    js_cdn = runtime_assets.framework_js_tag(framework='material', asset_mode='cdn')
-    assert '<script>' in js_material
-    assert 'cdn.jsdelivr.net' in js_cdn
+    # The Material style carries its own CSS/JS; it never loads a CSS framework.
+    for mode in ('vendored', 'cdn'):
+        assert runtime_assets.framework_css_tag(framework='material', asset_mode=mode) == ''
+        assert runtime_assets.framework_js_tag(framework='material', asset_mode=mode) == ''
     assert runtime_assets.framework_css_tag(framework='unknown', asset_mode='vendored') == ''
     assert runtime_assets.framework_js_tag(framework='unknown', asset_mode='vendored') == ''
 

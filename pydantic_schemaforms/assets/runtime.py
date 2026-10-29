@@ -132,7 +132,7 @@ def imask_script_tag(*, asset_mode: str = 'vendored') -> str:
 
 
 def framework_css_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
-    """Return framework CSS tag for Bootstrap/Materialize.
+    """Return the Bootstrap CSS tag (the Material style carries its own CSS).
 
     For asset_mode='vendored', CSS is inlined.
     For asset_mode='cdn', a pinned jsDelivr URL is emitted.
@@ -151,23 +151,11 @@ def framework_css_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
         css = _vendored_text_or_empty('assets/vendor/bootstrap/bootstrap.min.css')
         return style_tag_inline(css) if css else ''
 
-    if fw == 'material':
-        if mode == 'cdn':
-            return style_tag_href(
-                _pinned_jsdelivr_url(
-                    '@materializecss/materialize',
-                    'materialize',
-                    'dist/css/materialize.min.css',
-                )
-            )
-        css = _vendored_text_or_empty('assets/vendor/materialize/materialize.min.css')
-        return style_tag_inline(css) if css else ''
-
     return ''
 
 
 def framework_js_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
-    """Return framework JS tag for Bootstrap/Materialize.
+    """Return the Bootstrap JS tag (the Material style carries its own JS).
 
     For asset_mode='vendored', JS is inlined.
     For asset_mode='cdn', a pinned jsDelivr URL is emitted.
@@ -184,18 +172,6 @@ def framework_js_tag(*, framework: str, asset_mode: str = 'vendored') -> str:
                 _pinned_jsdelivr_url('bootstrap', 'bootstrap', 'dist/js/bootstrap.bundle.min.js')
             )
         js = _vendored_text_or_empty('assets/vendor/bootstrap/bootstrap.bundle.min.js')
-        return script_tag_inline(js) if js else ''
-
-    if fw == 'material':
-        if mode == 'cdn':
-            return script_tag_src(
-                _pinned_jsdelivr_url(
-                    '@materializecss/materialize',
-                    'materialize',
-                    'dist/js/materialize.min.js',
-                )
-            )
-        js = _vendored_text_or_empty('assets/vendor/materialize/materialize.min.js')
         return script_tag_inline(js) if js else ''
 
     return ''

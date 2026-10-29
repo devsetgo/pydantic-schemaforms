@@ -66,7 +66,7 @@ async def vendor_imask():
 
 Then add `<script src="/vendor/htmx.min.js"></script>` (and the IMask one, if you use masked inputs) to your base template.
 
-If you already provide Bootstrap/Materialize in your host app, keep `include_framework_assets=False`.
+If you already provide Bootstrap in your host app, keep `include_framework_assets=False`. The Material style (`framework="material"`) is self-contained: it always carries its own CSS and JavaScript and loads no CSS framework.
 Use `self_contained=True` as a shorthand for `include_framework_assets=True, asset_mode="vendored"` — for Bootstrap this also embeds Bootstrap Icons as a data URI (truly zero external dependencies).
 
 ### `EnhancedFormRenderer` — direct renderer instance
@@ -92,7 +92,6 @@ html = renderer.render_form_from_model(MyForm, submit_url='/submit')
 | IMask | `imask.min.js` |
 | Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` |
 | Bootstrap Icons | `bootstrap-icons.min.css`, `bootstrap-icons.woff2` |
-| Materialize | `materialize.min.css`, `materialize.min.js` |
 
 See `pydantic_schemaforms/assets/vendor/vendor_manifest.json` for exact versions, SHA256 checksums, and source URLs.
 
@@ -169,7 +168,6 @@ Vendored updates are scripted and checksum-verified.
   - `make vendor-update-imask IMASK_VERSION=…` (or omit to use npm latest)
   - `make vendor-update-bootstrap BOOTSTRAP_VERSION=…`
   - `make vendor-update-bootstrap-icons BOOTSTRAP_ICONS_VERSION=…`
-  - `make vendor-update-materialize MATERIALIZE_VERSION=…`
 
 After updating, run `make vendor-verify` and the test suite.
 

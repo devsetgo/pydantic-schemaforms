@@ -45,7 +45,6 @@ from pydantic_schemaforms.vendor_assets import (
     npm_tarball_url,
     vendor_htmx,
     vendor_imask,
-    vendor_materialize,
     vendor_bootstrap,
     vendor_js_yaml,
     vendor_smol_toml,
@@ -914,122 +913,6 @@ class TestVendorImask:
 # ===========================================================================
 # Tests from test_vendor_assets_remaining.py
 # ===========================================================================
-
-
-class TestVendorMaterialize:
-    """Test vendor_materialize function with mocking."""
-
-    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
-    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
-    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
-    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
-    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
-    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
-    def test_vendor_materialize_with_license(
-        self,
-        mock_tarball_url,
-        mock_http,
-        mock_extract,
-        mock_write,
-        mock_load,
-        mock_upsert,
-        mock_save,
-    ):
-        """Test vendor_materialize extracts CSS, JS, and LICENSE."""
-        mock_tarball_url.return_value = (
-            'https://registry.npmjs.org/@materializecss/materialize/-/materialize-2.1.1.tgz'
-        )
-        mock_http.return_value = b'tarball content'
-        mock_extract.side_effect = [b'css content', b'js content', b'license content']
-        mock_write.side_effect = [
-            {'path': 'materialize.min.css', 'sha256': 'css_hash', 'source_url': 'url1'},
-            {'path': 'materialize.min.js', 'sha256': 'js_hash', 'source_url': 'url2'},
-            {'path': 'LICENSE', 'sha256': 'lic_hash', 'source_url': 'url3'},
-        ]
-        mock_load.return_value = {'schema_version': 1}
-
-        result = vendor_materialize(version='2.1.1')
-
-        assert result.path == 'materialize.min.js'
-        assert result.sha256 == 'js_hash'
-        mock_tarball_url.assert_called_once_with('@materializecss/materialize', '2.1.1')
-        assert mock_extract.call_count == 3
-        assert mock_write.call_count == 3
-        mock_upsert.assert_called_once()
-        mock_save.assert_called_once()
-
-    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
-    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
-    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
-    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
-    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
-    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
-    def test_vendor_materialize_tries_license_md_fallback(
-        self,
-        mock_tarball_url,
-        mock_http,
-        mock_extract,
-        mock_write,
-        mock_load,
-        mock_upsert,
-        mock_save,
-    ):
-        """Test vendor_materialize tries LICENSE.md if LICENSE not found."""
-        mock_tarball_url.return_value = 'url'
-        mock_http.return_value = b'tgz'
-        # CSS, JS, LICENSE (not found), LICENSE.md (found)
-        mock_extract.side_effect = [
-            b'css',
-            b'js',
-            FileNotFoundError('LICENSE not found'),
-            b'license md',
-        ]
-        mock_write.side_effect = [
-            {'path': 'css', 'sha256': 'a', 'source_url': 'url'},
-            {'path': 'js', 'sha256': 'b', 'source_url': 'url'},
-            {'path': 'lic', 'sha256': 'c', 'source_url': 'url'},
-        ]
-        mock_load.return_value = {'schema_version': 1}
-
-        vendor_materialize(version='2.1.1')
-
-        assert mock_extract.call_count == 4
-        assert mock_write.call_count == 3
-
-    @patch('pydantic_schemaforms.vendor_assets.write_manifest')
-    @patch('pydantic_schemaforms.vendor_assets.upsert_asset_entry')
-    @patch('pydantic_schemaforms.vendor_assets.load_manifest')
-    @patch('pydantic_schemaforms.vendor_assets._write_vendored_file')
-    @patch('pydantic_schemaforms.vendor_assets._safe_member_bytes_from_tgz')
-    @patch('pydantic_schemaforms.vendor_assets.http_get_bytes')
-    @patch('pydantic_schemaforms.vendor_assets.npm_tarball_url')
-    def test_vendor_materialize_sets_schema_version(
-        self,
-        mock_tarball_url,
-        mock_http,
-        mock_extract,
-        mock_write,
-        mock_load,
-        mock_upsert,
-        mock_save,
-    ):
-        """Test vendor_materialize sets schema_version if missing."""
-        mock_tarball_url.return_value = 'url'
-        mock_http.return_value = b'tgz'
-        mock_extract.side_effect = [b'css', b'js', b'lic']
-        mock_write.side_effect = [
-            {'path': 'a', 'sha256': 'x', 'source_url': 'url'},
-            {'path': 'b', 'sha256': 'y', 'source_url': 'url'},
-            {'path': 'c', 'sha256': 'z', 'source_url': 'url'},
-        ]
-        mock_load.return_value = {}  # No schema_version
-
-        vendor_materialize(version='2.1.1')
-
-        saved_manifest = mock_save.call_args[0][0]
-        assert saved_manifest['schema_version'] == 1
 
 
 class TestVendorBootstrap:

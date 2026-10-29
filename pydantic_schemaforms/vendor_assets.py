@@ -290,50 +290,6 @@ def vendor_imask(*, version: str | None = None) -> VendoredFile:
     return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=tarball_url)
 
 
-def vendor_materialize(*, version: str = '1.0.0') -> VendoredFile:
-    """Download and vendor @materializecss/materialize (npm) assets."""
-    package = '@materializecss/materialize'
-    resolved_version = version
-    tarball_url = npm_tarball_url(package, resolved_version)
-    tgz = http_get_bytes(tarball_url)
-
-    css_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/css/materialize.min.css')
-    css_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/materialize.min.css')
-    css_entry = _write_vendored_file(rel_path=css_rel_path, data=css_bytes, source_url=tarball_url)
-
-    js_bytes = _safe_member_bytes_from_tgz(tgz, 'dist/js/materialize.min.js')
-    js_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/materialize.min.js')
-    js_entry = _write_vendored_file(rel_path=js_rel_path, data=js_bytes, source_url=tarball_url)
-
-    license_bytes: bytes
-    try:
-        license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE')
-    except FileNotFoundError:
-        license_bytes = _safe_member_bytes_from_tgz(tgz, 'LICENSE.md')
-    license_rel_path = Path('pydantic_schemaforms/assets/vendor/materialize/LICENSE')
-    license_entry = _write_vendored_file(
-        rel_path=license_rel_path, data=license_bytes, source_url=tarball_url
-    )
-
-    manifest = load_manifest()
-    if not isinstance(manifest.get('schema_version'), int):
-        manifest['schema_version'] = 1
-
-    entry = {
-        'name': 'materialize',
-        'version': resolved_version,
-        'files': [
-            css_entry,
-            js_entry,
-            license_entry,
-        ],
-    }
-    upsert_asset_entry(manifest, name='materialize', entry=entry)
-    write_manifest(manifest)
-
-    return VendoredFile(path=js_entry['path'], sha256=js_entry['sha256'], source_url=tarball_url)
-
-
 def vendor_bootstrap(*, version: str = '5.3.0') -> VendoredFile:
     """Download and vendor Bootstrap dist assets from GitHub releases."""
     resolved_version = version

@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [Unreleased]
+
+### Removed
+
+- **Materialize is no longer vendored or referenced.** The Material style has
+  long used its own self-contained theme and never loaded Materialize, but the
+  package still shipped Materialize 1.0.0 (about 320 KB), a
+  `vendor-update-materialize` make target, and a Materialize config behind
+  `framework_css_tag`/`framework_js_tag`. They're gone: both functions now
+  return nothing for `"material"`, and `get_theme_for_framework("material")`
+  returns the Material theme the renderer actually uses. (#265)
+
 ## [26.4.3] — 2026-10-29
 
 `FormModel` is now the only way to build a form: the builder API, the

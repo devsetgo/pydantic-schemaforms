@@ -16,7 +16,6 @@ from pydantic_schemaforms.vendor_assets import (
     vendor_datatables_buttons,
     vendor_htmx,
     vendor_imask,
-    vendor_materialize,
     verify_manifest_files,
 )
 
@@ -34,8 +33,6 @@ def main(argv: list[str]) -> int:
     p_bootstrap = sub.add_parser('update-bootstrap', help='Download and vendor Bootstrap dist assets.')
     p_bootstrap.add_argument('--version', default='5.3.0', help='Bootstrap version (default: 5.3.0).')
 
-    p_materialize = sub.add_parser('update-materialize', help='Download and vendor Materialize CSS (npm).')
-    p_materialize.add_argument('--version', default='1.0.0', help='Materialize version (default: 1.0.0).')
 
     p_datatables = sub.add_parser('update-datatables', help='Download and vendor DataTables core + styling (npm).')
     p_datatables.add_argument('--version', default='3.0.2', help='DataTables version (default: 3.0.2).')
@@ -73,12 +70,6 @@ def main(argv: list[str]) -> int:
     if args.cmd == 'update-bootstrap':
         info = vendor_bootstrap(version=args.version)
         print(f"Vendored Bootstrap from {info.source_url}")
-        print(f"Wrote {info.path} (sha256={info.sha256})")
-        return 0
-
-    if args.cmd == 'update-materialize':
-        info = vendor_materialize(version=args.version)
-        print(f"Vendored Materialize from {info.source_url}")
         print(f"Wrote {info.path} (sha256={info.sha256})")
         return 0
 
