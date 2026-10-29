@@ -1,4 +1,4 @@
-# AI Assistant Instructions
+# AI Assistants and Agent Skills
 
 AI coding assistants are trained on older code, so they tend to suggest APIs this library has
 removed. pydantic-schemaforms ships its own instructions for them, inside the package, so they

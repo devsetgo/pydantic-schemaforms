@@ -32,5 +32,6 @@ pages here go further, each on its own, so read the ones you need.
 
 - [Plugin Hooks and Custom Composites](plugin-hooks.md): register your own
   inputs and composite controls.
-- [AI Assistant Instructions](ai-instructions.md): version-matched
-  instructions for Claude, Copilot and other coding assistants.
+- [AI Assistants and Agent Skills](ai-instructions.md): five agent skills,
+  installed with `uvx library-skills`, that teach coding assistants to build,
+  create, convert, upgrade and document forms with the installed version.
