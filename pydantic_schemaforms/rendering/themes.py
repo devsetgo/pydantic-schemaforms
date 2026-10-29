@@ -20,7 +20,6 @@ __all__ = [
     'DefaultTheme',
     'FrameworkTheme',
     'BootstrapTheme',
-    'MaterialTheme',
     'PlainTheme',
     'MaterialEmbeddedTheme',
     'get_theme_for_framework',
@@ -349,13 +348,6 @@ class BootstrapTheme(FrameworkTheme):
         return base
 
 
-class MaterialTheme(FrameworkTheme):
-    name = 'material'
-
-    def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
-        super().__init__('material', include_assets=include_assets, asset_mode=asset_mode)
-
-
 class PlainTheme(FrameworkTheme):
     name = 'plain'
 
@@ -368,7 +360,9 @@ class MaterialEmbeddedTheme(RendererTheme):
 
     name = 'material-embedded'
 
-    def __init__(self) -> None:
+    def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
+        # The asset options are accepted for parity with the other themes; this
+        # theme always inlines its own CSS and JS.
         super().__init__(submit_label='Submit')
         self._css = self._build_css()
         self._js = self._build_js()
@@ -1217,17 +1211,6 @@ function toggleAccordion(sectionId, buttonElement) {
     padding: 16px 8px;
 }
 
-/* Compatibility: select controls rendered with Materialize-style class name */
-.md-form select.browser-default {
-    width: 100%;
-    min-height: 40px;
-    padding: 8px 10px;
-    border: 1px solid #cac4d0;
-    border-radius: 6px;
-    background: #ffffff;
-    box-sizing: border-box;
-}
-
 .md-form .md-input-wrapper {
     width: 100%;
 }
@@ -1534,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 _THEME_MAP: dict[str, type[RendererTheme]] = {
     'bootstrap': BootstrapTheme,
-    'material': MaterialTheme,
+    'material': MaterialEmbeddedTheme,
     'none': PlainTheme,
 }
 
