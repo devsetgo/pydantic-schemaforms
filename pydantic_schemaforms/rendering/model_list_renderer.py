@@ -37,6 +37,8 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .layout_engine import LayoutEngine
+from .model_list_markup import ModelListItem, render_default_model_list_item
+from .themes import RendererTheme
 from .schema_parser import (
     GROUP_ELEMENTS,
     ordered_properties,
@@ -249,118 +251,6 @@ def _resolve_item_title(title_template: str, index: int, item_data: dict[str, An
         return f'Item #{index + 1}'
 
 
-def _render_item_toggle(
-    *,
-    collapsible: bool,
-    expanded: bool,
-    # NOSONAR comments below: collapse_id/item_title are read via {expr}
-    # interpolation in the t-strings below -- see the note further down in
-    # this function on false-positive "unused variable" warnings.
-    collapse_id: str,  # NOSONAR
-    item_title: str,  # NOSONAR
-) -> SafeHTML:
-    if not collapsible:
-        return html(t"""
-                <span>
-                    <i class="bi bi-card-list me-2"></i>
-                    {item_title}
-                </span>""")
-
-    # NOSONAR comments below: each variable is read via {expr} interpolation
-    # in the t-string return statement -- Sonar's Python analyzer doesn't
-    # parse PEP 750 t-strings yet, so it can't see the reference and flags a
-    # false-positive "unused local variable".
-    chevron_class = 'down' if expanded else 'right'  # NOSONAR
-    expanded_attr = str(expanded).lower()  # NOSONAR
-    return html(t'''
-                <button class="btn btn-link text-decoration-none p-0 text-start"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#{collapse_id}"
-                        aria-expanded="{expanded_attr}"
-                        aria-controls="{collapse_id}">
-                    <i class="bi bi-chevron-{chevron_class} me-2"></i>
-                    <i class="bi bi-card-list me-2"></i>
-                    {item_title}
-                </button>''')
-
-
-def _column_class_for_field_count(field_count: int) -> str:
-    if field_count <= 2:
-        return 'col-12'
-    if field_count <= 4:
-        return 'col-md-6'
-    return 'col-lg-4 col-md-6'
-
-
-def _render_item_field_cell(
-    field_renderer: 'FieldRenderer',
-    *,
-    field_name: str,
-    index: int,
-    field_key: str,
-    nested_schema: dict[str, Any],
-    item_data: dict[str, Any],
-    nested_errors: dict[Any, Any],
-    context: 'RenderContext',
-    col_class: str,
-) -> SafeHTML:
-    field_value = item_data.get(field_key, '')
-    input_name = f'{field_name}[{index}].{field_key}'
-    field_error = nested_errors.get(field_key)
-
-    # NOSONAR comments below: field_col_class/nested_field_html are read via
-    # {expr} interpolation further down -- see the note in
-    # _render_item_toggle above.
-    field_col_class = (  # NOSONAR
-        'col-12' if resolve_ui_element(nested_schema) in GROUP_ELEMENTS else col_class
-    )
-
-    nested_field_html = SafeHTML(  # NOSONAR
-        str(
-            field_renderer.render_field(
-                input_name,
-                nested_schema,
-                field_value,
-                field_error,
-                [],
-                context,
-                'vertical',
-            )
-        )
-    )
-    return html(t'''
-            <div class="{field_col_class}">
-                {nested_field_html}
-            </div>''')
-
-
-def _render_item_body_wrapper(
-    *,
-    collapsible: bool,
-    expanded: bool,
-    # NOSONAR comment below: collapse_id is read via {collapse_id}
-    # interpolation in the t-string further down -- see the note in
-    # _render_item_toggle above.
-    collapse_id: str,  # NOSONAR
-    fields_html: str,
-) -> str:
-    if collapsible:
-        show_class = 'show' if expanded else ''  # NOSONAR
-        opening = html(t'''
-        <div class="collapse {show_class}" id="{collapse_id}">
-            <div class="card-body">''')
-        closing = """
-            </div>
-        </div>"""
-    else:
-        opening = """
-        <div class="card-body">"""
-        closing = """
-        </div>"""
-    return f'{opening}<div class="row">{fields_html}</div>{closing}'
-
-
 def render_schema_list_item(
     field_renderer: 'FieldRenderer',
     field_name: str,
@@ -381,55 +271,42 @@ def render_schema_list_item(
     safe_field_name = re.sub(r'[^a-zA-Z0-9_-]', '_', field_name)
     collapse_id = f'{safe_field_name}_item_{index}_content'
 
-    item_html = html(t'''
-    <div class="model-list-item card border mb-3"
-         data-index="{index}"
-         data-title-template="{title_template}"
-         data-field-name="{field_name}">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">''')
-    item_html += _render_item_toggle(
-        collapsible=collapsible, expanded=expanded, collapse_id=collapse_id, item_title=item_title
-    )
-    item_html += html(t'''
-            </h6>
-            <button type="button"
-                    class="btn btn-outline-danger btn-sm remove-item-btn"
-                    data-index="{index}"
-                    data-field-name="{field_name}"
-                    title="Remove this item">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>''')
-
-    properties = dict(ordered_properties(schema_def))
-    field_count = len([key for key in properties.keys() if not key.startswith('_')])
-    col_class = _column_class_for_field_count(field_count)
-
-    fields_html = ''.join(
-        str(
-            _render_item_field_cell(
-                field_renderer,
-                field_name=field_name,
-                index=index,
-                field_key=field_key,
-                nested_schema=nested_schema,
-                item_data=item_data,
-                nested_errors=nested_errors,
-                context=context,
-                col_class=col_class,
-            )
+    properties = [
+        (key, nested_schema)
+        for key, nested_schema in ordered_properties(schema_def)
+        if not key.startswith('_')
+    ]
+    cells = tuple(
+        (
+            str(
+                field_renderer.render_field(
+                    f'{field_name}[{index}].{field_key}',
+                    nested_schema,
+                    item_data.get(field_key, ''),
+                    nested_errors.get(field_key),
+                    [],
+                    context,
+                    'vertical',
+                )
+            ),
+            resolve_ui_element(nested_schema) in GROUP_ELEMENTS,
         )
-        for field_key, nested_schema in properties.items()
-        if not field_key.startswith('_')
+        for field_key, nested_schema in properties
     )
-    item_html += _render_item_body_wrapper(
-        collapsible=collapsible, expanded=expanded, collapse_id=collapse_id, fields_html=fields_html
+    item = ModelListItem(
+        index=index,
+        field_name=field_name,
+        title_template=title_template,
+        item_title=item_title,
+        collapsible=collapsible,
+        expanded=expanded,
+        collapse_id=collapse_id,
+        cells=cells,
     )
-
-    item_html += """
-    </div>"""
-    return item_html
+    theme = field_renderer.theme
+    if isinstance(theme, RendererTheme):
+        return theme.render_model_list_item(item)
+    return render_default_model_list_item(item)
 
 
 @LayoutEngine.layout_renderer('model_list')

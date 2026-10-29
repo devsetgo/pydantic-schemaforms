@@ -13,6 +13,7 @@ from pydantic_schemaforms.assets.runtime import (
 )
 from .field_shell import FieldShellRenderer, field_shell_for_framework
 from .form_style import FormStyle, get_form_style
+from .model_list_markup import ModelListItem, render_default_model_list_item
 from .frameworks import get_framework_config
 from .material_icons import render_material_icon
 
@@ -234,6 +235,11 @@ class RendererTheme:
         """Return framework-specific markup for layout/card sections."""
 
         return ''
+
+    def render_model_list_item(self, item: ModelListItem) -> str:
+        """One repeating sub-form item (its header, remove button and fields)."""
+
+        return render_default_model_list_item(item)
 
     def render_model_list_container(
         self,
