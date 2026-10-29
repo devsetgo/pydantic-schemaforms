@@ -15,7 +15,7 @@ Last updated: 2026-10-29.
 Small fixes and decisions that the later phases build on. Do these first so new
 features aren't layered on known bugs. Phase 1 ships as its own release.
 
-All phase 1 items are done; the phase 1 release is next.
+All phase 1 items are done; they ship as release 26.4.3.
 
 | # | Item | Status | Why now |
 |---|---|---|---|
