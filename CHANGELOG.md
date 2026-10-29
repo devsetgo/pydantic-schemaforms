@@ -53,6 +53,17 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Added
 
+- **Agent Skills ship inside the package.** `uvx library-skills --claude`
+  installs five skills into an app project, linked to the installed version:
+  `pydantic-schemaforms` (build and fix forms, with references for inputs,
+  complex forms, validation, data tables, security, rendering and extending),
+  `schemaforms-create` (a new form from a description such as "create a login
+  form", commented like a tutorial), `schemaforms-convert` (from Pydantic,
+  dataclasses, JSON Schema, WTForms or Django), `schemaforms-upgrade` (from
+  removed APIs) and `schemaforms-document` (docstrings, help text and a
+  Markdown page for an app's forms). The single-file instructions from
+  `get_app_instructions()` and the CLI are now built from the same sources,
+  and their examples come from tested files. (#264)
 - **Accessibility gate.** The Playwright suite runs axe-core 4.14 against
   WCAG 2.0, 2.1 and 2.2 A and AA rules plus axe best practices on every
   example page under Bootstrap and Material, plus the validation page's error

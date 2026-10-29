@@ -2,7 +2,7 @@
 
 Use these rules when generating form code in an application that depends on pydantic-schemaforms.
 
-<!-- INCLUDE: _shared_instructions.md -->
+<!-- INCLUDE: instructions -->
 
 ### Prompt templates
 

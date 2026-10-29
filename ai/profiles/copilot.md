@@ -1,6 +1,6 @@
 # Copilot instructions for app teams using pydantic-schemaforms
 
-<!-- INCLUDE: _shared_instructions.md -->
+<!-- INCLUDE: instructions -->
 
 ### Copilot conversion prompt starters
 

@@ -32,7 +32,7 @@ nav:
       - Render Timing and Logging: 'advanced/timing-logging.md'
       - Layout Primitives: 'advanced/layout-primitives.md'
       - Plugin Hooks and Custom Composites: 'advanced/plugin-hooks.md'
-      - AI Assistant Instructions: 'advanced/ai-instructions.md'
+      - AI Assistants and Agent Skills: 'advanced/ai-instructions.md'
   - Recipes:
       - 'recipes/index.md'
       - Contact Form: 'recipes/contact-form.md'
