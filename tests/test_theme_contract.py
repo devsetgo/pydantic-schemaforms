@@ -101,3 +101,15 @@ def test_material_output_has_no_bootstrap_classes() -> None:
     bootstrap = {'form-control', 'form-select', 'form-label', 'form-text', 'btn', 'card', 'alert'}
     assert not bootstrap & set(classes)
     assert not [name for name in classes if name.startswith('bi-')]
+
+
+def test_every_registered_input_alias_gets_its_canonical_material_kind() -> None:
+    from pydantic_schemaforms.inputs.registry import get_input_component_map
+    from pydantic_schemaforms.rendering.field_shell import material_field_kind
+
+    wrong = {
+        name: (material_field_kind(name), cls.ui_element)
+        for name, cls in get_input_component_map().items()
+        if material_field_kind(name) != material_field_kind(cls.ui_element)
+    }
+    assert not wrong

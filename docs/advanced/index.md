@@ -3,6 +3,11 @@
 The [Tutorial](../tutorial/index.md) covers everything most forms need. The
 pages here go further, each on its own, so read the ones you need.
 
+## Styling
+
+- [Material Design 3](material.md): the filled variant, the dark scheme and
+  changing the colors.
+
 ## Validation
 
 - [Live Validation (HTMX)](live-validation.md): check fields on the server

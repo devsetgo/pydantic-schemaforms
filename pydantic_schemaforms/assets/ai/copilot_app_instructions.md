@@ -1026,6 +1026,8 @@ Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 
 - **`framework="bootstrap"`** (default) uses Bootstrap 5 classes. **`"material"`** is a
   self-contained Material Design 3 style with its own CSS; it needs no external framework.
+  `material_variant="filled"` gives filled text fields, `data-md-theme="dark"` on an ancestor
+  gives the dark scheme, and overriding `--md-sys-color-*` on `.md-form` re-colors it.
   **`"none"`** is plain semantic HTML with no framework classes.
 - By default **no framework CSS is included**: the app's page template is expected to load it.
   `include_framework_assets=True` adds it (inlined by default, or `asset_mode="cdn"`).

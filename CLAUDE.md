@@ -12,6 +12,7 @@ pytest -n 2 --ignore=tests/playwright          # fast parallel test run
 pytest tests/test_invariants.py -v             # check architectural invariants
 ruff check pydantic_schemaforms tests          # lint
 ruff format --check pydantic_schemaforms tests # format check
+pytest tests/playwright/test_material_screenshots.py --no-cov  # write Material page PNGs to tests/playwright/screenshots/ -- look at them
 make ai-instructions                           # rebuild packaged AI-instruction files after editing their source
 ```
 
@@ -104,7 +105,11 @@ pydantic_schemaforms/
     form_style.py           # FormStyle / FormStyleTemplates — framework-specific templates
     layout_engine.py        # Layout rendering pipeline + composite-renderer registry
     datatable_renderer.py   # DataTableLayout's registered renderer
+    field_shell.py          # Label/help/error around a control, per framework
+    themes.py               # RendererTheme hooks; MaterialTheme
+    material_icons.py       # Material icons as inline SVG
     model_list_renderer.py  # model_list's registered renderer
+  assets/material/    # md3-tokens.css, md3.css, md3.js
   inputs/             # Field-level input classes
   integration/        # JSON/OpenAPI schema generators and framework checks
 examples/             # Live usage examples (not part of the package)
@@ -282,6 +287,45 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
   Wire names (`address.city`, `pets[0].name`) are internal: never make
   app-facing APIs or docs take or return them.
 
+## Styling: one rendering path, three frameworks
+
+`framework="bootstrap"`, `"material"` and `"none"` all render through the same
+path: `FieldRenderer.render_field` -> the input's `render()` -> the theme's field
+shell (`rendering/field_shell.py`). A theme (`rendering/themes.py`) supplies
+markup through hooks: `field_shell`, `control_attributes`, `input_class`,
+`alert_class`, `table_class`, `datatable_class`, `render_model_list_item`,
+`render_collapsible_section`, `render_error_summary` and the `FormStyleTemplates`
+chrome. The Material theme is `MaterialTheme`, with its CSS and script in
+`assets/material/`. **There is no Material-only rendering path any more; don't
+add one.**
+
+- **Never branch on the framework string in an input's `render()` or a renderer.**
+  If a widget needs framework-specific markup, add a theme hook.
+  `tests/test_theme_contract.py` fails on new comparisons outside the theme modules.
+- **A new input or option must look right under all three styles in the same
+  change.** Add it to the widget gallery and open `/gallery?style=material`, in
+  light and dark. If its `ui_element` is an alias, add it to `_MATERIAL_ALIASES` in
+  `field_shell.py`, and put a new name in the right `MATERIAL_*` set there; anything
+  unlisted gets the static-label field. Style it with scoped `.md-form` rules in
+  `assets/material/md3.css`.
+- **Widget CSS uses the tokens.** A `<style>` block shipped by an input takes its
+  colors through `var(--sf-x, <fallback>)`, with a hex value only as that fallback.
+  `md3.css` has no `!important` and no hex; colors live in `md3-tokens.css`. Both
+  are enforced by `test_theme_contract.py`.
+- **Material Design 3 is the reference** (m3.material.io, 2023 baseline).
+  `docs/advanced/material.md` documents the anatomy, tokens, the `filled` variant
+  and the dark scheme; keep it in step with the CSS. Dark mode is opt-in, through
+  `data-md-theme="dark"` or the page's `color-scheme`.
+- **Icons are inline SVG** from `rendering/material_icons.py`, never a ligature
+  `<span>` or a Bootstrap icon. An unknown name renders nothing, so add the path
+  when you use a new icon.
+- **The example app's Material shell** (`examples/templates/material_base.html`)
+  loads no Bootstrap. Page chrome there uses the tokens.
+- **A green test run doesn't show how it looks.** Run the screenshot test and read
+  the PNGs: that is how a broken alias field was caught during the rewrite.
+- Materialize is gone: don't vendor it or use its classes (`browser-default`,
+  `input-field`, `waves-effect`).
+
 ## Examples must cover every layout, input, and validation
 
 The example app (`examples/`, run with `python examples/main.py`) is the
@@ -318,7 +362,7 @@ A feature without a working example is not done.
 - **Composites:** every `model_list` option (`/menu-order`, `/layouts`) and
   every `DataTableLayout` `model_config` key (`/employees/import`,
   `/employees/directory`).
-- **Both frameworks:** each example page must render under
+- **Both frameworks:** (see also the screenshot test under "Styling") each example page must render under
   `?style=bootstrap` and `?style=material`.
 - **Same change, same bar:** adding or changing a layout, input, or
   validation feature includes its example in the same change. Examples

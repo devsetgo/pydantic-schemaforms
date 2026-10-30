@@ -17,7 +17,6 @@ Run:      pytest tests/playwright/test_example_pages.py -v
 """
 
 import hashlib
-import re
 import socket
 import threading
 import time
@@ -159,8 +158,8 @@ def test_material_placeholder_select_keeps_its_label_floated(
     page.goto(f'{examples_server_url}/gallery?style=material')
     page.locator('.tab-button', has_text='Selection Inputs').click()
     label = page.locator('label[for="selection_inputs.select_placeholder"]')
-    # Unfloated is translateY(0); the CSS floats a select's label above it.
-    expect(label).not_to_have_attribute('style', re.compile(r'translateY\(0\)'), timeout=TIMEOUT)
+    # A floated label is body-small, sitting in the outline's notch.
+    expect(label).to_have_css('font-size', '12px', timeout=TIMEOUT)
 
 
 _GROUP_CONTROLS = {
@@ -186,3 +185,62 @@ def test_grouped_forms_on_one_page_switch_independently(
     expect(panel(second, 1)).to_be_visible(timeout=TIMEOUT)
     expect(panel(first, 0)).to_be_visible(timeout=TIMEOUT)
     expect(panel(first, 1)).to_be_hidden(timeout=TIMEOUT)
+
+
+def test_material_pages_load_no_bootstrap(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/gallery?style=material')
+    expect(page.locator('form.md-form')).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('link[href*="bootstrap"]')).to_have_count(0)
+    expect(page.locator('script[src*="bootstrap"]')).to_have_count(0)
+
+
+@pytest.mark.parametrize('variant', ['outlined', 'filled'])
+@pytest.mark.parametrize('theme', ['light', 'dark'])
+def test_material_variants_and_schemes_pass_axe(
+    page: Page, examples_server_url: str, variant: str, theme: str
+) -> None:
+    page.add_init_script(f"localStorage.setItem('md-theme', '{theme}')")
+    page.goto(f'{examples_server_url}/gallery?style=material&variant={variant}')
+    expect(page.locator('form.md-form')).to_be_visible(timeout=TIMEOUT)
+    assert _blocking_violations(page) == []
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_model_list_add_remove_and_title(page: Page, examples_server_url: str, style: str) -> None:
+    page.on('dialog', lambda dialog: dialog.accept())
+    page.goto(f'{examples_server_url}/pets?style={style}&demo=true')
+    items = page.locator('.model-list-item')
+    expect(items.first).to_be_visible(timeout=TIMEOUT)
+    before = items.count()
+    # The demo list starts at its max_items, so remove before adding.
+    items.first.locator('.remove-item-btn').click()
+    expect(items).to_have_count(before - 1, timeout=TIMEOUT)
+    page.locator('.add-item-btn').first.click()
+    expect(items).to_have_count(before, timeout=TIMEOUT)
+    expect(items.last.locator('input:visible').first).to_be_visible(timeout=TIMEOUT)
+
+
+def test_material_model_list_item_collapses(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/pets?style=material&demo=true')
+    item = page.locator('.model-list-item').first
+    body = item.locator('.md-model-item__body')
+    summary = item.locator('summary')
+    was_open = body.is_visible()
+    summary.click()
+    if was_open:
+        expect(body).to_be_hidden(timeout=TIMEOUT)
+    else:
+        expect(body).to_be_visible(timeout=TIMEOUT)
+
+
+def test_star_rating_works_from_the_keyboard(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/gallery?style=material')
+    page.locator('.tab-button', has_text='Numeric').click()
+    star = page.locator('.star-rating-input [role="radio"][tabindex="0"]').first
+    star.focus()
+    value = star.get_attribute('data-rating')
+    star.press('ArrowRight')
+    expected = str(min(int(value) + 1, 5))
+    expect(
+        page.locator(f'.star-rating-input [role="radio"][data-rating="{expected}"]').first
+    ).to_have_attribute('aria-checked', 'true', timeout=TIMEOUT)

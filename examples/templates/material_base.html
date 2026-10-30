@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Pydantic Forms Demo</title>
+    <!-- The Material page shell: no Bootstrap, no icon font. Tokens come from the library. -->
+    <link rel="stylesheet" href="/vendor/md3-tokens.css">
+    <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
+    <script>
+        try {
+            if (localStorage.getItem('md-theme') === 'dark') {
+                document.documentElement.dataset.mdTheme = 'dark';
+            }
+        } catch (error) { /* storage blocked: stay light */ }
+    </script>
+    {% block extra_head %}{% endblock %}
+    <style>
+        body.md-shell {
+            margin: 0;
+            background: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--md-sys-typescale-font);
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+        .md-shell a { color: var(--md-sys-color-primary); }
+        .md-shell code { font-family: var(--md-sys-typescale-mono); font-size: 14px; }
+
+        .md-app-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 16px;
+            min-height: 64px;
+            padding: 8px 24px;
+            box-sizing: border-box;
+            background: var(--md-sys-color-surface-container);
+        }
+
+        .md-app-bar__title {
+            margin-right: auto;
+            color: var(--md-sys-color-on-surface);
+            font-size: 22px;
+            line-height: 28px;
+            text-decoration: none;
+        }
+
+        .md-app-bar__action {
+            min-height: 40px;
+            padding: 0 16px;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--md-sys-shape-corner-full);
+            background: transparent;
+            color: var(--md-sys-color-primary);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 38px;
+            text-decoration: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .md-app-bar__action[aria-current="true"] {
+            border-color: transparent;
+            background: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+
+        .md-shell__main {
+            max-width: 840px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* The page templates are shared with the Bootstrap shell; these are the
+           few of their class names that carry meaning. */
+        .md-shell .bi, .md-shell .btn-group + .bi { display: none; }
+        .md-shell .form-header h2 { margin: 0 0 8px; font-size: 28px; font-weight: 400; line-height: 36px; }
+        .md-shell .form-header { margin-bottom: 24px; }
+        .md-shell .row { display: flex; flex-wrap: wrap; gap: 16px; }
+        .md-shell .row > * { flex: 1 1 240px; min-width: 0; }
+        .md-shell .row.justify-content-center > * { flex-basis: 100%; }
+        .md-shell .mt-4 { margin-top: 24px; }
+        .md-shell .p-3 { padding: 16px; }
+        .md-shell .mb-2, .md-shell .mb-3 { margin-bottom: 8px; }
+        .md-shell .text-center { text-align: center; }
+        .md-shell .small { font-size: 14px; line-height: 20px; }
+        .md-shell .text-muted { color: var(--md-sys-color-on-surface-variant); }
+        .md-shell .text-danger { color: var(--md-sys-color-error); }
+        .md-shell .bg-light {
+            border-radius: var(--md-sys-shape-corner-medium);
+            background: var(--md-sys-color-surface-container-low);
+        }
+        .md-shell .alert {
+            margin-bottom: 16px;
+            padding: 16px;
+            border-radius: var(--md-sys-shape-corner-medium);
+            background: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+        .md-shell .badge {
+            display: inline-block;
+            padding: 0 8px;
+            border-radius: var(--md-sys-shape-corner-full);
+            background: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+            font-size: 12px;
+            line-height: 20px;
+        }
+        .md-shell .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .md-shell .btn {
+            display: inline-block;
+            min-height: 40px;
+            padding: 0 16px;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--md-sys-shape-corner-full);
+            background: transparent;
+            color: var(--md-sys-color-primary);
+            font: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 38px;
+            text-decoration: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        .md-shell .form-label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; }
+        .md-shell .form-control {
+            display: block;
+            width: 100%;
+            min-height: 56px;
+            padding: 8px 16px;
+            border: 1px solid var(--md-sys-color-outline);
+            border-radius: var(--md-sys-shape-corner-extra-small);
+            background-color: transparent;
+            color: var(--md-sys-color-on-surface);
+            font: inherit;
+            box-sizing: border-box;
+        }
+        .md-shell .demo-version-footer {
+            margin-top: 24px;
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+
+<body class="md-form md-shell">
+    <header class="md-app-bar">
+        <a class="md-app-bar__title" href="/">pydantic-schemaforms</a>
+        {% if request.url.path in ('/gallery', '/layouts') %}
+        {% set filled = request.query_params.get('variant') == 'filled' %}
+        {% set layout_query = '&layout=' ~ request.query_params.get('layout') if request.query_params.get('layout') else '' %}
+        <a class="md-app-bar__action" href="?style=material{{ layout_query }}"{% if not filled %} aria-current="true"{% endif %}>Outlined</a>
+        <a class="md-app-bar__action" href="?style=material{{ layout_query }}&variant=filled"{% if filled %} aria-current="true"{% endif %}>Filled</a>
+        {% endif %}
+        <button type="button" class="md-app-bar__action" id="md-theme-toggle" aria-pressed="false">Dark</button>
+    </header>
+    <main class="md-shell__main">
+        {% block content %}{% endblock %}
+        <div class="demo-version-footer">Demo App: v{{ container_version }}</div>
+    </main>
+    <script>
+        (function () {
+            var root = document.documentElement;
+            var toggle = document.getElementById('md-theme-toggle');
+            function sync() {
+                toggle.setAttribute('aria-pressed', root.dataset.mdTheme === 'dark' ? 'true' : 'false');
+            }
+            toggle.addEventListener('click', function () {
+                var dark = root.dataset.mdTheme !== 'dark';
+                root.dataset.mdTheme = dark ? 'dark' : 'light';
+                try { localStorage.setItem('md-theme', root.dataset.mdTheme); } catch (error) { /* per page only */ }
+                sync();
+            });
+            sync();
+        })();
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>
