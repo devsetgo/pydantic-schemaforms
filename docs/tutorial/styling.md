@@ -60,3 +60,62 @@ Every style keeps its markup predictable, so you can target it:
     See [Assets and Self-Contained Forms](../advanced/assets.md).
 
 Next: [CSRF Protection](csrf.md).
+
+## Dark mode
+
+Forms are light unless you opt in, and the switch is set by your page:
+
+=== "Bootstrap"
+
+    ```html
+    <html data-bs-theme="dark">
+    ```
+
+    Bootstrap 5.3 recolors its own components, and the form's widgets, tabs,
+    accordion and wizard follow it.
+
+=== "Material"
+
+    ```html
+    <html data-md-theme="dark">
+    ```
+
+    Or declare `color-scheme: dark` on the page. See
+    [Material Design 3](../advanced/material.md#dark-scheme).
+
+`framework="none"` has no dark mode of its own.
+
+## Your own colors
+
+Colors are CSS custom properties, so re-coloring needs no change to your Python.
+Put the rules in your page's stylesheet.
+
+=== "Bootstrap"
+
+    The form's widgets, tabs, accordion and wizard read `--sf-*` tokens:
+
+    ```css
+    :root {
+        --sf-primary: #00639b;
+        --sf-on-primary: #ffffff;
+        --sf-chip-bg: #d1e4ff;
+        --sf-chip-fg: #001d36;
+    }
+    ```
+
+    Bootstrap's own buttons and inputs don't read these. Bootstrap's
+    `.btn-primary` sets its colors per class, so recolor those with
+    `--bs-btn-*` or your own Bootstrap build.
+
+=== "Material"
+
+    Set `--md-sys-color-*` on `.md-form`, and every control follows:
+
+    ```css
+    form.md-form {
+        --md-sys-color-primary: #00639b;
+        --md-sys-color-on-primary: #ffffff;
+    }
+    ```
+
+    The token list is in [Material Design 3](../advanced/material.md#changing-the-colors).

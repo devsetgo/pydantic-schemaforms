@@ -199,7 +199,7 @@ def test_material_pages_load_no_bootstrap(page: Page, examples_server_url: str) 
 def test_material_variants_and_schemes_pass_axe(
     page: Page, examples_server_url: str, variant: str, theme: str
 ) -> None:
-    page.add_init_script(f"localStorage.setItem('md-theme', '{theme}')")
+    page.add_init_script(f"localStorage.setItem('sf-theme', '{theme}')")
     page.goto(f'{examples_server_url}/gallery?style=material&variant={variant}')
     expect(page.locator('form.md-form')).to_be_visible(timeout=TIMEOUT)
     assert _blocking_violations(page) == []
@@ -301,3 +301,42 @@ def test_material_csv_import_stays_material_after_load(
     screenshots = Path(__file__).parent / 'screenshots'
     screenshots.mkdir(exist_ok=True)
     page.screenshot(path=screenshots / 'data-table-errors.png', full_page=True)
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+@pytest.mark.parametrize('path', _html_pages())
+def test_example_page_passes_axe_in_dark(
+    page: Page, examples_server_url: str, path: str, style: str
+) -> None:
+    page.add_init_script("localStorage.setItem('sf-theme', 'dark')")
+    page.goto(f'{examples_server_url}{path}?style={style}', wait_until='load')
+    violations = _blocking_violations(page)
+    assert violations == [], f'{path} ({style}, dark):\n' + '\n'.join(violations)
+
+
+@pytest.mark.parametrize(
+    ('style', 'attribute'), [('bootstrap', 'data-bs-theme'), ('material', 'data-md-theme')]
+)
+def test_dark_toggle_switches_and_persists(
+    page: Page, examples_server_url: str, style: str, attribute: str
+) -> None:
+    page.goto(f'{examples_server_url}/login?style={style}', wait_until='load')
+    toggle = page.locator('#sf-theme-toggle')
+    expect(toggle).to_have_text('Dark', timeout=TIMEOUT)
+    toggle.click()
+    expect(page.locator('html')).to_have_attribute(attribute, 'dark')
+    expect(toggle).to_have_text('Light')
+    page.reload(wait_until='load')
+    expect(page.locator('html')).to_have_attribute(attribute, 'dark')
+    toggle.click()
+    expect(page.locator('html')).to_have_attribute(attribute, 'light')
+
+
+def test_material_tokens_can_be_overridden_for_a_custom_scheme(
+    page: Page, examples_server_url: str
+) -> None:
+    page.goto(f'{examples_server_url}/login?style=material', wait_until='load')
+    page.add_style_tag(content='form.md-form { --md-sys-color-primary: rgb(0, 99, 155); }')
+    expect(page.locator('form.md-form [type="submit"]').first).to_have_css(
+        'background-color', 'rgb(0, 99, 155)', timeout=TIMEOUT
+    )

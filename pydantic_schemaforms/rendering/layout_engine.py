@@ -455,7 +455,7 @@ document.addEventListener('keydown', function(e) {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--sf-outline-variant, #e0e0e0);
 }
 .modal-title {
     margin: 0;
@@ -475,7 +475,7 @@ document.addEventListener('keydown', function(e) {
 }
 .modal-footer {
     padding: 1rem;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     text-align: right;
 }
 </style>
@@ -519,7 +519,7 @@ class CardLayout(BaseLayout):
 </div>
 <style>
 .card-layout {
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 1rem;
@@ -527,7 +527,7 @@ class CardLayout(BaseLayout):
 .card-header {
     padding: 1rem;
     background-color: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 8px 8px 0 0;
 }
 .card-title {
@@ -540,7 +540,7 @@ class CardLayout(BaseLayout):
 .card-footer {
     padding: 1rem;
     background-color: #f8f9fa;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 0 0 8px 8px;
 }
 </style>

@@ -27,6 +27,9 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 - `docs/advanced/material.md` documents the Material style. (#265)
 - `material_variant="filled"` selects filled text fields (the default is
   `"outlined"`). (#265)
+- Opt-in dark mode for Bootstrap forms: under `data-bs-theme="dark"` the library's
+  widgets, tabs, accordion and wizard now follow Bootstrap's dark colors. (#265)
+- `--sf-*` CSS tokens re-color those same parts under Bootstrap. (#265)
 - Opt-in dark scheme for Material: `data-md-theme="dark"` on the form or an
   ancestor, or the page's `color-scheme`. (#265)
 
@@ -885,3 +888,4 @@ Published Date: 2026 January 09, 21:46
 
 
 Published Date: 2026 January 02, 19:13
+

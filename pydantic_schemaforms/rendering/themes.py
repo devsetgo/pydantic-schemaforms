@@ -24,7 +24,7 @@ from .form_style import FormStyle, get_form_style
 from .model_list_markup import ModelListItem, render_default_model_list_item
 from .frameworks import get_framework_config
 from .material_icons import render_material_icon
-from .theme_assets import ACCORDION_COMPONENT_SCRIPT, TAB_COMPONENT_SCRIPT
+from .theme_assets import ACCORDION_COMPONENT_SCRIPT, BOOTSTRAP_DARK_TOKENS, TAB_COMPONENT_SCRIPT
 
 __all__ = [
     'RendererTheme',
@@ -440,12 +440,10 @@ class BootstrapTheme(FrameworkTheme):
 
     def before_form(self) -> str:
         base = super().before_form()
-        if not self.include_assets:
-            return base
-        icons_tag = bootstrap_icons_css_tag(asset_mode=self.asset_mode)
-        if icons_tag:
-            return f'{base}\n{icons_tag}' if base else icons_tag
-        return base
+        parts = [base, BOOTSTRAP_DARK_TOKENS]
+        if self.include_assets:
+            parts.append(bootstrap_icons_css_tag(asset_mode=self.asset_mode))
+        return '\n'.join(part for part in parts if part)
 
 
 class PlainTheme(FrameworkTheme):

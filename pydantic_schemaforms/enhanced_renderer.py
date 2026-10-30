@@ -753,15 +753,15 @@ class EnhancedFormRenderer:
         # developer-authored markup.
         panel_assets = SafeHTML("""
 <style>
-.pf-debug-panel { margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+.pf-debug-panel { margin-top: 1.5rem; border: 1px solid var(--sf-outline-variant, #e0e0e0); border-radius: 8px; background: var(--sf-surface-low, #fafafa); }
 .pf-debug-summary { cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
 .pf-debug-tabs { padding: 0.35rem 0.85rem 0.75rem; }
 .pf-debug-tablist { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
-.pf-debug-tab-btn { border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
-.pf-debug-tab-btn.pf-active { background: #0d6efd; color: #ffffff; border-color: #0d6efd; }
+.pf-debug-tab-btn { border: 1px solid var(--sf-outline-variant, #d0d7de); background: var(--sf-surface, #ffffff); color: inherit; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+.pf-debug-tab-btn.pf-active { background: var(--sf-primary, #0d6efd); color: var(--sf-on-primary, #ffffff); border-color: var(--sf-primary, #0d6efd); }
 .pf-debug-tab { display: none; }
 .pf-debug-tab.pf-active { display: block; }
-.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
+.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: var(--sf-surface, #ffffff); border: 1px dashed var(--sf-outline-variant, #d0d7de); padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
 </style>
 <script>
 (function() {
