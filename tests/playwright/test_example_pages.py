@@ -340,3 +340,23 @@ def test_material_tokens_can_be_overridden_for_a_custom_scheme(
     expect(page.locator('form.md-form [type="submit"]').first).to_have_css(
         'background-color', 'rgb(0, 99, 155)', timeout=TIMEOUT
     )
+
+
+def test_validation_reports_the_same_errors_in_both_styles(
+    page: Page, examples_server_url: str
+) -> None:
+    summaries = {}
+    for style, selector in (
+        ('bootstrap', '.alert-danger li'),
+        ('material', '.md-error-summary li'),
+    ):
+        page.goto(f'{examples_server_url}/validation?style={style}', wait_until='load')
+        page.locator('form [type="submit"]').first.click()
+        items = page.locator(selector)
+        expect(items.first).to_be_visible(timeout=TIMEOUT)
+        summaries[style] = items.all_inner_texts()
+    assert summaries['material'] == summaries['bootstrap']
+    expect(page.locator('.md-error-text').first).to_be_visible()
+    screenshots = Path(__file__).parent / 'screenshots'
+    screenshots.mkdir(exist_ok=True)
+    page.screenshot(path=screenshots / 'validation-errors.png', full_page=True)

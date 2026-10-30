@@ -261,12 +261,6 @@ class EnhancedFormRenderer:
         form_attrs.update(kwargs)
         form_attrs['action'] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
-        if layout in GROUPED_LAYOUTS:
-            # Themes may drop novalidate to get native required-checks (Material
-            # does), but the browser can't focus an invalid input in a hidden
-            # tab/panel/step, so it silently refuses to submit. Server
-            # validation re-renders with the errored group open instead.
-            form_attrs['novalidate'] = True
 
         resolved_csrf_mode = self._resolve_csrf_mode(
             include_csrf=include_csrf,

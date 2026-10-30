@@ -315,6 +315,9 @@ add one.**
 - **Material Design 3 is the reference** (m3.material.io, 2023 baseline).
   `docs/advanced/material.md` documents the anatomy, tokens, the `filled` variant
   and the dark scheme; keep it in step with the CSS.
+- **Validation behaves the same in every style.** Forms carry `novalidate` and the
+  server reports every error at once; a theme must not add client-side blocking.
+  `test_validation_reports_the_same_errors_in_both_styles` compares the two.
 - **Dark mode is offered for Bootstrap and Material alike**, opt-in through
   `data-bs-theme="dark"` and `data-md-theme="dark"`. Bootstrap's dark `--sf-*` values
   are `BOOTSTRAP_DARK_TOKENS` in `rendering/theme_assets.py`; anything new that takes

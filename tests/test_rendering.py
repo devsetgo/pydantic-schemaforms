@@ -944,7 +944,7 @@ def test_material_theme_and_renderer_branches() -> None:
     theme = MaterialTheme()
     transformed = theme.transform_form_attributes({'class': 'x', 'novalidate': True})
     assert transformed['class'].startswith('md-form')
-    assert 'novalidate' not in transformed
+    assert transformed['novalidate'] is True
     filled = MaterialTheme(variant='filled').transform_form_attributes({'class': 'x'})
     assert filled['class'] == 'md-form md-form--filled x'
 
