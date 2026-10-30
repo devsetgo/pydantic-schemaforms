@@ -1051,6 +1051,10 @@ def _material_variant(variant: str | None) -> str | None:
     return variant if variant in ('outlined', 'filled') else None
 
 
+def _variant_query(variant: str | None) -> str:
+    return f'&variant={variant}' if _material_variant(variant) else ''
+
+
 @router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_get(
     request: Request,
@@ -1082,7 +1086,7 @@ async def gallery_get(
         layout='tabbed',
         framework=style,
         form_data=form_data,
-        submit_url=f'/gallery?style={style}',
+        submit_url=f'/gallery?style={style}{_variant_query(variant)}',
         material_variant=_material_variant(variant),
         debug=debug,
         show_timing=show_timing,
@@ -1120,7 +1124,11 @@ async def gallery_get(
 
 @router.post('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_post(
-    request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
+    request: Request,
+    style: str = 'bootstrap',
+    debug: bool = False,
+    show_timing: bool = True,
+    variant: str | None = None,
 ):
     """Tabbed widget gallery submission (async)."""
     form_data = uploads_as_filenames(await request.form())
@@ -1128,8 +1136,9 @@ async def gallery_post(
     validation = WidgetGalleryForm.validate(
         form_data,
         layout='tabbed',
-        submit_url=f'/gallery?style={style}',
+        submit_url=f'/gallery?style={style}{_variant_query(variant)}',
         framework=style,
+        material_variant=_material_variant(variant),
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
@@ -1735,11 +1744,14 @@ async def organization_shared_post(
 
 
 def _layout_demo_options(
-    style: str, layout: str, linear: bool, progress: bool, labels: bool
+    style: str, layout: str, linear: bool, progress: bool, labels: bool, variant: str | None = None
 ) -> dict:
     """Render kwargs for /layouts: the submit URL keeps every query option,
     and the wizard gets wizard_options built from them."""
-    query = f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
+    query = (
+        f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
+        f'{_variant_query(variant)}'
+    )
     options: dict = {'submit_url': f'/layouts?{query}', 'layout': layout}
     if layout == 'wizard':
         options['wizard_options'] = {'linear': linear, 'show_progress': progress}
@@ -1757,7 +1769,14 @@ _LAYOUT_CHOICES = [
 ]
 
 
-def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labels: bool) -> str:
+def _layout_switcher(
+    style: str,
+    layout: str,
+    linear: bool,
+    progress: bool,
+    labels: bool,
+    variant: str | None = None,
+) -> str:
     """Buttons to re-render /layouts with each layout, plus the wizard's options."""
 
     current_query = {
@@ -1771,6 +1790,7 @@ def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labe
     def link(label: str, current: bool, **query: object) -> SafeHTML:
         params = current_query | query
         href = '/layouts?' + '&'.join(f'{key}={value}' for key, value in params.items())
+        href += _variant_query(variant)
         css = 'btn btn-sm ' + ('btn-primary' if current else 'btn-outline-primary')
         return html(t'<a class="{css}" href="{href}">{label}</a>')
 
@@ -1874,13 +1894,13 @@ async def layouts_get(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        **_layout_demo_options(style, layout, linear, progress, labels),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels) + form_html
+    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
     return templates.TemplateResponse(
         request,
         'form.html',
@@ -1902,6 +1922,7 @@ async def layouts_get(
 async def layouts_post(
     request: Request,
     style: str = 'bootstrap',
+    variant: str | None = None,
     layout: str = 'tabbed',
     linear: bool = True,
     progress: bool = True,
@@ -1931,18 +1952,18 @@ async def layouts_post(
         )
 
     # Re-render the form with validation errors + user data.
-    renderer = EnhancedFormRenderer(framework=style)
+    renderer = EnhancedFormRenderer(framework=style, material_variant=_material_variant(variant))
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
         data=form_data,
         errors=validation.errors,
-        **_layout_demo_options(style, layout, linear, progress, labels),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels) + form_html
+    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
 
     return templates.TemplateResponse(
         request,

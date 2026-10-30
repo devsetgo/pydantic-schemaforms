@@ -417,3 +417,15 @@ def test_every_example_form_posts_back_in_its_own_style(
             if action.split('?')[0] in post_routes and f'style={style}' not in action:
                 lost[path] = action
     assert not lost
+
+
+@pytest.mark.parametrize('path', ['/gallery', '/layouts'])
+def test_filled_variant_survives_a_failed_submission(example_client: TestClient, path: str) -> None:
+    params = {'style': 'material', 'variant': 'filled'}
+    page = example_client.get(path, params=params)
+    assert 'md-form--filled' in page.text
+    assert 'variant=filled' in re.search(r'<form\b[^>]*\baction="([^"]*)"', page.text).group(1)
+
+    failed = example_client.post(path, params=params, data={'unexpected': 'value'})
+    assert 'md-form--filled' in failed.text
+    assert 'variant=filled' in re.search(r'<form\b[^>]*\baction="([^"]*)"', failed.text).group(1)
