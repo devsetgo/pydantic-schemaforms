@@ -12,7 +12,6 @@ Run:      pytest tests/playwright/test_wizard.py -v
 """
 
 import json
-import re
 import socket
 import threading
 import time
@@ -196,7 +195,7 @@ class TestWizardNavigation:
 
 
 class TestMaterialForms:
-    """The Material theme's own script checks required fields on submit."""
+    """Material forms submit to the server, like every other style."""
 
     def test_wizard_runs_under_material(self, page: Page, wizard_server_url: str) -> None:
         errors: list[str] = []
@@ -217,10 +216,10 @@ class TestMaterialForms:
         result = json.loads(page.locator('#result').inner_text(timeout=TIMEOUT))
         assert result['valid'] is False
 
-    def test_an_empty_visible_required_field_blocks_submit(
+    def test_an_empty_required_field_reaches_the_server(
         self, page: Page, wizard_server_url: str
     ) -> None:
         page.goto(f'{wizard_server_url}/?framework=material&layout=tabbed')
         page.locator('button[type="submit"]').click()
-        expect(page.locator('[name="nickname"]')).to_have_class(re.compile('error'))
-        expect(page.locator('#result')).not_to_be_attached()
+        result = json.loads(page.locator('#result').inner_text(timeout=TIMEOUT))
+        assert result['valid'] is False

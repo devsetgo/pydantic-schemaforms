@@ -35,6 +35,9 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Fixed
 
+- Material forms now submit to the server and show every error at once, like
+  Bootstrap. They used to drop `novalidate`, so the browser stopped a single-page
+  form at its first invalid field. (#265)
 - A model list item's title no longer goes through `innerHTML` as the user
   types, so markup in a title field can't run in the page. (#265)
 - Material: invalid fields now get a red outline, and textareas, radios,

@@ -527,9 +527,6 @@ class MaterialTheme(RendererTheme):
         if existing_class:
             classes.append(existing_class)
         attrs['class'] = ' '.join(classes)
-        # Let the browser check required fields on a single-page form; grouped
-        # layouts put novalidate back (see render_form_from_model).
-        attrs.pop('novalidate', None)
         return attrs
 
     def after_form(self) -> str:
