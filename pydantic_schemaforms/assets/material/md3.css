@@ -380,6 +380,15 @@
     background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
 }
 
+/* Inside the box, a floated label stays in line with the value, clear of the icon. */
+.md-form.md-form--filled .md-field--leading-icon.md-field--float .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(:focus) .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(.md-input:not(:placeholder-shown)) .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(:autofill) .md-floating-label {
+    left: 52px;
+}
+
 /* Browsers without :has() get a label above the box instead of an overlap. */
 @supports not selector(:has(a)) {
     .md-form .md-floating-label {

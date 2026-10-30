@@ -22,6 +22,7 @@ PAGES = {
     'gallery': '/gallery?style=material',
     'gallery-filled': '/gallery?style=material&variant=filled',
     'tabbed': '/layouts?style=material&layout=tabbed',
+    'tabbed-filled': '/layouts?style=material&layout=tabbed&variant=filled',
     'accordion': '/layouts?style=material&layout=accordion',
     'side-by-side': '/layouts?style=material&layout=side-by-side',
     'wizard': '/layouts?style=material&layout=wizard',

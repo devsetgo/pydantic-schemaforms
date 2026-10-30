@@ -244,3 +244,19 @@ def test_star_rating_works_from_the_keyboard(page: Page, examples_server_url: st
     expect(
         page.locator(f'.star-rating-input [role="radio"][data-rating="{expected}"]').first
     ).to_have_attribute('aria-checked', 'true', timeout=TIMEOUT)
+
+
+@pytest.mark.parametrize('variant', ['outlined', 'filled'])
+def test_material_floated_label_clears_the_leading_icon(
+    page: Page, examples_server_url: str, variant: str
+) -> None:
+    page.goto(f'{examples_server_url}/layouts?style=material&layout=vertical&variant={variant}')
+    field = page.locator('.md-field--leading-icon', has=page.locator('input:not([value=""])')).first
+    expect(field).to_be_visible(timeout=TIMEOUT)
+    label = field.locator('.md-floating-label').bounding_box()
+    icon = field.locator('.md-field__leading').bounding_box()
+    overlaps_x = label['x'] < icon['x'] + icon['width'] and icon['x'] < label['x'] + label['width']
+    overlaps_y = (
+        label['y'] < icon['y'] + icon['height'] and icon['y'] < label['y'] + label['height']
+    )
+    assert not (overlaps_x and overlaps_y), (label, icon)
