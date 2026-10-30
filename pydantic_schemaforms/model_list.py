@@ -185,6 +185,10 @@ class ModelListRenderer:
                 updateCollapseIds(newItem, fieldName, index);
 
                 // Expand the new item
+                const details = newItem.querySelector(':scope > details');
+                if (details) {
+                    details.open = true;
+                }
                 const collapseDiv = newItem.querySelector('.collapse');
                 if (collapseDiv) {
                     collapseDiv.classList.add('show');

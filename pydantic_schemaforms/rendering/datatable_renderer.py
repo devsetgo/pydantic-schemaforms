@@ -44,6 +44,7 @@ from pydantic_schemaforms.assets.runtime import (
 from pydantic_schemaforms.inputs.registry import get_input_component_map
 from pydantic_schemaforms.inputs.specialized_inputs import FileInput
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms.rendering.themes import RendererTheme
 from pydantic_schemaforms.tstring import SafeHTML
 from pydantic_schemaforms.tstring import html as render_html
 
@@ -66,35 +67,15 @@ _BUTTON_NAME_MAP = {'csv': 'csvHtml5', 'copy': 'copyHtml5', 'pdf': 'pdfHtml5'}
 
 
 # DataTableStyleConfig flags -> the Bootstrap utility class each one adds.
-_STYLE_CLASS_MAP = {
-    'striped': 'table-striped',
-    'bordered': 'table-bordered',
-    'hover': 'table-hover',
-    'compact': 'table-sm',
-}
-
-
-# DataTables' own CSS (dataTables.min.css) styles the <table>/search box/
-# pagination regardless of framework, so the only thing that changes here is
-# whether Bootstrap's own table/button/style classes are layered on top.
-# There is no dedicated Material variant yet -- 'material' falls back to the
-# same Bootstrap-ish classes as 'bootstrap' rather than going unstyled, and
-# framework='none' drops all of them (including the style flags) for a
-# truly bare table.
-def _table_classes_for_framework(framework: str, style: dict[str, Any]) -> str:
-    if framework == 'none':
-        return ''
-    classes = ['table']
-    classes.extend(css_class for flag, css_class in _STYLE_CLASS_MAP.items() if style.get(flag))
-    return ' '.join(classes)
+_DEFAULT_THEME = RendererTheme()
 
 
 # Plain, developer-authored CSS with no interpolated values -- wrapped in
 # SafeHTML(...) at each interpolation site so the html() processor passes
 # it through instead of escaping it.
 _ERROR_STYLES = """<style>
-.datatable-row-error > td { background-color: #f8d7da; }
-.datatable-cell-error { outline: 2px solid #dc3545; outline-offset: -2px; }
+.datatable-row-error > td { background-color: var(--sf-error-container, #f8d7da); }
+.datatable-cell-error { outline: 2px solid var(--sf-error, #dc3545); outline-offset: -2px; }
 </style>
 """
 
@@ -108,18 +89,18 @@ _ERROR_STYLES = """<style>
 # elsewhere on the same page are unaffected.
 _UPLOAD_STYLES = """<style>
 .datatable-upload-zone .file-drop-zone {
-    border: 2px dashed #adb5bd;
+    border: 2px dashed var(--sf-outline, #adb5bd);
     border-radius: 0.375rem;
     padding: 0.75rem;
-    background-color: #f8f9fa;
+    background-color: var(--sf-surface-low, #f8f9fa);
 }
 .datatable-upload-zone .file-drop-zone-active {
-    border-color: #0d6efd;
-    background-color: #e7f1ff;
+    border-color: var(--sf-primary, #0d6efd);
+    background-color: var(--sf-chip-bg, #e7f1ff);
 }
 .datatable-upload-zone .file-drop-zone-hint {
     font-size: 0.875rem;
-    color: #495057;
+    color: var(--sf-on-surface-variant, #495057);
     margin-top: 0.25rem;
 }
 </style>
@@ -241,7 +222,7 @@ def _render_cell_content(
         return _render_read_only_cell(prefix, field_name, row_index, value)
 
 
-def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str) -> SafeHTML:
+def _render_csv_template_link(model_cls: type['DataTableLayout'], theme: RendererTheme) -> SafeHTML:
     """A "Download CSV template" link, embedded as a data: URI so it needs
     no server route of its own -- the template bytes are already fully
     determined by the model's own fields at render time."""
@@ -250,13 +231,15 @@ def _render_csv_template_link(model_cls: type['DataTableLayout'], framework: str
     # in the t-string return statement -- see _render_read_only_cell above.
     href = f'data:text/csv;base64,{encoded}'  # NOSONAR
     filename = f'{model_cls.__name__.lower()}_template.csv'  # NOSONAR
-    css_class = '' if framework == 'none' else 'btn btn-secondary btn-sm mb-2'  # NOSONAR
+    css_class = theme.datatable_class('csv_template')  # NOSONAR
     return render_html(
         t'<a href="{href}" download="{filename}" class="{css_class}">Download CSV template</a>'
     )
 
 
-def _render_csv_upload_block(*, prefix: str, reviewing: bool, editable: bool) -> SafeHTML:
+def _render_csv_upload_block(
+    *, prefix: str, reviewing: bool, editable: bool, theme: RendererTheme
+) -> SafeHTML:
     """The file input + "Load"/"Reload CSV" button -- reuses FileInput for
     the same drag-drop/preview UX an ordinary input_type='file' field gets.
     Names are namespaced under the embedding field (prefix), like the row
@@ -293,39 +276,40 @@ def _render_csv_upload_block(*, prefix: str, reviewing: bool, editable: bool) ->
             'Upload a CSV to replace the table below, or edit cells directly and click Submit.'
         )
     return render_html(t"""
-{SafeHTML(_UPLOAD_STYLES)}<div class="mb-3 datatable-upload-zone">
-    <label for="{file_name}" class="form-label">Import CSV (optional)</label>
+{SafeHTML(_UPLOAD_STYLES)}<div class="{theme.datatable_class('upload_zone')} datatable-upload-zone">
+    <label for="{file_name}" class="{theme.datatable_class('upload_label')}">Import CSV (optional)</label>
     {file_input_html}
-    <div class="form-text">{help_text}</div>
-    <button type="submit" name="{action_name}" value="{action_value}" class="btn btn-secondary mt-2">{load_label}</button>
+    <div class="{theme.datatable_class('upload_help')}">{help_text}</div>
+    <button type="submit" name="{action_name}" value="{action_value}" class="{theme.datatable_class('load_button')}">{load_label}</button>
 </div>
 """)
 
 
-def _render_notice_banner(notice: str) -> SafeHTML:
+def _render_notice_banner(notice: str, theme: RendererTheme) -> SafeHTML:
     if not notice:
         return SafeHTML('')
-    return render_html(t'<div class="alert alert-warning">{notice}</div>')
+    return render_html(t'<div class="{theme.alert_class("warning")}">{notice}</div>')
 
 
-def _render_reviewing_banner(discard_url: str | None) -> SafeHTML:
+def _render_reviewing_banner(discard_url: str | None, theme: RendererTheme) -> SafeHTML:
+    alert_class = theme.alert_class('info')  # NOSONAR
     if discard_url:
         return render_html(
-            t'<div class="alert alert-info">Reviewing rows loaded from CSV -- nothing is '
+            t'<div class="{alert_class}">Reviewing rows loaded from CSV -- nothing is '
             t'saved yet. Fix any highlighted cells below, then click <strong>Submit</strong> '
             t'to save, or <a href="{discard_url}">discard and start over</a>.</div>'
         )
     return render_html(
-        t'<div class="alert alert-info">Reviewing rows loaded from CSV -- nothing is saved '
+        t'<div class="{alert_class}">Reviewing rows loaded from CSV -- nothing is saved '
         t'yet. Fix any highlighted cells below, then click <strong>Submit</strong> to save.</div>'
     )
 
 
-def _render_datatable_submit_button(prefix: str) -> SafeHTML:
+def _render_datatable_submit_button(prefix: str, theme: RendererTheme) -> SafeHTML:
     action_name = f'{prefix}.datatable_action'  # NOSONAR
     return render_html(
-        t'<div class="mt-3"><button type="submit" name="{action_name}" value="submit" '
-        t'class="btn btn-primary">Submit</button></div>'
+        t'<div class="{theme.datatable_class("submit_wrapper")}"><button type="submit" name="{action_name}" value="submit" '
+        t'class="{theme.datatable_class("submit_button")}">Submit</button></div>'
     )
 
 
@@ -347,7 +331,7 @@ def render_datatable_table(
     # NOSONAR comment below: table_id is read via {table_id} interpolation
     # in the return t-string further down in this function.
     table_id: str = 'datatable',  # NOSONAR
-    framework: str = 'bootstrap',
+    theme: RendererTheme | None = None,
     style: dict[str, Any] | None = None,
     editable: bool = True,
 ) -> str:
@@ -391,7 +375,7 @@ def render_datatable_table(
         )
     tbody_rows = SafeHTML(''.join(body_parts))  # NOSONAR
     table_class = (  # NOSONAR
-        f'{_table_classes_for_framework(framework, style or {})} datatable-table'.strip()
+        f'{(theme or _DEFAULT_THEME).table_class(style or {})} datatable-table'.strip()
     )
 
     return render_html(t"""{SafeHTML(_ERROR_STYLES)}<table id="{table_id}" class="{table_class}">
@@ -607,14 +591,16 @@ def render_datatable_layout_field(
     reviewing = bool(value.get('reviewing'))
     notice = value.get('notice') or ''
     discard_url = value.get('discard_url')
-    framework = getattr(getattr(engine, '_renderer', None), 'framework', 'bootstrap')
+    theme = getattr(getattr(engine, '_renderer', None), 'theme', None)
+    if not isinstance(theme, RendererTheme):
+        theme = _DEFAULT_THEME
 
     options = model_cls.datatable_options()
     csv_upload_enabled = options.get('csv_upload', True)
     editable = options.get('editable', True)
 
     template_link = (
-        str(_render_csv_template_link(model_cls, framework)) if options.get('csv_template') else ''
+        str(_render_csv_template_link(model_cls, theme)) if options.get('csv_template') else ''
     )
 
     table_html = render_datatable_table(
@@ -623,7 +609,7 @@ def render_datatable_layout_field(
         row_errors=row_errors,
         name_prefix=field_name,
         table_id=table_id,
-        framework=framework,
+        theme=theme,
         style=options.get('style'),
         editable=editable,
     )
@@ -645,18 +631,20 @@ def render_datatable_layout_field(
     submit_block = ''
     if csv_upload_enabled:
         upload_block = str(
-            _render_csv_upload_block(prefix=field_name, reviewing=reviewing, editable=editable)
+            _render_csv_upload_block(
+                prefix=field_name, reviewing=reviewing, editable=editable, theme=theme
+            )
         )
         if notice:
-            banner = str(_render_notice_banner(notice))
+            banner = str(_render_notice_banner(notice, theme))
         elif reviewing and editable:
             # The reviewing banner only makes sense when there's a separate
             # review-then-Submit step to describe -- editable=False commits
             # in the same click "Reload CSV" is pressed, so there's nothing
             # left to "review" by the time this would render.
-            banner = str(_render_reviewing_banner(discard_url))
+            banner = str(_render_reviewing_banner(discard_url, theme))
         if editable:
-            submit_block = str(_render_datatable_submit_button(field_name))
+            submit_block = str(_render_datatable_submit_button(field_name, theme))
 
     return '\n'.join(
         part

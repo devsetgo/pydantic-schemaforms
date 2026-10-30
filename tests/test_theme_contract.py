@@ -24,11 +24,9 @@ _THEME_MODULES = {
     'icon_mapping.py',
 }
 
-# Branches that predate the theme hooks, with how many each file may still
-# have. Each step of #265 removes its entries; never raise a count.
-_ALLOWED = {
-    'rendering/datatable_renderer.py': 2,  # table/button classes (moving to hooks)
-}
+# Never add an entry: a widget or renderer that needs framework-specific
+# markup gets a theme hook instead.
+_ALLOWED: dict[str, int] = {}
 
 
 def _is_framework_name(node: ast.expr) -> bool:
@@ -91,3 +89,15 @@ def test_md3_css_has_no_important_and_no_hex() -> None:
     css = (PACKAGE / 'assets' / 'material' / 'md3.css').read_text(encoding='utf-8')
     assert '!important' not in css
     assert not re.findall(r'#[0-9a-fA-F]{3,8}\b', css)
+
+
+def test_material_output_has_no_bootstrap_classes() -> None:
+    from examples.shared_models import WidgetGalleryForm
+    from pydantic_schemaforms import render_form_html
+
+    rendered = render_form_html(WidgetGalleryForm, framework='material', submit_url='/x')
+    markup = re.sub(r'<(style|script)\b.*?</\1>', '', rendered, flags=re.S)
+    classes = ' '.join(re.findall(r'class="([^"]*)"', markup)).split()
+    bootstrap = {'form-control', 'form-select', 'form-label', 'form-text', 'btn', 'card', 'alert'}
+    assert not bootstrap & set(classes)
+    assert not [name for name in classes if name.startswith('bi-')]

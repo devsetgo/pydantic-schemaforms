@@ -1461,7 +1461,8 @@
     line-height: 20px;
 }
 
-.md-form .md-field--static input[type="file"] {
+.md-form .md-field--static input[type="file"],
+.md-form .file-drop-zone input[type="file"] {
     width: auto;
     max-width: 100%;
     height: auto;
@@ -1471,7 +1472,7 @@
     font-size: 14px;
 }
 
-.md-form .md-field--static input[type="file"]::file-selector-button {
+.md-form input[type="file"]::file-selector-button {
     height: 40px;
     margin-right: 12px;
     padding: 0 24px;
@@ -1650,4 +1651,385 @@
 
 .md-form textarea.code-invalid {
     outline: 2px solid var(--md-sys-color-error);
+}
+
+/* ------------------------------------------------------------- composites */
+
+/* Model list items */
+.md-form .md-model-list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.md-form .md-model-item {
+    margin: 0;
+    padding: 0;
+}
+
+.md-form .md-model-item__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 56px;
+    padding: 4px 8px 4px 16px;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    list-style: none;
+}
+
+summary.md-model-item__header {
+    cursor: pointer;
+}
+
+summary.md-model-item__header::-webkit-details-marker {
+    display: none;
+}
+
+.md-form .md-model-item__title {
+    flex: 1;
+    min-width: 0;
+}
+
+.md-form .md-model-item__chevron {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    transition: transform var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form details[open] > summary .md-model-item__chevron {
+    transform: rotate(180deg);
+}
+
+.md-form .md-model-item__body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0 16px;
+    padding: 8px 16px 16px;
+}
+
+.md-form .md-model-item__cell--full {
+    grid-column: 1 / -1;
+}
+
+/* Tabs */
+.md-form .tab-layout .tab-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .tab-layout .tab-button {
+    position: relative;
+    min-height: 48px;
+    margin: 0;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .tab-layout .tab-button:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .tab-layout .tab-button:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form .tab-layout .tab-button.active {
+    color: var(--md-sys-color-primary);
+}
+
+.md-form .tab-layout .tab-button.active::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--md-sys-color-primary);
+}
+
+.md-form .tab-layout .tab-panel {
+    display: none;
+}
+
+.md-form .tab-layout .tab-panel.active {
+    display: block;
+}
+
+/* Accordion */
+.md-form .md-accordion-section {
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .md-accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: start;
+    cursor: pointer;
+}
+
+.md-form .md-accordion-header::after {
+    content: "";
+    flex: none;
+    width: 24px;
+    height: 24px;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: transform var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-accordion-header:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .md-accordion-header:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form .md-accordion-header.expanded {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .md-accordion-header.expanded::after {
+    transform: rotate(180deg);
+}
+
+.md-form .md-accordion-content {
+    padding: 16px;
+}
+
+/* Wizard stepper */
+.md-form .form-wizard .wizard-progress {
+    gap: 8px 16px;
+    margin-bottom: 24px;
+}
+
+.md-form .form-wizard .wizard-progress-item {
+    min-height: 40px;
+    padding: 0 12px 0 4px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.md-form .form-wizard .wizard-progress-item:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .form-wizard .wizard-progress-item:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+.md-form .form-wizard .wizard-progress-number {
+    width: 24px;
+    height: 24px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px;
+}
+
+.md-form .form-wizard .wizard-progress-item.active {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
+}
+
+.md-form .form-wizard .wizard-progress-item.active .wizard-progress-number,
+.md-form .form-wizard .wizard-progress-item.complete .wizard-progress-number {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.md-form .form-wizard .wizard-progress-item.has-error {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .form-wizard .wizard-progress-item.has-error .wizard-progress-number {
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+}
+
+.md-form .form-wizard .wizard-step-title {
+    margin: 0 0 16px;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.md-form .form-wizard .wizard-footer {
+    margin: 24px 0 16px;
+}
+
+/* Data table */
+.md-form .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .md-table th {
+    height: 56px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline);
+    font-weight: 500;
+    text-align: start;
+}
+
+.md-form .md-table td {
+    height: 56px;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .md-table--compact th,
+.md-form .md-table--compact td {
+    height: 40px;
+}
+
+.md-form .md-table--bordered th,
+.md-form .md-table--bordered td {
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .md-table--striped tbody tr:nth-child(odd) {
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.md-form .md-table--hover tbody tr:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .md-table td input,
+.md-form .md-table td select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 8px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.md-form .md-table td input[type="checkbox"] {
+    width: 18px;
+    min-height: 18px;
+}
+
+.md-form .md-table td input:focus,
+.md-form .md-table td select:focus {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+/* DataTables chrome */
+.md-form .dt-container {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+}
+
+.md-form .dt-container .dt-search input,
+.md-form .dt-container .dt-length select {
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+}
+
+.md-form .dt-container .dt-paging .dt-paging-button {
+    min-width: 40px;
+    min-height: 40px;
+    margin: 0 2px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .dt-container .dt-paging .dt-paging-button.current {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .dt-container .dt-paging .dt-paging-button.disabled {
+    color: var(--md-sys-color-on-surface);
+    opacity: var(--md-sys-state-disabled-opacity);
+}
+
+.md-form .dt-container .dt-button {
+    min-height: 40px;
+    padding: 0 24px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* The remove button sits over the header: a button can't nest in a <summary>. */
+.md-form .md-model-item {
+    position: relative;
+}
+
+.md-form .md-model-item__remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+}
+
+.md-form .md-model-item__details > .md-model-item__header {
+    padding-right: 56px;
+}
+
+/* A leading icon stays beside the first line of a textarea. */
+.md-form .md-field--textarea.md-field--leading-icon .md-textarea {
+    padding-left: 52px;
+}
+
+.md-form .md-field--textarea .md-field__leading {
+    top: 16px;
+    transform: none;
 }
