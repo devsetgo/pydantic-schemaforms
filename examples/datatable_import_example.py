@@ -270,15 +270,21 @@ def _sample_links_html() -> str:
     )
 
 
-def _view_toggle_html(*, editable: bool) -> str:
+def _import_url_for(style: str, *, editable: bool = True) -> str:
+    url = f'{_IMPORT_URL}?style={style}'
+    return url if editable else f'{url}&editable=false'
+
+
+def _view_toggle_html(*, style: str, editable: bool) -> str:
     if editable:
-        href, label = f'{_IMPORT_URL}?editable=false', 'View without inputs (read-only)'
+        href = _import_url_for(style, editable=False)
+        label = 'View without inputs (read-only)'
     else:
-        href, label = _IMPORT_URL, 'Back to editable view'
+        href, label = _import_url_for(style), 'Back to editable view'
     return f'<div class="mb-3"><a href="{href}" class="btn btn-outline-secondary btn-sm">{label}</a></div>'
 
 
-def _performance_recommendation_html(*, editable: bool, row_count: int) -> str:
+def _performance_recommendation_html(*, style: str, editable: bool, row_count: int) -> str:
     """A visible nudge, not just a docstring -- only shown when it's
     actionable: editable mode with enough rows that the per-cell widgets are
     the likely cause of any sluggishness."""
@@ -291,7 +297,7 @@ def _performance_recommendation_html(*, editable: bool, row_count: int) -> str:
         f'{_EDITABLE_ROW_RECOMMENDATION_THRESHOLD} rows, the read-only view '
         'renders significantly faster (plain text cells instead of '
         'per-row select/input widgets).</span>'
-        f'<a href="{_IMPORT_URL}?editable=false" class="btn btn-warning btn-sm">'
+        f'<a href="{_import_url_for(style, editable=False)}" class="btn btn-warning btn-sm">'
         'Switch to read-only</a>'
         '</div>'
     )
@@ -315,7 +321,7 @@ async def _render_page(
     display_rows = _IMPORTED_ROWS if rows is None else rows
     display_errors = _LAST_ROW_ERRORS if row_errors is None else row_errors
     row_model = EmployeeImport if editable else EmployeeImportReadOnly
-    import_url = _IMPORT_URL if editable else f'{_IMPORT_URL}?editable=false'
+    import_url = _import_url_for(style, editable=editable)
 
     with log_timing('render_form_html_async', rows=len(display_rows)):
         form_html = await render_form_html_async(
@@ -339,8 +345,10 @@ async def _render_page(
         )
     form_html = (
         _sample_links_html()
-        + _view_toggle_html(editable=editable)
-        + _performance_recommendation_html(editable=editable, row_count=len(display_rows))
+        + _view_toggle_html(style=style, editable=editable)
+        + _performance_recommendation_html(
+            style=style, editable=editable, row_count=len(display_rows)
+        )
         + form_html
     )
 
@@ -389,7 +397,7 @@ async def show_directory(
         EmployeeDirectoryForm,
         framework=style,
         form_data={'directory': table.as_layout_value(rows=_DIRECTORY_ROWS, asset_mode=assets)},
-        submit_url='/employees/directory',
+        submit_url=f'/employees/directory?style={style}',
         include_submit_button=False,
     )
     return templates.TemplateResponse(
@@ -512,7 +520,7 @@ async def import_or_save(
                 'data': result.rows,
                 'framework': 'fastapi',
                 'framework_name': 'FastAPI (Async)',
-                'try_again_url': _IMPORT_URL if editable else f'{_IMPORT_URL}?editable=false',
+                'try_again_url': _import_url_for(style, editable=editable),
             },
             headers={'Cache-Control': 'no-store'},
         )

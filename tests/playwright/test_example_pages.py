@@ -282,3 +282,22 @@ def test_material_layout_switcher_has_gaps_and_no_page_overflow(
     first, second = links.nth(0).bounding_box(), links.nth(1).bounding_box()
     assert second['x'] - (first['x'] + first['width']) >= 8
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+
+
+def test_material_csv_import_stays_material_after_load(
+    page: Page, examples_server_url: str, tmp_path
+) -> None:
+    csv_file = tmp_path / 'employees.csv'
+    csv_file.write_text(
+        'name,email,department,project_team_name,project_description\n'
+        'Ada,not-an-email,engineering,Platform,Core\n'
+    )
+    page.goto(f'{examples_server_url}/employees/import?style=material')
+    page.locator('input[type="file"]').set_input_files(csv_file)
+    page.get_by_role('button', name='Load CSV').click()
+    expect(page.locator('form.md-form')).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('.datatable-row-error').first).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('link[href*="bootstrap"]')).to_have_count(0)
+    screenshots = Path(__file__).parent / 'screenshots'
+    screenshots.mkdir(exist_ok=True)
+    page.screenshot(path=screenshots / 'data-table-errors.png', full_page=True)

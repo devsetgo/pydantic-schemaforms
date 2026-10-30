@@ -399,3 +399,21 @@ def test_showcase_rerenders_errors_after_a_correct_captcha() -> None:
     )
     assert response.status_code == 200
     assert 'Submission failed.' in response.text
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_every_example_form_posts_back_in_its_own_style(
+    example_client: TestClient, style: str
+) -> None:
+    """A submit_url without ?style= drops a Material page back to Bootstrap on POST."""
+    post_routes = set(_routes('post'))
+    lost: dict[str, str] = {}
+    for path in _routes('get'):
+        response = example_client.get(path, params={'style': style})
+        if response.status_code != 200:
+            continue
+        for action in re.findall(r'<form\b[^>]*\baction="([^"]*)"', response.text):
+            action = action.replace('&amp;', '&')
+            if action.split('?')[0] in post_routes and f'style={style}' not in action:
+                lost[path] = action
+    assert not lost
