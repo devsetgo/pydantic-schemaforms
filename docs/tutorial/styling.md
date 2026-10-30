@@ -29,7 +29,8 @@ The same form renders for three styles. Pick one with `framework=`:
 
     A Material Design 3 look with floating labels, built into the library:
     the form carries its own styles, so your page needs nothing extra and
-    no Materialize or other CSS framework.
+    no CSS framework. See [Material Design 3](../advanced/material.md) for the
+    filled variant, the dark scheme and changing the colors.
 
 === "Plain HTML"
 

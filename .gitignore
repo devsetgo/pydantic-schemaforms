@@ -190,3 +190,4 @@ TODO_TASKS.md
 
 # Output of scripts/export_sonar_issues.py (point-in-time snapshot)
 sonarcloud-issues.md
+tests/playwright/screenshots/

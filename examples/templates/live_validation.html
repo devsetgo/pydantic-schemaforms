@@ -1,4 +1,4 @@
-{% extends "shared_base.html" %}
+{% extends "material_base.html" if (framework_type == "material" or request.query_params.get("style") == "material") else "shared_base.html" %}
 
 {% block extra_styles %}
 <style>

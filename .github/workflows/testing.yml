@@ -104,6 +104,14 @@ jobs:
       - name: Run Playwright tests
         run: pytest tests/playwright/ -v --no-cov -p no:xdist
 
+      - name: Upload Material screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: material-screenshots
+          path: tests/playwright/screenshots/
+          if-no-files-found: ignore
+
   library-skills:
     # The Agent Skills in pydantic_schemaforms/.agents/skills/ must survive the
     # wheel build and be found by the real library-skills CLI (#264).

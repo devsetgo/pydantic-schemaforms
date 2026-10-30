@@ -29,6 +29,7 @@ nav:
       - Forms Built at Runtime: 'advanced/runtime-forms.md'
       - JSON API and JSON Schema: 'advanced/json-api.md'
       - Assets and Self-Contained Forms: 'advanced/assets.md'
+      - Material Design 3: 'advanced/material.md'
       - Render Timing and Logging: 'advanced/timing-logging.md'
       - Layout Primitives: 'advanced/layout-primitives.md'
       - Plugin Hooks and Custom Composites: 'advanced/plugin-hooks.md'

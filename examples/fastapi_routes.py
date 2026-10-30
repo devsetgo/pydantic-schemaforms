@@ -375,6 +375,13 @@ async def vendor_bootstrap_icons_css():
     return Response(content=css, media_type='text/css')
 
 
+@router.get('/vendor/md3-tokens.css', tags=['System'])
+async def vendor_md3_tokens_css():
+    """The Material tokens, for material_base.html's page shell."""
+    css = read_asset_text('assets/material/md3-tokens.css')
+    return Response(content=css, media_type='text/css')
+
+
 @router.get('/vendor/htmx.min.js', tags=['System'])
 async def vendor_htmx_js():
     """Serve the vendored HTMX JavaScript."""
@@ -1040,6 +1047,10 @@ async def showcase_post(
 # ================================
 
 
+def _material_variant(variant: str | None) -> str | None:
+    return variant if variant in ('outlined', 'filled') else None
+
+
 @router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_get(
     request: Request,
@@ -1048,6 +1059,7 @@ async def gallery_get(
     demo: bool = True,
     debug: bool = False,
     show_timing: bool = True,
+    variant: str | None = None,
 ):
     """Tabbed widget gallery - every input type grouped by category (GET).
 
@@ -1071,6 +1083,7 @@ async def gallery_get(
         framework=style,
         form_data=form_data,
         submit_url=f'/gallery?style={style}',
+        material_variant=_material_variant(variant),
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
@@ -1792,6 +1805,7 @@ def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labe
 async def layouts_get(
     request: Request,
     style: str = 'bootstrap',
+    variant: str | None = None,
     layout: str = 'tabbed',
     linear: bool = True,
     progress: bool = True,
@@ -1855,7 +1869,7 @@ async def layouts_get(
             },
         }
 
-    renderer = EnhancedFormRenderer(framework=style)
+    renderer = EnhancedFormRenderer(framework=style, material_variant=_material_variant(variant))
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
         data=form_data,

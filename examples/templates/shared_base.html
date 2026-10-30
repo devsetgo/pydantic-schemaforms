@@ -143,38 +143,6 @@
             color: #fff;
         }
 
-        /*
-         * Keep example pages clean when Material icon webfont imports are disabled.
-         * Without the font, ligature tokens (e.g., "favorite_border") render as text.
-         */
-        i.material-icons,
-        span.material-icons {
-            display: none !important;
-        }
-
-        /*
-         * Material select alignment fix for example pages:
-         * The renderer outputs a floating label immediately after
-         * `select.browser-default`. Without the Material webfont/CSS stack,
-         * this label overlaps selected text (e.g., Species over Dog 🐕).
-         */
-        .md-input-wrapper>select.browser-default {
-            width: 100%;
-        }
-
-        .md-input-wrapper>select.browser-default+.md-floating-label {
-            position: static !important;
-            display: block;
-            transform: none !important;
-            background: transparent !important;
-            padding: 0 !important;
-            margin-top: 0.25rem;
-            color: #495057;
-            font-size: 0.95rem;
-            line-height: 1.2;
-            pointer-events: none;
-        }
-
         .top-resource-bar {
             background: #0d0d0d;
             padding: 0.35rem 0;

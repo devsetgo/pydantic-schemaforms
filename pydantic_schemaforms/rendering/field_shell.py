@@ -181,7 +181,22 @@ MATERIAL_ALWAYS_FLOAT = frozenset({'select', 'date', 'time', 'datetime', 'month'
 MATERIAL_GROUPS = frozenset({'radio', 'checkbox_group'})
 
 
+# Registered alias -> the name the sets above use.
+_MATERIAL_ALIASES = {
+    'card': 'credit_card',
+    'cc_number': 'credit_card',
+    'money': 'currency',
+    'phone_number': 'phone',
+    'social_security_number': 'ssn',
+    'datetime-local': 'datetime',
+    'birthdate': 'date',
+    'checkbox_toggle': 'toggle',
+    'toggle_switch': 'toggle',
+}
+
+
 def material_field_kind(ui_element: str) -> str:
+    ui_element = _MATERIAL_ALIASES.get(ui_element, ui_element)
     if ui_element in MATERIAL_FLOATING:
         return (
             'textarea'
@@ -227,7 +242,7 @@ class MaterialFieldShell:
             classes.append('md-field--error')
 
         if kind in {'text', 'textarea', 'select'}:
-            if shell.ui_element in MATERIAL_ALWAYS_FLOAT:
+            if _MATERIAL_ALIASES.get(shell.ui_element, shell.ui_element) in MATERIAL_ALWAYS_FLOAT:
                 classes.append('md-field--float')
             leading = SafeHTML('')
             if shell.icon:
