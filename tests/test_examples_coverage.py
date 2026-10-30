@@ -429,3 +429,20 @@ def test_filled_variant_survives_a_failed_submission(example_client: TestClient,
     failed = example_client.post(path, params=params, data={'unexpected': 'value'})
     assert 'md-form--filled' in failed.text
     assert 'variant=filled' in re.search(r'<form\b[^>]*\baction="([^"]*)"', failed.text).group(1)
+
+
+@pytest.mark.parametrize(
+    ('cookie', 'url', 'is_material'),
+    [
+        ('material', '/login', True),
+        ('bootstrap', '/login?style=material', True),
+        ('material', '/login?style=bootstrap', False),
+        ('nonsense', '/login', False),
+    ],
+)
+def test_the_style_cookie_applies_only_when_the_url_names_no_style(
+    cookie: str, url: str, is_material: bool
+) -> None:
+    client = TestClient(examples.main.app, cookies={'sf-style': cookie})
+    form_tag = re.search(r'<form[^>]*>', client.get(url).text).group(0)
+    assert ('md-form' in form_tag) is is_material
