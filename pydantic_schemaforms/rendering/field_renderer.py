@@ -211,6 +211,10 @@ class FieldRenderer:
         ui_options_dict, ui_options_list = self._extract_ui_options(ui_info, field_schema)
         if ui_options_dict:
             field_attrs = self._apply_ui_option_attributes(field_attrs, ui_options_dict, ui_element)
+        if self._shell_theme is not None:
+            field_attrs = self._shell_theme.control_attributes(
+                getattr(input_component, 'ui_element', None) or ui_element, field_attrs
+            )
 
         label_text = field_schema.get('title', field_name.replace('_', ' ').title())
         help_text = ui_info.get('help_text') or field_schema.get('description')

@@ -258,8 +258,9 @@ class TestFieldRendererCheckboxHandling:
             _ToggleModel, submit_url='/x', framework='material', form_data={'switched': True}
         )
         assert 'type="toggle"' not in html
-        assert 'md-toggle-wrapper' in html
-        assert 'md-toggle-slider' in html
+        assert 'md-field--switch' in html
+        assert 'toggle-switch-wrapper' in html
+        assert 'toggle-switch-slider' in html
         assert 'type="checkbox"' in html
         assert 'checked="checked"' in html
 
@@ -448,7 +449,7 @@ class TestFieldRendererCheckboxHandling:
         )
         assert '<option value="choices">choices</option>' not in html
         assert '<option value="small">small</option>' in html
-        assert '<option value="medium" selected="selected">medium</option>' in html
+        assert '<option value="medium" selected>medium</option>' in html
         assert '<option value="large">large</option>' in html
 
     def test_bootstrap_select_placeholder_option_is_opt_in(self):
@@ -514,17 +515,14 @@ class TestFieldRendererCheckboxHandling:
         assert '<option value="">' not in no_placeholder_html
 
         unselected_html = render_form_html(_WithPlaceholder, submit_url='/x', framework='material')
-        assert (
-            '<option value="" selected="selected" disabled="disabled">Choose a plan...</option>'
-            in unselected_html
-        )
+        assert '<option value="" selected disabled>Choose a plan...</option>' in unselected_html
+        assert 'placeholder="Choose a plan' not in unselected_html
 
         selected_html = render_form_html(
             _WithPlaceholder, submit_url='/x', framework='material', form_data={'plan': 'pro'}
         )
-        assert '<option value="" disabled="disabled">Choose a plan...</option>' in selected_html
-        assert 'selected="selected">Choose a plan' not in selected_html
-        assert '<option value="pro" selected="selected">pro</option>' in selected_html
+        assert '<option value="" disabled>Choose a plan...</option>' in selected_html
+        assert '<option value="pro" selected>pro</option>' in selected_html
 
     def test_material_text_input_applies_arbitrary_ui_options_attributes(self):
         """Regression test: _build_material_text_input_attributes only read a

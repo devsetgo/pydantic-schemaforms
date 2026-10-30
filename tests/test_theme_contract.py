@@ -26,7 +26,6 @@ _THEME_MODULES = {
 # Branches that predate the theme hooks, with how many each file may still
 # have. Each step of #265 removes its entries; never raise a count.
 _ALLOWED = {
-    'enhanced_renderer.py': 2,  # the parallel Material path (removed with it)
     'rendering/datatable_renderer.py': 2,  # table/button classes (moving to hooks)
 }
 

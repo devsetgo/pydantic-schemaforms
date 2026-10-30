@@ -9,6 +9,21 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ## [Unreleased]
 
+### Changed
+
+- **`framework="material"` is rewritten on Material Design 3 and now renders
+  through the same path as Bootstrap and plain.** Every input gets a Material
+  field: outlined with a floating label and a real notch, with error, disabled
+  and icon states. The CSS uses design tokens (`--md-sys-color-*`) and has no
+  `!important`. `MaterialEmbeddedTheme` is now `MaterialTheme`. (#265)
+
+### Added
+
+- `material_variant="filled"` selects filled text fields (the default is
+  `"outlined"`). (#265)
+- Opt-in dark scheme for Material: `data-md-theme="dark"` on the form or an
+  ancestor, or the page's `color-scheme`. (#265)
+
 ### Removed
 
 - **Materialize is no longer vendored or referenced.** The Material style has

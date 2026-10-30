@@ -167,33 +167,122 @@ class PlainFieldShell(_InputShell):
         return '\n'.join(parts)
 
 
-class LegacyMaterialFieldShell(_InputShell):
-    """Today's Material fallback shell; replaced by the MD3 shell later in #265."""
+# Material Design 3 field anatomy per ui_element (see docs/advanced/material.md).
+MATERIAL_FLOATING = frozenset(
+    {
+        'text', 'password', 'email', 'search', 'url', 'tel', 'ssn', 'phone', 'credit_card',
+        'currency', 'number', 'integer', 'decimal', 'percentage', 'age', 'score',
+        'temperature', 'quantity', 'date', 'time', 'datetime', 'month', 'week', 'textarea',
+        'select', 'combobox',
+    }
+)  # fmt: skip
+# Native controls that always show a value or a mask, so the label never rests inside.
+MATERIAL_ALWAYS_FLOAT = frozenset({'select', 'date', 'time', 'datetime', 'month', 'week'})
+MATERIAL_GROUPS = frozenset({'radio', 'checkbox_group'})
 
-    def __init__(self) -> None:
-        super().__init__('material')
+
+def material_field_kind(ui_element: str) -> str:
+    if ui_element in MATERIAL_FLOATING:
+        return (
+            'textarea'
+            if ui_element == 'textarea'
+            else ('select' if ui_element == 'select' else 'text')
+        )
+    if ui_element == 'checkbox':
+        return 'checkbox'
+    if ui_element == 'toggle':
+        return 'switch'
+    if ui_element in MATERIAL_GROUPS:
+        return 'group'
+    return 'static'
+
+
+def _md_icon(name: str, classes: str = 'md-icon') -> SafeHTML:
+    from .material_icons import render_material_icon
+
+    return SafeHTML(render_material_icon(name, classes=classes))
+
+
+class MaterialFieldShell:
+    """Material Design 3 fields: an outlined (or filled) box with a floating
+    label in a notch, static labels for composite widgets, legends for
+    groups and inline labels for checkboxes and switches. Driven by CSS
+    alone (assets/material/md3.css)."""
 
     def render(self, shell: FieldShell) -> str:
-        if shell.family == 'input':
-            return self._render_input(shell, 'help-text', 'error-text')
+        kind = material_field_kind(shell.ui_element)
+        field_id = shell.field_id or shell.name
+        control = SafeHTML(shell.control_html)
+        required = (
+            SafeHTML('<span class="md-required" aria-hidden="true"> *</span>')
+            if shell.required
+            else SafeHTML('')
+        )
+        supporting = self._supporting(shell)
+        classes = ['md-field', f'md-field--{kind}']
+        if shell.error:
+            classes.append('md-field--error')
 
-        parts: list[str] = ['<div class="md-field">']
-        if shell.icon:
-            parts.extend(
-                [
-                    '<div class="md-field-with-icon">',
-                    html(t'<span class="md-icon material-icons">{shell.icon}</span>'),
-                    '<div class="md-input-wrapper">',
-                ]
+        if kind in {'text', 'textarea', 'select'}:
+            if shell.ui_element in MATERIAL_ALWAYS_FLOAT:
+                classes.append('md-field--float')
+            leading = SafeHTML('')
+            if shell.icon:
+                icon_svg = _md_icon(shell.icon)
+                if icon_svg:
+                    classes.append('md-field--leading-icon')
+                    leading = html(
+                        t'<span class="md-field__leading" aria-hidden="true">{icon_svg}</span>'
+                    )
+            trailing_icons = []
+            if shell.error:
+                trailing_icons.append(_md_icon('error'))
+            if kind == 'select':
+                trailing_icons.append(_md_icon('arrow_drop_down', 'md-icon md-chevron'))
+            trailing = (
+                html(
+                    t'<span class="md-field__trailing" aria-hidden="true">{SafeHTML("".join(trailing_icons))}</span>'
+                )
+                if trailing_icons
+                else SafeHTML('')
             )
-        if shell.label:
-            parts.append(
-                html(t'<label class="md-field-label" for="{shell.field_id}">{shell.label}</label>')
+            label = shell.label or ''
+            css = ' '.join(classes)
+            return str(
+                html(t'''<div class="{css}">
+<div class="md-field__box">{leading}{control}<label class="md-floating-label" for="{field_id}">{label}{required}</label><span class="md-field__outline" aria-hidden="true"><span class="md-field__outline-start"></span><span class="md-field__outline-notch"><span class="md-field__notch-text">{label}{required}</span></span><span class="md-field__outline-end"></span></span>{trailing}</div>{supporting}
+</div>''')
             )
-        parts.append(SafeHTML(shell.control_html))
-        if shell.icon:
-            parts.append(_CLOSE_DIV)
-            parts.append(_CLOSE_DIV)
+
+        css = ' '.join(classes)
+        if kind == 'checkbox':
+            label = shell.label or ''
+            return str(
+                html(t'''<div class="{css}">
+<div class="md-checkbox-container">{control}<label class="md-checkbox-label" for="{field_id}">{label}{required}</label></div>{supporting}
+</div>''')
+            )
+        if kind == 'switch':
+            label = shell.label or ''
+            return str(
+                html(t'''<div class="{css}">
+<div class="md-switch-row"><label class="md-switch-label" for="{field_id}">{label}{required}</label>{control}</div>{supporting}
+</div>''')
+            )
+        if kind == 'group' or not shell.label:
+            return str(html(t'<div class="{css}">\n{control}{supporting}\n</div>'))
+
+        label = shell.label
+        return str(
+            html(t'''<div class="{css}">
+<label class="md-field-label" for="{field_id}">{label}{required}</label>
+{control}{supporting}
+</div>''')
+        )
+
+    @staticmethod
+    def _supporting(shell: FieldShell) -> SafeHTML:
+        parts = []
         if shell.help_text:
             parts.append(
                 html(t'<div id="{shell.help_id}" class="md-help-text">{shell.help_text}</div>')
@@ -202,8 +291,10 @@ class LegacyMaterialFieldShell(_InputShell):
             parts.append(
                 html(t'<div id="{shell.error_id}" class="md-error-text">{shell.error}</div>')
             )
-        parts.append(_CLOSE_DIV)
-        return '\n'.join(parts)
+        if not parts:
+            return SafeHTML('')
+        inner = SafeHTML(''.join(str(p) for p in parts))
+        return html(t'<div class="md-field__supporting">{inner}</div>')
 
 
 def field_shell_for_framework(framework: str) -> FieldShellRenderer:
@@ -211,5 +302,5 @@ def field_shell_for_framework(framework: str) -> FieldShellRenderer:
     if framework == 'bootstrap':
         return BootstrapFieldShell()
     if framework == 'material':
-        return LegacyMaterialFieldShell()
+        return MaterialFieldShell()
     return PlainFieldShell(framework)

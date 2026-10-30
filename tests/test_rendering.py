@@ -80,7 +80,8 @@ from pydantic_schemaforms.rendering.schema_parser import (
     _field_info_to_schema,
     _infer_field_type,
 )
-from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme, RendererTheme
+from pydantic_schemaforms.assets.runtime import read_asset_text
+from pydantic_schemaforms.rendering.themes import MaterialTheme, RendererTheme
 from pydantic_schemaforms.schema_form import Field, FormModel
 from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 from pydantic_schemaforms.templates import (
@@ -939,11 +940,13 @@ def test_renderer_theme_fallback_and_wrapper_timing(monkeypatch: pytest.MonkeyPa
     assert 'Rendered in 0.500s' in wrapped
 
 
-def test_material_embedded_theme_and_renderer_branches() -> None:
-    theme = MaterialEmbeddedTheme()
+def test_material_theme_and_renderer_branches() -> None:
+    theme = MaterialTheme()
     transformed = theme.transform_form_attributes({'class': 'x', 'novalidate': True})
     assert transformed['class'].startswith('md-form')
     assert 'novalidate' not in transformed
+    filled = MaterialTheme(variant='filled').transform_form_attributes({'class': 'x'})
+    assert filled['class'] == 'md-form md-form--filled x'
 
     # No help/error branch and optional model-list blocks
     container = theme.render_model_list_container(
@@ -960,20 +963,20 @@ def test_material_embedded_theme_and_renderer_branches() -> None:
     assert 'md-model-list-wrapper' in container
     assert 'md-help-text' not in container
 
-    # Material field helpers now live on EnhancedFormRenderer(framework="material")
-    renderer = EnhancedFormRenderer(framework='material')
-    assert renderer._attr(None) == ''
-    assert renderer._render_material_help_block(None, 'f') == ''
-    assert renderer._render_material_error_block(None, 'f') == ''
+    # Controls get Material classes, and floating-label fields an empty
+    # placeholder so CSS can tell empty from filled.
+    assert theme.input_class('email') == 'md-input'
+    assert theme.input_class('select') == 'md-select'
+    assert theme.input_class('textarea') == 'md-textarea'
+    assert theme.input_class('radio') == ''
+    assert theme.control_attributes('email', {})['placeholder'] == ' '
+    assert theme.control_attributes('email', {'placeholder': 'x'})['placeholder'] == 'x'
+    assert 'placeholder' not in theme.control_attributes('select', {})
 
-    # enum fallback for select options and scalar option normalization
-    options = renderer._build_material_select_options({}, {'enum': ['A', 'B']})
-    assert options == [['A', 'A'], ['B', 'B']]
-
-    options2 = renderer._build_material_select_options(
-        {'options': ['X', {'value': 'Y', 'label': 'Why'}]}, {}
-    )
-    assert options2 == [['X', 'X'], ['Y', 'Why']]
+    with pytest.raises(ValueError, match='material_variant'):
+        MaterialTheme(variant='flat')
+    with pytest.raises(ValueError, match='material_variant'):
+        EnhancedFormRenderer(framework='material', material_variant='flat')
 
     # SimpleMaterialRenderer is a backward-compat alias — verify it still works
     compat = SimpleMaterialRenderer()
@@ -1757,8 +1760,8 @@ def test_accordion_layout_uses_form_style_templates() -> None:
     assert 'custom-acc-section' in html
 
 
-def test_material_embedded_theme_includes_error_summary_styles() -> None:
-    css = MaterialEmbeddedTheme._build_css()
+def test_material_theme_includes_error_summary_styles() -> None:
+    css = read_asset_text('assets/material/md3.css')
 
     assert '.md-error-summary' in css
     assert '.md-error-summary__title' in css
