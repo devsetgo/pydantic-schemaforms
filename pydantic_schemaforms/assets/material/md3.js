@@ -6,9 +6,9 @@
     window.schemaformsMaterial = true;
 
     function syncSlider(input) {
-        var min = parseFloat(input.min) || 0;
-        var max = input.max === '' ? 100 : parseFloat(input.max);
-        var value = parseFloat(input.value) || 0;
+        var min = Number.parseFloat(input.min) || 0;
+        var max = input.max === '' ? 100 : Number.parseFloat(input.max);
+        var value = Number.parseFloat(input.value) || 0;
         var progress = max > min ? ((value - min) / (max - min)) * 100 : 0;
         input.style.setProperty('--md-slider-progress', progress + '%');
     }

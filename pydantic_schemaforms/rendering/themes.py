@@ -209,7 +209,7 @@ class RendererTheme:
         )
 
     # --- Framework-specific extension hooks -------------------------------------------------
-    def control_attributes(self, ui_element: str, attrs: dict[str, Any]) -> dict[str, Any]:
+    def control_attributes(self, _ui_element: str, attrs: dict[str, Any]) -> dict[str, Any]:
         """Adjust a control's HTML attributes before its input renders it."""
 
         return attrs
@@ -284,7 +284,12 @@ class RendererTheme:
         return f'alert alert-{kind}'
 
     def render_collapsible_section(
-        self, *, title: str, body_html: str, is_open: bool, field_name: str
+        self,
+        *,
+        title: str,  # NOSONAR - read in the t-strings below, which Sonar can't parse yet
+        body_html: str,
+        is_open: bool,
+        field_name: str,  # NOSONAR
     ) -> str:
         """A sub-form shown as a section the user can fold away."""
 
@@ -574,16 +579,17 @@ class MaterialTheme(RendererTheme):
         return _MATERIAL_DATATABLE_CLASSES[slot]
 
     def render_model_list_item(self, item: ModelListItem) -> str:
-        title = html(
+        # NOSONAR comments here: these are read in t-strings, which Sonar can't parse yet.
+        title = html(  # NOSONAR
             t'<span class="md-model-item__title" data-model-list-title>{item.item_title}</span>'
         )
-        delete_icon = SafeHTML(str(render_material_icon('delete')))
-        remove = html(
+        delete_icon = SafeHTML(str(render_material_icon('delete')))  # NOSONAR
+        remove = html(  # NOSONAR
             t'<button type="button" class="md-icon-button remove-item-btn" '
             t'data-index="{item.index}" data-field-name="{item.field_name}" '
             t'title="Remove this item" aria-label="Remove this item">{delete_icon}</button>'
         )
-        cells = SafeHTML(
+        cells = SafeHTML(  # NOSONAR
             ''.join(
                 str(
                     html(
@@ -602,10 +608,10 @@ class MaterialTheme(RendererTheme):
 <div class="md-model-item__body">{cells}</div>
 </div>''')
             )
-        chevron = SafeHTML(
+        chevron = SafeHTML(  # NOSONAR
             str(render_material_icon('expand_more', classes='md-model-item__chevron'))
         )
-        open_attr = SafeHTML(' open' if item.expanded else '')
+        open_attr = SafeHTML(' open' if item.expanded else '')  # NOSONAR
         return str(
             html(t'''<div class="md-card md-model-item model-list-item" data-index="{item.index}"
      data-title-template="{item.title_template}" data-field-name="{item.field_name}">

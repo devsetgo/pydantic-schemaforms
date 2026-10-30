@@ -275,12 +275,16 @@ def _render_csv_upload_block(
         help_text = (
             'Upload a CSV to replace the table below, or edit cells directly and click Submit.'
         )
+    zone_class = theme.datatable_class('upload_zone')  # NOSONAR
+    label_class = theme.datatable_class('upload_label')  # NOSONAR
+    help_class = theme.datatable_class('upload_help')  # NOSONAR
+    button_class = theme.datatable_class('load_button')  # NOSONAR
     return render_html(t"""
-{SafeHTML(_UPLOAD_STYLES)}<div class="{theme.datatable_class('upload_zone')} datatable-upload-zone">
-    <label for="{file_name}" class="{theme.datatable_class('upload_label')}">Import CSV (optional)</label>
+{SafeHTML(_UPLOAD_STYLES)}<div class="{zone_class} datatable-upload-zone">
+    <label for="{file_name}" class="{label_class}">Import CSV (optional)</label>
     {file_input_html}
-    <div class="{theme.datatable_class('upload_help')}">{help_text}</div>
-    <button type="submit" name="{action_name}" value="{action_value}" class="{theme.datatable_class('load_button')}">{load_label}</button>
+    <div class="{help_class}">{help_text}</div>
+    <button type="submit" name="{action_name}" value="{action_value}" class="{button_class}">{load_label}</button>
 </div>
 """)
 
@@ -288,7 +292,8 @@ def _render_csv_upload_block(
 def _render_notice_banner(notice: str, theme: RendererTheme) -> SafeHTML:
     if not notice:
         return SafeHTML('')
-    return render_html(t'<div class="{theme.alert_class("warning")}">{notice}</div>')
+    alert_class = theme.alert_class('warning')  # NOSONAR
+    return render_html(t'<div class="{alert_class}">{notice}</div>')
 
 
 def _render_reviewing_banner(discard_url: str | None, theme: RendererTheme) -> SafeHTML:
@@ -307,9 +312,11 @@ def _render_reviewing_banner(discard_url: str | None, theme: RendererTheme) -> S
 
 def _render_datatable_submit_button(prefix: str, theme: RendererTheme) -> SafeHTML:
     action_name = f'{prefix}.datatable_action'  # NOSONAR
+    wrapper_class = theme.datatable_class('submit_wrapper')  # NOSONAR
+    button_class = theme.datatable_class('submit_button')  # NOSONAR
     return render_html(
-        t'<div class="{theme.datatable_class("submit_wrapper")}"><button type="submit" name="{action_name}" value="submit" '
-        t'class="{theme.datatable_class("submit_button")}">Submit</button></div>'
+        t'<div class="{wrapper_class}"><button type="submit" name="{action_name}" value="submit" '
+        t'class="{button_class}">Submit</button></div>'
     )
 
 

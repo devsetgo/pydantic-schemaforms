@@ -52,12 +52,14 @@ def build_label(
     framework: str = 'bootstrap',
 ) -> str:
     """Build label element with optional icon support."""
-    display_label = label or field_name.replace('_', ' ').title()
-    required_indicator = ' *' if required else ''
-    icon_html: SafeHTML = SafeHTML('')
+    # NOSONAR comments in this file: each name is read via {expr} interpolation in
+    # a t-string, and Sonar's Python analyzer doesn't parse PEP 750 t-strings yet.
+    display_label = label or field_name.replace('_', ' ').title()  # NOSONAR
+    required_indicator = ' *' if required else ''  # NOSONAR
+    icon_html: SafeHTML = SafeHTML('')  # NOSONAR
     if icon:
         if framework == 'bootstrap':
-            icon_class = icon if icon.startswith('bi bi-') else f'bi bi-{icon}'
+            icon_class = icon if icon.startswith('bi bi-') else f'bi bi-{icon}'  # NOSONAR
             icon_html = html(t'<i class="{icon_class}"></i> ')
         elif framework == 'material':
             icon_html = html(t'<i class="material-icons">{icon}</i> ')
@@ -75,7 +77,7 @@ class _InputShell:
     def __init__(self, framework: str) -> None:
         self.framework = framework
 
-    def _render_input(self, shell: FieldShell, help_class: str, error_class: str) -> str:
+    def _render_input(self, shell: FieldShell, help_class: str, error_class: str) -> str:  # NOSONAR
         parts: list[str] = []
         if shell.label:
             parts.append(
@@ -198,11 +200,7 @@ _MATERIAL_ALIASES = {
 def material_field_kind(ui_element: str) -> str:
     ui_element = _MATERIAL_ALIASES.get(ui_element, ui_element)
     if ui_element in MATERIAL_FLOATING:
-        return (
-            'textarea'
-            if ui_element == 'textarea'
-            else ('select' if ui_element == 'select' else 'text')
-        )
+        return ui_element if ui_element in {'textarea', 'select'} else 'text'
     if ui_element == 'checkbox':
         return 'checkbox'
     if ui_element == 'toggle':
@@ -229,59 +227,61 @@ class MaterialFieldShell:
         # A code editor has a toolbar and a highlight layer, so no floating label.
         if 'code-textarea-wrap' in shell.control_html:
             kind = 'static'
-        field_id = shell.field_id or shell.name
-        control = SafeHTML(shell.control_html)
-        required = (
-            SafeHTML('<span class="md-required" aria-hidden="true"> *</span>')
-            if shell.required
-            else SafeHTML('')
-        )
-        supporting = self._supporting(shell)
         classes = ['md-field', f'md-field--{kind}']
         if shell.error:
             classes.append('md-field--error')
-
         if kind in {'text', 'textarea', 'select'}:
-            if _MATERIAL_ALIASES.get(shell.ui_element, shell.ui_element) in MATERIAL_ALWAYS_FLOAT:
-                classes.append('md-field--float')
-            leading = SafeHTML('')
-            if shell.icon:
-                icon_svg = _md_icon(shell.icon)
-                if icon_svg:
-                    classes.append('md-field--leading-icon')
-                    leading = html(
-                        t'<span class="md-field__leading" aria-hidden="true">{icon_svg}</span>'
-                    )
-            trailing_icons = []
-            if shell.error:
-                trailing_icons.append(_md_icon('error'))
-            if kind == 'select':
-                trailing_icons.append(_md_icon('arrow_drop_down', 'md-icon md-chevron'))
-            trailing = (
-                html(
-                    t'<span class="md-field__trailing" aria-hidden="true">{SafeHTML("".join(trailing_icons))}</span>'
-                )
-                if trailing_icons
-                else SafeHTML('')
-            )
-            label = shell.label or ''
-            css = ' '.join(classes)
-            return str(
-                html(t'''<div class="{css}">
+            return self._render_floating(shell, kind, classes)
+        return self._render_labelled(shell, kind, ' '.join(classes))
+
+    @classmethod
+    def _render_floating(cls, shell: FieldShell, kind: str, classes: list[str]) -> str:
+        if _MATERIAL_ALIASES.get(shell.ui_element, shell.ui_element) in MATERIAL_ALWAYS_FLOAT:
+            classes.append('md-field--float')
+        leading = SafeHTML('')  # NOSONAR
+        icon_svg = _md_icon(shell.icon) if shell.icon else ''
+        if icon_svg:
+            classes.append('md-field--leading-icon')
+            leading = html(t'<span class="md-field__leading" aria-hidden="true">{icon_svg}</span>')
+        trailing = cls._trailing_icons(shell, kind)  # NOSONAR
+        css = ' '.join(classes)  # NOSONAR
+        control = SafeHTML(shell.control_html)  # NOSONAR
+        field_id = shell.field_id or shell.name  # NOSONAR
+        label = shell.label or ''  # NOSONAR
+        required = cls._required_mark(shell)  # NOSONAR
+        supporting = cls._supporting(shell)  # NOSONAR
+        return str(
+            html(t'''<div class="{css}">
 <div class="md-field__box">{leading}{control}<label class="md-floating-label" for="{field_id}">{label}{required}</label><span class="md-field__outline" aria-hidden="true"><span class="md-field__outline-start"></span><span class="md-field__outline-notch"><span class="md-field__notch-text">{label}{required}</span></span><span class="md-field__outline-end"></span></span>{trailing}</div>{supporting}
 </div>''')
-            )
+        )
 
-        css = ' '.join(classes)
+    @staticmethod
+    def _trailing_icons(shell: FieldShell, kind: str) -> SafeHTML:
+        icons = []
+        if shell.error:
+            icons.append(_md_icon('error'))
+        if kind == 'select':
+            icons.append(_md_icon('arrow_drop_down', 'md-icon md-chevron'))
+        if not icons:
+            return SafeHTML('')
+        inner = SafeHTML(''.join(icons))  # NOSONAR
+        return html(t'<span class="md-field__trailing" aria-hidden="true">{inner}</span>')
+
+    @classmethod
+    def _render_labelled(cls, shell: FieldShell, kind: str, css: str) -> str:
+        field_id = shell.field_id or shell.name  # NOSONAR
+        control = SafeHTML(shell.control_html)  # NOSONAR
+        required = cls._required_mark(shell)  # NOSONAR
+        supporting = cls._supporting(shell)  # NOSONAR
+        label = shell.label or ''  # NOSONAR
         if kind == 'checkbox':
-            label = shell.label or ''
             return str(
                 html(t'''<div class="{css}">
 <div class="md-checkbox-container">{control}<label class="md-checkbox-label" for="{field_id}">{label}{required}</label></div>{supporting}
 </div>''')
             )
         if kind == 'switch':
-            label = shell.label or ''
             return str(
                 html(t'''<div class="{css}">
 <div class="md-switch-row"><label class="md-switch-label" for="{field_id}">{label}{required}</label>{control}</div>{supporting}
@@ -289,14 +289,18 @@ class MaterialFieldShell:
             )
         if kind == 'group' or not shell.label:
             return str(html(t'<div class="{css}">\n{control}{supporting}\n</div>'))
-
-        label = shell.label
         return str(
             html(t'''<div class="{css}">
 <label class="md-field-label" for="{field_id}">{label}{required}</label>
 {control}{supporting}
 </div>''')
         )
+
+    @staticmethod
+    def _required_mark(shell: FieldShell) -> SafeHTML:
+        if not shell.required:
+            return SafeHTML('')
+        return SafeHTML('<span class="md-required" aria-hidden="true"> *</span>')
 
     @staticmethod
     def _supporting(shell: FieldShell) -> SafeHTML:
@@ -311,7 +315,7 @@ class MaterialFieldShell:
             )
         if not parts:
             return SafeHTML('')
-        inner = SafeHTML(''.join(str(p) for p in parts))
+        inner = SafeHTML(''.join(str(p) for p in parts))  # NOSONAR
         return html(t'<div class="md-field__supporting">{inner}</div>')
 
 
