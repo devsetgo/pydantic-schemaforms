@@ -66,7 +66,8 @@ touches every widget, so doing them after phases 2 and 3 means less retrofitting
 | 19 | [#240](https://github.com/devsetgo/pydantic-schemaforms/issues/240) Internationalization | Not started | Wraps every library-generated string and display format. Doing it after the new widgets and display mode means doing it once. |
 | 20 | [#266](https://github.com/devsetgo/pydantic-schemaforms/issues/266) Review other UI frameworks | Not started | Research only: pick which styles to add (for example Tailwind/daisyUI, Bulma, Pico) against criteria such as maintenance, licence and asset size. Feeds #247, so do it first. Adding a style is cheap only after #265 puts every style on one rendering path. |
 | 21 | [#247](https://github.com/devsetgo/pydantic-schemaforms/issues/247) Color schemes and a framework-free CSS-variables theme | Not started | Named color schemes plus custom ones, covering light and dark, and a new style built on the same tokens. A new style multiplies the work for every widget, so do it once the widget set has settled. #265 has put every style on one rendering path, and #266 feeds which styles to add. |
-| 22 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |
+| 22 | [#271](https://github.com/devsetgo/pydantic-schemaforms/issues/271) Toast notifications and other ways to show form feedback | Not started | Choices for how a form shows its errors and success messages, with today's summary as the default. After #247 so it uses the same color tokens, and after #240 so its messages can be translated. |
+| 23 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |
 
 ## Parked
 
