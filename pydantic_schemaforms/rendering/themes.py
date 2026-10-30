@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from html import escape
+from typing import Any
 
 from pydantic_schemaforms.templates import TemplateString
 from pydantic_schemaforms.tstring import SafeHTML, html
@@ -10,8 +11,15 @@ from pydantic_schemaforms.assets.runtime import (
     bootstrap_icons_css_tag,
     framework_css_tag,
     framework_js_tag,
+    material_script_tag,
+    material_style_tag,
 )
-from .field_shell import FieldShellRenderer, field_shell_for_framework
+from .field_shell import (
+    FieldShellRenderer,
+    MaterialFieldShell,
+    field_shell_for_framework,
+    material_field_kind,
+)
 from .form_style import FormStyle, get_form_style
 from .model_list_markup import ModelListItem, render_default_model_list_item
 from .frameworks import get_framework_config
@@ -23,7 +31,7 @@ __all__ = [
     'FrameworkTheme',
     'BootstrapTheme',
     'PlainTheme',
-    'MaterialEmbeddedTheme',
+    'MaterialTheme',
     'get_theme_for_framework',
 ]
 
@@ -172,6 +180,11 @@ class RendererTheme:
         )
 
     # --- Framework-specific extension hooks -------------------------------------------------
+    def control_attributes(self, ui_element: str, attrs: dict[str, Any]) -> dict[str, Any]:
+        """Adjust a control's HTML attributes before its input renders it."""
+
+        return attrs
+
     def field_shell(self, framework: str) -> FieldShellRenderer:
         """The markup around each control (label, help, error, wrapper).
 
@@ -401,17 +414,49 @@ class PlainTheme(FrameworkTheme):
         super().__init__('none', include_assets=include_assets, asset_mode=asset_mode)
 
 
-class MaterialEmbeddedTheme(RendererTheme):
-    """Self-contained Material Design 3 theme with inline assets."""
+class MaterialTheme(RendererTheme):
+    """Material Design 3, self-contained: its CSS and JS ship inline with the
+    form (assets/material/), so the page needs no CSS framework or icon font."""
 
-    name = 'material-embedded'
+    name = 'material'
+    VARIANTS = ('outlined', 'filled')
 
-    def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
+    def __init__(
+        self,
+        include_assets: bool = False,
+        *,
+        asset_mode: str = 'vendored',
+        variant: str = 'outlined',
+    ) -> None:
         # The asset options are accepted for parity with the other themes; this
         # theme always inlines its own CSS and JS.
         super().__init__(submit_label='Submit')
-        self._css = self._build_css()
-        self._js = self._build_js()
+        if variant not in self.VARIANTS:
+            raise ValueError(f"material_variant must be 'outlined' or 'filled', not {variant!r}")
+        self.variant = variant
+        self._load_form_style('material')
+
+    def field_shell(self, framework: str) -> FieldShellRenderer:
+        return MaterialFieldShell()
+
+    def input_class(self, ui_element: str) -> str:
+        kind = material_field_kind(ui_element)
+        if kind == 'select':
+            return 'md-select'
+        if kind == 'textarea':
+            return 'md-textarea'
+        if kind == 'text':
+            return 'md-input'
+        if kind == 'checkbox':
+            return 'md-checkbox'
+        return ''
+
+    def control_attributes(self, ui_element: str, attrs: dict[str, Any]) -> dict[str, Any]:
+        # An empty placeholder lets CSS tell an empty field (:placeholder-shown)
+        # from a filled one, which is what floats the label.
+        if material_field_kind(ui_element) in {'text', 'textarea'} and not attrs.get('placeholder'):
+            attrs = {**attrs, 'placeholder': ' '}
+        return attrs
 
     def render_error_summary(self, items_html: str) -> str:
         _items = SafeHTML(items_html)
@@ -422,74 +467,28 @@ class MaterialEmbeddedTheme(RendererTheme):
 </div>
 </section>""")
 
-    def button_class(self) -> str:
-        return ''
+    def alert_class(self, kind: str) -> str:
+        return f'md-banner md-banner--{kind}'
 
     def before_form(self) -> str:
-        return '\n'.join(
-            [
-                '<!-- Material Design 3 Self-Contained Form -->',
-                self._css,
-                '<div class="md-form-container">',
-            ]
-        )
+        return '\n'.join(['<!-- pydantic-schemaforms Material Design 3 -->', material_style_tag()])
 
     def transform_form_attributes(self, attrs: dict[str, str]) -> dict[str, str]:
         attrs = attrs.copy()
         existing_class = attrs.get('class', '').strip()
-        combined = 'md-form' if not existing_class else f'md-form {existing_class}'
-        attrs['class'] = combined
-        # Remove novalidate to enable browser validation for required fields
-        # Material inputs have required attributes that should be enforced by the browser
+        classes = ['md-form']
+        if self.variant == 'filled':
+            classes.append('md-form--filled')
+        if existing_class:
+            classes.append(existing_class)
+        attrs['class'] = ' '.join(classes)
+        # Let the browser check required fields on a single-page form; grouped
+        # layouts put novalidate back (see render_form_from_model).
         attrs.pop('novalidate', None)
         return attrs
 
     def after_form(self) -> str:
-        # JavaScript to prevent Enter key from submitting forms
-        prevent_enter_script = """
-<script>
-(function() {
-    document.addEventListener('DOMContentLoaded', function() {
-        // Prevent Enter key from submitting forms unless on submit button
-        const forms = document.querySelectorAll('form.md-form, form.pydantic-form');
-        forms.forEach(function(form) {
-            form.addEventListener('keydown', function(e) {
-                // Check if Enter key is pressed
-                if (e.key === 'Enter' || e.keyCode === 13) {
-                    const target = e.target;
-
-                    // Allow Enter in textareas (for multi-line input)
-                    if (target.tagName === 'TEXTAREA') {
-                        return;
-                    }
-
-                    // Allow Enter on submit buttons
-                    if (target.tagName === 'BUTTON' && target.type === 'submit') {
-                        return;
-                    }
-
-                    // Allow Enter on input type="submit"
-                    if (target.tagName === 'INPUT' && target.type === 'submit') {
-                        return;
-                    }
-
-                    // Prevent form submission for all other cases
-                    e.preventDefault();
-                    return false;
-                }
-            });
-        });
-    });
-})();
-</script>
-"""
-        return '\n'.join(
-            [
-                '</div>',
-                self._js,
-                prevent_enter_script,
-            ]
-        )
+        return material_script_tag() + '\n' + super().after_form()
 
     def render_submit_button(self, button_class: str) -> str:
         classes = 'md-button md-button-filled'
@@ -715,864 +714,10 @@ function toggleAccordion(sectionId, buttonElement) {
         parts.append(_CLOSE_SECTION)
         return '\n'.join(parts)
 
-    @staticmethod
-    def _build_css() -> str:
-        return """<style>
-/* Material Design 3 Self-Contained Styles - Using !important to override any conflicting styles */
-.md-form-container {
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 20px !important;
-    line-height: 1.5 !important;
-    color: #1c1b1f !important;
-    background: #fef7ff !important;
-    border: none !important;
-    box-sizing: border-box !important;
-    position: relative !important;
-}
-
-.md-form {
-    width: 100% !important;
-    background: #ffffff !important;
-    border-radius: 28px !important;
-    padding: 32px !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15) !important;
-    border: none !important;
-    margin: 0 !important;
-    box-sizing: border-box !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-}
-
-/* Reset any Bootstrap interference */
-.md-form * {
-    box-sizing: border-box !important;
-}
-
-/* Material Design Form Fields */
-.md-field {
-    margin-bottom: 32px !important;
-    position: relative !important;
-    width: 100% !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-}
-
-/* Model list container styling to blend with Material Design */
-.md-model-list-container {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-}
-
-/* Override Bootstrap styles for model list items within Material Design */
-.md-model-list-container .card {
-    border: 1px solid #79747e !important;
-    border-radius: 12px !important;
-    box-shadow: none !important;
-    margin-bottom: 16px !important;
-    background: #ffffff !important;
-}
-
-.md-model-list-container .card-header {
-    background: #f7f2fa !important;
-    border-bottom: 1px solid #e7e0ec !important;
-    border-radius: 12px 12px 0 0 !important;
-    color: #1c1b1f !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-    font-weight: 500 !important;
-}
-
-.md-model-list-container .btn {
-    border-radius: 20px !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-    font-weight: 500 !important;
-    text-transform: none !important;
-}
-
-.md-model-list-container .btn-primary {
-    background: #6750a4 !important;
-    border-color: #6750a4 !important;
-}
-
-.md-model-list-container .btn-danger {
-    background: #ba1a1a !important;
-    border-color: #ba1a1a !important;
-}
-
-.md-model-list-wrapper {
-    background: transparent !important;
-    margin-bottom: 32px !important;
-}
-
-.md-model-list-container {
-    border: 1px solid #e7e0ec !important;
-    border-radius: 24px !important;
-    padding: 16px 20px !important;
-    background: #fff !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
-}
-
-.md-model-list-items {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-}
-
-.md-model-card {
-    border: 1px solid #e7e0ec !important;
-    border-radius: 20px !important;
-    background: #ffffff !important;
-    padding: 16px 20px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
-}
-
-.md-model-card__header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 12px !important;
-}
-
-.md-model-card__body {
-    padding: 0 !important;
-}
-
-.md-model-list-actions {
-    margin-top: 12px !important;
-    display: flex !important;
-    justify-content: flex-end !important;
-}
-
-.md-button-tonal {
-    background: #e8def8 !important;
-    color: #1c1b1f !important;
-}
-
-.md-button-tonal:hover {
-    background: #cdc2db !important;
-}
-
-.md-button__icon {
-    margin-right: 8px !important;
-    width: 20px !important;
-    height: 20px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 0 0 20px !important;
-    fill: currentColor !important;
-}
-
-.md-button__label {
-    font-weight: 500 !important;
-}
-
-/* Layout card styling */
-.md-layout-card {
-    background: #ffffff !important;
-    border-radius: 24px !important;
-    padding: 24px 28px !important;
-    margin-bottom: 32px !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1) !important;
-    border: 1px solid #e7e0ec !important;
-}
-
-.md-layout-card__header {
-    margin-bottom: 12px !important;
-}
-
-.md-layout-card__title {
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    color: #1c1b1f !important;
-}
-
-.md-layout-card__help {
-    color: #49454f !important;
-    font-size: 14px !important;
-    margin-bottom: 12px !important;
-}
-
-.md-layout-card__content {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-}
-
-.md-field-label {
-    display: block !important;
-    color: #49454f !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    margin-bottom: 8px !important;
-    position: relative !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-    line-height: 1.4 !important;
-}
-
-.md-field-label.required::after {
-    content: ' *' !important;
-    color: #ba1a1a !important;
-}
-
-/* Material Design Outlined Text Fields */
-.md-text-field {
-    position: relative;
-    width: 100%;
-}
-
-/* Field container */
-.md-field {
-    margin: 16px 0;
-}
-
-/* Field with icon layout */
-.md-field-with-icon {
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-}
-
-/* Input wrapper for proper label positioning */
-.md-input-wrapper {
-    position: relative !important;
-    flex: 1 !important;
-    width: 100% !important;
-}
-
-.md-input {
-    width: 100% !important;
-    padding: 16px !important;
-    border: 1px solid #79747e !important;
-    border-radius: 4px !important;
-    background: transparent !important;
-    color: #1c1b1f !important;
-    font-size: 16px !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-    outline: none !important;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-sizing: border-box !important;
-    line-height: 1.5 !important;
-    margin: 0 !important;
-}
-
-.md-input:focus {
-    border-color: #6750a4 !important;
-    border-width: 2px !important;
-    padding: 15px !important; /* Adjust for thicker border */
-    box-shadow: none !important;
-}
-
-/* Icon styling - positioned outside to the left of input */
-.md-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 24px !important;
-    height: 24px !important;
-    margin-top: 16px !important; /* Align with input padding */
-    color: #49454f !important;
-    flex-shrink: 0 !important;
-    transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    fill: currentColor !important;
-}
-
-.md-field-with-icon:focus-within .md-icon {
-    color: #6750a4 !important;
-}
-
-.md-input:focus + .md-floating-label,
-.md-input:not(:placeholder-shown) + .md-floating-label,
-.md-textarea:focus + .md-floating-label,
-.md-textarea:not(:placeholder-shown) + .md-floating-label,
-.md-select:focus + .md-floating-label {
-    transform: translateY(-28px) scale(0.75) !important;
-    color: #6750a4 !important;
-    background: #ffffff !important;
-    padding: 0 4px !important;
-}
-
-.md-floating-label {
-    position: absolute !important;
-    left: 16px !important;
-    top: 16px !important;
-    color: #49454f !important;
-    font-size: 16px !important;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    pointer-events: none !important;
-    background: transparent !important;
-    z-index: 1 !important;
-    transform-origin: left top !important;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-    font-weight: 400 !important;
-    line-height: 1.4 !important;
-}
-
-.md-input:focus + .md-floating-label,
-.md-input:not(:placeholder-shown) + .md-floating-label {
-    transform: translateY(-28px) scale(0.75) !important;
-    color: #6750a4;
-    background: #ffffff;
-    padding: 0 4px;
-}
-
-.md-input.error {
-    border-color: #ba1a1a;
-}
-
-.md-input.error:focus {
-    border-color: #ba1a1a;
-}
-
-.md-input.error + .md-floating-label {
-    color: #ba1a1a;
-}
-
-/* Material Design Select */
-.md-select {
-    width: 100%;
-    padding: 16px;
-    border: 1px solid #79747e;
-    border-radius: 4px;
-    background: transparent;
-    color: #1c1b1f;
-    font-size: 16px;
-    font-family: inherit;
-    outline: none;
-    cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    box-sizing: border-box;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2349454f' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 12px center;
-    background-repeat: no-repeat;
-    background-size: 16px;
-    padding-right: 40px;
-}
-
-.md-select:focus {
-    border-color: #6750a4;
-    border-width: 2px;
-    padding: 15px 39px 15px 15px; /* Adjust for thicker border */
-}
-
-/* Unlike a text input, a <select> always displays visible content (a real
-   option or the blank placeholder option) -- it never has an empty,
-   :placeholder-shown-style state to key the floating label off of, so its
-   label stays permanently floated above the control instead of only
-   floating on :focus (which would otherwise leave it overlapping the
-   selected option's text whenever the control isn't focused). */
-.md-select + .md-floating-label {
-    transform: translateY(-28px) scale(0.75);
-    color: #49454f;
-    background: #ffffff;
-    padding: 0 4px;
-}
-
-.md-select:focus + .md-floating-label {
-    color: #6750a4;
-}
-
-/* Material Design Textarea */
-.md-textarea {
-    width: 100%;
-    min-height: 120px;
-    padding: 16px;
-    border: 1px solid #79747e;
-    border-radius: 4px;
-    background: transparent;
-    color: #1c1b1f;
-    font-size: 16px;
-    font-family: inherit;
-    outline: none;
-    resize: vertical;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    box-sizing: border-box;
-}
-
-.md-textarea:focus {
-    border-color: #6750a4;
-    border-width: 2px;
-    padding: 15px; /* Adjust for thicker border */
-}
-
-.md-textarea:focus + .md-floating-label,
-.md-textarea:not(:placeholder-shown) + .md-floating-label {
-    transform: translateY(-28px) scale(0.75);
-    color: #6750a4;
-    background: #ffffff;
-    padding: 0 4px;
-}
-
-/* Material Design Checkboxes */
-.md-checkbox-container {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin: 16px 0;
-    cursor: pointer;
-}
-
-.md-checkbox {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #79747e;
-    border-radius: 2px;
-    background: transparent;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    margin-top: 2px; /* Align with text baseline */
-    flex-shrink: 0;
-}
-
-.md-checkbox:checked {
-    background: #6750a4;
-    border-color: #6750a4;
-}
-
-.md-checkbox:checked::after {
-    content: '';
-    position: absolute;
-    top: 1px;
-    left: 4px;
-    width: 6px;
-    height: 10px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-}
-
-.md-checkbox-label {
-    color: #1c1b1f;
-    font-size: 16px;
-    cursor: pointer;
-    line-height: 1.5;
-}
-
-/* Material Design Buttons */
-.md-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 24px;
-    border: none;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    box-sizing: border-box;
-    min-width: 64px;
-    height: 40px;
-    position: relative;
-    overflow: hidden;
-}
-
-.md-button-filled {
-    background: #6750a4;
-    color: #ffffff;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);
-}
-
-.md-button-filled:hover {
-    background: #5a43a0;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px 2px rgba(0,0,0,0.15);
-    transform: translateY(-1px);
-}
-
-.md-button-filled:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15);
-}
-
-/* Help Text */
-.md-help-text {
-    font-size: 12px;
-    color: #49454f;
-    margin-top: 4px;
-    line-height: 1.33;
-    padding-left: 16px;
-}
-
-/* Compatibility: model-list/material mixed markup may emit `.help-text` */
-.md-form .help-text {
-    display: block;
-    font-size: 12px;
-    color: #49454f;
-    margin-top: 4px;
-    line-height: 1.33;
-}
-
-/* Error Text */
-.md-error-text {
-    font-size: 12px;
-    color: #ba1a1a;
-    margin-top: 4px;
-    line-height: 1.33;
-    font-weight: 400;
-    padding-left: 16px;
-}
-
-.md-error-summary {
-    border: 1px solid #f2b8b5;
-    background: #ffdad6;
-    color: #410e0b;
-    border-radius: 12px;
-    padding: 12px 14px;
-}
-
-.md-error-summary__title {
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-
-.md-error-summary__list {
-    margin: 0;
-    padding-left: 1.25rem;
-}
-
-.md-error-summary__list li {
-    margin-bottom: 2px;
-}
-
-/* Number and Date Inputs */
-.md-input[type="number"],
-.md-input[type="date"],
-.md-input[type="email"],
-.md-input[type="password"],
-.md-input[type="tel"],
-.md-input[type="url"] {
-    /* Inherit all md-input styles */
-}
-
-.md-input[type="color"] {
-    height: 56px;
-    padding: 8px;
-    cursor: pointer;
-}
-
-.md-input[type="range"] {
-    padding: 16px 8px;
-}
-
-.md-form .md-input-wrapper {
-    width: 100%;
-}
-
-/* Placeholder styling */
-.md-input::placeholder {
-    color: transparent;
-}
-
-.md-input:focus::placeholder {
-    color: #49454f;
-}
-
-/* State layers for interactive elements */
-.md-button-filled::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: currentColor;
-    opacity: 0;
-    transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: inherit;
-}
-
-.md-button-filled:hover::before {
-    opacity: 0.08;
-}
-
-.md-button-filled:focus::before {
-    opacity: 0.12;
-}
-
-.md-button-filled:active::before {
-    opacity: 0.16;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .md-form {
-        padding: 24px 16px;
-        border-radius: 28px;
-    }
-
-    .md-field {
-        margin-bottom: 24px;
-    }
-}
-
-/* Typography Scale */
-.md-headline-small {
-    font-size: 24px;
-    font-weight: 400;
-    line-height: 32px;
-    color: #1c1b1f;
-}
-
-.md-body-large {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
-    color: #1c1b1f;
-}
-
-.md-body-medium {
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 20px;
-    color: #49454f;
-}
-
-.md-label-large {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    color: #1c1b1f;
-}
-
-/* Surface colors and elevation */
-.md-surface {
-    background: #fef7ff;
-    color: #1c1b1f;
-}
-
-.md-surface-container {
-    background: #f3f0ff;
-    color: #1c1b1f;
-}
-
-.md-surface-container-high {
-    background: #e7e0ec;
-    color: #1c1b1f;
-}
-</style>
-"""
-
-    @staticmethod
-    def _build_js() -> str:
-        return """<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Material Design 3 form enhancements
-
-    // Floating label functionality for outlined text fields
-    function initializeFloatingLabels() {
-        const textFields = document.querySelectorAll('.md-input, .md-textarea, .md-select');
-
-        textFields.forEach(input => {
-            const label = input.nextElementSibling;
-            if (label && label.classList.contains('md-floating-label')) {
-
-                // Check initial state
-                function updateLabelState() {
-                    const hasValue = input.value && input.value.trim() !== '';
-                    const isFocused = document.activeElement === input;
-                    // A <select> always shows an option (the placeholder one is
-                    // empty), so its label stays floated, as the CSS intends.
-                    const alwaysFloat = input.classList.contains('md-select');
-
-                    if (hasValue || isFocused || alwaysFloat) {
-                        label.style.transform = 'translateY(-28px) scale(0.75)';
-                        label.style.color = isFocused ? '#6750a4' : '#49454f';
-                        label.style.background = '#ffffff';
-                        label.style.padding = '0 4px';
-                    } else {
-                        label.style.transform = 'translateY(0) scale(1)';
-                        label.style.color = '#49454f';
-                        label.style.background = 'transparent';
-                        label.style.padding = '0';
-                    }
-                }
-
-                // Set up event listeners
-                input.addEventListener('focus', updateLabelState);
-                input.addEventListener('blur', updateLabelState);
-                input.addEventListener('input', updateLabelState);
-
-                // Initial state check
-                updateLabelState();
-            }
-        });
-    }
-
-    // Enhanced focus and blur effects
-    const inputs = document.querySelectorAll('.md-input, .md-select, .md-textarea');
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.style.transform = 'scale(1.01)';
-            this.style.transition = 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)';
-        });
-
-        input.addEventListener('blur', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-
-    // Checkbox interactions with Material Design ripple effect
-    const checkboxes = document.querySelectorAll('.md-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const container = this.closest('.md-checkbox-container');
-            if (this.checked) {
-                // Create ripple effect
-                const ripple = document.createElement('div');
-                ripple.style.position = 'absolute';
-                ripple.style.borderRadius = '50%';
-                ripple.style.background = 'rgba(103, 80, 164, 0.3)';
-                ripple.style.width = '40px';
-                ripple.style.height = '40px';
-                ripple.style.left = '-11px';
-                ripple.style.top = '-11px';
-                ripple.style.pointerEvents = 'none';
-                ripple.style.transform = 'scale(0)';
-                ripple.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-
-                this.style.position = 'relative';
-                this.appendChild(ripple);
-
-                // Animate ripple
-                setTimeout(() => {
-                    ripple.style.transform = 'scale(1)';
-                    setTimeout(() => {
-                        ripple.style.opacity = '0';
-                        setTimeout(() => {
-                            if (ripple.parentNode) {
-                                ripple.parentNode.removeChild(ripple);
-                            }
-                        }, 300);
-                    }, 200);
-                }, 10);
-            }
-        });
-    });
-
-    // Enhanced form validation with Material Design styling
-    const form = document.querySelector('.md-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const requiredInputs = this.querySelectorAll('input[required], select[required], textarea[required]');
-            let hasErrors = false;
-
-            requiredInputs.forEach(input => {
-                // An input in a hidden tab, wizard step or collapsed panel
-                // can't show this message; server validation reports it and
-                // re-renders with that group open instead.
-                const fieldContainer = input.closest('.md-field');
-                if (!fieldContainer || input.getClientRects().length === 0) {
-                    return;
-                }
-                const value = input.type === 'checkbox' ? input.checked : input.value.trim();
-
-                if (!value) {
-                    input.classList.add('error');
-
-                    // Add error styling to label
-                    const label = input.nextElementSibling;
-                    if (label && label.classList.contains('md-floating-label')) {
-                        label.style.color = '#ba1a1a';
-                    }
-
-                    // Create or update error message
-                    let errorDiv = fieldContainer.querySelector('.md-error-text');
-                    if (!errorDiv) {
-                        errorDiv = document.createElement('div');
-                        errorDiv.className = 'md-error-text';
-                        fieldContainer.appendChild(errorDiv);
-                    }
-                    errorDiv.textContent = 'This field is required';
-
-                    hasErrors = true;
-                } else {
-                    input.classList.remove('error');
-
-                    // Remove error styling from label
-                    const label = input.nextElementSibling;
-                    if (label && label.classList.contains('md-floating-label')) {
-                        label.style.color = input === document.activeElement ? '#6750a4' : '#49454f';
-                    }
-
-                    // Remove error message if it was dynamically added
-                    const errorDiv = fieldContainer.querySelector('.md-error-text');
-                    if (errorDiv && errorDiv.textContent === 'This field is required') {
-                        errorDiv.remove();
-                    }
-                }
-            });
-
-            if (hasErrors) {
-                e.preventDefault();
-                // Scroll to first error with smooth animation
-                const firstError = this.querySelector('.error');
-                if (firstError) {
-                    firstError.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center',
-                        inline: 'nearest'
-                    });
-                    // Focus the field for better UX
-                    setTimeout(() => {
-                        firstError.focus();
-                    }, 500);
-                }
-            }
-        });
-
-        // Real-time validation for better UX
-        const allInputs = form.querySelectorAll('input, select, textarea');
-        allInputs.forEach(input => {
-            input.addEventListener('blur', function() {
-                if (this.hasAttribute('required')) {
-                    const value = this.type === 'checkbox' ? this.checked : this.value.trim();
-                    const fieldContainer = this.closest('.md-field');
-
-                    if (!value) {
-                        this.classList.add('error');
-                        const label = this.nextElementSibling;
-                        if (label && label.classList.contains('md-floating-label')) {
-                            label.style.color = '#ba1a1a';
-                        }
-                    } else {
-                        this.classList.remove('error');
-                        const label = this.nextElementSibling;
-                        if (label && label.classList.contains('md-floating-label')) {
-                            label.style.color = '#49454f';
-                        }
-                    }
-                }
-            });
-        });
-    }
-
-    // Initialize floating labels
-    initializeFloatingLabels();
-
-    // Reinitialize for dynamically added content
-    window.reinitializeMaterialForms = function() {
-        initializeFloatingLabels();
-    };
-});
-</script>
-"""
-
 
 _THEME_MAP: dict[str, type[RendererTheme]] = {
     'bootstrap': BootstrapTheme,
-    'material': MaterialEmbeddedTheme,
+    'material': MaterialTheme,
     'none': PlainTheme,
 }
 
@@ -1582,10 +727,13 @@ def get_theme_for_framework(
     *,
     include_assets: bool = False,
     asset_mode: str = 'vendored',
+    material_variant: str | None = None,
 ) -> RendererTheme:
     """Return a RendererTheme instance that matches the requested framework."""
 
     theme_cls = _THEME_MAP.get(framework.lower())
+    if theme_cls is MaterialTheme:
+        return MaterialTheme(variant=material_variant or 'outlined')
     if theme_cls is None:
         return FrameworkTheme(framework, include_assets=include_assets, asset_mode=asset_mode)
     return theme_cls(include_assets=include_assets, asset_mode=asset_mode)  # type: ignore[call-arg]

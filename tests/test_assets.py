@@ -2073,18 +2073,18 @@ def test_bootstrap_icons_vendored_version_is_recorded() -> None:
 
 
 def test_material_theme_css_has_no_google_fonts_imports() -> None:
-    from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme
+    from pydantic_schemaforms.assets.runtime import material_style_tag
 
-    css = MaterialEmbeddedTheme._build_css()
+    css = material_style_tag()
     assert 'fonts.googleapis.com' not in css
     assert 'fonts.gstatic.com' not in css
 
 
 def test_inline_theme_scripts_have_no_python_comments() -> None:
     # A stray `# comment` is a SyntaxError in JavaScript and kills the whole script.
+    from pydantic_schemaforms.assets.runtime import material_script_tag
     from pydantic_schemaforms.rendering.theme_assets import WIZARD_COMPONENT_ASSETS
-    from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme
 
-    for source in (MaterialEmbeddedTheme._build_js(), WIZARD_COMPONENT_ASSETS):
+    for source in (material_script_tag(), WIZARD_COMPONENT_ASSETS):
         script = source[source.index('<script>') : source.index('</script>')]
         assert not [line for line in script.splitlines() if line.lstrip().startswith('#')]

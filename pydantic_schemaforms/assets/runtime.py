@@ -26,6 +26,21 @@ def read_asset_bytes(relative_path: str) -> bytes:
     return (package_root / relative_path).read_bytes()
 
 
+@lru_cache(maxsize=1)
+def material_style_tag() -> str:
+    """The Material Design 3 tokens and components as an inline <style>."""
+    css = read_asset_text('assets/material/md3-tokens.css') + read_asset_text(
+        'assets/material/md3.css'
+    )
+    return style_tag_inline(css)
+
+
+@lru_cache(maxsize=1)
+def material_script_tag() -> str:
+    """The Material style's small script (submit-time required-field check)."""
+    return script_tag_inline(read_asset_text('assets/material/md3.js'))
+
+
 def script_tag_inline(js: str) -> str:
     # js is raw <script> element content, not an HTML context -- html-escaping it
     # here would corrupt the JS (e.g. turn `<` into `&lt;`), so it's passed through
