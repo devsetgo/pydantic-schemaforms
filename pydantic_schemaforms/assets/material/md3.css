@@ -1673,6 +1673,8 @@
 }
 
 .md-form .md-model-item {
+    /* The remove button sits over the header: a button can't nest in a <summary>. */
+    position: relative;
     margin: 0;
     padding: 0;
 }
@@ -2015,11 +2017,6 @@ summary.md-model-item__header::-webkit-details-marker {
     font: inherit;
     font-weight: 500;
     cursor: pointer;
-}
-
-/* The remove button sits over the header: a button can't nest in a <summary>. */
-.md-form .md-model-item {
-    position: relative;
 }
 
 .md-form .md-model-item__remove {

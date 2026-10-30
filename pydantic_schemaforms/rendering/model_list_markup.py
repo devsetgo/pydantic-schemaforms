@@ -28,7 +28,7 @@ class ModelListItem:
 def _render_item_toggle(item: ModelListItem) -> SafeHTML:
     # The title sits in its own element so the model-list script can update
     # it with textContent as the user types, never as HTML.
-    title = html(
+    title = html(  # NOSONAR
         t'<span class="model-list-item-title" data-model-list-title>{item.item_title}</span>'
     )
     if not item.collapsible:

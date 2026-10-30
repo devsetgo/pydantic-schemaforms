@@ -55,6 +55,38 @@ def _render_error(theme: RendererTheme, message: str | None) -> SafeHTML:
     return html(t'<div class="{alert_class}" role="alert">{message}</div>')
 
 
+def _render_sub_fields(
+    field_name: str,
+    field_schema: dict[str, Any],
+    schema_def: dict[str, Any],
+    value: Any,
+    context: 'RenderContext',
+    engine: LayoutEngine,
+) -> list[str]:
+    data = _normalize_value(value)
+    child_errors = context.child_errors or {}
+    # An optional sub-form (``Address | None``) can be left blank, so the
+    # browser must not insist on its fields; validation turns it into None.
+    optional = any(o.get('type') == 'null' for o in field_schema.get('anyOf') or [])
+    required = set() if optional else set(schema_def.get('required') or [])
+    renderer = engine._renderer  # noqa: SLF001 - composite renderers render children through it
+    parts = []
+    for key, sub_schema in ordered_properties(schema_def):
+        input_name = f'{field_name}.{key}'
+        parts.append(
+            renderer._render_field(  # noqa: SLF001
+                input_name,
+                sub_schema,
+                data.get(key),
+                child_errors.get(key),
+                [input_name] if key in required else [],
+                context,
+                'vertical',
+            )
+        )
+    return parts
+
+
 @LayoutEngine.layout_renderer('nested_model')
 def render_nested_model_field(
     field_name: str,
@@ -69,30 +101,14 @@ def render_nested_model_field(
     if not schema_def:
         return html(t"<!-- Error: could not resolve the sub-model of field '{field_name}' -->")
 
-    data = _normalize_value(value)
     child_errors = context.child_errors or {}
-    # An optional sub-form (``Address | None``) can be left blank, so the
-    # browser must not insist on its fields; validation turns it into None.
-    optional = any(o.get('type') == 'null' for o in field_schema.get('anyOf') or [])
-    required = set() if optional else set(schema_def.get('required') or [])
-    renderer = engine._renderer  # noqa: SLF001 - composite renderers render children through it
-
     theme = _theme(engine)
-    parts: list[str] = [str(_render_error(theme, context.error))]
-    for key, sub_schema in ordered_properties(schema_def):
-        input_name = f'{field_name}.{key}'
-        parts.append(
-            renderer._render_field(  # noqa: SLF001
-                input_name,
-                sub_schema,
-                data.get(key),
-                child_errors.get(key),
-                [input_name] if key in required else [],
-                context,
-                'vertical',
-            )
-        )
-    body = '\n'.join(parts)
+    body = '\n'.join(
+        [
+            str(_render_error(theme, context.error)),
+            *_render_sub_fields(field_name, field_schema, schema_def, value, context, engine),
+        ]
+    )
 
     if ui_info.get(IN_GROUP_FLAG):
         return html(
