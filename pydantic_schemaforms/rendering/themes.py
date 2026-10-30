@@ -24,6 +24,7 @@ from .form_style import FormStyle, get_form_style
 from .model_list_markup import ModelListItem, render_default_model_list_item
 from .frameworks import get_framework_config
 from .material_icons import render_material_icon
+from .theme_assets import ACCORDION_COMPONENT_SCRIPT, TAB_COMPONENT_SCRIPT
 
 __all__ = [
     'RendererTheme',
@@ -37,6 +38,34 @@ __all__ = [
 
 _CLOSE_SECTION = '</section>'
 _CLOSE_INNER_DIV = '  </div>'
+
+
+_TABLE_STYLE_CLASSES = {
+    'striped': 'table-striped',
+    'bordered': 'table-bordered',
+    'hover': 'table-hover',
+    'compact': 'table-sm',
+}
+
+_DATATABLE_CLASSES = {
+    'upload_zone': 'mb-3',
+    'upload_label': 'form-label',
+    'upload_help': 'form-text',
+    'load_button': 'btn btn-secondary mt-2',
+    'submit_wrapper': 'mt-3',
+    'submit_button': 'btn btn-primary',
+    'csv_template': 'btn btn-secondary btn-sm mb-2',
+}
+
+_MATERIAL_DATATABLE_CLASSES = {
+    'upload_zone': 'md-field',
+    'upload_label': 'md-field-label',
+    'upload_help': 'md-help-text',
+    'load_button': 'md-button md-button--tonal',
+    'submit_wrapper': 'md-field',
+    'submit_button': 'md-button md-button--filled',
+    'csv_template': 'md-button md-button--text',
+}
 
 
 class RendererTheme:
@@ -279,6 +308,18 @@ class RendererTheme:
 <ul class="mb-0 mt-2">{_items}</ul>
 </div>""")
 
+    def table_class(self, style: dict[str, Any]) -> str:
+        """Classes for a data table; `style` holds its striped/bordered/hover/compact flags."""
+
+        classes = ['table']
+        classes.extend(css for flag, css in _TABLE_STYLE_CLASSES.items() if style.get(flag))
+        return ' '.join(classes)
+
+    def datatable_class(self, slot: str) -> str:
+        """Classes for the chrome around a data table (see `_DATATABLE_CLASSES`)."""
+
+        return _DATATABLE_CLASSES[slot]
+
     def render_model_list_item(self, item: ModelListItem) -> str:
         """One repeating sub-form item (its header, remove button and fields)."""
 
@@ -413,6 +454,12 @@ class PlainTheme(FrameworkTheme):
     def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
         super().__init__('none', include_assets=include_assets, asset_mode=asset_mode)
 
+    def table_class(self, style: dict[str, Any]) -> str:
+        return ''
+
+    def datatable_class(self, slot: str) -> str:
+        return '' if slot == 'csv_template' else super().datatable_class(slot)
+
 
 class MaterialTheme(RendererTheme):
     """Material Design 3, self-contained: its CSS and JS ship inline with the
@@ -524,135 +571,62 @@ class MaterialTheme(RendererTheme):
             ]
         )
 
+    def table_class(self, style: dict[str, Any]) -> str:
+        flags = [f'md-table--{flag}' for flag in _TABLE_STYLE_CLASSES if style.get(flag)]
+        return ' '.join(['md-table', *flags])
+
+    def datatable_class(self, slot: str) -> str:
+        return _MATERIAL_DATATABLE_CLASSES[slot]
+
+    def render_model_list_item(self, item: ModelListItem) -> str:
+        title = html(
+            t'<span class="md-model-item__title" data-model-list-title>{item.item_title}</span>'
+        )
+        delete_icon = SafeHTML(str(render_material_icon('delete')))
+        remove = html(
+            t'<button type="button" class="md-icon-button remove-item-btn" '
+            t'data-index="{item.index}" data-field-name="{item.field_name}" '
+            t'title="Remove this item" aria-label="Remove this item">{delete_icon}</button>'
+        )
+        cells = SafeHTML(
+            ''.join(
+                str(
+                    html(
+                        t'<div class="md-model-item__cell{" md-model-item__cell--full" if full else ""}">'
+                        t'{SafeHTML(cell)}</div>'
+                    )
+                )
+                for cell, full in item.cells
+            )
+        )
+        if not item.collapsible:
+            return str(
+                html(t'''<div class="md-card md-model-item model-list-item" data-index="{item.index}"
+     data-title-template="{item.title_template}" data-field-name="{item.field_name}">
+<div class="md-model-item__header">{title}{remove}</div>
+<div class="md-model-item__body">{cells}</div>
+</div>''')
+            )
+        chevron = SafeHTML(
+            str(render_material_icon('expand_more', classes='md-model-item__chevron'))
+        )
+        open_attr = SafeHTML(' open' if item.expanded else '')
+        return str(
+            html(t'''<div class="md-card md-model-item model-list-item" data-index="{item.index}"
+     data-title-template="{item.title_template}" data-field-name="{item.field_name}">
+<div class="md-model-item__remove">{remove}</div>
+<details class="md-model-item__details"{open_attr}>
+<summary class="md-model-item__header">{chevron}{title}</summary>
+<div class="md-model-item__body">{cells}</div>
+</details>
+</div>''')
+        )
+
     def tab_component_assets(self) -> str:
-        return """
-<script>
-function switchTab(tabId, buttonElement) {
-    const tabLayout = buttonElement.closest('.tab-layout');
-    const own = selector => Array.from(tabLayout.querySelectorAll(selector))
-        .filter(el => el.closest('.tab-layout') === tabLayout);
-    const panels = own('.tab-panel');
-    const buttons = own('.tab-button');
-
-    panels.forEach(panel => {
-        panel.style.display = 'none';
-        panel.classList.remove('active');
-        panel.setAttribute('aria-hidden', 'true');
-    });
-
-    buttons.forEach(button => {
-        button.classList.remove('active');
-        button.setAttribute('aria-selected', 'false');
-    });
-
-    const selectedPanel = panels.find(panel => panel.id === tabId);
-    if (selectedPanel) {
-        selectedPanel.style.display = 'block';
-        selectedPanel.classList.add('active');
-        selectedPanel.setAttribute('aria-hidden', 'false');
-    }
-
-    buttonElement.classList.add('active');
-    buttonElement.setAttribute('aria-selected', 'true');
-}
-</script>
-<style>
-.md-form-container .tab-layout {
-    border-radius: 28px !important;
-    background: #fff !important;
-    border: 1px solid #e7e0ec !important;
-    padding: 16px 24px !important;
-    margin-bottom: 28px !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
-}
-
-.md-form-container .tab-layout .tab-navigation {
-    display: flex !important;
-    gap: 4px !important;
-    border-bottom: 1px solid #e7e0ec !important;
-    margin-bottom: 16px !important;
-}
-
-.md-form-container .tab-layout .tab-button {
-    border: none !important;
-    background: transparent !important;
-    color: #49454f !important;
-    font-weight: 500 !important;
-    padding: 0.75rem 1rem !important;
-    border-bottom: 2px solid transparent !important;
-    border-radius: 0 !important;
-    transition: color 0.15s ease, border-color 0.15s ease !important;
-}
-
-.md-form-container .tab-layout .tab-button.active {
-    color: #6750a4 !important;
-    border-bottom-color: #6750a4 !important;
-    font-weight: 600 !important;
-}
-
-.md-form-container .tab-layout .tab-button:hover {
-    background: rgba(103, 80, 164, 0.08) !important;
-}
-
-.md-form-container .tab-layout .tab-panel {
-    padding: 8px 0 !important;
-}
-</style>
-"""
+        return TAB_COMPONENT_SCRIPT
 
     def accordion_component_assets(self) -> str:
-        return """
-<script>
-function toggleAccordion(sectionId, buttonElement) {
-    const content = Array.from(buttonElement.parentElement.children)
-        .find(el => el.id === sectionId);
-    if (!content) { return; }
-    const isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
-
-    if (isExpanded) {
-        content.style.display = 'none';
-        buttonElement.setAttribute('aria-expanded', 'false');
-        buttonElement.classList.remove('expanded');
-    } else {
-        content.style.display = 'block';
-        buttonElement.setAttribute('aria-expanded', 'true');
-        buttonElement.classList.add('expanded');
-    }
-}
-</script>
-<style>
-.md-form-container .accordion-layout {
-    border: none !important;
-    padding: 0 !important;
-}
-
-.md-form-container .accordion-layout .accordion-section {
-    border: 1px solid #e7e0ec !important;
-    border-radius: 24px !important;
-    margin-bottom: 16px !important;
-    background: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
-}
-
-.md-form-container .accordion-layout .accordion-header {
-    background: transparent !important;
-    color: #1c1b1f !important;
-    font-weight: 600 !important;
-    padding: 1rem 1.25rem !important;
-    border: none !important;
-    border-radius: 24px 24px 0 0 !important;
-}
-
-.md-form-container .accordion-layout .accordion-header.expanded {
-    background: #e8def8 !important;
-    color: #1c1b1f !important;
-}
-
-.md-form-container .accordion-layout .accordion-content {
-    padding: 1rem 1.25rem 1.5rem !important;
-}
-</style>
-"""
+        return ACCORDION_COMPONENT_SCRIPT
 
     def render_model_list_container(
         self,

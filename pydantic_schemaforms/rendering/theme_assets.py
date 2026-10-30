@@ -1,6 +1,6 @@
 """Default CSS/JS snippets for layout-oriented components."""
 
-TAB_COMPONENT_ASSETS = """
+TAB_COMPONENT_SCRIPT = """
 <script>
 function switchTab(tabId, buttonElement) {
     const tabLayout = buttonElement.closest('.tab-layout');
@@ -31,7 +31,9 @@ function switchTab(tabId, buttonElement) {
     buttonElement.setAttribute('aria-selected', 'true');
 }
 </script>
-<style>
+"""
+
+TAB_COMPONENT_STYLE = """<style>
 .tab-layout .tab-navigation {
     border-bottom: 2px solid #e0e0e0;
     margin-bottom: 1rem;
@@ -60,7 +62,9 @@ function switchTab(tabId, buttonElement) {
 </style>
 """
 
-ACCORDION_COMPONENT_ASSETS = """
+TAB_COMPONENT_ASSETS = TAB_COMPONENT_SCRIPT + TAB_COMPONENT_STYLE
+
+ACCORDION_COMPONENT_SCRIPT = """
 <script>
 function toggleAccordion(sectionId, buttonElement) {
     const content = Array.from(buttonElement.parentElement.children)
@@ -79,7 +83,9 @@ function toggleAccordion(sectionId, buttonElement) {
     }
 }
 </script>
-<style>
+"""
+
+ACCORDION_COMPONENT_STYLE = """<style>
 .accordion-layout .accordion-section {
     border: 1px solid #e0e0e0;
     border-radius: 4px;
@@ -108,6 +114,8 @@ function toggleAccordion(sectionId, buttonElement) {
 }
 </style>
 """
+
+ACCORDION_COMPONENT_ASSETS = ACCORDION_COMPONENT_SCRIPT + ACCORDION_COMPONENT_STYLE
 
 # Idempotent: every wizard on a page ships this snippet, but the functions are
 # defined once and each `.form-wizard` is wired up once (data-wizard-ready).
@@ -249,7 +257,5 @@ WIZARD_COMPONENT_ASSETS = """
     display: flex; justify-content: space-between; gap: 0.5rem; margin: 1rem 0;
 }
 .form-wizard .wizard-footer [data-wizard-next] { margin-left: auto; }
-.md-form-container .form-wizard .wizard-progress-item.active { border-color: #6750a4; color: #6750a4; }
-.md-form-container .form-wizard .wizard-progress-item.active .wizard-progress-number { background: #6750a4; }
 </style>
 """
