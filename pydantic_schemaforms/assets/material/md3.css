@@ -1,6 +1,6 @@
 /* pydantic-schemaforms Material Design 3 components.
  * Scoped under .md-form; colors only through the tokens in md3-tokens.css;
- * no !important. Reference: m3.material.io (2023 baseline). */
+ * no important flags. Reference: m3.material.io (2023 baseline). */
 
 /* ------------------------------------------------------------------ base */
 
@@ -1128,4 +1128,526 @@
 
 .md-form details.nested-model-section > .nested-model-body {
     padding: 8px 16px 0;
+}
+
+/* -------------------------------------------------------------- widgets */
+
+/* A plain input in a static-label field (captcha, for one). */
+.md-form .md-field--static .md-input {
+    width: 100%;
+    height: 56px;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+}
+
+.md-form .md-field--static .md-input:focus {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+.md-form .captcha-input label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Chips: tags and multiselect */
+.md-form .tag,
+.md-form .multiselect-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 8px 0 12px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.md-form .tag .remove,
+.md-form .multiselect-chip-remove {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.md-form .tags-input {
+    min-height: 56px;
+    padding: 8px 12px;
+    gap: 8px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+}
+
+.md-form .tags-input:hover {
+    border-color: var(--md-sys-color-on-surface);
+}
+
+.md-form .tags-input:focus-within {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+.md-form .md-field--error .tags-input {
+    border-color: var(--md-sys-color-error);
+}
+
+.md-form .tags-container {
+    display: contents;
+}
+
+.md-form .tags-input input {
+    height: 32px;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+}
+
+/* Menus: multiselect dropdown and combobox listbox */
+.md-form .multiselect-search {
+    height: 56px;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+}
+
+.md-form .multiselect-search:focus {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+.md-form .multiselect-chips:not(:empty) {
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.md-form .combobox-wrapper {
+    display: contents;
+}
+
+.md-form .multiselect-dropdown,
+.md-form .combobox-listbox {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 280px;
+    margin: 4px 0 0;
+    padding: 8px 0;
+    overflow-y: auto;
+    list-style: none;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: var(--md-sys-color-surface-container);
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+.md-form .multiselect-dropdown[hidden],
+.md-form .combobox-listbox[hidden] {
+    display: none;
+}
+
+.md-form .multiselect-option,
+.md-form .combobox-listbox li {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 12px;
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.md-form .multiselect-option:hover,
+.md-form .combobox-listbox li:hover,
+.md-form .combobox-listbox li.combobox-option-active {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .multiselect-option-selected,
+.md-form .multiselect-option-selected:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-weight: 400;
+}
+
+/* Star rating */
+.md-form .star-rating-input .stars {
+    display: inline-flex;
+    margin-left: -8px;
+}
+
+.md-form .star-rating-input .rating-star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--md-sys-shape-corner-full);
+    font-size: 24px;
+    line-height: 1;
+}
+
+.md-form .star-rating-input .rating-star:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .star-rating-input .rating-star:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form .star-rating {
+    color: var(--md-sys-color-star);
+    font-size: 24px;
+    line-height: 32px;
+}
+
+/* Slider, range and rating: --md-slider-progress comes from md3.js */
+.md-form .md-field--static input[type="range"] {
+    width: calc(100% - 64px);
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    vertical-align: middle;
+    appearance: none;
+    cursor: pointer;
+}
+
+.md-form .md-field--static input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: linear-gradient(to right, var(--md-sys-color-primary) var(--md-slider-progress, 50%), var(--md-sys-color-surface-container-highest) 0);
+}
+
+.md-form .md-field--static input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: linear-gradient(to right, var(--md-sys-color-primary) var(--md-slider-progress, 50%), var(--md-sys-color-surface-container-highest) 0);
+}
+
+.md-form .md-field--static input[type="range"]::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-primary);
+    appearance: none;
+}
+
+.md-form .md-field--static input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-primary);
+}
+
+.md-form .md-field--static input[type="range"]:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+.md-form .md-field--static input[type="range"] + output {
+    display: inline-block;
+    min-width: 48px;
+    margin-left: 16px;
+    padding: 2px 8px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.md-form .slider-labels {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+/* Number stepper: icon buttons at the end of the field */
+.md-form .number-stepper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+    padding-right: 8px;
+}
+
+.md-form .number-stepper input {
+    order: 0;
+    appearance: textfield;
+}
+
+.md-form .number-stepper input::-webkit-inner-spin-button,
+.md-form .number-stepper input::-webkit-outer-spin-button {
+    appearance: none;
+}
+
+.md-form .number-stepper-decrement,
+.md-form .number-stepper-increment {
+    order: 1;
+    position: relative;
+    z-index: 1;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.md-form .number-stepper-decrement:hover,
+.md-form .number-stepper-increment:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .number-stepper-decrement:focus-visible,
+.md-form .number-stepper-increment:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+/* File drop zone */
+.md-form .file-drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px;
+    border: 1px dashed var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface-container-low);
+    text-align: center;
+}
+
+.md-form .file-drop-zone::before {
+    content: "";
+    width: 24px;
+    height: 24px;
+    background: var(--md-sys-color-on-surface-variant);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.md-form .file-drop-zone-active {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+}
+
+.md-form .file-drop-zone-hint {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .md-field--static input[type="file"] {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    padding: 0;
+    border: 0;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+}
+
+.md-form .md-field--static input[type="file"]::file-selector-button {
+    height: 40px;
+    margin-right: 12px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .file-item {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+}
+
+/* Color */
+.md-form .color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.md-form .md-field--static input[type="color"] {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-small);
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+}
+
+.md-form input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.md-form input[type="color"]::-webkit-color-swatch {
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+}
+
+.md-form input[type="color"]::-moz-color-swatch {
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+}
+
+/* The input is its own swatch here; only the hex readout stays. */
+.md-form .color-input-group > div > div {
+    display: none;
+}
+
+.md-form .color-input-group > div {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+}
+
+.md-form .color-input-group > div > span {
+    font-family: var(--md-sys-typescale-mono);
+}
+
+/* Custom-format date and time fields: the picker button takes the trailing slot */
+.md-form .md-field__box:has(.schemaforms-picker-wrap) .md-field__trailing {
+    display: none;
+}
+
+.md-form .schemaforms-picker-toggle {
+    z-index: 1;
+}
+
+/* Code editor */
+.md-form .code-format-toolbar {
+    margin-bottom: 8px;
+}
+
+.md-form .code-format-btn {
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.md-form .code-format-btn:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .code-textarea-stack textarea,
+.md-form .code-highlight-layer {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 120px;
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    font-family: var(--md-sys-typescale-mono);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .code-textarea-stack textarea {
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+}
+
+.md-form .code-highlight-layer,
+.md-form .code-highlight-layer code {
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-mono);
+    font-size: 14px;
+    line-height: 20px;
+    text-shadow: none;
+}
+
+.md-form .code-highlight-layer code {
+    background: transparent;
+}
+
+.md-form .code-textarea-stack textarea.code-highlight-active {
+    background: transparent;
+    color: transparent;
+    caret-color: var(--md-sys-color-on-surface);
+}
+
+.md-form .code-highlight-layer .token {
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+}
+
+.md-form .code-highlight-layer .token.comment,
+.md-form .code-highlight-layer .token.prolog,
+.md-form .code-highlight-layer .token.doctype,
+.md-form .code-highlight-layer .token.punctuation {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.md-form .code-highlight-layer .token.keyword,
+.md-form .code-highlight-layer .token.atrule,
+.md-form .code-highlight-layer .token.function {
+    color: var(--md-sys-color-primary);
+}
+
+.md-form .code-highlight-layer .token.string,
+.md-form .code-highlight-layer .token.char,
+.md-form .code-highlight-layer .token.attr-value {
+    color: var(--md-code-string);
+}
+
+.md-form .code-highlight-layer .token.number,
+.md-form .code-highlight-layer .token.boolean {
+    color: var(--md-code-number);
+}
+
+.md-form .code-highlight-layer .token.property,
+.md-form .code-highlight-layer .token.tag,
+.md-form .code-highlight-layer .token.constant,
+.md-form .code-highlight-layer .token.symbol,
+.md-form .code-highlight-layer .token.deleted {
+    color: var(--md-code-tag);
+}
+
+.md-form .code-format-error {
+    color: var(--md-sys-color-error);
+    font-size: 12px;
+}
+
+.md-form textarea.code-invalid {
+    outline: 2px solid var(--md-sys-color-error);
 }

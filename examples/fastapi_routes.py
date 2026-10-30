@@ -1040,34 +1040,6 @@ async def showcase_post(
 # ================================
 
 
-# The library leaves the look of radio variant="segmented" and checkbox_group
-# variant="button_group" to the app's CSS (see RadioGroup/CheckboxGroup); this is
-# the gallery's own styling for them, a starting point an app can copy.
-_CHOICE_VARIANT_CSS = """
-<style>
-.radio-group-segmented, .checkbox-group-button-group { border: 0; padding: 0; }
-.radio-item-segmented, .checkbox-item-button-group { display: inline-block; margin: 0 -1px 0 0; }
-.radio-item-segmented label, .checkbox-item-button-group label {
-    display: inline-block; padding: .375rem .9rem; margin: 0; cursor: pointer;
-    border: 1px solid #0d6efd; color: #0d6efd; background: #fff;
-}
-.radio-item-segmented:first-of-type label, .checkbox-item-button-group:first-of-type label {
-    border-radius: .375rem 0 0 .375rem;
-}
-.radio-item-segmented:last-of-type label, .checkbox-item-button-group:last-of-type label {
-    border-radius: 0 .375rem .375rem 0;
-}
-.radio-item-segmented input, .checkbox-item-button-group input {
-    position: absolute; opacity: 0; pointer-events: none;
-}
-.radio-item-segmented label:has(input:checked),
-.checkbox-item-button-group label:has(input:checked) { background: #0d6efd; color: #fff; }
-.radio-item-segmented label:has(input:focus-visible),
-.checkbox-item-button-group label:has(input:focus-visible) { outline: 2px solid #86b7fe; }
-</style>
-"""
-
-
 @router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_get(
     request: Request,
@@ -1104,7 +1076,6 @@ async def gallery_get(
         enable_logging=True,
     )
 
-    form_html = _CHOICE_VARIANT_CSS + form_html
     # model_list and DataTableLayout are composition mechanisms, not discrete
     # widgets (see WidgetGalleryForm's docstring), so they're cross-linked
     # here rather than embedded as gallery fields.
@@ -1167,7 +1138,7 @@ async def gallery_post(
             },
         )
     else:
-        form_html = _CHOICE_VARIANT_CSS + await validation.render_with_errors_async()
+        form_html = await validation.render_with_errors_async()
         return templates.TemplateResponse(
             request,
             'form.html',

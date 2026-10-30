@@ -949,8 +949,8 @@ of this table.
 | `radio`, `checkbox_group` | `collapsible` | `False` | The legend toggles the options open/closed |
 | `radio`, `checkbox_group` | `collapsed` | `False` | Start closed (with `collapsible`) |
 
-The `segmented`/`button_group` variants only add CSS classes (`radio-item-segmented`,
-`checkbox-item-button-group`); the app styles them.
+The `segmented`/`button_group` variants ship their own CSS; override the classes
+(`radio-item-segmented`, `checkbox-item-button-group`) to restyle them.
 
 ### Field-level options (work on every widget)
 

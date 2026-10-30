@@ -56,6 +56,13 @@
     --md-sys-color-outline-variant: light-dark(#cac4d0, #49454f);
     --md-sys-color-star: light-dark(#8c6d00, #f2c94c);
 
+    --md-code-string: #006a60;
+    --md-code-string: light-dark(#006a60, #80d5c8);
+    --md-code-number: #8c4a00;
+    --md-code-number: light-dark(#8c4a00, #ffb77c);
+    --md-code-tag: #9c2f5c;
+    --md-code-tag: light-dark(#9c2f5c, #ffb0cc);
+
     --md-sys-shape-corner-extra-small: 4px;
     --md-sys-shape-corner-small: 8px;
     --md-sys-shape-corner-medium: 12px;
@@ -94,7 +101,7 @@
     --sf-chip-bg: var(--md-sys-color-secondary-container);
     --sf-chip-fg: var(--md-sys-color-on-secondary-container);
     --sf-star-filled: var(--md-sys-color-star);
-    --sf-star-empty: var(--md-sys-color-outline-variant);
+    --sf-star-empty: var(--md-sys-color-outline);
     --sf-radius: var(--md-sys-shape-corner-extra-small);
 }
 
