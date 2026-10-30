@@ -20,6 +20,7 @@ import hashlib
 import socket
 import threading
 import time
+import re
 from pathlib import Path
 
 import pytest
@@ -360,3 +361,30 @@ def test_validation_reports_the_same_errors_in_both_styles(
     screenshots = Path(__file__).parent / 'screenshots'
     screenshots.mkdir(exist_ok=True)
     page.screenshot(path=screenshots / 'validation-errors.png', full_page=True)
+
+
+def test_site_header_style_and_variant_apply_across_pages(
+    page: Page, examples_server_url: str
+) -> None:
+    page.goto(f'{examples_server_url}/login', wait_until='load')
+    expect(page.locator('[data-sf-variant]')).to_have_count(0)
+    page.locator('[data-sf-style="material"]').click()
+    expect(page.locator('form.md-form')).to_be_visible(timeout=TIMEOUT)
+
+    page.locator('[data-sf-variant="filled"]').click()
+    expect(page.locator('form.md-form')).to_have_class(re.compile('md-form--filled'))
+
+    page.goto(f'{examples_server_url}/contact', wait_until='load')
+    expect(page.locator('form.md-form--filled')).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('[data-sf-variant="filled"]')).to_have_attribute('aria-current', 'true')
+
+    page.locator('[data-sf-style="bootstrap"]').click()
+    expect(page.locator('form:not(.md-form)').first).to_be_visible(timeout=TIMEOUT)
+    page.goto(f'{examples_server_url}/feedback', wait_until='load')
+    expect(page.locator('form:not(.md-form)').first).to_be_visible(timeout=TIMEOUT)
+
+
+def test_material_pages_show_the_site_header(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/login?style=material', wait_until='load')
+    expect(page.locator('.top-resource-bar')).to_contain_text('Documentation', timeout=TIMEOUT)
+    expect(page.locator('.site-brand-shell')).to_be_visible()

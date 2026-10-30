@@ -8,13 +8,6 @@
     <!-- The Material page shell: no Bootstrap, no icon font. Tokens come from the library. -->
     <link rel="stylesheet" href="/vendor/md3-tokens.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
-    <script>
-        try {
-            if (localStorage.getItem('sf-theme') === 'dark') {
-                document.documentElement.setAttribute('data-md-theme', 'dark');
-            }
-        } catch (error) { /* storage blocked: stay light */ }
-    </script>
     {% block extra_head %}{% endblock %}
     <style>
         body.md-shell {
@@ -26,49 +19,19 @@
             line-height: 24px;
         }
 
-        .md-shell a { color: var(--md-sys-color-primary); }
+        /* The demo's own colors, so the page isn't all one hue. The form keeps the MD3 scheme. */
+        .md-shell {
+            --demo-link: light-dark(#00639b, #8ed0ff);
+            --demo-warning-bg: light-dark(#ffefc2, #4d3a00);
+            --demo-warning-fg: light-dark(#3f2e00, #ffdf9e);
+            --demo-info-bg: light-dark(#d3e9f5, #004d65);
+            --demo-info-fg: light-dark(#001e2c, #c1e8fb);
+            --demo-success-bg: light-dark(#c8f0d0, #0f5223);
+            --demo-success-fg: light-dark(#00210b, #a6f2b5);
+        }
+
+        .md-shell a { color: var(--demo-link); }
         .md-shell code { font-family: var(--md-sys-typescale-mono); font-size: 14px; }
-
-        .md-app-bar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 8px 16px;
-            min-height: 64px;
-            padding: 8px 24px;
-            box-sizing: border-box;
-            background: var(--md-sys-color-surface-container);
-        }
-
-        .md-app-bar__title {
-            margin-right: auto;
-            color: var(--md-sys-color-on-surface);
-            font-size: 22px;
-            line-height: 28px;
-            text-decoration: none;
-        }
-
-        .md-app-bar__action {
-            min-height: 40px;
-            padding: 0 16px;
-            border: 1px solid var(--md-sys-color-outline);
-            border-radius: var(--md-sys-shape-corner-full);
-            background: transparent;
-            color: var(--md-sys-color-primary);
-            font: inherit;
-            font-size: 14px;
-            font-weight: 500;
-            line-height: 38px;
-            text-decoration: none;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-
-        .md-app-bar__action[aria-current="true"] {
-            border-color: transparent;
-            background: var(--md-sys-color-secondary-container);
-            color: var(--md-sys-color-on-secondary-container);
-        }
 
         .md-shell__main {
             max-width: 840px;
@@ -80,7 +43,13 @@
            few of their class names that carry meaning. */
         .md-shell .bi, .md-shell .btn-group + .bi { display: none; }
         .md-shell .form-header h2 { margin: 0 0 8px; font-size: 28px; font-weight: 400; line-height: 36px; }
-        .md-shell .form-header { margin-bottom: 24px; }
+        .md-shell .form-header {
+            margin-bottom: 24px;
+            padding: 24px;
+            border-radius: var(--md-sys-shape-corner-large);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #ffffff;
+        }
         .md-shell .row { display: flex; flex-wrap: wrap; gap: 16px; }
         .md-shell .row > * { flex: 1 1 240px; min-width: 0; }
         .md-shell .row.justify-content-center > * { flex-basis: 100%; }
@@ -110,6 +79,16 @@
             background: var(--md-sys-color-secondary-container);
             color: var(--md-sys-color-on-secondary-container);
         }
+        .md-shell .alert-warning { background: var(--demo-warning-bg); color: var(--demo-warning-fg); }
+        .md-shell .alert-success { background: var(--demo-success-bg); color: var(--demo-success-fg); }
+        .md-shell .alert-info { background: var(--demo-info-bg); color: var(--demo-info-fg); }
+        .md-shell .bg-info {
+            border-radius: var(--md-sys-shape-corner-medium);
+            background: var(--demo-info-bg);
+            color: var(--demo-info-fg);
+        }
+        .md-shell .bg-info .text-muted { color: inherit; }
+        .md-shell .alert pre, .md-shell .bg-info code { color: inherit; }
         .md-shell .badge {
             display: inline-block;
             padding: 0 8px;
@@ -119,6 +98,7 @@
             font-size: 12px;
             line-height: 20px;
         }
+        .md-shell .form-header .badge { background: #ffffff; color: #3730a3; }
         .md-shell .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .md-shell .btn {
             display: inline-block;
@@ -127,7 +107,7 @@
             border: 1px solid var(--md-sys-color-outline);
             border-radius: var(--md-sys-shape-corner-full);
             background: transparent;
-            color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-surface-variant);
             font: inherit;
             font-size: 14px;
             font-weight: 500;
@@ -160,35 +140,11 @@
 </head>
 
 <body class="md-form md-shell">
-    <header class="md-app-bar">
-        <a class="md-app-bar__title" href="/">pydantic-schemaforms</a>
-        {% if request.url.path in ('/gallery', '/layouts') %}
-        {% set filled = request.query_params.get('variant') == 'filled' %}
-        {% set layout_query = '&layout=' ~ request.query_params.get('layout') if request.query_params.get('layout') else '' %}
-        <a class="md-app-bar__action" href="?style=material{{ layout_query }}"{% if not filled %} aria-current="true"{% endif %}>Outlined</a>
-        <a class="md-app-bar__action" href="?style=material{{ layout_query }}&variant=filled"{% if filled %} aria-current="true"{% endif %}>Filled</a>
-        {% endif %}
-        <button type="button" class="md-app-bar__action" id="sf-theme-toggle">Dark</button>
-    </header>
+    {% include "_site_bar.html" %}
     <main class="md-shell__main">
         {% block content %}{% endblock %}
         <div class="demo-version-footer">Demo App: v{{ container_version }}</div>
     </main>
-    <script>
-        (function () {
-            var root = document.documentElement;
-            var toggle = document.getElementById('sf-theme-toggle');
-            function dark() { return root.getAttribute('data-md-theme') === 'dark'; }
-            function sync() { toggle.textContent = dark() ? 'Light' : 'Dark'; }
-            toggle.addEventListener('click', function () {
-                var next = dark() ? 'light' : 'dark';
-                root.setAttribute('data-md-theme', next);
-                try { localStorage.setItem('sf-theme', next); } catch (error) { /* this page only */ }
-                sync();
-            });
-            sync();
-        })();
-    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 

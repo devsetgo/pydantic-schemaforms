@@ -327,7 +327,7 @@ add one.**
   `<span>` or a Bootstrap icon. An unknown name renders nothing, so add the path
   when you use a new icon.
 - **The example app's Material shell** (`examples/templates/material_base.html`)
-  loads no Bootstrap. Page chrome there uses the tokens.
+  loads no Bootstrap. Both shells share `examples/templates/_site_bar.html`, whose style, variant and theme controls apply across the site.
 - **A green test run doesn't show how it looks.** Run the screenshot test and read
   the PNGs: that is how a broken alias field was caught during the rewrite.
 - Materialize is gone: don't vendor it or use its classes (`browser-default`,

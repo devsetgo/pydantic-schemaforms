@@ -25,7 +25,7 @@ from starlette.middleware.sessions import SessionMiddleware
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from examples.fastapi_routes import RequestTimingMiddleware, router
+from examples.fastapi_routes import PreferredStyleMiddleware, RequestTimingMiddleware, router
 from examples.datatable_import_example import router as datatable_router
 from examples.menu_order_example import router as menu_order_router
 from pydantic_schemaforms import __version__ as _psf_version
@@ -112,6 +112,7 @@ app = FastAPI(
     openapi_tags=_openapi_tags,
 )
 
+app.add_middleware(PreferredStyleMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv('SCHEMAFORMS_EXAMPLE_SESSION_SECRET', 'dev-only-change-me'),

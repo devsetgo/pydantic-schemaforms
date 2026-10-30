@@ -5,13 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Pydantic Forms Demo</title>
-    <script>
-        try {
-            if (localStorage.getItem('sf-theme') === 'dark') {
-                document.documentElement.setAttribute('data-bs-theme', 'dark');
-            }
-        } catch (error) { /* storage blocked: stay light */ }
-    </script>
 
     <!-- Served from /vendor/* (see fastapi_routes.py's vendor_bootstrap_css/js
          routes), not a CDN -- a render-blocking cdn.jsdelivr.net <link> here
@@ -64,63 +57,14 @@
             --bs-btn-active-bg: #087990;
         }
 
-        .site-brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: #ffffff;
-        }
 
-        .site-brand:hover {
-            color: #ffffff;
-        }
 
-        .site-brand-logo {
-            height: 42px;
-            width: auto;
-            display: block;
-        }
 
-        .site-brand-mark {
-            width: 36px;
-            height: 36px;
-            border-radius: 0.75rem;
-            display: none;
-        }
 
-        .site-brand-copy {
-            line-height: 1.1;
-        }
 
-        .site-brand-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin: 0;
-        }
 
-        .site-brand-subtitle {
-            font-size: 0.8rem;
-            color: #d1d5db;
-            margin: 0;
-        }
 
-        .site-brand-shell {
-            background: #000000;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem;
-        }
 
-        @media (max-width: 576px) {
-            .site-brand-logo {
-                display: none;
-            }
-
-            .site-brand-mark {
-                display: block;
-            }
-        }
 
         .demo-card {
             background: #fff;
@@ -150,36 +94,10 @@
             color: #fff;
         }
 
-        .top-resource-bar {
-            background: #0d0d0d;
-            padding: 0.35rem 0;
-            font-size: 0.78rem;
-        }
 
-        .top-resource-bar a {
-            color: #9ca3af;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: color 0.15s;
-        }
 
-        .top-resource-bar a:hover {
-            color: #ffffff;
-        }
 
-        .top-resource-bar .sep {
-            color: #374151;
-            margin: 0 0.5rem;
-        }
 
-        .version-chip {
-            color: #e5e7eb;
-            background: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 999px;
-            padding: 0.05rem 0.55rem;
-            font-size: 0.72rem;
-        }
 
         .demo-version-footer {
             margin-top: 2rem;
@@ -260,44 +178,9 @@
 </head>
 
 <body>
-    <div class="top-resource-bar">
-        <div class="container d-flex flex-wrap align-items-center gap-1">
-            <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">
-                <i class="bi bi-book me-1"></i>Documentation
-            </a>
-            <span class="sep">|</span>
-            <a href="https://github.com/devsetgo/pydantic-schemaforms" target="_blank" rel="noopener">
-                <i class="bi bi-github me-1"></i>Repository
-            </a>
-            <span class="sep">|</span>
-            <a href="https://pypi.org/project/pydantic-schemaforms/" target="_blank" rel="noopener">
-                <i class="bi bi-box-seam me-1"></i>PyPI
-            </a>
-            <span class="sep">|</span>
-            <span class="version-chip">Library v{{ library_version }}</span>
-            <span class="sep">|</span>
-            <a href="https://github.com/devsetgo/pydantic-schemaforms/issues" target="_blank" rel="noopener">
-                <i class="bi bi-bug me-1"></i>Issues
-            </a>
-            <button type="button" class="btn btn-sm btn-outline-light ms-auto" id="sf-theme-toggle">Dark</button>
-        </div>
-    </div>
+    {% include "_site_bar.html" %}
 
     <div class="{% if request and 'organization' in request.path %}container-fluid{% else %}container{% endif %} py-4">
-        {% if not request or request.url.path != '/' %}
-        <div class="site-brand-shell">
-            <a class="site-brand" href="/">
-                <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}"
-                    alt="">
-                <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}"
-                    alt="">
-                <span class="site-brand-copy">
-                    <span class="site-brand-title d-block">Pydantic Schemaform</span>
-                    <span class="site-brand-subtitle d-block">Pydantic models to polished forms</span>
-                </span>
-            </a>
-        </div>
-        {% endif %}
         {% block content %}{% endblock %}
         <div class="demo-version-footer">
             Demo App: v{{ container_version }}
@@ -305,21 +188,6 @@
     </div>
 
     <script src="/vendor/bootstrap.bundle.min.js"></script>
-    <script>
-        (function () {
-            var root = document.documentElement;
-            var toggle = document.getElementById('sf-theme-toggle');
-            function dark() { return root.getAttribute('data-bs-theme') === 'dark'; }
-            function sync() { toggle.textContent = dark() ? 'Light' : 'Dark'; }
-            toggle.addEventListener('click', function () {
-                var next = dark() ? 'light' : 'dark';
-                root.setAttribute('data-bs-theme', next);
-                try { localStorage.setItem('sf-theme', next); } catch (error) { /* this page only */ }
-                sync();
-            });
-            sync();
-        })();
-    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 

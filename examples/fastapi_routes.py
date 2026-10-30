@@ -306,6 +306,27 @@ def log_timing(label: str, **context: object):
         logger.info(f'{label} took {elapsed_ms:.1f}ms' + (f' ({suffix})' if suffix else ''))
 
 
+_FORM_STYLES = ('bootstrap', 'material', 'none')
+
+
+class PreferredStyleMiddleware:
+    """Apply the site header's style choice (the sf-style cookie) to any page
+    whose URL doesn't name a style, so the choice follows you around the demo."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] == 'http' and scope['method'] == 'GET':
+            request = Request(scope)
+            style = request.cookies.get('sf-style')
+            if style in _FORM_STYLES and 'style' not in request.query_params:
+                query = scope['query_string']
+                joiner = b'&' if query else b''
+                scope['query_string'] = query + joiner + f'style={style}'.encode()
+        await self.app(scope, receive, send)
+
+
 class RequestTimingMiddleware(BaseHTTPMiddleware):
     """Logs total wall-clock time for every request/response -- covers every
     route (including ones nobody hand-wrapped in log_timing, like /vendor/*
