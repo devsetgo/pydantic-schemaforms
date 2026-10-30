@@ -16,9 +16,14 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
   field: outlined with a floating label and a real notch, with error, disabled
   and icon states. The CSS uses design tokens (`--md-sys-color-*`) and has no
   `!important`. `MaterialEmbeddedTheme` is now `MaterialTheme`. (#265)
+- **Star rating stars are now buttons in every style**, in a `radiogroup` with
+  arrow-key support, so the widget works from the keyboard. The default
+  colors are darker, to meet contrast requirements. (#265)
 
 ### Added
 
+- Radio `variant="segmented"` and checkbox group `variant="button_group"` now
+  ship their own CSS instead of leaving it to the app. (#265)
 - `material_variant="filled"` selects filled text fields (the default is
   `"outlined"`). (#265)
 - Opt-in dark scheme for Material: `data-md-theme="dark"` on the form or an

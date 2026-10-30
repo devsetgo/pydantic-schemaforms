@@ -9,6 +9,7 @@ gets a theme hook instead.
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 
 PACKAGE = Path(__file__).resolve().parent.parent / 'pydantic_schemaforms'
@@ -73,3 +74,20 @@ def test_inputs_and_renderers_do_not_branch_on_the_framework() -> None:
     )
     stale = {name: count for name, count in _ALLOWED.items() if len(found.get(name, [])) < count}
     assert not stale, f'Lower these allowances in _ALLOWED, the branches are gone: {stale}'
+
+
+def test_widget_css_takes_colors_from_tokens() -> None:
+    hard_coded = re.compile(
+        r'(?:color|background|border|box-shadow)[^;\n]*?(?<!, )#[0-9a-fA-F]{3,8}\b'
+    )
+    found = {
+        path.name: hard_coded.findall(path.read_text(encoding='utf-8'))
+        for path in (PACKAGE / 'inputs').glob('*.py')
+    }
+    assert not {name: hits for name, hits in found.items() if hits}
+
+
+def test_md3_css_has_no_important_and_no_hex() -> None:
+    css = (PACKAGE / 'assets' / 'material' / 'md3.css').read_text(encoding='utf-8')
+    assert '!important' not in css
+    assert not re.findall(r'#[0-9a-fA-F]{3,8}\b', css)

@@ -211,6 +211,9 @@ class MaterialFieldShell:
 
     def render(self, shell: FieldShell) -> str:
         kind = material_field_kind(shell.ui_element)
+        # A code editor has a toolbar and a highlight layer, so no floating label.
+        if 'code-textarea-wrap' in shell.control_html:
+            kind = 'static'
         field_id = shell.field_id or shell.name
         control = SafeHTML(shell.control_html)
         required = (

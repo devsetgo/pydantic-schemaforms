@@ -939,7 +939,7 @@ class BirthdateInput(DateInput):
 
             age_div = html(
                 t'<div class="age-display" id="{field_name}_age" '
-                t'style="margin-top: 5px; font-size: 0.9em; color: #666;"></div>'
+                t'style="margin-top: 5px; font-size: 0.9em; color: var(--sf-on-surface-variant, #666);"></div>'
             )
             # JS-only below (rule 4 exception).
             age_script = SafeHTML(f"""
