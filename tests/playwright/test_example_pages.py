@@ -260,3 +260,25 @@ def test_material_floated_label_clears_the_leading_icon(
         label['y'] < icon['y'] + icon['height'] and icon['y'] < label['y'] + label['height']
     )
     assert not (overlaps_x and overlaps_y), (label, icon)
+
+
+def test_material_success_page_shows_json_left_aligned(
+    page: Page, examples_server_url: str
+) -> None:
+    page.goto(f'{examples_server_url}/login?style=material&demo=true')
+    page.locator('form.md-form [type="submit"]').first.click()
+    code = page.locator('pre code').first
+    expect(code).to_be_visible(timeout=TIMEOUT)
+    expect(code).to_have_css('text-align', 'start')
+
+
+def test_material_layout_switcher_has_gaps_and_no_page_overflow(
+    page: Page, examples_server_url: str
+) -> None:
+    page.set_viewport_size({'width': 1072, 'height': 800})
+    page.goto(f'{examples_server_url}/layouts?style=material&layout=tabbed')
+    links = page.locator('.layout-switcher a')
+    expect(links.first).to_be_visible(timeout=TIMEOUT)
+    first, second = links.nth(0).bounding_box(), links.nth(1).bounding_box()
+    assert second['x'] - (first['x'] + first['width']) >= 8
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
