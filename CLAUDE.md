@@ -314,8 +314,12 @@ add one.**
   are enforced by `test_theme_contract.py`.
 - **Material Design 3 is the reference** (m3.material.io, 2023 baseline).
   `docs/advanced/material.md` documents the anatomy, tokens, the `filled` variant
-  and the dark scheme; keep it in step with the CSS. Dark mode is opt-in, through
-  `data-md-theme="dark"` or the page's `color-scheme`.
+  and the dark scheme; keep it in step with the CSS.
+- **Dark mode is offered for Bootstrap and Material alike**, opt-in through
+  `data-bs-theme="dark"` and `data-md-theme="dark"`. Bootstrap's dark `--sf-*` values
+  are `BOOTSTRAP_DARK_TOKENS` in `rendering/theme_assets.py`; anything new that takes
+  a color must follow both. `tests/playwright/test_example_pages.py` runs axe on every
+  example page in dark under both styles.
 - **Icons are inline SVG** from `rendering/material_icons.py`, never a ligature
   `<span>` or a Bootstrap icon. An unknown name renders nothing, so add the path
   when you use a new icon.

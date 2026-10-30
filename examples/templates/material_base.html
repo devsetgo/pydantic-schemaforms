@@ -10,8 +10,8 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
     <script>
         try {
-            if (localStorage.getItem('md-theme') === 'dark') {
-                document.documentElement.dataset.mdTheme = 'dark';
+            if (localStorage.getItem('sf-theme') === 'dark') {
+                document.documentElement.setAttribute('data-md-theme', 'dark');
             }
         } catch (error) { /* storage blocked: stay light */ }
     </script>
@@ -168,7 +168,7 @@
         <a class="md-app-bar__action" href="?style=material{{ layout_query }}"{% if not filled %} aria-current="true"{% endif %}>Outlined</a>
         <a class="md-app-bar__action" href="?style=material{{ layout_query }}&variant=filled"{% if filled %} aria-current="true"{% endif %}>Filled</a>
         {% endif %}
-        <button type="button" class="md-app-bar__action" id="md-theme-toggle" aria-pressed="false">Dark</button>
+        <button type="button" class="md-app-bar__action" id="sf-theme-toggle">Dark</button>
     </header>
     <main class="md-shell__main">
         {% block content %}{% endblock %}
@@ -177,14 +177,13 @@
     <script>
         (function () {
             var root = document.documentElement;
-            var toggle = document.getElementById('md-theme-toggle');
-            function sync() {
-                toggle.setAttribute('aria-pressed', root.dataset.mdTheme === 'dark' ? 'true' : 'false');
-            }
+            var toggle = document.getElementById('sf-theme-toggle');
+            function dark() { return root.getAttribute('data-md-theme') === 'dark'; }
+            function sync() { toggle.textContent = dark() ? 'Light' : 'Dark'; }
             toggle.addEventListener('click', function () {
-                var dark = root.dataset.mdTheme !== 'dark';
-                root.dataset.mdTheme = dark ? 'dark' : 'light';
-                try { localStorage.setItem('md-theme', root.dataset.mdTheme); } catch (error) { /* per page only */ }
+                var next = dark() ? 'light' : 'dark';
+                root.setAttribute('data-md-theme', next);
+                try { localStorage.setItem('sf-theme', next); } catch (error) { /* this page only */ }
                 sync();
             });
             sync();

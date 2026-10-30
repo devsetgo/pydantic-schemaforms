@@ -35,7 +35,7 @@ function switchTab(tabId, buttonElement) {
 
 TAB_COMPONENT_STYLE = """<style>
 .tab-layout .tab-navigation {
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid var(--sf-outline-variant, #e0e0e0);
     margin-bottom: 1rem;
 }
 .tab-layout .tab-button {
@@ -47,11 +47,11 @@ TAB_COMPONENT_STYLE = """<style>
     margin-right: 0.5rem;
 }
 .tab-layout .tab-button:hover {
-    background-color: #f5f5f5;
+    background-color: var(--sf-surface-low, #f5f5f5);
 }
 .tab-layout .tab-button.active {
-    border-bottom-color: #007bff;
-    color: #007bff;
+    border-bottom-color: var(--sf-primary, #007bff);
+    color: var(--sf-primary, #007bff);
 }
 .tab-layout .tab-panel {
     display: none;
@@ -87,7 +87,7 @@ function toggleAccordion(sectionId, buttonElement) {
 
 ACCORDION_COMPONENT_STYLE = """<style>
 .accordion-layout .accordion-section {
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 4px;
     margin-bottom: 0.5rem;
 }
@@ -98,19 +98,19 @@ ACCORDION_COMPONENT_STYLE = """<style>
     text-align: left;
     padding: 1rem;
     cursor: pointer;
-    background-color: #f8f9fa;
+    background-color: var(--sf-surface-low, #f8f9fa);
     font-weight: 500;
 }
 .accordion-layout .accordion-header:hover {
-    background-color: #e9ecef;
+    background-color: var(--sf-surface-low, #e9ecef);
 }
 .accordion-layout .accordion-header.expanded {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--sf-primary, #007bff);
+    color: var(--sf-on-primary, white);
 }
 .accordion-layout .accordion-content {
     padding: 1rem;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
 }
 </style>
 """
@@ -240,22 +240,44 @@ WIZARD_COMPONENT_ASSETS = """
 }
 .form-wizard .wizard-progress-item {
     display: flex; align-items: center; gap: 0.5rem;
-    background: none; border: 1px solid #ced4da; border-radius: 999px;
+    background: none; border: 1px solid var(--sf-outline, #ced4da); border-radius: 999px;
     padding: 0.35rem 0.9rem; color: inherit; cursor: pointer; font: inherit;
 }
 .form-wizard .wizard-progress-number {
     display: inline-flex; align-items: center; justify-content: center;
     width: 1.5rem; height: 1.5rem; border-radius: 50%;
-    background: #e9ecef; font-size: 0.8rem; font-weight: 600;
+    background: var(--sf-surface-low, #e9ecef); font-size: 0.8rem; font-weight: 600;
 }
-.form-wizard .wizard-progress-item.active { border-color: #0d6efd; color: #0d6efd; font-weight: 600; }
-.form-wizard .wizard-progress-item.active .wizard-progress-number { background: #0d6efd; color: #fff; }
-.form-wizard .wizard-progress-item.complete .wizard-progress-number { background: #198754; color: #fff; }
-.form-wizard .wizard-progress-item.has-error { border-color: #dc3545; }
-.form-wizard .wizard-progress-item.has-error .wizard-progress-number { background: #dc3545; color: #fff; }
+.form-wizard .wizard-progress-item.active { border-color: var(--sf-primary, #0d6efd); color: var(--sf-primary, #0d6efd); font-weight: 600; }
+.form-wizard .wizard-progress-item.active .wizard-progress-number { background: var(--sf-primary, #0d6efd); color: var(--sf-on-primary, #fff); }
+.form-wizard .wizard-progress-item.complete .wizard-progress-number { background: var(--sf-success, #198754); color: var(--sf-on-primary, #fff); }
+.form-wizard .wizard-progress-item.has-error { border-color: var(--sf-error, #dc3545); }
+.form-wizard .wizard-progress-item.has-error .wizard-progress-number { background: var(--sf-error, #dc3545); color: var(--sf-on-primary, #fff); }
 .form-wizard .wizard-footer {
     display: flex; justify-content: space-between; gap: 0.5rem; margin: 1rem 0;
 }
 .form-wizard .wizard-footer [data-wizard-next] { margin-left: auto; }
 </style>
 """
+
+# Bootstrap supplies its own dark colors under data-bs-theme="dark"; this points
+# the library's --sf-* tokens (widgets, tabs, accordion, wizard) at them.
+BOOTSTRAP_DARK_TOKENS = """<style data-schemaforms-dark-tokens>
+[data-bs-theme="dark"] {
+    --sf-primary: var(--bs-primary-text-emphasis);
+    --sf-on-primary: var(--bs-body-bg);
+    --sf-outline: var(--bs-secondary-color);
+    --sf-outline-variant: var(--bs-border-color);
+    --sf-error: var(--bs-danger-text-emphasis);
+    --sf-error-container: var(--bs-danger-bg-subtle);
+    --sf-success: var(--bs-success-text-emphasis);
+    --sf-surface: var(--bs-body-bg);
+    --sf-surface-low: var(--bs-tertiary-bg);
+    --sf-on-surface: var(--bs-body-color);
+    --sf-on-surface-variant: var(--bs-body-color);
+    --sf-chip-bg: var(--bs-primary-bg-subtle);
+    --sf-chip-fg: var(--bs-primary-text-emphasis);
+    --sf-star-filled: var(--bs-warning-text-emphasis);
+    --sf-star-empty: var(--bs-secondary-color);
+}
+</style>"""

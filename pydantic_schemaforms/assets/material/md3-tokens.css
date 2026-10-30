@@ -2,7 +2,8 @@
  * Every color in md3.css comes from here. Light by default; dark when an
  * ancestor (or the form) has data-md-theme="dark", or when the page declares
  * `color-scheme: dark` and nothing says otherwise. Re-color a form by
- * overriding --md-sys-color-* on .md-form or any ancestor. */
+ * overriding --md-sys-color-* on .md-form itself (.md-form declares them, so a
+ * value set on an ancestor doesn't reach it). */
 
 .md-form {
     color-scheme: inherit;

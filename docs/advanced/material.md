@@ -31,7 +31,7 @@ Every color comes from a `--md-sys-color-*` custom property on `.md-form`.
 Override them for your brand:
 
 ```css
-.md-form {
+form.md-form {
     --md-sys-color-primary: #00639b;
     --md-sys-color-on-primary: #ffffff;
     --md-sys-color-secondary-container: #d1e4ff;
@@ -51,8 +51,9 @@ To keep the dark scheme working, set each one with `light-dark(<light>, <dark>)`
 | `--md-sys-shape-corner-*` | Corner radii |
 | `--md-sys-typescale-font` / `-mono` | Font stacks |
 
-Load your overrides after the form or with a more specific selector, because the
-form's styles are inlined with the form.
+Use a selector more specific than `.md-form`, such as `form.md-form`, because the
+form's styles are inlined with the form and may come after your stylesheet. Set
+the tokens on the form itself: a value on an ancestor doesn't reach it.
 
 ## How controls are built
 

@@ -78,10 +78,8 @@ def test_widget_css_takes_colors_from_tokens() -> None:
     hard_coded = re.compile(
         r'(?:color|background|border|box-shadow)[^;\n]*?(?<!, )#[0-9a-fA-F]{3,8}\b'
     )
-    found = {
-        path.name: hard_coded.findall(path.read_text(encoding='utf-8'))
-        for path in (PACKAGE / 'inputs').glob('*.py')
-    }
+    paths = [*(PACKAGE / 'inputs').glob('*.py'), PACKAGE / 'rendering' / 'theme_assets.py']
+    found = {path.name: hard_coded.findall(path.read_text(encoding='utf-8')) for path in paths}
     assert not {name: hits for name, hits in found.items() if hits}
 
 
