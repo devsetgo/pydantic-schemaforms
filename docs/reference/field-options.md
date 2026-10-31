@@ -2,7 +2,8 @@
 
 `pydantic_schemaforms.Field()` takes everything Pydantic's `Field()` takes,
 plus the form settings below. The form settings only change how a field is
-rendered; validation comes from the type and the Pydantic constraints.
+rendered, apart from `unchecked_message`; validation comes from the type and
+the Pydantic constraints.
 
 ## Label and help
 
@@ -32,6 +33,7 @@ rendered; validation comes from the type and the Pydantic constraints.
 | `ui_order=n` | Position among the fields (lower first); fields otherwise follow declaration order |
 | `ui_class="..."` | Extra CSS classes on the input |
 | `ui_style="..."` | Inline CSS on the input |
+| `unchecked_message="..."` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
 
 ## Sub-forms and lists
 
@@ -60,7 +62,7 @@ Any Pydantic `Field()` option works as usual. The ones that matter to forms:
 | `pattern` | Checked on submit; `pattern` attribute on text inputs |
 | `alias` | The input is named after the alias, and `result.data` uses the field name |
 | `examples` | Shown in the JSON Schema and in FastAPI's API docs, not in the form |
-| `validate_default=True` | Runs validators on a default too, for example to require a ticked checkbox with a custom message |
+| `validate_default=True` | Runs validators on a default too |
 
 A constraint that must hold always goes here, not in `ui_options`: only these
 are checked on the server.

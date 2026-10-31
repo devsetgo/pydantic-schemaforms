@@ -54,9 +54,8 @@ html = await render_form_html_async(
 )
 ```
 
-`layout_handler="datatable"` is registered automatically the moment you
-import anything from `pydantic_schemaforms.datatable_layout` — no manual
-registration step needed. The embedding `FormModel`'s framework
+`layout_handler="datatable"` is registered automatically when you import
+`DataTableLayout` — no manual registration step needed. The embedding `FormModel`'s framework
 (`bootstrap`/`material`/`none`), `debug`, and `show_timing` all apply to the
 table automatically — there's nothing DataTableLayout-specific to configure
 for those; they're just `render_form_html_async()`'s own parameters, same
@@ -224,25 +223,22 @@ without any cell being hand-editable.
 
 ## Table appearance (`style`)
 
-`model_config["style"]` maps to Bootstrap's own `table-*` utility classes.
-It's a partial dict — any flag you omit keeps its default, so
+`model_config["style"]` sets the table's look. It's a partial dict — any flag you omit keeps its default, so
 `{"striped": True}` alone only changes striping and leaves the rest as-is:
 
-| Style flag | Default | Bootstrap class added |
-|---|---|---|
-| `striped` | `False` | `table-striped` |
-| `bordered` | `False` | `table-bordered` |
-| `hover` | `True` | `table-hover` |
-| `compact` | `False` | `table-sm` |
+| Style flag | Default | Bootstrap class | Material class |
+|---|---|---|---|
+| `striped` | `False` | `table-striped` | `md-table--striped` |
+| `bordered` | `False` | `table-bordered` | `md-table--bordered` |
+| `hover` | `True` | `table-hover` | `md-table--hover` |
+| `compact` | `False` | `table-sm` | `md-table--compact` |
 
 ```python
 model_config = {"style": {"striped": True, "bordered": True, "compact": True}}
 ```
 
-These are Bootstrap-specific classes: they have no visible effect under
-`framework="none"` (a deliberately bare table) and there's no dedicated
-Material variant yet — `framework="material"` currently gets the same
-Bootstrap-ish classes as `framework="bootstrap"`.
+They have no effect under `framework="none"`, which renders a deliberately
+bare table.
 
 ## Performance: large imports
 

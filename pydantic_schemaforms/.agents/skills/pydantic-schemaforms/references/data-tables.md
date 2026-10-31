@@ -113,8 +113,8 @@ def download_template() -> Response:
 - Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
   `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
   `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
-  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`["csv",
-  "copy"]`; `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
+  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`[]`;
+  `"csv"` and `"copy"` add export buttons, `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
   `True` links a downloadable header-only CSV), and `style` (`{"striped", "bordered", "hover",
   "compact"}` booleans). Per-row errors are `dict[int, dict[str, str]]` (row index →
   field → message), the shape `ImportResult.row_errors` and `as_layout_value(row_errors=...)`

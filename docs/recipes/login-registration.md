@@ -24,9 +24,8 @@ any other error.
 
 - **The confirmation must match.** `passwords_match` reads the password from
   `info.data` and puts its error under the confirmation field.
-- **The terms box must be ticked.** `validate_default=True` makes Pydantic run
-  `terms_accepted` even when the box is left unticked (and so not submitted),
-  so the user sees your message instead of nothing.
+- **The terms box must be ticked.** `Literal[True]` accepts only a ticked box,
+  and `unchecked_message` is the error shown when it's left unticked.
 - **The username is cleaned up first.** `mode="before"` lowercases and trims
   it before `pattern` checks it.
 - **Errors from your own checks** go through `render_form_html()`'s

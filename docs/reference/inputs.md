@@ -185,7 +185,7 @@ dob: date = Field(..., ui_element='birthdate')
 
 ### Selection Inputs
 
-**`checkbox`** — Single boolean checkbox.
+**`checkbox`** — Single boolean checkbox. Type it Literal[True] when it must be ticked, with unchecked_message= for the error shown when it is left unticked.
 ```python
 agree: bool = Field(False, ui_element='checkbox', title='I accept the terms')
 ```

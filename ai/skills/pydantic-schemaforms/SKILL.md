@@ -59,6 +59,7 @@ Without `ui_element`, the input comes from the field's type:
 | `str` | text box |
 | `int`, `float` | number box (`float` accepts decimals) |
 | `bool` | checkbox |
+| `Literal[True]` | checkbox that must be ticked ("I accept the terms"); `unchecked_message=` sets its error |
 | `date`, `datetime`, `time` | date, date-and-time, time picker |
 | `EmailStr`, `AnyUrl` | email box, URL box |
 | `Enum`, `Literal[...]` | dropdown of the values; `list[...]` of either is a multi-select |

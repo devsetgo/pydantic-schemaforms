@@ -12,6 +12,7 @@ pytest -n 2 --ignore=tests/playwright          # fast parallel test run
 pytest tests/test_invariants.py -v             # check architectural invariants
 ruff check pydantic_schemaforms tests          # lint
 ruff format --check pydantic_schemaforms tests # format check
+pyright                                        # type check; CI fails on any error
 pytest tests/playwright/test_material_screenshots.py --no-cov  # write Material page PNGs to tests/playwright/screenshots/ -- look at them
 make ai-instructions                           # rebuild packaged AI-instruction files after editing their source
 ```
@@ -359,7 +360,8 @@ A feature without a working example is not done.
   failing and re-rendering on an example form: each Pydantic `Field`
   constraint (`min_length`, `max_length`, `ge`, `le`, `gt`, `lt`, `pattern`,
   `multiple_of`), `@field_validator`, `@model_validator`
-  (form-wide `_errors`), errors inside sub-forms and list items, each
+  (form-wide `_errors`), a required `Literal[True]` checkbox with
+  `unchecked_message`, errors inside sub-forms and list items, each
   built-in rule class in `validation.py` (`RequiredRule`, `MinLengthRule`,
   `MaxLengthRule`, `EmailRule`, `EmailDeliverabilityRule`, `PhoneRule`, `NumericRangeRule`,
   `DateRangeRule`, `RegexRule`, `CustomRule`) and a cross-field rule via
@@ -393,4 +395,4 @@ A feature without a working example is not done.
 - No docstrings on trivial methods.
 - No backwards-compatibility shims unless specifically requested.
 - Prefer editing existing files to creating new ones.
-- Run `pytest -n 2 --ignore=tests/playwright` before reporting a task done.
+- Run `pytest -n 2 --ignore=tests/playwright` and `pyright` before reporting a task done.
