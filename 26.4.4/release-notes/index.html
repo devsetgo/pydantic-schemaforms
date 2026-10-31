@@ -1,0 +1,6009 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Server-rendered HTML forms from Pydantic models: one model for the form, its validation and its data">
+      
+      
+        <meta name="author" content="Mike Ryan">
+      
+      
+      
+        <link rel="prev" href="../testing_workflow/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Release Notes - Pydantic SchemaForms</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Pydantic SchemaForms" class="md-header__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  <img src="../favicon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pydantic SchemaForms
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Release Notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorial/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorial - User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../advanced/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../recipes/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Recipes
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../alternatives/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Alternatives
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../about/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://pydantic-schemaforms.devsetgo.com/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Live Demo ↗
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Pydantic SchemaForms" class="md-nav__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  <img src="../favicon.png" alt="logo">
+
+    </a>
+    Pydantic SchemaForms
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tutorial/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial - User Guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial - User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/first-form/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Form
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/handling-submissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Handling Submissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fields and Inputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/nested-forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nested Forms and Lists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/styling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Styling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial/csrf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSRF Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../advanced/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced User Guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/live-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Validation (HTMX)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/rule-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rule-Based Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/data-tables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Tables (CSV Import)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/runtime-forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forms Built at Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/json-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON API and JSON Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets and Self-Contained Forms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/material/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material Design 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/timing-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Render Timing and Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/layout-primitives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Primitives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/plugin-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Hooks and Custom Composites
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/ai-instructions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Assistants and Agent Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../recipes/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recipes
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Recipes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/contact-form/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contact Form
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/login-registration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Login and Registration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/edit-form/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Edit Form from a Database Row
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/address-subform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shipping and Billing Addresses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/order-line-items/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order with Line Items
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/file-upload/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File Upload
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/wizard-application/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Step Application (Wizard)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/settings-code-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings with a Code Field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recipes/jinja-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding in a Jinja Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/field-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Field Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/validation-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/rendering-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../alternatives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alternatives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2644-2026-10-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.4.4] — 2026-10-31
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.4.4] — 2026-10-31">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2643-2026-10-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.4.3] — 2026-10-29
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.4.3] — 2026-10-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2641-2026-10-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.4.1] — 2026-10-12
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.4.1] — 2026-10-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2623-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.2.3] — 2026-06-28
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.2.3] — 2026-06-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2622-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.2.2] — 2026-06-28
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.2.2] — 2026-06-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2621-2026-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.2.1] — 2026-05-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.2.1] — 2026-05-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latest-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Latest Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Latest Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#support-for-python-315-2642" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support for Python 3.15 (26.4.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhancement-collapse-and-select-improvements-2637" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancement: Collapse and Select Improvements (26.3.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#browser-cache-bug-2636" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser Cache Bug (26.3.6)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fix-csv-import-2635" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fix: CSV Import (26.3.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhancement-csv-import-2634" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancement: CSV Import (26.3.4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhancements-to-json-output-and-new-input-types-2633" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancements to JSON output and new input types (26.3.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-input-types-and-bug-fixes-2632" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Input Types and Bug Fixes (26.3.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-actions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#america-250-release-adding-ai-help-instructions-and-clean-up-2631" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        America 250 Release: Adding AI Help Instructions and Clean Up. (26.3.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-actions_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#live-validation-fix-example-and-doc-updates-2624" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Validation Fix, Example, and Doc Updates (26.2.4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#csrf-feature-release-2621beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSRF Feature Release (26.2.1.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-external-validation-logic-2618beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing External Validation Logic (26.1.8.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fix-and-cleanup-2617beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fix and cleanup. (26.1.7.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#many-fixes-enhancements-and-increasing-code-coverage-2616beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Many fixes, enhancements, and increasing code coverage (26.1.6.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes-and-improvements-2612beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes and Improvements (26.1.2.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initial-beta-release-2611beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial Beta Release (26.1.1.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://pydantic-schemaforms.devsetgo.com/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Demo ↗
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2644-2026-10-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.4.4] — 2026-10-31
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.4.4] — 2026-10-31">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2643-2026-10-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.4.3] — 2026-10-29
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.4.3] — 2026-10-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2641-2026-10-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.4.1] — 2026-10-12
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.4.1] — 2026-10-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2623-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.2.3] — 2026-06-28
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.2.3] — 2026-06-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2622-2026-06-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.2.2] — 2026-06-28
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.2.2] — 2026-06-28">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2621-2026-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [26.2.1] — 2026-05-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[26.2.1] — 2026-05-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latest-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Latest Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Latest Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#production-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#support-for-python-315-2642" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support for Python 3.15 (26.4.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhancement-collapse-and-select-improvements-2637" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancement: Collapse and Select Improvements (26.3.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#browser-cache-bug-2636" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser Cache Bug (26.3.6)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fix-csv-import-2635" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fix: CSV Import (26.3.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhancement-csv-import-2634" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancement: CSV Import (26.3.4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhancements-to-json-output-and-new-input-types-2633" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancements to JSON output and new input types (26.3.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-input-types-and-bug-fixes-2632" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Input Types and Bug Fixes (26.3.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-actions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#america-250-release-adding-ai-help-instructions-and-clean-up-2631" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        America 250 Release: Adding AI Help Instructions and Clean Up. (26.3.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#github-actions_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#live-validation-fix-example-and-doc-updates-2624" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Validation Fix, Example, and Doc Updates (26.2.4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#csrf-feature-release-2621beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CSRF Feature Release (26.2.1.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-external-validation-logic-2618beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing External Validation Logic (26.1.8.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fix-and-cleanup-2617beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fix and cleanup. (26.1.7.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#many-fixes-enhancements-and-increasing-code-coverage-2616beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Many fixes, enhancements, and increasing code coverage (26.1.6.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes-and-improvements-2612beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes and Improvements (26.1.2.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initial-beta-release-2611beta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial Beta Release (26.1.1.beta)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changes_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bug-fixes_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>.</p>
+<p>Versions follow <strong>CalVer</strong>: <code>YY.Quarter.Build</code> — e.g. <code>26.2.1</code> = year 2026, quarter 2, build 1.
+Beta releases append <code>.beta</code> (e.g. <code>26.2.1.beta</code>); production releases have no suffix.</p>
+<h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="2644-2026-10-31">[26.4.4] — 2026-10-31<a class="headerlink" href="#2644-2026-10-31" title="Permanent link">&para;</a></h2>
+<p>The Material style is rebuilt on Material Design 3 and shares one rendering path
+with Bootstrap and plain HTML. A checkbox can now be required with <code>Literal[True]</code>.
+This is a breaking release for apps that customize Material forms.</p>
+<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>framework="material"</code> is rewritten on Material Design 3 and now renders
+  through the same path as Bootstrap and plain.</strong> Every input gets a Material
+  field: outlined with a floating label and a real notch, with error, disabled
+  and icon states. The CSS uses design tokens (<code>--md-sys-color-*</code>) and has no
+  <code>!important</code>. CSS written against the old Material markup needs updating. (#265)</li>
+<li><strong><code>MaterialEmbeddedTheme</code> is renamed <code>MaterialTheme</code>.</strong> Update any import or
+  subclass of it. (#265)</li>
+</ul>
+<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Star rating stars are now buttons in every style</strong>, in a <code>radiogroup</code> with
+  arrow-key support, so the widget works from the keyboard. The default
+  colors are darker, to meet contrast requirements. (#265)</li>
+</ul>
+<h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>Field(unchecked_message="...")</code> sets the error shown when a required checkbox
+  is left unticked. (#273)</li>
+<li>Radio <code>variant="segmented"</code> and checkbox group <code>variant="button_group"</code> now
+  ship their own CSS instead of leaving it to the app. (#265)</li>
+<li><code>docs/advanced/material.md</code> documents the Material style. (#265)</li>
+<li><code>material_variant="filled"</code> selects filled text fields (the default is
+  <code>"outlined"</code>). (#265)</li>
+<li>Opt-in dark mode for Bootstrap forms: under <code>data-bs-theme="dark"</code> the library's
+  widgets, tabs, accordion and wizard now follow Bootstrap's dark colors. (#265)</li>
+<li><code>--sf-*</code> CSS tokens re-color those same parts under Bootstrap. (#265)</li>
+<li>Opt-in dark scheme for Material: <code>data-md-theme="dark"</code> on the form or an
+  ancestor, or the page's <code>color-scheme</code>. (#265)</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A checkbox typed <code>Literal[True]</code> can now pass validation: ticking it used to
+  fail with "Input should be True". This is the way to require a box to be ticked,
+  such as accepting terms. (#273)</li>
+<li>Material forms now submit to the server and show every error at once, like
+  Bootstrap. They used to drop <code>novalidate</code>, so the browser stopped a single-page
+  form at its first invalid field. (#265)</li>
+<li>A model list item's title no longer goes through <code>innerHTML</code> as the user
+  types, so markup in a title field can't run in the page. (#265)</li>
+<li>Material: invalid fields now get a red outline, and textareas, radios,
+  multiselects, comboboxes and data tables are no longer unstyled. (#265)</li>
+</ul>
+<h3 id="removed">Removed<a class="headerlink" href="#removed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Materialize is no longer vendored or referenced.</strong> The Material style has
+  long used its own self-contained theme and never loaded Materialize, but the
+  package still shipped Materialize 1.0.0 (about 320 KB), a
+  <code>vendor-update-materialize</code> make target, and a Materialize config behind
+  <code>framework_css_tag</code>/<code>framework_js_tag</code>. They're gone: both functions now
+  return nothing for <code>"material"</code>, and <code>get_theme_for_framework("material")</code>
+  returns the Material theme the renderer actually uses. (#265)</li>
+</ul>
+<h2 id="2643-2026-10-29">[26.4.3] — 2026-10-29<a class="headerlink" href="#2643-2026-10-29" title="Permanent link">&para;</a></h2>
+<p><code>FormModel</code> is now the only way to build a form: the builder API, the
+prebuilt forms, <code>@form_validator</code> and the React/Vue adapters are removed.
+Five Agent Skills ship inside the package, and a long list of form bugs is
+fixed. This is a breaking release; see <code>docs/upgrading.md</code>.</p>
+<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>React and Vue adapters removed.</strong> <code>ReactJSONSchemaFormAdapter</code>,
+  <code>VueFormulateAdapter</code>, and their modules
+  (<code>integration.json_schema_form_adapter</code>, <code>integration.vue_formulate_adapter</code>,
+  and the <code>integration.react</code>/<code>integration.vue</code> shims) are deleted, along with
+  the React/Vue-only helpers <code>map_ui_element_to_framework</code> and
+  <code>convert_validation_rules</code>. They produced config blobs for client-side form
+  libraries, outside this library's server-rendered scope, and had no examples
+  or docs. For a JSON Schema of a form, use <code>FormModel.get_json_schema()</code>;
+  for a plain Pydantic model, use <code>FormModel.as_api_model()</code>. (#248)</li>
+<li><strong>The builder API is removed; <code>FormModel</code> is the only way to build a form.</strong>
+  <code>FormBuilder</code>, <code>AutoFormBuilder</code>, <code>create_form_from_model</code>,
+  <code>create_login_form</code>, <code>create_registration_form</code>, <code>create_contact_form</code>,
+  <code>render_form_page</code>, <code>FormIntegration</code>, <code>handle_form</code> and <code>handle_form_async</code>
+  are deleted, along with <code>ModernFormRenderer</code>, <code>FormDefinition</code> and
+  <code>FormSection</code> (which only existed to render builder forms) and the
+  <code>integration.builder</code>/<code>adapters</code>/<code>sync</code>/<code>async_support</code> modules. The builder
+  rendered through its own path, so it never got <code>layout=</code>, the wizard, nested
+  sub-forms, <code>model_list</code> or <code>DataTableLayout</code>. To upgrade: declare a
+  <code>FormModel</code> (or build one at runtime with Pydantic's
+  <code>create_model(..., __base__=FormModel)</code>), render it with <code>render_form_html()</code>
+  and handle submissions with <code>FormModel.validate()</code> and
+  <code>result.render_with_errors()</code>. See <code>docs/upgrading.md</code>. Importing any
+  removed name raises an <code>ImportError</code> that names its replacement. (#255)</li>
+<li><strong><code>@form_validator</code> is removed.</strong> It never ran: nothing called the methods
+  it decorated, so cross-field checks written with it were silently skipped.
+  Use Pydantic's <code>@model_validator(mode="after")</code> (its message lands in the
+  form-wide <code>_errors</code>) or <code>FormValidator.add_cross_field_rule</code>. (#254)</li>
+<li><strong><code>DataTableLayout</code> input names are namespaced by the embedding field.</strong>
+  Cells, the CSV file input and the Load/Submit buttons used to have fixed
+  names (<code>rows[i].col</code>, <code>csv_file</code>, <code>datatable_action</code>), so two tables on one
+  page overwrote each other. They are now named under the field the table is
+  embedded in (an <code>employees</code> field submits <code>employees.rows[i].col</code>,
+  <code>employees.csv_file</code>, <code>employees.datatable_action</code>), and the default table
+  id comes from the field name instead of the row model's class name.
+  <code>handle_import_post()</code> and <code>parse_submitted_rows()</code> find their table in the
+  submission themselves, so app code using them doesn't change. Code that
+  reads those form keys directly, or builds test submissions by hand, must use
+  the new names. When two tables share a row model, pass the new
+  <code>field=</code> argument to say which one to read. (#253)</li>
+</ul>
+<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Agent Skills ship inside the package.</strong> <code>uvx library-skills --claude</code>
+  installs five skills into an app project, linked to the installed version:
+  <code>pydantic-schemaforms</code> (build and fix forms, with references for inputs,
+  complex forms, validation, data tables, security, rendering and extending),
+  <code>schemaforms-create</code> (a new form from a description such as "create a login
+  form", commented like a tutorial), <code>schemaforms-convert</code> (from Pydantic,
+  dataclasses, JSON Schema, WTForms or Django), <code>schemaforms-upgrade</code> (from
+  removed APIs) and <code>schemaforms-document</code> (docstrings, help text and a
+  Markdown page for an app's forms). The single-file instructions from
+  <code>get_app_instructions()</code> and the CLI are now built from the same sources,
+  and their examples come from tested files. (#264)</li>
+<li><strong>Accessibility gate.</strong> The Playwright suite runs axe-core 4.14 against
+  WCAG 2.0, 2.1 and 2.2 A and AA rules plus axe best practices on every
+  example page under Bootstrap and Material, plus the validation page's error
+  state, and fails on any serious or critical violation. axe-core is vendored
+  for tests only (<code>tests/playwright/vendor/</code>, pinned by version and SHA-256);
+  it is not shipped in the package. What is tested, the baseline the inputs
+  meet, and what automated testing does not cover are in the new
+  <code>docs/reference/accessibility.md</code> page and the README. This is testing, not a claim of
+  ADA, Section 508 or WCAG conformance. (#246)</li>
+</ul>
+<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Two tabbed or accordion forms on one page no longer collide.</strong> Tab and
+  accordion ids were numbered from <code>tab-0</code>/<code>accordion-0</code> in every form, so
+  the second form's tabs and panels controlled the first form's. Each layout
+  now gets its own id prefix, and tab and accordion scripts only act inside
+  their own layout (which also stops an outer tab hiding a nested tabbed
+  sub-form). (#252)</li>
+<li><strong>Accordion fixes:</strong> under Bootstrap the open section rendered closed, and
+  under plain HTML and Material clicking a section header submitted the
+  form. (#252)</li>
+<li><strong>Invalid fields are announced.</strong> After a failed submit, a field's control
+  gets <code>aria-invalid="true"</code> and an <code>aria-describedby</code> pointing at its error
+  message, and at its help text whenever it has one, under Bootstrap,
+  Material and plain HTML. Help and error elements now carry matching
+  <code>&lt;id&gt;-help</code> / <code>&lt;id&gt;-error</code> ids. (#246)</li>
+<li><strong><code>DataTableLayout</code> cells have accessible names.</strong> Each editable cell gets
+  an <code>aria-label</code> such as "Email, row 3", since its column header is not a
+  <code>&lt;label&gt;</code>. (#246)</li>
+<li><strong>The tags input's label names its text box.</strong> The visible text box now
+  takes the field's id, so <code>&lt;label for=...&gt;</code> points at it, and it receives
+  the <code>aria-*</code> wiring above. (#246)</li>
+<li><strong>The code editor's highlight layer no longer takes keyboard focus.</strong> It is
+  <code>aria-hidden</code>, but Prism made it tabbable. (#246)</li>
+<li><strong>Contrast meets WCAG AA (4.5:1)</strong> for tag chips, the code editor's
+  property/tag syntax color and the "Rendered in" timing line. (#246)</li>
+<li><strong>The date picker toggle is a 24×24 px target</strong> (WCAG 2.2 target size). (#246)</li>
+<li><strong>Inputs are inferred from more field types.</strong> Without a <code>ui_element</code>,
+  <code>date</code>, <code>datetime</code>, <code>time</code>, <code>EmailStr</code> and <code>AnyUrl</code> fields render as date,
+  datetime-local, time, email and URL inputs; <code>Enum</code> and <code>Literal</code> fields render
+  as a select with their values; and a <code>list</code> of either renders as a
+  multiselect. <code>Optional</code> fields keep their input type instead of falling back
+  to a text box. Previously an <code>Enum</code> field rendered an empty section (or a
+  select with no options), so its choices had to be built by hand. (#258)</li>
+<li><strong>A fresh form shows the model's defaults.</strong> When no <code>form_data</code> is
+  passed, every field starts at its default (an <code>int = 1</code> shows 1, an Enum or
+  <code>Literal</code> default is selected, a <code>bool = True</code> checkbox is ticked,
+  <code>default_factory</code> values included). Passed data, such as a submission being
+  re-rendered or an edit form, is still used as is. Previously defaults were
+  never rendered, so they had to be passed in <code>form_data</code> by hand. (#258)</li>
+<li><strong>Validator messages are shown as written.</strong> A <code>ValueError</code> raised in a
+  <code>@field_validator</code> or <code>@model_validator</code> shows its own message, without
+  Pydantic's "Value error, " prefix. (#258)</li>
+<li><strong>Optional selects can be left empty.</strong> An <code>Optional</code> select gets an empty
+  first choice, and submitting it validates to <code>None</code>, including for
+  <code>str</code>-based enums. (#258)</li>
+<li><strong>An <code>Enum</code> field keeps its title</strong> when it matches the Enum class's name
+  (<code>Field(title="Size")</code> on a <code>Size</code> enum), including inside list items; it
+  used to fall back to the field name. (#258)</li>
+<li><strong>Material renders datetime fields as <code>datetime-local</code></strong>, not the invalid
+  <code>datetime</code> input type. (#258)</li>
+<li><strong>Pre-filling an <code>Enum</code> field selects its option.</strong> <code>form_data</code> holding an
+  Enum member, as a database row or <code>model_dump()</code> does, used to leave the
+  select (or radio) with nothing chosen. (#258)</li>
+<li><strong>A checkbox that defaults to <code>True</code> can be unticked.</strong> An unticked
+  checkbox sends nothing, so <code>validate()</code> used to fill in the default and
+  return <code>True</code>. In a form submission, a missing checkbox that has a default
+  is now <code>False</code>; one without a default is still required, and nested JSON
+  that omits it still gets the default. (#258)</li>
+<li><strong>An optional sub-form (<code>Address | None</code>) can be left empty.</strong> Its inputs
+  are no longer <code>required</code>, and when every one of them is blank or still at
+  its default, <code>validate()</code> returns <code>None</code> for it instead of field errors.
+  (#258)</li>
+<li><strong>A <code>currency</code> input works on a <code>Decimal</code>, <code>float</code> or <code>int</code> field.</strong> The
+  input formats what is typed as <code>$1,234.50</code>, which used to fail validation
+  as "Input should be a valid decimal". In a form submission the symbol and
+  thousands separators are now stripped first. (#258)</li>
+<li><strong>A <code>float</code> field accepts decimals in the browser.</strong> Number inputs always
+  had <code>step="1"</code>, so the browser refused 39.50. A <code>float</code> field now gets
+  <code>step="any"</code>, and <code>multiple_of</code> sets the step. (#258)</li>
+<li><strong>Material inputs carry the field's constraints.</strong> <code>min_length</code>,
+  <code>max_length</code>, <code>ge</code>, <code>le</code> and <code>pattern</code> now become <code>minlength</code>, <code>maxlength</code>,
+  <code>min</code>, <code>max</code> and <code>pattern</code> attributes under Material too, as they already
+  did under Bootstrap and plain HTML. (#258)</li>
+<li><strong><code>MinLengthRule</code> skips an empty value</strong>, like every other rule except
+  <code>RequiredRule</code> and like its own client-side check. It used to reject <code>""</code>,
+  so an optional field with a minimum length couldn't be left blank. (#258)</li>
+</ul>
+<h2 id="2641-2026-10-12">[26.4.1] — 2026-10-12<a class="headerlink" href="#2641-2026-10-12" title="Permanent link">&para;</a></h2>
+<p>Complex forms are now built one way: nest <code>FormModel</code>s as fields of a parent
+<code>FormModel</code> and pick a <code>layout=</code>. Data in and out is nested JSON. This is a
+breaking release; see <code>docs/upgrading.md</code>.</p>
+<h3 id="breaking-changes_2">Breaking Changes<a class="headerlink" href="#breaking-changes_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Form-orchestration classes removed.</strong> <code>TabbedLayout</code>, <code>ListLayout</code>,
+  <code>SectionDesign</code>, <code>FormDesign</code>, <code>FormLayoutBase</code>, and the <code>form_layouts</code>
+  <code>VerticalLayout</code>/<code>HorizontalLayout</code> wrappers now raise
+  <code>FormLayoutRemovedError</code> (a <code>TypeError</code>) when subclassed or called. The
+  message contains the upgrade steps and points to the new "Upgrading to
+  nested forms" section of the AI instructions.</li>
+<li><strong>Top-level <code>VerticalLayout</code>/<code>HorizontalLayout</code></strong> now name the flex layout
+  primitives from <code>rendering/layout_engine.py</code>, which the removed wrappers
+  used to shadow.</li>
+<li><strong><code>pydantic_schemaforms.layouts</code></strong> (the deprecated re-export shim) is deleted.</li>
+<li><strong><code>FormModel.validate(flatten=...)</code> removed.</strong> <code>result.data</code> is always nested
+  like the model. Passing <code>flatten</code> raises a <code>TypeError</code> explaining this.</li>
+<li><strong><code>ValidationResult.errors</code> is a nested error tree</strong> shaped like the data
+  (<code>errors["pets"][1]["name"]</code>) instead of string-path keys
+  (<code>errors["pets[1].name"]</code>). Container and form-wide messages use the
+  reserved <code>"_errors"</code> key instead of <code>"general"</code>.</li>
+<li><strong><code>layout="tabbed"</code>/<code>"side-by-side"</code> group sub-forms.</strong> The field-name
+  keyword heuristic and the two-fields-per-row pairing are gone; on a form
+  with no sub-form fields these layouts raise <code>ValueError</code>. Several
+  <code>input_type="layout"</code> fields no longer auto-render as tabs; pass
+  <code>layout="tabbed"</code>.</li>
+<li><strong>Unknown <code>layout=</code> values raise <code>ValueError</code></strong> instead of rendering vertically.</li>
+<li><strong>Non-validation exceptions propagate from <code>validate()</code></strong> instead of being
+  shown on the form as <code>errors["general"]</code>.</li>
+<li><strong>Renderer internals:</strong> <code>RenderContext.all_errors</code> is replaced by
+  <code>child_errors</code> (the field's own error sub-tree), and <code>render_field()</code> takes
+  the field's error node as <code>error</code> with no <code>all_errors</code> argument.
+  <code>get_nested_form_data</code>, <code>EnhancedFormRenderer._humanize_error_field</code>, and
+  <code>FieldRenderer.extract_nested_errors_for_field</code> are removed.</li>
+<li><strong><code>handle_form</code>/<code>handle_form_async</code> with a model</strong> return nested data and a
+  nested error tree. <code>FormValidator.validate_pydantic_model()</code> (which kept
+  only the first segment of each error path) is removed.</li>
+</ul>
+<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Sub-form fields.</strong> A field typed as another <code>FormModel</code> (or <code>Optional</code> of
+  one) renders as a titled section with inputs named <code>address.city</code>, with no
+  <code>ui_element</code> needed. <code>ui_collapsible</code>/<code>ui_collapsed</code> render it as a
+  <code>&lt;details&gt;</code> section that opens when it holds an error.</li>
+<li><strong>Grouped layouts:</strong> <code>layout="tabbed"</code>, <code>"side-by-side"</code>, and the new
+  <code>"accordion"</code> arrange the parent's plain fields plus one group per sub-form,
+  in declaration order (<code>ui_order</code> overrides). Re-rendering after a failed
+  submit opens the first group that contains an error.</li>
+<li><strong>Step wizard:</strong> <code>layout="wizard"</code> shows the same groups one step at a time
+  with a progress header and Back/Next. All steps are in one <code>&lt;form&gt;</code>, so one
+  POST submits everything. Next runs the browser's validation on the current
+  step; a re-render opens the first step with an error and marks the others.
+  Options: <code>wizard_options={"linear", "show_progress", "back_label",
+  "next_label"}</code> and <code>Field(ui_step_title=...)</code>. Without JavaScript all steps
+  show stacked.</li>
+<li><strong>Examples cover every layout, input, and validation</strong>, enforced by
+  <code>tests/test_examples_coverage.py</code> and a browser test that loads every
+  example page: the widget gallery shows every input type and alias with each
+  of its options plus field-level options (<code>ui_disabled</code>, <code>ui_readonly</code>,
+  <code>icon</code>, ...); <code>/validation</code> shows every Pydantic constraint, validator, rule
+  class, and a cross-field rule failing on one form; <code>/layouts</code> takes the
+  wizard options as query parameters; <code>/employees/directory</code> shows the
+  read-only <code>DataTableLayout</code> options.</li>
+<li><strong><code>validate()</code> takes the raw request form</strong> (Starlette <code>FormData</code>, Werkzeug
+  <code>MultiDict</code>, <code>(name, value)</code> pairs) as well as nested dicts, keeping
+  repeated values as lists. <code>render_form_html(form_data=...)</code> accepts the same.</li>
+<li><strong><code>render_with_errors(errors=...)</code></strong> re-renders with a different error tree, e.g.
+  the result's own errors merged with a rule-based <code>FormValidator</code>'s.</li>
+<li><strong>AI instructions</strong> now list every <code>ui_options</code> key per widget with its default,
+  every field-level option, the rule classes and cross-field rules, the
+  <code>FormModel</code>/<code>ValidationResult</code> API, every render option, and the asset helpers.</li>
+<li><strong><code>ValidationResult.error_list()</code></strong> (flat <code>[{"loc": [...], "msg": ...}]</code>) and
+  <strong><code>ValidationResult.instance</code></strong> (the validated model).</li>
+<li><strong><code>list[FormModel]</code> fields render as repeating sub-forms</strong> without
+  <code>ui_element="model_list"</code>.</li>
+<li><strong><code>LiveValidator.register_model_validator()</code></strong> registers sub-form and
+  list-item fields under their input names (<code>address.city</code>, <code>pets[].name</code>).</li>
+<li><strong><code>validate_form_data</code></strong> is exported from the top-level package, as the
+  validation guide already documented.</li>
+<li><strong><code>docs/complex_forms.md</code></strong>, a guide to composing forms and upgrading.</li>
+</ul>
+<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Decoding a submission compacts list indices instead of padding gaps with
+  <code>None</code>: <code>pets[0]</code> and <code>pets[2]</code> decode to a two-item list, so an item removed
+  without re-indexing still validates, and one field named like
+  <code>pets[500000000].name</code> no longer makes the server allocate a list that long.</li>
+<li><code>validation_response_headers</code>, <code>wrap_with_schemaforms_markers</code>,
+  <code>read_asset_text</code>, <code>bootstrap_icons_css_content</code> and <code>bootstrap_icons_css_tag</code>
+  are exported from the top-level package; the docs and examples imported them
+  from internal modules.</li>
+<li>Removing every item of a repeating sub-form now fails its <code>min_length</code>
+  instead of passing as the field's default (form submissions only; nested
+  JSON that omits the key still gets the default).</li>
+<li>Under <code>layout="tabbed"</code>/<code>"accordion"</code>/<code>"wizard"</code>, Material forms no longer
+  let the browser block submission on a required input in a hidden group with
+  no visible message; the server re-renders with that group open.</li>
+<li>A layout field's <code>default_factory</code> that raises is no longer silently
+  swallowed (the table rendered empty); the error propagates.</li>
+<li><code>radio</code> and <code>checkbox_group</code> never showed the current value: a re-rendered
+  form lost the user's choices. A <code>combobox</code> lost its value the same way.</li>
+<li>A field declared <code>ui_element="hidden"</code> rendered a visible label (only
+  <code>ui_hidden=True</code> produced a bare hidden input).</li>
+<li>Custom <code>date_format</code>/<code>time_format</code>/<code>datetime_format</code> were not applied to ISO
+  string values (JSON data), which showed as <code>2024-06-15</code> instead of the format.</li>
+<li>The file input's preview script failed to parse (a <code>#</code> comment in
+  JavaScript), so no preview appeared; it now shows file names as text, never
+  as markup.</li>
+<li>Material: the colour picker's hex readout (<code>show_value</code>) was missing, and a
+  <code>select</code> with a placeholder had its label overlapping the placeholder text.</li>
+<li>Switching tabs left the <code>active</code> class on the first panel.</li>
+<li><code>Field(icon=...)</code>, like other non-Pydantic keywords, was silently dropped
+  when any <code>ui_*</code> option was also passed.</li>
+<li>Material forms' inline script failed to parse (a <code>#</code> comment in
+  JavaScript), so its floating-label and field enhancements never ran.</li>
+<li><code>Field()</code> silently dropped any <code>ui_*</code> option it doesn't name as a parameter
+  (such as <code>ui_collapsible</code>) when another <code>ui_*</code> option like <code>ui_help_text</code> was
+  also passed. All <code>ui_*</code> options are now kept.</li>
+<li>Validation errors now reach fields inside sub-forms and are namespaced per
+  sub-form, so two sub-forms with the same field name no longer collide.</li>
+<li>Library code no longer imports from the <code>examples/</code> package or hard-codes
+  the demo app's field names.</li>
+<li><code>DataTableLayout.parse_submitted_rows()</code> no longer turns cell values like
+  <code>"1"</code> or <code>"yes"</code> into booleans before validation.</li>
+<li>The documented <code>FormConfig</code>/<code>TabbedLayout((...))</code> and
+  <code>HorizontalLayout(label_cols=...)</code> recipes, which never worked, are replaced.</li>
+<li>Several documentation examples that interpolated submitted values into
+  HTML with f-strings now use <code>html(t"...")</code>.</li>
+</ul>
+<hr />
+<h2 id="2623-2026-06-28">[26.2.3] — 2026-06-28<a class="headerlink" href="#2623-2026-06-28" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_3">Fixed<a class="headerlink" href="#fixed_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>LiveValidator.register_model_validator</code> partial-validation bug</strong> — previously called
+  <code>model_class.model_validate({field: value})</code> with only one field's data; if the model
+  had other required fields, Pydantic raised <code>ValidationError</code> for them, causing all
+  unrelated fields to produce <code>is_valid=False</code> with no errors even when the value was valid.
+  Now uses <code>__pydantic_validator__.validate_assignment(model_construct(), field_name, value)</code>
+  to validate each field in isolation, independent of sibling required fields.</p>
+</li>
+<li>
+<p><strong><code>LiveValidator.render_field_with_live_validation</code> single-trigger limitation</strong> — the
+  <code>if/elif/elif</code> chain for <code>validate_on_blur</code> / <code>validate_on_input</code> / <code>validate_on_change</code>
+  silently dropped every trigger after the first truthy one. Changed to independent <code>if</code>
+  checks so all enabled triggers combine into a single <code>hx-trigger</code> attribute
+  (e.g. <code>hx-trigger="blur, change"</code> when both are <code>True</code>).</p>
+</li>
+</ul>
+<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Live-validation example</strong> — <code>GET /live-validation</code> demo route in the FastAPI example
+  app shows a contact form with per-field HTMX validation on blur. Includes
+  <code>POST /validate/{field_name}</code> HTMX endpoint using <code>validation_response_headers()</code> and
+  <code>GET /vendor/htmx.min.js</code> to serve the vendored HTMX asset.</li>
+</ul>
+<hr />
+<h2 id="2622-2026-06-28">[26.2.2] — 2026-06-28<a class="headerlink" href="#2622-2026-06-28" title="Permanent link">&para;</a></h2>
+<h3 id="added_4">Added<a class="headerlink" href="#added_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>FormModel.as_api_model()</code></strong> — new class method that returns a pure Pydantic <code>BaseModel</code>
+  with <code>ui_*</code> rendering metadata stripped from <code>json_schema_extra</code>. Allows the same model
+  class to serve both as an HTML form and as a typed FastAPI body / <code>response_model</code> without
+  <code>ui_element</code>, <code>ui_placeholder</code>, etc. appearing in the OpenAPI/Swagger docs.
+  <code>Field(title=...)</code>, <code>Field(examples=[...])</code>, descriptions, and all validation constraints
+  (<code>min_length</code>, <code>ge</code>, <code>pattern</code>, …) are fully preserved. Result is cached per subclass and
+  safe to assign at module level (<code>ContactSchema = ContactForm.as_api_model()</code>).</li>
+</ul>
+<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Reduced SonarCloud code smells: extracted duplicate magic strings to named constants,
+  prefixed unused parameters with <code>_</code>, renamed methods that shadowed class attributes,
+  and merged nested <code>if</code> statements into compound conditions across multiple modules.</li>
+</ul>
+<hr />
+<h2 id="2621-2026-05-17">[26.2.1] — 2026-05-17<a class="headerlink" href="#2621-2026-05-17" title="Permanent link">&para;</a></h2>
+<p>First production release. All public Quick Start code paths verified working end-to-end.</p>
+<h3 id="breaking-changes_3">Breaking Changes<a class="headerlink" href="#breaking-changes_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>submit_url</code> is now explicit across public form render APIs and no longer defaults silently.
+  Calls that omit <code>submit_url</code> raise a clear <code>ValueError</code>, enforcing app-owned routing boundaries.</li>
+</ul>
+<h3 id="added_5">Added<a class="headerlink" href="#added_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>HTMX live validation</strong> — <code>LiveValidator</code>, <code>HTMXValidationConfig</code>, and <code>validation_response_headers()</code>
+  provide server-side field validation triggered by blur/input events via HTMX without page reloads.</li>
+<li><strong>Branch coverage</strong> — <code>branch = true</code> added to coverage configuration for deeper test quality.</li>
+<li><strong>HTML structural validation</strong> — <code>tests/test_html_structural.py</code> validates tag balance across all
+  frameworks and field types.</li>
+<li><strong>HTTP integration tests</strong> — FastAPI <code>TestClient</code> and Flask <code>test_client</code> round-trip tests.</li>
+<li><strong>Property-based tests</strong> — Hypothesis suite covering arbitrary field names, labels, and frameworks.</li>
+<li><strong>Performance benchmarks</strong> — <code>pytest-benchmark</code> suite for small, medium, and large form rendering.</li>
+<li><strong>Playwright browser tests</strong> — End-to-end HTMX validation tests against a live FastAPI server
+  (<code>tests/playwright/</code>), running in CI on Chromium.</li>
+<li><strong>macOS in CI matrix</strong> — Tests now run on ubuntu-latest, windows-latest, and macos-latest.</li>
+<li><code>py.typed</code> marker for PEP 561 compatibility.</li>
+<li>Vendored assets (htmx, Bootstrap, Materialize, iMask) with sha256 manifest verification.</li>
+<li><code>.gitattributes</code> forcing LF line endings on vendored assets for cross-platform checksum stability.</li>
+</ul>
+<h3 id="fixed_4">Fixed<a class="headerlink" href="#fixed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>create_form_from_model</code> crashed with any Pydantic model</strong> — <code>AutoFormBuilder._build_from_model</code>
+  used the wrong parameter name (<code>default_value</code> instead of <code>value</code>) and compared against <code>...</code>
+  instead of <code>PydanticUndefined</code>; the sentinel leaked into <code>json_schema_extra</code>, causing
+  <code>PydanticSerializationError</code> on every render call.</li>
+<li>Windows path separator in test assertion caused CI failure on win32.</li>
+<li>Dependabot config used unsupported <code>interval: "cron"</code> — silently ignored, causing weekly runs.
+  Replaced with <code>interval: "monthly"</code>.</li>
+<li>HTMX live validation JS used <code>JSON.parse(responseText)</code> on HTML responses; replaced with
+  the idiomatic <code>HX-Trigger: validationResult</code> header pattern so CSS classes are applied correctly.</li>
+<li><code>except A, B:</code> tuple syntax preserved via <code># fmt: skip</code> to prevent ruff from removing parentheses
+  that pyright requires.</li>
+</ul>
+<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Layout rendering internals refactored for maintainability and reduced cognitive complexity.</li>
+<li>Reliability and maintainability improvements to satisfy SonarCloud quality gate.</li>
+<li>Improved nested/collapsible form behavior when multiple forms are rendered on a page.</li>
+<li>Pre-commit ruff version pinned to match <code>requirements.txt</code> to eliminate local/CI formatting drift.</li>
+<li>Pyright added to <code>make tests</code> so type errors surface before commit.</li>
+</ul>
+<h3 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>fastapi[all]</code>: <code>0.121.2</code> → <code>0.128.4</code></li>
+<li><code>ruff</code>: <code>0.14.14</code> → <code>0.15.0</code></li>
+<li><code>tqdm</code>: <code>4.67.1</code> → <code>4.67.3</code></li>
+<li><code>pytest-html</code>: <code>4.1.1</code> → <code>4.2.0</code></li>
+<li><code>packaging</code>: <code>25.0</code> → <code>26.0</code></li>
+<li><code>black</code>: <code>25.12.0</code> → <code>26.1.0</code></li>
+<li><code>mkdocstrings[python]</code>: <code>1.0.0</code> → <code>1.0.1</code></li>
+<li><code>pymdown-extensions</code>: <code>10.20</code> → <code>10.20.1</code></li>
+</ul>
+<h2 id="latest-changes">Latest Changes<a class="headerlink" href="#latest-changes" title="Permanent link">&para;</a></h2>
+<h4 id="production-releases">Production Releases<a class="headerlink" href="#production-releases" title="Permanent link">&para;</a></h4>
+<h3 id="support-for-python-315-2642"><span style='color:blue'>Support for Python 3.15</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.4.2">26.4.2</a>)<a class="headerlink" href="#support-for-python-315-2642" title="Permanent link">&para;</a></h3>
+<h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Test: Update Coverage XML Timestamp (#231) (@devsetgo)</li>
+</ul>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Documentation: Clarify Python Requirement, Asset Modes, Examples, and Testing Workflow (#234) (@devsetgo)</li>
+<li>Documentation: Remove Stale 26.4.1 Release-Notes Draft From Repo Root (#232) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance">Maintenance<a class="headerlink" href="#maintenance" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Chore: Bump Version To 26.4.2 For Python 3.15 Support (#233) (@devsetgo)</li>
+<li>Documentation: Remove Stale 26.4.1 Release-Notes Draft From Repo Root (#232) (@devsetgo)</li>
+</ul>
+<h2 id="contributors">Contributors<a class="headerlink" href="#contributors" title="Permanent link">&para;</a></h2>
+<p>@devsetgo</p>
+<p>Published Date: 2026 October 24, 21:09</p>
+<h3 id="enhancement-collapse-and-select-improvements-2637"><span style='color:blue'>Enhancement: Collapse and Select Improvements</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.7">26.3.7</a>)<a class="headerlink" href="#enhancement-collapse-and-select-improvements-2637" title="Permanent link">&para;</a></h3>
+<h2 id="changes_1">Changes<a class="headerlink" href="#changes_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Update project dependencies and configurations (#219) (@devsetgo)</li>
+</ul>
+<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)</li>
+<li>Add optional forced-selection placeholder to select dropdowns (#220) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Expand and improve AI assistant app-building instructions (#218) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_1">Documentation<a class="headerlink" href="#documentation_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Bump version to 26.3.7 (#223) (@devsetgo)</li>
+<li>Dev (#222) (@devsetgo)</li>
+<li>Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_1">Maintenance<a class="headerlink" href="#maintenance_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Bump version to 26.3.7 (#223) (@devsetgo)</li>
+<li>Dev (#222) (@devsetgo)</li>
+<li>Add collapsible option groups and menu order example for checkboxes/radios (#221) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_1">Contributors<a class="headerlink" href="#contributors_1" title="Permanent link">&para;</a></h2>
+<p>@devsetgo and @claude</p>
+<p>Published Date: 2026 August 29, 22:05</p>
+<h3 id="browser-cache-bug-2636"><span style='color:blue'>Browser Cache Bug</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.6">26.3.6</a>)<a class="headerlink" href="#browser-cache-bug-2636" title="Permanent link">&para;</a></h3>
+<h2 id="changes_2">Changes<a class="headerlink" href="#changes_2" title="Permanent link">&para;</a></h2>
+<h2 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Reset CSV import page to blank state on each new visit (#216) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_2">Documentation<a class="headerlink" href="#documentation_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Reset CSV import page to blank state on each new visit (#216) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_2">Maintenance<a class="headerlink" href="#maintenance_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Reset CSV import page to blank state on each new visit (#216) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_2">Contributors<a class="headerlink" href="#contributors_2" title="Permanent link">&para;</a></h2>
+<p>@devsetgo and @claude</p>
+<p>Published Date: 2026 August 23, 21:17</p>
+<h3 id="bug-fix-csv-import-2635"><span style='color:blue'>Bug Fix: CSV Import</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.5">26.3.5</a>)<a class="headerlink" href="#bug-fix-csv-import-2635" title="Permanent link">&para;</a></h3>
+<h2 id="changes_3">Changes<a class="headerlink" href="#changes_3" title="Permanent link">&para;</a></h2>
+<h2 id="bug-fixes_2">Bug Fixes<a class="headerlink" href="#bug-fixes_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix DataTableLayout to submit all pages during large data imports (#215) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_3">Documentation<a class="headerlink" href="#documentation_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix DataTableLayout to submit all pages during large data imports (#215) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_3">Maintenance<a class="headerlink" href="#maintenance_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix DataTableLayout to submit all pages during large data imports (#215) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_3">Contributors<a class="headerlink" href="#contributors_3" title="Permanent link">&para;</a></h2>
+<p>@devsetgo and @claude</p>
+<p>Published Date: 2026 August 23, 20:54</p>
+<h3 id="enhancement-csv-import-2634"><span style='color:blue'>Enhancement: CSV Import</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.4">26.3.4</a>)<a class="headerlink" href="#enhancement-csv-import-2634" title="Permanent link">&para;</a></h3>
+<h2 id="changes_4">Changes<a class="headerlink" href="#changes_4" title="Permanent link">&para;</a></h2>
+<h2 id="documentation_4">Documentation<a class="headerlink" href="#documentation_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Deep documentation pass across library, examples, and docs (#213) (@devsetgo)</li>
+<li>Add DataTableLayout composite control for CSV import to table (#212) (@devsetgo)</li>
+<li>Demo Application and MonoRepo (#207) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_4">Maintenance<a class="headerlink" href="#maintenance_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Bump of Version to 26.3.4 (#214) (@devsetgo)</li>
+<li>Deep documentation pass across library, examples, and docs (#213) (@devsetgo)</li>
+<li>Add DataTableLayout composite control for CSV import to table (#212) (@devsetgo)</li>
+<li>Demo Application and MonoRepo (#207) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_4">Contributors<a class="headerlink" href="#contributors_4" title="Permanent link">&para;</a></h2>
+<p>@devsetgo and @claude</p>
+<p>Published Date: 2026 August 23, 19:08</p>
+<h3 id="enhancements-to-json-output-and-new-input-types-2633"><span style='color:blue'>Enhancements to JSON output and new input types</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.3">26.3.3</a>)<a class="headerlink" href="#enhancements-to-json-output-and-new-input-types-2633" title="Permanent link">&para;</a></h3>
+<h2 id="changes_5">Changes<a class="headerlink" href="#changes_5" title="Permanent link">&para;</a></h2>
+<h2 id="features_1">Features<a class="headerlink" href="#features_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix register_input_class registry and expand AI-assistant instructions (#202) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_5">Documentation<a class="headerlink" href="#documentation_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Add code/data mode to TextArea: format + optional syntax highlighting (#205) (@devsetgo)</li>
+<li>Refactoring Live Validation to Simplify (#204) (@devsetgo)</li>
+<li>Add option for DNS and MX email deliverability validation (#203) (@devsetgo)</li>
+<li>Fix register_input_class registry and expand AI-assistant instructions (#202) (@devsetgo)</li>
+<li>187 enhance date datetime and time (#192) (@devsetgo)</li>
+<li>189 enhancement json schema model output (#191) (@devsetgo)</li>
+<li>Dev (#185) (@devsetgo)</li>
+</ul>
+<h2 id="github-actions">GitHub Actions<a class="headerlink" href="#github-actions" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Refactoring Live Validation to Simplify (#204) (@devsetgo)</li>
+<li>github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.2.0 to 8.2.1 (#193) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/labeler from 6 to 7 (#194) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump release-drafter/release-drafter from 7.5.1 to 7.7.0 (#195) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/setup-python from 6 to 7 (#196) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>Dev (#185) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_5">Maintenance<a class="headerlink" href="#maintenance_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Bump version to 26.3.3 (#206) (@devsetgo)</li>
+<li>Add code/data mode to TextArea: format + optional syntax highlighting (#205) (@devsetgo)</li>
+<li>Refactoring Live Validation to Simplify (#204) (@devsetgo)</li>
+<li>Add option for DNS and MX email deliverability validation (#203) (@devsetgo)</li>
+<li>Fix register_input_class registry and expand AI-assistant instructions (#202) (@devsetgo)</li>
+<li>github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.2.0 to 8.2.1 (#193) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/labeler from 6 to 7 (#194) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump release-drafter/release-drafter from 7.5.1 to 7.7.0 (#195) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/setup-python from 6 to 7 (#196) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>187 enhance date datetime and time (#192) (@devsetgo)</li>
+<li>pip(deps): bump pymdown-extensions from 11.0 to 11.0.1 (#201) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump hatchling from 1.30.1 to 1.31.0 (#200) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>189 enhancement json schema model output (#191) (@devsetgo)</li>
+<li>Dev (#185) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_5">Contributors<a class="headerlink" href="#contributors_5" title="Permanent link">&para;</a></h2>
+<p>@devsetgo, <a href="https://github.com/apps/dependabot">@dependabot[bot]</a> and @claude</p>
+<p>Published Date: 2026 August 07, 21:33</p>
+<h3 id="new-input-types-and-bug-fixes-2632"><span style='color:blue'>New Input Types and Bug Fixes</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.2">26.3.2</a>)<a class="headerlink" href="#new-input-types-and-bug-fixes-2632" title="Permanent link">&para;</a></h3>
+<h2 id="changes_6">Changes<a class="headerlink" href="#changes_6" title="Permanent link">&para;</a></h2>
+<h2 id="bug-fixes_3">Bug Fixes<a class="headerlink" href="#bug-fixes_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Feature: Fix ui_element registry collisions; expand AI assistant docs with a verified example (#180) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_6">Documentation<a class="headerlink" href="#documentation_6" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Dev (#183) (@devsetgo)</li>
+<li>Add Tier-2 input widgets and Widget Gallery example, fix Material bugs (#181) (@devsetgo)</li>
+<li>Feature: Fix ui_element registry collisions; expand AI assistant docs with a verified example (#180) (@devsetgo)</li>
+</ul>
+<h2 id="github-actions_1">GitHub Actions<a class="headerlink" href="#github-actions_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.1.0 to 8.2.0 (#172) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/checkout from 5 to 7 (#169) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump release-drafter/release-drafter from 7.3.1 to 7.5.1 (#170) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+</ul>
+<h2 id="maintenance_6">Maintenance<a class="headerlink" href="#maintenance_6" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Dev (#183) (@devsetgo)</li>
+<li>Dev (#182) (@devsetgo)</li>
+<li>Add Tier-2 input widgets and Widget Gallery example, fix Material bugs (#181) (@devsetgo)</li>
+<li>Feature: Fix ui_element registry collisions; expand AI assistant docs with a verified example (#180) (@devsetgo)</li>
+<li>github-actions(deps): bump SonarSource/sonarqube-scan-action from 8.1.0 to 8.2.0 (#172) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pytest-asyncio from 1.3.0 to 1.4.0 (#173) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump fastapi from 0.138.1 to 0.139.0 (#171) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pytest from 9.0.3 to 9.1.1 (#174) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/checkout from 5 to 7 (#169) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump release-drafter/release-drafter from 7.3.1 to 7.5.1 (#170) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+</ul>
+<h2 id="contributors_6">Contributors<a class="headerlink" href="#contributors_6" title="Permanent link">&para;</a></h2>
+<p>@dependabot[bot], @devsetgo and <a href="https://github.com/apps/dependabot">dependabot[bot]</a></p>
+<p>Published Date: 2026 July 19, 18:46</p>
+<h3 id="america-250-release-adding-ai-help-instructions-and-clean-up-2631"><span style='color:blue'>America 250 Release: Adding AI Help Instructions and Clean Up.</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.1">26.3.1</a>)<a class="headerlink" href="#america-250-release-adding-ai-help-instructions-and-clean-up-2631" title="Permanent link">&para;</a></h3>
+<h2 id="changes_7">Changes<a class="headerlink" href="#changes_7" title="Permanent link">&para;</a></h2>
+<p>Happy 250th Birthday USA!!!!</p>
+<h2 id="features_2">Features<a class="headerlink" href="#features_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)</li>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes_4">Bug Fixes<a class="headerlink" href="#bug-fixes_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_7">Documentation<a class="headerlink" href="#documentation_7" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)</li>
+<li>Documentation Fix (#168) (@devsetgo)</li>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+<li>Production Release - Final Edits (#166) (@devsetgo)</li>
+</ul>
+<h2 id="github-actions_2">GitHub Actions<a class="headerlink" href="#github-actions_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)</li>
+<li>Documentation Fix (#168) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_7">Maintenance<a class="headerlink" href="#maintenance_7" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enhancement: Adding AI Helper Documentation (#177) (@devsetgo)</li>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+<li>Production Release - Final Edits (#166) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_7">Contributors<a class="headerlink" href="#contributors_7" title="Permanent link">&para;</a></h2>
+<p>@devsetgo</p>
+<p>Published Date: 2026 July 03, 23:12</p>
+<h3 id="live-validation-fix-example-and-doc-updates-2624"><span style='color:blue'>Live Validation Fix, Example, and Doc Updates</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.4">26.2.4</a>)<a class="headerlink" href="#live-validation-fix-example-and-doc-updates-2624" title="Permanent link">&para;</a></h3>
+<h2 id="changes_8">Changes<a class="headerlink" href="#changes_8" title="Permanent link">&para;</a></h2>
+<h2 id="features_3">Features<a class="headerlink" href="#features_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes_5">Bug Fixes<a class="headerlink" href="#bug-fixes_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+</ul>
+<h2 id="documentation_8">Documentation<a class="headerlink" href="#documentation_8" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_8">Maintenance<a class="headerlink" href="#maintenance_8" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Fix: Live Validation (#167) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_8">Contributors<a class="headerlink" href="#contributors_8" title="Permanent link">&para;</a></h2>
+<p>@devsetgo</p>
+<p>Published Date: 2026 June 28, 14:32</p>
+<h3 id="csrf-feature-release-2621beta"><span style='color:blue'>CSRF Feature Release</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.2.1.beta">26.2.1.beta</a>)<a class="headerlink" href="#csrf-feature-release-2621beta" title="Permanent link">&para;</a></h3>
+<h2 id="changes_9">Changes<a class="headerlink" href="#changes_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Documentation Updates (#116) (@devsetgo)</li>
+</ul>
+<h2 id="features_4">Features<a class="headerlink" href="#features_4" title="Permanent link">&para;</a></h2>
+<ul>
+<li>bump to v26.2.1.beta (#117) (@devsetgo)</li>
+<li>CSRF Feature (#114) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_9">Maintenance<a class="headerlink" href="#maintenance_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>feat(csrf): add CSRFMode enum with backward-compatible mode handling (#115) (@devsetgo)</li>
+<li>pip(deps): bump tox from 4.52.0 to 4.52.1 (#104) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump python-multipart from 0.0.24 to 0.0.26 (#106) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/upload-pages-artifact from 4 to 5 (#107) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump mike from 2.1.4 to 2.2.0 (#108) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump fastapi from 0.134.0 to 0.135.3 (#97) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pytest-cov from 7.0.0 to 7.1.0 (#98) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pydantic-extra-types from 2.11.1 to 2.11.2 (#99) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump python-multipart from 0.0.22 to 0.0.24 (#100) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pytest from 9.0.1 to 9.0.3 (#101) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump actions/github-script from 7 to 9 (#102) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump release-drafter/release-drafter from 6.2.0 to 7.2.0 (#103) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>dependency update and tests (#96) (@devsetgo)</li>
+<li>update of dependencies (#87) (@devsetgo)</li>
+<li>pip(deps): bump hatchling from 1.28.0 to 1.29.0 (#73) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump tox from 4.44.0 to 4.46.3 (#74) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump fastapi[all] from 0.128.4 to 0.134.0 (#75) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump mkdocs-material from 9.7.2 to 9.7.3 (#76) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump ruff from 0.15.1 to 0.15.4 (#77) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+</ul>
+<h2 id="contributors_9">Contributors<a class="headerlink" href="#contributors_9" title="Permanent link">&para;</a></h2>
+<p>@dependabot[bot], @devsetgo and <a href="https://github.com/apps/dependabot">dependabot[bot]</a></p>
+<p>Published Date: 2026 April 26, 19:26</p>
+<h3 id="removing-external-validation-logic-2618beta"><span style='color:blue'>Removing External Validation Logic</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.8.beta">26.1.8.beta</a>)<a class="headerlink" href="#removing-external-validation-logic-2618beta" title="Permanent link">&para;</a></h3>
+<h2 id="changes_10">Changes<a class="headerlink" href="#changes_10" title="Permanent link">&para;</a></h2>
+<h2 id="bug-fixes_6">Bug Fixes<a class="headerlink" href="#bug-fixes_6" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Removing validation logic outside of library. (#71) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_10">Contributors<a class="headerlink" href="#contributors_10" title="Permanent link">&para;</a></h2>
+<p>@devsetgo</p>
+<p>Published Date: 2026 February 27, 21:32</p>
+<h3 id="bug-fix-and-cleanup-2617beta"><span style='color:blue'>Bug fix and cleanup.</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.7.beta">26.1.7.beta</a>)<a class="headerlink" href="#bug-fix-and-cleanup-2617beta" title="Permanent link">&para;</a></h3>
+<h2 id="changes_11">Changes<a class="headerlink" href="#changes_11" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Move of examples (#69) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes_7">Bug Fixes<a class="headerlink" href="#bug-fixes_7" title="Permanent link">&para;</a></h2>
+<ul>
+<li>fix(layouts): validate nested layout submissions and restore Preferen… (#70) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_11">Contributors<a class="headerlink" href="#contributors_11" title="Permanent link">&para;</a></h2>
+<p>@devsetgo</p>
+<p>Published Date: 2026 February 22, 19:56</p>
+<h3 id="many-fixes-enhancements-and-increasing-code-coverage-2616beta"><span style='color:blue'>Many fixes, enhancements, and increasing code coverage</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.6.beta">26.1.6.beta</a>)<a class="headerlink" href="#many-fixes-enhancements-and-increasing-code-coverage-2616beta" title="Permanent link">&para;</a></h3>
+<h2 id="changes_12">Changes<a class="headerlink" href="#changes_12" title="Permanent link">&para;</a></h2>
+<ul>
+<li>bumping version to 26.1.6.beta (#68) (@devsetgo)</li>
+<li>feat(examples,docs): add plain HTML style support and document render… (#67) (@devsetgo)</li>
+<li>improving documents (#59) (@devsetgo)</li>
+<li>improving test coverage (#58) (@devsetgo)</li>
+<li>improving reliability rating (#57) (@devsetgo)</li>
+<li>working on sonarcloud issue (#41) (@devsetgo)</li>
+<li>fixing examples (#33) (@devsetgo)</li>
+</ul>
+<h2 id="features_5">Features<a class="headerlink" href="#features_5" title="Permanent link">&para;</a></h2>
+<ul>
+<li>working on example. (#65) (@devsetgo)</li>
+<li>Improvements - docs, examples, and bug fixes (#43) (@devsetgo)</li>
+<li>34 add timing (#42) (@devsetgo)</li>
+<li>adding start line and end line for HTML sent to browser (#32) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes_8">Bug Fixes<a class="headerlink" href="#bug-fixes_8" title="Permanent link">&para;</a></h2>
+<ul>
+<li>working on material design render issues (#66) (@devsetgo)</li>
+<li>working on example. (#65) (@devsetgo)</li>
+<li>Improvements - docs, examples, and bug fixes (#43) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_10">Maintenance<a class="headerlink" href="#maintenance_10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>pip(deps): bump tox from 4.36.0 to 4.44.0 (#60) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump mkdocs-material from 9.7.1 to 9.7.2 (#61) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump isort from 7.0.0 to 8.0.0 (#62) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump flask from 3.1.2 to 3.1.3 (#63) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump autoflake from 2.3.1 to 2.3.3 (#64) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pytest-html from 4.1.1 to 4.2.0 (#45) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump ruff from 0.14.14 to 0.15.0 (#44) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump tqdm from 4.67.1 to 4.67.3 (#47) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump fastapi[all] from 0.121.2 to 0.128.4 (#48) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump mkdocstrings[python] from 1.0.0 to 1.0.1 (#39) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump pymdown-extensions from 10.20 to 10.20.1 (#36) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>github-actions(deps): bump release-drafter/release-drafter from 6.1.0 to 6.2.0 (#35) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump black from 25.12.0 to 26.1.0 (#37) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump ruff from 0.14.11 to 0.14.14 (#38) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>pip(deps): bump packaging from 25.0 to 26.0 (#40) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+</ul>
+<h2 id="contributors_12">Contributors<a class="headerlink" href="#contributors_12" title="Permanent link">&para;</a></h2>
+<p>@dependabot[bot], @devsetgo and <a href="https://github.com/apps/dependabot">dependabot[bot]</a></p>
+<p>Published Date: 2026 February 22, 16:35</p>
+<h3 id="bug-fixes-and-improvements-2612beta"><span style='color:blue'>Bug fixes and Improvements</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.2.beta">26.1.2.beta</a>)<a class="headerlink" href="#bug-fixes-and-improvements-2612beta" title="Permanent link">&para;</a></h3>
+<h2 id="changes_13">Changes<a class="headerlink" href="#changes_13" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Publishing Improvements (#17) (@devsetgo)</li>
+<li>Doc (#16) (@devsetgo)</li>
+<li>GitHub Actions Improvements (#10) (@devsetgo)</li>
+<li>first release (#9) (@devsetgo)</li>
+<li>working on documentation (#5) (@devsetgo)</li>
+<li>working on coverage (#4) (@devsetgo)</li>
+</ul>
+<h2 id="features_6">Features<a class="headerlink" href="#features_6" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Improving Workflow (#1) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes_9">Bug Fixes<a class="headerlink" href="#bug-fixes_9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>18 bootstrap not included in self contained example (#24) (@devsetgo)</li>
+<li>Fix model-list delete for dynamically added items (#23) (@devsetgo)</li>
+<li>working on coverage issue (#3) (@devsetgo)</li>
+<li>working on publishing issue (#2) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_11">Maintenance<a class="headerlink" href="#maintenance_11" title="Permanent link">&para;</a></h2>
+<ul>
+<li>github-actions(deps): bump actions/upload-pages-artifact from 3 to 4 (#19) (@<a href="https://github.com/apps/dependabot">dependabot[bot]</a>)</li>
+<li>updating release drafter (#11) (@devsetgo)</li>
+<li>Pre-Release Checks (#6) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_13">Contributors<a class="headerlink" href="#contributors_13" title="Permanent link">&para;</a></h2>
+<p>@dependabot[bot], @devsetgo and <a href="https://github.com/apps/dependabot">dependabot[bot]</a></p>
+<p>Published Date: 2026 January 09, 21:46</p>
+<h4 id="pre-releases">Pre-releases<a class="headerlink" href="#pre-releases" title="Permanent link">&para;</a></h4>
+<h3 id="initial-beta-release-2611beta"><span style='color:blue'>Initial Beta Release</span> (<a href="https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.1.1.beta">26.1.1.beta</a>)<a class="headerlink" href="#initial-beta-release-2611beta" title="Permanent link">&para;</a></h3>
+<h2 id="changes_14">Changes<a class="headerlink" href="#changes_14" title="Permanent link">&para;</a></h2>
+<ul>
+<li>GitHub Actions Improvements (#10) (@devsetgo)</li>
+<li>first release (#9) (@devsetgo)</li>
+<li>working on documentation (#5) (@devsetgo)</li>
+<li>working on coverage (#4) (@devsetgo)</li>
+</ul>
+<h2 id="features_7">Features<a class="headerlink" href="#features_7" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Improving Workflow (#1) (@devsetgo)</li>
+</ul>
+<h2 id="bug-fixes_10">Bug Fixes<a class="headerlink" href="#bug-fixes_10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>working on coverage issue (#3) (@devsetgo)</li>
+<li>working on publishing issue (#2) (@devsetgo)</li>
+</ul>
+<h2 id="maintenance_12">Maintenance<a class="headerlink" href="#maintenance_12" title="Permanent link">&para;</a></h2>
+<ul>
+<li>updating release drafter (#11) (@devsetgo)</li>
+<li>Pre-Release Checks (#6) (@devsetgo)</li>
+</ul>
+<h2 id="contributors_14">Contributors<a class="headerlink" href="#contributors_14" title="Permanent link">&para;</a></h2>
+<p>@devsetgo</p>
+<p>Published Date: 2026 January 02, 19:13</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../testing_workflow/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Testing Workflow">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Testing Workflow
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 - 2026 Mike Ryan
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://pydantic-schemaforms.devsetgo.com/" target="_blank" rel="noopener" title="Live Demo" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/devsetgo" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/_devsetgo" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.instant", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.footer", "toc.follow", "navigation.top", "search.suggest", "content.tabs.link", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../js/demo-link.js"></script>
+      
+    
+  </body>
+</html>
