@@ -22,7 +22,7 @@ pass CI with a serious or critical violation on any example page.
 | **Rule sets** | WCAG 2.0, 2.1 and 2.2 at levels A and AA, plus axe's best-practice rules. axe maps the same rules to Section 508 and EN 301 549. |
 | **Fails the build on** | Any violation axe rates *serious* or *critical* |
 | **Pages** | Every page of the example app, which renders every input type, widget option, layout and composite control the library supports |
-| **Styles** | Bootstrap and Material |
+| **Styles** | Bootstrap and Material, in light and dark |
 | **States** | The initial form and the error state after a failed submit (messages, `aria-invalid`, the error summary) |
 | **When** | On every pull request, in the Playwright CI job |
 

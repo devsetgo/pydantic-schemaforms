@@ -28,7 +28,7 @@ extending reference if nothing genuinely fits.
 | Structural (not a real widget) | `nested_model` (a sub-form: inferred automatically for a field typed as another `FormModel`, never declare it), `model_list` (repeating sub-forms: inferred automatically for a `list[FormModel]` field), `layout` (a registered custom composite such as `DataTableLayout`) |
 
 Most forms only need Text/Numeric/Selection/Date. The "Specialized numeric" and "Specialized
-date" rows add presentation behavior only (e.g. `percentage` shows a `%` placeholder, `rating`
+date" rows add presentation behavior only (e.g. `percentage` shows a `%` placeholder, `star_rating`
 renders stars) — validation still comes entirely from `Field()` constraints, not the widget
 choice. Every ui_options key each widget accepts is listed in "Every widget option" below —
 check it before assuming an option doesn't exist, and before inventing one (an unknown key is
@@ -270,6 +270,7 @@ These are `Field()` keyword arguments, not `ui_options` keys:
 | `ui_placeholder=` | Placeholder attribute |
 | `icon=` | Icon name shown before the label (`"envelope"`, `"person"`, ...), mapped per framework |
 | `ui_order=` | Position among the fields/groups; lower first, default is declaration order |
+| `unchecked_message=` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
 | `ui_disabled=True` | Disabled: not editable and **not submitted** |
 | `ui_readonly=True` | Read-only: not editable but submitted |
 | `ui_hidden=True` | Rendered as a bare hidden input (same as `ui_element="hidden"`) |

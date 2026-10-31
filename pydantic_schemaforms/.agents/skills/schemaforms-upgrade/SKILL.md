@@ -52,6 +52,18 @@ These apply to every task. Read them before writing code.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
 
+## 26.4.4: Material Design 3
+
+`framework="material"` was rebuilt on Material Design 3. Forms keep working with no code change;
+only customizations of the Material style need attention. Search the app for `MaterialEmbeddedTheme`,
+`materialize`, and CSS or tests that target Material markup.
+
+| Changed | Replace with |
+|---|---|
+| CSS or tests written against the old Material markup | The new markup; the form keeps its `md-form` class. Color overrides use `--md-sys-color-*` tokens on `form.md-form` |
+| `MaterialEmbeddedTheme` | `MaterialTheme` |
+| Materialize, and `framework_css_tag()`/`framework_js_tag()` for `"material"` | Nothing: both now return nothing for `"material"`, and the page needs no Materialize |
+
 ## 26.4.3: one way to build a form
 
 The builder API, the React and Vue adapters and `@form_validator` are removed. Importing a removed

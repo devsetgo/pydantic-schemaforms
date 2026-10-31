@@ -54,7 +54,7 @@ fields, adding constraints the code checks elsewhere.
 | `EmailField` / `Email()` | `EmailStr` |
 | `URLField` / `URL()` | `AnyUrl` |
 | `IntegerField`, `DecimalField`, `FloatField` | `int`, `Decimal`, `float` |
-| `BooleanField` | `bool` with a `False` default |
+| `BooleanField` | `bool` with a `False` default; with `DataRequired()`, `Literal[True]` |
 | `SelectField(choices=...)` | `Literal[...]` or an `Enum`; `ui_options={"choices": [{"value": ..., "label": ...}]}` when labels differ from values |
 | `RadioField` | the same, `ui_element="radio"` |
 | `SelectMultipleField` | `list[Literal[...]]` |
@@ -88,6 +88,7 @@ with the token in the session (see the `pydantic-schemaforms` skill's security r
 | `IntegerField(min_value, max_value)` | `int`, `ge`, `le` |
 | `DecimalField(max_digits, decimal_places)` | `Decimal`, `max_digits`, `decimal_places` |
 | `BooleanField(required=False)` | `bool = False` |
+| `BooleanField()` (required, so it must be ticked) | `Literal[True]`; `unchecked_message=` for its error |
 | `ChoiceField(choices=...)` / `TypedChoiceField` | `Literal[...]` or an `Enum` |
 | `MultipleChoiceField` | `list[Literal[...]]` |
 | `ModelChoiceField(queryset)` | choices built at runtime: `ui_options={"choices": [...]}` from the query, or `create_model()` |
@@ -110,7 +111,7 @@ token as `csrf_token_provider`.
 | `"type": "string"` | `str`; `minLength`/`maxLength`/`pattern` → `min_length`/`max_length`/`pattern` |
 | `"format": "email"`, `"uri"`, `"date"`, `"date-time"`, `"time"` | `EmailStr`, `AnyUrl`, `date`, `datetime`, `time` |
 | `"type": "integer"` / `"number"` | `int` / `float`; `minimum`/`maximum` → `ge`/`le`; `exclusiveMinimum` → `gt`; `multipleOf` → `multiple_of` |
-| `"type": "boolean"` | `bool` |
+| `"type": "boolean"` | `bool`; with `"const": true`, `Literal[True]` |
 | `"enum": [...]` | `Literal[...]` or an `Enum` |
 | `"type": "array"` of enum | `list[Literal[...]]` |
 | `"type": "array"` of objects | `list[ItemForm]`; `minItems`/`maxItems` → `min_length`/`max_length` |

@@ -29,14 +29,15 @@ All phase 1 items are done; they ship as release 26.4.3.
 
 ## Phase 2: Core form features
 
-How phase 2 and later phases are grouped into releases is not decided yet.
+Items 8 and 9 ship as release 26.4.4. How the rest of phase 2 and later phases
+are grouped into releases is not decided yet.
 
 The features people ask for most. Each one builds on the layout engine and the
 wizard that shipped in 26.4.1.
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 8 | [#265](https://github.com/devsetgo/pydantic-schemaforms/issues/265) Rebuild the Material style on the shared rendering path | Done | Material renders through its own parallel code path, so every widget and fix is done twice and Material keeps lagging (the Enum, constraint and step bugs fixed for #258 were all Material-only or Material-too). Do it before the phase 2 features so conditional fields, groups and display mode are built once. Also removes the vendored Materialize files it no longer uses. |
+| 8 | [#265](https://github.com/devsetgo/pydantic-schemaforms/issues/265) Rebuild the Material style on the shared rendering path | Done ([#272](https://github.com/devsetgo/pydantic-schemaforms/pull/272)) | Material renders through its own parallel code path, so every widget and fix is done twice and Material keeps lagging (the Enum, constraint and step bugs fixed for #258 were all Material-only or Material-too). Do it before the phase 2 features so conditional fields, groups and display mode are built once. Also removes the vendored Materialize files it no longer uses. |
 | 9 | [#273](https://github.com/devsetgo/pydantic-schemaforms/issues/273) `Literal[True]` checkbox always fails validation | Done ([#283](https://github.com/devsetgo/pydantic-schemaforms/pull/283)) | A bug: there's no straightforward way to require acceptance of terms. Small, stands alone, and #274's consent field needs it. |
 | 10 | [#274](https://github.com/devsetgo/pydantic-schemaforms/issues/274) Content blocks and a consent field | Not started | Forms can't hold text that isn't a field. Comes before the other layout work because it changes what a form can contain. |
 | 11 | [#237](https://github.com/devsetgo/pydantic-schemaforms/issues/237) Conditional show/hide rules | Not started | The most common missing form feature. Needs the ID fix from phase 1. |

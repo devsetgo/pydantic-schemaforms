@@ -83,8 +83,9 @@ with `render_form_html()` and `request.form`.
 - **Complex forms by nesting.** Sub-forms, optional sub-forms and repeating
   lists, shown as sections, tabs, columns, an accordion or a step wizard with
   one `layout=` argument. Data and errors come back nested like the model.
-- **Bootstrap, Material or plain HTML**, with assets inlined, linked from a
-  CDN or left to your page.
+- **Bootstrap, Material Design 3 or plain HTML**, with opt-in dark mode for
+  Bootstrap and Material, and assets inlined, linked from a CDN or left to your
+  page.
 - **Escaped by construction.** All HTML is built with Python 3.14 t-strings
   and an escaping processor.
 - **Accessibility-tested.** Every input, layout and error state is checked
@@ -139,8 +140,8 @@ For assistants without skills support, `python -m pydantic_schemaforms.ai_instru
 
 ## Accessibility
 
-axe-core 4.14 runs against every example page, under Bootstrap and Material
-and in the error state after a failed submit, and any serious or critical
+axe-core 4.14 runs against every example page, under Bootstrap and Material, in
+light and dark, and in the error state after a failed submit, and any serious or critical
 violation fails CI. This is testing, not a compliance claim: conformance
 depends on your whole application. See the
 [Accessibility reference](https://devsetgo.github.io/pydantic-schemaforms/reference/accessibility/).
@@ -153,8 +154,8 @@ and the [Roadmap](https://github.com/devsetgo/pydantic-schemaforms/blob/main/ROA
 ```bash
 git clone https://github.com/devsetgo/pydantic-schemaforms.git
 cd pydantic-schemaforms
-pip install -e .
-python -m pytest tests/
+make install
+make tests
 ```
 
 ## Links

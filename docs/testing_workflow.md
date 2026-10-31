@@ -14,14 +14,8 @@ This runs:
 1. **Pre-commit hooks** (Ruff linting + formatting, YAML/TOML checks, trailing whitespace)
 2. **Type check** (`pyright`)
 3. **Parser regression suite** (`tests/test_form_data_parsing.py`)
-4. **Full pytest suite** (~1,500 tests covering validation, rendering, async, layouts, examples, integration)
+4. **Full pytest suite** (~1,700 tests covering validation, rendering, async, layouts, examples, integration)
 5. **Coverage badge generation** (summarizes test coverage)
-
-## What Changed
-
-- **Ruff is now enabled** in `.pre-commit-config.yaml` and runs as part of `make tests`
-- **Pre-commit hooks are mandatory** before pytest runs; if linting fails, tests don't start
-- **No manual ruff invocation needed** — it's automatic via pre-commit
 
 ## Workflow
 
@@ -56,34 +50,37 @@ Tests are organized in `tests/` by domain — one file per subject area:
 | Test File | Purpose | ~Tests |
 |-----------|---------|--------|
 | `test_inputs.py` | All input component types (text, datetime, selection, specialized) | 185 |
-| `test_validation.py` | Validation rules, engine, HTMX live validation | 165 |
-| `test_assets.py` | Vendor assets, CDN/vendored modes, Bootstrap Icons | 135 |
-| `test_input_rendering.py` | Rendered HTML of each input type and its widget options | 120 |
+| `test_validation.py` | Validation rules, engine, HTMX live validation | 180 |
+| `test_assets.py` | Vendor assets, CDN/vendored modes, Bootstrap Icons | 130 |
+| `test_input_rendering.py` | Rendered HTML of each input type and its widget options | 140 |
 | `test_integration.py` | Schema generators, FastAPI integration, HTML markers | 50 |
-| `test_rendering.py` | EnhancedFormRenderer, themes, templates | 100 |
-| `test_layouts.py` | Layout engine, TabLayout, AccordionLayout, async rendering | 85 |
-| `test_examples_coverage.py` | Every layout, input, widget option, and validation kind has a working example; every example route renders under both styles | 70 |
-| `test_nested_model_forms.py` | Composing forms by nesting FormModels: rendering, grouped layouts, nested data and errors | 65 |
+| `test_rendering.py` | EnhancedFormRenderer, themes, templates | 115 |
+| `test_layouts.py` | Layout engine, TabLayout, AccordionLayout, async rendering | 95 |
+| `test_examples_coverage.py` | Every layout, input, widget option, and validation kind has a working example; every example route renders under both styles | 80 |
+| `test_docs_examples.py` | Runs every `docs_src/` app's GET and POST routes | 65 |
+| `test_ai_skills.py` + `test_ai_instructions.py` | Packaged skills and instructions are valid and match their sources | 60 |
+| `test_nested_model_forms.py` | Composing forms by nesting FormModels: rendering, grouped layouts, nested data and errors | 85 |
 | `test_field_renderer_coverage.py` | Field-level rendering logic | 60 |
 | `test_schema_form.py` + `test_schema_form_coverage.py` | FormModel, Field, schema parsing | 95 |
 | `test_template_coverage.py` | t-string templates in `templates.py` / `FormStyle` | 55 |
-| `test_datatable_layout.py` | DataTableLayout composite (CSV import, row errors) | 50 |
+| `test_datatable_layout.py` | DataTableLayout composite (CSV import, row errors) | 60 |
 | `test_live_validation_coverage.py` | HTMX live validation config | 45 |
 | `test_form_data_parsing.py` | Nested form data parsing | 25 |
 | `test_form_layouts.py` | Removed layout classes raise `FormLayoutRemovedError` with upgrade steps | 20 |
 | `test_invariants.py` + `test_meta_invariants.py` | **Protected.** Enforce the t-string / no-`string.Template` rule; never remove or weaken | 6 |
-| Smaller focused files | CSRF, debug mode, model lists, plugin hooks, AI instructions, benchmarks, etc. | ~100 |
+| `test_theme_contract.py` | No framework branching outside the themes; Material CSS uses tokens | 5 |
+| Smaller focused files | CSRF, debug mode, model lists, plugin hooks, benchmarks, etc. | ~150 |
 
-`tests/playwright/` holds browser tests: every example page must load without a JavaScript error and pass axe-core (WCAG 2.0–2.2 A/AA plus best practices) with no serious or critical accessibility violation (both styles, plus the validation error state); see `docs/reference/accessibility.md`. axe-core is vendored for tests only in `tests/playwright/vendor/`, pinned by version and SHA-256. CI runs these in their own job.
+`tests/playwright/` holds browser tests: every example page must load without a JavaScript error and pass axe-core (WCAG 2.0–2.2 A/AA plus best practices) with no serious or critical accessibility violation (both styles, light and dark, plus the validation error state); see `docs/reference/accessibility.md`. axe-core is vendored for tests only in `tests/playwright/vendor/`, pinned by version and SHA-256. CI runs these in their own job. `test_material_screenshots.py` writes Material page PNGs to `tests/playwright/screenshots/` to look at, since a passing test doesn't show how a page looks.
 
 ## Linting Rules (Ruff)
 
-Ruff checks for:
-- **Import ordering** (`from __future__` first, stdlib, third-party, local)
-- **Unused imports** and variables
-- **Deprecated patterns** (old Pydantic v1 syntax)
-- **Style** (line length, unused code)
-- **Type hints** (basic checks)
+Ruff runs these rule sets (see `[tool.ruff.lint]` in `pyproject.toml`):
+- **F**: unused imports and variables, undefined names
+- **E, W**: style errors and warnings
+- **B**: likely bugs
+- **C**: comprehensions
+- **TID**: banned APIs, including `string.Template`
 
 If Ruff finds issues, run:
 ```bash
@@ -95,7 +92,7 @@ Then manually review any remaining issues and re-run `make tests`.
 ## CI/CD Integration
 
 - **Local**: `make tests` validates code before pushing
-- **GitHub Actions** (`.github/workflows/testing.yml`): Runs same checks on each PR
+- **GitHub Actions** (`.github/workflows/testing.yml`): Runs lint, pyright, the test matrix (Python 3.14 and 3.15 on Linux, macOS and Windows) and Playwright on each PR
 - **Pre-commit**: Enabled for all developers via `.pre-commit-config.yaml`
 
 ## Dependencies
@@ -168,6 +165,6 @@ pytest tests/test_assets.py -k "bootstrap_icons" -v
 
 All PRs must pass:
 - ✅ Ruff linting
-- ✅ Import ordering (isort)
-- ✅ pytest (all tests)
-- ✅ Coverage thresholds
+- ✅ Type check (pyright)
+- ✅ pytest (all tests, 90% coverage)
+- ✅ Playwright (browser and accessibility tests)

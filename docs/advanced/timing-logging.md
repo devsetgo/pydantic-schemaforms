@@ -135,19 +135,19 @@ For web apps, conditionally enable logs during troubleshooting:
 ```python
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
-from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms import SafeHTML, html, render_form_html
 
 app = FastAPI()
 
 
 @app.get("/demo", response_class=HTMLResponse)
 def demo(debug_logs: bool = Query(False)):
-    form_html = render_form_html(
+    form_html = SafeHTML(render_form_html(
         MyForm,
         submit_url="/demo",
         enable_logging=debug_logs,
-    )
-    return f"<html><body>{form_html}</body></html>"
+    ))
+    return html(t"<html><body>{form_html}</body></html>")
 ```
 
 ### Related options

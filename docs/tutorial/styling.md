@@ -59,8 +59,6 @@ Every style keeps its markup predictable, so you can target it:
     sandboxed iframe, but it adds several hundred kilobytes to every page.
     See [Assets and Self-Contained Forms](../advanced/assets.md).
 
-Next: [CSRF Protection](csrf.md).
-
 ## Dark mode
 
 Forms are light unless you opt in, and the switch is set by your page:
@@ -119,3 +117,5 @@ Put the rules in your page's stylesheet.
     ```
 
     The token list is in [Material Design 3](../advanced/material.md#changing-the-colors).
+
+Next: [CSRF Protection](csrf.md).

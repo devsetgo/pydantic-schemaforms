@@ -80,7 +80,8 @@ read-only table showing the remaining `model_config` options (`csv_upload`,
   registered input type and alias with each of its widget options, plus
   field-level options, tabbed by category
 - `/validation` (`ValidationShowcaseForm`) — every Pydantic constraint,
-  `@field_validator`, `@model_validator`, sub-form and list-item errors, every
+  a required checkbox (`Literal[True]`), `@field_validator`, `@model_validator`,
+  sub-form and list-item errors, every
   rule class, and a cross-field rule, failing on one form; `?scenario=mismatch`
   shows the form-wide error and `?scenario=valid` a passing submission
 - `/date-time-formats` (examples/date_time_formats_example.py) — custom
@@ -112,7 +113,7 @@ Contains reusable FormModel classes used by the examples, including:
 
 - The examples are model-first and use the same renderer pipeline as the library docs.
 - For template rendering, pass generated form HTML into Jinja as `{{ form_html | safe }}`.
-- For Python f-string HTML responses, embed `{form_html}` directly.
+- To build a page in Python, wrap the form in `SafeHTML(form_html)` and interpolate it in `html(t'...')`.
 
 ## Asset behavior in examples
 

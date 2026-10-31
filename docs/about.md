@@ -7,7 +7,7 @@ It focuses on:
 - One Pydantic model for the form, its validation and its data
 - HTML that is escaped by construction, built with Python 3.14 t-strings
 - Sync (WSGI) and async (ASGI) rendering, tested with FastAPI and Flask
-- Offline-by-default asset delivery (vendored/inlined assets), with explicit opt-in for CDNs
+- No external requests by default: assets are packaged and inlined, with explicit opt-in for CDNs
 
 If you're new, start with the [Tutorial](tutorial/index.md). The
 [Reference](reference/index.md) lists every input, layout and option.

@@ -1,6 +1,6 @@
 # Assets and Self-Contained Forms
 
-`pydantic-schemaforms` is **offline-by-default**: by default, rendered HTML ships all required JS/CSS from this library (vendored assets are embedded/packaged).
+`pydantic-schemaforms` makes no external requests unless you ask for a CDN. By default your page provides the CSS framework, and the library adds only the small scripts and styles its inputs need. `include_framework_assets=True` adds the framework too, inlined from packaged copies.
 
 This page documents the standard knobs used across entry points to control asset injection.
 
@@ -92,14 +92,17 @@ html = renderer.render_form_from_model(MyForm, submit_url='/submit')
 | IMask | `imask.min.js` |
 | Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` |
 | Bootstrap Icons | `bootstrap-icons.min.css`, `bootstrap-icons.woff2` |
+| DataTables | `datatables`, `datatables-buttons`, for `DataTableLayout` |
+| Prism, js-yaml, smol-toml | `prismjs`, `js-yaml`, `smol-toml`, for the code editor's highlighting and formatting |
 
 See `pydantic_schemaforms/assets/vendor/vendor_manifest.json` for exact versions, SHA256 checksums, and source URLs.
 
 ## Bootstrap Icons
 
 Bootstrap Icons are included as part of the Bootstrap theme’s asset delivery.  The library
-emits `<i class="bi bi-*">` elements for icons (password-toggle, field icons, etc.), so the
-icon font must be present for those elements to render correctly.
+emits `<i class="bi bi-*">` elements for icons (password-toggle, field icons, etc.) under
+Bootstrap, so the icon font must be present for those elements to render correctly. The Material
+style uses inline SVG icons and doesn't need it.
 
 **When `include_framework_assets=True` (or `self_contained=True`):**
 
@@ -167,7 +170,6 @@ Vendored updates are scripted and checksum-verified.
   - `make vendor-update-htmx HTMX_VERSION=…`
   - `make vendor-update-imask IMASK_VERSION=…` (or omit to use npm latest)
   - `make vendor-update-bootstrap BOOTSTRAP_VERSION=…`
-  - `make vendor-update-bootstrap-icons BOOTSTRAP_ICONS_VERSION=…`
 
 After updating, run `make vendor-verify` and the test suite.
 
