@@ -57,10 +57,15 @@ accessibility gate from phase 1.
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 20 | [#178](https://github.com/devsetgo/pydantic-schemaforms/issues/178) Mobile-friendly inputs | Not started | Start by re-auditing the issue: some Tier 2 items have shipped since July. Then do the remaining Tier 2 and Tier 3 items that fit the vanilla-JS pattern: OTP code, segmented control, stepper buttons, password strength meter, year picker. Skip Tier 5. |
-| 21 | [#239](https://github.com/devsetgo/pydantic-schemaforms/issues/239) Remote options for select and combobox | Not started | Reuses the HTMX plumbing from live validation. Can move earlier if a user needs it. |
-| 22 | [#277](https://github.com/devsetgo/pydantic-schemaforms/issues/277) MD3 menu for select fields | Not started | Native selects open the browser's own menu, so only the closed field looks like MD3. Opt-in, with the native select as the fallback. |
-| 23 | [#278](https://github.com/devsetgo/pydantic-schemaforms/issues/278) MD3 date and time picker | Not started | Same gap for date and time inputs, which open the browser's own picker. Opt-in, after #277 so both menus share their surface styling. |
+| 20 | [#291](https://github.com/devsetgo/pydantic-schemaforms/issues/291) One-time code (OTP) input | Not started | Small, self-contained vanilla-JS widget. Common on sign-in and verification forms. |
+| 21 | [#292](https://github.com/devsetgo/pydantic-schemaforms/issues/292) Password strength meter | Not started | The scoring rules already exist on the server, so this mostly adds the display. |
+| 22 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Not started | Small gap next to the existing month and week inputs. |
+| 23 | [#294](https://github.com/devsetgo/pydantic-schemaforms/issues/294) E.164 phone numbers | Not started | Builds on the phone input's live formatting, and gives apps a consistent value to store. |
+| 24 | [#295](https://github.com/devsetgo/pydantic-schemaforms/issues/295) Confirmation step before submit | Not started | Reuses the existing modal code. |
+| 25 | [#296](https://github.com/devsetgo/pydantic-schemaforms/issues/296) Form progress indicator | Not started | Most useful once long forms have conditional fields, and must not compete with the wizard's step display. |
+| 26 | [#239](https://github.com/devsetgo/pydantic-schemaforms/issues/239) Remote options for select and combobox | Not started | Reuses the HTMX plumbing from live validation. Can move earlier if a user needs it. |
+| 27 | [#277](https://github.com/devsetgo/pydantic-schemaforms/issues/277) MD3 menu for select fields | Not started | Native selects open the browser's own menu, so only the closed field looks like MD3. Opt-in, with the native select as the fallback. |
+| 28 | [#278](https://github.com/devsetgo/pydantic-schemaforms/issues/278) MD3 date and time picker | Not started | Same gap for date and time inputs, which open the browser's own picker. Opt-in, after #277 so both menus share their surface styling. |
 
 ## Phase 4: Reach
 
@@ -69,12 +74,12 @@ touches every widget, so doing them after phases 2 and 3 means less retrofitting
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 24 | [#235](https://github.com/devsetgo/pydantic-schemaforms/issues/235) Build a FormModel from JSON Schema | Not started | The library-sized answer to [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190). Close #190 when this ships. With `FormBuilder` removed (#255), this is the friendly way to build a form at runtime; until it ships, the `create_model(..., __base__=FormModel)` recipe in `docs/advanced/runtime-forms.md` covers it. |
-| 25 | [#240](https://github.com/devsetgo/pydantic-schemaforms/issues/240) Internationalization | Not started | Wraps every library-generated string and display format. Doing it after the new widgets and display mode means doing it once. |
-| 26 | [#266](https://github.com/devsetgo/pydantic-schemaforms/issues/266) Review other UI frameworks | Not started | Research only: pick which styles to add (for example Tailwind/daisyUI, Bulma, Pico) against criteria such as maintenance, licence and asset size. Feeds #247, so do it first. Adding a style is cheap only after #265 puts every style on one rendering path. |
-| 27 | [#247](https://github.com/devsetgo/pydantic-schemaforms/issues/247) Color schemes and a framework-free CSS-variables theme | Not started | Named color schemes plus custom ones, covering light and dark, and a new style built on the same tokens. A new style multiplies the work for every widget, so do it once the widget set has settled. #265 has put every style on one rendering path, and #266 feeds which styles to add. |
-| 28 | [#271](https://github.com/devsetgo/pydantic-schemaforms/issues/271) Toast notifications and other ways to show form feedback | Not started | Choices for how a form shows its errors and success messages, with today's summary as the default. After #247 so it uses the same color tokens, and after #240 so its messages can be translated. |
-| 29 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |
+| 29 | [#235](https://github.com/devsetgo/pydantic-schemaforms/issues/235) Build a FormModel from JSON Schema | Not started | The library-sized answer to [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190). With `FormBuilder` removed (#255), this is the friendly way to build a form at runtime; until it ships, the `create_model(..., __base__=FormModel)` recipe in `docs/advanced/runtime-forms.md` covers it. |
+| 30 | [#240](https://github.com/devsetgo/pydantic-schemaforms/issues/240) Internationalization | Not started | Wraps every library-generated string and display format. Doing it after the new widgets and display mode means doing it once. |
+| 31 | [#266](https://github.com/devsetgo/pydantic-schemaforms/issues/266) Review other UI frameworks | Not started | Research only: pick which styles to add (for example Tailwind/daisyUI, Bulma, Pico) against criteria such as maintenance, licence and asset size. Feeds #247, so do it first. Adding a style is cheap only after #265 puts every style on one rendering path. |
+| 32 | [#247](https://github.com/devsetgo/pydantic-schemaforms/issues/247) Color schemes and a framework-free CSS-variables theme | Not started | Named color schemes plus custom ones, covering light and dark, and a new style built on the same tokens. A new style multiplies the work for every widget, so do it once the widget set has settled. #265 has put every style on one rendering path, and #266 feeds which styles to add. |
+| 33 | [#271](https://github.com/devsetgo/pydantic-schemaforms/issues/271) Toast notifications and other ways to show form feedback | Not started | Choices for how a form shows its errors and success messages, with today's summary as the default. After #247 so it uses the same color tokens, and after #240 so its messages can be translated. |
+| 34 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |
 
 ## Parked
 
@@ -86,6 +91,9 @@ touches every widget, so doing them after phases 2 and 3 means less retrofitting
 | [#279](https://github.com/devsetgo/pydantic-schemaforms/issues/279) Opt out of inlining Material CSS on every form | No place on the roadmap decided yet. |
 | [#280](https://github.com/devsetgo/pydantic-schemaforms/issues/280) Remove the double `mb-3` on Bootstrap select fields | No place on the roadmap decided yet. |
 | [#281](https://github.com/devsetgo/pydantic-schemaforms/issues/281) Retire the `FRAMEWORKS` config dict | No place on the roadmap decided yet. |
+| [#297](https://github.com/devsetgo/pydantic-schemaforms/issues/297) Drawing inputs: signature pad, drawing canvas and image annotation | No place on the roadmap decided yet. Stateful canvas work that needs an accessible alternative. |
+| [#298](https://github.com/devsetgo/pydantic-schemaforms/issues/298) Rich content and structured choice inputs | A tracking issue with no place on the roadmap yet. Each input needs a design decision, especially whether it can stay dependency-free. |
+| [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190) Form builder | A far-future idea that depends on the library gaining a larger user base. It may become part of the demo site (pydantic-schemaforms.devsetgo.com) or DevSetGo.com rather than the library, so it stays open after #235 ships. |
 
 ## Not planned
 
