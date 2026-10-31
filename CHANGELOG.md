@@ -9,13 +9,24 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ## [Unreleased]
 
-### Changed
+## [26.4.4] — 2026-10-31
+
+The Material style is rebuilt on Material Design 3 and shares one rendering path
+with Bootstrap and plain HTML. A checkbox can now be required with `Literal[True]`.
+This is a breaking release for apps that customize Material forms.
+
+### Breaking Changes
 
 - **`framework="material"` is rewritten on Material Design 3 and now renders
   through the same path as Bootstrap and plain.** Every input gets a Material
   field: outlined with a floating label and a real notch, with error, disabled
   and icon states. The CSS uses design tokens (`--md-sys-color-*`) and has no
-  `!important`. `MaterialEmbeddedTheme` is now `MaterialTheme`. (#265)
+  `!important`. CSS written against the old Material markup needs updating. (#265)
+- **`MaterialEmbeddedTheme` is renamed `MaterialTheme`.** Update any import or
+  subclass of it. (#265)
+
+### Changed
+
 - **Star rating stars are now buttons in every style**, in a `radiogroup` with
   arrow-key support, so the widget works from the keyboard. The default
   colors are darker, to meet contrast requirements. (#265)
