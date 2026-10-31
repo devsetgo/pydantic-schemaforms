@@ -3,6 +3,42 @@
 Other ways to build forms in Python web apps, and how pydantic-schemaforms
 differs. Pick the one that fits your stack.
 
+## Where the idea came from
+
+The main inspiration for this library is
+[React JSON Schema Form](https://rjsf-team.github.io/react-jsonschema-form/)
+(RJSF), which is where the "-schemaforms" in the name comes from. RJSF showed
+that a schema can describe a whole form: the data shape in one document, how
+each field looks in another, and a swappable theme for the UI framework.
+
+The first attempt here was a Python library that generated the schemas for
+RJSF. Ultimately, it did not work out as the concept made the process more complicated. Yet the idea of creating a UI abstraction layer over Pydantic became this library.
+
+| Idea | In RJSF | Here |
+|---|---|---|
+| The schema describes the form | JSON Schema | A Pydantic model, which can [produce JSON Schema](advanced/json-api.md#json-schema-for-other-tools) |
+| Say how a field looks, apart from its type | `uiSchema` | `ui_*` settings on `Field()` |
+| Pick the input | `ui:widget` | `ui_element` (or `ui_widget`) |
+| Input settings | `ui:options` | `ui_options` |
+| Field presentation | `ui:order`, `ui:placeholder`, `ui:autofocus`, `ui:help`, `ui:disabled`, `ui:readonly`, `ui:classNames`, `ui:style` | `ui_order`, `ui_placeholder`, `ui_autofocus`, `ui_help_text`, `ui_disabled`, `ui_readonly`, `ui_class`, `ui_style` |
+| Nested objects and arrays | Sub-forms, and arrays with add and remove buttons | A `FormModel` field, and `list[FormModel]` |
+| Your own inputs and controls | Custom widgets and fields | `register_input_class()` and layout renderers; see [Plugin Hooks](advanced/plugin-hooks.md) |
+| UI framework themes | Theme packages, such as `@rjsf/mui` and `@rjsf/react-bootstrap` | `framework="bootstrap"`, `"material"` or `"none"` |
+| Pre-filled values | `formData` | `form_data` |
+| Errors from your own checks | `extraErrors` | `errors=` |
+| Error list above the form | `showErrorList` | The error summary |
+| Check while typing | `liveValidate`, in the browser | [`LiveValidator`](advanced/live-validation.md), on the server over HTMX |
+
+These JavaScript libraries work in a similar way, and they're worth a look if
+you're building a JavaScript frontend:
+
+- [JSON Forms](https://jsonforms.io/) also pairs a JSON Schema with a separate UI
+  schema, for React, Angular and Vue.
+- [uniforms](https://uniforms.tools/) generates React forms from several kinds
+  of schema, with themes for UI frameworks.
+- [Vue Formulate](https://vueformulate.com/) builds Vue forms from a schema. Its
+  Vue 3 successor is [FormKit](https://formkit.com/).
+
 ## What this library is for
 
 pydantic-schemaforms suits apps that render HTML on the server and already
@@ -45,10 +81,10 @@ integrate with Django's ORM or admin; a Django adapter is on the
 
 ## JSON Schema form renderers in the browser
 
-Libraries such as [react-jsonschema-form](https://rjsf-team.github.io/react-jsonschema-form/)
-render a form in the browser from a JSON Schema, which a Pydantic model can
-produce. They suit apps that already have a React frontend. The form is built
-by JavaScript on the client, and the server validates the posted JSON
+RJSF and the libraries [above](#where-the-idea-came-from) render a form in the
+browser, and RJSF and JSON Forms take a JSON Schema, which a Pydantic model can
+produce. They suit apps that already have a JavaScript frontend. The form is
+built by JavaScript on the client, and the server validates the posted JSON
 separately.
 
 pydantic-schemaforms renders on the server, so the form arrives as HTML,
