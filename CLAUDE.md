@@ -33,6 +33,11 @@ overwritten the next time docs are built:
 
 Everything else under `docs/` (`tutorial/`, `advanced/`, `recipes/`,
 `reference/`, etc.) is genuinely hand-maintained — edit those directly.
+`scripts/changelog.py` also adds section icons and PR/author links to `CHANGELOG.md`
+and tidies each release's entry, so write the static part in plain Keep a Changelog
+form. When a release is published, `pythonpublish.yml` puts that version's section on top of
+the GitHub release notes that Release Drafter (`.github/release-drafter.yml`) drafted.
+
 `docs/roadmap.md` only includes `ROADMAP.md` via a snippet; edit the root
 file. Code examples in those pages live under `docs_src/` and are included
 with `--8<--`; `tests/test_docs_examples.py` runs every one (each app's GET
