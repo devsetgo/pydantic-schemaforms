@@ -57,63 +57,14 @@
             --bs-btn-active-bg: #087990;
         }
 
-        .site-brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: #ffffff;
-        }
 
-        .site-brand:hover {
-            color: #ffffff;
-        }
 
-        .site-brand-logo {
-            height: 42px;
-            width: auto;
-            display: block;
-        }
 
-        .site-brand-mark {
-            width: 36px;
-            height: 36px;
-            border-radius: 0.75rem;
-            display: none;
-        }
 
-        .site-brand-copy {
-            line-height: 1.1;
-        }
 
-        .site-brand-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin: 0;
-        }
 
-        .site-brand-subtitle {
-            font-size: 0.8rem;
-            color: #d1d5db;
-            margin: 0;
-        }
 
-        .site-brand-shell {
-            background: #000000;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem;
-        }
 
-        @media (max-width: 576px) {
-            .site-brand-logo {
-                display: none;
-            }
-
-            .site-brand-mark {
-                display: block;
-            }
-        }
 
         .demo-card {
             background: #fff;
@@ -143,68 +94,10 @@
             color: #fff;
         }
 
-        /*
-         * Keep example pages clean when Material icon webfont imports are disabled.
-         * Without the font, ligature tokens (e.g., "favorite_border") render as text.
-         */
-        i.material-icons,
-        span.material-icons {
-            display: none !important;
-        }
 
-        /*
-         * Material select alignment fix for example pages:
-         * The renderer outputs a floating label immediately after
-         * `select.browser-default`. Without the Material webfont/CSS stack,
-         * this label overlaps selected text (e.g., Species over Dog 🐕).
-         */
-        .md-input-wrapper>select.browser-default {
-            width: 100%;
-        }
 
-        .md-input-wrapper>select.browser-default+.md-floating-label {
-            position: static !important;
-            display: block;
-            transform: none !important;
-            background: transparent !important;
-            padding: 0 !important;
-            margin-top: 0.25rem;
-            color: #495057;
-            font-size: 0.95rem;
-            line-height: 1.2;
-            pointer-events: none;
-        }
 
-        .top-resource-bar {
-            background: #0d0d0d;
-            padding: 0.35rem 0;
-            font-size: 0.78rem;
-        }
 
-        .top-resource-bar a {
-            color: #9ca3af;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: color 0.15s;
-        }
-
-        .top-resource-bar a:hover {
-            color: #ffffff;
-        }
-
-        .top-resource-bar .sep {
-            color: #374151;
-            margin: 0 0.5rem;
-        }
-
-        .version-chip {
-            color: #e5e7eb;
-            background: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 999px;
-            padding: 0.05rem 0.55rem;
-            font-size: 0.72rem;
-        }
 
         .demo-version-footer {
             margin-top: 2rem;
@@ -214,49 +107,80 @@
             color: #6b7280;
             text-align: center;
         }
+
+        /* Bootstrap's data-bs-theme="dark" recolors its own components; these are
+           the demo's own light values. */
+        :root { --demo-code-bg: #f1f3f5; }
+
+        [data-bs-theme="dark"] {
+            --demo-code-bg: #2b3035;
+            --bs-link-color: #6ea8fe;
+            --bs-link-color-rgb: 110, 168, 254;
+            --bs-code-color: #e685b5;
+        }
+
+        [data-bs-theme="dark"] body { background-color: #1a1d20; }
+        [data-bs-theme="dark"] .demo-card { background: var(--bs-body-bg); border-color: var(--bs-border-color); }
+        [data-bs-theme="dark"] .demo-version-footer { border-top-color: var(--bs-border-color); color: var(--bs-secondary-color); }
+        [data-bs-theme="dark"] .bg-light, [data-bs-theme="dark"] .bg-white {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color);
+        }
+        [data-bs-theme="dark"] .btn-outline-primary {
+            --bs-btn-color: #6ea8fe;
+            --bs-btn-border-color: #6ea8fe;
+            --bs-btn-hover-bg: #6ea8fe;
+            --bs-btn-hover-color: #000;
+            --bs-btn-hover-border-color: #6ea8fe;
+            --bs-btn-active-bg: #6ea8fe;
+            --bs-btn-active-color: #000;
+        }
+        [data-bs-theme="dark"] .text-muted { color: #ced4da !important; }
+        [data-bs-theme="dark"] .btn-outline-secondary {
+            --bs-btn-color: #ced4da;
+            --bs-btn-border-color: #ced4da;
+            --bs-btn-hover-bg: #ced4da;
+            --bs-btn-hover-color: #000;
+            --bs-btn-hover-border-color: #ced4da;
+            --bs-btn-active-bg: #ced4da;
+            --bs-btn-active-color: #000;
+        }
+        [data-bs-theme="dark"] .btn-outline-dark {
+            --bs-btn-color: #dee2e6;
+            --bs-btn-border-color: #dee2e6;
+            --bs-btn-hover-bg: #dee2e6;
+            --bs-btn-hover-color: #000;
+            --bs-btn-hover-border-color: #dee2e6;
+            --bs-btn-active-bg: #dee2e6;
+            --bs-btn-active-color: #000;
+        }
+        [data-bs-theme="dark"] .btn-outline-success {
+            --bs-btn-color: #75b798;
+            --bs-btn-border-color: #75b798;
+            --bs-btn-hover-bg: #75b798;
+            --bs-btn-hover-color: #000;
+            --bs-btn-hover-border-color: #75b798;
+            --bs-btn-active-bg: #75b798;
+            --bs-btn-active-color: #000;
+        }
+        [data-bs-theme="dark"] .btn-outline-info {
+            --bs-btn-color: #6edff6;
+            --bs-btn-border-color: #6edff6;
+            --bs-btn-hover-bg: #6edff6;
+            --bs-btn-hover-color: #000;
+            --bs-btn-hover-border-color: #6edff6;
+            --bs-btn-active-bg: #6edff6;
+            --bs-btn-active-color: #000;
+        }
     </style>
 
     {% block extra_styles %}{% endblock %}
 </head>
 
 <body>
-    <div class="top-resource-bar">
-        <div class="container d-flex flex-wrap align-items-center gap-1">
-            <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">
-                <i class="bi bi-book me-1"></i>Documentation
-            </a>
-            <span class="sep">|</span>
-            <a href="https://github.com/devsetgo/pydantic-schemaforms" target="_blank" rel="noopener">
-                <i class="bi bi-github me-1"></i>Repository
-            </a>
-            <span class="sep">|</span>
-            <a href="https://pypi.org/project/pydantic-schemaforms/" target="_blank" rel="noopener">
-                <i class="bi bi-box-seam me-1"></i>PyPI
-            </a>
-            <span class="sep">|</span>
-            <span class="version-chip">Library v{{ library_version }}</span>
-            <span class="sep">|</span>
-            <a href="https://github.com/devsetgo/pydantic-schemaforms/issues" target="_blank" rel="noopener">
-                <i class="bi bi-bug me-1"></i>Issues
-            </a>
-        </div>
-    </div>
+    {% include "_site_bar.html" %}
 
     <div class="{% if request and 'organization' in request.path %}container-fluid{% else %}container{% endif %} py-4">
-        {% if not request or request.url.path != '/' %}
-        <div class="site-brand-shell">
-            <a class="site-brand" href="/">
-                <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}"
-                    alt="">
-                <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}"
-                    alt="">
-                <span class="site-brand-copy">
-                    <span class="site-brand-title d-block">Pydantic Schemaform</span>
-                    <span class="site-brand-subtitle d-block">Pydantic models to polished forms</span>
-                </span>
-            </a>
-        </div>
-        {% endif %}
         {% block content %}{% endblock %}
         <div class="demo-version-footer">
             Demo App: v{{ container_version }}

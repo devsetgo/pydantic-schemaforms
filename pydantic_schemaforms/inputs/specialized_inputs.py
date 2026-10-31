@@ -80,7 +80,7 @@ class FileInput(FileInputBase):
                             Array.from(this.files).forEach(function(file) {{
                                 const fileItem = document.createElement('div');
                                 fileItem.className = 'file-item';
-                                fileItem.style.cssText = 'margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 3px;';
+                                fileItem.style.cssText = 'margin: 5px 0; padding: 5px; border: 1px solid var(--sf-outline-variant, #ddd); border-radius: 3px;';
 
                                 // Text nodes, not innerHTML: a file name is user-controlled.
                                 const nameEl = document.createElement('strong');
@@ -207,7 +207,7 @@ class ColorInput(FormInput):
             value_div = html(t'''
             <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
                 <span id="{field_name}_value" style="font-family: monospace;">{current_value}</span>
-                <div id="{field_name}_swatch" style="width: 20px; height: 20px; background-color: {current_value}; border: 1px solid #ccc; margin-left: 5px;"></div>
+                <div id="{field_name}_swatch" style="width: 20px; height: 20px; background-color: {current_value}; border: 1px solid var(--sf-outline-variant, #ccc); margin-left: 5px;"></div>
             </div>
             ''')
             # JS-only content below (rule 4 exception) -- field_id/field_name
@@ -493,8 +493,16 @@ class RatingStarsInput(FormInput):
         star_parts: list[str] = []
         for i in range(1, max_stars + 1):
             star_class = 'star-filled' if i <= rating else 'star-empty'  # NOSONAR
+            checked = 'true' if i == rating else 'false'  # NOSONAR
+            # Roving tabindex: the group is one tab stop, the arrow keys move inside it.
+            tabindex = '0' if i == (rating or 1) else '-1'  # NOSONAR
+            star_label = f'{i} of {max_stars} stars'  # NOSONAR
             star_parts.append(
-                html(t'<span class="rating-star {star_class}" data-rating="{i}">★</span>')
+                html(
+                    t'<button type="button" class="rating-star {star_class}" role="radio" '
+                    t'aria-checked="{checked}" aria-label="{star_label}" tabindex="{tabindex}" '
+                    t'data-rating="{i}">★</button>'
+                )
             )
         stars_html = SafeHTML(''.join(star_parts))  # NOSONAR
 
@@ -505,13 +513,18 @@ class RatingStarsInput(FormInput):
                 cursor: pointer;
             }}
             .star-rating-input .rating-star {{
-                color: #ddd;
+                background: none;
+                border: 0;
+                padding: 0;
+                font: inherit;
+                cursor: pointer;
+                color: var(--sf-star-empty, #6c757d);
                 transition: color 0.2s;
             }}
             .star-rating-input .rating-star.star-filled,
             .star-rating-input .rating-star:hover,
             .star-rating-input .rating-star.hover {{
-                color: #ffd700;
+                color: var(--sf-star-filled, #b58900);
             }}
             </style>
             <script>
@@ -519,6 +532,16 @@ class RatingStarsInput(FormInput):
                 const starsContainer = document.getElementById('{field_id}_stars');
                 const hiddenInput = document.getElementById('{field_id}_value');
                 const stars = starsContainer.querySelectorAll('.rating-star');
+
+                function select(rating) {{
+                    hiddenInput.value = rating;
+                    stars.forEach(function(s, i) {{
+                        s.classList.toggle('star-filled', i < rating);
+                        s.classList.toggle('star-empty', i >= rating);
+                        s.setAttribute('aria-checked', i === rating - 1 ? 'true' : 'false');
+                        s.tabIndex = i === rating - 1 ? 0 : -1;
+                    }});
+                }}
 
                 stars.forEach(function(star, index) {{
                     star.addEventListener('mouseenter', function() {{
@@ -534,12 +557,21 @@ class RatingStarsInput(FormInput):
                     }});
 
                     star.addEventListener('click', function() {{
-                        const rating = parseInt(this.dataset.rating);
-                        hiddenInput.value = rating;
+                        select(parseInt(this.dataset.rating));
+                    }});
 
-                        stars.forEach(function(s, i) {{
-                            s.classList.toggle('star-filled', i < rating);
-                        }});
+                    star.addEventListener('keydown', function(e) {{
+                        let next = null;
+                        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {{
+                            next = Math.min(index + 2, stars.length);
+                        }} else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {{
+                            next = Math.max(index, 1);
+                        }}
+                        if (next !== null) {{
+                            e.preventDefault();
+                            select(next);
+                            stars[next - 1].focus();
+                        }}
                     }});
                 }});
             }});
@@ -548,7 +580,7 @@ class RatingStarsInput(FormInput):
 
         return html(t'''
         <div class="star-rating-input" data-name="{name}">
-            <div class="stars" id="{field_id}_stars">
+            <div class="stars" id="{field_id}_stars" role="radiogroup" aria-label="Rating">
                 {stars_html}
             </div>
             {hidden_html}
@@ -600,7 +632,7 @@ class TagsInput(FormInput):
         assets = SafeHTML(f"""
             <style>
             .tags-input {{
-                border: 1px solid #ccc;
+                border: 1px solid var(--sf-outline, #ccc);
                 border-radius: 4px;
                 padding: 5px;
                 min-height: 40px;
@@ -616,8 +648,8 @@ class TagsInput(FormInput):
                 min-width: 100px;
             }}
             .tag {{
-                background: #0a58ca;
-                color: white;
+                background: var(--sf-chip-bg, #0a58ca);
+                color: var(--sf-chip-fg, white);
                 padding: 2px 8px;
                 border-radius: 12px;
                 font-size: 12px;

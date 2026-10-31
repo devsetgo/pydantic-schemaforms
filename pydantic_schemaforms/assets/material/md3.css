@@ -1,0 +1,2045 @@
+/* pydantic-schemaforms Material Design 3 components.
+ * Scoped under .md-form; colors only through the tokens in md3-tokens.css;
+ * no important flags. Reference: m3.material.io (2023 baseline). */
+
+/* ------------------------------------------------------------------ base */
+
+.md-form {
+    font-family: var(--md-sys-typescale-font);
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--md-sys-color-on-surface);
+    -webkit-font-smoothing: antialiased;
+}
+
+.md-form *,
+.md-form *::before,
+.md-form *::after {
+    box-sizing: border-box;
+}
+
+.md-form-container {
+    background: var(--md-sys-color-surface);
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    padding: 24px;
+}
+
+.md-form :focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+.md-form .md-field {
+    position: relative;
+    margin: 0 0 24px;
+}
+
+.md-form .md-required {
+    margin-left: 2px;
+}
+
+.md-form .md-icon {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    fill: currentColor;
+}
+
+/* --------------------------------------------------------- text fields */
+
+.md-form .md-field__box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    color: var(--md-sys-color-on-surface);
+}
+
+.md-form .md-field__box > :not(.md-floating-label, .md-field__outline, .md-field__leading, .md-field__trailing) {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.md-form .md-input,
+.md-form .md-select,
+.md-form .md-textarea {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: 24px;
+    outline: none;
+    position: relative;
+    z-index: 1;
+}
+
+.md-form .md-input:focus-visible,
+.md-form .md-select:focus-visible,
+.md-form .md-textarea:focus-visible {
+    outline: none;
+}
+
+.md-form .md-textarea {
+    min-height: 112px;
+    resize: vertical;
+}
+
+.md-form .md-select {
+    appearance: none;
+    padding-right: 48px;
+    cursor: pointer;
+}
+
+.md-form .md-input::placeholder,
+.md-form .md-textarea::placeholder {
+    color: transparent;
+    transition: color var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-field--float .md-input::placeholder,
+.md-form .md-field__box:has(:focus) .md-input::placeholder,
+.md-form .md-field__box:has(:focus) .md-textarea::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* The label rests inside the box and floats into the outline's notch. */
+.md-form .md-floating-label {
+    position: absolute;
+    left: 16px;
+    top: 28px;
+    max-width: calc(100% - 32px);
+    transform: translateY(-50%);
+    transform-origin: left center;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 16px;
+    line-height: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 2;
+    transition:
+        top var(--md-sys-motion-short) var(--md-sys-motion-easing),
+        font-size var(--md-sys-motion-short) var(--md-sys-motion-easing),
+        color var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-field--float .md-floating-label,
+.md-form .md-field__box:has(:focus) .md-floating-label,
+.md-form .md-field__box:has(.md-input:not(:placeholder-shown)) .md-floating-label,
+.md-form .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-floating-label,
+.md-form .md-field__box:has(:autofill) .md-floating-label {
+    top: 0;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.md-form .md-field--leading-icon .md-input,
+.md-form .md-field--leading-icon .md-select {
+    padding-left: 52px;
+}
+
+.md-form .md-field--leading-icon .md-floating-label {
+    left: 52px;
+    max-width: calc(100% - 68px);
+}
+
+.md-form .md-field--leading-icon.md-field--float .md-floating-label,
+.md-form .md-field--leading-icon .md-field__box:has(:focus) .md-floating-label,
+.md-form .md-field--leading-icon .md-field__box:has(.md-input:not(:placeholder-shown)) .md-floating-label {
+    left: 16px;
+}
+
+.md-form .md-field__leading,
+.md-form .md-field__trailing {
+    position: absolute;
+    top: 16px;
+    display: inline-flex;
+    color: var(--md-sys-color-on-surface-variant);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.md-form .md-field__leading {
+    left: 12px;
+}
+
+.md-form .md-field__trailing {
+    right: 12px;
+    gap: 4px;
+}
+
+.md-form .md-field--select .md-field__trailing .md-chevron {
+    transition: transform var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-field--select .md-field__box:has(:focus) .md-chevron {
+    transform: rotate(180deg);
+}
+
+.md-form .md-field--error.md-field--select .md-select {
+    padding-right: 76px;
+}
+
+/* Outlined: three segments, the middle one opens under a floated label. */
+.md-form .md-field__outline {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.md-form .md-field__outline > span {
+    border: 1px solid var(--md-sys-color-outline);
+    transition: border-color var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-field__outline > .md-field__outline-start {
+    width: 12px;
+    border-right: 0;
+    border-radius: var(--md-sys-shape-corner-extra-small) 0 0 var(--md-sys-shape-corner-extra-small);
+}
+
+.md-form .md-field__outline > .md-field__outline-notch {
+    flex: 0 0 auto;
+    max-width: calc(100% - 24px);
+    border-left: 0;
+    border-right: 0;
+}
+
+.md-form .md-field__notch-text {
+    display: block;
+    max-width: 0;
+    padding: 0;
+    font-size: 12px;
+    line-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    visibility: hidden;
+    transition: max-width var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-field__outline > .md-field__outline-end {
+    flex: 1 1 auto;
+    border-left: 0;
+    border-radius: 0 var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0;
+}
+
+.md-form .md-field--float .md-field__outline-notch,
+.md-form .md-field__box:has(:focus) .md-field__outline-notch,
+.md-form .md-field__box:has(.md-input:not(:placeholder-shown)) .md-field__outline-notch,
+.md-form .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-field__outline-notch,
+.md-form .md-field__box:has(:autofill) .md-field__outline-notch {
+    border-top-color: transparent;
+}
+
+.md-form .md-field--float .md-field__notch-text,
+.md-form .md-field__box:has(:focus) .md-field__notch-text,
+.md-form .md-field__box:has(.md-input:not(:placeholder-shown)) .md-field__notch-text,
+.md-form .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-field__notch-text,
+.md-form .md-field__box:has(:autofill) .md-field__notch-text {
+    max-width: 100%;
+    padding: 0 4px;
+}
+
+.md-form .md-field__box:hover .md-field__outline > span {
+    border-color: var(--md-sys-color-on-surface);
+}
+
+.md-form .md-field__box:has(:focus) .md-field__outline > span {
+    border-color: var(--md-sys-color-primary);
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.md-form .md-field__box:has(:focus) .md-field__outline > .md-field__outline-start {
+    border-left-width: 2px;
+}
+
+.md-form .md-field__box:has(:focus) .md-field__outline > .md-field__outline-end {
+    border-right-width: 2px;
+}
+
+.md-form .md-field__box:has(:focus) .md-field__outline-notch,
+.md-form .md-field--float .md-field__box:has(:focus) .md-field__outline-notch {
+    border-top-color: transparent;
+}
+
+.md-form .md-field__box:has(:focus) .md-floating-label {
+    color: var(--md-sys-color-primary);
+}
+
+/* Error */
+.md-form .md-field--error .md-field__outline > span,
+.md-form .md-field--error .md-field__box:hover .md-field__outline > span,
+.md-form .md-field--error .md-field__box:has(:focus) .md-field__outline > span {
+    border-color: var(--md-sys-color-error);
+}
+
+.md-form .md-field--error .md-field__box:has(:focus) .md-field__outline-notch,
+.md-form .md-field--error.md-field--float .md-field__outline-notch,
+.md-form .md-field--error .md-field__box:has(.md-input:not(:placeholder-shown)) .md-field__outline-notch,
+.md-form .md-field--error .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-field__outline-notch {
+    border-top-color: transparent;
+}
+
+.md-form .md-field--error .md-floating-label,
+.md-form .md-field--error .md-field__box:has(:focus) .md-floating-label,
+.md-form .md-field--error .md-field__trailing {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .md-field--error .md-input,
+.md-form .md-field--error .md-textarea {
+    padding-right: 48px;
+}
+
+.md-form .md-field__box:has(.md-textarea) .md-field__trailing {
+    top: 16px;
+}
+
+/* Disabled */
+.md-form .md-field__box:has(:disabled) {
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.md-form .md-field__box:has(:disabled) .md-floating-label {
+    color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+
+.md-form .md-field__box:has(:disabled) .md-field__outline > span,
+.md-form .md-field__box:has(:disabled):hover .md-field__outline > span {
+    border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+}
+
+/* Filled variant */
+.md-form.md-form--filled .md-field__box {
+    background: var(--md-sys-color-surface-container-highest);
+    border-radius: var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;
+}
+
+.md-form.md-form--filled .md-field__outline > span {
+    display: none;
+}
+
+.md-form.md-form--filled .md-field__outline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-bottom: 1px solid var(--md-sys-color-on-surface-variant);
+    transition: border-color var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form.md-form--filled .md-field__box:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface-container-highest));
+}
+
+.md-form.md-form--filled .md-field__box:hover .md-field__outline::after {
+    border-bottom-color: var(--md-sys-color-on-surface);
+}
+
+.md-form.md-form--filled .md-field__box:has(:focus) .md-field__outline::after {
+    border-bottom: 2px solid var(--md-sys-color-primary);
+}
+
+.md-form.md-form--filled .md-field--error .md-field__outline::after,
+.md-form.md-form--filled .md-field--error .md-field__box:has(:focus) .md-field__outline::after {
+    border-bottom-color: var(--md-sys-color-error);
+}
+
+.md-form.md-form--filled .md-input,
+.md-form.md-form--filled .md-select {
+    padding-top: 24px;
+    padding-bottom: 8px;
+}
+
+.md-form.md-form--filled .md-textarea {
+    padding-top: 28px;
+}
+
+.md-form.md-form--filled .md-field--float .md-floating-label,
+.md-form.md-form--filled .md-field__box:has(:focus) .md-floating-label,
+.md-form.md-form--filled .md-field__box:has(.md-input:not(:placeholder-shown)) .md-floating-label,
+.md-form.md-form--filled .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-floating-label,
+.md-form.md-form--filled .md-field__box:has(:autofill) .md-floating-label {
+    top: 16px;
+}
+
+.md-form.md-form--filled .md-field__box:has(:disabled) {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent);
+}
+
+/* Inside the box, a floated label stays in line with the value, clear of the icon. */
+.md-form.md-form--filled .md-field--leading-icon.md-field--float .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(:focus) .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(.md-input:not(:placeholder-shown)) .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(.md-textarea:not(:placeholder-shown)) .md-floating-label,
+.md-form.md-form--filled .md-field--leading-icon .md-field__box:has(:autofill) .md-floating-label {
+    left: 52px;
+}
+
+/* Browsers without :has() get a label above the box instead of an overlap. */
+@supports not selector(:has(a)) {
+    .md-form .md-floating-label {
+        position: static;
+        transform: none;
+        display: block;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .md-form .md-field__notch-text {
+        display: none;
+    }
+}
+
+/* -------------------------------------------- static label and supporting */
+
+.md-form .md-field-label {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.md-form .md-field--error > .md-field-label {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .md-field__supporting {
+    padding: 4px 16px 0;
+}
+
+.md-form .md-help-text,
+.md-form .md-error-text {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.md-form .md-error-text {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .md-field--static .md-field__supporting,
+.md-form .md-field--group .md-field__supporting,
+.md-form .md-field--checkbox .md-field__supporting,
+.md-form .md-field--switch .md-field__supporting {
+    padding-left: 0;
+}
+
+/* -------------------------------------------------------- checkbox, radio */
+
+.md-form .md-field--checkbox .md-checkbox-container,
+.md-form .md-field--switch .md-switch-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+}
+
+/* MD3 switch rows: label first, switch at the end of the row. */
+.md-form .md-field--switch .md-switch-row {
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch),
+.md-form input[type="radio"] {
+    appearance: none;
+    position: relative;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 11px;
+    border: 2px solid var(--md-sys-color-on-surface-variant);
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+    transition:
+        background-color var(--md-sys-motion-short) var(--md-sys-motion-easing),
+        border-color var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 10px;
+    border-radius: 50%;
+}
+
+/* 40px state layer */
+.md-form input[type="checkbox"]:not(.toggle-switch)::before,
+.md-form input[type="radio"]::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--md-sys-color-on-surface);
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch):hover::before,
+.md-form input[type="radio"]:hover::before {
+    opacity: 0.08;
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch):focus-visible,
+.md-form input[type="radio"]:focus-visible {
+    outline: none;
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch):focus-visible::before,
+.md-form input[type="radio"]:focus-visible::before {
+    opacity: 0.1;
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch):checked {
+    border-color: var(--md-sys-color-primary);
+    background-color: var(--md-sys-color-primary);
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch):checked::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: var(--md-sys-color-on-primary);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M6.75 12.13 3.62 9 2.56 10.06l4.19 4.19 9-9-1.06-1.06z'/%3E%3C/svg%3E") center / 18px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M6.75 12.13 3.62 9 2.56 10.06l4.19 4.19 9-9-1.06-1.06z'/%3E%3C/svg%3E") center / 18px no-repeat;
+}
+
+.md-form input[type="checkbox"]:not(.toggle-switch):checked::before,
+.md-form input[type="radio"]:checked::before {
+    background: var(--md-sys-color-primary);
+}
+
+.md-form input[type="radio"]:checked {
+    border-color: var(--md-sys-color-primary);
+}
+
+.md-form input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--md-sys-color-primary);
+}
+
+.md-form input[type="checkbox"]:disabled,
+.md-form input[type="radio"]:disabled {
+    opacity: 0.38;
+    cursor: default;
+}
+
+.md-form .md-field--error input[type="checkbox"]:not(.toggle-switch),
+.md-form .md-field--error input[type="radio"] {
+    border-color: var(--md-sys-color-error);
+}
+
+.md-form .md-field--error input[type="checkbox"]:not(.toggle-switch):checked {
+    background-color: var(--md-sys-color-error);
+}
+
+.md-form .md-checkbox-label,
+.md-form .md-switch-label {
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+}
+
+.md-form .md-field--checkbox .md-checkbox-container {
+    margin-left: -11px;
+}
+
+/* Groups: a fieldset whose legend is the label. */
+.md-form fieldset.radio-group,
+.md-form fieldset.checkbox-group {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+
+.md-form fieldset.radio-group > legend,
+.md-form fieldset.checkbox-group > legend {
+    float: left;
+    width: 100%;
+    margin: 0 0 4px;
+    padding: 0;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.md-form fieldset.radio-group > legend + *,
+.md-form fieldset.checkbox-group > legend + * {
+    clear: both;
+}
+
+.md-form .md-field--error fieldset > legend {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .radio-item label,
+.md-form .checkbox-item label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    margin-left: -10px;
+    cursor: pointer;
+}
+
+.md-form .checkbox-item label {
+    margin-left: -11px;
+}
+
+.md-form .radio-label,
+.md-form .checkbox-label {
+    margin-left: 2px;
+}
+
+/* Segmented buttons (radio variant="segmented") */
+.md-form fieldset.radio-group-segmented > .radio-item,
+.md-form fieldset.checkbox-group-button-group > .checkbox-item {
+    display: inline-flex;
+}
+
+.md-form fieldset.radio-group-segmented {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.md-form fieldset.radio-group-segmented > legend {
+    flex: 0 0 100%;
+}
+
+.md-form .radio-item-segmented label {
+    position: relative;
+    justify-content: center;
+    min-width: 48px;
+    height: 40px;
+    margin: 0 0 0 -1px;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.md-form .radio-item-segmented:first-of-type label {
+    margin-left: 0;
+    border-radius: var(--md-sys-shape-corner-full) 0 0 var(--md-sys-shape-corner-full);
+}
+
+.md-form .radio-item-segmented:last-of-type label {
+    border-radius: 0 var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) 0;
+}
+
+.md-form .radio-item-segmented input[type="radio"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: inherit;
+    opacity: 0;
+}
+
+.md-form .radio-item-segmented label:has(input:checked) {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .radio-item-segmented label:has(input:checked) .radio-label::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin: 0 8px 0 -4px;
+    vertical-align: -4px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / 18px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / 18px no-repeat;
+}
+
+.md-form .radio-item-segmented label:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.md-form .radio-item-segmented label:has(input:checked):hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
+}
+
+.md-form .radio-item-segmented label:has(input:focus-visible) {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+.md-form .radio-item-segmented .radio-label,
+.md-form .checkbox-item-button-group .checkbox-label {
+    margin: 0;
+}
+
+/* Filter chips (checkbox_group variant="button_group") */
+.md-form fieldset.checkbox-group-button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.md-form fieldset.checkbox-group-button-group > legend {
+    flex: 0 0 100%;
+}
+
+.md-form .checkbox-item-button-group label {
+    position: relative;
+    height: 32px;
+    margin: 0;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.md-form .checkbox-item-button-group input[type="checkbox"]:not(.toggle-switch) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: inherit;
+    opacity: 0;
+}
+
+.md-form .checkbox-item-button-group label:has(input:checked) {
+    padding-left: 8px;
+    border-color: transparent;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .checkbox-item-button-group label:has(input:checked) .checkbox-label::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    vertical-align: -4px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / 18px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / 18px no-repeat;
+}
+
+.md-form .checkbox-item-button-group label:hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 8%, transparent);
+}
+
+.md-form .checkbox-item-button-group label:has(input:checked):hover {
+    background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
+}
+
+.md-form .checkbox-item-button-group label:has(input:focus-visible) {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------- switch */
+
+.md-form .toggle-switch-wrapper {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 52px;
+    height: 32px;
+    cursor: pointer;
+}
+
+.md-form .toggle-switch-wrapper input.toggle-switch {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.md-form .toggle-switch-slider {
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-surface-container-highest);
+    transition:
+        background-color var(--md-sys-motion-medium) var(--md-sys-motion-easing),
+        border-color var(--md-sys-motion-medium) var(--md-sys-motion-easing);
+}
+
+.md-form .toggle-switch-slider::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    bottom: auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--md-sys-color-outline);
+    transform: translateY(-50%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+    transition:
+        left var(--md-sys-motion-medium) var(--md-sys-motion-easing),
+        width var(--md-sys-motion-medium) var(--md-sys-motion-easing),
+        height var(--md-sys-motion-medium) var(--md-sys-motion-easing),
+        background-color var(--md-sys-motion-medium) var(--md-sys-motion-easing),
+        box-shadow var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .toggle-switch-wrapper:hover .toggle-switch-slider::before {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+}
+
+.md-form .toggle-switch-wrapper input:checked + .toggle-switch-slider {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary);
+}
+
+.md-form .toggle-switch-wrapper input:checked + .toggle-switch-slider::before {
+    transform: translateY(-50%);
+    left: 22px;
+    width: 24px;
+    height: 24px;
+    background: var(--md-sys-color-on-primary);
+}
+
+.md-form .toggle-switch-wrapper input:checked + .toggle-switch-slider::after {
+    content: "";
+    position: absolute;
+    left: 26px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translateY(-50%);
+    background: var(--md-sys-color-on-primary-container);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / 16px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center / 16px no-repeat;
+}
+
+.md-form .toggle-switch-wrapper:hover input:checked + .toggle-switch-slider::before {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.md-form .toggle-switch-wrapper input:focus-visible + .toggle-switch-slider {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+.md-form .toggle-switch-wrapper input:disabled + .toggle-switch-slider {
+    opacity: 0.38;
+}
+
+.md-form .toggle-switch-text {
+    display: none;
+}
+
+.md-form .md-field--error .toggle-switch-slider {
+    border-color: var(--md-sys-color-error);
+}
+
+/* ------------------------------------------------------------- buttons */
+
+.md-form .md-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    min-width: 48px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    text-decoration: none;
+    cursor: pointer;
+    overflow: hidden;
+    isolation: isolate;
+    transition: box-shadow var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-button:hover::before {
+    opacity: 0.08;
+}
+
+.md-form .md-button:focus-visible::before,
+.md-form .md-button:active::before {
+    opacity: 0.1;
+}
+
+.md-form .md-button:disabled {
+    opacity: 0.38;
+    cursor: default;
+}
+
+.md-form .md-button--filled,
+.md-form .md-button-filled {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.md-form .md-button--filled:hover,
+.md-form .md-button-filled:hover {
+    box-shadow: var(--md-sys-elevation-1);
+}
+
+.md-form .md-button--tonal,
+.md-form .md-button-tonal {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .md-button--outlined {
+    border: 1px solid var(--md-sys-color-outline);
+    color: var(--md-sys-color-primary);
+}
+
+.md-form .md-button--text {
+    padding: 0 12px;
+}
+
+.md-form .md-button--error {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .md-button__icon {
+    width: 18px;
+    height: 18px;
+    margin-left: -8px;
+    fill: currentColor;
+}
+
+.md-form .md-icon-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    isolation: isolate;
+}
+
+.md-form .md-icon-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    z-index: -1;
+}
+
+.md-form .md-icon-button:hover::before {
+    opacity: 0.08;
+}
+
+.md-form .md-icon-button svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.md-form .md-form__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* -------------------------------------------------------- error summary */
+
+.md-form .md-error-summary {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    column-gap: 16px;
+    padding: 16px;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .md-error-summary::before {
+    content: "";
+    grid-row: 1 / span 2;
+    width: 24px;
+    height: 24px;
+    background: var(--md-sys-color-error);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E") center / 24px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E") center / 24px no-repeat;
+}
+
+.md-form .md-error-summary__title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    margin-bottom: 4px;
+}
+
+.md-form .md-error-summary__list {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.md-form .md-banner {
+    padding: 12px 16px;
+    margin: 0 0 16px;
+    border-radius: var(--md-sys-shape-corner-medium);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .md-banner--danger {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+}
+
+.md-form .md-banner--warning,
+.md-form .md-banner--info {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+/* --------------------------------------------------------- cards, groups */
+
+.md-form .md-layout-card,
+.md-form .md-card {
+    margin: 0 0 24px;
+    padding: 16px 16px 0;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.md-form .md-layout-card__header {
+    margin: 0 0 16px;
+}
+
+.md-form .md-layout-card__title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.md-form .md-layout-card__help {
+    margin: -12px 0 16px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.md-form .md-layout-card .md-floating-label,
+.md-form .md-card .md-floating-label {
+    background: none;
+}
+
+.md-form details.nested-model-section {
+    margin: 0 0 24px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.md-form details.nested-model-section > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 16px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+}
+
+.md-form details.nested-model-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.md-form details.nested-model-section > summary::after {
+    content: "";
+    width: 24px;
+    height: 24px;
+    margin-left: auto;
+    background: var(--md-sys-color-on-surface-variant);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E") center / 24px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E") center / 24px no-repeat;
+    transition: transform var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form details.nested-model-section[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.md-form details.nested-model-section > .nested-model-body {
+    padding: 8px 16px 0;
+}
+
+/* -------------------------------------------------------------- widgets */
+
+/* A plain input in a static-label field (captcha, for one). */
+.md-form .md-field--static .md-input {
+    width: 100%;
+    height: 56px;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+}
+
+.md-form .md-field--static .md-input:focus {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+.md-form .captcha-input label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Chips: tags and multiselect */
+.md-form .tag,
+.md-form .multiselect-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 8px 0 12px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.md-form .tag .remove,
+.md-form .multiselect-chip-remove {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.md-form .tags-input {
+    min-height: 56px;
+    padding: 8px 12px;
+    gap: 8px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+}
+
+.md-form .tags-input:hover {
+    border-color: var(--md-sys-color-on-surface);
+}
+
+.md-form .tags-input:focus-within {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+.md-form .md-field--error .tags-input {
+    border-color: var(--md-sys-color-error);
+}
+
+.md-form .tags-container {
+    display: contents;
+}
+
+.md-form .tags-input input {
+    height: 32px;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+}
+
+/* Menus: multiselect dropdown and combobox listbox */
+.md-form .multiselect-search {
+    height: 56px;
+    padding: 0 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+}
+
+.md-form .multiselect-search:focus {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+.md-form .multiselect-chips:not(:empty) {
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.md-form .combobox-wrapper {
+    display: contents;
+}
+
+.md-form .multiselect-dropdown,
+.md-form .combobox-listbox {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 280px;
+    margin: 4px 0 0;
+    padding: 8px 0;
+    overflow-y: auto;
+    list-style: none;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: var(--md-sys-color-surface-container);
+    box-shadow: var(--md-sys-elevation-2);
+}
+
+.md-form .multiselect-dropdown[hidden],
+.md-form .combobox-listbox[hidden] {
+    display: none;
+}
+
+.md-form .multiselect-option,
+.md-form .combobox-listbox li {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 12px;
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.md-form .multiselect-option:hover,
+.md-form .combobox-listbox li:hover,
+.md-form .combobox-listbox li.combobox-option-active {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .multiselect-option-selected,
+.md-form .multiselect-option-selected:hover {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-weight: 400;
+}
+
+/* Star rating */
+.md-form .star-rating-input .stars {
+    display: inline-flex;
+    margin-left: -8px;
+}
+
+.md-form .star-rating-input .rating-star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--md-sys-shape-corner-full);
+    font-size: 24px;
+    line-height: 1;
+}
+
+.md-form .star-rating-input .rating-star:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .star-rating-input .rating-star:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form .star-rating {
+    color: var(--md-sys-color-star);
+    font-size: 24px;
+    line-height: 32px;
+}
+
+/* Slider, range and rating: --md-slider-progress comes from md3.js */
+.md-form .md-field--static input[type="range"] {
+    width: calc(100% - 64px);
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    vertical-align: middle;
+    appearance: none;
+    cursor: pointer;
+}
+
+.md-form .md-field--static input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: linear-gradient(to right, var(--md-sys-color-primary) var(--md-slider-progress, 50%), var(--md-sys-color-surface-container-highest) 0);
+}
+
+.md-form .md-field--static input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: linear-gradient(to right, var(--md-sys-color-primary) var(--md-slider-progress, 50%), var(--md-sys-color-surface-container-highest) 0);
+}
+
+.md-form .md-field--static input[type="range"]::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-primary);
+    appearance: none;
+}
+
+.md-form .md-field--static input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-primary);
+}
+
+.md-form .md-field--static input[type="range"]:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+.md-form .md-field--static input[type="range"] + output {
+    display: inline-block;
+    min-width: 48px;
+    margin-left: 16px;
+    padding: 2px 8px;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.md-form .slider-labels {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px;
+    line-height: 16px;
+}
+
+/* Number stepper: icon buttons at the end of the field */
+.md-form .number-stepper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0;
+    padding-right: 8px;
+}
+
+.md-form .number-stepper input {
+    order: 0;
+    appearance: textfield;
+}
+
+.md-form .number-stepper input::-webkit-inner-spin-button,
+.md-form .number-stepper input::-webkit-outer-spin-button {
+    appearance: none;
+}
+
+.md-form .number-stepper-decrement,
+.md-form .number-stepper-increment {
+    order: 1;
+    position: relative;
+    z-index: 1;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.md-form .number-stepper-decrement:hover,
+.md-form .number-stepper-increment:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .number-stepper-decrement:focus-visible,
+.md-form .number-stepper-increment:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+/* File drop zone */
+.md-form .file-drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px;
+    border: 1px dashed var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface-container-low);
+    text-align: center;
+}
+
+.md-form .file-drop-zone::before {
+    content: "";
+    width: 24px;
+    height: 24px;
+    background: var(--md-sys-color-on-surface-variant);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.md-form .file-drop-zone-active {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+}
+
+.md-form .file-drop-zone-hint {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .md-field--static input[type="file"],
+.md-form .file-drop-zone input[type="file"] {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    padding: 0;
+    border: 0;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+}
+
+.md-form input[type="file"]::file-selector-button {
+    height: 40px;
+    margin-right: 12px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .file-item {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+}
+
+/* Color */
+.md-form .color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.md-form .md-field--static input[type="color"] {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-small);
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+}
+
+.md-form input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.md-form input[type="color"]::-webkit-color-swatch {
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+}
+
+.md-form input[type="color"]::-moz-color-swatch {
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-small);
+}
+
+/* The input is its own swatch here; only the hex readout stays. */
+.md-form .color-input-group > div > div {
+    display: none;
+}
+
+.md-form .color-input-group > div {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+}
+
+.md-form .color-input-group > div > span {
+    font-family: var(--md-sys-typescale-mono);
+}
+
+/* Custom-format date and time fields: the picker button takes the trailing slot */
+.md-form .md-field__box:has(.schemaforms-picker-wrap) .md-field__trailing {
+    display: none;
+}
+
+.md-form .schemaforms-picker-toggle {
+    z-index: 1;
+}
+
+/* Code editor */
+.md-form .code-format-toolbar {
+    margin-bottom: 8px;
+}
+
+.md-form .code-format-btn {
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.md-form .code-format-btn:hover {
+    background: color-mix(in srgb, var(--md-sys-color-primary) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .code-textarea-stack textarea,
+.md-form .code-highlight-layer {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 120px;
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    font-family: var(--md-sys-typescale-mono);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .code-textarea-stack textarea {
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+}
+
+.md-form .code-highlight-layer,
+.md-form .code-highlight-layer code {
+    background: var(--md-sys-color-surface-container-low);
+    color: var(--md-sys-color-on-surface);
+    font-family: var(--md-sys-typescale-mono);
+    font-size: 14px;
+    line-height: 20px;
+    text-shadow: none;
+}
+
+.md-form .code-highlight-layer code {
+    background: transparent;
+}
+
+.md-form .code-textarea-stack textarea.code-highlight-active {
+    background: transparent;
+    color: transparent;
+    caret-color: var(--md-sys-color-on-surface);
+}
+
+.md-form .code-highlight-layer .token {
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+}
+
+.md-form .code-highlight-layer .token.comment,
+.md-form .code-highlight-layer .token.prolog,
+.md-form .code-highlight-layer .token.doctype,
+.md-form .code-highlight-layer .token.punctuation {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.md-form .code-highlight-layer .token.keyword,
+.md-form .code-highlight-layer .token.atrule,
+.md-form .code-highlight-layer .token.function {
+    color: var(--md-sys-color-primary);
+}
+
+.md-form .code-highlight-layer .token.string,
+.md-form .code-highlight-layer .token.char,
+.md-form .code-highlight-layer .token.attr-value {
+    color: var(--md-code-string);
+}
+
+.md-form .code-highlight-layer .token.number,
+.md-form .code-highlight-layer .token.boolean {
+    color: var(--md-code-number);
+}
+
+.md-form .code-highlight-layer .token.property,
+.md-form .code-highlight-layer .token.tag,
+.md-form .code-highlight-layer .token.constant,
+.md-form .code-highlight-layer .token.symbol,
+.md-form .code-highlight-layer .token.deleted {
+    color: var(--md-code-tag);
+}
+
+.md-form .code-format-error {
+    color: var(--md-sys-color-error);
+    font-size: 12px;
+}
+
+.md-form textarea.code-invalid {
+    outline: 2px solid var(--md-sys-color-error);
+}
+
+/* ------------------------------------------------------------- composites */
+
+/* Model list items */
+.md-form .md-model-list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.md-form .md-model-item {
+    /* The remove button sits over the header: a button can't nest in a <summary>. */
+    position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+.md-form .md-model-item__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 56px;
+    padding: 4px 8px 4px 16px;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    list-style: none;
+}
+
+summary.md-model-item__header {
+    cursor: pointer;
+}
+
+summary.md-model-item__header::-webkit-details-marker {
+    display: none;
+}
+
+.md-form .md-model-item__title {
+    flex: 1;
+    min-width: 0;
+}
+
+.md-form .md-model-item__chevron {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    transition: transform var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form details[open] > summary .md-model-item__chevron {
+    transform: rotate(180deg);
+}
+
+.md-form .md-model-item__body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0 16px;
+    padding: 8px 16px 16px;
+}
+
+.md-form .md-model-item__cell--full {
+    grid-column: 1 / -1;
+}
+
+/* Tabs */
+.md-form .tab-layout .tab-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .tab-layout .tab-button {
+    position: relative;
+    min-height: 48px;
+    margin: 0;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .tab-layout .tab-button:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .tab-layout .tab-button:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form .tab-layout .tab-button.active {
+    color: var(--md-sys-color-primary);
+}
+
+.md-form .tab-layout .tab-button.active::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--md-sys-color-primary);
+}
+
+.md-form .tab-layout .tab-panel {
+    display: none;
+}
+
+.md-form .tab-layout .tab-panel.active {
+    display: block;
+}
+
+/* Accordion */
+.md-form .md-accordion-section {
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .md-accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 0;
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: start;
+    cursor: pointer;
+}
+
+.md-form .md-accordion-header::after {
+    content: "";
+    flex: none;
+    width: 24px;
+    height: 24px;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: transform var(--md-sys-motion-short) var(--md-sys-motion-easing);
+}
+
+.md-form .md-accordion-header:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .md-accordion-header:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
+}
+
+.md-form .md-accordion-header.expanded {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .md-accordion-header.expanded::after {
+    transform: rotate(180deg);
+}
+
+.md-form .md-accordion-content {
+    padding: 16px;
+}
+
+/* Wizard stepper */
+.md-form .form-wizard .wizard-progress {
+    gap: 8px 16px;
+    margin-bottom: 24px;
+}
+
+.md-form .form-wizard .wizard-progress-item {
+    min-height: 40px;
+    padding: 0 12px 0 4px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.md-form .form-wizard .wizard-progress-item:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .form-wizard .wizard-progress-item:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: 2px;
+}
+
+.md-form .form-wizard .wizard-progress-number {
+    width: 24px;
+    height: 24px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 12px;
+}
+
+.md-form .form-wizard .wizard-progress-item.active {
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
+}
+
+.md-form .form-wizard .wizard-progress-item.active .wizard-progress-number,
+.md-form .form-wizard .wizard-progress-item.complete .wizard-progress-number {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.md-form .form-wizard .wizard-progress-item.has-error {
+    color: var(--md-sys-color-error);
+}
+
+.md-form .form-wizard .wizard-progress-item.has-error .wizard-progress-number {
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+}
+
+.md-form .form-wizard .wizard-step-title {
+    margin: 0 0 16px;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+}
+
+.md-form .form-wizard .wizard-footer {
+    margin: 24px 0 16px;
+}
+
+/* Data table */
+.md-form .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.md-form .md-table th {
+    height: 56px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline);
+    font-weight: 500;
+    text-align: start;
+}
+
+.md-form .md-table td {
+    height: 56px;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .md-table--compact th,
+.md-form .md-table--compact td {
+    height: 40px;
+}
+
+.md-form .md-table--bordered th,
+.md-form .md-table--bordered td {
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-form .md-table--striped tbody tr:nth-child(odd) {
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.md-form .md-table--hover tbody tr:hover {
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) var(--md-sys-state-hover-opacity), transparent);
+}
+
+.md-form .md-table td input,
+.md-form .md-table td select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 8px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.md-form .md-table td input[type="checkbox"] {
+    width: 18px;
+    min-height: 18px;
+}
+
+.md-form .md-table td input:focus,
+.md-form .md-table td select:focus {
+    border-color: var(--md-sys-color-primary);
+    outline: 1px solid var(--md-sys-color-primary);
+}
+
+/* DataTables chrome */
+.md-form .dt-container {
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+}
+
+.md-form .dt-container .dt-search input,
+.md-form .dt-container .dt-length select {
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-extra-small);
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+    font: inherit;
+}
+
+.md-form .dt-container .dt-paging .dt-paging-button {
+    min-width: 40px;
+    min-height: 40px;
+    margin: 0 2px;
+    border: 0;
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .dt-container .dt-paging .dt-paging-button.current {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.md-form .dt-container .dt-paging .dt-paging-button.disabled {
+    color: var(--md-sys-color-on-surface);
+    opacity: var(--md-sys-state-disabled-opacity);
+}
+
+.md-form .dt-container .dt-button {
+    min-height: 40px;
+    padding: 0 24px;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: var(--md-sys-shape-corner-full);
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.md-form .md-model-item__remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+}
+
+.md-form .md-model-item__details > .md-model-item__header {
+    padding-right: 56px;
+}
+
+/* A leading icon stays beside the first line of a textarea. */
+.md-form .md-field--textarea.md-field--leading-icon .md-textarea {
+    padding-left: 52px;
+}
+
+.md-form .md-field--textarea .md-field__leading {
+    top: 16px;
+    transform: none;
+}
+
+.md-form .md-model-list-actions {
+    margin-bottom: 24px;
+}

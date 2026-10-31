@@ -399,3 +399,50 @@ def test_showcase_rerenders_errors_after_a_correct_captcha() -> None:
     )
     assert response.status_code == 200
     assert 'Submission failed.' in response.text
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_every_example_form_posts_back_in_its_own_style(
+    example_client: TestClient, style: str
+) -> None:
+    """A submit_url without ?style= drops a Material page back to Bootstrap on POST."""
+    post_routes = set(_routes('post'))
+    lost: dict[str, str] = {}
+    for path in _routes('get'):
+        response = example_client.get(path, params={'style': style})
+        if response.status_code != 200:
+            continue
+        for action in re.findall(r'<form\b[^>]*\baction="([^"]*)"', response.text):
+            action = action.replace('&amp;', '&')
+            if action.split('?')[0] in post_routes and f'style={style}' not in action:
+                lost[path] = action
+    assert not lost
+
+
+@pytest.mark.parametrize('path', ['/gallery', '/layouts'])
+def test_filled_variant_survives_a_failed_submission(example_client: TestClient, path: str) -> None:
+    params = {'style': 'material', 'variant': 'filled'}
+    page = example_client.get(path, params=params)
+    assert 'md-form--filled' in page.text
+    assert 'variant=filled' in re.search(r'<form\b[^>]*\baction="([^"]*)"', page.text).group(1)
+
+    failed = example_client.post(path, params=params, data={'unexpected': 'value'})
+    assert 'md-form--filled' in failed.text
+    assert 'variant=filled' in re.search(r'<form\b[^>]*\baction="([^"]*)"', failed.text).group(1)
+
+
+@pytest.mark.parametrize(
+    ('cookie', 'url', 'is_material'),
+    [
+        ('material', '/login', True),
+        ('bootstrap', '/login?style=material', True),
+        ('material', '/login?style=bootstrap', False),
+        ('nonsense', '/login', False),
+    ],
+)
+def test_the_style_cookie_applies_only_when_the_url_names_no_style(
+    cookie: str, url: str, is_material: bool
+) -> None:
+    client = TestClient(examples.main.app, cookies={'sf-style': cookie})
+    form_tag = re.search(r'<form[^>]*>', client.get(url).text).group(0)
+    assert ('md-form' in form_tag) is is_material

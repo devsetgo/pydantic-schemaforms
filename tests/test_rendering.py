@@ -80,7 +80,8 @@ from pydantic_schemaforms.rendering.schema_parser import (
     _field_info_to_schema,
     _infer_field_type,
 )
-from pydantic_schemaforms.rendering.themes import MaterialEmbeddedTheme, RendererTheme
+from pydantic_schemaforms.assets.runtime import read_asset_text
+from pydantic_schemaforms.rendering.themes import MaterialTheme, RendererTheme
 from pydantic_schemaforms.schema_form import Field, FormModel
 from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 from pydantic_schemaforms.templates import (
@@ -939,11 +940,13 @@ def test_renderer_theme_fallback_and_wrapper_timing(monkeypatch: pytest.MonkeyPa
     assert 'Rendered in 0.500s' in wrapped
 
 
-def test_material_embedded_theme_and_renderer_branches() -> None:
-    theme = MaterialEmbeddedTheme()
+def test_material_theme_and_renderer_branches() -> None:
+    theme = MaterialTheme()
     transformed = theme.transform_form_attributes({'class': 'x', 'novalidate': True})
     assert transformed['class'].startswith('md-form')
-    assert 'novalidate' not in transformed
+    assert transformed['novalidate'] is True
+    filled = MaterialTheme(variant='filled').transform_form_attributes({'class': 'x'})
+    assert filled['class'] == 'md-form md-form--filled x'
 
     # No help/error branch and optional model-list blocks
     container = theme.render_model_list_container(
@@ -960,21 +963,20 @@ def test_material_embedded_theme_and_renderer_branches() -> None:
     assert 'md-model-list-wrapper' in container
     assert 'md-help-text' not in container
 
-    # Material field helpers now live on EnhancedFormRenderer(framework="material")
-    renderer = EnhancedFormRenderer(framework='material')
-    assert renderer._attr(None) == ''
-    assert renderer._render_material_help_block(None, 'f') == ''
-    assert renderer._render_material_error_block(None, 'f') == ''
-    assert renderer._model_list_framework() == 'bootstrap'
+    # Controls get Material classes, and floating-label fields an empty
+    # placeholder so CSS can tell empty from filled.
+    assert theme.input_class('email') == 'md-input'
+    assert theme.input_class('select') == 'md-select'
+    assert theme.input_class('textarea') == 'md-textarea'
+    assert theme.input_class('radio') == ''
+    assert theme.control_attributes('email', {})['placeholder'] == ' '
+    assert theme.control_attributes('email', {'placeholder': 'x'})['placeholder'] == 'x'
+    assert 'placeholder' not in theme.control_attributes('select', {})
 
-    # enum fallback for select options and scalar option normalization
-    options = renderer._build_material_select_options({}, {'enum': ['A', 'B']})
-    assert options == [['A', 'A'], ['B', 'B']]
-
-    options2 = renderer._build_material_select_options(
-        {'options': ['X', {'value': 'Y', 'label': 'Why'}]}, {}
-    )
-    assert options2 == [['X', 'X'], ['Y', 'Why']]
+    with pytest.raises(ValueError, match='material_variant'):
+        MaterialTheme(variant='flat')
+    with pytest.raises(ValueError, match='material_variant'):
+        EnhancedFormRenderer(framework='material', material_variant='flat')
 
     # SimpleMaterialRenderer is a backward-compat alias — verify it still works
     compat = SimpleMaterialRenderer()
@@ -1374,17 +1376,10 @@ def test_runtime_asset_helpers_cover_modes_and_fallbacks(monkeypatch: pytest.Mon
     assert 'unpkg.com' in runtime_assets.imask_script_tag(asset_mode='cdn')
     assert '<script>' in runtime_assets.imask_script_tag(asset_mode='vendored')
 
-    monkeypatch.setattr(runtime_assets, '_vendored_text_or_empty', lambda _path: '/*css*/')
-    css_material = runtime_assets.framework_css_tag(framework='material', asset_mode='vendored')
-    css_cdn = runtime_assets.framework_css_tag(framework='material', asset_mode='cdn')
-    assert '<style>' in css_material
-    assert 'cdn.jsdelivr.net' in css_cdn
-
-    monkeypatch.setattr(runtime_assets, '_vendored_text_or_empty', lambda _path: '//js')
-    js_material = runtime_assets.framework_js_tag(framework='material', asset_mode='vendored')
-    js_cdn = runtime_assets.framework_js_tag(framework='material', asset_mode='cdn')
-    assert '<script>' in js_material
-    assert 'cdn.jsdelivr.net' in js_cdn
+    # The Material style carries its own CSS/JS; it never loads a CSS framework.
+    for mode in ('vendored', 'cdn'):
+        assert runtime_assets.framework_css_tag(framework='material', asset_mode=mode) == ''
+        assert runtime_assets.framework_js_tag(framework='material', asset_mode=mode) == ''
     assert runtime_assets.framework_css_tag(framework='unknown', asset_mode='vendored') == ''
     assert runtime_assets.framework_js_tag(framework='unknown', asset_mode='vendored') == ''
 
@@ -1765,8 +1760,8 @@ def test_accordion_layout_uses_form_style_templates() -> None:
     assert 'custom-acc-section' in html
 
 
-def test_material_embedded_theme_includes_error_summary_styles() -> None:
-    css = MaterialEmbeddedTheme._build_css()
+def test_material_theme_includes_error_summary_styles() -> None:
+    css = read_asset_text('assets/material/md3.css')
 
     assert '.md-error-summary' in css
     assert '.md-error-summary__title' in css

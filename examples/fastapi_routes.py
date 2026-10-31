@@ -306,6 +306,27 @@ def log_timing(label: str, **context: object):
         logger.info(f'{label} took {elapsed_ms:.1f}ms' + (f' ({suffix})' if suffix else ''))
 
 
+_FORM_STYLES = ('bootstrap', 'material', 'none')
+
+
+class PreferredStyleMiddleware:
+    """Apply the site header's style choice (the sf-style cookie) to any page
+    whose URL doesn't name a style, so the choice follows you around the demo."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] == 'http' and scope['method'] == 'GET':
+            request = Request(scope)
+            style = request.cookies.get('sf-style')
+            if style in _FORM_STYLES and 'style' not in request.query_params:
+                query = scope['query_string']
+                joiner = b'&' if query else b''
+                scope['query_string'] = query + joiner + f'style={style}'.encode()
+        await self.app(scope, receive, send)
+
+
 class RequestTimingMiddleware(BaseHTTPMiddleware):
     """Logs total wall-clock time for every request/response -- covers every
     route (including ones nobody hand-wrapped in log_timing, like /vendor/*
@@ -372,6 +393,13 @@ templates.env.globals['container_version'] = os.getenv('SCHEMAFORMS_DEMO_IMAGE_V
 async def vendor_bootstrap_icons_css():
     """Serve the vendored Bootstrap Icons CSS with the woff2 font embedded as a data URI."""
     css = bootstrap_icons_css_content()
+    return Response(content=css, media_type='text/css')
+
+
+@router.get('/vendor/md3-tokens.css', tags=['System'])
+async def vendor_md3_tokens_css():
+    """The Material tokens, for material_base.html's page shell."""
+    css = read_asset_text('assets/material/md3-tokens.css')
     return Response(content=css, media_type='text/css')
 
 
@@ -1040,32 +1068,12 @@ async def showcase_post(
 # ================================
 
 
-# The library leaves the look of radio variant="segmented" and checkbox_group
-# variant="button_group" to the app's CSS (see RadioGroup/CheckboxGroup); this is
-# the gallery's own styling for them, a starting point an app can copy.
-_CHOICE_VARIANT_CSS = """
-<style>
-.radio-group-segmented, .checkbox-group-button-group { border: 0; padding: 0; }
-.radio-item-segmented, .checkbox-item-button-group { display: inline-block; margin: 0 -1px 0 0; }
-.radio-item-segmented label, .checkbox-item-button-group label {
-    display: inline-block; padding: .375rem .9rem; margin: 0; cursor: pointer;
-    border: 1px solid #0d6efd; color: #0d6efd; background: #fff;
-}
-.radio-item-segmented:first-of-type label, .checkbox-item-button-group:first-of-type label {
-    border-radius: .375rem 0 0 .375rem;
-}
-.radio-item-segmented:last-of-type label, .checkbox-item-button-group:last-of-type label {
-    border-radius: 0 .375rem .375rem 0;
-}
-.radio-item-segmented input, .checkbox-item-button-group input {
-    position: absolute; opacity: 0; pointer-events: none;
-}
-.radio-item-segmented label:has(input:checked),
-.checkbox-item-button-group label:has(input:checked) { background: #0d6efd; color: #fff; }
-.radio-item-segmented label:has(input:focus-visible),
-.checkbox-item-button-group label:has(input:focus-visible) { outline: 2px solid #86b7fe; }
-</style>
-"""
+def _material_variant(variant: str | None) -> str | None:
+    return variant if variant in ('outlined', 'filled') else None
+
+
+def _variant_query(variant: str | None) -> str:
+    return f'&variant={variant}' if _material_variant(variant) else ''
 
 
 @router.get('/gallery', response_class=HTMLResponse, tags=['Showcase'])
@@ -1076,6 +1084,7 @@ async def gallery_get(
     demo: bool = True,
     debug: bool = False,
     show_timing: bool = True,
+    variant: str | None = None,
 ):
     """Tabbed widget gallery - every input type grouped by category (GET).
 
@@ -1098,13 +1107,13 @@ async def gallery_get(
         layout='tabbed',
         framework=style,
         form_data=form_data,
-        submit_url=f'/gallery?style={style}',
+        submit_url=f'/gallery?style={style}{_variant_query(variant)}',
+        material_variant=_material_variant(variant),
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
     )
 
-    form_html = _CHOICE_VARIANT_CSS + form_html
     # model_list and DataTableLayout are composition mechanisms, not discrete
     # widgets (see WidgetGalleryForm's docstring), so they're cross-linked
     # here rather than embedded as gallery fields.
@@ -1136,7 +1145,11 @@ async def gallery_get(
 
 @router.post('/gallery', response_class=HTMLResponse, tags=['Showcase'])
 async def gallery_post(
-    request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
+    request: Request,
+    style: str = 'bootstrap',
+    debug: bool = False,
+    show_timing: bool = True,
+    variant: str | None = None,
 ):
     """Tabbed widget gallery submission (async)."""
     form_data = uploads_as_filenames(await request.form())
@@ -1144,8 +1157,9 @@ async def gallery_post(
     validation = WidgetGalleryForm.validate(
         form_data,
         layout='tabbed',
-        submit_url=f'/gallery?style={style}',
+        submit_url=f'/gallery?style={style}{_variant_query(variant)}',
         framework=style,
+        material_variant=_material_variant(variant),
         debug=debug,
         show_timing=show_timing,
         enable_logging=True,
@@ -1167,7 +1181,7 @@ async def gallery_post(
             },
         )
     else:
-        form_html = _CHOICE_VARIANT_CSS + await validation.render_with_errors_async()
+        form_html = await validation.render_with_errors_async()
         return templates.TemplateResponse(
             request,
             'form.html',
@@ -1751,11 +1765,14 @@ async def organization_shared_post(
 
 
 def _layout_demo_options(
-    style: str, layout: str, linear: bool, progress: bool, labels: bool
+    style: str, layout: str, linear: bool, progress: bool, labels: bool, variant: str | None = None
 ) -> dict:
     """Render kwargs for /layouts: the submit URL keeps every query option,
     and the wizard gets wizard_options built from them."""
-    query = f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
+    query = (
+        f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
+        f'{_variant_query(variant)}'
+    )
     options: dict = {'submit_url': f'/layouts?{query}', 'layout': layout}
     if layout == 'wizard':
         options['wizard_options'] = {'linear': linear, 'show_progress': progress}
@@ -1773,7 +1790,14 @@ _LAYOUT_CHOICES = [
 ]
 
 
-def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labels: bool) -> str:
+def _layout_switcher(
+    style: str,
+    layout: str,
+    linear: bool,
+    progress: bool,
+    labels: bool,
+    variant: str | None = None,
+) -> str:
     """Buttons to re-render /layouts with each layout, plus the wizard's options."""
 
     current_query = {
@@ -1787,6 +1811,7 @@ def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labe
     def link(label: str, current: bool, **query: object) -> SafeHTML:
         params = current_query | query
         href = '/layouts?' + '&'.join(f'{key}={value}' for key, value in params.items())
+        href += _variant_query(variant)
         css = 'btn btn-sm ' + ('btn-primary' if current else 'btn-outline-primary')
         return html(t'<a class="{css}" href="{href}">{label}</a>')
 
@@ -1821,6 +1846,7 @@ def _layout_switcher(style: str, layout: str, linear: bool, progress: bool, labe
 async def layouts_get(
     request: Request,
     style: str = 'bootstrap',
+    variant: str | None = None,
     layout: str = 'tabbed',
     linear: bool = True,
     progress: bool = True,
@@ -1884,18 +1910,18 @@ async def layouts_get(
             },
         }
 
-    renderer = EnhancedFormRenderer(framework=style)
+    renderer = EnhancedFormRenderer(framework=style, material_variant=_material_variant(variant))
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        **_layout_demo_options(style, layout, linear, progress, labels),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels) + form_html
+    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
     return templates.TemplateResponse(
         request,
         'form.html',
@@ -1917,6 +1943,7 @@ async def layouts_get(
 async def layouts_post(
     request: Request,
     style: str = 'bootstrap',
+    variant: str | None = None,
     layout: str = 'tabbed',
     linear: bool = True,
     progress: bool = True,
@@ -1946,18 +1973,18 @@ async def layouts_post(
         )
 
     # Re-render the form with validation errors + user data.
-    renderer = EnhancedFormRenderer(framework=style)
+    renderer = EnhancedFormRenderer(framework=style, material_variant=_material_variant(variant))
     form_html = await renderer.render_form_from_model_async(
         LayoutDemonstrationForm,
         data=form_data,
         errors=validation.errors,
-        **_layout_demo_options(style, layout, linear, progress, labels),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels) + form_html
+    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
 
     return templates.TemplateResponse(
         request,

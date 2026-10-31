@@ -21,12 +21,10 @@ from pydantic.fields import FieldInfo
 from pydantic_core import PydanticSerializationError, PydanticUndefined, to_jsonable_python
 
 from .html_markers import wrap_with_schemaforms_markers
-from .icon_mapping import map_icon_for_framework
 from .rendering.context import RenderContext
-from .rendering.field_renderer import _FORMAT_UI_ELEMENTS, FieldRenderer
+from .rendering.field_renderer import FieldRenderer
 from .rendering.frameworks import get_framework_config
-from .inputs.registry import get_input_component_map
-from .error_tree import field_message, iter_errors, normalize_error_tree
+from .error_tree import iter_errors, normalize_error_tree
 from .form_data import decode_submission
 from .rendering.layout_engine import (
     GROUPED_LAYOUTS,
@@ -34,7 +32,6 @@ from .rendering.layout_engine import (
     check_layout,
     check_wizard_options,
 )
-from .rendering.material_icons import render_material_icon
 from .rendering.schema_parser import (
     SchemaMetadata,
     build_schema_metadata,
@@ -43,9 +40,8 @@ from .rendering.schema_parser import (
     resolve_list_item_ref,
     resolve_ui_element,
 )
-from .rendering.themes import MaterialEmbeddedTheme, RendererTheme, get_theme_for_framework
+from .rendering.themes import MaterialTheme, RendererTheme, get_theme_for_framework
 from .schema_form import FormModel
-from .templates import FormTemplates, render_template
 from .tstring import SafeHTML
 from .tstring import html as render_html
 
@@ -75,56 +71,6 @@ CSRF_MODE_OFF = CSRFMode.OFF.value
 CSRF_MODE_FIELD_ONLY = CSRFMode.FIELD_ONLY.value
 CSRF_MODE_REQUIRED_PROVIDER = CSRFMode.REQUIRED_PROVIDER.value
 CSRF_MODES = {mode.value for mode in CSRFMode}
-
-_MATERIAL_SELECTED = ' selected="selected"'
-_ERROR_CLASS = ' error'
-
-# ui_element values Material has genuine bespoke rendering for as a plain
-# outlined text-like field (real HTML5 types that need nothing beyond a
-# scalar value and str() -- no options list, no list-valued value, no
-# custom JS/CSS widget behavior). Anything else falls back to the shared
-# widget-registry rendering instead of _render_material_outlined_field's
-# generic text box (see _render_material_field).
-_MATERIAL_NATIVE_SCALAR_TYPES = frozenset(
-    {
-        'text',
-        'email',
-        'password',
-        'search',
-        'url',
-        'tel',
-        'number',
-        'date',
-        'month',
-        'week',
-        'datetime',
-        'datetime-local',
-        # 'color' is deliberately absent: the shared ColorInput adds the hex
-        # readout (show_value) that the outlined Material template lacks.
-        'time',
-        'hidden',
-        # 'select' has a genuine bespoke Material template
-        # (_render_material_select_input) with a working .md-select +
-        # .md-floating-label pairing -- delegating it to the shared registry
-        # pipeline instead loses that CSS pairing (the generic <select> it
-        # renders has none of Material's classes), leaving the floating
-        # label permanently overlapping the control instead of animating out
-        # of the way.
-        'select',
-    }
-)
-
-# date/time/datetime ui_element values that get routed through the shared
-# widget registry (instead of the plain Material text box) specifically when
-# a custom display format is configured -- see DateInput/TimeInput/
-# DatetimeInput's *_format kwargs in inputs/datetime_inputs.py. Default
-# (no format) Material rendering for these types is completely unaffected.
-_MATERIAL_DATE_TIME_FORMAT_KEYS = {
-    'date': 'date_format',
-    'time': 'time_format',
-    'datetime': 'datetime_format',
-    'datetime-local': 'datetime_format',
-}
 
 
 class SchemaFormValidationError(Exception):
@@ -226,21 +172,25 @@ class EnhancedFormRenderer:
         *,
         include_framework_assets: bool = False,
         asset_mode: str = 'vendored',
+        material_variant: str | None = None,
     ):
         self.framework = framework
         self.include_framework_assets = include_framework_assets
-        if theme is None and framework == 'material':
-            theme = MaterialEmbeddedTheme()
+        if material_variant is not None and material_variant not in MaterialTheme.VARIANTS:
+            raise ValueError(
+                f"material_variant must be 'outlined' or 'filled', not {material_variant!r}"
+            )
         resolved_theme = theme or get_theme_for_framework(
             framework,
             include_assets=include_framework_assets,
             asset_mode=asset_mode,
+            material_variant=material_variant,
         )
         self._theme: RendererTheme = resolved_theme
         self.asset_mode = asset_mode
         if hasattr(self._theme, 'config'):
             self.config = self._theme.config  # type: ignore[union-attr]
-        elif isinstance(self._theme, MaterialEmbeddedTheme):
+        elif isinstance(self._theme, MaterialTheme):
             self.config = {}
         else:
             self.config = get_framework_config(framework)
@@ -311,12 +261,6 @@ class EnhancedFormRenderer:
         form_attrs.update(kwargs)
         form_attrs['action'] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
-        if layout in GROUPED_LAYOUTS:
-            # Themes may drop novalidate to get native required-checks (Material
-            # does), but the browser can't focus an invalid input in a hidden
-            # tab/panel/step, so it silently refuses to submit. Server
-            # validation re-renders with the errored group open instead.
-            form_attrs['novalidate'] = True
 
         resolved_csrf_mode = self._resolve_csrf_mode(
             include_csrf=include_csrf,
@@ -392,7 +336,7 @@ class EnhancedFormRenderer:
         if has_model_list_fields:
             from .model_list import ModelListRenderer
 
-            list_renderer = ModelListRenderer(framework=self._model_list_framework())
+            list_renderer = ModelListRenderer()
             output_parts.append(list_renderer.get_model_list_javascript())
 
         combined_output = '\n'.join(output_parts)
@@ -534,10 +478,6 @@ class EnhancedFormRenderer:
         layout: str = 'vertical',
     ) -> str:
         """``error`` is the field's error node (see ``pydantic_schemaforms.error_tree``)."""
-        if self.framework == 'material':
-            return self._render_material_field(
-                field_name, field_schema, value, error, required_fields, context, layout
-            )
         return self._field_renderer.render_field(
             field_name, field_schema, value, error, required_fields, context, layout
         )
@@ -624,20 +564,7 @@ class EnhancedFormRenderer:
             item_parts.append(
                 render_html(t'<li><strong>{humanized_field}:</strong> {message}</li>')
             )
-        items_html = SafeHTML('\n'.join(item_parts))
-
-        if self.framework == 'material':
-            return render_html(t"""<section class="md-field">
-<div class="md-error-summary" role="alert" aria-live="polite">
-<div class="md-error-summary__title">Submission failed. Please correct the following:</div>
-<ul class="md-error-summary__list">{items_html}</ul>
-</div>
-</section>""")
-
-        return render_html(t"""<div class="alert alert-danger schemaforms-error-summary" role="alert" aria-live="polite">
-<strong>Submission failed.</strong> Please correct the following:
-<ul class="mb-0 mt-2">{items_html}</ul>
-</div>""")
+        return self._theme.render_error_summary('\n'.join(item_parts))
 
     def _resolve_csrf_mode(
         self, *, include_csrf: bool, csrf_mode: CSRFMode | str, debug: bool
@@ -726,527 +653,6 @@ class EnhancedFormRenderer:
     def _render_submit_button(self) -> str:
         button_class = self._theme.button_class() or self.config.get('button_class', '')
         return self._theme.render_submit_button(button_class)
-
-    def _model_list_framework(self) -> str:
-        """Allow subclasses to control which framework powers model list assets."""
-        if self.framework == 'material':
-            return 'bootstrap'
-        return self.framework
-
-    # ------------------------------------------------------------------ #
-    #  Material Design field rendering                                     #
-    #  Called by _render_field when self.framework == "material".          #
-    #  These methods mirror the field-level logic that was previously      #
-    #  maintained in SimpleMaterialRenderer as method overrides.           #
-    # ------------------------------------------------------------------ #
-
-    _MATERIAL_REQUIRED = 'required="required" aria-required="true"'
-
-    @staticmethod
-    def _attr(value: Any) -> str:
-        return html.escape(str(value)) if value is not None else ''
-
-    def _render_material_help_block(self, help_text: str | None, field_name: str) -> str:
-        if not help_text:
-            return ''
-        return render_template(
-            FormTemplates.MATERIAL_HELP_TEXT, help_content=str(help_text), field_id=field_name
-        )
-
-    def _render_material_error_block(self, error: str | None, field_name: str) -> str:
-        if not error:
-            return ''
-        return render_template(
-            FormTemplates.MATERIAL_ERROR_TEXT, error_content=str(error), field_id=field_name
-        )
-
-    def _material_described_by(
-        self, field_name: str, help_text: str | None, error: str | None
-    ) -> str:
-        """aria-invalid/aria-describedby tying the control to the ids
-        _render_material_help_block/_render_material_error_block emit."""
-        ids = [f'{field_name}-help'] if help_text else []
-        if error:
-            ids.append(f'{field_name}-error')
-        if not ids:
-            return ''
-        described_by = self._attr(' '.join(ids))
-        invalid = 'aria-invalid="true" ' if error else ''
-        return f'{invalid}aria-describedby="{described_by}"'
-
-    def _wrap_material_field_body(
-        self, *, field_name: str, field_body: str, help_text: str | None, error: str | None
-    ) -> str:
-        return render_template(
-            FormTemplates.MATERIAL_FIELD_CONTAINER,
-            field_body=field_body,
-            help_text=self._render_material_help_block(help_text, field_name),
-            error_text=self._render_material_error_block(error, field_name),
-        )
-
-    def _wrap_material_with_icon(self, icon: str | None, input_wrapper: str) -> str:
-        if not icon:
-            return input_wrapper
-        icon_markup = render_material_icon(icon, classes='md-icon')
-        return render_template(
-            FormTemplates.MATERIAL_FIELD_WITH_ICON,
-            icon_markup=icon_markup,
-            input_wrapper=input_wrapper,
-        )
-
-    # Keys inside a ui_options dict that mean something else (select choices,
-    # async-select config, the legacy nested 'attributes' dict already
-    # handled above) rather than a literal HTML attribute to emit.
-    _MATERIAL_UI_OPTION_SKIP_KEYS = {
-        'choices',
-        'options',
-        'async_options',
-        'fetch_url',
-        'attributes',
-    }
-
-    @staticmethod
-    def _material_constraint_attributes(
-        field_schema: dict[str, Any], input_type: str
-    ) -> dict[str, Any]:
-        # The same Pydantic constraints FieldRenderer turns into attributes
-        # for Bootstrap and plain HTML, so the browser checks them here too.
-        constraints: dict[str, Any] = {}
-        for key, attr_name in (
-            ('minLength', 'minlength'),
-            ('maxLength', 'maxlength'),
-            ('minimum', 'min'),
-            ('maximum', 'max'),
-            ('pattern', 'pattern'),
-        ):
-            if key in field_schema:
-                constraints[attr_name] = field_schema[key]
-        if input_type == 'number':
-            if 'multipleOf' in field_schema:
-                constraints['step'] = field_schema['multipleOf']
-            elif field_schema.get('type') == 'number':
-                constraints['step'] = 'any'
-        return constraints
-
-    _MATERIAL_EXPLICIT_ATTRS = (
-        ('min_value', 'min'),
-        ('max_value', 'max'),
-        ('min_length', 'minlength'),
-        ('max_length', 'maxlength'),
-        ('step', 'step'),
-    )
-
-    def _build_material_text_input_attributes(
-        self, ui_info: dict[str, Any], constraints: dict[str, Any] | None = None
-    ) -> str:
-        explicit = {name: ui_info.get(source) for source, name in self._MATERIAL_EXPLICIT_ATTRS}
-        extra = ui_info.get('attributes')
-        # ui_options (the documented, framework-agnostic way to attach extra
-        # HTML attributes -- see FieldRenderer._apply_ui_option_attributes,
-        # the Bootstrap/plain equivalent) strips its `ui_` prefix down to
-        # 'options'. Mirror that flat-dict convention here so e.g. hx-post/
-        # data-* attributes used for live-validation wiring work identically
-        # under Material instead of silently being dropped.
-        ui_options = ui_info.get('options')
-        options = (
-            {
-                key: value
-                for key, value in ui_options.items()
-                if key not in self._MATERIAL_UI_OPTION_SKIP_KEYS
-                and not isinstance(value, (list, dict))
-            }
-            if isinstance(ui_options, dict)
-            else {}
-        )
-        # Later sources win: an explicit ui_options value replaces a constraint.
-        merged = {
-            **(constraints or {}),
-            **{key: value for key, value in explicit.items() if value is not None},
-            **(extra if isinstance(extra, dict) else {}),
-            **options,
-        }
-        return ' '.join(
-            f'{name}="{html.escape(str(value))}"'
-            for name, value in merged.items()
-            if value is not None
-        )
-
-    def _build_material_select_options(
-        self, ui_info: dict[str, Any], field_schema: dict[str, Any]
-    ) -> list[list[str]]:
-        options = ui_info.get('options', [])
-        # ui_options={'choices': [...]} (the documented way to declare select
-        # options) lands here as a dict, not a list -- iterating it directly
-        # would treat its key name ("choices") as a single bogus option, same
-        # shape as FieldRenderer._extract_ui_options already guards against.
-        if isinstance(options, dict):
-            options = options.get('choices') or options.get('options') or []
-        if not options and 'enum' in field_schema:
-            options = [{'value': v, 'label': v} for v in field_schema['enum']]
-        normalized: list[list[str]] = []
-        for option in options:
-            if isinstance(option, dict):
-                opt_value = option.get('value', '')
-                opt_label = option.get('label', opt_value)
-            else:
-                opt_value = opt_label = str(option)
-            normalized.append([opt_value, opt_label])
-        return normalized
-
-    def _infer_material_input_type(self, field_schema: dict[str, Any]) -> str:
-        field_type = field_schema.get('type', 'string')
-        field_format = field_schema.get('format', '')
-        if field_schema.get('enum'):
-            return 'select'
-        if field_type == 'array' and (field_schema.get('items') or {}).get('enum'):
-            return 'multiselect'
-        if field_type == 'string' and field_format in _FORMAT_UI_ELEMENTS:
-            # "datetime" is not a valid HTML input type; Material renders the
-            # type attribute directly.
-            inferred = _FORMAT_UI_ELEMENTS[field_format]
-            return 'datetime-local' if inferred == 'datetime' else inferred
-        if field_type in ('integer', 'number'):
-            return 'number'
-        if field_type == 'boolean':
-            return 'checkbox'
-        return 'text'
-
-    def _render_material_text_input(
-        self,
-        field_name: str,
-        input_type: str,
-        value: Any,
-        error: str | None,
-        ui_info: dict[str, Any],
-        is_required: bool,
-        described_by: str = '',
-        field_schema: dict[str, Any] | None = None,
-    ) -> str:
-        error_class = _ERROR_CLASS if error else ''
-        attrs = self._build_material_text_input_attributes(
-            ui_info, self._material_constraint_attributes(field_schema or {}, input_type)
-        )
-        if is_required:
-            attrs = f'{attrs} {self._MATERIAL_REQUIRED}'.strip()
-        attrs = f'{attrs} {described_by}'.strip()
-        value_attr = self._attr(value) if value is not None else ''
-        return render_template(
-            FormTemplates.MATERIAL_TEXT_INPUT,
-            input_type=input_type,
-            name=self._attr(field_name),
-            field_id=self._attr(field_name),
-            error_class=error_class,
-            value=value_attr,
-            attributes=attrs,
-        )
-
-    def _render_material_textarea_input(
-        self,
-        field_name: str,
-        value: Any,
-        error: str | None,
-        is_required: bool,
-        described_by: str = '',
-    ) -> str:
-        error_class = _ERROR_CLASS if error else ''
-        attrs = f'{self._MATERIAL_REQUIRED if is_required else ""} {described_by}'.strip()
-        value_content = str(value) if value is not None else ''
-        return render_template(
-            FormTemplates.MATERIAL_TEXTAREA,
-            name=self._attr(field_name),
-            field_id=self._attr(field_name),
-            error_class=error_class,
-            value=value_content,
-            attributes=attrs,
-        )
-
-    def _render_material_select_input(
-        self,
-        field_name: str,
-        value: Any,
-        error: str | None,
-        ui_info: dict[str, Any],
-        field_schema: dict[str, Any],
-        is_required: bool,
-        described_by: str = '',
-    ) -> str:
-        error_class = _ERROR_CLASS if error else ''
-        attrs = f'{self._MATERIAL_REQUIRED if is_required else ""} {described_by}'.strip()
-        options = self._build_material_select_options(ui_info, field_schema)
-
-        # ui_options={'placeholder': '...'} (see FieldRenderer._build_placeholder_option
-        # for the shared/generic-framework equivalent) -- read from the same raw
-        # ui_info['options'] source _build_material_select_options already reads
-        # independently, since that helper's own contract is "real options only".
-        raw_ui_options = ui_info.get('options')
-        placeholder_text = (
-            raw_ui_options.get('placeholder') if isinstance(raw_ui_options, dict) else None
-        )
-
-        rendered_options = []
-        if not placeholder_text and field_schema.get('nullable'):
-            # An Optional select must be able to stay empty.
-            rendered_options.append(
-                render_template(
-                    FormTemplates.MATERIAL_SELECT_OPTION,
-                    value='',
-                    selected=_MATERIAL_SELECTED if value in (None, '') else '',
-                    label='',
-                )
-            )
-        if placeholder_text:
-            is_placeholder_selected = value is None or str(value) == ''
-            rendered_options.append(
-                render_template(
-                    FormTemplates.MATERIAL_SELECT_OPTION,
-                    value='',
-                    selected=_MATERIAL_SELECTED if is_placeholder_selected else '',
-                    disabled=' disabled="disabled"',
-                    label=str(placeholder_text),
-                )
-            )
-        for opt_value, opt_label in options:
-            is_selected = str(value) == str(opt_value)
-            rendered_options.append(
-                render_template(
-                    FormTemplates.MATERIAL_SELECT_OPTION,
-                    value=self._attr(opt_value),
-                    selected=_MATERIAL_SELECTED if is_selected else '',
-                    label=str(opt_label),
-                )
-            )
-        return render_template(
-            FormTemplates.MATERIAL_SELECT,
-            name=self._attr(field_name),
-            field_id=self._attr(field_name),
-            error_class=error_class,
-            options=''.join(rendered_options),
-            attributes=attrs,
-        )
-
-    def _render_material_boolean_field(
-        self,
-        template: Any,
-        field_name: str,
-        label: str,
-        value: Any,
-        error: str | None,
-        help_text: str | None,
-        is_required: bool,
-    ) -> str:
-        """Shared by the checkbox and toggle templates, which take the same slots."""
-        checked_attr = (
-            'checked="checked"'
-            if value is True or str(value).lower() in {'true', '1', 'on'}
-            else ''
-        )
-        # The template's `required` slot sits on the <input>, so the ARIA
-        # wiring rides along with it.
-        required_attr = ' '.join(
-            part
-            for part in (
-                self._MATERIAL_REQUIRED if is_required else '',
-                self._material_described_by(field_name, help_text, error),
-            )
-            if part
-        )
-        return render_template(
-            template,
-            name=self._attr(field_name),
-            field_id=self._attr(field_name),
-            label=label,
-            required_indicator=' *' if is_required else '',
-            checked=checked_attr,
-            required=required_attr,
-            help_text=self._render_material_help_block(help_text, field_name),
-            error_text=self._render_material_error_block(error, field_name),
-        )
-
-    def _render_material_outlined_field(
-        self,
-        field_name: str,
-        input_type: str,
-        label: str,
-        value: Any,
-        error: str | None,
-        help_text: str | None,
-        is_required: bool,
-        ui_info: dict[str, Any],
-        field_schema: dict[str, Any],
-    ) -> str:
-        required_text = ' *' if is_required else ''
-        icon = ui_info.get('icon')
-        if icon:
-            icon = map_icon_for_framework(icon, 'material')
-
-        described_by = self._material_described_by(field_name, help_text, error)
-        if input_type == 'textarea':
-            control_html = self._render_material_textarea_input(
-                field_name, value, error, is_required, described_by
-            )
-        elif input_type == 'select':
-            control_html = self._render_material_select_input(
-                field_name, value, error, ui_info, field_schema, is_required, described_by
-            )
-        else:
-            control_html = self._render_material_text_input(
-                field_name,
-                input_type,
-                value,
-                error,
-                ui_info,
-                is_required,
-                described_by,
-                field_schema,
-            )
-
-        input_wrapper = render_template(
-            FormTemplates.MATERIAL_FIELD_INPUT_WRAPPER,
-            input_control=control_html,
-            field_id=self._attr(field_name),
-            label=label,
-            required_indicator=required_text,
-        )
-        field_body = self._wrap_material_with_icon(icon, input_wrapper)
-        return self._wrap_material_field_body(
-            field_name=field_name, field_body=field_body, help_text=help_text, error=error
-        )
-
-    def _render_material_field(
-        self,
-        field_name: str,
-        field_schema: dict[str, Any],
-        value: Any = None,
-        error: Any = None,
-        required_fields: list[str] | None = None,
-        context: RenderContext | None = None,
-        _layout: str = 'vertical',
-    ) -> str:
-        context = context or RenderContext(form_data={}, schema_defs={})
-        ui_info = extract_ui_info(field_schema)
-
-        if ui_info.get('hidden') or resolve_ui_element(field_schema) == 'hidden':
-            display_value = str(value or '')
-            return render_html(t'<input type="hidden" name="{field_name}" value="{display_value}">')
-
-        input_type = resolve_ui_element(field_schema) or self._infer_material_input_type(
-            field_schema
-        )
-
-        if input_type == 'model_list':
-            return self._render_material_model_list_field(
-                field_name, field_schema, value, error, required_fields, context
-            )
-
-        if input_type == 'layout' or LayoutEngine.get_renderer_for_element(input_type):
-            return self._field_renderer.render_field(
-                field_name, field_schema, value, error, required_fields, context, _layout
-            )
-
-        error = field_message(error)
-
-        label = field_schema.get('title', field_name.replace('_', ' ').title())
-        help_text = ui_info.get('help_text') or field_schema.get('description')
-        is_required = field_name in (required_fields or [])
-
-        if input_type == 'checkbox':
-            return self._render_material_boolean_field(
-                FormTemplates.MATERIAL_CHECKBOX_FIELD,
-                field_name,
-                label,
-                value,
-                error,
-                help_text,
-                is_required,
-            )
-
-        if input_type in ('toggle', 'toggle_switch', 'checkbox_toggle'):
-            # The Material renderer has no widget-class registry of its own
-            # (unlike Bootstrap, which dispatches through get_input_component()),
-            # so this mirrors Bootstrap's ToggleSwitch with a dedicated
-            # Material-styled switch instead of just reusing the plain checkbox.
-            return self._render_material_boolean_field(
-                FormTemplates.MATERIAL_TOGGLE_FIELD,
-                field_name,
-                label,
-                value,
-                error,
-                help_text,
-                is_required,
-            )
-
-        fmt_key = _MATERIAL_DATE_TIME_FORMAT_KEYS.get(input_type)
-        ui_opts = (
-            ui_info.get('options') or ui_info.get('ui_options') or field_schema.get('ui_options')
-        )
-        has_custom_date_time_format = bool(
-            fmt_key and isinstance(ui_opts, dict) and ui_opts.get(fmt_key)
-        )
-
-        if (
-            input_type not in _MATERIAL_NATIVE_SCALAR_TYPES
-            and input_type in get_input_component_map()
-        ) or has_custom_date_time_format:
-            # No bespoke Material template exists for this widget (radio,
-            # checkbox_group, multiselect, combobox, tags, rating, star_rating,
-            # slider, phone, currency, ssn, credit_card, percentage, decimal,
-            # integer, age, quantity, score, temperature, birthdate, captcha,
-            # honeypot, csrf, file, ...). Previously these all fell through to
-            # _render_material_outlined_field below, which just stringifies
-            # `value` into a plain text box -- for list-valued fields (radio
-            # groups' selected list, multiselect, checkbox_group) that shows
-            # the raw Python repr (e.g. "['email', 'push']") as literal text,
-            # and single-choice widgets like radio/select lose the ability to
-            # pick a different option entirely. Reuse the same widget-registry
-            # rendering Bootstrap uses instead -- MaterialEmbeddedTheme's
-            # input_class()/select_class() are empty for anything outside its
-            # own small config, so no wrong framework class gets injected; the
-            # widget's own CSS/JS (if any, e.g. the toggle switch's or tags
-            # input's self-contained <style>) still applies. It won't have full
-            # Material Design polish, but it renders and functions correctly
-            # instead of silently breaking.
-            return self._field_renderer.render_field(
-                field_name,
-                field_schema,
-                value,
-                error,
-                required_fields,
-                context,
-                _layout,
-            )
-
-        return self._render_material_outlined_field(
-            field_name,
-            input_type,
-            label,
-            value,
-            error,
-            help_text,
-            is_required,
-            ui_info,
-            field_schema,
-        )
-
-    def _render_material_model_list_field(
-        self,
-        field_name: str,
-        field_schema: dict[str, Any],
-        value: Any = None,
-        error: str | None = None,
-        required_fields: list[str] | None = None,
-        context: RenderContext | None = None,
-    ) -> str:
-        context = context or RenderContext(form_data={}, schema_defs={})
-        field_html = self._field_renderer.render_field(
-            field_name,
-            field_schema,
-            value,
-            error,
-            required_fields or [],
-            context,
-            'vertical',
-        )
-        return render_template(FormTemplates.MATERIAL_MODEL_LIST_WRAPPER, content=field_html)
 
     def _build_debug_panel(
         self,
@@ -1341,15 +747,15 @@ class EnhancedFormRenderer:
         # developer-authored markup.
         panel_assets = SafeHTML("""
 <style>
-.pf-debug-panel { margin-top: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+.pf-debug-panel { margin-top: 1.5rem; border: 1px solid var(--sf-outline-variant, #e0e0e0); border-radius: 8px; background: var(--sf-surface-low, #fafafa); }
 .pf-debug-summary { cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
 .pf-debug-tabs { padding: 0.35rem 0.85rem 0.75rem; }
 .pf-debug-tablist { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
-.pf-debug-tab-btn { border: 1px solid #d0d7de; background: #ffffff; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
-.pf-debug-tab-btn.pf-active { background: #0d6efd; color: #ffffff; border-color: #0d6efd; }
+.pf-debug-tab-btn { border: 1px solid var(--sf-outline-variant, #d0d7de); background: var(--sf-surface, #ffffff); color: inherit; padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+.pf-debug-tab-btn.pf-active { background: var(--sf-primary, #0d6efd); color: var(--sf-on-primary, #ffffff); border-color: var(--sf-primary, #0d6efd); }
 .pf-debug-tab { display: none; }
 .pf-debug-tab.pf-active { display: block; }
-.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: #ffffff; border: 1px dashed #d0d7de; padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
+.pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: var(--sf-surface, #ffffff); border: 1px dashed var(--sf-outline-variant, #d0d7de); padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
 </style>
 <script>
 (function() {
@@ -1487,6 +893,7 @@ def render_form_html(
         framework=framework,
         include_framework_assets=include_framework_assets,
         asset_mode=asset_mode,
+        material_variant=kwargs.pop('material_variant', None),
     )
     html = renderer.render_form_from_model(
         form_model_cls,

@@ -25,9 +25,7 @@
        HTML inputs (no framework class at all) would otherwise show no visual
        change at all, or (previously) a colored border with no icon, unlike
        Bootstrap's checkmark/exclamation. Reuse Bootstrap's own SVG icons here
-       so every "Try Different Styles" option gets the identical indicator;
-       specificity/!important is bumped to win over Material's own
-       heavily-!important'd .md-input border/padding/background rules. */
+       so every "Try Different Styles" option gets the identical indicator. */
     input.is-invalid, .md-input.is-invalid {
         border-color: #dc3545 !important;
         border-width: 2px !important;

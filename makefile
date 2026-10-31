@@ -28,7 +28,7 @@ DOCKER_TAG := $(shell TZ=America/New_York date +%y.%m.%d.%H%M)
 .PHONY: help install test tests cleanup ruff isort autoflake \
 	ex-run ex-test kill \
 	ai-instructions docs-build docs-deploy \
-	vendor-update-htmx vendor-update-imask vendor-update-bootstrap vendor-update-materialize vendor-verify \
+	vendor-update-htmx vendor-update-imask vendor-update-bootstrap vendor-verify \
 	docker-build docker-push docker-all \
 	bump bump-beta bump-undo release-check package release \
 	rebase git-cleanup
@@ -130,9 +130,6 @@ vendor-update-imask: ## Vendor IMask (IMASK_VERSION=x.y.z)
 
 vendor-update-bootstrap: ## Vendor Bootstrap (BOOTSTRAP_VERSION=5.x.y)
 	$(PYTHON) scripts/vendor_assets.py update-bootstrap --version "$(BOOTSTRAP_VERSION)"
-
-vendor-update-materialize: ## Vendor Materialize (MATERIALIZE_VERSION=1.x.y)
-	$(PYTHON) scripts/vendor_assets.py update-materialize --version "$(MATERIALIZE_VERSION)"
 
 vendor-verify: ## Verify vendored assets match manifest checksums
 	$(PYTHON) scripts/vendor_assets.py verify --require-nonempty

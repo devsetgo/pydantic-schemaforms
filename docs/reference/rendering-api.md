@@ -19,6 +19,7 @@ inputs need. It is a fragment for your page, not a whole page.
 | `form_data` | `None` | Values to show. `None` starts from the field defaults; a dict is used as is (see [Fields and Inputs](../tutorial/fields.md#defaults-and-pre-filled-forms)). Nested dicts, Enum members and dates are fine. |
 | `errors` | `None` | Messages to show, shaped like the data: `{"email": "..."}`, `{"address": {"city": "..."}}`, `"_errors"` for the whole form |
 | `framework` | `"bootstrap"` | `"bootstrap"`, `"material"` or `"none"`; see [Styling](../tutorial/styling.md) |
+| `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only affects `framework="material"`. See [Material Design 3](../advanced/material.md) |
 | `layout` | `"vertical"` | See [Layouts](layouts.md) |
 | `wizard_options` | `None` | See [Layouts](layouts.md#wizard_options) |
 | `method` | `"POST"` | The form's `method` |

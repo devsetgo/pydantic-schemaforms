@@ -7,6 +7,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [Unreleased]
+
+### Changed
+
+- **`framework="material"` is rewritten on Material Design 3 and now renders
+  through the same path as Bootstrap and plain.** Every input gets a Material
+  field: outlined with a floating label and a real notch, with error, disabled
+  and icon states. The CSS uses design tokens (`--md-sys-color-*`) and has no
+  `!important`. `MaterialEmbeddedTheme` is now `MaterialTheme`. (#265)
+- **Star rating stars are now buttons in every style**, in a `radiogroup` with
+  arrow-key support, so the widget works from the keyboard. The default
+  colors are darker, to meet contrast requirements. (#265)
+
+### Added
+
+- Radio `variant="segmented"` and checkbox group `variant="button_group"` now
+  ship their own CSS instead of leaving it to the app. (#265)
+- `docs/advanced/material.md` documents the Material style. (#265)
+- `material_variant="filled"` selects filled text fields (the default is
+  `"outlined"`). (#265)
+- Opt-in dark mode for Bootstrap forms: under `data-bs-theme="dark"` the library's
+  widgets, tabs, accordion and wizard now follow Bootstrap's dark colors. (#265)
+- `--sf-*` CSS tokens re-color those same parts under Bootstrap. (#265)
+- Opt-in dark scheme for Material: `data-md-theme="dark"` on the form or an
+  ancestor, or the page's `color-scheme`. (#265)
+
+### Fixed
+
+- Material forms now submit to the server and show every error at once, like
+  Bootstrap. They used to drop `novalidate`, so the browser stopped a single-page
+  form at its first invalid field. (#265)
+- A model list item's title no longer goes through `innerHTML` as the user
+  types, so markup in a title field can't run in the page. (#265)
+- Material: invalid fields now get a red outline, and textareas, radios,
+  multiselects, comboboxes and data tables are no longer unstyled. (#265)
+
+### Removed
+
+- **Materialize is no longer vendored or referenced.** The Material style has
+  long used its own self-contained theme and never loaded Materialize, but the
+  package still shipped Materialize 1.0.0 (about 320 KB), a
+  `vendor-update-materialize` make target, and a Materialize config behind
+  `framework_css_tag`/`framework_js_tag`. They're gone: both functions now
+  return nothing for `"material"`, and `get_theme_for_framework("material")`
+  returns the Material theme the renderer actually uses. (#265)
+
 ## [26.4.3] — 2026-10-29
 
 `FormModel` is now the only way to build a form: the builder API, the
@@ -399,6 +445,27 @@ First production release. All public Quick Start code paths verified working end
 ## Latest Changes
 
 #### Production Releases
+
+### <span style='color:blue'>Support for Python 3.15</span> ([26.4.2](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.4.2))
+
+## Changes
+- Test: Update Coverage XML Timestamp (#231) (@devsetgo)
+
+## Documentation
+
+- Documentation: Clarify Python Requirement, Asset Modes, Examples, and Testing Workflow (#234) (@devsetgo)
+- Documentation: Remove Stale 26.4.1 Release-Notes Draft From Repo Root (#232) (@devsetgo)
+
+## Maintenance
+
+- Chore: Bump Version To 26.4.2 For Python 3.15 Support (#233) (@devsetgo)
+- Documentation: Remove Stale 26.4.1 Release-Notes Draft From Repo Root (#232) (@devsetgo)
+
+## Contributors
+@devsetgo
+
+
+Published Date: 2026 October 24, 21:09
 
 ### <span style='color:blue'>Enhancement: Collapse and Select Improvements</span> ([26.3.7](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.7))
 

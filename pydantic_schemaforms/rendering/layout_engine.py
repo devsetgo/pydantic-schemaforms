@@ -455,7 +455,7 @@ document.addEventListener('keydown', function(e) {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--sf-outline-variant, #e0e0e0);
 }
 .modal-title {
     margin: 0;
@@ -475,7 +475,7 @@ document.addEventListener('keydown', function(e) {
 }
 .modal-footer {
     padding: 1rem;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     text-align: right;
 }
 </style>
@@ -519,7 +519,7 @@ class CardLayout(BaseLayout):
 </div>
 <style>
 .card-layout {
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 1rem;
@@ -527,7 +527,7 @@ class CardLayout(BaseLayout):
 .card-header {
     padding: 1rem;
     background-color: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 8px 8px 0 0;
 }
 .card-title {
@@ -540,7 +540,7 @@ class CardLayout(BaseLayout):
 .card-footer {
     padding: 1rem;
     background-color: #f8f9fa;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 0 0 8px 8px;
 }
 </style>
@@ -837,7 +837,8 @@ class LayoutEngine:
         if handler is None:
             # NOSONAR comment below: title is read via {title} interpolation below.
             title = field_schema.get('title', field_name.replace('_', ' ').title())  # NOSONAR
-            return html(t"""<div class="layout-field-unknown alert alert-warning">
+            alert_class = self._alert_class('warning')  # NOSONAR
+            return html(t"""<div class="layout-field-unknown {alert_class}">
     <p>Layout field "{title}" has no registered layout_handler.</p>
     <small>input_type="layout" needs layout_handler=... naming a renderer registered with
     LayoutEngine.layout_renderer(). To compose forms, nest FormModels as fields instead
@@ -847,6 +848,12 @@ class LayoutEngine:
             return handler(field_name, field_schema, value, ui_info, context, self)
         except Exception as exc:  # pragma: no cover - defensive message
             return self._layout_error_message(field_name, field_schema, ui_info, exc)
+
+    def _alert_class(self, kind: str) -> str:
+        theme = getattr(self._renderer, 'theme', None)
+        if theme is not None and hasattr(theme, 'alert_class'):
+            return theme.alert_class(kind)
+        return f'alert alert-{kind}'
 
     def _render_layout_card(self, title: str, body_html: str, help_text: str) -> str:
         theme = getattr(self._renderer, 'theme', None)
@@ -887,8 +894,9 @@ class LayoutEngine:
         help_text = ui_info.get('help_text', '')
         error_message = str(exc)
         help_html = html(t'<small class="text-muted">{help_text}</small>') if help_text else ''
+        alert_class = self._alert_class('warning')  # NOSONAR
         return html(t'''
-        <div class="layout-field-error alert alert-warning">
+        <div class="layout-field-error {alert_class}">
             <p>Error rendering layout field "{title}": {error_message}</p>
             {help_html}
         </div>

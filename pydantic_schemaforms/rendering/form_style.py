@@ -696,8 +696,8 @@ def _material_wizard_footer(
 ) -> SafeHTML:
     return html(t"""
 <div class="wizard-footer">
-    <button type="button" class="md-button md-button-tonal" data-wizard-back>{back_label}</button>
-    <button type="button" class="md-button md-button-filled" data-wizard-next>{next_label}</button>
+    <button type="button" class="md-button md-button--outlined" data-wizard-back>{back_label}</button>
+    <button type="button" class="md-button md-button--filled" data-wizard-next>{next_label}</button>
 </div>""")
 
 

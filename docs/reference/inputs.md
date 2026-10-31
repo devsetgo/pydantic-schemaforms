@@ -708,9 +708,8 @@ Use this instead of `multiselect` when you want independent on/off
 checkboxes laid out directly on the page rather than a dropdown -- both
 submit a list of selected values. `variant="button_group"` adds
 `checkbox-group-button-group`/`checkbox-item-button-group` modifier classes
-for styling the options as an adjacent button row; it's presentation only,
-your app's CSS still does the actual visual styling (removing borders
-between items, etc.).
+and the CSS that shows the options as an adjacent button row (under Material,
+as MD3 filter chips). It's presentation only.
 
 `ui_options={"collapsible": True}` turns the legend into a clickable toggle
 that shows/hides the checkboxes underneath -- useful for grouping a long
@@ -748,9 +747,9 @@ class RadioExample(FormModel):
 ```
 
 `variant="segmented"` adds `radio-group-segmented`/`radio-item-segmented`
-modifier classes for styling the options as adjacent buttons instead of
-stacked radios -- presentation only, same caveat as `checkbox_group`'s
-`button_group` variant above.
+modifier classes and the CSS that shows the options as adjacent buttons
+instead of stacked radios (under Material, as MD3 segmented buttons). It's
+presentation only.
 
 `ui_options={"collapsible": True}` (and `collapsed=True` to start closed)
 works identically to `checkbox_group`'s -- see above.

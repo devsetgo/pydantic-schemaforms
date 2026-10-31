@@ -1,0 +1,260 @@
+{# The site header both page shells share: resource links, theme, style and variant. #}
+<style>
+        a.site-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        a.site-brand:hover {
+            color: #ffffff;
+        }
+
+        .site-brand-logo {
+            height: 42px;
+            width: auto;
+            display: block;
+        }
+
+        .site-brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        .site-brand-copy {
+            line-height: 1.1;
+        }
+
+        .site-brand-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .site-brand-subtitle {
+            font-size: 0.8rem;
+            color: #d1d5db;
+            margin: 0;
+        }
+
+        .site-brand-shell {
+            background: #000000;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .top-resource-bar {
+            background: #0d0d0d;
+            padding: 0.35rem 0;
+            font-size: 0.78rem;
+        }
+
+        .top-resource-bar a {
+            color: #9ca3af;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.15s;
+        }
+
+        .top-resource-bar a:hover {
+            color: #ffffff;
+        }
+
+        .top-resource-bar .sep {
+            color: #374151;
+            margin: 0 0.5rem;
+        }
+
+        .version-chip {
+            color: #e5e7eb;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 999px;
+            padding: 0.05rem 0.55rem;
+            font-size: 0.72rem;
+        }
+
+        @media (max-width: 576px) {
+            .site-brand-logo {
+                display: none;
+            }
+
+            .site-brand-mark {
+                display: block;
+            }
+        }
+
+        .top-resource-bar__inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 12px;
+            box-sizing: border-box;
+        }
+
+        .sf-bar__controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .sf-bar__group {
+            display: inline-flex;
+            border: 1px solid #6b7280;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .sf-bar__btn {
+            padding: 2px 10px;
+            border: 0;
+            background: transparent;
+            color: #e5e7eb;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .sf-bar__btn + .sf-bar__btn { border-left: 1px solid #6b7280; }
+        .sf-bar__btn:hover { background: #1f2937; color: #ffffff; }
+        .sf-bar__btn:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+        .sf-bar__btn[aria-current="true"] { background: #e5e7eb; color: #0d0d0d; }
+        .site-brand-header { max-width: 1116px; margin: 24px auto 0; padding: 0 12px; box-sizing: border-box; }
+        .site-brand-subtitle { display: block; }
+</style>
+{% set current_style = request.query_params.get('style') or framework_type or 'bootstrap' %}
+<script>
+    (function () {
+        var theme = null;
+        try { theme = localStorage.getItem('sf-theme'); } catch (error) { /* storage blocked */ }
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            document.documentElement.setAttribute('data-md-theme', 'dark');
+        }
+    })();
+</script>
+<div class="top-resource-bar">
+    <div class="top-resource-bar__inner">
+        <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">Documentation</a>
+        <span class="sep">|</span>
+        <a href="https://github.com/devsetgo/pydantic-schemaforms" target="_blank" rel="noopener">Repository</a>
+        <span class="sep">|</span>
+        <a href="https://pypi.org/project/pydantic-schemaforms/" target="_blank" rel="noopener">PyPI</a>
+        <span class="sep">|</span>
+        <span class="version-chip">Library v{{ library_version }}</span>
+        <span class="sep">|</span>
+        <a href="https://github.com/devsetgo/pydantic-schemaforms/issues" target="_blank" rel="noopener">Issues</a>
+        <div class="sf-bar__controls">
+            <div class="sf-bar__group" role="group" aria-label="Form style">
+                <button type="button" class="sf-bar__btn" data-sf-style="bootstrap"{% if current_style == 'bootstrap' %} aria-current="true"{% endif %}>Bootstrap</button>
+                <button type="button" class="sf-bar__btn" data-sf-style="material"{% if current_style == 'material' %} aria-current="true"{% endif %}>Material</button>
+                <button type="button" class="sf-bar__btn" data-sf-style="none"{% if current_style == 'none' %} aria-current="true"{% endif %}>Plain</button>
+            </div>
+            {% if current_style == 'material' %}
+            <div class="sf-bar__group" role="group" aria-label="Text field variant">
+                <button type="button" class="sf-bar__btn" data-sf-variant="outlined">Outlined</button>
+                <button type="button" class="sf-bar__btn" data-sf-variant="filled">Filled</button>
+            </div>
+            {% endif %}
+            <div class="sf-bar__group">
+                <button type="button" class="sf-bar__btn" id="sf-theme-toggle">Dark</button>
+            </div>
+        </div>
+    </div>
+</div>
+    {% if not request or request.url.path != '/' %}
+    <div class="site-brand-header"><div class="site-brand-shell">
+        <a class="site-brand" href="/">
+            <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}"
+                alt="">
+            <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}"
+                alt="">
+            <span class="site-brand-copy">
+                <span class="site-brand-title d-block">Pydantic Schemaform</span>
+                <span class="site-brand-subtitle d-block">Pydantic models to polished forms</span>
+            </span>
+        </a>
+    </div></div>
+{% endif %}
+<script>
+    (function () {
+        var root = document.documentElement;
+        var params = new URLSearchParams(location.search);
+
+        function remember(key, value) {
+            try { localStorage.setItem(key, value); } catch (error) { /* this page only */ }
+        }
+        function recall(key) {
+            try { return localStorage.getItem(key); } catch (error) { return null; }
+        }
+        function setStyleCookie(value) {
+            document.cookie = 'sf-style=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+        }
+        function goTo(nextParams) {
+            location.href = location.pathname + '?' + nextParams.toString();
+        }
+
+        if (params.get('style')) { setStyleCookie(params.get('style')); }
+
+        var toggle = document.getElementById('sf-theme-toggle');
+        function isDark() { return root.getAttribute('data-bs-theme') === 'dark'; }
+        function syncTheme() { toggle.textContent = isDark() ? 'Light' : 'Dark'; }
+        toggle.addEventListener('click', function () {
+            var next = isDark() ? 'light' : 'dark';
+            root.setAttribute('data-bs-theme', next);
+            root.setAttribute('data-md-theme', next);
+            remember('sf-theme', next);
+            syncTheme();
+        });
+        syncTheme();
+
+        document.querySelectorAll('[data-sf-style]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                setStyleCookie(button.dataset.sfStyle);
+                params.set('style', button.dataset.sfStyle);
+                goTo(params);
+            });
+        });
+
+        // The demo's site-wide switch adds the class material_variant="filled" renders,
+        // so it works on every page; ?variant= is the server-rendered way.
+        var variantButtons = document.querySelectorAll('[data-sf-variant]');
+        function applyVariant(variant) {
+            document.querySelectorAll('form.md-form').forEach(function (form) {
+                form.classList.toggle('md-form--filled', variant === 'filled');
+            });
+            variantButtons.forEach(function (button) {
+                if (button.dataset.sfVariant === variant) {
+                    button.setAttribute('aria-current', 'true');
+                } else {
+                    button.removeAttribute('aria-current');
+                }
+            });
+        }
+        if (variantButtons.length) {
+            variantButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    remember('sf-variant', button.dataset.sfVariant);
+                    if (params.has('variant')) {
+                        params.delete('variant');
+                        goTo(params);
+                    } else {
+                        applyVariant(button.dataset.sfVariant);
+                    }
+                });
+            });
+            document.addEventListener('DOMContentLoaded', function () {
+                applyVariant(params.get('variant') || recall('sf-variant') || 'outlined');
+            });
+        }
+    })();
+</script>

@@ -579,17 +579,15 @@ def test_decoder_compacts_list_indices_instead_of_padding() -> None:
     }
 
 
-@pytest.mark.parametrize('layout', ['tabbed', 'accordion', 'wizard'])
-def test_grouped_material_forms_skip_native_validation_of_hidden_groups(layout: str) -> None:
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+@pytest.mark.parametrize('layout', ['vertical', 'tabbed', 'accordion', 'wizard'])
+def test_every_style_leaves_validation_to_the_server(layout: str, framework: str) -> None:
     form_tag = re.search(
         r'<form[^>]*>',
-        render_form_html(ProfileForm, layout=layout, framework='material', submit_url='/p'),
+        render_form_html(ProfileForm, layout=layout, framework=framework, submit_url='/p'),
     )
     assert form_tag is not None
     assert 'novalidate' in form_tag.group(0)
-
-    vertical = render_form_html(ProfileForm, framework='material', submit_url='/p')
-    assert 'novalidate' not in re.search(r'<form[^>]*>', vertical).group(0)
 
 
 def test_removing_every_item_of_a_repeating_sub_form_still_checks_min_length() -> None:

@@ -1,4 +1,4 @@
-{% extends "shared_base.html" %}
+{% extends "material_base.html" if (framework_type == "material" or request.query_params.get("style") == "material") else "shared_base.html" %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,11 +8,7 @@
             <!-- Header -->
             <div class="form-header">
                 <h2 class="mb-3">
-                    {% if framework_type == "material" %}
-                        <span class="material-icons me-2" style="font-size: 2rem; vertical-align: middle;">description</span>
-                    {% else %}
-                        <i class="bi bi-file-earmark-text-fill me-2"></i>
-                    {% endif %}
+                    <i class="bi bi-file-earmark-text-fill me-2"></i>
                     {{ title }}
                 </h2>
                 <p class="mb-0">
@@ -30,11 +26,7 @@
 
                 {% if security_highlight %}
                 <div class="alert alert-warning d-flex align-items-start" role="alert">
-                    {% if framework_type == "material" %}
-                        <span class="material-icons me-2" style="font-size: 1.2rem;">verified_user</span>
-                    {% else %}
-                        <i class="bi bi-shield-lock-fill me-2"></i>
-                    {% endif %}
+                    <i class="bi bi-shield-lock-fill me-2"></i>
                     <div>
                         <strong>Security Highlight:</strong> {{ security_highlight }}
                     </div>
@@ -54,34 +46,12 @@
                     </a>
                 </div>
 
-                <!-- Style Variants -->
-                <div class="mt-4 p-3 bg-light rounded">
-                    <h6 class="text-muted mb-2">
-                        <i class="bi bi-palette-fill me-2"></i>
-                        Try Different Styles
-                    </h6>
-                    <div class="btn-group" role="group">
-                        <a href="?style=bootstrap&demo=true&debug=true" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-bootstrap me-1"></i>
-                            Bootstrap
-                        </a>
-                        <a href="?style=material&demo=true" class="btn btn-outline-info btn-sm">
-                            <i class="bi bi-palette me-1"></i>
-                            Material Design
-                        </a>
-                        <a href="?style=none&demo=true&debug=true" class="btn btn-outline-dark btn-sm">
-                            <i class="bi bi-code-square me-1"></i>
-                            Plain HTML
-                        </a>
-                    </div>
-                </div>
-
                 {% block extra_info %}{% endblock %}
 
                 {% if api_endpoint %}
                 <!-- Dual-Use API callout — shown when the route passes api_endpoint context -->
                 <div class="mt-4 p-3 rounded border" style="border-color: #0d6efd !important; background-color: rgba(13,110,253,.05);">
-                    <h6 class="mb-2" style="color: #0a58ca;">
+                    <h6 class="mb-2" style="color: var(--bs-link-color);">
                         <i class="bi bi-braces me-2"></i>
                         Also available as a JSON API
                     </h6>

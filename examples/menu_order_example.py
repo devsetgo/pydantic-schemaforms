@@ -179,7 +179,7 @@ async def show_form(request: Request, style: str = 'bootstrap', debug: bool = Fa
     with log_timing('render_form_html_async'):
         form_html = await render_form_html_async(
             MenuOrder,
-            submit_url='/menu-order/',
+            submit_url=f'/menu-order/?style={style}',
             framework=style,
             debug=debug,
             csrf_mode='required-provider',
@@ -222,7 +222,7 @@ async def submit_form(request: Request, style: str = 'bootstrap', debug: bool = 
             MenuOrder,
             form_data=submitted,
             errors={'form': csrf_error},
-            submit_url='/menu-order/',
+            submit_url=f'/menu-order/?style={style}',
             framework=style,
             debug=debug,
             csrf_mode='required-provider',
@@ -248,7 +248,7 @@ async def submit_form(request: Request, style: str = 'bootstrap', debug: bool = 
 
     result = MenuOrder.validate(
         submitted,
-        submit_url='/menu-order/',
+        submit_url=f'/menu-order/?style={style}',
         framework=style,
         csrf_mode='required-provider',
         csrf_field_name='csrf_token',

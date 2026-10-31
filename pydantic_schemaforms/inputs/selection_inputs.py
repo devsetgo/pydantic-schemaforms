@@ -61,6 +61,38 @@ function toggleCollapsibleGroup(contentId, buttonElement) {
 """)
 
 
+# The look of radio variant="segmented" and checkbox_group variant="button_group".
+# Colors read the theme's tokens; md3.css restyles both as MD3 components.
+_CHOICE_VARIANT_ASSETS = SafeHTML("""
+<style>
+.radio-group-segmented, .checkbox-group-button-group { border: 0; padding: 0; }
+.radio-item-segmented, .checkbox-item-button-group { display: inline-block; margin: 0 -1px 0 0; }
+.radio-item-segmented label, .checkbox-item-button-group label {
+    display: inline-block; padding: .375rem .9rem; margin: 0; cursor: pointer;
+    border: 1px solid var(--sf-primary, #0d6efd); color: var(--sf-primary, #0d6efd);
+    background: var(--sf-surface, #fff);
+}
+.radio-item-segmented:first-of-type label, .checkbox-item-button-group:first-of-type label {
+    border-radius: .375rem 0 0 .375rem;
+}
+.radio-item-segmented:last-of-type label, .checkbox-item-button-group:last-of-type label {
+    border-radius: 0 .375rem .375rem 0;
+}
+.radio-item-segmented input, .checkbox-item-button-group input {
+    position: absolute; opacity: 0; pointer-events: none;
+}
+.radio-item-segmented label:has(input:checked),
+.checkbox-item-button-group label:has(input:checked) {
+    background: var(--sf-primary, #0d6efd); color: var(--sf-on-primary, #fff);
+}
+.radio-item-segmented label:has(input:focus-visible),
+.checkbox-item-button-group label:has(input:focus-visible) {
+    outline: 2px solid var(--sf-primary, #86b7fe);
+}
+</style>
+""")
+
+
 class SelectInput(SelectInputBase):
     """Dropdown select input with support for single and multiple selection."""
 
@@ -189,8 +221,8 @@ class MultiSelectInput(SelectInput):
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: #e2e8f0;
-    color: #1c1b1f;
+    background: var(--sf-chip-bg, #e2e8f0);
+    color: var(--sf-chip-fg, #1c1b1f);
     border-radius: 12px;
     padding: 2px 8px;
     font-size: 0.875rem;
@@ -204,7 +236,7 @@ class MultiSelectInput(SelectInput):
     width: 100%;
     box-sizing: border-box;
     padding: 6px 10px;
-    border: 1px solid #79747e;
+    border: 1px solid var(--sf-outline, #79747e);
     border-radius: 4px;
 }}
 .multiselect-dropdown {{
@@ -213,7 +245,7 @@ class MultiSelectInput(SelectInput):
     padding: 0;
     max-height: 180px;
     overflow-y: auto;
-    border: 1px solid #79747e;
+    border: 1px solid var(--sf-outline, #79747e);
     border-radius: 4px;
 }}
 .multiselect-option {{
@@ -221,10 +253,10 @@ class MultiSelectInput(SelectInput):
     cursor: pointer;
 }}
 .multiselect-option:hover {{
-    background: #f1f5f9;
+    background: var(--sf-surface-low, #f1f5f9);
 }}
 .multiselect-option-selected {{
-    background: #e0e7ff;
+    background: var(--sf-chip-bg, #e0e7ff);
     font-weight: 600;
 }}
 /* Applied by the enhancement script once the chips/search/dropdown UI has
@@ -455,12 +487,15 @@ class CheckboxGroup(SelectInputBase):
         legend_text = legend or group_name.replace('_', ' ').title()
 
         if not collapsible:
-            return substitute(
+            rendered = substitute(
                 self.template,
                 fieldset_attributes=fieldset_attributes_str,
                 legend=escape(legend_text),
                 checkboxes=checkboxes_html,
             )
+            if variant == 'button_group':
+                return SafeHTML(rendered + _CHOICE_VARIANT_ASSETS)
+            return rendered
 
         content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
         aria_expanded = 'false' if collapsed else 'true'
@@ -477,7 +512,11 @@ class CheckboxGroup(SelectInputBase):
             fieldset_attributes=fieldset_attributes_str,
             toggle=toggle,
             content=content,
-            assets=_COLLAPSIBLE_GROUP_ASSETS,
+            assets=(
+                SafeHTML(_COLLAPSIBLE_GROUP_ASSETS + _CHOICE_VARIANT_ASSETS)
+                if variant in ('button_group', 'segmented')
+                else _COLLAPSIBLE_GROUP_ASSETS
+            ),
         )
 
 
@@ -606,12 +645,15 @@ class RadioGroup(SelectInputBase):
         legend_text = legend or group_name.replace('_', ' ').title()
 
         if not collapsible:
-            return substitute(
+            rendered = substitute(
                 self.template,
                 fieldset_attributes=fieldset_attributes_str,
                 legend=escape(legend_text),
                 radio_buttons=radio_buttons_html,
             )
+            if variant == 'segmented':
+                return SafeHTML(rendered + _CHOICE_VARIANT_ASSETS)
+            return rendered
 
         content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
         aria_expanded = 'false' if collapsed else 'true'
@@ -628,7 +670,11 @@ class RadioGroup(SelectInputBase):
             fieldset_attributes=fieldset_attributes_str,
             toggle=toggle,
             content=content,
-            assets=_COLLAPSIBLE_GROUP_ASSETS,
+            assets=(
+                SafeHTML(_COLLAPSIBLE_GROUP_ASSETS + _CHOICE_VARIANT_ASSETS)
+                if variant in ('button_group', 'segmented')
+                else _COLLAPSIBLE_GROUP_ASSETS
+            ),
         )
 
 
@@ -690,7 +736,7 @@ class ToggleSwitch(CheckboxInput):
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: var(--sf-outline-variant, #ccc);
             transition: .3s;
             border-radius: 24px;
         }
@@ -706,10 +752,10 @@ class ToggleSwitch(CheckboxInput):
             border-radius: 50%;
         }
         .toggle-switch-wrapper input:checked + .toggle-switch-slider {
-            background-color: #2196F3;
+            background-color: var(--sf-primary, #2196F3);
         }
         .toggle-switch-wrapper input:focus + .toggle-switch-slider {
-            box-shadow: 0 0 1px #2196F3;
+            box-shadow: 0 0 1px var(--sf-primary, #2196F3);
         }
         .toggle-switch-wrapper input:checked + .toggle-switch-slider::before {
             transform: translateX(22px);

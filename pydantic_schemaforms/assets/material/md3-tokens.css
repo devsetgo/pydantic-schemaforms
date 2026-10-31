@@ -1,0 +1,117 @@
+/* pydantic-schemaforms Material Design 3 tokens (m3.material.io baseline scheme).
+ * Every color in md3.css comes from here. Light by default; dark when an
+ * ancestor (or the form) has data-md-theme="dark", or when the page declares
+ * `color-scheme: dark` and nothing says otherwise. Re-color a form by
+ * overriding --md-sys-color-* on .md-form itself (.md-form declares them, so a
+ * value set on an ancestor doesn't reach it). */
+
+.md-form {
+    color-scheme: inherit;
+
+    --md-sys-color-primary: #6750a4;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #eaddff;
+    --md-sys-color-on-primary-container: #21005d;
+    --md-sys-color-secondary: #625b71;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #e8def8;
+    --md-sys-color-on-secondary-container: #1d192b;
+    --md-sys-color-error: #b3261e;
+    --md-sys-color-on-error: #ffffff;
+    --md-sys-color-error-container: #f9dedc;
+    --md-sys-color-on-error-container: #410e0b;
+    --md-sys-color-surface: #fef7ff;
+    --md-sys-color-surface-container-lowest: #ffffff;
+    --md-sys-color-surface-container-low: #f7f2fa;
+    --md-sys-color-surface-container: #f3edf7;
+    --md-sys-color-surface-container-high: #ece6f0;
+    --md-sys-color-surface-container-highest: #e6e0e9;
+    --md-sys-color-on-surface: #1d1b20;
+    --md-sys-color-on-surface-variant: #49454f;
+    --md-sys-color-outline: #79747e;
+    --md-sys-color-outline-variant: #cac4d0;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-star: #8c6d00;
+
+    --md-sys-color-primary: light-dark(#6750a4, #d0bcff);
+    --md-sys-color-on-primary: light-dark(#ffffff, #381e72);
+    --md-sys-color-primary-container: light-dark(#eaddff, #4f378b);
+    --md-sys-color-on-primary-container: light-dark(#21005d, #eaddff);
+    --md-sys-color-secondary: light-dark(#625b71, #ccc2dc);
+    --md-sys-color-on-secondary: light-dark(#ffffff, #332d41);
+    --md-sys-color-secondary-container: light-dark(#e8def8, #4a4458);
+    --md-sys-color-on-secondary-container: light-dark(#1d192b, #e8def8);
+    --md-sys-color-error: light-dark(#b3261e, #f2b8b5);
+    --md-sys-color-on-error: light-dark(#ffffff, #601410);
+    --md-sys-color-error-container: light-dark(#f9dedc, #8c1d18);
+    --md-sys-color-on-error-container: light-dark(#410e0b, #f9dedc);
+    --md-sys-color-surface: light-dark(#fef7ff, #141218);
+    --md-sys-color-surface-container-lowest: light-dark(#ffffff, #0f0d13);
+    --md-sys-color-surface-container-low: light-dark(#f7f2fa, #1d1b20);
+    --md-sys-color-surface-container: light-dark(#f3edf7, #211f26);
+    --md-sys-color-surface-container-high: light-dark(#ece6f0, #2b2930);
+    --md-sys-color-surface-container-highest: light-dark(#e6e0e9, #36343b);
+    --md-sys-color-on-surface: light-dark(#1d1b20, #e6e0e9);
+    --md-sys-color-on-surface-variant: light-dark(#49454f, #cac4d0);
+    --md-sys-color-outline: light-dark(#79747e, #938f99);
+    --md-sys-color-outline-variant: light-dark(#cac4d0, #49454f);
+    --md-sys-color-star: light-dark(#8c6d00, #f2c94c);
+
+    --md-code-string: #006a60;
+    --md-code-string: light-dark(#006a60, #80d5c8);
+    --md-code-number: #8c4a00;
+    --md-code-number: light-dark(#8c4a00, #ffb77c);
+    --md-code-tag: #9c2f5c;
+    --md-code-tag: light-dark(#9c2f5c, #ffb0cc);
+
+    --md-sys-shape-corner-extra-small: 4px;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 12px;
+    --md-sys-shape-corner-large: 16px;
+    --md-sys-shape-corner-extra-large: 28px;
+    --md-sys-shape-corner-full: 9999px;
+
+    --md-sys-typescale-font: Roboto, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --md-sys-typescale-mono: ui-monospace, "Roboto Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+    --md-sys-state-hover-opacity: 8%;
+    --md-sys-state-focus-opacity: 10%;
+    --md-sys-state-pressed-opacity: 10%;
+    --md-sys-state-disabled-opacity: 0.38;
+
+    --md-sys-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+    --md-sys-motion-short: 150ms;
+    --md-sys-motion-medium: 200ms;
+
+    --md-sys-elevation-1: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 30%, transparent),
+        0 1px 3px 1px color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent);
+    --md-sys-elevation-2: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 30%, transparent),
+        0 2px 6px 2px color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent);
+
+    /* Names the widgets' own CSS reads, with Bootstrap-era fallbacks there. */
+    --sf-primary: var(--md-sys-color-primary);
+    --sf-on-primary: var(--md-sys-color-on-primary);
+    --sf-outline: var(--md-sys-color-outline);
+    --sf-outline-variant: var(--md-sys-color-outline-variant);
+    --sf-error: var(--md-sys-color-error);
+    --sf-error-container: var(--md-sys-color-error-container);
+    --sf-surface: var(--md-sys-color-surface-container-lowest);
+    --sf-surface-low: var(--md-sys-color-surface-container-low);
+    --sf-on-surface: var(--md-sys-color-on-surface);
+    --sf-on-surface-variant: var(--md-sys-color-on-surface-variant);
+    --sf-chip-bg: var(--md-sys-color-secondary-container);
+    --sf-chip-fg: var(--md-sys-color-on-secondary-container);
+    --sf-star-filled: var(--md-sys-color-star);
+    --sf-star-empty: var(--md-sys-color-outline);
+    --sf-radius: var(--md-sys-shape-corner-extra-small);
+}
+
+:where([data-md-theme="dark"]) .md-form,
+.md-form[data-md-theme="dark"] {
+    color-scheme: dark;
+}
+
+:where([data-md-theme="light"]) .md-form,
+.md-form[data-md-theme="light"] {
+    color-scheme: light;
+}

@@ -24,6 +24,7 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .layout_engine import IN_GROUP_FLAG, LayoutEngine
 from .schema_parser import ordered_properties, resolve_nested_model_ref
+from .themes import RendererTheme
 
 if TYPE_CHECKING:
     from .context import RenderContext
@@ -39,33 +40,51 @@ def _normalize_value(value: Any) -> dict[str, Any]:
     return {}
 
 
-def _render_error(message: str | None) -> SafeHTML:
+_DEFAULT_THEME = RendererTheme()
+
+
+def _theme(engine: LayoutEngine) -> RendererTheme:
+    theme = getattr(engine._renderer, 'theme', None)  # noqa: SLF001
+    return theme if isinstance(theme, RendererTheme) else _DEFAULT_THEME
+
+
+def _render_error(theme: RendererTheme, message: str | None) -> SafeHTML:
     if not message:
         return SafeHTML('')
-    return html(t'<div class="alert alert-danger nested-model-error" role="alert">{message}</div>')
+    alert_class = f'{theme.alert_class("danger")} nested-model-error'  # NOSONAR
+    return html(t'<div class="{alert_class}" role="alert">{message}</div>')
 
 
-def _wrap_collapsible(
-    *,
-    # NOSONAR comments below: title/field_name are read via {expr}
-    # interpolation in the t-strings in this function, which Sonar's parser
-    # doesn't see (same note as model_list_renderer._render_item_toggle).
-    title: str,  # NOSONAR
-    body: str,
-    collapsed: bool,
-    has_errors: bool,
-    field_name: str,  # NOSONAR
-) -> SafeHTML:
-    _body = SafeHTML(body)
-    if collapsed and not has_errors:
-        return html(t'''<details class="nested-model-section" data-field-name="{field_name}">
-    <summary class="nested-model-summary">{title}</summary>
-    <div class="nested-model-body">{_body}</div>
-</details>''')
-    return html(t'''<details class="nested-model-section" data-field-name="{field_name}" open>
-    <summary class="nested-model-summary">{title}</summary>
-    <div class="nested-model-body">{_body}</div>
-</details>''')
+def _render_sub_fields(
+    field_name: str,
+    field_schema: dict[str, Any],
+    schema_def: dict[str, Any],
+    value: Any,
+    context: 'RenderContext',
+    engine: LayoutEngine,
+) -> list[str]:
+    data = _normalize_value(value)
+    child_errors = context.child_errors or {}
+    # An optional sub-form (``Address | None``) can be left blank, so the
+    # browser must not insist on its fields; validation turns it into None.
+    optional = any(o.get('type') == 'null' for o in field_schema.get('anyOf') or [])
+    required = set() if optional else set(schema_def.get('required') or [])
+    renderer = engine._renderer  # noqa: SLF001 - composite renderers render children through it
+    parts = []
+    for key, sub_schema in ordered_properties(schema_def):
+        input_name = f'{field_name}.{key}'
+        parts.append(
+            renderer._render_field(  # noqa: SLF001
+                input_name,
+                sub_schema,
+                data.get(key),
+                child_errors.get(key),
+                [input_name] if key in required else [],
+                context,
+                'vertical',
+            )
+        )
+    return parts
 
 
 @LayoutEngine.layout_renderer('nested_model')
@@ -82,29 +101,14 @@ def render_nested_model_field(
     if not schema_def:
         return html(t"<!-- Error: could not resolve the sub-model of field '{field_name}' -->")
 
-    data = _normalize_value(value)
     child_errors = context.child_errors or {}
-    # An optional sub-form (``Address | None``) can be left blank, so the
-    # browser must not insist on its fields; validation turns it into None.
-    optional = any(o.get('type') == 'null' for o in field_schema.get('anyOf') or [])
-    required = set() if optional else set(schema_def.get('required') or [])
-    renderer = engine._renderer  # noqa: SLF001 - composite renderers render children through it
-
-    parts: list[str] = [str(_render_error(context.error))]
-    for key, sub_schema in ordered_properties(schema_def):
-        input_name = f'{field_name}.{key}'
-        parts.append(
-            renderer._render_field(  # noqa: SLF001
-                input_name,
-                sub_schema,
-                data.get(key),
-                child_errors.get(key),
-                [input_name] if key in required else [],
-                context,
-                'vertical',
-            )
-        )
-    body = '\n'.join(parts)
+    theme = _theme(engine)
+    body = '\n'.join(
+        [
+            str(_render_error(theme, context.error)),
+            *_render_sub_fields(field_name, field_schema, schema_def, value, context, engine),
+        ]
+    )
 
     if ui_info.get(IN_GROUP_FLAG):
         return html(
@@ -116,13 +120,11 @@ def render_nested_model_field(
 
     if ui_info.get('collapsible'):
         has_errors = bool(context.error) or bool(child_errors)
-        section = _wrap_collapsible(
+        return theme.render_collapsible_section(
             title=title,
-            body=body,
-            collapsed=bool(ui_info.get('collapsed')),
-            has_errors=has_errors,
+            body_html=body,
+            is_open=not bool(ui_info.get('collapsed')) or has_errors,
             field_name=field_name,
         )
-        return str(section)
 
     return engine._render_layout_card(title, body, help_text)  # noqa: SLF001

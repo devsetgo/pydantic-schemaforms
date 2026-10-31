@@ -250,7 +250,7 @@ def _code_area_enhancement(
     line-height: 1.5;
     white-space: pre;
     padding: 8px;
-    border: 1px solid #79747e;
+    border: 1px solid var(--sf-outline, #79747e);
     border-radius: 4px;
     box-sizing: border-box;
     margin: 0;
@@ -267,7 +267,7 @@ def _code_area_enhancement(
 .code-highlight-layer .token.constant, .code-highlight-layer .token.deleted,
 .code-highlight-layer .token.property, .code-highlight-layer .token.symbol,
 .code-highlight-layer .token.tag {{
-    color: #ff79a8;  /* the vendored Prism theme's #f92672 is under 4.5:1 on its background */
+    color: var(--sf-code-tag, #ff79a8);  /* the vendored Prism theme's #f92672 is under 4.5:1 on its background */
 }}
 .code-textarea-stack textarea.code-highlight-active {{
     position: relative;
@@ -278,8 +278,8 @@ def _code_area_enhancement(
 }}
 .code-format-toolbar {{ display: flex; justify-content: flex-end; margin-bottom: 4px; }}
 .code-format-btn {{ font-size: 0.75rem; padding: 2px 8px; cursor: pointer; }}
-.code-format-error {{ color: #b91c1c; font-size: 0.75rem; margin-top: 2px; display: none; }}
-textarea.code-invalid {{ outline: 2px solid #b91c1c; }}
+.code-format-error {{ color: var(--sf-error, #b91c1c); font-size: 0.75rem; margin-top: 2px; display: none; }}
+textarea.code-invalid {{ outline: 2px solid var(--sf-error, #b91c1c); }}
 {highlight_css}"""
 
     # Style/script block is developer-authored markup, not user data; `field_id`

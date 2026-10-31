@@ -164,3 +164,18 @@ def test_task_list_enforces_min_and_max_items() -> None:
 
     msg = str(excinfo_max.value)
     assert 'tasks' in msg and '10' in msg  # context hints about max length
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+def test_item_titles_are_text_not_html(framework: str) -> None:
+    # The script rebuilds each item's title from what the user types; it must
+    # set it as text, so typing markup into a field can't inject HTML.
+    html_out = render_form_html(
+        TaskListForm,
+        submit_url='/tasks',
+        framework=framework,
+        form_data={'project_name': 'Demo', 'tasks': [_task('<b>One</b>')]},
+    )
+    assert 'data-model-list-title' in html_out
+    assert 'titleElement.textContent = newTitle' in html_out
+    assert 'titleElement.innerHTML' not in html_out
