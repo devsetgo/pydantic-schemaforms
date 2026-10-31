@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from pydantic import ValidationInfo, field_validator, model_validator
 
@@ -12,6 +13,10 @@ class RegistrationForm(FormModel):
     age: int = Field(title='Age', ge=13, le=120)
     start_date: date = Field(title='Start date')
     end_date: date = Field(title='End date')
+    accept_terms: Literal[True] = Field(
+        title='I accept the terms',
+        unchecked_message='You must accept the terms to register',
+    )
 
     @field_validator('username', mode='before')
     @classmethod

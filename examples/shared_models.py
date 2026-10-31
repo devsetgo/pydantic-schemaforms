@@ -9,7 +9,7 @@ import os
 import sys
 from datetime import date, datetime, time
 from enum import Enum
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -3114,6 +3114,12 @@ class ValidationShowcaseForm(FormModel):
     pack_size: int = Field(..., title='Pack size (multiple_of=6)', multiple_of=6)
     email: EmailStr = Field(..., title='Email (EmailStr)', ui_element='email')
 
+    # A required checkbox, with its own message when it is left unticked
+    accept_terms: Literal[True] = Field(
+        title='I accept the terms (Literal[True] + unchecked_message)',
+        unchecked_message='You must accept the terms to continue',
+    )
+
     # Validators
     password: str = Field(
         ..., title='Password (@field_validator: needs a digit)', ui_element='password'
@@ -3193,6 +3199,7 @@ VALID_VALIDATION_DEMO = {
     'tip_percent': 15,
     'pack_size': 12,
     'email': 'ada@example.com',
+    'accept_terms': True,
     'password': 'engine1843',
     'confirm_password': 'engine1843',
     'address': {'city': 'London', 'postcode': '10001'},

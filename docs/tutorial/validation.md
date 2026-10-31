@@ -31,6 +31,14 @@ browser catches many mistakes before the form is even sent.
 The messages are Pydantic's, with the range ones shortened: `age=9` shows
 "Must be 13 or greater".
 
+## Required checkboxes
+
+To make the user tick a box, such as "I accept the terms", type it
+`Literal[True]`. Ticking passes and leaving it unticked fails. An unticked box
+submits nothing, so the error would be "Field required"; `unchecked_message`
+replaces that with your own wording, as `accept_terms` does above. It also works
+on a `bool` with no default.
+
 ## Field validators
 
 `@field_validator` is a classmethod that gets the value and returns it,
