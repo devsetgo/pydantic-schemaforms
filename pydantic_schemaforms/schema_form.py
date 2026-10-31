@@ -57,6 +57,7 @@ def Field(
     ui_items_expanded: bool | None = None,
     layout_handler: str | None = None,
     layout_renderer: str | None = None,
+    unchecked_message: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -68,6 +69,9 @@ def Field(
     (Pydantic's own Field constraints, still accepted here) are what
     actually validates; see `get_app_instructions()` for the full
     constraints-vs-ui_options guidance.
+
+    unchecked_message replaces the error shown when a required checkbox
+    (``Literal[True]``, or ``bool`` with no default) is left unticked.
     """
     # Collect UI attributes
     ui_attrs = {}
@@ -102,6 +106,7 @@ def Field(
         # (input_type='layout' is required to dispatch here at all).
         'layout_handler': layout_handler,
         'layout_renderer': layout_renderer,
+        'unchecked_message': unchecked_message,
     }
 
     # Other UI keys (ui_collapsible, ui_step_title, icon, ...) must not fall

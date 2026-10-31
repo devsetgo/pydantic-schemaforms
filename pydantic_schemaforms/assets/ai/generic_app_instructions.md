@@ -1363,6 +1363,7 @@ enough. All names are imported from the top-level package.
 
 ```python
 from datetime import date
+from typing import Literal
 
 from pydantic import ValidationInfo, field_validator, model_validator
 
@@ -1376,6 +1377,10 @@ class RegistrationForm(FormModel):
     age: int = Field(title='Age', ge=13, le=120)
     start_date: date = Field(title='Start date')
     end_date: date = Field(title='End date')
+    accept_terms: Literal[True] = Field(
+        title='I accept the terms',
+        unchecked_message='You must accept the terms to register',
+    )
 
     @field_validator('username', mode='before')
     @classmethod
@@ -1411,9 +1416,9 @@ class RegistrationForm(FormModel):
 - A check that needs the request (a username already taken, a wrong password, a failed captcha)
   belongs in the route after `validate()`: render again with
   `render_form_html(Model, form_data=submitted, errors={"username": "That username is taken"}, ...)`.
-- A required checkbox ("I accept the terms") with a custom message: give it a `False` default,
-  `validate_default=True`, and a `@field_validator` that raises when it's `False`. An unticked
-  box sends nothing, so without `validate_default` the validator never runs.
+- A required checkbox ("I accept the terms"): type it `Literal[True]` and pass
+  `unchecked_message="..."` to `Field()` for the error shown when it's left unticked. Don't use a
+  `@field_validator` on a `bool` with no default: an unticked box sends nothing, so it never runs.
 
 ### Rule-based validation
 

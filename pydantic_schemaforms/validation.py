@@ -13,12 +13,13 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
-from typing import Annotated, Any, Union, get_args, get_origin
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
 from collections.abc import Callable
 
 from pydantic import AfterValidator, BaseModel, EmailStr, ValidationError
 from pydantic_core import PydanticCustomError, PydanticUndefined, to_jsonable_python
 
+from .form_data import coerce_form_value
 from .tstring import SafeHTML
 
 # Import version check to ensure compatibility
@@ -1079,6 +1080,7 @@ class ValidationResult:
 
 _CHECKBOX_ELEMENTS = {None, 'checkbox', 'toggle', 'toggle_switch', 'checkbox_toggle'}
 _CURRENCY_ELEMENTS = {'currency', 'money'}
+_UNCHECKED_ERROR_TYPES = {'missing', 'literal_error'}
 
 
 def _ui_element(field_info: Any) -> str | None:
@@ -1090,15 +1092,45 @@ def _renders_as_checkbox(field_info: Any) -> bool:
     return _ui_element(field_info) in _CHECKBOX_ELEMENTS
 
 
+def _is_literal_true(annotation: Any) -> bool:
+    if get_origin(annotation) is not Literal:
+        return False
+    args = get_args(annotation)
+    # Identity, because Literal[1] compares equal to Literal[True].
+    return len(args) == 1 and args[0] is True
+
+
 def _sub_model(annotation: Any) -> type[BaseModel] | None:
-    return next(
-        (
-            t
-            for t in (get_args(annotation) or (annotation,))
-            if isinstance(t, type) and issubclass(t, BaseModel)
-        ),
-        None,
-    )
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        return annotation
+    return next((model for arg in get_args(annotation) if (model := _sub_model(arg))), None)
+
+
+def _unchecked_message(model: type[BaseModel], loc: tuple[Any, ...]) -> str | None:
+    """The ``unchecked_message`` of the field an error location points at."""
+    current: type[BaseModel] | None = model
+    info = None
+    for segment in loc:
+        if isinstance(segment, int):
+            continue
+        info = current.model_fields.get(segment) if current else None
+        if info is None:
+            return None
+        current = _sub_model(info.annotation)
+    extra = getattr(info, 'json_schema_extra', None)
+    return extra.get('unchecked_message') if isinstance(extra, dict) else None
+
+
+def _apply_unchecked_messages(
+    errors: list[dict[str, Any]], model: type[BaseModel]
+) -> list[dict[str, Any]]:
+    return [
+        {**error, 'msg': message}
+        if error['type'] in _UNCHECKED_ERROR_TYPES
+        and (message := _unchecked_message(model, error['loc']))
+        else error
+        for error in errors
+    ]
 
 
 def _value_left_blank(value: Any, info: Any) -> bool:
@@ -1163,6 +1195,11 @@ def _coerce_html_form_values(
     7. (``from_form`` only) A ``currency`` input shows ``$1,234.50`` as it is
        typed. For a numeric field (``Decimal``, ``float``, ``int``) the
        symbol and thousands separators are stripped so it parses.
+    8. A ticked checkbox submits ``"1"`` or ``"on"``, which ``Literal[True]``
+       rejects because it only accepts the value ``True``. A truthy value is
+       converted first, so ticking passes. (``from_form`` only) An absent
+       ``Literal[True]`` with a default is submitted as ``False``, so that
+       leaving it unticked fails instead of falling back to the default.
     """
     result = dict(data)
 
@@ -1187,7 +1224,7 @@ def _coerce_html_form_values(
                 result[field_name] = []
             elif (
                 from_form
-                and non_none_types == [bool]
+                and (non_none_types == [bool] or _is_literal_true(annotation))
                 and not field_info.is_required()
                 and _renders_as_checkbox(field_info)
             ):
@@ -1195,6 +1232,14 @@ def _coerce_html_form_values(
             continue
 
         value = result[field_name]
+
+        if (
+            any(_is_literal_true(t) for t in non_none_types)
+            and _renders_as_checkbox(field_info)
+            and coerce_form_value(value) is True
+        ):
+            result[field_name] = True
+            continue
 
         if list_type is not None and list_item_model is None:
             if value not in (None, '') and not isinstance(value, list):
@@ -1323,7 +1368,7 @@ def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResu
     except ValidationError as exc:
         return ValidationResult(
             is_valid=False,
-            errors=build_error_tree(exc.errors()),
+            errors=build_error_tree(_apply_unchecked_messages(exc.errors(), runtime_model)),
             form_model_cls=form_model_class,
             original_data=nested,
         )

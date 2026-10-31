@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from datetime import date, datetime, time
-from typing import Optional
+from typing import Literal, Optional
 from unittest.mock import patch
 
 import pytest
@@ -21,6 +21,7 @@ from pydantic import Field, model_validator
 
 from pydantic_schemaforms.live_validation import LiveValidator
 from pydantic_schemaforms.live_validation import ValidationResponse as LiveValidationResponse
+from pydantic_schemaforms.schema_form import Field as FormField
 from pydantic_schemaforms.schema_form import FormModel
 from pydantic_schemaforms.validation import (
     CrossFieldRules,
@@ -1912,3 +1913,82 @@ def test_currency_input_formatting_is_stripped_for_numeric_fields() -> None:
 
     result = _Price.validate([('amount', '$1,012.50'), ('budget', '€2,000'), ('label', '$5.00')])
     assert result.data == {'amount': Decimal('1012.50'), 'budget': 2000.0, 'label': '$5.00'}
+
+
+class _Address(FormModel):
+    terms: Literal[True] = FormField(title='Terms', unchecked_message='Accept the address terms')
+
+
+class _Item(FormModel):
+    terms: Literal[True] = FormField(title='Terms', unchecked_message='Accept the item terms')
+
+
+class _Consent(FormModel):
+    terms: Literal[True] = FormField(title='Terms', ui_element='checkbox')
+    custom: Literal[True] = FormField(title='Custom', unchecked_message='Please tick custom')
+    plain_bool: bool = FormField(title='Plain', unchecked_message='Please tick plain')
+    defaulted: Literal[True] = FormField(
+        True, title='Defaulted', unchecked_message='Please re-tick'
+    )
+
+
+TICKED = [('terms', '1'), ('custom', 'on'), ('plain_bool', '1'), ('defaulted', '1')]
+
+
+class TestRequiredCheckbox:
+    @pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+    def test_ticked_passes(self, framework):
+        result = _Consent.validate(TICKED, submit_url='/x', framework=framework)
+
+        assert result.is_valid, result.errors
+        assert result.data == {
+            'terms': True,
+            'custom': True,
+            'plain_bool': True,
+            'defaulted': True,
+        }
+
+    @pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+    def test_unticked_fails_and_shows_the_custom_message(self, framework):
+        result = _Consent.validate([('other', 'x')], submit_url='/x', framework=framework)
+
+        assert not result.is_valid
+        assert result.errors == {
+            'terms': 'Field required',
+            'custom': 'Please tick custom',
+            'plain_bool': 'Please tick plain',
+            'defaulted': 'Please re-tick',
+        }
+        page = result.render_with_errors()
+        for message in ('Please tick custom', 'Please tick plain', 'Please re-tick'):
+            assert message in page
+
+    def test_a_plain_dict_of_the_form_is_converted_too(self):
+        assert _Consent.validate(dict(TICKED)).is_valid
+
+    def test_a_falsy_value_fails_with_the_custom_message(self):
+        result = _Consent.validate([*TICKED[:1], ('custom', '0'), *TICKED[2:]])
+
+        assert result.errors == {'custom': 'Please tick custom'}
+
+    def test_message_reaches_sub_forms_and_list_items(self):
+        class Parent(FormModel):
+            address: _Address = FormField(title='Address')
+            items: list[_Item] | None = FormField(None, title='Items')
+
+        result = Parent.validate([('items[0].other', 'x'), ('address.other', 'x')])
+
+        assert result.errors == {
+            'address': {'terms': 'Accept the address terms'},
+            'items': {0: {'terms': 'Accept the item terms'}},
+        }
+
+    def test_other_literals_and_other_errors_are_untouched(self):
+        class Other(FormModel):
+            one: Literal[1] = FormField(1, title='One', ui_element='checkbox')
+            name: str = FormField(title='Name', min_length=3, unchecked_message='Not used')
+
+        result = Other.validate([('one', '1'), ('name', 'ab')])
+
+        assert set(result.errors) == {'one', 'name'}
+        assert 'at least 3' in result.errors['name']
