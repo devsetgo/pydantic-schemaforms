@@ -29,7 +29,7 @@ FRAMEWORKS: dict[str, dict[str, str]] = {
         'help_class': 'form-text text-muted',
         'field_wrapper_class': 'mb-3',
     },
-    # The Material style is self-contained (MaterialEmbeddedTheme): it loads no
+    # The Material style is self-contained (MaterialTheme): it loads no
     # CSS framework and its classes come from the theme, not this table.
     'material': {
         'css_url': '',

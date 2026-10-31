@@ -8,7 +8,7 @@ Every item follows the "Examples must cover every layout, input, and
 validation" rule in `CLAUDE.md`: a feature isn't done until it's demonstrated
 on an example page under both Bootstrap and Material.
 
-Last updated: 2026-10-29.
+Last updated: 2026-10-31.
 
 ## Phase 1: Clear the ground
 
@@ -37,7 +37,7 @@ wizard that shipped in 26.4.1.
 | # | Item | Status | Why in this order |
 |---|---|---|---|
 | 8 | [#265](https://github.com/devsetgo/pydantic-schemaforms/issues/265) Rebuild the Material style on the shared rendering path | Done | Material renders through its own parallel code path, so every widget and fix is done twice and Material keeps lagging (the Enum, constraint and step bugs fixed for #258 were all Material-only or Material-too). Do it before the phase 2 features so conditional fields, groups and display mode are built once. Also removes the vendored Materialize files it no longer uses. |
-| 9 | [#273](https://github.com/devsetgo/pydantic-schemaforms/issues/273) `Literal[True]` checkbox always fails validation | Not started | A bug: there's no straightforward way to require acceptance of terms. Small, stands alone, and #274's consent field needs it. |
+| 9 | [#273](https://github.com/devsetgo/pydantic-schemaforms/issues/273) `Literal[True]` checkbox always fails validation | Done ([#283](https://github.com/devsetgo/pydantic-schemaforms/pull/283)) | A bug: there's no straightforward way to require acceptance of terms. Small, stands alone, and #274's consent field needs it. |
 | 10 | [#274](https://github.com/devsetgo/pydantic-schemaforms/issues/274) Content blocks and a consent field | Not started | Forms can't hold text that isn't a field. Comes before the other layout work because it changes what a form can contain. |
 | 11 | [#237](https://github.com/devsetgo/pydantic-schemaforms/issues/237) Conditional show/hide rules | Not started | The most common missing form feature. Needs the ID fix from phase 1. |
 | 12 | [#241](https://github.com/devsetgo/pydantic-schemaforms/issues/241) Field groups and grid widths in one model | Not started | Next layout change after #237, so show/hide rules can target a whole group. |
