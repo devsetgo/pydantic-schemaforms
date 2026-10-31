@@ -34,6 +34,8 @@ make (wrong password, username taken) are added in the route after `validate()`:
 back on a failed login, never the password. Redirect (303) after success.
 
 ```python
+from typing import Literal
+
 from pydantic import EmailStr, ValidationInfo, field_validator
 
 from pydantic_schemaforms import Field, FormModel
@@ -56,7 +58,10 @@ class RegistrationForm(FormModel):
     email: EmailStr = Field(title='Email')
     password: str = Field(title='Password', ui_element='password', min_length=12)
     confirm_password: str = Field(title='Confirm password', ui_element='password')
-    accept_terms: bool = Field(False, title='I accept the terms of service', validate_default=True)
+    accept_terms: Literal[True] = Field(
+        title='I accept the terms of service',
+        unchecked_message='You must accept the terms to create an account',
+    )
 
     @field_validator('username', mode='before')
     @classmethod
@@ -68,13 +73,6 @@ class RegistrationForm(FormModel):
     def passwords_match(cls, value: str, info: ValidationInfo) -> str:
         if value != info.data.get('password'):
             raise ValueError('Passwords do not match')
-        return value
-
-    @field_validator('accept_terms')
-    @classmethod
-    def terms_accepted(cls, value: bool) -> bool:
-        if not value:
-            raise ValueError('You must accept the terms to create an account')
         return value
 ```
 

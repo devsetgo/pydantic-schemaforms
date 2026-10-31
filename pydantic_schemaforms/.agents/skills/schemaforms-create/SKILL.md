@@ -120,7 +120,8 @@ Flask is the same with `render_form_html()` (not async), `request.form` and no `
 | website, link | `AnyUrl` |
 | number, count, age, quantity | `int` with `ge`/`le` |
 | price, amount | `Decimal` with `ui_element="currency"`, `ge=0` |
-| yes/no, agree, subscribe | `bool` |
+| yes/no, subscribe | `bool` |
+| must agree, accept the terms | `Literal[True]` with `unchecked_message="..."` |
 | one of a few fixed choices | `Literal[...]` or an `Enum` (dropdown); `ui_element="radio"` for 2-4 visible options |
 | several of fixed choices | `list[Literal[...]]` (multi-select) or `ui_element="checkbox_group"` |
 | date, time, date and time | `date`, `time`, `datetime` |

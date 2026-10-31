@@ -3,6 +3,18 @@
 Breaking changes that need more than a one-line fix, with the steps to
 upgrade. Every release's changes are in the [Release Notes](release-notes.md).
 
+## To 26.4.4: Material Design 3
+
+`framework="material"` was rebuilt on Material Design 3. Forms keep working with
+no code change, and only apps that customize the Material style need to act.
+
+| Changed | What to do |
+|---|---|
+| Material markup and CSS classes | Update CSS written against the old markup. The form keeps its `md-form` class; see [Material Design 3](advanced/material.md) for the anatomy. |
+| Colors | Override `--md-sys-color-*` tokens on `form.md-form` |
+| `MaterialEmbeddedTheme` | Renamed `MaterialTheme` |
+| Materialize, and `framework_css_tag()`/`framework_js_tag()` for `"material"` | Removed: the style never loaded Materialize, and both functions now return nothing for `"material"`. Don't load Materialize for these forms. |
+
 ## To 26.4.3: one way to build a form
 
 The builder API, the React and Vue adapters and `@form_validator` are

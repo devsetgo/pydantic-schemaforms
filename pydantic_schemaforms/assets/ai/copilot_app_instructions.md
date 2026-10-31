@@ -143,6 +143,7 @@ Without `ui_element`, the input comes from the field's type:
 | `str` | text box |
 | `int`, `float` | number box (`float` accepts decimals) |
 | `bool` | checkbox |
+| `Literal[True]` | checkbox that must be ticked ("I accept the terms"); `unchecked_message=` sets its error |
 | `date`, `datetime`, `time` | date, date-and-time, time picker |
 | `EmailStr`, `AnyUrl` | email box, URL box |
 | `Enum`, `Literal[...]` | dropdown of the values; `list[...]` of either is a multi-select |
@@ -553,8 +554,8 @@ def download_template() -> Response:
 - Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
   `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
   `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
-  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`["csv",
-  "copy"]`; `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
+  (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`[]`;
+  `"csv"` and `"copy"` add export buttons, `"pdf"` is accepted but raises `NotImplementedError`), `csv_template` (`False`;
   `True` links a downloadable header-only CSV), and `style` (`{"striped", "bordered", "hover",
   "compact"}` booleans). Per-row errors are `dict[int, dict[str, str]]` (row index →
   field → message), the shape `ImportResult.row_errors` and `as_layout_value(row_errors=...)`
@@ -719,7 +720,7 @@ extending reference if nothing genuinely fits.
 | Structural (not a real widget) | `nested_model` (a sub-form: inferred automatically for a field typed as another `FormModel`, never declare it), `model_list` (repeating sub-forms: inferred automatically for a `list[FormModel]` field), `layout` (a registered custom composite such as `DataTableLayout`) |
 
 Most forms only need Text/Numeric/Selection/Date. The "Specialized numeric" and "Specialized
-date" rows add presentation behavior only (e.g. `percentage` shows a `%` placeholder, `rating`
+date" rows add presentation behavior only (e.g. `percentage` shows a `%` placeholder, `star_rating`
 renders stars) — validation still comes entirely from `Field()` constraints, not the widget
 choice. Every ui_options key each widget accepts is listed in "Every widget option" below —
 check it before assuming an option doesn't exist, and before inventing one (an unknown key is
@@ -961,6 +962,7 @@ These are `Field()` keyword arguments, not `ui_options` keys:
 | `ui_placeholder=` | Placeholder attribute |
 | `icon=` | Icon name shown before the label (`"envelope"`, `"person"`, ...), mapped per framework |
 | `ui_order=` | Position among the fields/groups; lower first, default is declaration order |
+| `unchecked_message=` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
 | `ui_disabled=True` | Disabled: not editable and **not submitted** |
 | `ui_readonly=True` | Read-only: not editable but submitted |
 | `ui_hidden=True` | Rendered as a bare hidden input (same as `ui_element="hidden"`) |
@@ -1008,6 +1010,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `form_data` | `None` | Values to show; `None` starts from field defaults |
 | `errors` | `None` | Messages shaped like the data; `"_errors"` for the whole form |
 | `framework` | `"bootstrap"` | `"bootstrap"`, `"material"` or `"none"` |
+| `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only with `framework="material"` |
 | `layout` | `"vertical"` | See the complex forms reference |
 | `wizard_options` | `None` | With `layout="wizard"` |
 | `method` | `"POST"` | The form's method |
@@ -1018,13 +1021,16 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `self_contained` | `False` | Assets inlined, Bootstrap Icons included: no external requests at all |
 | `show_timing` / `debug` / `enable_logging` | `False` | Render time under the form / a debug panel / DEBUG log lines |
 | `include_html_markers` | `True` | `<!--- Start/End Pydantic-SchemaForms -->` comments around the output |
+| `inject_layout_styles` | `True` | The small stylesheet that makes the form fill its container |
 
 Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 `**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
 
 ### Styling and assets
 
-- **`framework="bootstrap"`** (default) uses Bootstrap 5 classes. **`"material"`** is a
+- **`framework="bootstrap"`** (default) uses Bootstrap 5 classes; `data-bs-theme="dark"` on an
+  ancestor gives its dark mode, and `--sf-*` tokens re-color the library's widgets, tabs, accordion
+  and wizard. **`"material"`** is a
   self-contained Material Design 3 style with its own CSS; it needs no external framework.
   `material_variant="filled"` gives filled text fields, `data-md-theme="dark"` on an ancestor
   gives the dark scheme, and overriding `--md-sys-color-*` on `.md-form` re-colors it.
@@ -1731,7 +1737,7 @@ class SignupForm(FormModel):
 | `EmailField` / `Email()` | `EmailStr` |
 | `URLField` / `URL()` | `AnyUrl` |
 | `IntegerField`, `DecimalField`, `FloatField` | `int`, `Decimal`, `float` |
-| `BooleanField` | `bool` with a `False` default |
+| `BooleanField` | `bool` with a `False` default; with `DataRequired()`, `Literal[True]` |
 | `SelectField(choices=...)` | `Literal[...]` or an `Enum`; `ui_options={"choices": [{"value": ..., "label": ...}]}` when labels differ from values |
 | `RadioField` | the same, `ui_element="radio"` |
 | `SelectMultipleField` | `list[Literal[...]]` |
@@ -1765,6 +1771,7 @@ with the token in the session (see the `pydantic-schemaforms` skill's security r
 | `IntegerField(min_value, max_value)` | `int`, `ge`, `le` |
 | `DecimalField(max_digits, decimal_places)` | `Decimal`, `max_digits`, `decimal_places` |
 | `BooleanField(required=False)` | `bool = False` |
+| `BooleanField()` (required, so it must be ticked) | `Literal[True]`; `unchecked_message=` for its error |
 | `ChoiceField(choices=...)` / `TypedChoiceField` | `Literal[...]` or an `Enum` |
 | `MultipleChoiceField` | `list[Literal[...]]` |
 | `ModelChoiceField(queryset)` | choices built at runtime: `ui_options={"choices": [...]}` from the query, or `create_model()` |
@@ -1787,7 +1794,7 @@ token as `csrf_token_provider`.
 | `"type": "string"` | `str`; `minLength`/`maxLength`/`pattern` → `min_length`/`max_length`/`pattern` |
 | `"format": "email"`, `"uri"`, `"date"`, `"date-time"`, `"time"` | `EmailStr`, `AnyUrl`, `date`, `datetime`, `time` |
 | `"type": "integer"` / `"number"` | `int` / `float`; `minimum`/`maximum` → `ge`/`le`; `exclusiveMinimum` → `gt`; `multipleOf` → `multiple_of` |
-| `"type": "boolean"` | `bool` |
+| `"type": "boolean"` | `bool`; with `"const": true`, `Literal[True]` |
 | `"enum": [...]` | `Literal[...]` or an `Enum` |
 | `"type": "array"` of enum | `list[Literal[...]]` |
 | `"type": "array"` of objects | `list[ItemForm]`; `minItems`/`maxItems` → `min_length`/`max_length` |
@@ -1868,6 +1875,18 @@ its replacement; this skill has the full mapping and the order to do it in.
    submission if there isn't one.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
+
+### 26.4.4: Material Design 3
+
+`framework="material"` was rebuilt on Material Design 3. Forms keep working with no code change;
+only customizations of the Material style need attention. Search the app for `MaterialEmbeddedTheme`,
+`materialize`, and CSS or tests that target Material markup.
+
+| Changed | Replace with |
+|---|---|
+| CSS or tests written against the old Material markup | The new markup; the form keeps its `md-form` class. Color overrides use `--md-sys-color-*` tokens on `form.md-form` |
+| `MaterialEmbeddedTheme` | `MaterialTheme` |
+| Materialize, and `framework_css_tag()`/`framework_js_tag()` for `"material"` | Nothing: both now return nothing for `"material"`, and the page needs no Materialize |
 
 ### 26.4.3: one way to build a form
 

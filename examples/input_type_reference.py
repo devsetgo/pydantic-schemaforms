@@ -197,7 +197,8 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
         [
             InputTypeEntry(
                 'checkbox',
-                'Single boolean checkbox.',
+                'Single boolean checkbox. Type it Literal[True] when it must be ticked, with '
+                'unchecked_message= for the error shown when it is left unticked.',
                 "agree: bool = Field(False, ui_element='checkbox', title='I accept the terms')",
             ),
             InputTypeEntry(

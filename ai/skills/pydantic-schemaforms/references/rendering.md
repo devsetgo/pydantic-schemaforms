@@ -14,6 +14,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `form_data` | `None` | Values to show; `None` starts from field defaults |
 | `errors` | `None` | Messages shaped like the data; `"_errors"` for the whole form |
 | `framework` | `"bootstrap"` | `"bootstrap"`, `"material"` or `"none"` |
+| `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only with `framework="material"` |
 | `layout` | `"vertical"` | See the complex forms reference |
 | `wizard_options` | `None` | With `layout="wizard"` |
 | `method` | `"POST"` | The form's method |
@@ -24,13 +25,16 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `self_contained` | `False` | Assets inlined, Bootstrap Icons included: no external requests at all |
 | `show_timing` / `debug` / `enable_logging` | `False` | Render time under the form / a debug panel / DEBUG log lines |
 | `include_html_markers` | `True` | `<!--- Start/End Pydantic-SchemaForms -->` comments around the output |
+| `inject_layout_styles` | `True` | The small stylesheet that makes the form fill its container |
 
 Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 `**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
 
 ## Styling and assets
 
-- **`framework="bootstrap"`** (default) uses Bootstrap 5 classes. **`"material"`** is a
+- **`framework="bootstrap"`** (default) uses Bootstrap 5 classes; `data-bs-theme="dark"` on an
+  ancestor gives its dark mode, and `--sf-*` tokens re-color the library's widgets, tabs, accordion
+  and wizard. **`"material"`** is a
   self-contained Material Design 3 style with its own CSS; it needs no external framework.
   `material_variant="filled"` gives filled text fields, `data-md-theme="dark"` on an ancestor
   gives the dark scheme, and overriding `--md-sys-color-*` on `.md-form` re-colors it.

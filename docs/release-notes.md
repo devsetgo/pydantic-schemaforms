@@ -7,11 +7,223 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [Unreleased]
+
+## [26.4.4] — 2026-10-31
+
+The Material style is rebuilt on Material Design 3 and shares one rendering path
+with Bootstrap and plain HTML. A checkbox can now be required with `Literal[True]`.
+This is a breaking release for apps that customize Material forms.
+
+### Breaking Changes
+
+- **`framework="material"` is rewritten on Material Design 3 and now renders
+  through the same path as Bootstrap and plain.** Every input gets a Material
+  field: outlined with a floating label and a real notch, with error, disabled
+  and icon states. The CSS uses design tokens (`--md-sys-color-*`) and has no
+  `!important`. CSS written against the old Material markup needs updating. (#265)
+- **`MaterialEmbeddedTheme` is renamed `MaterialTheme`.** Update any import or
+  subclass of it. (#265)
+
+### Changed
+
+- **Star rating stars are now buttons in every style**, in a `radiogroup` with
+  arrow-key support, so the widget works from the keyboard. The default
+  colors are darker, to meet contrast requirements. (#265)
+
+### Added
+
+- `Field(unchecked_message="...")` sets the error shown when a required checkbox
+  is left unticked. (#273)
+- Radio `variant="segmented"` and checkbox group `variant="button_group"` now
+  ship their own CSS instead of leaving it to the app. (#265)
+- `docs/advanced/material.md` documents the Material style. (#265)
+- `material_variant="filled"` selects filled text fields (the default is
+  `"outlined"`). (#265)
+- Opt-in dark mode for Bootstrap forms: under `data-bs-theme="dark"` the library's
+  widgets, tabs, accordion and wizard now follow Bootstrap's dark colors. (#265)
+- `--sf-*` CSS tokens re-color those same parts under Bootstrap. (#265)
+- Opt-in dark scheme for Material: `data-md-theme="dark"` on the form or an
+  ancestor, or the page's `color-scheme`. (#265)
+
+### Fixed
+
+- A checkbox typed `Literal[True]` can now pass validation: ticking it used to
+  fail with "Input should be True". This is the way to require a box to be ticked,
+  such as accepting terms. (#273)
+- Material forms now submit to the server and show every error at once, like
+  Bootstrap. They used to drop `novalidate`, so the browser stopped a single-page
+  form at its first invalid field. (#265)
+- A model list item's title no longer goes through `innerHTML` as the user
+  types, so markup in a title field can't run in the page. (#265)
+- Material: invalid fields now get a red outline, and textareas, radios,
+  multiselects, comboboxes and data tables are no longer unstyled. (#265)
+
+### Removed
+
+- **Materialize is no longer vendored or referenced.** The Material style has
+  long used its own self-contained theme and never loaded Materialize, but the
+  package still shipped Materialize 1.0.0 (about 320 KB), a
+  `vendor-update-materialize` make target, and a Materialize config behind
+  `framework_css_tag`/`framework_js_tag`. They're gone: both functions now
+  return nothing for `"material"`, and `get_theme_for_framework("material")`
+  returns the Material theme the renderer actually uses. (#265)
+
+## [26.4.3] — 2026-10-29
+
+`FormModel` is now the only way to build a form: the builder API, the
+prebuilt forms, `@form_validator` and the React/Vue adapters are removed.
+Five Agent Skills ship inside the package, and a long list of form bugs is
+fixed. This is a breaking release; see `docs/upgrading.md`.
+
+### Breaking Changes
+
+- **React and Vue adapters removed.** `ReactJSONSchemaFormAdapter`,
+  `VueFormulateAdapter`, and their modules
+  (`integration.json_schema_form_adapter`, `integration.vue_formulate_adapter`,
+  and the `integration.react`/`integration.vue` shims) are deleted, along with
+  the React/Vue-only helpers `map_ui_element_to_framework` and
+  `convert_validation_rules`. They produced config blobs for client-side form
+  libraries, outside this library's server-rendered scope, and had no examples
+  or docs. For a JSON Schema of a form, use `FormModel.get_json_schema()`;
+  for a plain Pydantic model, use `FormModel.as_api_model()`. (#248)
+- **The builder API is removed; `FormModel` is the only way to build a form.**
+  `FormBuilder`, `AutoFormBuilder`, `create_form_from_model`,
+  `create_login_form`, `create_registration_form`, `create_contact_form`,
+  `render_form_page`, `FormIntegration`, `handle_form` and `handle_form_async`
+  are deleted, along with `ModernFormRenderer`, `FormDefinition` and
+  `FormSection` (which only existed to render builder forms) and the
+  `integration.builder`/`adapters`/`sync`/`async_support` modules. The builder
+  rendered through its own path, so it never got `layout=`, the wizard, nested
+  sub-forms, `model_list` or `DataTableLayout`. To upgrade: declare a
+  `FormModel` (or build one at runtime with Pydantic's
+  `create_model(..., __base__=FormModel)`), render it with `render_form_html()`
+  and handle submissions with `FormModel.validate()` and
+  `result.render_with_errors()`. See `docs/upgrading.md`. Importing any
+  removed name raises an `ImportError` that names its replacement. (#255)
+- **`@form_validator` is removed.** It never ran: nothing called the methods
+  it decorated, so cross-field checks written with it were silently skipped.
+  Use Pydantic's `@model_validator(mode="after")` (its message lands in the
+  form-wide `_errors`) or `FormValidator.add_cross_field_rule`. (#254)
+- **`DataTableLayout` input names are namespaced by the embedding field.**
+  Cells, the CSV file input and the Load/Submit buttons used to have fixed
+  names (`rows[i].col`, `csv_file`, `datatable_action`), so two tables on one
+  page overwrote each other. They are now named under the field the table is
+  embedded in (an `employees` field submits `employees.rows[i].col`,
+  `employees.csv_file`, `employees.datatable_action`), and the default table
+  id comes from the field name instead of the row model's class name.
+  `handle_import_post()` and `parse_submitted_rows()` find their table in the
+  submission themselves, so app code using them doesn't change. Code that
+  reads those form keys directly, or builds test submissions by hand, must use
+  the new names. When two tables share a row model, pass the new
+  `field=` argument to say which one to read. (#253)
+
+### Added
+
+- **Agent Skills ship inside the package.** `uvx library-skills --claude`
+  installs five skills into an app project, linked to the installed version:
+  `pydantic-schemaforms` (build and fix forms, with references for inputs,
+  complex forms, validation, data tables, security, rendering and extending),
+  `schemaforms-create` (a new form from a description such as "create a login
+  form", commented like a tutorial), `schemaforms-convert` (from Pydantic,
+  dataclasses, JSON Schema, WTForms or Django), `schemaforms-upgrade` (from
+  removed APIs) and `schemaforms-document` (docstrings, help text and a
+  Markdown page for an app's forms). The single-file instructions from
+  `get_app_instructions()` and the CLI are now built from the same sources,
+  and their examples come from tested files. (#264)
+- **Accessibility gate.** The Playwright suite runs axe-core 4.14 against
+  WCAG 2.0, 2.1 and 2.2 A and AA rules plus axe best practices on every
+  example page under Bootstrap and Material, plus the validation page's error
+  state, and fails on any serious or critical violation. axe-core is vendored
+  for tests only (`tests/playwright/vendor/`, pinned by version and SHA-256);
+  it is not shipped in the package. What is tested, the baseline the inputs
+  meet, and what automated testing does not cover are in the new
+  `docs/reference/accessibility.md` page and the README. This is testing, not a claim of
+  ADA, Section 508 or WCAG conformance. (#246)
+
+### Fixed
+
+- **Two tabbed or accordion forms on one page no longer collide.** Tab and
+  accordion ids were numbered from `tab-0`/`accordion-0` in every form, so
+  the second form's tabs and panels controlled the first form's. Each layout
+  now gets its own id prefix, and tab and accordion scripts only act inside
+  their own layout (which also stops an outer tab hiding a nested tabbed
+  sub-form). (#252)
+- **Accordion fixes:** under Bootstrap the open section rendered closed, and
+  under plain HTML and Material clicking a section header submitted the
+  form. (#252)
+- **Invalid fields are announced.** After a failed submit, a field's control
+  gets `aria-invalid="true"` and an `aria-describedby` pointing at its error
+  message, and at its help text whenever it has one, under Bootstrap,
+  Material and plain HTML. Help and error elements now carry matching
+  `<id>-help` / `<id>-error` ids. (#246)
+- **`DataTableLayout` cells have accessible names.** Each editable cell gets
+  an `aria-label` such as "Email, row 3", since its column header is not a
+  `<label>`. (#246)
+- **The tags input's label names its text box.** The visible text box now
+  takes the field's id, so `<label for=...>` points at it, and it receives
+  the `aria-*` wiring above. (#246)
+- **The code editor's highlight layer no longer takes keyboard focus.** It is
+  `aria-hidden`, but Prism made it tabbable. (#246)
+- **Contrast meets WCAG AA (4.5:1)** for tag chips, the code editor's
+  property/tag syntax color and the "Rendered in" timing line. (#246)
+- **The date picker toggle is a 24×24 px target** (WCAG 2.2 target size). (#246)
+- **Inputs are inferred from more field types.** Without a `ui_element`,
+  `date`, `datetime`, `time`, `EmailStr` and `AnyUrl` fields render as date,
+  datetime-local, time, email and URL inputs; `Enum` and `Literal` fields render
+  as a select with their values; and a `list` of either renders as a
+  multiselect. `Optional` fields keep their input type instead of falling back
+  to a text box. Previously an `Enum` field rendered an empty section (or a
+  select with no options), so its choices had to be built by hand. (#258)
+- **A fresh form shows the model's defaults.** When no `form_data` is
+  passed, every field starts at its default (an `int = 1` shows 1, an Enum or
+  `Literal` default is selected, a `bool = True` checkbox is ticked,
+  `default_factory` values included). Passed data, such as a submission being
+  re-rendered or an edit form, is still used as is. Previously defaults were
+  never rendered, so they had to be passed in `form_data` by hand. (#258)
+- **Validator messages are shown as written.** A `ValueError` raised in a
+  `@field_validator` or `@model_validator` shows its own message, without
+  Pydantic's "Value error, " prefix. (#258)
+- **Optional selects can be left empty.** An `Optional` select gets an empty
+  first choice, and submitting it validates to `None`, including for
+  `str`-based enums. (#258)
+- **An `Enum` field keeps its title** when it matches the Enum class's name
+  (`Field(title="Size")` on a `Size` enum), including inside list items; it
+  used to fall back to the field name. (#258)
+- **Material renders datetime fields as `datetime-local`**, not the invalid
+  `datetime` input type. (#258)
+- **Pre-filling an `Enum` field selects its option.** `form_data` holding an
+  Enum member, as a database row or `model_dump()` does, used to leave the
+  select (or radio) with nothing chosen. (#258)
+- **A checkbox that defaults to `True` can be unticked.** An unticked
+  checkbox sends nothing, so `validate()` used to fill in the default and
+  return `True`. In a form submission, a missing checkbox that has a default
+  is now `False`; one without a default is still required, and nested JSON
+  that omits it still gets the default. (#258)
+- **An optional sub-form (`Address | None`) can be left empty.** Its inputs
+  are no longer `required`, and when every one of them is blank or still at
+  its default, `validate()` returns `None` for it instead of field errors.
+  (#258)
+- **A `currency` input works on a `Decimal`, `float` or `int` field.** The
+  input formats what is typed as `$1,234.50`, which used to fail validation
+  as "Input should be a valid decimal". In a form submission the symbol and
+  thousands separators are now stripped first. (#258)
+- **A `float` field accepts decimals in the browser.** Number inputs always
+  had `step="1"`, so the browser refused 39.50. A `float` field now gets
+  `step="any"`, and `multiple_of` sets the step. (#258)
+- **Material inputs carry the field's constraints.** `min_length`,
+  `max_length`, `ge`, `le` and `pattern` now become `minlength`, `maxlength`,
+  `min`, `max` and `pattern` attributes under Material too, as they already
+  did under Bootstrap and plain HTML. (#258)
+- **`MinLengthRule` skips an empty value**, like every other rule except
+  `RequiredRule` and like its own client-side check. It used to reject `""`,
+  so an optional field with a minimum length couldn't be left blank. (#258)
+
 ## [26.4.1] — 2026-10-12
 
 Complex forms are now built one way: nest `FormModel`s as fields of a parent
 `FormModel` and pick a `layout=`. Data in and out is nested JSON. This is a
-breaking release; see `docs/complex_forms.md#upgrading`.
+breaking release; see `docs/upgrading.md`.
 
 ### Breaking Changes
 
@@ -249,6 +461,27 @@ First production release. All public Quick Start code paths verified working end
 ## Latest Changes
 
 #### Production Releases
+
+### <span style='color:blue'>Support for Python 3.15</span> ([26.4.2](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.4.2))
+
+## Changes
+- Test: Update Coverage XML Timestamp (#231) (@devsetgo)
+
+## Documentation
+
+- Documentation: Clarify Python Requirement, Asset Modes, Examples, and Testing Workflow (#234) (@devsetgo)
+- Documentation: Remove Stale 26.4.1 Release-Notes Draft From Repo Root (#232) (@devsetgo)
+
+## Maintenance
+
+- Chore: Bump Version To 26.4.2 For Python 3.15 Support (#233) (@devsetgo)
+- Documentation: Remove Stale 26.4.1 Release-Notes Draft From Repo Root (#232) (@devsetgo)
+
+## Contributors
+@devsetgo
+
+
+Published Date: 2026 October 24, 21:09
 
 ### <span style='color:blue'>Enhancement: Collapse and Select Improvements</span> ([26.3.7](https://github.com/devsetgo/pydantic-schemaforms/releases/tag/26.3.7))
 

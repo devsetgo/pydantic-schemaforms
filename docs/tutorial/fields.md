@@ -22,6 +22,7 @@ Without a `ui_element`, the input comes from the field's type:
 | `str` | Text box |
 | `int`, `float` | Number box (for a `Decimal`, set `ui_element="decimal"` or `"currency"`) |
 | `bool` | Checkbox |
+| `Literal[True]` | Checkbox that must be ticked; see [Validation](validation.md#required-checkboxes) |
 | `date` | Date picker |
 | `datetime` | Date and time picker |
 | `time` | Time picker |

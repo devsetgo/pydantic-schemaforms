@@ -136,8 +136,7 @@ tests, same as always.
 
 ### Real, working composite examples
 
-Earlier versions of this guide illustrated the mechanism with a `WizardForm`
-example that was never actually shipped. Three real composites in this
+Three real composites in this
 library demonstrate both keyspaces end-to-end:
 
 - **`DataTableLayout`** (`pydantic_schemaforms/datatable_layout.py` +
@@ -167,8 +166,7 @@ its value; see [Nested Forms and Lists](../tutorial/nested-forms.md)) are `conte
 If your composite is shaped like `DataTableLayout` — a `FormModel` subclass
 whose own fields define the composite's structure, meant to be embedded as
 a layout field and never rendered on its own — subclass
-`pydantic_schemaforms.composite_layout.CompositeLayoutModel` instead of
-`FormModel` directly. It disables `render_form()` with a clear
+`CompositeLayoutModel` (a top-level export) instead of `FormModel` directly. It disables `render_form()` with a clear
 `NotImplementedError` pointing callers at your own value-bundling
 classmethod (the `as_layout_value()` convention `DataTableLayout` uses), so
 nobody accidentally calls it as if it rendered one instance's inputs.
