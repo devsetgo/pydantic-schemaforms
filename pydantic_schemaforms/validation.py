@@ -14,7 +14,7 @@ from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Literal, Union, get_args, get_origin
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 
 from pydantic import AfterValidator, BaseModel, EmailStr, ValidationError
 from pydantic_core import PydanticCustomError, PydanticUndefined, to_jsonable_python
@@ -1122,8 +1122,8 @@ def _unchecked_message(model: type[BaseModel], loc: tuple[Any, ...]) -> str | No
 
 
 def _apply_unchecked_messages(
-    errors: list[dict[str, Any]], model: type[BaseModel]
-) -> list[dict[str, Any]]:
+    errors: Sequence[Mapping[str, Any]], model: type[BaseModel]
+) -> list[Mapping[str, Any]]:
     return [
         {**error, 'msg': message}
         if error['type'] in _UNCHECKED_ERROR_TYPES
