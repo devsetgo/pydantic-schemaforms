@@ -22,6 +22,8 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Added
 
+- `Field(unchecked_message="...")` sets the error shown when a required checkbox
+  is left unticked. (#273)
 - Radio `variant="segmented"` and checkbox group `variant="button_group"` now
   ship their own CSS instead of leaving it to the app. (#265)
 - `docs/advanced/material.md` documents the Material style. (#265)
@@ -35,6 +37,9 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Fixed
 
+- A checkbox typed `Literal[True]` can now pass validation: ticking it used to
+  fail with "Input should be True". This is the way to require a box to be ticked,
+  such as accepting terms. (#273)
 - Material forms now submit to the server and show every error at once, like
   Bootstrap. They used to drop `novalidate`, so the browser stopped a single-page
   form at its first invalid field. (#265)
