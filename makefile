@@ -137,7 +137,7 @@ vendor-verify: ## Verify vendored assets match manifest checksums
 ##@ Docker (demo image)
 
 docker-build: ## Build the demo image (pins pydantic-schemaforms==VERSION) and smoke-test it
-	sed "s/__APP_VERSION__/$(VERSION)/g" $(DEMO_APP_DIR)/requirements.template.txt > $(DEMO_APP_DIR)/requirements.txt
+	sed "s/__APP_VERSION__/$(VERSION)/g" $(DEMO_APP_DIR)/requirements.template > $(DEMO_APP_DIR)/requirements.txt
 	docker build -f $(DEMO_APP_DIR)/Dockerfile \
 		--build-arg SCHEMAFORMS_DEMO_IMAGE_VERSION=$(DOCKER_TAG) \
 		--label version=$(DOCKER_TAG) \
