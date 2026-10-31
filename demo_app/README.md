@@ -5,7 +5,7 @@ This folder is the in-repo home for demo app assets after deprecating the standa
 ## Current layout
 
 - `Dockerfile`: default release image definition. It intentionally runs the canonical app from `examples/main.py` to minimize sync drift.
-- `requirements.template.txt`: minimal runtime dependency template, rendered to `requirements.txt` with the release version pin.
+- `requirements.template`: minimal runtime dependency template, rendered to `requirements.txt` with the release version pin.
 - `src/`, `migrations/`, `alembic.ini`, `requirements-demo.txt`, `scripts/docker_entrypoint.sh`: imported demo runtime snapshot from the retired standalone repo.
 
 ## Why both exist right now
