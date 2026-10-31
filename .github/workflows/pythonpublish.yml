@@ -32,6 +32,25 @@ jobs:
         with:
           packages-dir: dist
 
+  release-highlights:
+    name: Add CHANGELOG highlights to the release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Update the release body
+        run: |
+          gh release view "$TAG" --json body --jq .body > current-body.md
+          python3 scripts/changelog.py --release-body "$TAG" current-body.md > new-body.md
+          gh release edit "$TAG" --notes-file new-body.md
+
   prepare-docs-inputs:
     name: Prepare docs deployment inputs
     runs-on: ubuntu-latest
