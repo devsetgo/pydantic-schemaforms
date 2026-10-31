@@ -10,12 +10,6 @@
 name-template: "Release Notes (Draft)"
 
 autolabeler:
-  # Version bump PRs repeat changes already listed, so they stay out of the notes.
-  - label: 'skip-changelog'
-    branch:
-      - '/^chore\/release[/-].+/'
-    title:
-      - '/^(prepare release|bump (of )?version)/i'
   - label: 'breaking'
     branch:
       - '/^breaking[/-].+/'
@@ -45,122 +39,40 @@ autolabeler:
     branch:
       - '/^(dep|deps|bump|dependabot)[/-].+/'
 
-# Every category is exclusive, because a PR carries several labels and should be
-# listed once. Order decides where it goes: fixes come before features since
-# ai-pr-assistant often gives a bug fix a feature label too.
 categories:
-  - type: 'pre-exclude'
-    when:
-      label: 'skip-changelog'
-  - title: "💥 Breaking Changes"
-    exclusive: true
-    when:
-      labels: ["breaking", "breaking-change", "Breaking Change"]
-  - title: "🐛 Fixes"
-    exclusive: true
-    when:
-      labels: ["bug", "fix"]
-  - title: "✨ Features"
-    exclusive: true
-    when:
-      labels: ["feature", "enhancement"]
-  - title: "📝 Documentation"
-    exclusive: true
-    when:
-      labels: ["docs", "documentation"]
-  - title: "♻️ Code Improvements"
-    exclusive: true
-    when:
-      labels: ["code improvements", "Code Improvements", "refactor"]
-  - title: "⬆️ Dependencies"
-    exclusive: true
-    when:
-      label: "dependencies"
-  - title: "👷 GitHub Actions"
-    exclusive: true
-    when:
-      label: "github actions"
-  - title: "🔧 Maintenance"
-    exclusive: true
-    when:
-      labels: ["chore", "test"]
+  - title: "Breaking Changes"
+    labels:
+      - "breaking"
+      - "breaking-change"
+      - "Breaking Change"
+  - title: "Features"
+    labels:
+      - "feature"
+      - "enhancement"
+  - title: "Bug Fixes"
+    labels:
+      - "bug"
+      - "fix"
+  - title: "Documentation"
+    labels:
+      - "docs"
+  - title: "Code Improvements"
+    labels:
+      - "code improvements"
+  - title: "GitHub Actions"
+    labels:
+      - "github actions"
+  - title: "Maintenance"
+    labels:
+      - "chore"
+      - "dependencies"
 
-category-template: "### $TITLE"
-change-template: |-
-  - **$TITLE** · PR [#$NUMBER]($URL) by [@$AUTHOR]($AUTHOR_URL)
-    $BODY
+change-template: "- $TITLE (#$NUMBER) (@$AUTHOR)"
 change-title-escapes: "<*_&"
-change-body-escapes: "<&"
-new-contributor-template: "- 🎉 Welcome $AUTHOR_MENTION, whose first PR was [#$NUMBER]($URL)!"
-no-new-contributor-template: ""
-exclude-contributors:
-  - "claude"
-
-replacers:
-  # Each item's title swaps the PR's type prefix for an icon.
-  - target: change-title
-    search: '/^Breaking Change:\s*/i'
-    replace: '💥 '
-  - target: change-title
-    search: '/^(Bug|Fix):\s*/i'
-    replace: '🐛 '
-  - target: change-title
-    search: '/^Feature:\s*/i'
-    replace: '✨ '
-  - target: change-title
-    search: '/^Enhancement:\s*/i'
-    replace: '🚀 '
-  - target: change-title
-    search: '/^(Documentation|Docs):\s*/i'
-    replace: '📝 '
-  - target: change-title
-    search: '/^Refactor:\s*/i'
-    replace: '♻️ '
-  - target: change-title
-    search: '/^Test:\s*/i'
-    replace: '✅ '
-  - target: change-title
-    search: '/^(Chore|Maintenance):\s*/i'
-    replace: '🔧 '
-  - target: change-title
-    search: '/^(?:[\w-]+\(deps(?:-dev)?\):\s*)?bump\b/i'
-    replace: '⬆️ Bump'
-  # Each item's text is the opening paragraph of its PR description, without the
-  # breaking-change note, issue link or heading that can come before it.
-  - target: change-body
-    search: '/^(?:> \[!CAUTION\][^\n]*\n(?:>[^\n]*\n)*|⚠️[^\n]*\n)\s*/'
-    replace: ''
-  - target: change-body
-    search: '/^(?:(?:Closes|Fixes|Related:?) #\d+\.?\s*)?(?:#{1,6} *)?(?:Summary|Motivation)?\s*/'
-    replace: ''
-  - target: change-body
-    search: '/\r?\n[ \t]*\r?\n[\s\S]*$/'
-    replace: ''
-  - target: change-body
-    search: '/\s*\r?\n\s*/g'
-    replace: ' '
-  - target: change-body
-    search: '/:\s*$/'
-    replace: '.'
-  # An empty $NEW_CONTRIBUTORS would otherwise leave a gap.
-  - search: '/\n{3,}/g'
-    replace: "\n\n"
 
 template: |
-  ## 🎁 What's Changed
-
+  ## Changes
   $CHANGES
 
-  ## 🙌 Contributors
-
+  ## Contributors
   $CONTRIBUTORS
-
-  $NEW_CONTRIBUTORS
-
-  ## 📦 Get It
-
-  ```bash
-  pip install --upgrade pydantic-schemaforms
-  ```
-
-  [📚 Documentation](https://devsetgo.github.io/pydantic-schemaforms/) · [📝 Release notes](https://devsetgo.github.io/pydantic-schemaforms/latest/release-notes/) · [🐍 PyPI](https://pypi.org/project/pydantic-schemaforms/) · [🔍 Full diff](https://github.com/devsetgo/pydantic-schemaforms/compare/$PREVIOUS_TAG...main)
