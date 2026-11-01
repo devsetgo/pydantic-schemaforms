@@ -1927,3 +1927,15 @@ class TestModelListCustomization:
 
         html = result.render_with_errors()
         assert 'at least 2 characters' in html
+
+
+@pytest.mark.parametrize(
+    'ui_element', ['select', 'multiselect', 'combobox', 'radio', 'checkbox_group']
+)
+def test_bootstrap_option_fields_have_one_margin_wrapper(ui_element):
+    class Form(FormModel):
+        choice: str = Field('a', ui_element=ui_element, options=['a', 'b'])
+
+    rendered = str(Form.render_form(framework='bootstrap', submit_url='/x'))
+
+    assert rendered.count('<div class="mb-3">') == 1
