@@ -966,6 +966,7 @@ These are `Field()` keyword arguments, not `ui_options` keys:
 | `ui_order=` | Position among the fields/groups; lower first, default is declaration order |
 | `unchecked_message=` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
 | `ui_content=` | The text of a `ui_element="content"` block or `"consent"` field. Escaped; use `html(t'...')` for links or lists. Add `ui_options={"scrollable": True}` for long text. Declare a block as `intro: None = Field(ui_element="content", ui_content="...")`: it submits nothing and isn't in `result.data`. A consent field is a checkbox, so type it `Literal[True]` when it must be ticked |
+| `ui_show_when={"field": "contact", "equals": "phone"}` | Hide this field until another field has a value; also `in`, `truthy`, `not_empty`. It needs a default. Add `"required": True` for "required only while shown" rather than a `@model_validator`. `field` is relative to this model and can go down (`"address.country"`) but not up. Hidden values are dropped on the server and left out of `render_display()` |
 | `ui_disabled=True` | Disabled: not editable and **not submitted** |
 | `ui_readonly=True` | Read-only: not editable but submitted |
 | `ui_hidden=True` | Rendered as a bare hidden input (same as `ui_element="hidden"`) |

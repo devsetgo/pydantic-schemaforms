@@ -235,6 +235,13 @@ class ModelListRenderer:
                 }
             });
 
+            item.querySelectorAll('[data-show-when-target]').forEach(wrapper => {
+                wrapper.setAttribute(
+                    'data-show-when-target',
+                    wrapper.getAttribute('data-show-when-target').replace(/\\[\\d+\\]/, `[${index}]`)
+                );
+            });
+
             item.querySelectorAll('label').forEach(label => {
                 if (label.getAttribute('for')) {
                     label.setAttribute('for', label.getAttribute('for').replace(/\\[\\d+\\]/, `[${index}]`));

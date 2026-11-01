@@ -80,6 +80,46 @@ can catch mistakes before the form is sent. `team_size` above only accepts 1
 to 500 either way. The next chapter, [Validation](validation.md), covers them
 in detail.
 
+## Show a field only when it applies
+
+`ui_show_when` hides a field until another field has a given value:
+
+=== "FastAPI"
+
+    ```python hl_lines="17-21"
+    --8<-- "docs_src/tutorial/show_when/fastapi_app.py"
+    ```
+
+=== "Flask"
+
+    ```python hl_lines="16-20"
+    --8<-- "docs_src/tutorial/show_when/flask_app.py"
+    ```
+
+`field` names the field to watch, and one test decides when this one shows:
+
+| Test | Shows when the other field |
+|---|---|
+| `"equals": "phone"` | Has this value |
+| `"in": ["phone", "post"]` | Has one of these values |
+| `"truthy": True` | Is ticked or has a non-empty value (`False` for the opposite) |
+| `"not_empty": True` | Has any value (`False` for empty) |
+
+**The server applies the same rule.** A hidden field's submitted value is dropped
+before validation, even in a hand-written request, so it produces no errors and
+`result.data` holds the field's default. That's why the field must have a default.
+
+**For "required only when shown"**, add `"required": True` to the rule, as above,
+rather than declaring the field required.
+
+`field` is relative to the model the rule is on. It can go down into a sub-form
+(`"address.country"`) but not up to a parent, so to hide a whole sub-form based on
+a parent's field, put the rule on the sub-form field in the parent. Inside a
+`model_list`, each item follows its own values.
+
+In `layout="tabbed"`, `"accordion"` and `"wizard"`, a hidden sub-form leaves its
+tab, panel or step in place, empty.
+
 ## Defaults and pre-filled forms
 
 A fresh form starts from the field defaults: the team size shows 1, the plan

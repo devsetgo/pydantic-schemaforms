@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Callable
 from dataclasses import replace
+from functools import wraps
 from typing import Any
 
 from pydantic_schemaforms.icon_mapping import map_icon_for_framework
@@ -11,6 +14,8 @@ from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.frameworks import get_input_component
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 from pydantic_schemaforms.error_tree import child_errors, field_message
+from pydantic_schemaforms.form_data import _tokenize_form_path
+from pydantic_schemaforms.show_when import lookup, rule_matches
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info, resolve_ui_element
 from pydantic_schemaforms.rendering.themes import RendererTheme
 from pydantic_schemaforms.tstring import SafeHTML, html
@@ -54,6 +59,58 @@ _FORMAT_UI_ELEMENTS = {
 }
 
 
+def _show_when_wrapper(
+    field_name: str, rule: dict[str, Any], markup: str, context: RenderContext
+) -> SafeHTML:
+    # A disabled fieldset disables everything inside it without touching each
+    # control, so a field's own ui_disabled survives being shown again.
+    prefix = field_name[: field_name.rfind('.') + 1]
+    scope: Any = context.form_data if context.visible_data is None else context.visible_data
+    for token in _tokenize_form_path(prefix.rstrip('.')):
+        if isinstance(token, int):
+            scope = scope[token] if isinstance(scope, list) and token < len(scope) else None
+        else:
+            scope = scope.get(token) if isinstance(scope, dict) else None
+    shown = rule_matches(rule, lookup(scope, rule['field']))
+    _state = SafeHTML('' if shown else ' hidden disabled')
+    target = f'{prefix}{rule["field"]}'  # NOSONAR - read in the t-string below
+    # The script only needs the test, not where it points.
+    test = json.dumps({k: v for k, v in rule.items() if k not in ('field', 'required')})  # NOSONAR
+    _markup = SafeHTML(str(markup))  # NOSONAR
+    return html(
+        t'<fieldset class="sf-show-when" data-show-when="{test}" '
+        t'data-show-when-target="{target}" '
+        t'style="border: 0; margin: 0; padding: 0; min-width: 0"{_state}>{_markup}</fieldset>'
+    )
+
+
+def _applies_show_when(render_field: Callable[..., str]) -> Callable[..., str]:
+    """Wrap a field with a ``ui_show_when`` rule; every field renders through here."""
+
+    @wraps(render_field)
+    def wrapper(
+        self: Any,
+        field_name: str,
+        field_schema: dict[str, Any],
+        value: Any = None,
+        error: str | None = None,
+        required_fields: list[str] | None = None,
+        context: RenderContext | None = None,
+        layout: str = 'vertical',
+    ) -> str:
+        rule = extract_ui_info(field_schema).get('show_when')
+        if rule and rule.get('required'):
+            required_fields = [*(required_fields or []), field_name]
+        markup = render_field(
+            self, field_name, field_schema, value, error, required_fields, context, layout
+        )
+        if not rule or context is None:
+            return markup
+        return _show_when_wrapper(field_name, rule, markup, context)
+
+    return wrapper
+
+
 class FieldRenderer:
     """Encapsulates the heavy lifting of turning schema fields into HTML."""
 
@@ -79,6 +136,7 @@ class FieldRenderer:
         theme = self.theme
         return theme if isinstance(theme, RendererTheme) else None
 
+    @_applies_show_when
     def render_field(
         self,
         field_name: str,

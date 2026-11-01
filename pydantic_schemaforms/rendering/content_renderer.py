@@ -83,6 +83,8 @@ def render_consent_field(
         'ui_options': {**options, 'aria-describedby': block_id},
     }
     checkbox_schema.pop('ui', None)
+    # The rule is already applied around this whole field.
+    checkbox_schema.pop('ui_show_when', None)
     checkbox = SafeHTML(  # NOSONAR - read in the t-string below
         engine._renderer._field_renderer.render_field(  # noqa: SLF001
             field_name,

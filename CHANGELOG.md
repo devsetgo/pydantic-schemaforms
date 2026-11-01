@@ -11,6 +11,11 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Added
 
+- `Field(ui_show_when={"field": "contact", "equals": "phone"})` hides a field until another
+  field has a given value, with `in`, `truthy` and `not_empty` as well. A hidden field submits
+  nothing and isn't validated, and `"required": True` makes a field required only while it
+  shows. It works inside sub-forms and `model_list` items, and display mode leaves hidden
+  fields out. (#237)
 - `FormModel.render_display(data, framework=..., layout=..., edit_urls=...)` shows validated
   data read-only, as a review or confirmation page, with the form's labels, order and
   sections. Selects show their label, booleans Yes or No, and `model_list` a table. Passwords

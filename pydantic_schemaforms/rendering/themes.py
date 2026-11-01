@@ -63,7 +63,7 @@ _DISPLAY_CLASSES = {
     'value': 'col-sm-8 text-break',
     'empty': 'text-body-secondary',
     'table_wrapper': 'table-responsive',
-    'edit': 'btn btn-outline-secondary btn-sm mb-3',
+    'edit': 'btn btn-outline-secondary btn-sm mt-2',
 }
 
 _MATERIAL_DISPLAY_CLASSES = {

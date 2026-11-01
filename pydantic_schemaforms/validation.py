@@ -1353,6 +1353,19 @@ def _coerce_html_form_values(
     return result
 
 
+def _visible_submission(
+    model: type[Any], nested: dict[str, Any]
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Drop values of fields hidden by a ``ui_show_when`` rule; see ``show_when.prune``."""
+    from .rendering.schema_parser import build_schema_metadata, has_show_when_rules
+    from .show_when import prune
+
+    if not has_show_when_rules(model):
+        return nested, []
+    metadata = build_schema_metadata(model)
+    return prune(metadata.schema.get('properties') or {}, metadata.schema_defs, nested)
+
+
 def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResult:
     """Validate a submission against a form model.
 
@@ -1381,8 +1394,9 @@ def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResu
         else form_model_class
     )
 
+    visible, required_errors = _visible_submission(runtime_model, nested)
     coerced = _coerce_html_form_values(
-        nested,
+        visible,
         getattr(runtime_model, 'model_fields', {}) or {},
         from_form=is_form_submission(data),
     )
@@ -1391,7 +1405,16 @@ def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResu
     except ValidationError as exc:
         return ValidationResult(
             is_valid=False,
-            errors=build_error_tree(_apply_unchecked_messages(exc.errors(), runtime_model)),
+            errors=build_error_tree(
+                [*_apply_unchecked_messages(exc.errors(), runtime_model), *required_errors]
+            ),
+            form_model_cls=form_model_class,
+            original_data=nested,
+        )
+    if required_errors:
+        return ValidationResult(
+            is_valid=False,
+            errors=build_error_tree(required_errors),
             form_model_cls=form_model_class,
             original_data=nested,
         )

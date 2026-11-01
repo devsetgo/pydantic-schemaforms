@@ -55,7 +55,7 @@ def server_url():
 @pytest.mark.parametrize('name', sorted(PAGES))
 def test_screenshot(page: Page, server_url: str, name: str, theme: str) -> None:
     OUTPUT.mkdir(exist_ok=True)
-    page.add_init_script(f"localStorage.setItem('md-theme', '{theme}')")
+    page.add_init_script(f"localStorage.setItem('sf-theme', '{theme}')")
     page.goto(f'{server_url}{PAGES[name]}')
     form = page.locator('.md-form').first
     expect(form).to_be_visible(timeout=15_000)
