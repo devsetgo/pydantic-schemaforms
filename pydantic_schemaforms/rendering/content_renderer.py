@@ -22,18 +22,21 @@ def _body(ui_info: dict[str, Any]) -> SafeHTML:
     # turns it back into a plain str, which would then be escaped.
     if 'content_html' in ui_info:
         return SafeHTML(ui_info['content_html'])
-    text = ui_info.get('content', '')
+    text = ui_info.get('content', '')  # NOSONAR - read in the t-string below
     return html(t'<p>{text}</p>')
 
 
 def _block(
-    block_id: str, ui_info: dict[str, Any], engine: LayoutEngine, heading: str | None = None
+    block_id: str,  # NOSONAR - read in the t-strings below
+    ui_info: dict[str, Any],
+    engine: LayoutEngine,
+    heading: str | None = None,
 ) -> SafeHTML:
     options = ui_info.get('options')
     scrollable = bool(isinstance(options, dict) and options.get('scrollable'))
     field_renderer = engine._renderer._field_renderer  # noqa: SLF001
     theme = field_renderer.theme
-    css_class = (
+    css_class = (  # NOSONAR - read in the t-strings below
         theme.content_block_class(scrollable) if theme else ''
     ) or field_renderer.class_defaults.content_block_class(scrollable)
     _heading = html(t'<h3 class="h5">{heading}</h3>') if heading else SafeHTML('')
@@ -80,7 +83,7 @@ def render_consent_field(
         'ui_options': {**options, 'aria-describedby': block_id},
     }
     checkbox_schema.pop('ui', None)
-    checkbox = SafeHTML(
+    checkbox = SafeHTML(  # NOSONAR - read in the t-string below
         engine._renderer._field_renderer.render_field(  # noqa: SLF001
             field_name,
             checkbox_schema,

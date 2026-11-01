@@ -56,4 +56,44 @@ return html(t"<p>Thanks for signing up, {name}!</p>")
 `.format()` would insert it as live HTML. This is the same mechanism the
 library uses for every piece of HTML it generates.
 
+## Show the answers back
+
+For a confirmation or review page, `render_display()` shows validated data with
+the form's own labels, order and sections, so you don't have to write that HTML:
+
+=== "FastAPI"
+
+    ```python hl_lines="39"
+    --8<-- "docs_src/tutorial/display/fastapi_app.py"
+    ```
+
+=== "Flask"
+
+    ```python hl_lines="38"
+    --8<-- "docs_src/tutorial/display/flask_app.py"
+    ```
+
+A select shows its option's label, a checkbox shows Yes or No, a date uses the
+field's `date_format`, a sub-form is a titled section and a `model_list` is a
+table. Every value is escaped, and a submitted URL stays plain text rather than
+becoming a link.
+
+Some fields are deliberately not shown as entered:
+
+| Field | Shown as |
+|---|---|
+| `password`, or a `SecretStr` value | Dots |
+| `ssn`, `credit_card` and their aliases | Dots and the last four digits |
+| `ui_hidden=True`, `hidden` | Left out |
+| `csrf`, `captcha`, `honeypot` | Left out |
+| `content` block | Left out, since it explains how to fill the form in |
+| `consent` | Its title and Yes or No, without the long text |
+
+`edit_urls={"address": "/order"}` adds an Edit link to that sub-form's section.
+Each URL must be relative or http(s).
+
+`layout=` takes the same values as the form. `"tabbed"`, `"accordion"` and
+`"side-by-side"` arrange the sub-forms the same way, and `"wizard"` shows one flat
+page so everything can be read at once.
+
 Next: [Fields and Inputs](fields.md).

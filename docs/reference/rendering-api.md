@@ -54,6 +54,7 @@ other async frameworks.
 |---|---|
 | `validate(data, *, submit_url=None, framework="bootstrap", **render_options)` | A `ValidationResult`. `data` is the raw request form (`await request.form()`, `request.form`) or a nested dict such as a JSON body. Render options (`layout=`, `csrf_mode=`, ...) are kept for `render_with_errors()`. |
 | `render_form(data=None, errors=None, framework="bootstrap", *, submit_url, **options)` | The same as `render_form_html(Model, ...)` |
+| `render_display(data, framework="bootstrap", *, layout="vertical", edit_urls=None, **options)` | Read-only HTML for validated data; see [Show the answers back](../tutorial/handling-submissions.md#show-the-answers-back). `data` is `result.data`, a dict shaped like the model, or a model instance. `options` are the asset options plus `material_variant` and `include_html_markers`. |
 | `as_api_model()` | A plain Pydantic model with the same fields and validation but without the form settings, for request bodies and `response_model`; see [JSON API and JSON Schema](../advanced/json-api.md) |
 | `get_pydantic_json_schema(**options)` | The standard JSON Schema, with sub-forms as `$defs`; Pydantic's `model_json_schema()` options pass through |
 | `get_json_schema()` | The schema the renderer uses internally, form settings included |

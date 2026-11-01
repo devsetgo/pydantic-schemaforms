@@ -299,7 +299,7 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
 path: `FieldRenderer.render_field` -> the input's `render()` -> the theme's field
 shell (`rendering/field_shell.py`). A theme (`rendering/themes.py`) supplies
 markup through hooks: `field_shell`, `control_attributes`, `input_class`,
-`alert_class`, `table_class`, `datatable_class`, `render_model_list_item`,
+`alert_class`, `table_class`, `datatable_class`, `display_class`, `render_model_list_item`,
 `render_collapsible_section`, `render_error_summary` and the `FormStyleTemplates`
 chrome. The Material theme is `MaterialTheme`, with its CSS and script in
 `assets/material/`. **There is no Material-only rendering path any more; don't

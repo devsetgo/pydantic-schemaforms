@@ -31,6 +31,16 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 `**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
 
+## Read-only review and confirmation pages
+
+Don't hand-build a page from `result.data`. `Model.render_display(result.data, framework=...)`
+shows the values with the form's labels, order and sections, all escaped. Same `framework=`,
+`layout=` (`"wizard"` renders one flat page), `material_variant=` and asset options as the form.
+`edit_urls={"address": "/order"}` adds an Edit link to that sub-form's section (relative or http(s)
+URLs only). Selects show their label, booleans Yes/No, `model_list` a table. Passwords are masked,
+card and SSN inputs show the last four digits, and hidden fields, security inputs and content blocks
+are left out.
+
 ## Styling and assets
 
 - **`framework="bootstrap"`** (default) uses Bootstrap 5 classes; `data-bs-theme="dark"` on an

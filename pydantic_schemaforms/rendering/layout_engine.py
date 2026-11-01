@@ -733,24 +733,8 @@ class LayoutEngine:
         in field order -- shown as tabs, side-by-side columns, accordion panels,
         or wizard steps."""
 
-        if not metadata.group_fields:
-            raise ValueError(
-                f"layout='{mode}' needs groups to arrange, but this form has no sub-form "
-                'fields. Split it into nested FormModel fields, e.g. '
-                '`contact: Contact = Field(title="Contact")`, or use layout="vertical". '
-                'See docs/tutorial/layouts.md.'
-            )
-
+        groups = self.group_fields(metadata, mode, general_title)
         group_names = {name for name, _schema in metadata.group_fields}
-        plain_fields = [(n, sch) for n, sch in metadata.fields if n not in group_names]
-        groups: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
-        if plain_fields:
-            groups.append((general_title, plain_fields))
-        for name, schema in metadata.group_fields:
-            title = schema.get('title') or name.replace('_', ' ').title()
-            if mode == 'wizard':
-                title = schema.get('ui_step_title') or title
-            groups.append((title, [(name, schema)]))
 
         # A tab/panel/step heading already shows a sub-form's title, so the
         # sub-form must not draw its own titled card inside it. Columns have no heading.
@@ -775,14 +759,55 @@ class LayoutEngine:
                     )
                 )
             body = '\n'.join(parts)
-            if mode == 'side-by-side' and fields is plain_fields:
+            if mode == 'side-by-side' and fields[0][0] not in group_names:
                 body = self._render_layout_card(title, body, '')
             group_has_error = any(has_errors(errors.get(n)) for n, _ in fields)
             if active_index is None and group_has_error:
                 active_index = index
             rendered.append({'title': title, 'content': body, 'has_error': group_has_error})
 
-        active_index = active_index or 0
+        return [
+            self.render_group_component(
+                rendered, mode, active_index=active_index or 0, wizard_options=wizard_options
+            )
+        ]
+
+    def group_fields(
+        self, metadata: SchemaMetadata, mode: str, general_title: str = 'General'
+    ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
+        """A parent's own plain fields first, then one group per sub-form field."""
+
+        if not metadata.group_fields:
+            raise ValueError(
+                f"layout='{mode}' needs groups to arrange, but this form has no sub-form "
+                'fields. Split it into nested FormModel fields, e.g. '
+                '`contact: Contact = Field(title="Contact")`, or use layout="vertical". '
+                'See docs/tutorial/layouts.md.'
+            )
+
+        group_names = {name for name, _schema in metadata.group_fields}
+        plain_fields = [(n, sch) for n, sch in metadata.fields if n not in group_names]
+        groups: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
+        if plain_fields:
+            groups.append((general_title, plain_fields))
+        for name, schema in metadata.group_fields:
+            title = schema.get('title') or name.replace('_', ' ').title()
+            if mode == 'wizard':
+                title = schema.get('ui_step_title') or title
+            groups.append((title, [(name, schema)]))
+        return groups
+
+    def render_group_component(
+        self,
+        rendered: list[dict[str, Any]],
+        mode: str,
+        *,
+        active_index: int = 0,
+        wizard_options: dict[str, Any] | None = None,
+    ) -> str:
+        """Arrange rendered groups (``title``, ``content``) as tabs, accordion
+        panels, wizard steps or side-by-side columns."""
+
         renderer_kwargs = {'framework': self._renderer.framework, 'renderer': self._renderer}
 
         if mode == 'tabbed':
@@ -809,7 +834,7 @@ class LayoutEngine:
                 gap='1.5rem',
                 align_items='flex-start',
             )
-        return [component.render(**renderer_kwargs)]
+        return component.render(**renderer_kwargs)
 
     def render_layout_field(
         self,

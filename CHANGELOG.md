@@ -11,6 +11,11 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Added
 
+- `FormModel.render_display(data, framework=..., layout=..., edit_urls=...)` shows validated
+  data read-only, as a review or confirmation page, with the form's labels, order and
+  sections. Selects show their label, booleans Yes or No, and `model_list` a table. Passwords
+  are masked, card and social security numbers show only their last four digits, and content
+  blocks are left out. (#238)
 - `Field(ui_element="content", ui_content=...)` puts text between fields. It submits
   nothing and is left out of validation and the returned data. (#274)
 - `Field(ui_element="consent", ui_content=...)` pairs text with a checkbox, with

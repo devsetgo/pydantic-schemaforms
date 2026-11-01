@@ -57,6 +57,24 @@ _DATATABLE_CLASSES = {
     'csv_template': 'btn btn-secondary btn-sm mb-2',
 }
 
+_DISPLAY_CLASSES = {
+    'list': 'row mt-2',
+    'term': 'col-sm-4',
+    'value': 'col-sm-8 text-break',
+    'empty': 'text-body-secondary',
+    'table_wrapper': 'table-responsive',
+    'edit': 'btn btn-outline-secondary btn-sm mb-3',
+}
+
+_MATERIAL_DISPLAY_CLASSES = {
+    'list': 'md-display',
+    'term': 'md-display__term',
+    'value': 'md-display__value',
+    'empty': 'md-display__value--empty',
+    'table_wrapper': 'md-display__table',
+    'edit': 'md-button md-button--text',
+}
+
 _MATERIAL_DATATABLE_CLASSES = {
     'upload_zone': 'md-field',
     'upload_label': 'md-field-label',
@@ -330,6 +348,11 @@ class RendererTheme:
 
         return _DATATABLE_CLASSES[slot]
 
+    def display_class(self, slot: str) -> str:
+        """Classes for read-only display markup (see `_DISPLAY_CLASSES`)."""
+
+        return _DISPLAY_CLASSES[slot]
+
     def render_model_list_item(self, item: ModelListItem) -> str:
         """One repeating sub-form item (its header, remove button and fields)."""
 
@@ -486,6 +509,9 @@ class PlainTheme(FrameworkTheme):
     def datatable_class(self, slot: str) -> str:
         return '' if slot == 'csv_template' else super().datatable_class(slot)
 
+    def display_class(self, slot: str) -> str:
+        return ''
+
 
 class MaterialTheme(RendererTheme):
     """Material Design 3, self-contained: its CSS and JS ship inline with the
@@ -603,6 +629,9 @@ class MaterialTheme(RendererTheme):
 
     def datatable_class(self, slot: str) -> str:
         return _MATERIAL_DATATABLE_CLASSES[slot]
+
+    def display_class(self, slot: str) -> str:
+        return _MATERIAL_DISPLAY_CLASSES[slot]
 
     def render_model_list_item(self, item: ModelListItem) -> str:
         # NOSONAR comments here: these are read in t-strings, which Sonar can't parse yet.
