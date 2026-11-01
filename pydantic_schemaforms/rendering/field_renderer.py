@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import replace
+from functools import wraps
 from typing import Any
 
 from pydantic_schemaforms.icon_mapping import map_icon_for_framework
@@ -82,6 +84,33 @@ def _show_when_wrapper(
     )
 
 
+def _applies_show_when(render_field: Callable[..., str]) -> Callable[..., str]:
+    """Wrap a field with a ``ui_show_when`` rule; every field renders through here."""
+
+    @wraps(render_field)
+    def wrapper(
+        self: Any,
+        field_name: str,
+        field_schema: dict[str, Any],
+        value: Any = None,
+        error: str | None = None,
+        required_fields: list[str] | None = None,
+        context: RenderContext | None = None,
+        layout: str = 'vertical',
+    ) -> str:
+        rule = extract_ui_info(field_schema).get('show_when')
+        if rule and rule.get('required'):
+            required_fields = [*(required_fields or []), field_name]
+        markup = render_field(
+            self, field_name, field_schema, value, error, required_fields, context, layout
+        )
+        if not rule or context is None:
+            return markup
+        return _show_when_wrapper(field_name, rule, markup, context)
+
+    return wrapper
+
+
 class FieldRenderer:
     """Encapsulates the heavy lifting of turning schema fields into HTML."""
 
@@ -107,29 +136,8 @@ class FieldRenderer:
         theme = self.theme
         return theme if isinstance(theme, RendererTheme) else None
 
+    @_applies_show_when
     def render_field(
-        self,
-        field_name: str,
-        field_schema: dict[str, Any],
-        value: Any = None,
-        error: str | None = None,
-        required_fields: list[str] | None = None,
-        context: RenderContext | None = None,
-        layout: str = 'vertical',
-    ) -> str:
-        rule = extract_ui_info(field_schema).get('show_when')
-        if not rule or context is None:
-            return self._render_field_markup(
-                field_name, field_schema, value, error, required_fields, context, layout
-            )
-        if rule.get('required'):
-            required_fields = [*(required_fields or []), field_name]
-        markup = self._render_field_markup(
-            field_name, field_schema, value, error, required_fields, context, layout
-        )
-        return _show_when_wrapper(field_name, rule, markup, context)
-
-    def _render_field_markup(
         self,
         field_name: str,
         field_schema: dict[str, Any],

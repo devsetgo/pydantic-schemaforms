@@ -137,6 +137,49 @@ def _check_target(
         current = (definition or {}).get('properties') or {}
 
 
+def _prune_sub_forms(
+    pruned: dict[str, Any],
+    properties: dict[str, Any],
+    schema_defs: dict[str, Any],
+    path: tuple[Any, ...],
+) -> list[dict[str, Any]]:
+    errors: list[dict[str, Any]] = []
+    for name, field_schema in properties.items():
+        definition, is_list = _sub_definition(field_schema, schema_defs)
+        value = pruned.get(name)
+        if not definition or not value:
+            continue
+        sub_properties = definition.get('properties') or {}
+        if not is_list:
+            pruned[name], sub_errors = prune(sub_properties, schema_defs, value, (*path, name))
+            errors.extend(sub_errors)
+        elif isinstance(value, list):
+            items = [
+                prune(sub_properties, schema_defs, item, (*path, name, index))
+                for index, item in enumerate(value)
+            ]
+            pruned[name] = [item for item, _errors in items]
+            errors.extend(error for _item, item_errors in items for error in item_errors)
+    return errors
+
+
+def _drop_hidden(pruned: dict[str, Any], ruled: dict[str, dict[str, Any]]) -> set[str]:
+    # A field can depend on one that is itself hidden, in any declaration order.
+    hidden: set[str] = set()
+    for _pass in range(len(ruled)):
+        newly_hidden = {
+            name
+            for name, rule in ruled.items()
+            if name not in hidden and not rule_matches(rule, lookup(pruned, rule['field']))
+        }
+        if not newly_hidden:
+            break
+        hidden |= newly_hidden
+        for name in newly_hidden:
+            pruned.pop(name, None)
+    return hidden
+
+
 def prune(
     properties: dict[str, Any],
     schema_defs: dict[str, Any],
@@ -152,52 +195,18 @@ def prune(
     if not isinstance(data, dict):
         return data, []
     pruned = dict(data)
-    errors: list[dict[str, Any]] = []
-
-    for name, field_schema in properties.items():
-        definition, is_list = _sub_definition(field_schema, schema_defs)
-        value = pruned.get(name)
-        if not definition or not value:
-            continue
-        sub_properties = definition.get('properties') or {}
-        if is_list and isinstance(value, list):
-            items = [
-                prune(sub_properties, schema_defs, item, (*path, name, index))
-                for index, item in enumerate(value)
-            ]
-            pruned[name] = [item for item, _errors in items]
-            errors.extend(error for _item, item_errors in items for error in item_errors)
-        elif not is_list:
-            pruned[name], sub_errors = prune(sub_properties, schema_defs, value, (*path, name))
-            errors.extend(sub_errors)
+    sub_errors = _prune_sub_forms(pruned, properties, schema_defs, path)
 
     ruled = {name: rule for name, schema in properties.items() if (rule := _rule(schema))}
     for name, rule in ruled.items():
         _check_target(name, rule, properties, schema_defs)
+    hidden = _drop_hidden(pruned, ruled)
 
-    # A field can depend on one that is itself hidden, in any declaration order.
-    hidden: set[str] = set()
-    for _pass in range(len(ruled)):
-        newly_hidden = {
-            name
-            for name, rule in ruled.items()
-            if name not in hidden and not rule_matches(rule, lookup(pruned, rule['field']))
-        }
-        if not newly_hidden:
-            break
-        hidden |= newly_hidden
-        for name in newly_hidden:
-            pruned.pop(name, None)
-
-    shown_and_nested = {name for name in ruled if name not in hidden}
-    errors = [
-        error
-        for error in errors
-        if len(error['loc']) <= len(path) or error['loc'][len(path)] not in hidden
-    ]
-    for name in shown_and_nested:
+    depth = len(path)
+    errors = [error for error in sub_errors if error['loc'][depth] not in hidden]
+    for name, rule in ruled.items():
         value = pruned.get(name)
-        if ruled[name].get('required') and (value is False or _is_empty(value)):
+        if name not in hidden and rule.get('required') and (value is False or _is_empty(value)):
             message = properties[name].get('unchecked_message') or 'Field required'
             errors.append({'loc': (*path, name), 'msg': message, 'type': 'missing'})
     return pruned, errors
