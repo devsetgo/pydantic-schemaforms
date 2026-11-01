@@ -14,7 +14,7 @@ This runs:
 1. **Pre-commit hooks** (Ruff linting + formatting, YAML/TOML checks, trailing whitespace)
 2. **Type check** (`pyright`)
 3. **Parser regression suite** (`tests/test_form_data_parsing.py`)
-4. **Full pytest suite** (~1,700 tests covering validation, rendering, async, layouts, examples, integration)
+4. **Full pytest suite** (~1,900 tests covering validation, rendering, async, layouts, examples, integration)
 5. **Coverage badge generation** (summarizes test coverage)
 
 ## Workflow

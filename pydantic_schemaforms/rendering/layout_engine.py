@@ -824,7 +824,7 @@ class LayoutEngine:
     def group_fields(
         self, metadata: SchemaMetadata, mode: str, general_title: str = 'General'
     ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
-        """A parent's own plain fields first, then one group per sub-form field."""
+        """A parent's own plain fields first, then one group per sub-form or ``ui_group``."""
 
         group_names = {name for name, _schema in metadata.group_fields}
         arranged = arrange_fields(metadata.fields)

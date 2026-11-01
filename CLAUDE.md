@@ -104,6 +104,7 @@ referencing it in any doc or AI-instructions example.
 ```
 pydantic_schemaforms/
   tstring.py           # SafeHTML + html() processor — the XSS safety core
+  show_when.py         # ui_show_when rules: the checks, server pruning and browser script
   templates.py         # FormTemplates: t-string render functions for form elements
   composite_layout.py  # CompositeLayoutModel — base for FormModel-shaped composites
   datatable_layout.py  # DataTableLayout — reference composite (CSV-import-to-table)
@@ -115,6 +116,7 @@ pydantic_schemaforms/
     themes.py               # RendererTheme hooks; MaterialTheme
     material_icons.py       # Material icons as inline SVG
     model_list_renderer.py  # model_list's registered renderer
+    display_renderer.py     # render_display(): read-only review pages
   assets/material/    # md3-tokens.css, md3.css, md3.js
   inputs/             # Field-level input classes
   integration/        # JSON/OpenAPI schema generators and framework checks

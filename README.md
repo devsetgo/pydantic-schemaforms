@@ -83,6 +83,11 @@ with `render_form_html()` and `request.form`.
 - **Complex forms by nesting.** Sub-forms, optional sub-forms and repeating
   lists, shown as sections, tabs, columns, an accordion or a step wizard with
   one `layout=` argument. Data and errors come back nested like the model.
+- **Fields that respond.** Show a field only when it applies with `ui_show_when`,
+  enforced on the server too. Group fields and share rows with `ui_group` and
+  `ui_cols`, keeping the data flat.
+- **Review pages for free.** `render_display()` shows validated data read-only,
+  with the form's labels and sections, for confirmation pages.
 - **Bootstrap, Material Design 3 or plain HTML**, with opt-in dark mode for
   Bootstrap and Material, and assets inlined, linked from a CDN or left to your
   page.

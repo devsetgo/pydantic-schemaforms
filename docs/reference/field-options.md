@@ -19,7 +19,7 @@ the Pydantic constraints.
 | Option | Effect |
 |---|---|
 | `ui_element="..."` | The input to render, such as `"textarea"`, `"radio"` or `"currency"`. Without it, the input comes from the field's type. See [Input Types](inputs.md). |
-| `input_type="..."` | Same as `ui_element`. |
+| `input_type="..."`, `ui_widget="..."` | Same as `ui_element`. |
 | `ui_options={...}` | Settings for that input, such as `rows`, `choices` or `language`. Keys an input doesn't use become HTML attributes on it, for example `{"autocomplete": "username"}`. |
 
 ## Behaviour

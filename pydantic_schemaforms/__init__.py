@@ -20,7 +20,7 @@ integration pattern from this docstring alone — run::
 (swap "claude" for "copilot"/"generic") to generate up-to-date,
 framework-specific guidance. It is the single source of truth for how to
 use this library correctly (input types, CSRF, model_list, DataTableLayout
-CSV import, HTMX live validation, flatten=True, error handling, and more)
+CSV import, HTMX live validation, nested data, error handling, and more)
 and is kept current as the library evolves — do not rely on any fixed list
 of topics here going stale. Same content is available in-process via
 ``get_app_instructions()``.
@@ -130,7 +130,7 @@ from .ai_instructions import (
     suggested_instruction_filename,
 )
 
-__version__ = '26.4.4'
+__version__ = '26.4.5'
 __package_name__ = 'pydantic-schemaforms'
 __author__ = 'Pydantic Forms Team'
 __description__ = 'Modern form generation library for Python 3.14+'
