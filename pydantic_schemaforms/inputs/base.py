@@ -124,7 +124,9 @@ def _describe_field(
     them with it, and flag it invalid; returns the (help, error) element ids."""
     field_id = str(kwargs.get('id') or kwargs.get('name') or 'field')
     help_id, error_id = f'{field_id}-help', f'{field_id}-error'
-    described_by = [help_id] if help_text else []
+    described_by = [kwargs['aria-describedby']] if kwargs.get('aria-describedby') else []
+    if help_text:
+        described_by.append(help_id)
     if error:
         described_by.append(error_id)
         kwargs['aria-invalid'] = 'true'

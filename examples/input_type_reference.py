@@ -208,6 +208,13 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
                 aliases=('toggle_switch', 'checkbox_toggle'),
             ),
             InputTypeEntry(
+                'consent',
+                'Text the user must agree to, with a checkbox. Type it Literal[True] when it must '
+                'be ticked. ui_options: scrollable=True for long text. Text is escaped unless '
+                "built with html(t'...').",
+                "terms: Literal[True] = Field(ui_element='consent', ui_content='Our terms...')",
+            ),
+            InputTypeEntry(
                 'checkbox_group',
                 'Multiple booleans from one field, rendered as a group of checkboxes. '
                 'ui_options collapsible=True turns the legend into a toggle that shows/hides '
@@ -256,6 +263,13 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
     (
         'Files & Specialized Inputs',
         [
+            InputTypeEntry(
+                'content',
+                'Text between fields. Submits nothing and is left out of validation and the '
+                'returned data. title= adds a heading. ui_options: scrollable=True for long text. '
+                "Text is escaped unless built with html(t'...').",
+                "intro: None = Field(ui_element='content', ui_content='Tell us about yourself.')",
+            ),
             InputTypeEntry(
                 'file',
                 'File upload input.',

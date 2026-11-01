@@ -963,6 +963,7 @@ These are `Field()` keyword arguments, not `ui_options` keys:
 | `icon=` | Icon name shown before the label (`"envelope"`, `"person"`, ...), mapped per framework |
 | `ui_order=` | Position among the fields/groups; lower first, default is declaration order |
 | `unchecked_message=` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
+| `ui_content=` | The text of a `ui_element="content"` block or `"consent"` field. Escaped; use `html(t'...')` for links or lists. Add `ui_options={"scrollable": True}` for long text. Declare a block as `intro: None = Field(ui_element="content", ui_content="...")`: it submits nothing and isn't in `result.data`. A consent field is a checkbox, so type it `Literal[True]` when it must be ticked |
 | `ui_disabled=True` | Disabled: not editable and **not submitted** |
 | `ui_readonly=True` | Read-only: not editable but submitted |
 | `ui_hidden=True` | Rendered as a bare hidden input (same as `ui_element="hidden"`) |

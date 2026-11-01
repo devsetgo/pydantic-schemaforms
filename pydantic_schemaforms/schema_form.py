@@ -7,6 +7,7 @@ from pydantic import Field as PydanticField
 from pydantic.fields import FieldInfo
 
 from .validation import ValidationResult
+from .tstring import SafeHTML
 
 
 _PYDANTIC_FIELD_PARAMS = frozenset(inspect.signature(PydanticField).parameters)
@@ -58,6 +59,7 @@ def Field(
     layout_handler: str | None = None,
     layout_renderer: str | None = None,
     unchecked_message: str | None = None,
+    ui_content: str | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -72,7 +74,18 @@ def Field(
 
     unchecked_message replaces the error shown when a required checkbox
     (``Literal[True]``, or ``bool`` with no default) is left unticked.
+
+    ui_content is the text of a ``content`` block or ``consent`` field. It is
+    escaped unless built with ``html(t'...')``. A ``content`` field submits
+    nothing and is left out of validation and the returned data, so it needs
+    no default: ``intro: None = Field(ui_element='content', ui_content='...')``.
     """
+    if 'ui_content_html' in kwargs:
+        raise TypeError("Pass ui_content=html(t'...') instead of ui_content_html")
+    if ui_element == 'content':
+        exclude = True
+        if default is ...:
+            default = None
     # Collect UI attributes
     ui_attrs = {}
     ui_params = {
@@ -108,6 +121,9 @@ def Field(
         'layout_renderer': layout_renderer,
         'unchecked_message': unchecked_message,
     }
+    # JSON Schema generation turns SafeHTML back into a plain str, so which kind
+    # it was has to be kept in the key.
+    ui_params['ui_content_html' if isinstance(ui_content, SafeHTML) else 'ui_content'] = ui_content
 
     # Other UI keys (ui_collapsible, ui_step_title, icon, ...) must not fall
     # through to pydantic's **kwargs: it drops unknown kwargs whenever
@@ -490,6 +506,10 @@ class FormModel(BaseModel):
 
         field_defs: dict[str, tuple[Any, FieldInfo]] = {}
         for name, fi in cls.get_runtime_model().model_fields.items():
+            if isinstance(fi.json_schema_extra, dict) and (
+                fi.json_schema_extra.get('ui_element') == 'content'
+            ):
+                continue
             clean = copy.copy(fi)
             if isinstance(fi.json_schema_extra, dict):
                 stripped = {

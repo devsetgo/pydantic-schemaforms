@@ -1078,7 +1078,7 @@ class ValidationResult:
         return f'ValidationResult(valid=False, errors={self.errors})'
 
 
-_CHECKBOX_ELEMENTS = {None, 'checkbox', 'toggle', 'toggle_switch', 'checkbox_toggle'}
+_CHECKBOX_ELEMENTS = {None, 'checkbox', 'toggle', 'toggle_switch', 'checkbox_toggle', 'consent'}
 _CURRENCY_ELEMENTS = {'currency', 'money'}
 _UNCHECKED_ERROR_TYPES = {'missing', 'literal_error'}
 
@@ -1090,6 +1090,13 @@ def _ui_element(field_info: Any) -> str | None:
 
 def _renders_as_checkbox(field_info: Any) -> bool:
     return _ui_element(field_info) in _CHECKBOX_ELEMENTS
+
+
+def _sends_nothing_when_blank(field_info: Any) -> bool:
+    if _ui_element(field_info) == 'content':
+        return True
+    annotation = field_info.annotation
+    return (annotation is bool or _is_literal_true(annotation)) and _renders_as_checkbox(field_info)
 
 
 def _is_literal_true(annotation: Any) -> bool:
@@ -1219,9 +1226,15 @@ def _coerce_html_form_values(
             else None
         )
 
+        # A content block submits nothing, so anything sent under its name is ignored.
+        if _ui_element(field_info) == 'content':
+            result.pop(field_name, None)
+            continue
+
         if field_name not in result:
             if from_form and list_item_model is not None:
                 result[field_name] = []
+                continue
             elif (
                 from_form
                 and (non_none_types == [bool] or _is_literal_true(annotation))
@@ -1229,7 +1242,17 @@ def _coerce_html_form_values(
                 and _renders_as_checkbox(field_info)
             ):
                 result[field_name] = False
-            continue
+                continue
+            # A sub-form of only unticked checkboxes and content blocks sends nothing.
+            elif (
+                from_form
+                and field_info.is_required()
+                and (sub_model := _sub_model(annotation)) is not None
+                and all(_sends_nothing_when_blank(f) for f in sub_model.model_fields.values())
+            ):
+                result[field_name] = {}
+            else:
+                continue
 
         value = result[field_name]
 

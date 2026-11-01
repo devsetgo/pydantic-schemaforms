@@ -9,6 +9,13 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ## [Unreleased]
 
+### Added
+
+- `Field(ui_element="content", ui_content=...)` puts text between fields. It submits
+  nothing and is left out of validation and the returned data. (#274)
+- `Field(ui_element="consent", ui_content=...)` pairs text with a checkbox, with
+  `ui_options={"scrollable": True}` for long text. (#274)
+
 ### Removed
 
 - The internal `FRAMEWORKS` dict, `get_framework_config()` and the renderer's `config`

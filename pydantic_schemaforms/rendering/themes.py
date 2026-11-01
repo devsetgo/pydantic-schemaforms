@@ -233,6 +233,11 @@ class RendererTheme:
 
         return ''
 
+    def content_block_class(self, scrollable: bool) -> str:
+        """Return the CSS class for a content block or a consent field's text."""
+
+        return ''
+
     def input_class(self, _ui_element: str) -> str:
         """Return the CSS class applied to rendered inputs."""
 
@@ -418,6 +423,9 @@ class FrameworkTheme(RendererTheme):
     def field_wrapper_class(self) -> str:
         return self.field_wrapper_css
 
+    def content_block_class(self, scrollable: bool) -> str:
+        return 'mb-3 border rounded p-3' if scrollable else 'mb-3'
+
     def input_class(self, ui_element: str) -> str:
         # 'toggle'/aliases render as an HTML checkbox under the hood, and
         # radio/checkbox_group are groups of checkbox-family <input>s -- all
@@ -458,6 +466,10 @@ class BootstrapTheme(FrameworkTheme):
 
 class PlainTheme(FrameworkTheme):
     name = 'plain'
+
+    def content_block_class(self, scrollable: bool) -> str:
+        return 'field'
+
     form_css = ''
     field_wrapper_css = 'field'
     input_css = ''
@@ -499,6 +511,9 @@ class MaterialTheme(RendererTheme):
 
     def field_shell(self, framework: str) -> FieldShellRenderer:
         return MaterialFieldShell()
+
+    def content_block_class(self, scrollable: bool) -> str:
+        return 'md-content md-content--scroll' if scrollable else 'md-content'
 
     def input_class(self, ui_element: str) -> str:
         kind = material_field_kind(ui_element)
