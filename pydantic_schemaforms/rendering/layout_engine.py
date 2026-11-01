@@ -64,6 +64,24 @@ def _unique_id_prefix(kind: str) -> str:
     return f'{kind}-{secrets.token_hex(4)}'
 
 
+def _later_groups(
+    entry: tuple[str | None, FieldList], group_names: set[str], mode: str
+) -> list[tuple[str, FieldList]]:
+    """The groups one arranged entry adds after the form's own plain fields."""
+
+    title, items = entry
+    if title is not None:
+        return [(title, items)]
+    groups = []
+    for name, schema in items:
+        if name in group_names:
+            group_title = schema.get('title') or name.replace('_', ' ').title()
+            if mode == 'wizard':
+                group_title = schema.get('ui_step_title') or group_title
+            groups.append((group_title, [(name, schema)]))
+    return groups
+
+
 def is_sub_form_group(fields: FieldList, group_names: set[str]) -> bool:
     """Whether a group is one sub-form on its own, which draws its own title."""
 
@@ -818,20 +836,14 @@ class LayoutEngine:
                 'ui_group="Contact", or use layout="vertical". See docs/tutorial/layouts.md.'
             )
 
-        plain_fields: FieldList = []
-        later: list[tuple[str, FieldList]] = []
-        for title, items in arranged:
-            if title is not None:
-                later.append((title, items))
-                continue
-            for name, schema in items:
-                if name not in group_names:
-                    plain_fields.append((name, schema))
-                    continue
-                group_title = schema.get('title') or name.replace('_', ' ').title()
-                if mode == 'wizard':
-                    group_title = schema.get('ui_step_title') or group_title
-                later.append((group_title, [(name, schema)]))
+        plain_fields = [
+            (name, schema)
+            for title, items in arranged
+            if title is None
+            for name, schema in items
+            if name not in group_names
+        ]
+        later = [group for entry in arranged for group in _later_groups(entry, group_names, mode)]
         return [(general_title, plain_fields), *later] if plain_fields else later
 
     def render_fields(

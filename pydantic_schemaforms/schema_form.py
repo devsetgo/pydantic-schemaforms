@@ -14,6 +14,26 @@ from .tstring import SafeHTML
 _PYDANTIC_FIELD_PARAMS = frozenset(inspect.signature(PydanticField).parameters)
 
 
+def _check_group_options(
+    ui_group: Any, ui_cols: Any, ui_group_show_when: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    if ui_cols is not None and (
+        not isinstance(ui_cols, int) or isinstance(ui_cols, bool) or not 1 <= ui_cols <= 12
+    ):
+        raise ValueError(f'ui_cols must be a whole number from 1 to 12, not {ui_cols!r}')
+    if ui_group is not None and (not isinstance(ui_group, str) or not ui_group.strip()):
+        raise ValueError('ui_group must be a non-empty title')
+    if ui_group_show_when is not None:
+        if ui_group is None:
+            raise ValueError('ui_group_show_when needs ui_group on the same field')
+        ui_group_show_when = check_rule(ui_group_show_when)
+        if ui_group_show_when.get('required'):
+            raise ValueError(
+                'ui_group_show_when can\'t say "required"; put it on the field\'s own ui_show_when'
+            )
+    return ui_group_show_when
+
+
 def Field(
     default: Any = ...,
     *,
@@ -96,20 +116,7 @@ def Field(
     ui_cols (1-12) sets a field's width so consecutive fields share a row. The
     ui_group_* options apply to the whole group and go on any one of its fields.
     """
-    if ui_cols is not None and (
-        not isinstance(ui_cols, int) or isinstance(ui_cols, bool) or not 1 <= ui_cols <= 12
-    ):
-        raise ValueError(f'ui_cols must be a whole number from 1 to 12, not {ui_cols!r}')
-    if ui_group is not None and (not isinstance(ui_group, str) or not ui_group.strip()):
-        raise ValueError('ui_group must be a non-empty title')
-    if ui_group_show_when is not None:
-        if ui_group is None:
-            raise ValueError('ui_group_show_when needs ui_group on the same field')
-        ui_group_show_when = check_rule(ui_group_show_when)
-        if ui_group_show_when.get('required'):
-            raise ValueError(
-                'ui_group_show_when can\'t say "required"; put it on the field\'s own ui_show_when'
-            )
+    ui_group_show_when = _check_group_options(ui_group, ui_cols, ui_group_show_when)
     if ui_show_when is not None:
         ui_show_when = check_rule(ui_show_when)
         if default is ... and 'default_factory' not in kwargs:
