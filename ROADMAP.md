@@ -44,7 +44,7 @@ Forms and pages gain content that isn't an input. Content blocks and display mod
 | 10 | [#280](https://github.com/devsetgo/pydantic-schemaforms/issues/280) Remove the double `mb-3` on Bootstrap select fields | Done ([#301](https://github.com/devsetgo/pydantic-schemaforms/pull/301)) | Small cleanup, so every field has the same spacing before new markup is added. |
 | 11 | [#281](https://github.com/devsetgo/pydantic-schemaforms/issues/281) Retire the `FRAMEWORKS` config dict | Done ([#302](https://github.com/devsetgo/pydantic-schemaforms/pull/302)) | Moves each style's settings into its theme before this phase adds new theme hooks. Rendered output doesn't change. |
 | 12 | [#274](https://github.com/devsetgo/pydantic-schemaforms/issues/274) Content blocks and a consent field | Done ([#303](https://github.com/devsetgo/pydantic-schemaforms/pull/303)) | Forms can't hold text that isn't a field. The consent field builds on #273. |
-| 13 | [#238](https://github.com/devsetgo/pydantic-schemaforms/issues/238) Read-only display mode | Not started | Replaces the f-string confirmation pages users write today, which are an XSS risk, and supplies the display templates the wizard review step (#250) needs. Must decide how a content block from #274 appears in display mode. |
+| 13 | [#238](https://github.com/devsetgo/pydantic-schemaforms/issues/238) Read-only display mode | Done ([#306](https://github.com/devsetgo/pydantic-schemaforms/pull/306)) | Replaces the f-string confirmation pages users write today, which are an XSS risk, and supplies the display templates the wizard review step (#250) needs. Must decide how a content block from #274 appears in display mode. |
 
 ## Phase 3: Form structure
 
