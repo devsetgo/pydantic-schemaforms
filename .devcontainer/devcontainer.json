@@ -17,6 +17,16 @@
 		"PATH": "${containerEnv:PATH}:/home/mike/.local/bin"
 	},
 
+	// Share Claude Code's memory, transcripts and login with the WSL host so they survive rebuilds.
+	"initializeCommand": "mkdir -p ${localEnv:HOME}/.claude ${localEnv:HOME}/claude-config",
+	"mounts": [
+		"source=${localEnv:HOME}/.claude,target=/home/mike/.claude,type=bind",
+		"source=${localEnv:HOME}/claude-config,target=/home/mike/claude-config,type=bind"
+	],
+	"containerEnv": {
+		"CLAUDE_CONFIG_DIR": "/home/mike/.claude"
+	},
+
 	// "postStartCommand": "pip install -r requirements.txt", // Add this line to install requirements.txt after container start
 	// Configure tool-specific properties.
 	"customizations": {

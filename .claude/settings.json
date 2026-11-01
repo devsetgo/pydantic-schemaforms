@@ -44,5 +44,17 @@
       "Bash(pip show *)",
       "Bash(make create-docs *)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"$CLAUDE_PROJECT_DIR/TODO_TASKS.md\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
   }
 }
