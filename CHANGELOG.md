@@ -9,6 +9,12 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ## [Unreleased]
 
+### Removed
+
+- The internal `FRAMEWORKS` dict, `get_framework_config()` and the renderer's `config`
+  attribute. Each style's classes now live on its theme, and rendered output is
+  unchanged. (#281)
+
 ### Fixed
 
 - Bootstrap select, multiselect, combobox, radio and checkbox group fields no longer
