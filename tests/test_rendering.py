@@ -81,7 +81,13 @@ from pydantic_schemaforms.rendering.schema_parser import (
     _infer_field_type,
 )
 from pydantic_schemaforms.assets.runtime import read_asset_text
-from pydantic_schemaforms.rendering.themes import MaterialTheme, RendererTheme
+from pydantic_schemaforms.rendering.themes import (
+    DefaultTheme,
+    MaterialTheme,
+    RendererTheme,
+    class_defaults_for_theme,
+    get_theme_for_framework,
+)
 from pydantic_schemaforms.schema_form import Field, FormModel
 from pydantic_schemaforms.simple_material_renderer import SimpleMaterialRenderer
 from pydantic_schemaforms.templates import (
@@ -197,7 +203,6 @@ class TestEnhancedFormRenderer:
         assert renderer is not None
         assert hasattr(renderer, 'render_form_from_model')
         assert renderer.framework == 'bootstrap'
-        assert renderer.config is not None
 
     def test_render_form_from_model_basic(self, simple_form_model, enhanced_renderer):
         """Test basic form rendering from model."""
@@ -1663,7 +1668,7 @@ def test_model_list_from_schema_respects_custom_form_style_templates() -> None:
 
     class _StubRendererWithTheme:
         framework = 'custom-style'
-        config: dict = {}
+        class_defaults = DefaultTheme()
         theme = _CustomTheme()
 
     field_renderer = FieldRenderer(_StubRendererWithTheme())
@@ -1939,3 +1944,52 @@ def test_bootstrap_option_fields_have_one_margin_wrapper(ui_element):
     rendered = str(Form.render_form(framework='bootstrap', submit_url='/x'))
 
     assert rendered.count('<div class="mb-3">') == 1
+
+
+class _BareTheme(RendererTheme):
+    name = 'bare'
+
+
+@pytest.mark.parametrize(
+    ('framework', 'form_class', 'wrapper', 'select_class'),
+    [
+        ('bootstrap', 'needs-validation', 'mb-3', 'form-select'),
+        ('none', '', 'field', ''),
+        ('material', '', '', ''),
+    ],
+)
+def test_custom_theme_gets_unset_classes_from_its_framework(
+    framework, form_class, wrapper, select_class
+):
+    defaults = class_defaults_for_theme(_BareTheme(), framework)
+
+    assert defaults.form_class() == form_class
+    assert defaults.field_wrapper_class() == wrapper
+    assert defaults.input_class('select') == select_class
+
+
+def test_custom_theme_classes_win_over_framework_defaults():
+    class _Theme(RendererTheme):
+        name = 'own'
+
+        def form_class(self) -> str:
+            return 'my-form'
+
+    class Form(FormModel):
+        name: str = Field('x')
+
+    rendered = str(
+        EnhancedFormRenderer(framework='bootstrap', theme=_Theme()).render_form_from_model(Form)
+    )
+
+    assert 'my-form' in rendered
+    assert 'needs-validation' not in rendered
+    assert 'form-control' in rendered
+
+
+def test_unknown_framework_renders_bootstrap_classes():
+    theme = get_theme_for_framework('unknown-style')
+
+    assert theme.form_class() == 'needs-validation'
+    assert theme.input_class('select') == 'form-select'
+    assert theme.input_class('radio') == 'form-check-input'

@@ -42,18 +42,6 @@ def _infer_string_element(field_schema: dict[str, Any]) -> str:
 # docstring).
 _CHECKBOX_LIKE_ELEMENTS = {'checkbox', 'toggle', 'toggle_switch', 'checkbox_toggle'}
 
-# ui_element values whose individual <input> elements are checkboxes/radios
-# under the hood, regardless of whether the widget is a single boolean
-# (checkbox/toggle) or a group of options (radio/checkbox_group). This is
-# broader than _CHECKBOX_LIKE_ELEMENTS above (which is only for the
-# single-boolean checked/value coercion) -- radio/checkbox_group don't have a
-# single boolean value, but their per-item <input>s still need the
-# checkbox-family CSS class, not the dropdown-styled select_class (applying
-# select_class -- e.g. Bootstrap's .form-select, which paints a dropdown
-# chevron -- directly onto a radio/checkbox <input> makes it look like a
-# broken dropdown arrow instead of a radio button).
-_CHECKBOX_FAMILY_ELEMENTS = _CHECKBOX_LIKE_ELEMENTS | {'radio', 'checkbox_group'}
-
 # JSON Schema string formats Pydantic emits for these types -> the input they
 # should render as when no ui_element is given.
 _FORMAT_UI_ELEMENTS = {
@@ -72,8 +60,8 @@ class FieldRenderer:
         self._renderer = renderer
 
     @property
-    def config(self) -> dict[str, Any]:
-        return self._renderer.config
+    def class_defaults(self) -> Any:
+        return self._renderer.class_defaults
 
     @property
     def framework(self) -> str:
@@ -302,7 +290,7 @@ class FieldRenderer:
         if self.theme:
             wrapper_class = self.theme.field_wrapper_class() or ''
         if not wrapper_class:
-            wrapper_class = self.config.get('field_wrapper_class', '')
+            wrapper_class = self.class_defaults.field_wrapper_class()
         if wrapper_class:
             _input_html = SafeHTML(str(input_html))
             return html(t'<div class="{wrapper_class}">{_input_html}</div>')
@@ -502,11 +490,7 @@ class FieldRenderer:
             themed_class = self.theme.input_class(ui_element)
         if themed_class:
             return themed_class
-        if ui_element in _CHECKBOX_FAMILY_ELEMENTS:
-            return self.config.get('checkbox_class', '')
-        if ui_element in ('select', 'multiselect'):
-            return self.config.get('select_class', '')
-        return self.config.get('input_class', '')
+        return self.class_defaults.input_class(ui_element)
 
     def render_model_list_from_schema(
         self,

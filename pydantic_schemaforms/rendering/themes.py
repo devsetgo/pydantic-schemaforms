@@ -22,7 +22,6 @@ from .field_shell import (
 )
 from .form_style import FormStyle, get_form_style
 from .model_list_markup import ModelListItem, render_default_model_list_item
-from .frameworks import get_framework_config
 from .material_icons import render_material_icon
 from .theme_assets import ACCORDION_COMPONENT_SCRIPT, BOOTSTRAP_DARK_TOKENS, TAB_COMPONENT_SCRIPT
 
@@ -33,6 +32,7 @@ __all__ = [
     'BootstrapTheme',
     'PlainTheme',
     'MaterialTheme',
+    'class_defaults_for_theme',
     'get_theme_for_framework',
 ]
 
@@ -372,7 +372,15 @@ class DefaultTheme(RendererTheme):
 
 
 class FrameworkTheme(RendererTheme):
-    """Renderer theme that mirrors the legacy framework config mapping."""
+    """Renders a CSS framework's classes. These are Bootstrap's, which is also
+    how an unrecognized framework name renders; other styles override them."""
+
+    form_css = 'needs-validation'
+    field_wrapper_css = 'mb-3'
+    input_css = 'form-control'
+    select_css = 'form-select'
+    checkbox_css = 'form-check-input'
+    button_css = 'btn btn-primary'
 
     def __init__(
         self,
@@ -384,7 +392,6 @@ class FrameworkTheme(RendererTheme):
     ) -> None:
         super().__init__(submit_label=submit_label)
         self.framework = framework
-        self.config: dict[str, str] = get_framework_config(framework)
         self.include_assets = include_assets
         self.asset_mode = asset_mode
 
@@ -406,10 +413,10 @@ class FrameworkTheme(RendererTheme):
         return '\n'.join([b for b in blocks if b])
 
     def form_class(self) -> str:
-        return self.config.get('form_class', '')
+        return self.form_css
 
     def field_wrapper_class(self) -> str:
-        return self.config.get('field_wrapper_class', '')
+        return self.field_wrapper_css
 
     def input_class(self, ui_element: str) -> str:
         # 'toggle'/aliases render as an HTML checkbox under the hood, and
@@ -417,9 +424,7 @@ class FrameworkTheme(RendererTheme):
         # need checkbox_class, not select_class (Bootstrap's .form-select
         # paints a dropdown chevron; applying it to a radio/checkbox <input>
         # makes it look like a broken dropdown arrow instead of a radio
-        # button). See field_renderer._CHECKBOX_FAMILY_ELEMENTS -- duplicated
-        # here rather than imported to avoid a circular import between the
-        # two modules.
+        # button).
         if ui_element in {
             'checkbox',
             'toggle',
@@ -428,13 +433,13 @@ class FrameworkTheme(RendererTheme):
             'radio',
             'checkbox_group',
         }:
-            return self.config.get('checkbox_class', '')
+            return self.checkbox_css
         if ui_element in {'select', 'multiselect'}:
-            return self.config.get('select_class', '')
-        return self.config.get('input_class', '')
+            return self.select_css
+        return self.input_css
 
     def button_class(self) -> str:
-        return self.config.get('button_class', '')
+        return self.button_css
 
 
 class BootstrapTheme(FrameworkTheme):
@@ -453,6 +458,12 @@ class BootstrapTheme(FrameworkTheme):
 
 class PlainTheme(FrameworkTheme):
     name = 'plain'
+    form_css = ''
+    field_wrapper_css = 'field'
+    input_css = ''
+    select_css = ''
+    checkbox_css = ''
+    button_css = ''
 
     def __init__(self, include_assets: bool = False, *, asset_mode: str = 'vendored') -> None:
         super().__init__('none', include_assets=include_assets, asset_mode=asset_mode)
@@ -695,6 +706,20 @@ _THEME_MAP: dict[str, type[RendererTheme]] = {
     'material': MaterialTheme,
     'none': PlainTheme,
 }
+
+
+def class_defaults_for_theme(theme: RendererTheme, framework: str) -> RendererTheme:
+    """Return the theme that supplies the classes `theme` leaves empty.
+
+    A custom theme overrides only the classes it sets and gets the rest from its
+    framework. The built-in themes set their own, and Material's depend on its
+    CSS, so a custom theme on Material doesn't inherit them.
+    """
+    if isinstance(theme, (FrameworkTheme, MaterialTheme)):
+        return theme
+    if framework == 'material':
+        return DefaultTheme()
+    return PlainTheme() if framework == 'none' else FrameworkTheme(framework)
 
 
 def get_theme_for_framework(

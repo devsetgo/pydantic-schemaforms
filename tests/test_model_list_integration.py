@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from examples.shared_models import TaskListForm
 from pydantic_schemaforms import render_form_html
+from pydantic_schemaforms.rendering.themes import DefaultTheme
 from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.field_renderer import FieldRenderer
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
@@ -68,7 +69,7 @@ def test_schema_model_list_renders_hidden_template_item_for_optional_lists() -> 
 
     class _DummyRenderer:
         framework = 'bootstrap'
-        config = {}
+        class_defaults = DefaultTheme()
         theme = None
 
     renderer = FieldRenderer(_DummyRenderer())
@@ -116,7 +117,7 @@ def test_render_field_dispatches_model_list_through_the_registry(monkeypatch) ->
 
     class _DummyRenderer:
         framework = 'bootstrap'
-        config = {}
+        class_defaults = DefaultTheme()
         theme = None
 
     dummy = _DummyRenderer()

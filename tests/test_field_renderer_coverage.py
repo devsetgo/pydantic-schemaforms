@@ -14,12 +14,12 @@ class TestFieldRendererBasicSetup:
     def test_field_renderer_init(self):
         """Test FieldRenderer initialization."""
         renderer = Mock()
-        renderer.config = {'framework': 'bootstrap'}
+        renderer.class_defaults = 'defaults'
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
         assert field_renderer._renderer == renderer
-        assert field_renderer.config == {'framework': 'bootstrap'}
+        assert field_renderer.class_defaults == 'defaults'
         assert field_renderer.framework == 'bootstrap'
 
     def test_field_renderer_theme_property(self):
@@ -33,7 +33,6 @@ class TestFieldRendererBasicSetup:
     def test_field_renderer_theme_none(self):
         """Test FieldRenderer theme property when not set."""
         renderer = Mock(spec=[])
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -46,7 +45,6 @@ class TestFieldRendererHiddenFields:
     def test_render_hidden_field(self):
         """Test rendering of hidden input fields."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -65,7 +63,6 @@ class TestFieldRendererHiddenFields:
     def test_render_field_with_hidden_ui_config(self):
         """Test rendering field marked as hidden in UI config."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -88,7 +85,6 @@ class TestFieldRendererUIElementDetection:
     def test_render_field_with_explicit_element(self):
         """Test rendering field with explicit UI element specified."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
         renderer._render_layout_field = Mock(return_value='<div>layout</div>')
 
@@ -107,7 +103,6 @@ class TestFieldRendererUIElementDetection:
     def test_render_field_detects_layout_element(self):
         """Test field renderer detects layout element type."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
         renderer._render_layout_field = Mock(return_value='<div>layout content</div>')
 
@@ -125,7 +120,6 @@ class TestFieldRendererUIElementDetection:
     def test_render_field_detects_model_list_element(self):
         """Test field renderer detects model_list element type."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
         renderer._render_model_list_field = Mock(return_value='<ul>list</ul>')
 
@@ -146,7 +140,6 @@ class TestFieldRendererCheckboxHandling:
     def test_render_checkbox_with_true_value(self):
         """Test rendering checkbox with true value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -165,7 +158,6 @@ class TestFieldRendererCheckboxHandling:
     def test_render_checkbox_with_string_true_value(self):
         """Test rendering checkbox with string 'true' value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -184,7 +176,6 @@ class TestFieldRendererCheckboxHandling:
     def test_render_checkbox_with_numeric_true_value(self):
         """Test rendering checkbox with numeric true value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -203,7 +194,6 @@ class TestFieldRendererCheckboxHandling:
     def test_render_checkbox_with_on_value(self):
         """Test rendering checkbox with 'on' value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -584,7 +574,6 @@ class TestFieldRendererPasswordFields:
     def test_render_password_field(self):
         """Test rendering of password fields."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -603,7 +592,6 @@ class TestFieldRendererPasswordFields:
     def test_render_password_field_no_value(self):
         """Test rendering of password field without value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -626,7 +614,6 @@ class TestFieldRendererErrorHandling:
     def test_render_field_with_error(self):
         """Test rendering field with error message."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -646,7 +633,6 @@ class TestFieldRendererErrorHandling:
     def test_render_field_with_error_node_dict(self):
         """A dict error node renders its own "_errors" message."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -671,7 +657,6 @@ class TestFieldRendererRequiredFields:
     def test_render_required_field(self):
         """Test rendering required field."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -693,7 +678,6 @@ class TestFieldRendererRequiredFields:
     def test_render_optional_field(self):
         """Test rendering optional field."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -719,7 +703,6 @@ class TestFieldRendererInputInference:
     def test_infer_ui_element_from_schema(self):
         """Test UI element inference from schema."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -738,7 +721,6 @@ class TestFieldRendererInputInference:
     def test_infer_textarea_for_long_string(self):
         """Test textarea inference for long text."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -761,7 +743,6 @@ class TestFieldRendererContextRequirement:
     def test_render_field_without_context_raises(self):
         """Test that rendering without context raises error."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -778,7 +759,6 @@ class TestFieldRendererLayoutOptions:
     def test_render_field_vertical_layout(self):
         """Test rendering field with vertical layout."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -797,7 +777,6 @@ class TestFieldRendererLayoutOptions:
     def test_render_field_horizontal_layout(self):
         """Test rendering field with horizontal layout."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -816,7 +795,6 @@ class TestFieldRendererLayoutOptions:
     def test_render_field_inline_layout(self):
         """Test rendering field with inline layout."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -839,7 +817,6 @@ class TestFieldRendererInputClassing:
     def test_get_input_class_for_text(self):
         """Test input class generation for text input."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
         renderer.theme = Mock()
         renderer.theme.input_class = Mock(return_value='form-control')
@@ -852,7 +829,6 @@ class TestFieldRendererInputClassing:
     def test_get_input_class_for_email(self):
         """Test input class generation for email input."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
         renderer.theme = Mock()
         renderer.theme.input_class = Mock(return_value='form-control')
@@ -865,7 +841,6 @@ class TestFieldRendererInputClassing:
     def test_get_input_class_for_checkbox(self):
         """Test input class generation for checkbox."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
         renderer.theme = Mock()
         renderer.theme.input_class = Mock(return_value='form-check-input')
@@ -882,7 +857,6 @@ class TestFieldRendererFrameworkSpecific:
     def test_render_field_bootstrap_framework(self):
         """Test rendering field for bootstrap framework."""
         renderer = Mock()
-        renderer.config = {'theme': 'bootstrap'}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -901,7 +875,6 @@ class TestFieldRendererFrameworkSpecific:
     def test_render_field_material_framework(self):
         """Test rendering field for material framework."""
         renderer = Mock()
-        renderer.config = {'theme': 'material'}
         renderer.framework = 'material'
 
         field_renderer = FieldRenderer(renderer)
@@ -924,7 +897,6 @@ class TestFieldRendererNullValues:
     def test_render_field_with_none_value(self):
         """Test rendering field with None value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -943,7 +915,6 @@ class TestFieldRendererNullValues:
     def test_render_checkbox_with_none_value(self):
         """Test rendering checkbox with None value."""
         renderer = Mock()
-        renderer.config = {}
         renderer.framework = 'bootstrap'
 
         field_renderer = FieldRenderer(renderer)
@@ -960,9 +931,21 @@ class TestFieldRendererNullValues:
         assert isinstance(result, str)
 
 
+class _ClassDefaults:
+    def __init__(self, classes):
+        self.classes = classes
+
+    def field_wrapper_class(self):
+        return self.classes.get('field_wrapper_class', '')
+
+    def input_class(self, ui_element):
+        key = 'select_class' if ui_element in ('select', 'multiselect') else 'input_class'
+        return self.classes.get(key, '')
+
+
 class _DummyRenderer:
-    def __init__(self, config=None, framework='bootstrap', theme=None):
-        self.config = config or {}
+    def __init__(self, classes=None, framework='bootstrap', theme=None):
+        self.class_defaults = _ClassDefaults(classes or {})
         self.framework = framework
         self.theme = theme
 
@@ -987,9 +970,9 @@ def _context(schema_defs=None):
     return RenderContext(form_data={}, schema_defs=schema_defs or {})
 
 
-def test_render_field_uses_schema_and_ui_option_attributes_with_config_wrapper(monkeypatch):
+def test_render_field_uses_schema_and_ui_option_attributes_with_default_wrapper(monkeypatch):
     renderer = _DummyRenderer(
-        config={
+        classes={
             'input_class': 'base-input',
             'field_wrapper_class': 'field-wrap',
         }
@@ -1067,7 +1050,7 @@ def test_render_field_uses_theme_wrapper_class(monkeypatch):
         def field_wrapper_class():
             return 'theme-field-wrap'
 
-    renderer = _DummyRenderer(config={'field_wrapper_class': 'config-wrap'}, theme=_Theme())
+    renderer = _DummyRenderer(classes={'field_wrapper_class': 'default-wrap'}, theme=_Theme())
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
@@ -1083,11 +1066,11 @@ def test_render_field_uses_theme_wrapper_class(monkeypatch):
     )
 
     assert 'theme-field-wrap' in html
-    assert 'config-wrap' not in html
+    assert 'default-wrap' not in html
 
 
 def test_render_field_selection_paths_multiselect_and_no_options(monkeypatch):
-    renderer = _DummyRenderer(config={'select_class': 'sel-class'})
+    renderer = _DummyRenderer(classes={'select_class': 'sel-class'})
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(
@@ -1540,7 +1523,7 @@ def test_extract_nested_errors_and_schema_list_item_rendering(monkeypatch):
 
 
 def test_render_field_radio_enum_branch_and_helpers(monkeypatch):
-    renderer = _DummyRenderer(config={'select_class': 'select-base'})
+    renderer = _DummyRenderer(classes={'select_class': 'select-base'})
     field_renderer = FieldRenderer(renderer)
 
     monkeypatch.setattr(

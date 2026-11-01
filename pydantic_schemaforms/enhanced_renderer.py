@@ -23,7 +23,6 @@ from pydantic_core import PydanticSerializationError, PydanticUndefined, to_json
 from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
-from .rendering.frameworks import get_framework_config
 from .error_tree import iter_errors, normalize_error_tree
 from .form_data import decode_submission
 from .rendering.layout_engine import (
@@ -40,7 +39,12 @@ from .rendering.schema_parser import (
     resolve_list_item_ref,
     resolve_ui_element,
 )
-from .rendering.themes import MaterialTheme, RendererTheme, get_theme_for_framework
+from .rendering.themes import (
+    MaterialTheme,
+    RendererTheme,
+    class_defaults_for_theme,
+    get_theme_for_framework,
+)
 from .schema_form import FormModel
 from .tstring import SafeHTML
 from .tstring import html as render_html
@@ -188,12 +192,7 @@ class EnhancedFormRenderer:
         )
         self._theme: RendererTheme = resolved_theme
         self.asset_mode = asset_mode
-        if hasattr(self._theme, 'config'):
-            self.config = self._theme.config  # type: ignore[union-attr]
-        elif isinstance(self._theme, MaterialTheme):
-            self.config = {}
-        else:
-            self.config = get_framework_config(framework)
+        self.class_defaults = class_defaults_for_theme(self._theme, framework)
         self._layout_engine = LayoutEngine(self)
         self._field_renderer = FieldRenderer(self)
 
@@ -244,7 +243,7 @@ class EnhancedFormRenderer:
         errors = normalize_error_tree(errors)
         error_summary_markup = self._render_error_summary(errors)
 
-        default_form_class = self._theme.form_class() or self.config.get('form_class', '')
+        default_form_class = self._theme.form_class() or self.class_defaults.form_class()
         form_attrs: dict[str, Any] = {
             'method': method,
             'action': submit_url,
@@ -651,7 +650,7 @@ class EnhancedFormRenderer:
         )
 
     def _render_submit_button(self) -> str:
-        button_class = self._theme.button_class() or self.config.get('button_class', '')
+        button_class = self._theme.button_class() or self.class_defaults.button_class()
         return self._theme.render_submit_button(button_class)
 
     def _build_debug_panel(
