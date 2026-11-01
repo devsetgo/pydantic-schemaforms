@@ -908,6 +908,41 @@ def render_form_html(
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
 
+def render_display_html(
+    form_model_cls: type[FormModel],
+    data: Any,
+    framework: str = 'bootstrap',
+    layout: str = 'vertical',
+    *,
+    edit_urls: dict[str, str] | None = None,
+    self_contained: bool = False,
+    include_framework_assets: bool = False,
+    asset_mode: str = 'vendored',
+    material_variant: str | None = None,
+    include_html_markers: bool = True,
+) -> str:
+    """Render validated data as a read-only review page; see `FormModel.render_display`."""
+
+    from .rendering.display_renderer import render_display
+
+    renderer = EnhancedFormRenderer(
+        framework=framework,
+        include_framework_assets=include_framework_assets or self_contained,
+        asset_mode=asset_mode,
+        material_variant=material_variant,
+    )
+    metadata = build_schema_metadata(form_model_cls)
+    output = render_display(
+        renderer,
+        metadata,
+        data,
+        layout=layout,
+        general_title=_general_group_title(form_model_cls, metadata),
+        edit_urls=edit_urls,
+    )
+    return wrap_with_schemaforms_markers(output, enabled=include_html_markers)
+
+
 async def render_form_html_async(
     form_model_cls: type[FormModel],
     form_data: dict[str, Any] | None = None,

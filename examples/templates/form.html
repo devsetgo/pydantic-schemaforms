@@ -80,7 +80,7 @@
                 </div>
                 {% endif %}
 
-                {% if framework == "fastapi" %}
+                {% if framework == "fastapi" and not hide_api_info %}
                 <!-- API Info -->
                 <div class="mt-4 p-3 bg-info bg-opacity-10 rounded">
                     <h6 class="text-muted mb-2">

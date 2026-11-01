@@ -352,6 +352,39 @@ class FormModel(BaseModel):
         )
 
     @classmethod
+    def render_display(
+        cls,
+        data: Any,
+        framework: str = 'bootstrap',
+        *,
+        layout: str = 'vertical',
+        edit_urls: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """Render validated data read-only: a review or confirmation page, with
+        the form's labels, order and sections but no inputs.
+
+        Args:
+            data: `result.data` from `validate()`, another dict shaped like the
+                model, or an instance of a model
+            framework: CSS framework to use (bootstrap, material, none)
+            layout: Same values as `render_form`; `wizard` shows one flat page
+            edit_urls: Sub-form field name to URL, adding an Edit link to that section
+            **kwargs: Asset options as for `render_form`, plus `material_variant`
+
+        Passwords are masked, card and social security numbers show only their
+        last four digits, and content blocks are left out.
+
+        Returns:
+            HTML fragment as string
+        """
+        from .enhanced_renderer import render_display_html
+
+        return render_display_html(
+            cls, data, framework=framework, layout=layout, edit_urls=edit_urls, **kwargs
+        )
+
+    @classmethod
     def validate(
         cls,
         data: Any,

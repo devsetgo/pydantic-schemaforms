@@ -1842,6 +1842,44 @@ def _layout_switcher(
     )
 
 
+# Demo values for /layouts and /layouts/review.
+_LAYOUT_DEMO_DATA = {
+    'personal_info': {
+        'first_name': 'Alex',
+        'last_name': 'Johnson',
+        'email': 'alex.johnson@example.com',
+        'birth_date': '1990-05-15',
+    },
+    'contact_info': {
+        'phone': '+1 (555) 987-6543',
+        'address': '456 Demo Street',
+        'city': 'San Francisco',
+        'postal_code': '94102',
+    },
+    'preferences': {
+        'notification_email': True,
+        'notification_sms': False,
+        'theme': 'dark',
+        'language': 'en',
+    },
+    'task_list': {
+        'project_name': 'Demo Project',
+        'tasks': [
+            {
+                'task_name': 'Complete project setup',
+                'priority': 'high',
+                'due_date': '2024-12-01',
+            },
+            {
+                'task_name': 'Write documentation',
+                'priority': 'medium',
+                'due_date': '2024-12-15',
+            },
+        ],
+    },
+}
+
+
 @router.get('/layouts', response_class=HTMLResponse, tags=['Showcase'])
 async def layouts_get(
     request: Request,
@@ -1873,42 +1911,7 @@ async def layouts_get(
         except Exception:
             pass  # Ignore invalid JSON
     elif demo or not data:
-        # Add demo data for easier testing of all layout types
-        form_data = {
-            'personal_info': {
-                'first_name': 'Alex',
-                'last_name': 'Johnson',
-                'email': 'alex.johnson@example.com',
-                'birth_date': '1990-05-15',
-            },
-            'contact_info': {
-                'phone': '+1 (555) 987-6543',
-                'address': '456 Demo Street',
-                'city': 'San Francisco',
-                'postal_code': '94102',
-            },
-            'preferences': {
-                'notification_email': True,
-                'notification_sms': False,
-                'theme': 'dark',
-                'language': 'en',
-            },
-            'task_list': {
-                'project_name': 'Demo Project',
-                'tasks': [
-                    {
-                        'task_name': 'Complete project setup',
-                        'priority': 'high',
-                        'due_date': '2024-12-01',
-                    },
-                    {
-                        'task_name': 'Write documentation',
-                        'priority': 'medium',
-                        'due_date': '2024-12-15',
-                    },
-                ],
-            },
-        }
+        form_data = _LAYOUT_DEMO_DATA
 
     renderer = EnhancedFormRenderer(framework=style, material_variant=_material_variant(variant))
     form_html = await renderer.render_form_from_model_async(
@@ -1965,6 +1968,12 @@ async def layouts_post(
                 'request': request,
                 'title': 'Layout Demo Submitted Successfully',
                 'message': 'All layout types processed successfully!',
+                'display_html': LayoutDemonstrationForm.render_display(
+                    validation.data,
+                    framework=style,
+                    layout=layout,
+                    material_variant=_material_variant(variant),
+                ),
                 'data': validation.data,
                 'framework': 'fastapi',
                 'framework_name': 'FastAPI (Async)',
@@ -1998,6 +2007,80 @@ async def layouts_post(
             'framework_type': style,
             'form_html': form_html,
             'errors': validation.errors,
+        },
+    )
+
+
+@router.get('/layouts/review', response_class=HTMLResponse, tags=['Showcase'])
+async def layouts_review(
+    request: Request,
+    style: str = 'bootstrap',
+    variant: str | None = None,
+    layout: str = 'vertical',
+):
+    """The same demo values read-only, through FormModel.render_display()."""
+    if layout not in dict(_LAYOUT_CHOICES):
+        layout = 'vertical'
+
+    def link(value: str, label: str) -> str:
+        css = 'btn btn-sm ' + ('btn-primary' if value == layout else 'btn-outline-primary')
+        href = f'/layouts/review?style={style}&layout={value}{_variant_query(variant)}'
+        return str(html(t'<a class="{css}" href="{href}">{label}</a>'))
+
+    links = SafeHTML(''.join(link(value, label) for value, label in _LAYOUT_CHOICES))
+    edit_url = f'/layouts?style={style}&layout=vertical{_variant_query(variant)}'
+    display_html = LayoutDemonstrationForm.render_display(
+        _LAYOUT_DEMO_DATA,
+        framework=style,
+        layout=layout,
+        edit_urls={'personal_info': edit_url, 'task_list': edit_url},
+        material_variant=_material_variant(variant),
+    )
+    page_html = html(
+        t'<div class="d-flex flex-wrap gap-2 align-items-center mb-4">'
+        t'<span class="text-muted small">Layout:</span>{links}</div>{SafeHTML(display_html)}'
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Read-Only Review',
+            'description': "A validated model shown with the form's labels and sections, not "
+            'inputs. Select fields show their label, booleans Yes or No, lists a table.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'hide_api_info': True,
+            'form_html': str(page_html),
+        },
+    )
+
+
+@router.get('/gallery/review', response_class=HTMLResponse, tags=['Showcase'])
+async def gallery_review(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    """Every input type in display mode, using the gallery's own demo values."""
+    # Every gallery field has a default, and those defaults are its demo values.
+    demo_values = {name: info.annotation() for name, info in WidgetGalleryForm.model_fields.items()}
+    display_html = WidgetGalleryForm.render_display(
+        demo_values,
+        framework=style,
+        layout='tabbed',
+        material_variant=_material_variant(variant),
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Every Input, Read-Only',
+            'description': 'How each input type reads in display mode. Passwords are masked; '
+            'card and social security numbers show only their last four digits.',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'hide_api_info': True,
+            'form_html': display_html,
         },
     )
 

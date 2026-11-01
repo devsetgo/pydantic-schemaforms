@@ -17,6 +17,12 @@
 
             <!-- Content -->
             <div class="p-4">
+                {% if display_html %}
+                <div class="text-start mb-4">
+                    {{ display_html|safe }}
+                </div>
+                {% endif %}
+
                 <!-- Success Display -->
                 <div class="text-center">
                     <div class="alert alert-success mb-4">
