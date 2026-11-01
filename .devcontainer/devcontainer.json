@@ -5,6 +5,9 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or the host.
@@ -12,16 +15,17 @@
 
 	// Install Python and JS dependencies, then build JS bundle after container creation
 	// "postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt && cd pydantic-schemaforms && npm install && npx vite build",
-	"postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt",
+	"postCreateCommand": "pip3 install --upgrade pip setuptools wheel && pip3 install -r requirements.txt && playwright install --with-deps chromium",
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:/home/mike/.local/bin"
 	},
 
-	// Share Claude Code's memory, transcripts and login with the WSL host so they survive rebuilds.
-	"initializeCommand": "mkdir -p ${localEnv:HOME}/.claude ${localEnv:HOME}/claude-config",
+	// Share Claude Code's memory, transcripts and login, and the gh login, with the WSL host so they survive rebuilds.
+	"initializeCommand": "mkdir -p ${localEnv:HOME}/.claude ${localEnv:HOME}/claude-config ${localEnv:HOME}/.config/gh",
 	"mounts": [
 		"source=${localEnv:HOME}/.claude,target=/home/mike/.claude,type=bind",
-		"source=${localEnv:HOME}/claude-config,target=/home/mike/claude-config,type=bind"
+		"source=${localEnv:HOME}/claude-config,target=/home/mike/claude-config,type=bind",
+		"source=${localEnv:HOME}/.config/gh,target=/home/mike/.config/gh,type=bind"
 	],
 	"containerEnv": {
 		"CLAUDE_CONFIG_DIR": "/home/mike/.claude"
