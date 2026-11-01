@@ -53,7 +53,7 @@ Both items change the layout engine, and both must work with the display mode fr
 | # | Item | Status | Why in this order |
 |---|---|---|---|
 | 14 | [#237](https://github.com/devsetgo/pydantic-schemaforms/issues/237) Conditional show/hide rules | Done ([#308](https://github.com/devsetgo/pydantic-schemaforms/pull/308)) | The most common missing form feature. Fields hidden by a rule must also stay out of display mode (#238). |
-| 15 | [#241](https://github.com/devsetgo/pydantic-schemaforms/issues/241) Field groups and grid widths in one model | Not started | After #237, so show/hide rules can target a whole group. Display mode (#238) must render groups as well. |
+| 15 | [#241](https://github.com/devsetgo/pydantic-schemaforms/issues/241) Field groups and grid widths in one model | Done ([#309](https://github.com/devsetgo/pydantic-schemaforms/pull/309)) | After #237, so show/hide rules can target a whole group. Display mode (#238) must render groups as well. |
 
 ## Phase 4: Long forms and the wizard
 
