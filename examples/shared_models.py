@@ -432,6 +432,7 @@ class MediumContactForm(FormModel):
         icon='person',
         min_length=2,
         max_length=50,
+        ui_cols=6,
     )
 
     last_name: str = FormField(
@@ -442,6 +443,7 @@ class MediumContactForm(FormModel):
         icon='person',
         min_length=2,
         max_length=50,
+        ui_cols=6,
     )
 
     email: EmailStr = FormField(
@@ -2543,6 +2545,42 @@ class LayoutDemonstrationForm(FormModel):
     )
     task_list: TaskListForm = Field(
         title='Task List', ui_help_text='A sub-form containing a repeating list'
+    )
+
+
+class FieldGroupsForm(FormModel):
+    """A flat model arranged with ui_group and ui_cols: result.data has no nesting."""
+
+    first_name: str = Field('Alex', title='First name (ui_cols=6)', ui_cols=6, min_length=2)
+    last_name: str = Field('Johnson', title='Last name (ui_cols=6)', ui_cols=6, min_length=2)
+    street: str = Field(
+        '456 Demo Street', title='Street (ui_cols=8)', ui_group='Address', ui_cols=8
+    )
+    unit: str = Field('', title='Unit (ui_cols=4)', ui_group='Address', ui_cols=4)
+    city: str = Field('Oslo', title='City (ui_cols=4)', ui_group='Address', ui_cols=4)
+    region: str = Field('', title='Region (ui_cols=4)', ui_group='Address', ui_cols=4)
+    postcode: str = Field('0150', title='Postcode (ui_cols=4)', ui_group='Address', ui_cols=4)
+    wants_invoice: bool = Field(True, title='Send me an invoice')
+    company: str = Field(
+        'Example Ltd',
+        title='Company (the whole group follows ui_group_show_when)',
+        ui_group='Invoice',
+        ui_group_show_when={'field': 'wants_invoice', 'truthy': True},
+        ui_cols=8,
+    )
+    vat_number: str = Field(
+        '',
+        title='VAT number',
+        ui_group='Invoice',
+        ui_cols=4,
+    )
+    notes: str = Field(
+        '',
+        title='Notes (ui_group_collapsible, starts closed)',
+        ui_element='textarea',
+        ui_group='More',
+        ui_group_collapsible=True,
+        ui_group_collapsed=True,
     )
 
 

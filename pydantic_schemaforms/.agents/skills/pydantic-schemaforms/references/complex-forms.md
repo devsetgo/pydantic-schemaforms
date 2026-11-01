@@ -149,6 +149,15 @@ class AccountForm(FormModel):
     preferences: Preferences = Field(title='Preferences', ui_order=1)
 ```
 
+## Groups and widths without nesting
+
+For a heading over some fields, or two fields on a row, keep the model flat instead of adding a
+sub-form: `Field(ui_group="Address", ui_cols=6)`. `ui_group` gathers fields with the same title
+into a section (or a tab, panel, column or step under a grouped layout), and `result.data` stays
+flat. `ui_cols` (1-12) makes consecutive fields share a row, under every style.
+`ui_group_collapsible=True`, `ui_group_collapsed=True` and `ui_group_show_when={...}` apply to the
+whole group and go on any one of its fields. Neither option applies inside `model_list` items.
+
 ## Wizard
 
 ```python

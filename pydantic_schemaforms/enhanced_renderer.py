@@ -26,6 +26,8 @@ from .rendering.field_renderer import FieldRenderer
 from .error_tree import iter_errors, normalize_error_tree
 from .form_data import decode_submission
 from .rendering.layout_engine import (
+    GRID_CLASS,
+    GRID_STYLES,
     GROUPED_LAYOUTS,
     LayoutEngine,
     check_layout,
@@ -166,6 +168,7 @@ def _has_file_field(
 
 
 SHOW_WHEN_ATTRIBUTE = 'data-show-when='
+GRID_ATTRIBUTE = f'class="{GRID_CLASS}"'
 
 
 def _render_context(data: dict[str, Any], metadata: SchemaMetadata) -> RenderContext:
@@ -177,8 +180,10 @@ def _render_context(data: dict[str, Any], metadata: SchemaMetadata) -> RenderCon
     )
 
 
-def _with_show_when_script(markup: str) -> str:
-    return f'{markup}\n{SHOW_WHEN_SCRIPT}' if SHOW_WHEN_ATTRIBUTE in markup else markup
+def _with_field_assets(markup: str) -> str:
+    grid = f'\n{GRID_STYLES}' if GRID_ATTRIBUTE in markup else ''
+    script = f'\n{SHOW_WHEN_SCRIPT}' if SHOW_WHEN_ATTRIBUTE in markup else ''
+    return f'{markup}{grid}{script}'
 
 
 class EnhancedFormRenderer:
@@ -304,9 +309,10 @@ class EnhancedFormRenderer:
                 )
             )
         else:
-            for field_name, field_schema in metadata.fields:
-                form_body_parts.append(
-                    self._render_field(
+            form_body_parts.extend(
+                self._layout_engine.render_fields(
+                    metadata.fields,
+                    lambda field_name, field_schema: self._render_field(
                         field_name,
                         field_schema,
                         data.get(field_name),
@@ -314,8 +320,11 @@ class EnhancedFormRenderer:
                         metadata.required_fields,
                         context,
                         'vertical',
-                    )
+                    ),
+                    context,
+                    errors=errors,
                 )
+            )
 
         if error_summary_markup:
             form_body_parts.insert(0, error_summary_markup)
@@ -355,6 +364,8 @@ class EnhancedFormRenderer:
             list_renderer = ModelListRenderer()
             output_parts.append(list_renderer.get_model_list_javascript())
 
+        if GRID_ATTRIBUTE in form_markup:
+            output_parts.append(GRID_STYLES)
         if SHOW_WHEN_ATTRIBUTE in form_markup:
             output_parts.append(SHOW_WHEN_SCRIPT)
 
@@ -390,21 +401,22 @@ class EnhancedFormRenderer:
         errors = normalize_error_tree(errors)
         context = _render_context(data, metadata)
 
-        form_parts: list[str] = []
-        for field_name, field_schema in metadata.fields:
-            form_parts.append(
-                self._render_field(
-                    field_name,
-                    field_schema,
-                    data.get(field_name),
-                    errors.get(field_name),
-                    metadata.required_fields,
-                    context,
-                    'vertical',
-                )
-            )
+        form_parts = self._layout_engine.render_fields(
+            metadata.fields,
+            lambda field_name, field_schema: self._render_field(
+                field_name,
+                field_schema,
+                data.get(field_name),
+                errors.get(field_name),
+                metadata.required_fields,
+                context,
+                'vertical',
+            ),
+            context,
+            errors=errors,
+        )
 
-        return _with_show_when_script('\n'.join(form_parts))
+        return _with_field_assets('\n'.join(str(part) for part in form_parts))
 
     async def render_form_from_model_async(
         self,

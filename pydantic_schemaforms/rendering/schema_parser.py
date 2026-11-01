@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from pydantic_schemaforms.schema_form import FormModel
+from pydantic_schemaforms.show_when import GROUP_RULE_KEY
 
 
 @dataclass(frozen=True)
@@ -175,7 +176,8 @@ def has_show_when_rules(model_cls: type[BaseModel]) -> bool:
     """Whether a model or any model reachable from it declares ``ui_show_when``."""
 
     return any(
-        isinstance(info.json_schema_extra, dict) and 'ui_show_when' in info.json_schema_extra
+        isinstance(info.json_schema_extra, dict)
+        and ('ui_show_when' in info.json_schema_extra or GROUP_RULE_KEY in info.json_schema_extra)
         for model in _models_by_name(model_cls).values()
         for info in model.model_fields.values()
     )
@@ -197,6 +199,64 @@ def ordered_properties(schema: dict[str, Any]) -> list[tuple[str, dict[str, Any]
     properties = list((schema.get('properties') or {}).items())
     properties.sort(key=lambda item: extract_ui_info(item[1]).get('order', 999))
     return properties
+
+
+FieldList = list[tuple[str, dict[str, Any]]]
+
+
+def arrange_fields(fields: FieldList) -> list[tuple[str | None, FieldList]]:
+    """Runs of ungrouped fields (title ``None``) and ``ui_group`` groups, each
+    group at the position of its first field."""
+
+    arranged: list[tuple[str | None, FieldList]] = []
+    groups: dict[str, FieldList] = {}
+    for name, field_schema in fields:
+        title = extract_ui_info(field_schema).get('group')
+        if title in groups:
+            groups[title].append((name, field_schema))
+        elif title:
+            groups[title] = [(name, field_schema)]
+            arranged.append((title, groups[title]))
+        elif arranged and arranged[-1][0] is None:
+            arranged[-1][1].append((name, field_schema))
+        else:
+            arranged.append((None, [(name, field_schema)]))
+    return arranged
+
+
+def group_option(items: FieldList, option: str) -> Any:
+    """A ``ui_group_*`` option, which may be declared on any field of the group."""
+
+    for _name, field_schema in items:
+        value = extract_ui_info(field_schema).get(option)
+        if value is not None:
+            return value
+    return None
+
+
+def _apply_group_rules(properties: dict[str, Any], required: list[str]) -> None:
+    """Copy each group's rule to all its fields, so the server hides them together."""
+
+    for title, items in arrange_fields(list(properties.items())):
+        rules = {
+            str(rule): rule
+            for _name, field_schema in items
+            if (rule := extract_ui_info(field_schema).get('group_show_when'))
+        }
+        if not title or not rules:
+            continue
+        if len(rules) > 1:
+            raise ValueError(f'ui_group {title!r} has more than one ui_group_show_when')
+        needs_value = [name for name, _schema in items if name in required]
+        if needs_value:
+            raise ValueError(
+                f'{needs_value} in ui_group {title!r} need a default, since a hidden group '
+                'submits nothing. For a value required only while shown, add ui_show_when '
+                'with "required": True.'
+            )
+        rule = next(iter(rules.values()))
+        for _name, field_schema in items:
+            field_schema[GROUP_RULE_KEY] = rule
 
 
 def build_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
@@ -227,11 +287,13 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     models = _models_by_name(model_cls)
     _restore_titles(properties, model_cls.model_fields)
     _normalize_properties(properties, schema_defs)
+    _apply_group_rules(properties, required_fields)
     for def_name, definition in schema_defs.items():
         if isinstance(definition, dict) and isinstance(definition.get('properties'), dict):
             if def_name in models:
                 _restore_titles(definition['properties'], models[def_name].model_fields)
             _normalize_properties(definition['properties'], schema_defs)
+            _apply_group_rules(definition['properties'], definition.get('required') or [])
 
     fields = ordered_properties(schema)
 

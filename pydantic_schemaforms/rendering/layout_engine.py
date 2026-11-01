@@ -13,7 +13,15 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
 from pydantic_schemaforms.error_tree import has_errors
-from .schema_parser import SchemaMetadata
+from pydantic_schemaforms.show_when import show_when_wrapper
+from .schema_parser import (
+    FieldList,
+    SchemaMetadata,
+    arrange_fields,
+    extract_ui_info,
+    group_option,
+    resolve_ui_element,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from pydantic_schemaforms.enhanced_renderer import EnhancedFormRenderer
@@ -31,6 +39,21 @@ LayoutRenderer = Callable[
 # the field must not draw a second titled card (see nested_model_renderer).
 IN_GROUP_FLAG = '_in_group'
 
+# Self-contained rather than a framework's grid, so a width means the same under
+# every style. The :has rule lets neighbours close up when a rule hides a column.
+GRID_STYLES = (
+    """<style data-schemaforms-grid>
+.sf-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1rem; }
+.sf-col { grid-column: span 12; min-width: 0; }
+.sf-col:has(> fieldset[hidden]) { display: none; }
+@media (min-width: 768px) {
+"""
+    + ''.join(f'.sf-col-{width} {{ grid-column: span {width}; }}\n' for width in range(1, 13))
+    + """}
+</style>"""
+)
+GRID_CLASS = 'sf-grid'
+
 # Leading space: appended directly after another class in the templates.
 _ACTIVE_CLASS = ' active'
 
@@ -39,6 +62,31 @@ def _unique_id_prefix(kind: str) -> str:
     """Fresh per render, so two tabbed or accordion layouts on one page (or one
     layout rendered twice) never share element ids."""
     return f'{kind}-{secrets.token_hex(4)}'
+
+
+def _later_groups(
+    entry: tuple[str | None, FieldList], group_names: set[str], mode: str
+) -> list[tuple[str, FieldList]]:
+    """The groups one arranged entry adds after the form's own plain fields."""
+
+    title, items = entry
+    if title is not None:
+        return [(title, items)]
+    groups = []
+    for name, schema in items:
+        if name in group_names:
+            group_title = schema.get('title') or name.replace('_', ' ').title()
+            if mode == 'wizard':
+                group_title = schema.get('ui_step_title') or group_title
+            groups.append((group_title, [(name, schema)]))
+    return groups
+
+
+def is_sub_form_group(fields: FieldList, group_names: set[str]) -> bool:
+    """Whether a group is one sub-form on its own, which draws its own title."""
+
+    name, schema = fields[0]
+    return name in group_names and not extract_ui_info(schema).get('group')
 
 
 def _wrap_side_by_side_column(col: str) -> str:
@@ -740,27 +788,28 @@ class LayoutEngine:
         # sub-form must not draw its own titled card inside it. Columns have no heading.
         in_group = mode in ('tabbed', 'accordion', 'wizard')
 
+        def render_one(name: str, schema: dict[str, Any]) -> str:
+            if in_group and name in group_names and not extract_ui_info(schema).get('group'):
+                schema = {**schema, IN_GROUP_FLAG: True}
+            return self._renderer._render_field(  # noqa: SLF001
+                name,
+                schema,
+                data.get(name),
+                errors.get(name),
+                metadata.required_fields,
+                context,
+                'vertical',
+            )
+
         rendered: list[dict[str, Any]] = []
         active_index: int | None = None
         for index, (title, fields) in enumerate(groups):
-            parts = []
-            for name, schema in fields:
-                if in_group and name in group_names:
-                    schema = {**schema, IN_GROUP_FLAG: True}
-                parts.append(
-                    self._renderer._render_field(  # noqa: SLF001
-                        name,
-                        schema,
-                        data.get(name),
-                        errors.get(name),
-                        metadata.required_fields,
-                        context,
-                        'vertical',
-                    )
-                )
-            body = '\n'.join(parts)
-            if mode == 'side-by-side' and fields[0][0] not in group_names:
+            body = '\n'.join(self._render_rows(fields, render_one))
+            if mode == 'side-by-side' and not is_sub_form_group(fields, group_names):
                 body = self._render_layout_card(title, body, '')
+            rule = group_option(fields, 'group_show_when')
+            if rule:
+                body = show_when_wrapper(fields[0][0], rule, body, context)
             group_has_error = any(has_errors(errors.get(n)) for n, _ in fields)
             if active_index is None and group_has_error:
                 active_index = index
@@ -777,25 +826,108 @@ class LayoutEngine:
     ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
         """A parent's own plain fields first, then one group per sub-form field."""
 
-        if not metadata.group_fields:
+        group_names = {name for name, _schema in metadata.group_fields}
+        arranged = arrange_fields(metadata.fields)
+        if not group_names and all(title is None for title, _items in arranged):
             raise ValueError(
                 f"layout='{mode}' needs groups to arrange, but this form has no sub-form "
-                'fields. Split it into nested FormModel fields, e.g. '
-                '`contact: Contact = Field(title="Contact")`, or use layout="vertical". '
-                'See docs/tutorial/layouts.md.'
+                'fields or ui_group. Split it into nested FormModel fields, e.g. '
+                '`contact: Contact = Field(title="Contact")`, give fields a '
+                'ui_group="Contact", or use layout="vertical". See docs/tutorial/layouts.md.'
             )
 
-        group_names = {name for name, _schema in metadata.group_fields}
-        plain_fields = [(n, sch) for n, sch in metadata.fields if n not in group_names]
-        groups: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
-        if plain_fields:
-            groups.append((general_title, plain_fields))
-        for name, schema in metadata.group_fields:
-            title = schema.get('title') or name.replace('_', ' ').title()
-            if mode == 'wizard':
-                title = schema.get('ui_step_title') or title
-            groups.append((title, [(name, schema)]))
-        return groups
+        plain_fields = [
+            (name, schema)
+            for title, items in arranged
+            if title is None
+            for name, schema in items
+            if name not in group_names
+        ]
+        later = [group for entry in arranged for group in _later_groups(entry, group_names, mode)]
+        return [(general_title, plain_fields), *later] if plain_fields else later
+
+    def render_fields(
+        self,
+        fields: FieldList,
+        render_one: Callable[[str, dict[str, Any]], str],
+        context: RenderContext,
+        *,
+        prefix: str = '',
+        errors: dict[Any, Any] | None = None,
+    ) -> list[str]:
+        """Fields in order, with ``ui_group`` sections and ``ui_cols`` rows. Forms
+        using neither get exactly one part per field."""
+
+        parts: list[str] = []
+        for title, items in arrange_fields(fields):
+            rows = self._render_rows(items, render_one)
+            if title is None:
+                parts.extend(rows)
+                continue
+            parts.append(self._group_section(title, items, rows, context, prefix, errors or {}))
+        return parts
+
+    def _render_rows(
+        self, items: FieldList, render_one: Callable[[str, dict[str, Any]], str]
+    ) -> list[str]:
+        """Consecutive ``ui_cols`` fields share a row until they pass 12 columns."""
+
+        parts: list[str] = []
+        row: list[str] = []
+        used = 0
+
+        def flush() -> None:
+            nonlocal used
+            if row:
+                _cells = SafeHTML(''.join(row))  # NOSONAR - read in the t-string below
+                parts.append(html(t'<div class="{GRID_CLASS}">{_cells}</div>'))
+                row.clear()
+            used = 0
+
+        for name, schema in items:
+            markup = render_one(name, schema)
+            ui_info = extract_ui_info(schema)
+            cols = ui_info.get('cols')
+            if ui_info.get('hidden') or resolve_ui_element(schema) == 'hidden':
+                # Takes no space, so it doesn't break the row it sits in.
+                (row if row else parts).append(markup)
+            elif not cols:
+                flush()
+                parts.append(markup)
+            else:
+                if used + cols > 12:
+                    flush()
+                _markup = SafeHTML(str(markup))  # NOSONAR - read in the t-string below
+                row.append(html(t'<div class="sf-col sf-col-{cols}">{_markup}</div>'))
+                used += cols
+        flush()
+        return parts
+
+    def _group_section(
+        self,
+        title: str,
+        items: FieldList,
+        rows: list[str],
+        context: RenderContext,
+        prefix: str,
+        errors: dict[Any, Any],
+    ) -> str:
+        body = '\n'.join(str(row) for row in rows)
+        theme = getattr(self._renderer, 'theme', None)
+        if group_option(items, 'group_collapsible') and theme is not None:
+            has_error = any(has_errors(errors.get(name)) for name, _schema in items)
+            section = theme.render_collapsible_section(
+                title=title,
+                body_html=body,
+                is_open=not group_option(items, 'group_collapsed') or has_error,
+                field_name=f'{prefix}{title}',
+            )
+        else:
+            section = self._render_layout_card(title, body, '')
+        rule = group_option(items, 'group_show_when')
+        if rule:
+            return show_when_wrapper(f'{prefix}{items[0][0]}', rule, section, context)
+        return section
 
     def render_group_component(
         self,

@@ -55,6 +55,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     PASSWORD_MISMATCH_DEMO,
     VALID_VALIDATION_DEMO,
     ValidationShowcaseForm,
+    FieldGroupsForm,
     WidgetGalleryForm,
     validation_showcase_rules,
     create_sample_nested_data,
@@ -2007,6 +2008,104 @@ async def layouts_post(
             'framework_type': style,
             'form_html': form_html,
             'errors': validation.errors,
+        },
+    )
+
+
+_FIELD_GROUPS_DESCRIPTION = (
+    'One flat model arranged with ui_group and ui_cols, so result.data has no nesting. A group '
+    'can be a section, tab, panel or wizard step.'
+)
+
+
+async def _render_field_groups_page(
+    request: Request,
+    style: str,
+    variant: str | None,
+    layout: str,
+    data: dict | None = None,
+    errors: dict | None = None,
+):
+    if layout not in dict(_LAYOUT_CHOICES):
+        layout = 'vertical'
+    query = f'style={style}&layout={layout}{_variant_query(variant)}'
+
+    def link(value: str, label: str) -> str:
+        css = 'btn btn-sm ' + ('btn-primary' if value == layout else 'btn-outline-primary')
+        href = f'/layouts/field-groups?style={style}&layout={value}{_variant_query(variant)}'
+        return str(html(t'<a class="{css}" href="{href}">{label}</a>'))
+
+    links = SafeHTML(''.join(link(value, label) for value, label in _LAYOUT_CHOICES))
+    renderer = EnhancedFormRenderer(framework=style, material_variant=_material_variant(variant))
+    form_html = await renderer.render_form_from_model_async(
+        FieldGroupsForm,
+        data=data,
+        errors=errors or {},
+        submit_url=f'/layouts/field-groups?{query}',
+        layout=layout,
+    )
+    page_html = html(
+        t'<div class="d-flex flex-wrap gap-2 align-items-center mb-4">'
+        t'<span class="text-muted small">Layout:</span>{links}</div>{SafeHTML(form_html)}'
+    )
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Field Groups and Grid Widths',
+            'description': _FIELD_GROUPS_DESCRIPTION,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'hide_api_info': True,
+            'form_html': wrap_with_schemaforms_markers(str(page_html)),
+            'errors': errors,
+        },
+    )
+
+
+@router.get('/layouts/field-groups', response_class=HTMLResponse, tags=['Showcase'])
+async def field_groups_get(
+    request: Request,
+    style: str = 'bootstrap',
+    variant: str | None = None,
+    layout: str = 'vertical',
+):
+    """ui_group and ui_cols on a flat model, shown with any layout."""
+    return await _render_field_groups_page(request, style, variant, layout)
+
+
+@router.post('/layouts/field-groups', response_class=HTMLResponse, tags=['Showcase'])
+async def field_groups_post(
+    request: Request,
+    style: str = 'bootstrap',
+    variant: str | None = None,
+    layout: str = 'vertical',
+):
+    form_data = await request.form()
+    validation = FieldGroupsForm.validate(form_data)
+    if not validation.is_valid:
+        return await _render_field_groups_page(
+            request, style, variant, layout, data=form_data, errors=validation.errors
+        )
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': 'Field Groups Submitted',
+            'message': 'The groups were only presentation: the data below is flat.',
+            'display_html': FieldGroupsForm.render_display(
+                validation.data,
+                framework=style,
+                layout=layout,
+                material_variant=_material_variant(variant),
+            ),
+            'data': validation.data,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'try_again_url': create_refer_path(request),
         },
     )
 

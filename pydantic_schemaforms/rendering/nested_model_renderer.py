@@ -70,21 +70,26 @@ def _render_sub_fields(
     optional = any(o.get('type') == 'null' for o in field_schema.get('anyOf') or [])
     required = set() if optional else set(schema_def.get('required') or [])
     renderer = engine._renderer  # noqa: SLF001 - composite renderers render children through it
-    parts = []
-    for key, sub_schema in ordered_properties(schema_def):
+
+    def render_one(key: str, sub_schema: dict[str, Any]) -> str:
         input_name = f'{field_name}.{key}'
-        parts.append(
-            renderer._render_field(  # noqa: SLF001
-                input_name,
-                sub_schema,
-                data.get(key),
-                child_errors.get(key),
-                [input_name] if key in required else [],
-                context,
-                'vertical',
-            )
+        return renderer._render_field(  # noqa: SLF001
+            input_name,
+            sub_schema,
+            data.get(key),
+            child_errors.get(key),
+            [input_name] if key in required else [],
+            context,
+            'vertical',
         )
-    return parts
+
+    return engine.render_fields(
+        ordered_properties(schema_def),
+        render_one,
+        context,
+        prefix=f'{field_name}.',
+        errors=child_errors,
+    )
 
 
 @LayoutEngine.layout_renderer('nested_model')

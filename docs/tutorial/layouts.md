@@ -49,6 +49,35 @@ the one that opens, and the error summary at the top stays visible.
 - Groups follow the order the fields are declared in. `ui_order` changes it
   without moving code: `ui_order=1` puts Preferences right after the first group.
 
+## Group fields without nesting
+
+Sub-forms are right when the data is really nested. For "these four fields under a
+heading" or "first and last name on one row", keep the model flat:
+
+```python
+--8<-- "docs_src/tutorial/layouts/field_groups.py"
+```
+
+`result.data` stays flat, with no `address` key: groups only affect how the form looks.
+
+- **`ui_group`** gathers fields with the same title into one section, placed where
+  its first field is declared. Under `layout="tabbed"`, `"accordion"`, `"side-by-side"`
+  or `"wizard"`, each group becomes its own tab, panel, column or step, alongside any
+  sub-forms.
+- **`ui_cols`** is a width out of 12. Consecutive fields share a row until they pass 12,
+  and a field with no `ui_cols` starts a new row. Below 768px wide, every field is full
+  width. It works the same under all three styles.
+- **`ui_group_collapsible=True`** lets the user fold the group away, and
+  **`ui_group_collapsed=True`** starts it closed; a group with an error always opens.
+  These apply in `layout="vertical"`, since a tab or panel already folds.
+- **`ui_group_show_when`** hides the whole group, heading included, using the same rules
+  as `ui_show_when`. Its fields need defaults. Under `"tabbed"`, `"accordion"` and
+  `"wizard"`, the tab, panel or step stays in place, empty.
+
+The `ui_group_*` options go on any one field of the group. `render_display()` shows groups
+as titled sections too, without the column widths. Inside a `model_list` item, `ui_group`
+and `ui_cols` have no effect, since each item already arranges its own fields.
+
 ## Wizard
 
 `layout="wizard"` shows one group at a time with a progress header and Back

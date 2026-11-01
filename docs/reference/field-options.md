@@ -31,6 +31,10 @@ the Pydantic constraints.
 | `ui_readonly=True` | The input can't be changed but is submitted |
 | `ui_hidden=True` | Rendered as `<input type="hidden">`, same as `ui_element="hidden"` |
 | `ui_show_when={...}` | Hide this field until another field has a given value; see [Show a field only when it applies](../tutorial/fields.md#show-a-field-only-when-it-applies) |
+| `ui_group="Contact"` | Put this field under a titled section, without nesting the data; see [Group fields without nesting](../tutorial/layouts.md#group-fields-without-nesting) |
+| `ui_cols=6` | Width out of 12, so consecutive fields share a row. Full width on narrow screens |
+| `ui_group_collapsible=True`, `ui_group_collapsed=True` | Let the user fold the group away, and start it closed |
+| `ui_group_show_when={...}` | Hide the whole group until another field has a value, like `ui_show_when` |
 | `ui_order=n` | Position among the fields (lower first); fields otherwise follow declaration order |
 | `ui_class="..."` | Extra CSS classes on the input |
 | `ui_style="..."` | Inline CSS on the input |
