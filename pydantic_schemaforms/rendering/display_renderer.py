@@ -164,7 +164,7 @@ class _DisplayRenderer:
         if element in _BOOLEAN_ELEMENTS:
             is_true = value is True or str(value).lower() in _TRUE_STRINGS
             return ('Yes' if is_true else 'No'), False
-        if _is_empty(value):
+        if _is_empty(value):  # NOSONAR - S2583 is wrong: most values are not empty
             return EMPTY_TEXT, True
         masked = _masked_text(element, value)
         if masked is not None:
