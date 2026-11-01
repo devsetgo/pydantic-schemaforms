@@ -105,6 +105,15 @@ def _file_name(value: Any) -> str:
     return str(name if name else value)
 
 
+def _masked_text(element: str, value: Any) -> str | None:
+    if element == 'password' or isinstance(value, (SecretStr, SecretBytes)):
+        return MASK
+    if element in _LAST_FOUR_ELEMENTS:
+        digits = ''.join(char for char in str(value) if char.isdigit())
+        return f'{MASK}{digits[-4:]}'
+    return None
+
+
 class _DisplayRenderer:
     def __init__(self, renderer: 'EnhancedFormRenderer', schema_defs: dict[str, Any]) -> None:
         self._renderer = renderer
@@ -157,23 +166,26 @@ class _DisplayRenderer:
             return ('Yes' if is_true else 'No'), False
         if _is_empty(value):
             return EMPTY_TEXT, True
-        if element == 'password' or isinstance(value, (SecretStr, SecretBytes)):
-            return MASK, False
-        if element in _LAST_FOUR_ELEMENTS:
-            digits = ''.join(char for char in str(value) if char.isdigit())
-            return f'{MASK}{digits[-4:]}', False
+        masked = _masked_text(element, value)
+        if masked is not None:
+            return masked, False
+        return self._filled_text(element, field_schema, ui_info, value), False
+
+    def _filled_text(
+        self, element: str, field_schema: dict[str, Any], ui_info: dict[str, Any], value: Any
+    ) -> str:
         if isinstance(value, bool):
-            return ('Yes' if value else 'No'), False
+            return 'Yes' if value else 'No'
         if element in _CHOICE_ELEMENTS:
-            return self._choice_labels(field_schema, ui_info, value), False
+            return self._choice_labels(field_schema, ui_info, value)
         if element in _TEMPORAL_FORMATS:
-            return _format_temporal(element, value, ui_info), False
+            return _format_temporal(element, value, ui_info)
         if element == 'file':
             files = value if isinstance(value, list) else [value]
-            return ', '.join(_file_name(item) for item in files), False
+            return ', '.join(_file_name(item) for item in files)
         if isinstance(value, (list, tuple, set)):
-            return ', '.join(str(item) for item in value), False
-        return str(value), False
+            return ', '.join(str(item) for item in value)
+        return str(value)
 
     def _value_markup(self, text: str, is_empty: bool) -> tuple[str, SafeHTML]:
         # HTML collapses a multi-line answer's line breaks and indentation.
@@ -256,7 +268,7 @@ class _DisplayRenderer:
             return self._table([(name, {}) for name in names], value)
         if isinstance(value, dict):
             return self._fields([(key, {}) for key in value], value)
-        text, is_empty = self._text({}, value)
+        text, is_empty = self._text({}, value)  # NOSONAR - read in the t-string below
         css = self._theme.display_class('empty') if is_empty else ''  # NOSONAR
         return str(html(t'<p class="{css}">{text}</p>'))
 
@@ -342,6 +354,39 @@ class _DisplayRenderer:
         return '\n'.join(part for part in parts if part)
 
 
+def _grouped_content(
+    renderer: 'EnhancedFormRenderer',
+    display: _DisplayRenderer,
+    metadata: SchemaMetadata,
+    values: dict[str, Any],
+    layout: str,
+    general_title: str,
+    edit_urls: dict[str, str],
+) -> str:
+    engine = renderer._layout_engine  # noqa: SLF001
+    group_names = {name for name, _schema in metadata.group_fields}
+    in_group = layout != 'side-by-side'
+    rendered = []
+    for title, fields in engine.group_fields(metadata, layout, general_title):
+        name = fields[0][0]
+        if name in group_names:
+            body = display.section(
+                name,
+                fields[0][1],
+                values.get(name),
+                in_group=in_group,
+                edit_url=edit_urls.get(name),
+            )
+        else:
+            body = display.top_level(fields, values, {})
+            if not body:
+                continue
+            if not in_group:
+                body = engine._render_layout_card(title, body, '')  # noqa: SLF001
+        rendered.append({'title': title, 'content': body})
+    return engine.render_group_component(rendered, layout)
+
+
 def render_display(
     renderer: 'EnhancedFormRenderer',
     metadata: SchemaMetadata,
@@ -360,28 +405,9 @@ def render_display(
 
     # A wizard is a way of filling a form in, not of reading it: flat.
     if layout in GROUPED_LAYOUTS and layout != 'wizard':
-        engine = renderer._layout_engine  # noqa: SLF001
-        group_names = {name for name, _schema in metadata.group_fields}
-        in_group = layout != 'side-by-side'
-        rendered = []
-        for title, fields in engine.group_fields(metadata, layout, general_title):
-            name = fields[0][0]
-            if name in group_names:
-                body = display.section(
-                    name,
-                    fields[0][1],
-                    values.get(name),
-                    in_group=in_group,
-                    edit_url=edit_urls.get(name),
-                )
-            else:
-                body = display.top_level(fields, values, {})
-                if not body:
-                    continue
-                if not in_group:
-                    body = engine._render_layout_card(title, body, '')  # noqa: SLF001
-            rendered.append({'title': title, 'content': body})
-        content = engine.render_group_component(rendered, layout)
+        content = _grouped_content(
+            renderer, display, metadata, values, layout, general_title, edit_urls
+        )
     else:
         content = display.top_level(metadata.fields, values, edit_urls)
 
