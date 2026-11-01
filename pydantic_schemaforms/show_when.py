@@ -129,8 +129,10 @@ def lookup(scope: Any, path: str) -> Any:
     return current
 
 
-def _rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
-    """A field's own rule and its group's; schema_parser copies the latter to each field."""
+def field_rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
+    """A field's own rule and its group's. schema_parser copies the group's rule to each
+    of its fields; the layout engine removes it again from fields whose group it wraps
+    as a whole, so a field renders it only where no group wrapper exists (list items)."""
 
     # A dynamically registered field keeps its ui_* keys under 'ui', unprefixed.
     nested = field_schema.get('ui') or {}
@@ -144,7 +146,9 @@ def _rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
 def is_shown(field_schema: dict[str, Any], scope: Any) -> bool:
     """Whether a field shows, given the (already pruned) values of its own model."""
 
-    return all(rule_matches(rule, lookup(scope, rule['field'])) for rule in _rules(field_schema))
+    return all(
+        rule_matches(rule, lookup(scope, rule['field'])) for rule in field_rules(field_schema)
+    )
 
 
 def _ref(node: Any) -> str | None:
@@ -244,7 +248,7 @@ def prune(
     pruned = dict(data)
     sub_errors = _prune_sub_forms(pruned, properties, schema_defs, path)
 
-    ruled = {name: rules for name, schema in properties.items() if (rules := _rules(schema))}
+    ruled = {name: rules for name, schema in properties.items() if (rules := field_rules(schema))}
     for name, rules in ruled.items():
         for rule in rules:
             _check_target(name, rule, properties, schema_defs)

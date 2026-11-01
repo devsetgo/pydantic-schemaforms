@@ -13,7 +13,7 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
 from pydantic_schemaforms.error_tree import has_errors
-from pydantic_schemaforms.show_when import show_when_wrapper
+from pydantic_schemaforms.show_when import GROUP_RULE_KEY, show_when_wrapper
 from .schema_parser import (
     FieldList,
     SchemaMetadata,
@@ -885,7 +885,8 @@ class LayoutEngine:
             used = 0
 
         for name, schema in items:
-            markup = render_one(name, schema)
+            # The group's rule wraps the whole section, so the field must not repeat it.
+            markup = render_one(name, {k: v for k, v in schema.items() if k != GROUP_RULE_KEY})
             ui_info = extract_ui_info(schema)
             cols = ui_info.get('cols')
             if ui_info.get('hidden') or resolve_ui_element(schema) == 'hidden':

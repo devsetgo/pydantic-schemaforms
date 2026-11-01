@@ -11,6 +11,7 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
+from pydantic_schemaforms.show_when import GROUP_RULE_KEY
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 if TYPE_CHECKING:
@@ -83,8 +84,9 @@ def render_consent_field(
         'ui_options': {**options, 'aria-describedby': block_id},
     }
     checkbox_schema.pop('ui', None)
-    # The rule is already applied around this whole field.
+    # The rules are already applied around this whole field.
     checkbox_schema.pop('ui_show_when', None)
+    checkbox_schema.pop(GROUP_RULE_KEY, None)
     checkbox = SafeHTML(  # NOSONAR - read in the t-string below
         engine._renderer._field_renderer.render_field(  # noqa: SLF001
             field_name,

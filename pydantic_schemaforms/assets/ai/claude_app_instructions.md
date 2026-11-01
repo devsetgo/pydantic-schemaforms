@@ -390,7 +390,8 @@ sub-form: `Field(ui_group="Address", ui_cols=6)`. `ui_group` gathers fields with
 into a section (or a tab, panel, column or step under a grouped layout), and `result.data` stays
 flat. `ui_cols` (1-12) makes consecutive fields share a row, under every style.
 `ui_group_collapsible=True`, `ui_group_collapsed=True` and `ui_group_show_when={...}` apply to the
-whole group and go on any one of its fields. Neither option applies inside `model_list` items.
+whole group and go on any one of its fields. `ui_group` and `ui_cols` don't apply inside
+`model_list` items; `ui_group_show_when` there hides each field on its own.
 
 ### Wizard
 

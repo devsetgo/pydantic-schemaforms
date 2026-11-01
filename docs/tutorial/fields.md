@@ -112,7 +112,8 @@ before validation, even in a hand-written request, so it produces no errors and
 **For "required only when shown"**, add `"required": True` to the rule, as above,
 rather than declaring the field required.
 
-`field` is relative to the model the rule is on. It can go down into a sub-form
+`field` names the other field as its input is named, so by its alias if it has one.
+It is relative to the model the rule is on. It can go down into a sub-form
 (`"address.country"`) but not up to a parent, so to hide a whole sub-form based on
 a parent's field, put the rule on the sub-form field in the parent. Inside a
 `model_list`, each item follows its own values.

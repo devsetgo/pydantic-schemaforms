@@ -76,7 +76,8 @@ heading" or "first and last name on one row", keep the model flat:
 
 The `ui_group_*` options go on any one field of the group. `render_display()` shows groups
 as titled sections too, without the column widths. Inside a `model_list` item, `ui_group`
-and `ui_cols` have no effect, since each item already arranges its own fields.
+and `ui_cols` have no effect, since each item already arranges its own fields;
+`ui_group_show_when` still hides each of the group's fields.
 
 ## Wizard
 

@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, SecretBytes, SecretStr
 
-from pydantic_schemaforms.show_when import is_shown, prune
+from pydantic_schemaforms.show_when import field_rules, is_shown, prune
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .layout_engine import GROUPED_LAYOUTS, LayoutEngine, check_layout, is_sub_form_group
@@ -234,7 +234,7 @@ class _DisplayRenderer:
             str(html(t'<th scope="col">{self._title(name, schema)}</th>'))
             for name, schema in columns
         ]
-        columns_have_rules = any(extract_ui_info(schema).get('show_when') for _n, schema in columns)
+        columns_have_rules = any(field_rules(schema) for _n, schema in columns)
         rows = []
         for item in items:
             data = item if isinstance(item, dict) else {}
