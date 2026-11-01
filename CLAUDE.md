@@ -394,6 +394,14 @@ A feature without a working example is not done.
   whole script. Also look at the pages: an option that renders but shows
   nothing visible (an unstyled variant, an empty value) is not demonstrated.
 
+## In-progress work
+
+Keep the plan, decisions and next step for unfinished work under an
+`## In progress` heading at the top of the gitignored `TODO_TASKS.md`, and
+update it when that state changes. A `SessionStart` hook
+loads it into each new session, so work carries across devcontainer rebuilds
+and WSL.
+
 ## Coding standards
 
 - No comments unless the WHY is non-obvious.
