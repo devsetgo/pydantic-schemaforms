@@ -9,6 +9,11 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ## [Unreleased]
 
+### Fixed
+
+- Bootstrap select, multiselect, combobox, radio and checkbox group fields no longer
+  render a second `mb-3` wrapper. Spacing is unchanged. (#280)
+
 ## [26.4.4] — 2026-10-31
 
 The Material style is rebuilt on Material Design 3 and shares one rendering path
@@ -892,4 +897,3 @@ Happy 250th Birthday USA!!!!
 
 #### 🙌 Contributors
 [@devsetgo](https://github.com/devsetgo)
-

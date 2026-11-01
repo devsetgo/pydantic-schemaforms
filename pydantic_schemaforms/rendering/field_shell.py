@@ -104,7 +104,7 @@ class BootstrapFieldShell(_InputShell):
             return self._render_input(shell, 'form-text', 'invalid-feedback d-block')
 
         control = SafeHTML(shell.control_html)
-        parts: list[str] = ['<div class="mb-3">']
+        parts: list[str] = []
         if shell.label:
             parts.append(
                 html(t'<label for="{shell.field_id}" class="form-label">{shell.label}</label>')
@@ -132,7 +132,6 @@ class BootstrapFieldShell(_InputShell):
                     t'<div id="{shell.error_id}" class="invalid-feedback d-block">{shell.error}</div>'
                 )
             )
-        parts.append(_CLOSE_DIV)
         return '\n'.join(parts)
 
 
