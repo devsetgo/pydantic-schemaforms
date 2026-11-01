@@ -233,7 +233,7 @@ class RendererTheme:
 
         return ''
 
-    def content_block_class(self, scrollable: bool) -> str:
+    def content_block_class(self, _scrollable: bool) -> str:
         """Return the CSS class for a content block or a consent field's text."""
 
         return ''
