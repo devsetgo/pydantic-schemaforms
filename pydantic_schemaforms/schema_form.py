@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from pydantic import Field as PydanticField
 from pydantic.fields import FieldInfo
 
+from .show_when import check_rule
 from .validation import ValidationResult
 from .tstring import SafeHTML
 
@@ -60,6 +61,7 @@ def Field(
     layout_renderer: str | None = None,
     unchecked_message: str | None = None,
     ui_content: str | None = None,
+    ui_show_when: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -79,7 +81,19 @@ def Field(
     escaped unless built with ``html(t'...')``. A ``content`` field submits
     nothing and is left out of validation and the returned data, so it needs
     no default: ``intro: None = Field(ui_element='content', ui_content='...')``.
+
+    ui_show_when hides this field until another field has a given value:
+    ``{"field": "contact", "equals": "phone"}``, or ``in``, ``truthy``,
+    ``not_empty``. A hidden field submits nothing, so it needs a default, and
+    ``"required": True`` in the rule makes it required only while it shows.
     """
+    if ui_show_when is not None:
+        ui_show_when = check_rule(ui_show_when)
+        if default is ... and 'default_factory' not in kwargs:
+            raise ValueError(
+                'A field with ui_show_when needs a default, since it submits nothing while '
+                'hidden. For a value required only while shown, add "required": True to the rule.'
+            )
     if 'ui_content_html' in kwargs:
         raise TypeError("Pass ui_content=html(t'...') instead of ui_content_html")
     if ui_element == 'content':
@@ -120,6 +134,7 @@ def Field(
         'layout_handler': layout_handler,
         'layout_renderer': layout_renderer,
         'unchecked_message': unchecked_message,
+        'ui_show_when': ui_show_when,
     }
     # JSON Schema generation turns SafeHTML back into a plain str, so which kind
     # it was has to be kept in the key.

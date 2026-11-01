@@ -388,3 +388,43 @@ def test_material_pages_show_the_site_header(page: Page, examples_server_url: st
     page.goto(f'{examples_server_url}/login?style=material', wait_until='load')
     expect(page.locator('.top-resource-bar')).to_contain_text('Documentation', timeout=TIMEOUT)
     expect(page.locator('.site-brand-shell')).to_be_visible()
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_show_when_follows_the_controlling_field(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/gallery?style={style}')
+    page.get_by_role('tab', name='Field Options').click()
+    method = page.locator('[name="field_options.contact_method"]')
+    phone = page.locator('[name="field_options.contact_phone"]')
+
+    expect(phone).to_be_visible()
+    method.select_option('email')
+    expect(phone).to_be_hidden()
+    expect(phone).to_be_disabled()
+    method.select_option('phone')
+    expect(phone).to_be_visible()
+    expect(phone).to_be_enabled()
+    expect(phone).to_have_value('555-0100')
+
+    page.locator('[name="field_options.wants_updates"]').uncheck()
+    expect(page.locator('[name="field_options.update_topics"]')).to_be_hidden()
+    # Depends on the field just hidden, so it follows it.
+    expect(page.locator('[name="field_options.update_note"]')).to_be_hidden()
+
+
+def test_show_when_inside_a_new_model_list_item(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/validation')
+    block = page.locator('[data-field-name="items"]').first
+    block.locator('.add-item-btn').click()
+    items = block.locator('[name$=".is_gift"]')
+    last = items.count() - 1
+    name = items.nth(last).get_attribute('name')
+    note = block.locator(f'[name="{name.replace("is_gift", "gift_note")}"]')
+
+    expect(note).to_be_hidden()
+    items.nth(last).check()
+    expect(note).to_be_visible()
+    if last > 0:
+        expect(block.locator('[name$=".gift_note"]').first).to_be_hidden()

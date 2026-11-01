@@ -171,6 +171,16 @@ def _models_by_name(model_cls: type[BaseModel]) -> dict[str, type[BaseModel]]:
     return found
 
 
+def has_show_when_rules(model_cls: type[BaseModel]) -> bool:
+    """Whether a model or any model reachable from it declares ``ui_show_when``."""
+
+    return any(
+        isinstance(info.json_schema_extra, dict) and 'ui_show_when' in info.json_schema_extra
+        for model in _models_by_name(model_cls).values()
+        for info in model.model_fields.values()
+    )
+
+
 def _restore_titles(properties: dict[str, Any], model_fields: dict[str, FieldInfo]) -> None:
     # Pydantic drops a $ref field's title when it equals the referenced
     # class's own title (Field(title="Size") on a `Size` enum), which would

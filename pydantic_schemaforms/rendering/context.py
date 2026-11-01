@@ -22,3 +22,6 @@ class RenderContext:
     error: str | None = None
     required_fields: tuple[str, ...] = ()
     child_errors: dict[Any, Any] = field(default_factory=dict)
+    # form_data without the fields hidden by a ui_show_when rule, when any exist:
+    # a field may depend on one that is itself hidden.
+    visible_data: dict[str, Any] | None = None

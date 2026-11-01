@@ -46,6 +46,7 @@ from .rendering.themes import (
     get_theme_for_framework,
 )
 from .schema_form import FormModel
+from .show_when import SHOW_WHEN_SCRIPT, prune
 from .tstring import SafeHTML
 from .tstring import html as render_html
 
@@ -164,6 +165,22 @@ def _has_file_field(
     return False
 
 
+SHOW_WHEN_ATTRIBUTE = 'data-show-when='
+
+
+def _render_context(data: dict[str, Any], metadata: SchemaMetadata) -> RenderContext:
+    visible_data, _errors = prune(
+        metadata.schema.get('properties') or {}, metadata.schema_defs, data
+    )
+    return RenderContext(
+        form_data=data, schema_defs=metadata.schema_defs, visible_data=visible_data
+    )
+
+
+def _with_show_when_script(markup: str) -> str:
+    return f'{markup}\n{SHOW_WHEN_SCRIPT}' if SHOW_WHEN_ATTRIBUTE in markup else markup
+
+
 class EnhancedFormRenderer:
     """Render Pydantic FormModels into HTML using UI metadata."""
 
@@ -238,7 +255,7 @@ class EnhancedFormRenderer:
         include_csrf = bool(kwargs.pop('include_csrf', False))
         csrf_field_name = kwargs.pop('csrf_field_name', 'csrf_token') or 'csrf_token'
 
-        context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
+        context = _render_context(data, metadata)
 
         errors = normalize_error_tree(errors)
         error_summary_markup = self._render_error_summary(errors)
@@ -338,6 +355,9 @@ class EnhancedFormRenderer:
             list_renderer = ModelListRenderer()
             output_parts.append(list_renderer.get_model_list_javascript())
 
+        if SHOW_WHEN_ATTRIBUTE in form_markup:
+            output_parts.append(SHOW_WHEN_SCRIPT)
+
         combined_output = '\n'.join(output_parts)
 
         if enable_logging:
@@ -368,7 +388,7 @@ class EnhancedFormRenderer:
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
         data = _render_values(data)
         errors = normalize_error_tree(errors)
-        context = RenderContext(form_data=data, schema_defs=metadata.schema_defs)
+        context = _render_context(data, metadata)
 
         form_parts: list[str] = []
         for field_name, field_schema in metadata.fields:
@@ -384,7 +404,7 @@ class EnhancedFormRenderer:
                 )
             )
 
-        return '\n'.join(form_parts)
+        return _with_show_when_script('\n'.join(form_parts))
 
     async def render_form_from_model_async(
         self,

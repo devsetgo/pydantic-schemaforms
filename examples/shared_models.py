@@ -3099,6 +3099,39 @@ class FieldOptionsGalleryForm(FormModel):
         title='Extra HTML attributes via ui_options (autocomplete, data-*)',
         ui_options={'autocomplete': 'off', 'data-analytics-id': 'gallery-demo'},
     )
+    contact_method: str = Field(
+        'phone',
+        title='Contact method (controls the four fields below)',
+        ui_element='select',
+        ui_options={
+            'choices': [
+                {'value': 'email', 'label': 'Email'},
+                {'value': 'phone', 'label': 'Phone'},
+                {'value': 'post', 'label': 'Post'},
+            ]
+        },
+    )
+    contact_phone: str = Field(
+        '555-0100',
+        title='ui_show_when equals "phone", required while shown',
+        ui_show_when={'field': 'contact_method', 'equals': 'phone', 'required': True},
+    )
+    contact_time: str = Field(
+        '',
+        title='ui_show_when in ["phone", "post"]',
+        ui_show_when={'field': 'contact_method', 'in': ['phone', 'post']},
+    )
+    wants_updates: bool = Field(True, title='Send me updates')
+    update_topics: str = Field(
+        'Releases',
+        title='ui_show_when truthy',
+        ui_show_when={'field': 'wants_updates', 'truthy': True},
+    )
+    update_note: str = Field(
+        '',
+        title='ui_show_when not_empty (clear the topics above to hide this)',
+        ui_show_when={'field': 'update_topics', 'not_empty': True},
+    )
 
 
 class WidgetGalleryForm(FormModel):
@@ -3136,11 +3169,23 @@ class WidgetGalleryForm(FormModel):
 class ValidationAddress(FormModel):
     city: str = Field(..., title='City (min_length=2)', min_length=2)
     postcode: str = Field(..., title='Postcode (pattern: 5 digits)', pattern=r'^\d{5}$')
+    needs_access_code: bool = Field(False, title='This building needs an access code')
+    access_code: str = Field(
+        '',
+        title='Access code (ui_show_when, required only while shown)',
+        ui_show_when={'field': 'needs_access_code', 'truthy': True, 'required': True},
+    )
 
 
 class ValidationItem(FormModel):
     name: str = Field(..., title='Item name (min_length=1)', min_length=1)
     quantity: int = Field(1, title='Quantity (ge=1)', ge=1)
+    is_gift: bool = Field(False, title='This is a gift')
+    gift_note: str = Field(
+        '',
+        title='Gift note (ui_show_when, scoped to this item, required while shown)',
+        ui_show_when={'field': 'is_gift', 'truthy': True, 'required': True},
+    )
 
 
 class ValidationShowcaseForm(FormModel):

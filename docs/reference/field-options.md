@@ -30,6 +30,7 @@ the Pydantic constraints.
 | `ui_disabled=True` | The input is greyed out. Browsers don't submit disabled inputs, so the field gets its default when validated. |
 | `ui_readonly=True` | The input can't be changed but is submitted |
 | `ui_hidden=True` | Rendered as `<input type="hidden">`, same as `ui_element="hidden"` |
+| `ui_show_when={...}` | Hide this field until another field has a given value; see [Show a field only when it applies](../tutorial/fields.md#show-a-field-only-when-it-applies) |
 | `ui_order=n` | Position among the fields (lower first); fields otherwise follow declaration order |
 | `ui_class="..."` | Extra CSS classes on the input |
 | `ui_style="..."` | Inline CSS on the input |

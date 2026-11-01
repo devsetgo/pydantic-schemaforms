@@ -15,6 +15,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, SecretBytes, SecretStr
 
+from pydantic_schemaforms.show_when import is_shown, prune
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .layout_engine import GROUPED_LAYOUTS, LayoutEngine, check_layout
@@ -126,8 +127,10 @@ class _DisplayRenderer:
             return 'password'
         return self._field_renderer._infer_ui_element(field_schema)  # noqa: SLF001
 
-    def _is_shown(self, field_schema: dict[str, Any]) -> bool:
+    def _is_shown(self, field_schema: dict[str, Any], scope: Any = None) -> bool:
         if extract_ui_info(field_schema).get('hidden'):
+            return False
+        if scope is not None and not is_shown(field_schema, scope):
             return False
         return self._element(field_schema) not in _SKIPPED_ELEMENTS
 
@@ -230,10 +233,16 @@ class _DisplayRenderer:
             str(html(t'<th scope="col">{self._title(name, schema)}</th>'))
             for name, schema in columns
         ]
+        columns_have_rules = any(extract_ui_info(schema).get('show_when') for _n, schema in columns)
         rows = []
         for item in items:
             data = item if isinstance(item, dict) else {}
-            cells = [str(self._cell(schema, data.get(name))) for name, schema in columns]
+            cells = [
+                str(self._cell(schema, data.get(name)))
+                if not columns_have_rules or is_shown(schema, data)
+                else '<td></td>'
+                for name, schema in columns
+            ]
             _cells = SafeHTML(''.join(cells))  # NOSONAR
             rows.append(str(html(t'<tr>{_cells}</tr>')))
         _headers = SafeHTML(''.join(headers))  # NOSONAR
@@ -283,8 +292,14 @@ class _DisplayRenderer:
         item_ref = resolve_list_item_ref(field_schema)
         definition = self._schema_defs.get(item_ref or '')
         if definition:
-            shown = [(n, s) for n, s in ordered_properties(definition) if self._is_shown(s)]
-            return self._table(shown, value if isinstance(value, list) else [])
+            items = value if isinstance(value, list) else []
+            # A column stays if any row shows it; other rows leave that cell blank.
+            shown = [
+                (n, s)
+                for n, s in ordered_properties(definition)
+                if self._is_shown(s) and any(is_shown(s, item) for item in items)
+            ]
+            return self._table(shown, items)
 
         # DataTableLayout.as_layout_value() bundles the rows with their model.
         model_cls = value.get('model_cls') if isinstance(value, dict) else None
@@ -302,7 +317,7 @@ class _DisplayRenderer:
         parts: list[str] = []
         rows: list[tuple[str, str, bool]] = []
         for name, field_schema in fields:
-            if not self._is_shown(field_schema):
+            if not self._is_shown(field_schema, values):
                 continue
             value = values.get(name)
             if self._is_composite(self._element(field_schema)):
@@ -342,7 +357,7 @@ class _DisplayRenderer:
         parts: list[str] = []
         pending: list[tuple[str, dict[str, Any]]] = []
         for name, field_schema in fields:
-            if name in edit_urls:
+            if name in edit_urls and is_shown(field_schema, data):
                 parts.append(self._fields(pending, data))
                 pending = []
                 parts.append(
@@ -370,6 +385,8 @@ def _grouped_content(
     for title, fields in engine.group_fields(metadata, layout, general_title):
         name = fields[0][0]
         if name in group_names:
+            if not is_shown(fields[0][1], values):
+                continue
             body = display.section(
                 name,
                 fields[0][1],
@@ -400,7 +417,11 @@ def render_display(
     edit_urls = dict(edit_urls or {})
     _check_edit_urls(edit_urls, metadata)
     plain = _plain(data)
-    values: dict[str, Any] = plain if isinstance(plain, dict) else {}
+    values, _errors = prune(
+        metadata.schema.get('properties') or {},
+        metadata.schema_defs,
+        plain if isinstance(plain, dict) else {},
+    )
     display = _DisplayRenderer(renderer, metadata.schema_defs)
 
     # A wizard is a way of filling a form in, not of reading it: flat.
