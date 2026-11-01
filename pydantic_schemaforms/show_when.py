@@ -11,10 +11,15 @@ rule on the sub-form field itself instead.
 
 from __future__ import annotations
 
+import json
 from enum import Enum
 from typing import Any
 
+from .form_data import _tokenize_form_path
+from .tstring import SafeHTML, html
+
 SHOW_WHEN_KEY = 'show_when'
+GROUP_RULE_KEY = 'ui_group_show_when'
 _OPERATORS = ('equals', 'in', 'truthy', 'not_empty')
 _FALSE_STRINGS = frozenset({'', '0', 'false', 'off', 'no'})
 
@@ -89,16 +94,22 @@ def lookup(scope: Any, path: str) -> Any:
     return current
 
 
-def _rule(field_schema: dict[str, Any]) -> dict[str, Any] | None:
+def _rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
+    """A field's own rule and its group's; schema_parser copies the latter to each field."""
+
     # A dynamically registered field keeps its ui_* keys under 'ui', unprefixed.
-    return field_schema.get('ui_show_when') or (field_schema.get('ui') or {}).get(SHOW_WHEN_KEY)
+    nested = field_schema.get('ui') or {}
+    candidates = (
+        field_schema.get('ui_show_when') or nested.get(SHOW_WHEN_KEY),
+        field_schema.get(GROUP_RULE_KEY) or nested.get('group_show_when'),
+    )
+    return [rule for rule in candidates if rule]
 
 
 def is_shown(field_schema: dict[str, Any], scope: Any) -> bool:
     """Whether a field shows, given the (already pruned) values of its own model."""
 
-    rule = _rule(field_schema)
-    return rule is None or rule_matches(rule, lookup(scope, rule['field']))
+    return all(rule_matches(rule, lookup(scope, rule['field'])) for rule in _rules(field_schema))
 
 
 def _ref(node: Any) -> str | None:
@@ -163,14 +174,15 @@ def _prune_sub_forms(
     return errors
 
 
-def _drop_hidden(pruned: dict[str, Any], ruled: dict[str, dict[str, Any]]) -> set[str]:
+def _drop_hidden(pruned: dict[str, Any], ruled: dict[str, list[dict[str, Any]]]) -> set[str]:
     # A field can depend on one that is itself hidden, in any declaration order.
     hidden: set[str] = set()
     for _pass in range(len(ruled)):
         newly_hidden = {
             name
-            for name, rule in ruled.items()
-            if name not in hidden and not rule_matches(rule, lookup(pruned, rule['field']))
+            for name, rules in ruled.items()
+            if name not in hidden
+            and not all(rule_matches(rule, lookup(pruned, rule['field'])) for rule in rules)
         }
         if not newly_hidden:
             break
@@ -197,19 +209,46 @@ def prune(
     pruned = dict(data)
     sub_errors = _prune_sub_forms(pruned, properties, schema_defs, path)
 
-    ruled = {name: rule for name, schema in properties.items() if (rule := _rule(schema))}
-    for name, rule in ruled.items():
-        _check_target(name, rule, properties, schema_defs)
+    ruled = {name: rules for name, schema in properties.items() if (rules := _rules(schema))}
+    for name, rules in ruled.items():
+        for rule in rules:
+            _check_target(name, rule, properties, schema_defs)
     hidden = _drop_hidden(pruned, ruled)
 
     depth = len(path)
     errors = [error for error in sub_errors if error['loc'][depth] not in hidden]
-    for name, rule in ruled.items():
+    for name, rules in ruled.items():
         value = pruned.get(name)
-        if name not in hidden and rule.get('required') and (value is False or _is_empty(value)):
+        required = any(rule.get('required') for rule in rules)
+        if name not in hidden and required and (value is False or _is_empty(value)):
             message = properties[name].get('unchecked_message') or 'Field required'
             errors.append({'loc': (*path, name), 'msg': message, 'type': 'missing'})
     return pruned, errors
+
+
+def show_when_wrapper(field_name: str, rule: dict[str, Any], markup: str, context: Any) -> SafeHTML:
+    """Wrap markup that a rule hides. ``field_name`` places the rule among its siblings."""
+
+    # A disabled fieldset disables everything inside it without touching each
+    # control, so a field's own ui_disabled survives being shown again.
+    prefix = field_name[: field_name.rfind('.') + 1]
+    scope: Any = context.form_data if context.visible_data is None else context.visible_data
+    for token in _tokenize_form_path(prefix.rstrip('.')):
+        if isinstance(token, int):
+            scope = scope[token] if isinstance(scope, list) and token < len(scope) else None
+        else:
+            scope = scope.get(token) if isinstance(scope, dict) else None
+    shown = rule_matches(rule, lookup(scope, rule['field']))
+    _state = SafeHTML('' if shown else ' hidden disabled')
+    target = f'{prefix}{rule["field"]}'  # NOSONAR - read in the t-string below
+    # The script only needs the test, not where it points.
+    test = json.dumps({k: v for k, v in rule.items() if k not in ('field', 'required')})  # NOSONAR
+    _markup = SafeHTML(str(markup))  # NOSONAR
+    return html(
+        t'<fieldset class="sf-show-when" data-show-when="{test}" '
+        t'data-show-when-target="{target}" '
+        t'style="border: 0; margin: 0; padding: 0; min-width: 0"{_state}>{_markup}</fieldset>'
+    )
 
 
 # Plain JavaScript in a Python string: a '#' comment here would kill the script.

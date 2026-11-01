@@ -18,10 +18,11 @@ from pydantic import BaseModel, SecretBytes, SecretStr
 from pydantic_schemaforms.show_when import is_shown, prune
 from pydantic_schemaforms.tstring import SafeHTML, html
 
-from .layout_engine import GROUPED_LAYOUTS, LayoutEngine, check_layout
+from .layout_engine import GROUPED_LAYOUTS, LayoutEngine, check_layout, is_sub_form_group
 from .schema_parser import (
     GROUP_ELEMENTS,
     SchemaMetadata,
+    arrange_fields,
     build_schema_metadata,
     extract_ui_info,
     ordered_properties,
@@ -311,6 +312,21 @@ class _DisplayRenderer:
         return self._generic(value)
 
     def _fields(self, fields: list[tuple[str, dict[str, Any]]], data: Any) -> str:
+        """Each ``ui_group`` as a titled section, in order. ``ui_cols`` is left out:
+        narrow columns of label-and-value pairs read worse than a list."""
+
+        parts: list[str] = []
+        for title, items in arrange_fields(fields):
+            body = self._ungrouped_fields(items, data)
+            if title is None or not body:
+                parts.append(body)
+            else:
+                parts.append(
+                    self._renderer._layout_engine._render_layout_card(title, body, '')  # noqa: SLF001
+                )
+        return '\n'.join(part for part in parts if part)
+
+    def _ungrouped_fields(self, fields: list[tuple[str, dict[str, Any]]], data: Any) -> str:
         """Definition lists for runs of plain fields, sections between them."""
 
         values = data if isinstance(data, dict) else {}
@@ -327,6 +343,9 @@ class _DisplayRenderer:
                 rows.append((self._title(name, field_schema), *self._text(field_schema, value)))
         parts.append(self._rows(rows))
         return '\n'.join(part for part in parts if part)
+
+    def ungrouped(self, fields: list[tuple[str, dict[str, Any]]], data: Any) -> str:
+        return self._ungrouped_fields(fields, data)
 
     def section(
         self,
@@ -383,19 +402,20 @@ def _grouped_content(
     in_group = layout != 'side-by-side'
     rendered = []
     for title, fields in engine.group_fields(metadata, layout, general_title):
-        name = fields[0][0]
-        if name in group_names:
-            if not is_shown(fields[0][1], values):
+        name, field_schema = fields[0]
+        if is_sub_form_group(fields, group_names):
+            if not is_shown(field_schema, values):
                 continue
             body = display.section(
                 name,
-                fields[0][1],
+                field_schema,
                 values.get(name),
                 in_group=in_group,
                 edit_url=edit_urls.get(name),
             )
         else:
-            body = display.top_level(fields, values, {})
+            # The tab, panel or card is the group's section, so it needs no second one.
+            body = display.ungrouped(fields, values)
             if not body:
                 continue
             if not in_group:

@@ -30,6 +30,7 @@ PAGES = {
     'data-table': '/employees/import?style=material',
     'validation': '/validation?style=material',
     'review': '/layouts/review?style=material',
+    'field-groups': '/layouts/field-groups?style=material',
     'review-gallery': '/gallery/review?style=material',
 }
 

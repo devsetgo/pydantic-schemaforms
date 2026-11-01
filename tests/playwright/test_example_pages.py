@@ -428,3 +428,34 @@ def test_show_when_inside_a_new_model_list_item(page: Page, examples_server_url:
     expect(note).to_be_visible()
     if last > 0:
         expect(block.locator('[name$=".gift_note"]').first).to_be_hidden()
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material', 'none'])
+def test_ui_cols_share_a_row_and_stack_when_narrow(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.set_viewport_size({'width': 1100, 'height': 800})
+    page.goto(f'{examples_server_url}/layouts/field-groups?style={style}')
+    first = page.locator('[name="first_name"]')
+    last = page.locator('[name="last_name"]')
+
+    assert first.bounding_box()['y'] == last.bounding_box()['y']
+    assert first.bounding_box()['x'] < last.bounding_box()['x']
+
+    page.set_viewport_size({'width': 500, 'height': 800})
+    assert first.bounding_box()['y'] < last.bounding_box()['y']
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_group_show_when_hides_the_whole_group(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/layouts/field-groups?style={style}')
+    company = page.locator('[name="company"]')
+
+    expect(company).to_be_visible()
+    expect(page.get_by_text('Invoice', exact=True)).to_be_visible()
+    page.locator('[name="wants_invoice"]').uncheck()
+    expect(company).to_be_hidden()
+    expect(company).to_be_disabled()
+    expect(page.get_by_text('Invoice', exact=True)).to_be_hidden()

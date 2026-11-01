@@ -170,7 +170,17 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     source = _example_source()
     for option in WIZARD_OPTIONS:
         assert f"'{option}'" in source, f'wizard_options key {option!r} is never used'
-    for field_option in ('ui_step_title', 'ui_collapsible', 'ui_collapsed'):
+    assert '/layouts/field-groups' in home
+    for field_option in (
+        'ui_step_title',
+        'ui_collapsible',
+        'ui_collapsed',
+        'ui_group',
+        'ui_cols',
+        'ui_group_collapsible',
+        'ui_group_collapsed',
+        'ui_group_show_when',
+    ):
         assert field_option in source, field_option
 
 

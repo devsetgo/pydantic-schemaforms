@@ -11,6 +11,10 @@ Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no s
 
 ### Added
 
+- `Field(ui_group="Contact")` puts fields under a titled section without nesting the data, and
+  a group can be its own tab, accordion panel or wizard step. `ui_cols=6` (1-12) sets a field's
+  width so consecutive fields share a row. `ui_group_collapsible`, `ui_group_collapsed` and
+  `ui_group_show_when` apply to a whole group. (#241)
 - `Field(ui_show_when={"field": "contact", "equals": "phone"})` hides a field until another
   field has a given value, with `in`, `truthy` and `not_empty` as well. A hidden field submits
   nothing and isn't validated, and `"required": True` makes a field required only while it
