@@ -21,6 +21,7 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 # which only registers itself if an app imports it), so this needs to be a
 # real, unconditional import here rather than the lazy per-call imports the
 # thin delegator methods below use for everything else in that module.
+from . import content_renderer as _content_renderer  # noqa: F401
 from . import model_list_renderer as _model_list_renderer  # noqa: F401
 from . import nested_model_renderer as _nested_model_renderer  # noqa: F401
 

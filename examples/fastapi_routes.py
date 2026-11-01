@@ -1134,7 +1134,7 @@ async def gallery_get(
             'title': 'Widget Gallery - Tabbed by Category',
             'description': 'Every input type, alias, and widget option, grouped into tabs: '
             'Text, Checkboxes & Toggles, Numeric, Selection, Date & Time, '
-            'Files & Specialized, and Field Options',
+            'Content & Consent, Files & Specialized, and Field Options',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,

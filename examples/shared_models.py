@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pydantic import EmailStr, field_validator, model_validator
 
 from pydantic_schemaforms import (
+    html,
     CustomRule,
     DateRangeRule,
     EmailDeliverabilityRule,
@@ -2575,6 +2576,12 @@ _LANGUAGES = [
 ]
 
 
+_LONG_TERMS = ' '.join(
+    f'Clause {number}: this made-up disclosure is long enough to need its own scrollbar.'
+    for number in range(1, 25)
+)
+
+
 class TextInputsGalleryForm(FormModel):
     """Text-family widgets: plain, multi-line/code, masked, and formatted."""
 
@@ -2991,6 +2998,42 @@ class DateTimeGalleryForm(FormModel):
     )
 
 
+class ContentGalleryForm(FormModel):
+    # Text is escaped by default; html(t'...') allows links and lists.
+    intro: None = Field(
+        ui_element='content',
+        ui_content='A content block is text between fields. <b>This is escaped</b>, not bold.',
+    )
+    rich_block: None = Field(
+        ui_element='content',
+        title='Content block with a heading',
+        ui_content=html(
+            t'<p>Built with <code>html(t"...")</code>, so it can hold '
+            t'<a href="/input-types">links</a> and lists:</p><ul><li>One</li><li>Two</li></ul>'
+        ),
+    )
+    long_block: None = Field(
+        ui_element='content',
+        title='Scrollable content block',
+        ui_content=_LONG_TERMS,
+        ui_options={'scrollable': True},
+    )
+    newsletter_consent: bool = Field(
+        False,
+        ui_element='consent',
+        title='I would like the newsletter',
+        ui_content='We send one email a month, and you can leave at any time.',
+    )
+    long_consent: bool = Field(
+        False,
+        ui_element='consent',
+        title='I have read this disclosure',
+        ui_content=_LONG_TERMS,
+        ui_options={'scrollable': True},
+        ui_help_text='A consent field can also have help text.',
+    )
+
+
 class SpecializedGalleryForm(FormModel):
     """Files and other specialized widgets."""
 
@@ -3073,6 +3116,7 @@ class WidgetGalleryForm(FormModel):
     numeric_inputs: NumericGalleryForm = Field(title='Numeric Inputs')
     selection_inputs: SelectionGalleryForm = Field(title='Selection Inputs')
     date_time: DateTimeGalleryForm = Field(title='Date & Time')
+    content: ContentGalleryForm = Field(title='Content & Consent')
     files_specialized: SpecializedGalleryForm = Field(title='Files & Specialized')
     field_options: FieldOptionsGalleryForm = Field(title='Field Options')
 
@@ -3118,6 +3162,13 @@ class ValidationShowcaseForm(FormModel):
     accept_terms: Literal[True] = Field(
         title='I accept the terms (Literal[True] + unchecked_message)',
         unchecked_message='You must accept the terms to continue',
+    )
+    # The same, with text the user is agreeing to
+    accept_disclosure: Literal[True] = Field(
+        ui_element='consent',
+        title='I have read this disclosure (consent + unchecked_message)',
+        ui_content='We keep your answers for 30 days and then delete them.',
+        unchecked_message='Please confirm you have read the disclosure',
     )
 
     # Validators

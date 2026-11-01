@@ -195,6 +195,11 @@ agree: bool = Field(False, ui_element='checkbox', title='I accept the terms')
 enabled: bool = Field(True, ui_element='toggle')
 ```
 
+**`consent`** — Text the user must agree to, with a checkbox. Type it Literal[True] when it must be ticked. ui_options: scrollable=True for long text. Text is escaped unless built with html(t'...').
+```python
+terms: Literal[True] = Field(ui_element='consent', ui_content='Our terms...')
+```
+
 **`checkbox_group`** — Multiple booleans from one field, rendered as a group of checkboxes. ui_options collapsible=True turns the legend into a toggle that shows/hides the options -- purely presentational, does not affect required-ness.
 ```python
 channels: list[str] = Field(default_factory=list, ui_element='checkbox_group',
@@ -233,6 +238,11 @@ city: str = Field('', ui_element='combobox',
 ```
 
 ### Files & Specialized Inputs
+
+**`content`** — Text between fields. Submits nothing and is left out of validation and the returned data. title= adds a heading. ui_options: scrollable=True for long text. Text is escaped unless built with html(t'...').
+```python
+intro: None = Field(ui_element='content', ui_content='Tell us about yourself.')
+```
 
 **`file`** — File upload input.
 ```python

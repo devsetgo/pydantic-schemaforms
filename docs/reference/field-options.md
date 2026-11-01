@@ -35,6 +35,28 @@ the Pydantic constraints.
 | `ui_style="..."` | Inline CSS on the input |
 | `unchecked_message="..."` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
 
+## Text in a form
+
+| Option | What it does |
+|---|---|
+| `ui_content="..."` | The text of a `content` block or `consent` field. It is escaped; build it with `html(t'...')` to include links or lists |
+| `ui_options={"scrollable": True}` | Puts long text in a scrollable box |
+
+```python
+class Application(FormModel):
+    intro: None = Field(ui_element="content", ui_content="Tell us about yourself.")
+    terms: Literal[True] = Field(
+        ui_element="consent",
+        title="I agree to the terms",
+        ui_content=html(t'<p>Read <a href="/terms">the terms</a> first.</p>'),
+        unchecked_message="Please agree to continue",
+    )
+```
+
+A `content` field submits nothing and is left out of validation, `result.data`
+and `as_api_model()`, so it needs no default. A `consent` field is a checkbox with
+text above it, and validates like any other checkbox.
+
 ## Sub-forms and lists
 
 Options on a field typed as a `FormModel` or a `list` of one, described in
