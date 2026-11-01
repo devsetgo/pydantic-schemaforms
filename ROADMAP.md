@@ -37,6 +37,8 @@ All phase 1 items are done; they ship as release 26.4.3.
 
 ## Phase 2: Display-only content
 
+All phase 2 items are done; they ship as release 26.4.5.
+
 Forms and pages gain content that isn't an input. Content blocks and display mode need the same new theme markup, so they're built together, after two small cleanups so that markup is added once.
 
 | # | Item | Status | Why in this order |
@@ -47,6 +49,8 @@ Forms and pages gain content that isn't an input. Content blocks and display mod
 | 13 | [#238](https://github.com/devsetgo/pydantic-schemaforms/issues/238) Read-only display mode | Done ([#306](https://github.com/devsetgo/pydantic-schemaforms/pull/306)) | Replaces the f-string confirmation pages users write today, which are an XSS risk, and supplies the display templates the wizard review step (#250) needs. Must decide how a content block from #274 appears in display mode. |
 
 ## Phase 3: Form structure
+
+All phase 3 items are done; they ship as release 26.4.5.
 
 Both items change the layout engine, and both must work with the display mode from phase 2.
 

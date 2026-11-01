@@ -56,6 +56,41 @@ def check_rule(rule: Any) -> dict[str, Any]:
     return checked
 
 
+def check_field_options(
+    *,
+    has_default: bool,
+    ui_show_when: Any,
+    ui_group: Any,
+    ui_cols: Any,
+    ui_group_show_when: Any,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """Validate the rule and layout options shared by ``Field()`` and ``FormField()``,
+    and return both rules in JSON-safe form."""
+
+    if ui_cols is not None and (
+        not isinstance(ui_cols, int) or isinstance(ui_cols, bool) or not 1 <= ui_cols <= 12
+    ):
+        raise ValueError(f'ui_cols must be a whole number from 1 to 12, not {ui_cols!r}')
+    if ui_group is not None and (not isinstance(ui_group, str) or not ui_group.strip()):
+        raise ValueError('ui_group must be a non-empty title')
+    if ui_group_show_when is not None:
+        if ui_group is None:
+            raise ValueError('ui_group_show_when needs ui_group on the same field')
+        ui_group_show_when = check_rule(ui_group_show_when)
+        if ui_group_show_when.get('required'):
+            raise ValueError(
+                'ui_group_show_when can\'t say "required"; put it on the field\'s own ui_show_when'
+            )
+    if ui_show_when is not None:
+        ui_show_when = check_rule(ui_show_when)
+        if not has_default:
+            raise ValueError(
+                'A field with ui_show_when needs a default, since it submits nothing while '
+                'hidden. For a value required only while shown, add "required": True to the rule.'
+            )
+    return ui_show_when, ui_group_show_when
+
+
 def _is_truthy(value: Any) -> bool:
     value = _plain(value)
     if isinstance(value, str):
@@ -94,8 +129,10 @@ def lookup(scope: Any, path: str) -> Any:
     return current
 
 
-def _rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
-    """A field's own rule and its group's; schema_parser copies the latter to each field."""
+def field_rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
+    """A field's own rule and its group's. schema_parser copies the group's rule to each
+    of its fields; the layout engine removes it again from fields whose group it wraps
+    as a whole, so a field renders it only where no group wrapper exists (list items)."""
 
     # A dynamically registered field keeps its ui_* keys under 'ui', unprefixed.
     nested = field_schema.get('ui') or {}
@@ -109,7 +146,9 @@ def _rules(field_schema: dict[str, Any]) -> list[dict[str, Any]]:
 def is_shown(field_schema: dict[str, Any], scope: Any) -> bool:
     """Whether a field shows, given the (already pruned) values of its own model."""
 
-    return all(rule_matches(rule, lookup(scope, rule['field'])) for rule in _rules(field_schema))
+    return all(
+        rule_matches(rule, lookup(scope, rule['field'])) for rule in field_rules(field_schema)
+    )
 
 
 def _ref(node: Any) -> str | None:
@@ -209,7 +248,7 @@ def prune(
     pruned = dict(data)
     sub_errors = _prune_sub_forms(pruned, properties, schema_defs, path)
 
-    ruled = {name: rules for name, schema in properties.items() if (rules := _rules(schema))}
+    ruled = {name: rules for name, schema in properties.items() if (rules := field_rules(schema))}
     for name, rules in ruled.items():
         for rule in rules:
             _check_target(name, rule, properties, schema_defs)

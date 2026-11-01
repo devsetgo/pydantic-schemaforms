@@ -74,6 +74,9 @@ the tokens on the form itself: a value on an ancestor doesn't reach it.
 | Sub-forms and list items | Outlined cards; collapsible ones use `<details>` |
 | Tabs, accordion, wizard | Primary tabs, divided list, numbered stepper |
 
+`render_display()` shares the same tokens: its lists use `.md-display`, with
+`.md-display__term` and `.md-display__value`, and its tables use `.md-table`.
+
 ## What isn't Material Design 3
 
 - A `select` opens the browser's own menu; only the closed field is styled.

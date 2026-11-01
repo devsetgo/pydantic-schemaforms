@@ -259,6 +259,35 @@ def test_group_rule_inside_a_sub_form():
     assert Parent.validate({'child': {'a': 'smuggled'}}).data['child']['a'] == 'stays-default'
 
 
+def test_a_group_rule_inside_list_items_hides_each_field_in_the_browser_too():
+    class Gift(FormModel):
+        gift: bool = Field(False, title='Gift')
+        note: str = Field(
+            '', title='Note', ui_group='Wrap', ui_group_show_when={'field': 'gift', 'truthy': True}
+        )
+        paper: str = Field('', title='Paper', ui_group='Wrap')
+
+    class Order(FormModel):
+        items: list[Gift] = Field(default_factory=list, title='Items')
+
+    rendered = _render(Order, data={'items': [{'gift': False}, {'gift': True}]})
+
+    # Item 0 is also rendered once more as the hidden template, so count item 1.
+    assert rendered.count('data-show-when-target="items[1].gift"') == 2
+    assert 'hidden disabled' in rendered.split('name="items[0].note"')[0].rsplit('<fieldset', 1)[1]
+    assert 'hidden' not in rendered.split('name="items[1].note"')[0].rsplit('<fieldset', 1)[1]
+    submitted = Order.validate(
+        {'items': [{'gift': False, 'note': 'smuggled'}, {'gift': True, 'note': 'kept'}]}
+    )
+    assert [item['note'] for item in submitted.data['items']] == ['', 'kept']
+
+
+def test_a_group_rule_at_the_top_level_wraps_the_section_only_once():
+    rendered = _render(Hidden)
+
+    assert rendered.count('data-show-when-target="on"') == 1
+
+
 def test_model_list_items_ignore_groups_and_widths():
     class Item(FormModel):
         a: str = Field('', title='A', ui_group='Ignored', ui_cols=6)

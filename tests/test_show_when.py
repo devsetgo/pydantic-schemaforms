@@ -5,7 +5,7 @@ from enum import Enum
 import pytest
 from starlette.datastructures import FormData
 
-from pydantic_schemaforms import Field, FormModel
+from pydantic_schemaforms import Field, FormField, FormModel
 from pydantic_schemaforms.show_when import check_rule, rule_matches
 
 FRAMEWORKS = ['bootstrap', 'material', 'none']
@@ -105,6 +105,26 @@ def test_bad_rules_are_rejected(rule):
 def test_enum_values_become_json_safe():
     assert check_rule({'field': 'k', 'equals': Kind.A})['equals'] == 'a'
     assert check_rule({'field': 'k', 'in': [Kind.A, Kind.B]})['in'] == ['a', 'b']
+
+
+def test_form_field_applies_the_same_checks():
+    with pytest.raises(ValueError, match='ui_show_when'):
+        FormField('', ui_show_when={'field': 'kind', 'equal': 'a'})
+    with pytest.raises(ValueError, match='needs a default'):
+        FormField(title='Note', ui_show_when={'field': 'kind', 'equals': 'a'})
+    with pytest.raises(ValueError, match='ui_cols'):
+        FormField('', ui_cols=99)
+    with pytest.raises(ValueError, match='needs ui_group'):
+        FormField('', ui_group_show_when={'field': 'kind', 'truthy': True})
+
+    class Form(FormModel):
+        kind: Kind = FormField(Kind.A, title='Kind')
+        note: str = FormField(
+            '', title='Note', ui_show_when={'field': 'kind', 'equals': Kind.B}, ui_cols=6
+        )
+
+    assert Form.validate({'kind': 'a', 'note': 'smuggled'}).data['note'] == ''
+    assert Form.validate({'kind': 'b', 'note': 'kept'}).data['note'] == 'kept'
 
 
 def test_a_rule_field_needs_a_default():

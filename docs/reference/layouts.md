@@ -21,6 +21,9 @@ An unknown value raises `ValueError`.
 
 ## Groups
 
+Fields sharing a `ui_group` title also form a group, so a flat model can use these
+layouts too; see [Group fields without nesting](../tutorial/layouts.md#group-fields-without-nesting).
+
 The grouped layouts (`tabbed`, `side-by-side`, `accordion`, `wizard`) arrange
 **groups**:
 

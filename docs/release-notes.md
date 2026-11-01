@@ -7,7 +7,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
-## [Unreleased]
+## [26.4.5] — 2026-11-01
+
+Forms can now respond to what's entered and show answers back: conditional fields,
+field groups and grid widths in one model, read-only review pages, and text and consent
+blocks between fields. There are no breaking changes for apps using the public API.
+
+### ✨ Added
+
+- `Field(ui_group="Contact")` puts fields under a titled section without nesting the data, and
+  a group can be its own tab, accordion panel or wizard step. `ui_cols=6` (1-12) sets a field's
+  width so consecutive fields share a row. `ui_group_collapsible`, `ui_group_collapsed` and
+  `ui_group_show_when` apply to a whole group. ([#241](https://github.com/devsetgo/pydantic-schemaforms/pull/241))
+- `Field(ui_show_when={"field": "contact", "equals": "phone"})` hides a field until another
+  field has a given value, with `in`, `truthy` and `not_empty` as well. A hidden field submits
+  nothing and isn't validated, and `"required": True` makes a field required only while it
+  shows. It works inside sub-forms and `model_list` items, and display mode leaves hidden
+  fields out. ([#237](https://github.com/devsetgo/pydantic-schemaforms/pull/237))
+- `FormModel.render_display(data, framework=..., layout=..., edit_urls=...)` shows validated
+  data read-only, as a review or confirmation page, with the form's labels, order and
+  sections. Selects show their label, booleans Yes or No, and `model_list` a table. Passwords
+  are masked, card and social security numbers show only their last four digits, and content
+  blocks are left out. ([#238](https://github.com/devsetgo/pydantic-schemaforms/pull/238))
+- `Field(ui_element="content", ui_content=...)` puts text between fields. It submits
+  nothing and is left out of validation and the returned data. ([#274](https://github.com/devsetgo/pydantic-schemaforms/pull/274))
+- `Field(ui_element="consent", ui_content=...)` pairs text with a checkbox, with
+  `ui_options={"scrollable": True}` for long text. ([#274](https://github.com/devsetgo/pydantic-schemaforms/pull/274))
+
+### 🗑️ Removed
+
+- The internal `FRAMEWORKS` dict, `get_framework_config()` and the renderer's `config`
+  attribute. Each style's classes now live on its theme, and rendered output is
+  unchanged. ([#281](https://github.com/devsetgo/pydantic-schemaforms/pull/281))
+
+### 🐛 Fixed
+
+- Bootstrap select, multiselect, combobox, radio and checkbox group fields no longer
+  render a second `mb-3` wrapper. Spacing is unchanged. ([#280](https://github.com/devsetgo/pydantic-schemaforms/pull/280))
 
 ## [26.4.4] — 2026-10-31
 
@@ -892,3 +928,4 @@ Happy 250th Birthday USA!!!!
 
 #### 🙌 Contributors
 [@devsetgo](https://github.com/devsetgo)
+

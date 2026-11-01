@@ -13,7 +13,7 @@ from pydantic_schemaforms.rendering.context import RenderContext
 from pydantic_schemaforms.rendering.frameworks import get_input_component
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
 from pydantic_schemaforms.error_tree import child_errors, field_message
-from pydantic_schemaforms.show_when import show_when_wrapper
+from pydantic_schemaforms.show_when import field_rules, show_when_wrapper
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info, resolve_ui_element
 from pydantic_schemaforms.rendering.themes import RendererTheme
 from pydantic_schemaforms.tstring import SafeHTML, html
@@ -58,7 +58,8 @@ _FORMAT_UI_ELEMENTS = {
 
 
 def _applies_show_when(render_field: Callable[..., str]) -> Callable[..., str]:
-    """Wrap a field with a ``ui_show_when`` rule; every field renders through here."""
+    """Wrap a field with its ``ui_show_when`` rule, and with its group's rule when the
+    layout engine left it on the schema; every field renders through here."""
 
     @wraps(render_field)
     def wrapper(
@@ -71,15 +72,17 @@ def _applies_show_when(render_field: Callable[..., str]) -> Callable[..., str]:
         context: RenderContext | None = None,
         layout: str = 'vertical',
     ) -> str:
-        rule = extract_ui_info(field_schema).get('show_when')
-        if rule and rule.get('required'):
+        rules = field_rules(field_schema)
+        if any(rule.get('required') for rule in rules):
             required_fields = [*(required_fields or []), field_name]
         markup = render_field(
             self, field_name, field_schema, value, error, required_fields, context, layout
         )
-        if not rule or context is None:
+        if context is None:
             return markup
-        return show_when_wrapper(field_name, rule, markup, context)
+        for rule in rules:
+            markup = show_when_wrapper(field_name, rule, markup, context)
+        return markup
 
     return wrapper
 

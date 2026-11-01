@@ -10,6 +10,8 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic import Field as PydanticField
 
+from .show_when import check_field_options
+
 from .input_types import format_icon_class, get_default_input_type, is_input_type_valid
 
 
@@ -93,6 +95,18 @@ class FormField:
             autofocus: Whether the field should auto-focus
             **kwargs: Additional parameters
         """
+
+        show_when, group_show_when = check_field_options(
+            has_default=default is not ... or default_factory is not None,
+            ui_show_when=kwargs.get('ui_show_when'),
+            ui_group=kwargs.get('ui_group'),
+            ui_cols=kwargs.get('ui_cols'),
+            ui_group_show_when=kwargs.get('ui_group_show_when'),
+        )
+        if show_when is not None:
+            kwargs['ui_show_when'] = show_when
+        if group_show_when is not None:
+            kwargs['ui_group_show_when'] = group_show_when
 
         # Map min/max_value to Pydantic constraints
         if min_value is not None:
