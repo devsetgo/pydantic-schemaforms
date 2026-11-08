@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -27,6 +28,9 @@ if TYPE_CHECKING:
 # Wire names, owned by the library: apps never read or write them.
 STEP_FIELD = '_sf_wizard_step'
 ACTION_FIELD = '_sf_wizard'
+# The data a review_step wizard was first rendered with, carried through a failed
+# submit so the review still marks what changed since then.
+ORIGINAL_FIELD = '_sf_original'
 _SAVED_FILE_KEY = '__sf_saved_file__'
 _DRAFT_VERSION = 1
 
@@ -123,6 +127,23 @@ def _from_json(value: Any) -> Any:
     if isinstance(value, list):
         return [_from_json(item) for item in value]
     return value
+
+
+def original_to_json(data: Any) -> str:
+    from pydantic_core import to_jsonable_python
+
+    return json.dumps(to_jsonable_python(_to_json(data), fallback=str))
+
+
+def original_from_json(text: Any) -> Any:
+    """The starting values back from ``ORIGINAL_FIELD``; None if absent or unreadable."""
+
+    if not isinstance(text, str) or not text:
+        return None
+    try:
+        return _from_json(json.loads(text))
+    except ValueError:
+        return None
 
 
 def _is_blank(value: Any) -> bool:

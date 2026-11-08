@@ -144,6 +144,7 @@ class _DisplayRenderer:
         schema_defs: dict[str, Any],
         *,
         live: bool = False,
+        compare: bool = False,
     ) -> None:
         self._renderer = renderer
         self._schema_defs = schema_defs
@@ -152,6 +153,9 @@ class _DisplayRenderer:
         # live: a wizard review step filled in the browser. Each value carries a
         # slot naming its input, relative to the list item it sits in.
         self._live = live
+        # compare: each slot also carries its starting text, for the script to
+        # mark what changed (#318).
+        self._compare = compare
         self._path: list[str] = []
 
     @contextmanager
@@ -170,20 +174,24 @@ class _DisplayRenderer:
         finally:
             self._path = saved
 
-    def _slot(self, name: str, field_schema: dict[str, Any]) -> SafeHTML:
+    def _slot(self, name: str, field_schema: dict[str, Any], text: str, is_empty: bool) -> SafeHTML:
         """``data-review-*`` attributes telling the review script how to show a value."""
 
         if not self._live:
             return SafeHTML('')
         slot = '.'.join([*self._path, name])  # NOSONAR - read in the t-strings below
         kind = _slot_kind(self._element(field_schema), field_schema)  # NOSONAR
+        initial = '' if is_empty else text  # NOSONAR
+        _initial = (  # NOSONAR
+            html(t' data-review-initial="{initial}"') if self._compare else SafeHTML('')
+        )
         if kind == 'choice':
             labels = json.dumps(self._choice_map(field_schema))  # NOSONAR
             return html(
                 t' data-review-slot="{slot}" data-review-format="choice"'
-                t' data-review-choices="{labels}"'
+                t' data-review-choices="{labels}"{_initial}'
             )
-        return html(t' data-review-slot="{slot}" data-review-format="{kind}"')
+        return html(t' data-review-slot="{slot}" data-review-format="{kind}"{_initial}')
 
     def _element(self, field_schema: dict[str, Any]) -> str:
         if field_schema.get('format') == 'password':
@@ -339,7 +347,10 @@ class _DisplayRenderer:
 
         list_name = '.'.join(self._path)  # NOSONAR - read in the t-string below
         with self._list_item():
+            # A new item has nothing to compare with; matched rows get theirs in the browser.
+            compare, self._compare = self._compare, False
             row_template = ''.join(str(self._cell(name, schema, None)) for name, schema in columns)
+            self._compare = compare
             static = self._live_rows(columns, items)
         theme = self._theme
         wrapper_class = theme.display_class('table_wrapper')  # NOSONAR
@@ -374,7 +385,12 @@ class _DisplayRenderer:
             _cells = SafeHTML(  # NOSONAR
                 ''.join(str(self._cell(name, schema, data.get(name))) for name, schema in columns)
             )
-            rows.append(str(html(t'<tr>{_cells}</tr>')))
+            # Compared, these are the starting rows the script matches live items against.
+            # Their own (empty) row scope keeps their slots out of the top-level fill.
+            _marker = SafeHTML(  # NOSONAR
+                ' data-review-original data-review-row=""' if self._compare else ''
+            )
+            rows.append(str(html(t'<tr{_marker}>{_cells}</tr>')))
         return ''.join(rows)
 
     def _cell(self, name: str, field_schema: dict[str, Any], value: Any) -> SafeHTML:
@@ -385,7 +401,7 @@ class _DisplayRenderer:
         text, is_empty = self._text(field_schema, value)
         extra_class, _style = self._value_markup(text, is_empty)
         _class = html(t' class="{extra_class}"') if extra_class else SafeHTML('')  # NOSONAR
-        _slot = self._slot(name, field_schema)  # NOSONAR
+        _slot = self._slot(name, field_schema, text, is_empty)  # NOSONAR
         return html(t'<td{_class}{_style}{_slot}>{text}</td>')
 
     @staticmethod
@@ -471,9 +487,8 @@ class _DisplayRenderer:
                 rows = []
             else:
                 title = self._title(name, field_schema)
-                rows.append(
-                    (title, *self._text(field_schema, value), self._slot(name, field_schema))
-                )
+                text, is_empty = self._text(field_schema, value)
+                rows.append((title, text, is_empty, self._slot(name, field_schema, text, is_empty)))
         parts.append(self._rows(rows))
         return '\n'.join(part for part in parts if part)
 
@@ -621,21 +636,25 @@ def render_review_step(
     *,
     live: bool,
     edit_label: str,
+    original: Any = None,
 ) -> str:
     """A wizard's review step: each step's answers under its title, with an Edit button.
 
     ``live`` (one POST): slots the wizard script fills from the inputs whenever
     the step opens. Otherwise (``save_steps``): the saved data, and Edit posts
-    a jump back like the step header does.
+    a jump back like the step header does. ``original``, live only: the data
+    the wizard started with, rendered as each slot's starting value so the
+    script can show what changed.
     """
 
-    plain = _plain(data)
+    compare = live and original is not None
+    plain = _plain(original if compare else data)
     values, _errors = prune(
         metadata.schema.get('properties') or {},
         metadata.schema_defs,
         plain if isinstance(plain, dict) else {},
     )
-    display = _DisplayRenderer(renderer, metadata.schema_defs, live=live)
+    display = _DisplayRenderer(renderer, metadata.schema_defs, live=live, compare=compare)
     engine = renderer._layout_engine  # noqa: SLF001
     theme = renderer.theme
     group_names = {name for name, _schema in metadata.group_fields}

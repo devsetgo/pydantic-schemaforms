@@ -124,6 +124,10 @@ wizard_options = {"review_step": {"title": "Check your answers", "edit_label": "
 `True` uses the title "Review" and the label "Edit". It also works with
 `save_steps`, where the review is rendered on the server from the saved draft.
 
+When the wizard is rendered with existing data, as an edit form is, the review
+shows each changed answer as **old → new**, so users see what they changed
+before they submit. Nothing to set up: pass the data as usual.
+
 ??? note "Layouts for content that isn't a form field"
 
     The library also has layout building blocks, such as a grid, tabs and

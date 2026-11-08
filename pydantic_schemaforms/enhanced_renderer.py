@@ -31,7 +31,9 @@ from .rendering.layout_engine import (
     GROUPED_LAYOUTS,
     LayoutEngine,
     check_layout,
+    NO_ORIGINAL,
     check_wizard_options,
+    review_options,
     wizard_step_count,
 )
 from .rendering.schema_parser import (
@@ -99,6 +101,29 @@ def _step_state(layout: str, wizard_options: dict[str, Any], draft: Any) -> Any:
     if draft is not None:
         raise TypeError("draft= needs layout='wizard' and wizard_options={'save_steps': True}")
     return None
+
+
+def _review_original(
+    layout: str,
+    wizard_options: dict[str, Any],
+    step_state: Any,
+    data: dict[str, Any],
+    *,
+    passed: bool,
+) -> Any:
+    """What a review step compares against: the data the wizard was first
+    rendered with, read back from the hidden field after a failed submit.
+    ``NO_ORIGINAL`` when there is no live review step; None when there is one
+    but nothing to compare (a fresh form)."""
+
+    from .wizard_steps import ORIGINAL_FIELD, original_from_json, original_to_json
+
+    carried = data.pop(ORIGINAL_FIELD, None)
+    if layout != 'wizard' or step_state is not None or not review_options(wizard_options):
+        return NO_ORIGINAL
+    if carried is not None:
+        return original_from_json(carried)
+    return original_from_json(original_to_json(data)) if passed else None
 
 
 def _on_last_step(
@@ -276,11 +301,13 @@ class EnhancedFormRenderer:
         # that was passed, such as a submission being re-rendered, is used as
         # is: an unticked checkbox is simply absent from a submission, so
         # filling in its default would tick it again.
+        data_passed = data is not None
         if data is None:
             data = self._model_defaults(model_cls)
             if step_state is not None:
                 data = {**data, **step_state.data}
         data = _render_values(data)
+        original = _review_original(layout, wizard_options, step_state, data, passed=data_passed)
 
         # Keep backward compatibility for callers still passing these via kwargs.
         include_csrf = bool(kwargs.pop('include_csrf', False))
@@ -333,6 +360,7 @@ class EnhancedFormRenderer:
                     general_title=_general_group_title(model_cls, metadata),
                     wizard_options=wizard_options,
                     step_state=step_state,
+                    original=original,
                 )
             )
         else:

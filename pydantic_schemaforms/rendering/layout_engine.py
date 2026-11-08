@@ -58,6 +58,8 @@ GRID_CLASS = 'sf-grid'
 # Leading space: appended directly after another class in the templates.
 _ACTIVE_CLASS = ' active'
 _SCRIPT_RE = re.compile(r'<script\b.*?</script>', re.DOTALL)
+# render_groups(original=...) when the form has no live review step to compare in.
+NO_ORIGINAL: Any = object()
 
 
 def _unique_id_prefix(kind: str) -> str:
@@ -384,6 +386,7 @@ class WizardLayout(BaseLayout):
         next_label: str = 'Next',
         save_steps: bool = False,
         reached: int = 0,
+        original_json: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(content='', **kwargs)
@@ -396,6 +399,8 @@ class WizardLayout(BaseLayout):
         # save_steps: one step per page, posted by real submit buttons, no script.
         self.save_steps = save_steps
         self.reached = reached
+        # A review step's starting values, posted back so a failed submit keeps them.
+        self.original_json = original_json
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
@@ -435,6 +440,10 @@ class WizardLayout(BaseLayout):
                 templates.wizard_step_state.render(
                     step=str(self.active_index), next_label=self.next_label
                 )
+            )
+        if self.original_json is not None:
+            hidden_html += str(
+                html(t'<input type="hidden" name="_sf_original" value="{self.original_json}">')
             )
         return templates.wizard_layout.render(
             layout_class=layout_class,
@@ -827,6 +836,7 @@ class LayoutEngine:
         general_title: str = 'General',
         wizard_options: dict[str, Any] | None = None,
         step_state: Any = None,
+        original: Any = NO_ORIGINAL,
     ) -> list[str]:
         """Render a parent form as groups -- its own plain fields first, then
         one group per sub-form field (nested model, model_list, layout field),
@@ -871,9 +881,15 @@ class LayoutEngine:
             )
             rendered.append({'title': title, 'content': content, 'has_error': group_has_error})
         if review:
-            rendered.append(self._review_group(metadata, data, groups, review, current))
+            rendered.append(self._review_group(metadata, data, groups, review, current, original))
 
         component_options = {k: v for k, v in (wizard_options or {}).items() if k != 'review_step'}
+        if original is not NO_ORIGINAL:
+            from pydantic_schemaforms.wizard_steps import original_to_json
+
+            component_options['original_json'] = (
+                original_to_json(original) if original is not None else ''
+            )
         return [
             self.render_group_component(
                 rendered, mode, active_index=active_index or 0, wizard_options=component_options
@@ -887,6 +903,7 @@ class LayoutEngine:
         groups: list[tuple[str, FieldList]],
         review: dict[str, str],
         current: int | None,
+        original: Any = NO_ORIGINAL,
     ) -> dict[str, Any]:
         """The wizard's review step. ``current`` is set only for save_steps, whose
         page renders the review just when it is the step being shown."""
@@ -897,7 +914,13 @@ class LayoutEngine:
         content = ''
         if live or current == len(groups):
             content = render_review_step(
-                self._renderer, metadata, data, groups, live=live, edit_label=review['edit_label']
+                self._renderer,
+                metadata,
+                data,
+                groups,
+                live=live,
+                edit_label=review['edit_label'],
+                original=None if original is NO_ORIGINAL else original,
             )
         return {'title': review['title'], 'content': content, 'has_error': False}
 
