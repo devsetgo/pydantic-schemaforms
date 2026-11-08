@@ -671,6 +671,36 @@ def _default_wizard_step(
 DEFAULT_WIZARD_STEP_TEMPLATE = TemplateString(_default_wizard_step)
 
 
+def _saved_steps_footer(
+    back_class: str,
+    next_class: str,
+    back_label: str,
+    next_label: str,
+    *,
+    show_back: bool,
+    show_next: bool,
+) -> SafeHTML:
+    """A save_steps wizard's Back and Next: submit buttons that post the step."""
+
+    def button(css: str, action: str, label: str, marker: SafeHTML) -> SafeHTML:
+        _class = html(t' class="{css}"') if css else SafeHTML('')  # NOSONAR
+        return html(
+            t'<button type="submit"{_class} name="_sf_wizard" value="{action}" {marker}>{label}</button>'
+        )
+
+    _back = (  # NOSONAR
+        button(back_class, 'back', back_label, SafeHTML('data-wizard-back'))
+        if show_back
+        else SafeHTML('')
+    )
+    _next = (  # NOSONAR
+        button(next_class, 'next', next_label, SafeHTML('data-wizard-next'))
+        if show_next
+        else SafeHTML('')
+    )
+    return html(t'<div class="wizard-footer">{_back}{_next}</div>')
+
+
 def _default_wizard_footer(
     *,
     back_label: str = 'Back',
@@ -681,21 +711,14 @@ def _default_wizard_footer(
     **_: Any,
 ) -> SafeHTML:
     if save_steps:
-        _back = (  # NOSONAR
-            html(
-                t'<button type="submit" class="btn btn-outline-secondary" name="_sf_wizard" value="back" data-wizard-back>{back_label}</button>'
-            )
-            if show_back
-            else SafeHTML('')
+        return _saved_steps_footer(
+            'btn btn-outline-secondary',
+            'btn btn-primary',
+            back_label,
+            next_label,
+            show_back=bool(show_back),
+            show_next=bool(show_next),
         )
-        _next = (  # NOSONAR
-            html(
-                t'<button type="submit" class="btn btn-primary" name="_sf_wizard" value="next" data-wizard-next>{next_label}</button>'
-            )
-            if show_next
-            else SafeHTML('')
-        )
-        return html(t'<div class="wizard-footer">{_back}{_next}</div>')
     return html(t"""
 <div class="wizard-footer">
     <button type="button" class="btn btn-outline-secondary" data-wizard-back>{back_label}</button>
@@ -729,21 +752,9 @@ def _plain_wizard_footer(
     **_: Any,
 ) -> SafeHTML:
     if save_steps:
-        _back = (  # NOSONAR
-            html(
-                t'<button type="submit" name="_sf_wizard" value="back" data-wizard-back>{back_label}</button>'
-            )
-            if show_back
-            else SafeHTML('')
+        return _saved_steps_footer(
+            '', '', back_label, next_label, show_back=bool(show_back), show_next=bool(show_next)
         )
-        _next = (  # NOSONAR
-            html(
-                t'<button type="submit" name="_sf_wizard" value="next" data-wizard-next>{next_label}</button>'
-            )
-            if show_next
-            else SafeHTML('')
-        )
-        return html(t'<div class="wizard-footer">{_back}{_next}</div>')
     return html(t"""
 <div class="wizard-footer">
     <button type="button" data-wizard-back>{back_label}</button>
@@ -777,21 +788,14 @@ def _material_wizard_footer(
     **_: Any,
 ) -> SafeHTML:
     if save_steps:
-        _back = (  # NOSONAR
-            html(
-                t'<button type="submit" class="md-button md-button--outlined" name="_sf_wizard" value="back" data-wizard-back>{back_label}</button>'
-            )
-            if show_back
-            else SafeHTML('')
+        return _saved_steps_footer(
+            'md-button md-button--outlined',
+            'md-button md-button--filled',
+            back_label,
+            next_label,
+            show_back=bool(show_back),
+            show_next=bool(show_next),
         )
-        _next = (  # NOSONAR
-            html(
-                t'<button type="submit" class="md-button md-button--filled" name="_sf_wizard" value="next" data-wizard-next>{next_label}</button>'
-            )
-            if show_next
-            else SafeHTML('')
-        )
-        return html(t'<div class="wizard-footer">{_back}{_next}</div>')
     return html(t"""
 <div class="wizard-footer">
     <button type="button" class="md-button md-button--outlined" data-wizard-back>{back_label}</button>

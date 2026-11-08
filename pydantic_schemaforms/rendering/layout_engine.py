@@ -84,6 +84,19 @@ def _later_groups(
     return groups
 
 
+def _saved_step_view(
+    mode: str, wizard_options: dict[str, Any] | None, step_state: Any, step_count: int
+) -> tuple[bool, int | None, dict[str, Any] | None]:
+    """For a save_steps wizard: (True, the step to show, options with the furthest
+    step reached). Any other form: (False, None, the options unchanged)."""
+
+    if mode != 'wizard' or not (wizard_options or {}).get('save_steps'):
+        return False, None, wizard_options
+    current = min(step_state.step, step_count - 1) if step_state else 0
+    reached = max(step_state.reached if step_state else 0, current)
+    return True, current, {**(wizard_options or {}), 'reached': reached}
+
+
 def is_sub_form_group(fields: FieldList, group_names: set[str]) -> bool:
     """Whether a group is one sub-form on its own, which draws its own title."""
 
@@ -391,40 +404,23 @@ class WizardLayout(BaseLayout):
         form_style = getattr(theme, 'form_style', None) or _DEFAULT_FORM_STYLE
         templates = form_style.templates
 
-        steps_html: list[str] = []
-        progress_items: list[str] = []
-        last = len(self.steps) - 1
-        for index, step in enumerate(self.steps):
-            is_active = index == self.active_index
-            if is_active or not self.save_steps:
-                steps_html.append(
-                    templates.wizard_step.render(
-                        index=str(index),
-                        title=step['title'],
-                        content=step['content'],
-                        active_class=_ACTIVE_CLASS if is_active else '',
-                    )
-                )
-            state = (_ACTIVE_CLASS if is_active else '') + (
-                ' has-error' if step.get('has_error') else ''
+        steps_html = [
+            templates.wizard_step.render(
+                index=str(index),
+                title=step['title'],
+                content=step['content'],
+                active_class=_ACTIVE_CLASS if index == self.active_index else '',
             )
-            if self.save_steps and index < self.active_index:
-                state += ' complete'
-            unreachable = self.save_steps and index > self.reached and index != self.active_index
-            progress_items.append(
-                templates.wizard_progress_item.render(
-                    index=str(index),
-                    number=str(index + 1),
-                    title=step['title'],
-                    state_class=state,
-                    action=f'goto:{index}' if self.save_steps else '',
-                    disabled='true' if unreachable else '',
-                    current='true' if self.save_steps and is_active else '',
-                )
-            )
-
+            for index, step in enumerate(self.steps)
+            if index == self.active_index or not self.save_steps
+        ]
         progress_html = (
-            templates.wizard_progress.render(items_html='\n'.join(progress_items))
+            templates.wizard_progress.render(
+                items_html='\n'.join(
+                    self._progress_item(templates, index, step)
+                    for index, step in enumerate(self.steps)
+                )
+            )
             if self.show_progress
             else ''
         )
@@ -446,15 +442,36 @@ class WizardLayout(BaseLayout):
             active_step=str(self.active_index),
             progress_html=progress_html,
             steps_html='\n'.join(steps_html),
-            footer_html=templates.wizard_footer.render(
-                back_label=self.back_label,
-                next_label=self.next_label,
-                save_steps='true' if self.save_steps else '',
-                show_back='true' if self.active_index > 0 else '',
-                show_next='true' if self.active_index < last else '',
-            ),
+            footer_html=self._footer(templates),
             component_assets=assets,
             hidden_html=hidden_html,
+        )
+
+    def _progress_item(self, templates: Any, index: int, step: dict[str, Any]) -> str:
+        is_active = index == self.active_index
+        state = (_ACTIVE_CLASS if is_active else '') + (
+            ' has-error' if step.get('has_error') else ''
+        )
+        common = {'index': str(index), 'number': str(index + 1), 'title': step['title']}
+        if not self.save_steps:
+            return templates.wizard_progress_item.render(state_class=state, **common)
+        if index < self.active_index:
+            state += ' complete'
+        return templates.wizard_progress_item.render(
+            state_class=state,
+            action=f'goto:{index}',
+            disabled='true' if index > self.reached and not is_active else '',
+            current='true' if is_active else '',
+            **common,
+        )
+
+    def _footer(self, templates: Any) -> str:
+        return templates.wizard_footer.render(
+            back_label=self.back_label,
+            next_label=self.next_label,
+            save_steps='true' if self.save_steps else '',
+            show_back='true' if self.active_index > 0 else '',
+            show_next='true' if self.active_index < len(self.steps) - 1 else '',
         )
 
 
@@ -836,36 +853,43 @@ class LayoutEngine:
                 'vertical',
             )
 
-        save_steps = mode == 'wizard' and bool((wizard_options or {}).get('save_steps'))
-        current = min(step_state.step, len(groups) - 1) if save_steps and step_state else 0
+        save_steps, current, wizard_options = _saved_step_view(
+            mode, wizard_options, step_state, len(groups)
+        )
         rendered: list[dict[str, Any]] = []
-        active_index: int | None = current if save_steps else None
+        active_index = current
         for index, (title, fields) in enumerate(groups):
-            if save_steps and index != current:
-                group_has_error = any(has_errors(errors.get(n)) for n, _ in fields)
-                rendered.append({'title': title, 'content': '', 'has_error': group_has_error})
-                continue
-            body = '\n'.join(self._render_rows(fields, render_one))
-            if mode == 'side-by-side' and not is_sub_form_group(fields, group_names):
-                body = self._render_layout_card(title, body, '')
-            rule = group_option(fields, 'group_show_when')
-            if rule:
-                body = show_when_wrapper(fields[0][0], rule, body, context)
             group_has_error = any(has_errors(errors.get(n)) for n, _ in fields)
             if active_index is None and group_has_error:
                 active_index = index
-            rendered.append({'title': title, 'content': body, 'has_error': group_has_error})
+            # A save_steps page holds only the current step's inputs.
+            content = (
+                ''
+                if save_steps and index != current
+                else self._group_body(title, fields, render_one, mode, group_names, context)
+            )
+            rendered.append({'title': title, 'content': content, 'has_error': group_has_error})
 
-        if save_steps:
-            wizard_options = {
-                **(wizard_options or {}),
-                'reached': max(step_state.reached if step_state else 0, current),
-            }
         return [
             self.render_group_component(
                 rendered, mode, active_index=active_index or 0, wizard_options=wizard_options
             )
         ]
+
+    def _group_body(
+        self,
+        title: str,
+        fields: FieldList,
+        render_one: Callable[[str, dict[str, Any]], str],
+        mode: str,
+        group_names: set[str],
+        context: RenderContext,
+    ) -> str:
+        body = '\n'.join(self._render_rows(fields, render_one))
+        if mode == 'side-by-side' and not is_sub_form_group(fields, group_names):
+            body = self._render_layout_card(title, body, '')
+        rule = group_option(fields, 'group_show_when')
+        return show_when_wrapper(fields[0][0], rule, body, context) if rule else body
 
     @staticmethod
     def group_fields(
