@@ -119,6 +119,24 @@ def _masked_text(element: str, value: Any) -> str | None:
     return None
 
 
+def _slot_kind(element: str, field_schema: dict[str, Any]) -> str:
+    """How the review script shows a value, matching ``_DisplayRenderer._text``."""
+
+    if element in _BOOLEAN_ELEMENTS:
+        return 'yesno'
+    if element == 'password' or field_schema.get('writeOnly'):
+        return 'mask'
+    if element in _LAST_FOUR_ELEMENTS:
+        return 'last4'
+    if element in _CHOICE_ELEMENTS:
+        return 'choice'
+    if element == 'file':
+        return 'file'
+    if element in ('datetime', 'datetime-local'):
+        return 'datetime'
+    return 'text'
+
+
 class _DisplayRenderer:
     def __init__(
         self,
@@ -157,26 +175,14 @@ class _DisplayRenderer:
 
         if not self._live:
             return SafeHTML('')
-        element = self._element(field_schema)
         slot = '.'.join([*self._path, name])  # NOSONAR - read in the t-strings below
-        if element in _BOOLEAN_ELEMENTS:
-            kind = 'yesno'
-        elif element == 'password' or field_schema.get('writeOnly'):
-            kind = 'mask'
-        elif element in _LAST_FOUR_ELEMENTS:
-            kind = 'last4'
-        elif element in _CHOICE_ELEMENTS:
+        kind = _slot_kind(self._element(field_schema), field_schema)  # NOSONAR
+        if kind == 'choice':
             labels = json.dumps(self._choice_map(field_schema))  # NOSONAR
             return html(
                 t' data-review-slot="{slot}" data-review-format="choice"'
                 t' data-review-choices="{labels}"'
             )
-        elif element == 'file':
-            kind = 'file'
-        elif element in ('datetime', 'datetime-local'):
-            kind = 'datetime'
-        else:
-            kind = 'text'
         return html(t' data-review-slot="{slot}" data-review-format="{kind}"')
 
     def _element(self, field_schema: dict[str, Any]) -> str:
@@ -412,15 +418,7 @@ class _DisplayRenderer:
         item_ref = resolve_list_item_ref(field_schema)
         definition = self._schema_defs.get(item_ref or '')
         if definition:
-            items = value if isinstance(value, list) else []
-            # A column stays if any row shows it; other rows leave that cell blank.
-            # Live, the rows change in the browser, so every column stays.
-            shown = [
-                (n, s)
-                for n, s in ordered_properties(definition)
-                if self._is_shown(s) and (self._live or any(is_shown(s, item) for item in items))
-            ]
-            return self._table(shown, items)
+            return self._list_body(definition, value)
 
         # DataTableLayout.as_layout_value() bundles the rows with their model.
         model_cls = value.get('model_cls') if isinstance(value, dict) else None
@@ -430,6 +428,17 @@ class _DisplayRenderer:
             shown = [(n, s) for n, s in metadata.fields if table_renderer._is_shown(s)]
             return table_renderer._table(shown, _plain(value.get('rows')) or [])
         return self._generic(value)
+
+    def _list_body(self, definition: dict[str, Any], value: Any) -> str:
+        items = value if isinstance(value, list) else []
+        # A column stays if any row shows it; other rows leave that cell blank.
+        # Live, the rows change in the browser, so every column stays.
+        shown = [
+            (n, s)
+            for n, s in ordered_properties(definition)
+            if self._is_shown(s) and (self._live or any(is_shown(s, item) for item in items))
+        ]
+        return self._table(shown, items)
 
     def _fields(self, fields: list[tuple[str, dict[str, Any]]], data: Any) -> str:
         """Each ``ui_group`` as a titled section, in order. ``ui_cols`` is left out:
@@ -587,6 +596,22 @@ def render_display(
     return '\n'.join(str(block) for block in blocks if block)
 
 
+def _edit_button(index: int, title: str, edit_label: str, css: str, *, live: bool) -> SafeHTML:
+    """Edit on a review section: a script jump, or (save_steps) a posted one."""
+
+    label = f'{edit_label} {title}'  # NOSONAR - read in the t-strings below
+    if live:
+        return html(
+            t'<button type="button" class="{css}" data-wizard-edit="{index}" '
+            t'aria-label="{label}">{edit_label}</button>'
+        )
+    action = f'goto:{index}'  # NOSONAR
+    return html(
+        t'<button type="submit" class="{css}" name="_sf_wizard" value="{action}" '
+        t'aria-label="{label}">{edit_label}</button>'
+    )
+
+
 def render_review_step(
     renderer: 'EnhancedFormRenderer',
     metadata: SchemaMetadata,
@@ -625,18 +650,7 @@ def render_review_step(
             body = display.ungrouped(fields, values)
         if not body:
             continue
-        label = f'{edit_label} {title}'  # NOSONAR
-        if live:
-            button = html(
-                t'<button type="button" class="{edit_class}" data-wizard-edit="{index}" '
-                t'aria-label="{label}">{edit_label}</button>'
-            )
-        else:
-            action = f'goto:{index}'  # NOSONAR
-            button = html(
-                t'<button type="submit" class="{edit_class}" name="_sf_wizard" value="{action}" '
-                t'aria-label="{label}">{edit_label}</button>'
-            )
+        button = _edit_button(index, title, edit_label, edit_class, live=live)
         card = engine._render_layout_card(title, f'{button}\n{body}', '')  # noqa: SLF001
         _card = SafeHTML(card)  # NOSONAR
         sections.append(str(html(t'<div data-review-section>{_card}</div>')))

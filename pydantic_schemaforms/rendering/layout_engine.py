@@ -871,22 +871,7 @@ class LayoutEngine:
             )
             rendered.append({'title': title, 'content': content, 'has_error': group_has_error})
         if review:
-            from .display_renderer import render_review_step
-
-            on_review = not save_steps or current == len(groups)
-            content = (
-                render_review_step(
-                    self._renderer,
-                    metadata,
-                    data,
-                    groups,
-                    live=not save_steps,
-                    edit_label=review['edit_label'],
-                )
-                if on_review
-                else ''
-            )
-            rendered.append({'title': review['title'], 'content': content, 'has_error': False})
+            rendered.append(self._review_group(metadata, data, groups, review, current))
 
         component_options = {k: v for k, v in (wizard_options or {}).items() if k != 'review_step'}
         return [
@@ -894,6 +879,27 @@ class LayoutEngine:
                 rendered, mode, active_index=active_index or 0, wizard_options=component_options
             )
         ]
+
+    def _review_group(
+        self,
+        metadata: SchemaMetadata,
+        data: dict[str, Any],
+        groups: list[tuple[str, FieldList]],
+        review: dict[str, str],
+        current: int | None,
+    ) -> dict[str, Any]:
+        """The wizard's review step. ``current`` is set only for save_steps, whose
+        page renders the review just when it is the step being shown."""
+
+        from .display_renderer import render_review_step
+
+        live = current is None
+        content = ''
+        if live or current == len(groups):
+            content = render_review_step(
+                self._renderer, metadata, data, groups, live=live, edit_label=review['edit_label']
+            )
+        return {'title': review['title'], 'content': content, 'has_error': False}
 
     def _group_body(
         self,
