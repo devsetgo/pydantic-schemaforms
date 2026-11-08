@@ -631,13 +631,10 @@ def _wizard_progress_item(
     # check mark for its number and says so to screen readers.
     shown = '✓' if done == 'true' else number  # NOSONAR - read in the t-string below
     _number = html(t'<span class="wizard-progress-number">{shown}</span>')  # NOSONAR
-    _said = (  # NOSONAR
-        html(
-            t'<span class="sf-sr-only" data-step-done{SafeHTML("" if done == "true" else " hidden")}> (complete)</span>'
-        )
-        if done
-        else SafeHTML('')
-    )
+    _said = SafeHTML('')  # NOSONAR - read in the t-string below
+    if done:
+        _hidden = SafeHTML('' if done == 'true' else ' hidden')  # NOSONAR
+        _said = html(t'<span class="sf-sr-only" data-step-done{_hidden}> (complete)</span>')
     _title = html(t'<span class="wizard-progress-title">{title}</span>{_said}')  # NOSONAR
     _class = SafeHTML(state_class)  # NOSONAR
     if action:
