@@ -648,3 +648,56 @@ def test_progress_counts_required_fields_as_they_fill(
     expect(numbers).to_have_text(['✓', '✓', '✓', '✓'], timeout=TIMEOUT)
     expect(page.locator('[data-step-done]:not([hidden])')).to_have_count(4)
     assert _blocking_violations(page) == []
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_autosave_restores_a_draft_after_a_reload(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.on('dialog', lambda dialog: dialog.accept())
+    page.goto(f'{examples_server_url}/layouts?layout=tabbed&autosave=true&style={style}')
+    page.evaluate('localStorage.clear()')
+    notice = page.locator('[data-sf-draft-notice]')
+    expect(notice).to_be_hidden()
+    page.fill('[name="personal_info.first_name"]', 'Robin')
+    page.get_by_role('tab', name='Task List').click()
+    page.locator('.add-item-btn').first.click()
+    page.fill('[name="task_list.tasks[2].task_name"]', 'Third task')
+    page.wait_for_function('Object.keys(localStorage).length === 1')
+
+    page.reload(wait_until='load')
+    expect(notice).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('[name="personal_info.first_name"]')).to_have_value('Robin')
+    expect(page.locator('[name="task_list.tasks[2].task_name"]')).to_have_value('Third task')
+    assert _blocking_violations(page) == []
+
+    # Discard goes back to the server's values.
+    with page.expect_navigation(wait_until='load'):
+        notice.locator('[data-sf-draft-discard]').click()
+    expect(page.locator('[name="personal_info.first_name"]')).to_have_value('Alex')
+    expect(notice).to_be_hidden()
+
+    # A submit that goes ahead clears the draft.
+    page.fill('[name="personal_info.first_name"]', 'Sam')
+    page.wait_for_function('Object.keys(localStorage).length === 1')
+    with page.expect_navigation(wait_until='load'):
+        page.locator('form [type="submit"]:not([name])').first.click()
+    assert page.evaluate('Object.keys(localStorage).length') == 0
+
+
+def test_warn_unsaved_asks_only_when_something_changed(
+    page: Page, examples_server_url: str
+) -> None:
+    asked: list[str] = []
+    page.on('dialog', lambda dialog: (asked.append(dialog.type), dialog.accept()))
+    url = f'{examples_server_url}/layouts?layout=tabbed&warn=true'
+    page.goto(url)
+    page.click('[name="personal_info.first_name"]')
+    page.goto(f'{examples_server_url}/')
+    assert asked == []
+
+    page.goto(url)
+    page.click('[name="personal_info.first_name"]')
+    page.keyboard.type('X')
+    page.goto(f'{examples_server_url}/')
+    assert asked == ['beforeunload']

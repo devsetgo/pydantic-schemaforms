@@ -73,6 +73,7 @@ def Field(
     ui_group_show_when: dict[str, Any] | None = None,
     ui_max_size: int | None = None,
     ui_max_files: int | None = None,
+    ui_autosave: bool | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -105,6 +106,9 @@ def Field(
     ui_max_size (bytes) and ui_max_files limit an ``UploadedFile`` or
     ``list[UploadedFile]`` field, and so does ``ui_options={"accept": ...}``.
     All three are checked on the server, with the error under the field.
+
+    ui_autosave=False keeps this field out of a form's ``autosave=True`` drafts,
+    for values that shouldn't sit in the browser's storage.
     """
     ui_show_when, ui_group_show_when = check_field_options(
         has_default=default is not ... or 'default_factory' in kwargs,
@@ -162,6 +166,7 @@ def Field(
         'ui_group_show_when': ui_group_show_when,
         'ui_max_size': ui_max_size,
         'ui_max_files': ui_max_files,
+        'ui_autosave': ui_autosave,
     }
     # JSON Schema generation turns SafeHTML back into a plain str, so which kind
     # it was has to be kept in the key.

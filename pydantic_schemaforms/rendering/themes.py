@@ -319,6 +319,11 @@ class RendererTheme:
 
         return f'alert alert-{kind}'
 
+    def alert_action_class(self) -> str:
+        """Classes for a button inside an alert, in the alert's own text color."""
+
+        return 'btn btn-link btn-sm p-0 align-baseline alert-link'
+
     def render_collapsible_section(
         self,
         *,
@@ -563,6 +568,9 @@ class PlainTheme(FrameworkTheme):
     def confirm_class(self, slot: str) -> str:
         return ''
 
+    def alert_action_class(self) -> str:
+        return ''
+
 
 class MaterialTheme(RendererTheme):
     """Material Design 3, self-contained: its CSS and JS ship inline with the
@@ -622,6 +630,9 @@ class MaterialTheme(RendererTheme):
 
     def alert_class(self, kind: str) -> str:
         return f'md-banner md-banner--{kind}'
+
+    def alert_action_class(self) -> str:
+        return _MATERIAL_TEXT_BUTTON
 
     def before_form(self) -> str:
         return '\n'.join(['<!-- pydantic-schemaforms Material Design 3 -->', material_style_tag()])

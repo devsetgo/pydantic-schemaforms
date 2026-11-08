@@ -20,6 +20,8 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `method` | `"POST"` | The form's method |
 | `include_submit_button` | `True` | `False` when the form is submitted another way |
 | `progress` | `False` | `True`: "n of m complete" for the required fields, counted in the browser as the user types (a bar at the top; a wizard ticks finished steps in its header instead). Hidden without JavaScript. Don't build your own counter; pass it to `validate()` too |
+| `autosave` | `False` | `True`: saves the form to `localStorage` as the user types and restores it after a reload ("restored · Discard" notice); cleared on submit, expires after 7 days. Unencrypted on the device: leave it off for sensitive forms, and mark sensitive fields `Field(ui_autosave=False)`. Passwords, files and hidden inputs are never saved. Don't write your own; pass it to `validate()` too |
+| `warn_unsaved` | `False` | `True`: the browser asks before leaving with unsubmitted changes |
 | `confirm` | `None` | `True` or `{"title", "message", "confirm_label", "cancel_label"}`: a native `<dialog>` asks before the form submits, for actions that are hard to undo. Don't build your own modal. Named buttons (a wizard's Back/Next) don't ask; without JavaScript it submits directly. Not with `wizard_options` `review_step` (raises `ValueError`); pass it to `validate()` too |
 | `csrf_mode`, `csrf_token_provider`, `csrf_field_name` | `"off"` | See the security reference |
 | `include_framework_assets` | `False` | Add the framework's CSS and JavaScript |

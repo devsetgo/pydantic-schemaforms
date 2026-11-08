@@ -38,6 +38,7 @@ the Pydantic constraints.
 | `ui_order=n` | Position among the fields (lower first); fields otherwise follow declaration order |
 | `ui_max_size=n` | Largest file in bytes, for an `UploadedFile` field; checked on the server. See [File Upload](../recipes/file-upload.md) |
 | `ui_max_files=n` | Most files allowed in a `list[UploadedFile]` field; checked on the server |
+| `ui_autosave=False` | Keep this field out of the form's `autosave=True` drafts, for values that shouldn't sit in the browser |
 | `ui_class="..."` | Extra CSS classes on the input |
 | `ui_style="..."` | Inline CSS on the input |
 | `unchecked_message="..."` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |

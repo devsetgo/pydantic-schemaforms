@@ -7,6 +7,7 @@ from dataclasses import replace
 from functools import wraps
 from typing import Any
 
+from pydantic_schemaforms.autosave import NO_AUTOSAVE_ATTRIBUTE
 from pydantic_schemaforms.icon_mapping import map_icon_for_framework
 from pydantic_schemaforms.inputs import HiddenInput
 from pydantic_schemaforms.rendering.context import RenderContext
@@ -221,6 +222,8 @@ class FieldRenderer:
 
         if ui_info.get('autofocus'):
             field_attrs['autofocus'] = True
+        if ui_info.get('autosave') is False:
+            field_attrs[NO_AUTOSAVE_ATTRIBUTE] = True
         if ui_info.get('disabled'):
             field_attrs['disabled'] = True
         if ui_info.get('readonly'):

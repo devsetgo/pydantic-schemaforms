@@ -51,6 +51,13 @@ from .rendering.themes import (
     get_theme_for_framework,
 )
 from .schema_form import FormModel
+from .autosave import (
+    AUTOSAVE_ASSETS,
+    AUTOSAVE_ATTRIBUTE,
+    WARN_ATTRIBUTE,
+    check_flag,
+    draft_notice,
+)
 from .confirm import CONFIRM_ASSETS, CONFIRM_ATTRIBUTE, check_confirm
 from .progress import PROGRESS_ASSETS, PROGRESS_ATTRIBUTE, PROGRESS_BAR, WIZARD_TICKS_CLASS
 from .show_when import SHOW_WHEN_SCRIPT, prune
@@ -299,6 +306,8 @@ class EnhancedFormRenderer:
         wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
         step_state = _step_state(layout, wizard_options, kwargs.pop('draft', None))
         confirm = check_confirm(kwargs.pop('confirm', None))
+        autosave = check_flag('autosave', kwargs.pop('autosave', False))
+        warn_unsaved = check_flag('warn_unsaved', kwargs.pop('warn_unsaved', False))
         progress = kwargs.pop('progress', False)
         if not isinstance(progress, bool):
             raise ValueError(f'progress= takes True or False, not {progress!r}.')
@@ -348,6 +357,10 @@ class EnhancedFormRenderer:
         # unless the caller already chose an enctype explicitly.
         if 'enctype' not in kwargs and _has_file_field(metadata.fields, data, metadata.schema_defs):
             form_attrs['enctype'] = 'multipart/form-data'
+        if autosave:
+            form_attrs[AUTOSAVE_ATTRIBUTE] = model_cls.__name__
+        if warn_unsaved:
+            form_attrs[WARN_ATTRIBUTE] = 'true'
         form_attrs.update(kwargs)
         form_attrs['action'] = submit_url  # kwargs must not override action
         form_attrs = self._theme.transform_form_attributes(form_attrs)
@@ -399,6 +412,9 @@ class EnhancedFormRenderer:
 
         if progress_bar:
             form_body_parts.insert(0, str(PROGRESS_BAR))
+        if autosave:
+            notice = draft_notice(self._theme.alert_class('info'), self._theme.alert_action_class())
+            form_body_parts.insert(0, notice)
         if error_summary_markup:
             form_body_parts.insert(0, error_summary_markup)
 
@@ -451,6 +467,9 @@ class EnhancedFormRenderer:
             output_parts.append(CONFIRM_ASSETS)
         if PROGRESS_ATTRIBUTE in form_markup or WIZARD_TICKS_CLASS in form_markup:
             output_parts.append(PROGRESS_ASSETS)
+        # Last, so the other scripts have set the form up before its starting values are read.
+        if AUTOSAVE_ATTRIBUTE in form_markup or WARN_ATTRIBUTE in form_markup:
+            output_parts.append(AUTOSAVE_ASSETS)
 
         combined_output = '\n'.join(output_parts)
 

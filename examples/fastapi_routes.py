@@ -1758,14 +1758,23 @@ def _layout_demo_options(
     variant: str | None = None,
     review: bool = False,
     count: bool = False,
+    autosave: bool = False,
+    warn: bool = False,
 ) -> dict:
     """Render kwargs for /layouts: the submit URL keeps every query option,
     and the wizard gets wizard_options built from them."""
     query = (
         f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
-        f'&review={review}&count={count}{_variant_query(variant)}'
+        f'&review={review}&count={count}&autosave={autosave}&warn={warn}'
+        f'{_variant_query(variant)}'
     )
-    options: dict = {'submit_url': f'/layouts?{query}', 'layout': layout, 'progress': count}
+    options: dict = {
+        'submit_url': f'/layouts?{query}',
+        'layout': layout,
+        'progress': count,
+        'autosave': autosave,
+        'warn_unsaved': warn,
+    }
     if layout == 'wizard':
         options['wizard_options'] = {'linear': linear, 'show_progress': progress}
         if labels:
@@ -1795,6 +1804,8 @@ def _layout_switcher(
     variant: str | None = None,
     review: bool = False,
     count: bool = False,
+    autosave: bool = False,
+    warn: bool = False,
 ) -> str:
     """Buttons to re-render /layouts with each layout, plus the wizard's options."""
 
@@ -1806,6 +1817,8 @@ def _layout_switcher(
         'labels': str(labels).lower(),
         'review': str(review).lower(),
         'count': str(count).lower(),
+        'autosave': str(autosave).lower(),
+        'warn': str(warn).lower(),
     }
 
     def link(label: str, current: bool, *, toggle: bool = False, **query: object) -> SafeHTML:
@@ -1825,8 +1838,15 @@ def _layout_switcher(
         ''.join(str(link(label, value == layout, layout=value)) for value, label in _LAYOUT_CHOICES)
     )
     # progress=True: a bar on every layout, ticks in the wizard's step header.
-    count_link = link(
-        'Count required fields (progress)', count, toggle=True, count=str(not count).lower()
+    form_toggles = SafeHTML(
+        ''.join(
+            str(link(label, active, toggle=True, **{key: str(not active).lower()}))
+            for key, label, active in (
+                ('count', 'Count required fields (progress)', count),
+                ('autosave', 'Autosave a draft', autosave),
+                ('warn', 'Warn before leaving (warn_unsaved)', warn),
+            )
+        )
     )
     wizard_row = SafeHTML('')
     if layout == 'wizard':
@@ -1853,7 +1873,7 @@ def _layout_switcher(
             t'<div class="layout-switcher mb-4"><div class="d-flex flex-wrap gap-2 align-items-center">'
             t'<span class="text-muted small">Layout:</span>{layout_links}</div>'
             t'<div class="d-flex flex-wrap gap-2 align-items-center mt-2">'
-            t'<span class="text-muted small">Form options:</span>{count_link}</div>{wizard_row}</div>'
+            t'<span class="text-muted small">Form options:</span>{form_toggles}</div>{wizard_row}</div>'
         )
     )
 
@@ -1907,6 +1927,8 @@ async def layouts_get(
     labels: bool = False,
     review: bool = False,
     count: bool = False,
+    autosave: bool = False,
+    warn: bool = False,
     data: str = None,
     demo: bool = True,
     debug: bool = False,
@@ -1936,14 +1958,18 @@ async def layouts_get(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        **_layout_demo_options(style, layout, linear, progress, labels, variant, review, count),
+        **_layout_demo_options(
+            style, layout, linear, progress, labels, variant, review, count, autosave, warn
+        ),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
     form_html = (
-        _layout_switcher(style, layout, linear, progress, labels, variant, review, count)
+        _layout_switcher(
+            style, layout, linear, progress, labels, variant, review, count, autosave, warn
+        )
         + form_html
     )
     return templates.TemplateResponse(
@@ -1973,6 +1999,8 @@ async def layouts_post(
     labels: bool = False,
     review: bool = False,
     count: bool = False,
+    autosave: bool = False,
+    warn: bool = False,
     debug: bool = False,
     show_timing: bool = True,
 ):
@@ -2009,14 +2037,18 @@ async def layouts_post(
         LayoutDemonstrationForm,
         data=form_data,
         errors=validation.errors,
-        **_layout_demo_options(style, layout, linear, progress, labels, variant, review, count),
+        **_layout_demo_options(
+            style, layout, linear, progress, labels, variant, review, count, autosave, warn
+        ),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
     form_html = (
-        _layout_switcher(style, layout, linear, progress, labels, variant, review, count)
+        _layout_switcher(
+            style, layout, linear, progress, labels, variant, review, count, autosave, warn
+        )
         + form_html
     )
 
