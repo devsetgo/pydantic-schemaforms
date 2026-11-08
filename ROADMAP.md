@@ -9,7 +9,7 @@ Every item follows the "Examples must cover every layout, input, and
 validation" rule in `CLAUDE.md`: a feature isn't done until it's demonstrated
 on an example page under both Bootstrap and Material.
 
-Last updated: 2026-11-07.
+Last updated: 2026-11-08.
 
 ## Phase 1: Clear the ground
 
@@ -63,16 +63,49 @@ Both items change the layout engine, and both must work with the display mode fr
 
 Everything a long form needs, finished by a complete job application as a realistic test.
 
+Reviewed 2026-11-08 against the code as of 26.4.5. The phase ships as one
+release: every item is in the same area, and the job application (#276) is
+the test that they fit together.
+
+Decisions that cut across the items:
+
+- **One display path.** The review step (#250), the change display (#318) and
+  any later read-only view all render through `render_display()`'s
+  `_DisplayRenderer` (`rendering/display_renderer.py`, from #238). Nothing
+  formats a value for reading a second time in Python. The review step's
+  browser script fills server-rendered slots by `textContent` only, so it
+  can't inject markup, and the small amount of per-input formatting it needs
+  (an option's label, a file's name, a masked password) is the only
+  client-side formatting the library has.
+- **Two wizard modes, one layout.** The wizard today is one `<form>` and one
+  POST ("client mode"). #275 adds "server mode", a POST per step. Every later
+  wizard feature says what it does in each mode: the review step is filled
+  from live inputs in client mode and is `render_display()` of the saved data
+  in server mode; autosave (#243) is per step in server mode.
+- **Works without JavaScript, same in every style.** Each item is a
+  progressive enhancement: the form still submits, the server still reports
+  every error, and the markup comes from theme hooks (`rendering/themes.py`),
+  never a framework branch. Each one goes on an example page under both
+  styles, light and dark, and through the axe gate.
+- **Issue text to bring up to date before starting** (the design detail lives
+  in the issues, so fix it there): #242 names `integration/adapters.py` and
+  `handle_form`, both removed, and asks for drag and drop, which `FileInput`
+  already has; #250 points at `docs/layouts.md` and
+  `_shared_instructions.md`, now `docs/tutorial/layouts.md` and
+  `ai/_shared.md`; #295's "existing modal code" is `ModalLayout`, a
+  `Layout.create_modal` page primitive with global `openModal` functions and
+  inline `onclick`, so it is a starting point to replace, not reuse as is.
+
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 16 | [#242](https://github.com/devsetgo/pydantic-schemaforms/issues/242) Server-side upload validation | Not started | Size, count and type checks on the server. Comes first because a resume upload in #276 needs them, and so a step in #275 can upload a file on its own. |
-| 17 | [#275](https://github.com/devsetgo/pydantic-schemaforms/issues/275) Opt-in step-by-step saving for the wizard | Not started | An option for each step to be validated and saved on the server. Before #250, whose review step would read saved data in this mode. |
-| 18 | [#250](https://github.com/devsetgo/pydantic-schemaforms/issues/250) Wizard review step | Not started | Adds an opt-in final wizard step that shows everything entered before Submit. Builds on #238: reuse its per-input display formatting and escaping rather than writing a second set. |
-| 19 | [#318](https://github.com/devsetgo/pydantic-schemaforms/issues/318) Wizard review step: show what changed | Not started | Builds on #250 and #238's display formatting. When the wizard is given existing data, the review step shows each changed field as **from → to**, compared in the browser. Only applies to the review step, and only when initial data is passed in. |
-| 20 | [#295](https://github.com/devsetgo/pydantic-schemaforms/issues/295) Confirmation step before submit | Not started | Sits beside the review step as the other way to check before submitting. Reuses the existing modal code. |
-| 21 | [#296](https://github.com/devsetgo/pydantic-schemaforms/issues/296) Form progress indicator | Not started | The count of completed fields depends on which fields #237 hides, and it must not compete with the wizard's step display. |
-| 22 | [#243](https://github.com/devsetgo/pydantic-schemaforms/issues/243) Draft autosave and unsaved-changes warning | Not started | Small vanilla-JS feature. Most useful once long forms and the wizard have conditional fields and groups. |
-| 23 | [#276](https://github.com/devsetgo/pydantic-schemaforms/issues/276) Job application example | Not started | A realistic test of everything above, built up in stages as each dependency lands. Sign-in stays a separate page outside the wizard. |
+| 16 | [#242](https://github.com/devsetgo/pydantic-schemaforms/issues/242) Server-side upload validation | Not started | Today a file field is typed `Any` and every app copies `check_upload()` from `docs/recipes/file-upload.md`. Add an `UploadedFile` value type that `validate()` fills from Starlette's `UploadFile` or Werkzeug's `FileStorage` by their shape, without importing either, with `list[UploadedFile]` for `multiple`. Server checks for `ui_max_size`, `ui_max_files` and the existing `accept` option land in the error tree under the field like any other error. First because a resume upload in #276 needs it and because a step in #275 must be able to upload a file on its own; a per-step POST is also the one way round the browser forgetting a chosen file when the form re-renders with errors. Display mode already shows a file's name (`_file_name`). |
+| 17 | [#275](https://github.com/devsetgo/pydantic-schemaforms/issues/275) Opt-in step-by-step saving for the wizard | Not started | The largest design decision in the phase, so it is settled before the review step is built for both modes. `wizard_options={"save_steps": True}` renders only the current step's inputs with the progress header, and a `validate_step()` call checks one step's fields against app-supplied data; the app owns storage, and the last step's POST validates the whole model from the merged data. Full-page POSTs first, so it works with CSRF and without JavaScript; HTMX stays an option for later. Back and jumping in the header become GETs the app answers with the saved data. `WizardLayout` keeps one template; the mode only changes which steps carry inputs. |
+| 18 | [#250](https://github.com/devsetgo/pydantic-schemaforms/issues/250) Wizard review step | Not started | `wizard_options={"review_step": True}` adds one final step, grouped by step title with an Edit link per group, and moves Submit to it. The server renders it with `_DisplayRenderer` (which today flattens `layout="wizard"`, so `_grouped_content` gains a wizard path) and the wizard script fills each value slot from the live inputs in client mode, leaving out anything a `show_when` rule hides. In server mode it is `render_display()` of the saved data, with no script. Lands after #275 so one template serves both modes, but its client mode can start as soon as #275's design is agreed. |
+| 19 | [#318](https://github.com/devsetgo/pydantic-schemaforms/issues/318) Wizard review step: show what changed | Not started | Cheap once #250 exists: the server already renders each slot's initial value from `data`, so the slot keeps it and the script shows **from → to** when the live value differs, with screen-reader text that doesn't rely on bold or colour. On by default whenever `data` is passed in, review step only. A `model_list` compares item by item and marks added or removed items whole; a field newly hidden by a rule is left out, as display mode does. Server mode compares saved against submitted on the server with the same templates. |
+| 20 | [#295](https://github.com/devsetgo/pydantic-schemaforms/issues/295) Confirmation step before submit | Not started | For single forms and destructive actions; a wizard with a review step doesn't need it, and the two must not both appear. `render_form(confirm={"title": ..., "message": ..., "confirm_label": ...})` wraps submit in a native `<dialog>` opened by the form's `submit` event, which gives focus trapping and Escape for free, with a theme hook for its Bootstrap and MD3 markup. Without JavaScript the form submits as before. Replaces `ModalLayout`'s global functions and inline `onclick` rather than building on them. |
+| 21 | [#296](https://github.com/devsetgo/pydantic-schemaforms/issues/296) Form progress indicator | Not started | `render_form(progress=True)` counts required inputs that are visible, so fields hidden by #237 don't count, and reports "n of m required fields complete" in a `<progress>` element with a polite live region. In a wizard the step header already shows progress, so the indicator attaches to the current step's count or marks completed steps in the header; decide by trying both on `/layouts?layout=wizard`. |
+| 22 | [#243](https://github.com/devsetgo/pydantic-schemaforms/issues/243) Draft autosave and unsaved-changes warning | Not started | Small vanilla-JS feature, as the issue describes. Restores only when the server rendered no `data`, so an edit form (#318) and a re-render with errors always win; after restoring it dispatches `input` events so `show_when` rules re-evaluate. Skips passwords, CSRF, honeypot and file inputs; the docs say drafts sit unencrypted on the device, so sensitive forms leave it off. In server mode it keys on the step. |
+| 23 | [#276](https://github.com/devsetgo/pydantic-schemaforms/issues/276) Job application example | Not started | A realistic test of everything above, built up in stages: the sign-in page and wizard can start now on 26.4.5's groups, rules, content and consent blocks; the resume step gains server checks with #242, saving with #275, review with #250, change display on the edit route with #318, and autosave with #243. `docs/recipes/wizard-application.md` is already a four-step job application, so it stays the minimal version and links to the full one in `examples/`; sign-in reuses `docs/recipes/login-registration.md`. |
 
 ## Phase 5: New small inputs
 
