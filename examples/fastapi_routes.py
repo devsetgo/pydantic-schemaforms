@@ -1748,19 +1748,29 @@ async def organization_shared_post(
 
 
 def _layout_demo_options(
-    style: str, layout: str, linear: bool, progress: bool, labels: bool, variant: str | None = None
+    style: str,
+    layout: str,
+    linear: bool,
+    progress: bool,
+    labels: bool,
+    variant: str | None = None,
+    review: bool = False,
 ) -> dict:
     """Render kwargs for /layouts: the submit URL keeps every query option,
     and the wizard gets wizard_options built from them."""
     query = (
         f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
-        f'{_variant_query(variant)}'
+        f'&review={review}{_variant_query(variant)}'
     )
     options: dict = {'submit_url': f'/layouts?{query}', 'layout': layout}
     if layout == 'wizard':
         options['wizard_options'] = {'linear': linear, 'show_progress': progress}
         if labels:
             options['wizard_options'] |= {'back_label': 'Previous', 'next_label': 'Continue'}
+        if review:
+            options['wizard_options']['review_step'] = (
+                {'title': 'Check your answers', 'edit_label': 'Change'} if labels else True
+            )
     return options
 
 
@@ -1780,6 +1790,7 @@ def _layout_switcher(
     progress: bool,
     labels: bool,
     variant: str | None = None,
+    review: bool = False,
 ) -> str:
     """Buttons to re-render /layouts with each layout, plus the wizard's options."""
 
@@ -1789,6 +1800,7 @@ def _layout_switcher(
         'linear': str(linear).lower(),
         'progress': str(progress).lower(),
         'labels': str(labels).lower(),
+        'review': str(review).lower(),
     }
 
     def link(label: str, current: bool, **query: object) -> SafeHTML:
@@ -1810,6 +1822,7 @@ def _layout_switcher(
                     ('linear', 'Linear (validate before jumping ahead)', linear),
                     ('progress', 'Progress header', progress),
                     ('labels', 'Custom button labels', labels),
+                    ('review', 'Review step', review),
                 )
             )
         )
@@ -1875,6 +1888,7 @@ async def layouts_get(
     linear: bool = True,
     progress: bool = True,
     labels: bool = False,
+    review: bool = False,
     data: str = None,
     demo: bool = True,
     debug: bool = False,
@@ -1904,13 +1918,15 @@ async def layouts_get(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        **_layout_demo_options(style, layout, linear, progress, labels, variant),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant, review),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
+    form_html = (
+        _layout_switcher(style, layout, linear, progress, labels, variant, review) + form_html
+    )
     return templates.TemplateResponse(
         request,
         'form.html',
@@ -1937,6 +1953,7 @@ async def layouts_post(
     linear: bool = True,
     progress: bool = True,
     labels: bool = False,
+    review: bool = False,
     debug: bool = False,
     show_timing: bool = True,
 ):
@@ -1973,13 +1990,15 @@ async def layouts_post(
         LayoutDemonstrationForm,
         data=form_data,
         errors=validation.errors,
-        **_layout_demo_options(style, layout, linear, progress, labels, variant),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant, review),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
+    form_html = (
+        _layout_switcher(style, layout, linear, progress, labels, variant, review) + form_html
+    )
 
     return templates.TemplateResponse(
         request,
@@ -2115,7 +2134,11 @@ def _save_steps_options(style: str, variant: str | None) -> dict[str, Any]:
         'framework': style,
         'material_variant': _material_variant(variant),
         'layout': 'wizard',
-        'wizard_options': {'save_steps': True, 'next_label': 'Save and continue'},
+        'wizard_options': {
+            'save_steps': True,
+            'next_label': 'Save and continue',
+            'review_step': {'title': 'Check and submit'},
+        },
     }
 
 

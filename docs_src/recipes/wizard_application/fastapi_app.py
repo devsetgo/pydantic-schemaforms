@@ -8,7 +8,7 @@ app = FastAPI()
 FORM_OPTIONS = {
     'submit_url': '/apply',
     'layout': 'wizard',
-    'wizard_options': {'next_label': 'Continue'},
+    'wizard_options': {'next_label': 'Continue', 'review_step': True},
     'include_framework_assets': True,
     'asset_mode': 'cdn',
 }

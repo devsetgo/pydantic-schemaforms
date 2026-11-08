@@ -853,8 +853,9 @@ class LayoutEngine:
                 'vertical',
             )
 
+        review = review_options(wizard_options) if mode == 'wizard' else None
         save_steps, current, wizard_options = _saved_step_view(
-            mode, wizard_options, step_state, len(groups)
+            mode, wizard_options, step_state, len(groups) + (1 if review else 0)
         )
         rendered: list[dict[str, Any]] = []
         active_index = current
@@ -869,10 +870,28 @@ class LayoutEngine:
                 else self._group_body(title, fields, render_one, mode, group_names, context)
             )
             rendered.append({'title': title, 'content': content, 'has_error': group_has_error})
+        if review:
+            from .display_renderer import render_review_step
 
+            on_review = not save_steps or current == len(groups)
+            content = (
+                render_review_step(
+                    self._renderer,
+                    metadata,
+                    data,
+                    groups,
+                    live=not save_steps,
+                    edit_label=review['edit_label'],
+                )
+                if on_review
+                else ''
+            )
+            rendered.append({'title': review['title'], 'content': content, 'has_error': False})
+
+        component_options = {k: v for k, v in (wizard_options or {}).items() if k != 'review_step'}
         return [
             self.render_group_component(
-                rendered, mode, active_index=active_index or 0, wizard_options=wizard_options
+                rendered, mode, active_index=active_index or 0, wizard_options=component_options
             )
         ]
 
@@ -1134,7 +1153,30 @@ class LayoutEngine:
 
 GROUPED_LAYOUTS = frozenset({'tabbed', 'side-by-side', 'accordion', 'wizard'})
 LAYOUTS = frozenset({'vertical', *GROUPED_LAYOUTS})
-WIZARD_OPTIONS = frozenset({'linear', 'show_progress', 'back_label', 'next_label', 'save_steps'})
+WIZARD_OPTIONS = frozenset(
+    {'linear', 'show_progress', 'back_label', 'next_label', 'save_steps', 'review_step'}
+)
+_REVIEW_OPTIONS = frozenset({'title', 'edit_label'})
+
+
+def review_options(wizard_options: dict[str, Any] | None) -> dict[str, str] | None:
+    """The review step's title and Edit label, or None when the wizard has none."""
+
+    value = (wizard_options or {}).get('review_step')
+    if not value:
+        return None
+    options = value if isinstance(value, dict) else {}
+    return {
+        'title': options.get('title', 'Review'),
+        'edit_label': options.get('edit_label', 'Edit'),
+    }
+
+
+def wizard_step_count(
+    metadata: SchemaMetadata, general_title: str, wizard_options: dict[str, Any] | None
+) -> int:
+    steps = len(LayoutEngine.group_fields(metadata, 'wizard', general_title))
+    return steps + (1 if review_options(wizard_options) else 0)
 
 
 def check_layout(layout: str) -> None:
@@ -1153,4 +1195,14 @@ def check_wizard_options(options: dict[str, Any] | None) -> dict[str, Any]:
         raise ValueError(
             f'Unknown wizard_options {sorted(unknown)}; expected any of {sorted(WIZARD_OPTIONS)}.'
         )
+    review = options.get('review_step')
+    if isinstance(review, dict):
+        unknown = set(review) - _REVIEW_OPTIONS
+        if unknown or not all(isinstance(value, str) for value in review.values()):
+            raise ValueError(
+                f'review_step takes True or a dict of {sorted(_REVIEW_OPTIONS)} with text '
+                f'values, not {review!r}.'
+            )
+    elif not isinstance(review, (bool, type(None))):
+        raise ValueError(f'review_step takes True or a dict, not {review!r}.')
     return options

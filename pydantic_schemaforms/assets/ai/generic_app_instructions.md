@@ -417,6 +417,16 @@ form_html = render_form_html(
   `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`). An unknown key
   raises `ValueError`. Pass it to `validate()` too.
 
+#### Review step (`review_step`)
+
+Use `wizard_options={"review_step": True}` when users should check their answers before
+submitting. It adds a final step showing every value read-only, grouped by step, with an Edit
+button per step; Submit appears only there. Pass a dict to rename it:
+`{"review_step": {"title": "Check your answers", "edit_label": "Change"}}` (other keys or
+non-text values raise `ValueError`). The library builds it, so the app writes no confirmation
+page and the POST is unchanged. It works with `save_steps` too (rendered from the draft; Submit
+on it is the final submit, so `result.is_complete` needs no change).
+
 #### Saving each step (`save_steps`)
 
 Use `wizard_options={"save_steps": True}` only when a user must be able to stop and resume, or

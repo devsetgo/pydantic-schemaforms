@@ -31,6 +31,8 @@ a time.
 - **`wizard_options`** renames the Next button here; it can also rename Back,
   hide the progress header or let users jump between steps. See
   [Layouts](../tutorial/layouts.md#wizard).
+- **`"review_step": True`** adds a last step that shows every answer, grouped
+  by step, with an Edit button for each. The submit button is on that step.
 - **The consent box has no default**, so it's required: the form can't be
   sent without it.
 

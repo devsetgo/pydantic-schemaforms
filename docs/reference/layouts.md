@@ -65,6 +65,8 @@ Pass to `render_form_html()` and `validate()` together with `layout="wizard"`:
 | `next_label` | `"Next"` | Text of the Next button |
 | `save_steps` | `False` | `True` makes each step its own page and POST, saved on the server. See [Saving each step](#saving-each-step). |
 
+| `review_step` | `False` | `True` adds a final review step. A dict sets `title` (default `"Review"`) and `edit_label` (default `"Edit"`); any other key, or a non-text value, raises `ValueError`. See [Review step](#review-step). |
+
 An unknown key raises `ValueError`.
 
 How the wizard behaves:
@@ -108,6 +110,30 @@ on the last step. Steps not reached yet are shown disabled in the header.
 
 See [Rendering API](rendering-api.md#wizardstepresult) for the result and the
 [Save and Continue recipe](../recipes/save-and-continue.md) for a full route.
+
+### Review step
+
+`wizard_options={"review_step": True}` adds a step after the last real one that
+shows everything entered, read-only, in a section per step titled with the
+step's title. Values are shown as `render_display()` shows them: option labels,
+Yes/No for checkboxes, masked passwords, only the last four digits of card and
+social security numbers, file names, and a `model_list` as a table. Fields
+hidden by a `ui_show_when` rule are left out.
+
+- **Edit** on a section goes back to that step. It is always allowed, also
+  with `linear`.
+- **The submit button is on the review step only.** Next on the last real step
+  goes to the review.
+- **One-POST wizard:** the browser fills the review from the live inputs each
+  time it is reached, as plain text. Added or removed `model_list` items show
+  up. The review adds no inputs, so the POST is unchanged. Without JavaScript
+  the review shows the values the page was rendered with.
+- **With `save_steps`:** the server renders the review from the saved draft,
+  with no script. Edit buttons are submit buttons that jump back to the step.
+  Submit on the review is the final submit: an error in a step reopens that
+  step, and a form-wide `@model_validator` error shows on the review.
+- **After a failed submit**, the wizard opens on the first step with an error,
+  never on the review.
 
 ## Repeating sub-form options
 

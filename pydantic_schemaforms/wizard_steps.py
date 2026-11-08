@@ -186,8 +186,11 @@ def _with_uploads(value: Any) -> Any:
     return value
 
 
-def step_field_names(model_cls: type[FormModel]) -> list[list[str]]:
-    """The top-level field names on each wizard step, in order."""
+def step_field_names(
+    model_cls: type[FormModel], wizard_options: dict[str, Any] | None = None
+) -> list[list[str]]:
+    """The top-level field names on each wizard step, in order. A review step
+    (``review_step``) comes last and has none."""
 
     from .enhanced_renderer import _general_group_title
     from .rendering.layout_engine import LayoutEngine
@@ -197,7 +200,10 @@ def step_field_names(model_cls: type[FormModel]) -> list[list[str]]:
     groups = LayoutEngine.group_fields(
         metadata, 'wizard', _general_group_title(model_cls, metadata)
     )
-    return [[name for name, _schema in fields] for _title, fields in groups]
+    from .rendering.layout_engine import review_options
+
+    steps = [[name for name, _schema in fields] for _title, fields in groups]
+    return [*steps, []] if review_options(wizard_options) else steps
 
 
 def check_save_steps(render_kwargs: dict[str, Any]) -> None:
@@ -293,7 +299,7 @@ def validate_step(
     from .validation import validate_form_data
 
     check_save_steps(render_kwargs)
-    steps = step_field_names(model_cls)
+    steps = step_field_names(model_cls, render_kwargs.get('wizard_options'))
     last = len(steps) - 1
     saved = StepState.from_draft(draft)
 
