@@ -101,6 +101,15 @@ the header jump to any step (`"linear": False`). `ui_step_title` on a
 sub-form field gives its step a different title from its `title`. All the
 options are in the [Layouts reference](../reference/layouts.md).
 
+### Save each step
+
+`wizard_options={"save_steps": True}` turns the wizard into one page and one
+POST per step. Your route calls `Model.validate_step()` instead of
+`validate()`, stores the `result.draft` it returns (in a session or a
+database) and passes it back as `draft=`. A user can leave after any step and
+resume later, and files can be handled on the step they are uploaded. See the
+[Save and Continue recipe](../recipes/save-and-continue.md).
+
 ??? note "Layouts for content that isn't a form field"
 
     The library also has layout building blocks, such as a grid, tabs and

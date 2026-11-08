@@ -22,6 +22,7 @@ inputs need. It is a fragment for your page, not a whole page.
 | `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only affects `framework="material"`. See [Material Design 3](../advanced/material.md) |
 | `layout` | `"vertical"` | See [Layouts](layouts.md) |
 | `wizard_options` | `None` | See [Layouts](layouts.md#wizard_options) |
+| `draft` | `None` | With `wizard_options={"save_steps": True}`: the saved `result.draft`, to resume a wizard. See [Layouts](layouts.md#saving-each-step) |
 | `method` | `"POST"` | The form's `method` |
 | `include_submit_button` | `True` | `False` leaves the button out, for a form you submit some other way |
 | `csrf_mode` | `"off"` | `"required-provider"` adds a hidden CSRF field; see [CSRF Protection](../tutorial/csrf.md) |
@@ -54,6 +55,7 @@ other async frameworks.
 |---|---|
 | `validate(data, *, submit_url=None, framework="bootstrap", **render_options)` | A `ValidationResult`. `data` is the raw request form (`await request.form()`, `request.form`) or a nested dict such as a JSON body. Render options (`layout=`, `csrf_mode=`, ...) are kept for `render_with_errors()`. |
 | `render_form(data=None, errors=None, framework="bootstrap", *, submit_url, **options)` | The same as `render_form_html(Model, ...)` |
+| `validate_step(data, *, draft=None, submit_url=None, framework="bootstrap", **render_options)` | A `WizardStepResult`, for a `layout="wizard"` form with `save_steps`; see [`WizardStepResult`](#wizardstepresult) |
 | `render_display(data, framework="bootstrap", *, layout="vertical", edit_urls=None, **options)` | Read-only HTML for validated data; see [Show the answers back](../tutorial/handling-submissions.md#show-the-answers-back). `data` is `result.data`, a dict shaped like the model, or a model instance. `options` are the asset options plus `material_variant` and `include_html_markers`. |
 | `as_api_model()` | A plain Pydantic model with the same fields and validation but without the form settings, for request bodies and `response_model`; see [JSON API and JSON Schema](../advanced/json-api.md) |
 | `get_pydantic_json_schema(**options)` | The standard JSON Schema, with sub-forms as `$defs`; Pydantic's `model_json_schema()` options pass through |
@@ -74,6 +76,31 @@ group in the grouped layouts.
 | `original_data` | The submission decoded into nested form, before validation |
 | `render_with_errors(**options)` | The form again with the submitted values and the errors, using the options given to `validate()`. Pass `errors=` to show a different set, such as these merged with a `FormValidator`'s. |
 | `render_with_errors_async(**options)` | The same, off the event loop |
+
+## `WizardStepResult`
+
+Returned by `FormModel.validate_step()` for a wizard with
+`wizard_options={"save_steps": True}`. See [Layouts](layouts.md#saving-each-step).
+
+| Member | Holds |
+|---|---|
+| `is_valid` | The submitted step passed its checks (only that step's fields are checked) |
+| `is_complete` | Submit on the last step and the whole model is valid |
+| `data` | The data so far, nested like the model. When complete it is the validated `model_dump()`; before that, what was submitted so far, with this step's uploads as `UploadedFile` |
+| `errors` | The messages, nested like the data |
+| `draft` | A small JSON-safe dict to store as it is and pass back as `draft=`. Read it after storing files, so a `ref` you set is kept. |
+| `files` | The `UploadedFile`s accepted on the step just submitted (empty if it was invalid) |
+| `step` | Index of the step shown next |
+| `render()` | The next step, or the same step with its errors. Raises `ValueError` when `is_complete`. |
+| `render_async()` | The same, off the event loop |
+
+Change `data` before `render()` and before reading `draft` to prefill a later
+step.
+
+`SavedFile` is a subclass of `UploadedFile`. In later steps and in the final
+`data`, a file field accepted on an earlier step holds a `SavedFile` with
+`filename`, `content_type`, `size` and the `ref` you set. Its `read()` raises,
+because the content lives where your app stored it.
 
 ## `html()` and `SafeHTML`
 

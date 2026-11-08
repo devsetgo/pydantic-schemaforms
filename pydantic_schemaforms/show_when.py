@@ -299,8 +299,11 @@ SHOW_WHEN_SCRIPT = """<script data-schemaforms-show-when>
     function currentValue(wrapper) {
         var root = wrapper.closest('form') || document;
         var name = CSS.escape(wrapper.getAttribute('data-show-when-target'));
-        var controls = Array.prototype.slice.call(root.querySelectorAll('[name="' + name + '"]'))
-            .filter(function (control) { return !control.matches(':disabled'); });
+        var all = Array.prototype.slice.call(root.querySelectorAll('[name="' + name + '"]'));
+        // No such field on the page (it is on another step of a save_steps
+        // wizard): keep the state the server rendered.
+        if (!all.length) { return undefined; }
+        var controls = all.filter(function (control) { return !control.matches(':disabled'); });
         if (!controls.length) { return null; }
         var first = controls[0];
         if (first.type === 'radio') {
@@ -353,7 +356,9 @@ SHOW_WHEN_SCRIPT = """<script data-schemaforms-show-when>
         for (var pass = 0; changed && pass <= wrappers.length; pass++) {
             changed = false;
             wrappers.forEach(function (wrapper) {
-                var show = matches(JSON.parse(wrapper.getAttribute('data-show-when')), currentValue(wrapper));
+                var value = currentValue(wrapper);
+                if (value === undefined) { return; }
+                var show = matches(JSON.parse(wrapper.getAttribute('data-show-when')), value);
                 if (wrapper.hidden === show) {
                     wrapper.hidden = !show;
                     wrapper.disabled = !show;

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import secrets
 from html import escape
 from typing import TYPE_CHECKING, Any, Union
@@ -56,6 +57,7 @@ GRID_CLASS = 'sf-grid'
 
 # Leading space: appended directly after another class in the templates.
 _ACTIVE_CLASS = ' active'
+_SCRIPT_RE = re.compile(r'<script\b.*?</script>', re.DOTALL)
 
 
 def _unique_id_prefix(kind: str) -> str:
@@ -367,6 +369,8 @@ class WizardLayout(BaseLayout):
         show_progress: bool = True,
         back_label: str = 'Back',
         next_label: str = 'Next',
+        save_steps: bool = False,
+        reached: int = 0,
         **kwargs: Any,
     ) -> None:
         super().__init__(content='', **kwargs)
@@ -376,6 +380,9 @@ class WizardLayout(BaseLayout):
         self.show_progress = show_progress
         self.back_label = back_label
         self.next_label = next_label
+        # save_steps: one step per page, posted by real submit buttons, no script.
+        self.save_steps = save_steps
+        self.reached = reached
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
@@ -386,22 +393,33 @@ class WizardLayout(BaseLayout):
 
         steps_html: list[str] = []
         progress_items: list[str] = []
+        last = len(self.steps) - 1
         for index, step in enumerate(self.steps):
             is_active = index == self.active_index
-            steps_html.append(
-                templates.wizard_step.render(
-                    index=str(index),
-                    title=step['title'],
-                    content=step['content'],
-                    active_class=_ACTIVE_CLASS if is_active else '',
+            if is_active or not self.save_steps:
+                steps_html.append(
+                    templates.wizard_step.render(
+                        index=str(index),
+                        title=step['title'],
+                        content=step['content'],
+                        active_class=_ACTIVE_CLASS if is_active else '',
+                    )
                 )
-            )
             state = (_ACTIVE_CLASS if is_active else '') + (
                 ' has-error' if step.get('has_error') else ''
             )
+            if self.save_steps and index < self.active_index:
+                state += ' complete'
+            unreachable = self.save_steps and index > self.reached and index != self.active_index
             progress_items.append(
                 templates.wizard_progress_item.render(
-                    index=str(index), number=str(index + 1), title=step['title'], state_class=state
+                    index=str(index),
+                    number=str(index + 1),
+                    title=step['title'],
+                    state_class=state,
+                    action=f'goto:{index}' if self.save_steps else '',
+                    disabled='true' if unreachable else '',
+                    current='true' if self.save_steps and is_active else '',
                 )
             )
 
@@ -411,16 +429,32 @@ class WizardLayout(BaseLayout):
             else ''
         )
         assets = theme.wizard_component_assets() if theme else form_style.assets.wizard_assets
+        layout_class = self._merge_classes(attrs)
+        hidden_html = ''
+        if self.save_steps:
+            # The page already shows just this step, so it needs the styles but not the script.
+            assets = _SCRIPT_RE.sub('', assets)
+            layout_class = f'{layout_class} wizard-enhanced wizard-saved'.strip()
+            hidden_html = str(
+                templates.wizard_step_state.render(
+                    step=str(self.active_index), next_label=self.next_label
+                )
+            )
         return templates.wizard_layout.render(
-            layout_class=self._merge_classes(attrs),
+            layout_class=layout_class,
             linear='true' if self.linear else 'false',
             active_step=str(self.active_index),
             progress_html=progress_html,
             steps_html='\n'.join(steps_html),
             footer_html=templates.wizard_footer.render(
-                back_label=self.back_label, next_label=self.next_label
+                back_label=self.back_label,
+                next_label=self.next_label,
+                save_steps='true' if self.save_steps else '',
+                show_back='true' if self.active_index > 0 else '',
+                show_next='true' if self.active_index < last else '',
             ),
             component_assets=assets,
+            hidden_html=hidden_html,
         )
 
 
@@ -775,6 +809,7 @@ class LayoutEngine:
         mode: str,
         general_title: str = 'General',
         wizard_options: dict[str, Any] | None = None,
+        step_state: Any = None,
     ) -> list[str]:
         """Render a parent form as groups -- its own plain fields first, then
         one group per sub-form field (nested model, model_list, layout field),
@@ -801,9 +836,15 @@ class LayoutEngine:
                 'vertical',
             )
 
+        save_steps = mode == 'wizard' and bool((wizard_options or {}).get('save_steps'))
+        current = min(step_state.step, len(groups) - 1) if save_steps and step_state else 0
         rendered: list[dict[str, Any]] = []
-        active_index: int | None = None
+        active_index: int | None = current if save_steps else None
         for index, (title, fields) in enumerate(groups):
+            if save_steps and index != current:
+                group_has_error = any(has_errors(errors.get(n)) for n, _ in fields)
+                rendered.append({'title': title, 'content': '', 'has_error': group_has_error})
+                continue
             body = '\n'.join(self._render_rows(fields, render_one))
             if mode == 'side-by-side' and not is_sub_form_group(fields, group_names):
                 body = self._render_layout_card(title, body, '')
@@ -815,14 +856,20 @@ class LayoutEngine:
                 active_index = index
             rendered.append({'title': title, 'content': body, 'has_error': group_has_error})
 
+        if save_steps:
+            wizard_options = {
+                **(wizard_options or {}),
+                'reached': max(step_state.reached if step_state else 0, current),
+            }
         return [
             self.render_group_component(
                 rendered, mode, active_index=active_index or 0, wizard_options=wizard_options
             )
         ]
 
+    @staticmethod
     def group_fields(
-        self, metadata: SchemaMetadata, mode: str, general_title: str = 'General'
+        metadata: SchemaMetadata, mode: str, general_title: str = 'General'
     ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
         """A parent's own plain fields first, then one group per sub-form or ``ui_group``."""
 
@@ -1063,7 +1110,7 @@ class LayoutEngine:
 
 GROUPED_LAYOUTS = frozenset({'tabbed', 'side-by-side', 'accordion', 'wizard'})
 LAYOUTS = frozenset({'vertical', *GROUPED_LAYOUTS})
-WIZARD_OPTIONS = frozenset({'linear', 'show_progress', 'back_label', 'next_label'})
+WIZARD_OPTIONS = frozenset({'linear', 'show_progress', 'back_label', 'next_label', 'save_steps'})
 
 
 def check_layout(layout: str) -> None:

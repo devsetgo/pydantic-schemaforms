@@ -88,6 +88,25 @@ class SchemaFormValidationError(Exception):
         super().__init__('Schema form validation error')
 
 
+def _step_state(layout: str, wizard_options: dict[str, Any], draft: Any) -> Any:
+    """The saved progress of a ``save_steps`` wizard, or None for any other form."""
+
+    from .wizard_steps import StepState
+
+    if layout == 'wizard' and wizard_options.get('save_steps'):
+        return StepState.from_draft(draft)
+    if draft is not None:
+        raise TypeError("draft= needs layout='wizard' and wizard_options={'save_steps': True}")
+    return None
+
+
+def _on_last_step(model_cls: type[FormModel], metadata: SchemaMetadata, state: Any) -> bool:
+    groups = LayoutEngine.group_fields(
+        metadata, 'wizard', _general_group_title(model_cls, metadata)
+    )
+    return state.step >= len(groups) - 1
+
+
 def _general_group_title(model_cls: type[FormModel], metadata: SchemaMetadata) -> str:
     """Heading of the group holding a parent's own plain fields under a
     grouped layout: the model's explicit title, else "General"."""
@@ -247,6 +266,7 @@ class EnhancedFormRenderer:
 
         check_layout(layout)
         wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
+        step_state = _step_state(layout, wizard_options, kwargs.pop('draft', None))
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
         # A fresh form (no data passed) starts from the model's defaults. Data
         # that was passed, such as a submission being re-rendered, is used as
@@ -254,6 +274,8 @@ class EnhancedFormRenderer:
         # filling in its default would tick it again.
         if data is None:
             data = self._model_defaults(model_cls)
+            if step_state is not None:
+                data = {**data, **step_state.data}
         data = _render_values(data)
 
         # Keep backward compatibility for callers still passing these via kwargs.
@@ -306,6 +328,7 @@ class EnhancedFormRenderer:
                     mode=layout,
                     general_title=_general_group_title(model_cls, metadata),
                     wizard_options=wizard_options,
+                    step_state=step_state,
                 )
             )
         else:
@@ -329,6 +352,8 @@ class EnhancedFormRenderer:
         if error_summary_markup:
             form_body_parts.insert(0, error_summary_markup)
 
+        if step_state is not None and not _on_last_step(model_cls, metadata, step_state):
+            include_submit_button = False
         submit_markup = self._render_submit_button() if include_submit_button else ''
 
         # Calculate render time before form_wrapper (we'll add timing display inside form)

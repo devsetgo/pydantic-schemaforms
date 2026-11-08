@@ -591,10 +591,12 @@ def _wizard_layout(
     steps_html: str = '',
     footer_html: str = '',
     component_assets: str = '',
+    hidden_html: str = '',
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
 <div class="form-wizard {layout_class}" data-linear="{linear}" data-active-step="{active_step}">
+    {SafeHTML(hidden_html)}
     {SafeHTML(progress_html)}
     <div class="wizard-steps">{SafeHTML(steps_html)}</div>
     {SafeHTML(footer_html)}
@@ -614,16 +616,46 @@ WIZARD_PROGRESS_TEMPLATE = TemplateString(_wizard_progress)
 
 
 def _wizard_progress_item(
-    *, index: str = '', number: str = '', title: str = '', state_class: str = '', **_: Any
+    *,
+    index: str = '',
+    number: str = '',
+    title: str = '',
+    state_class: str = '',
+    action: str = '',
+    disabled: str = '',
+    current: str = '',
+    **_: Any,
 ) -> SafeHTML:
+    _number = html(t'<span class="wizard-progress-number">{number}</span>')  # NOSONAR
+    _title = html(t'<span class="wizard-progress-title">{title}</span>')  # NOSONAR
+    _class = SafeHTML(state_class)  # NOSONAR
+    if action:
+        # save_steps: a header jump posts the current step, like Back and Next.
+        _disabled = SafeHTML(' disabled' if disabled else '')  # NOSONAR
+        _current = SafeHTML(' aria-current="step"' if current else '')  # NOSONAR
+        return html(t'''
+<li><button type="submit" name="_sf_wizard" value="{action}" class="wizard-progress-item{_class}"{_current}{_disabled}>
+    {_number}
+    {_title}
+</button></li>''')
     return html(t'''
-<li><button type="button" class="wizard-progress-item{SafeHTML(state_class)}" data-wizard-goto="{index}">
-    <span class="wizard-progress-number">{number}</span>
-    <span class="wizard-progress-title">{title}</span>
+<li><button type="button" class="wizard-progress-item{_class}" data-wizard-goto="{index}">
+    {_number}
+    {_title}
 </button></li>''')
 
 
 WIZARD_PROGRESS_ITEM_TEMPLATE = TemplateString(_wizard_progress_item)
+
+
+def _wizard_step_state(*, step: str = '0', next_label: str = 'Next', **_: Any) -> SafeHTML:
+    # Enter in a field submits with the form's first submit button, so the first
+    # one is a hidden Next: otherwise it would be a header jump or Back.
+    return html(t'''<input type="hidden" name="_sf_wizard_step" value="{step}">
+<button type="submit" name="_sf_wizard" value="next" class="wizard-default-action" tabindex="-1" aria-hidden="true">{next_label}</button>''')
+
+
+WIZARD_STEP_STATE_TEMPLATE = TemplateString(_wizard_step_state)
 
 
 def _default_wizard_step(
@@ -640,8 +672,30 @@ DEFAULT_WIZARD_STEP_TEMPLATE = TemplateString(_default_wizard_step)
 
 
 def _default_wizard_footer(
-    *, back_label: str = 'Back', next_label: str = 'Next', **_: Any
+    *,
+    back_label: str = 'Back',
+    next_label: str = 'Next',
+    save_steps: str = '',
+    show_back: str = 'true',
+    show_next: str = 'true',
+    **_: Any,
 ) -> SafeHTML:
+    if save_steps:
+        _back = (  # NOSONAR
+            html(
+                t'<button type="submit" class="btn btn-outline-secondary" name="_sf_wizard" value="back" data-wizard-back>{back_label}</button>'
+            )
+            if show_back
+            else SafeHTML('')
+        )
+        _next = (  # NOSONAR
+            html(
+                t'<button type="submit" class="btn btn-primary" name="_sf_wizard" value="next" data-wizard-next>{next_label}</button>'
+            )
+            if show_next
+            else SafeHTML('')
+        )
+        return html(t'<div class="wizard-footer">{_back}{_next}</div>')
     return html(t"""
 <div class="wizard-footer">
     <button type="button" class="btn btn-outline-secondary" data-wizard-back>{back_label}</button>
@@ -666,8 +720,30 @@ PLAIN_WIZARD_STEP_TEMPLATE = TemplateString(_plain_wizard_step)
 
 
 def _plain_wizard_footer(
-    *, back_label: str = 'Back', next_label: str = 'Next', **_: Any
+    *,
+    back_label: str = 'Back',
+    next_label: str = 'Next',
+    save_steps: str = '',
+    show_back: str = 'true',
+    show_next: str = 'true',
+    **_: Any,
 ) -> SafeHTML:
+    if save_steps:
+        _back = (  # NOSONAR
+            html(
+                t'<button type="submit" name="_sf_wizard" value="back" data-wizard-back>{back_label}</button>'
+            )
+            if show_back
+            else SafeHTML('')
+        )
+        _next = (  # NOSONAR
+            html(
+                t'<button type="submit" name="_sf_wizard" value="next" data-wizard-next>{next_label}</button>'
+            )
+            if show_next
+            else SafeHTML('')
+        )
+        return html(t'<div class="wizard-footer">{_back}{_next}</div>')
     return html(t"""
 <div class="wizard-footer">
     <button type="button" data-wizard-back>{back_label}</button>
@@ -692,8 +768,30 @@ MATERIAL_WIZARD_STEP_TEMPLATE = TemplateString(_material_wizard_step)
 
 
 def _material_wizard_footer(
-    *, back_label: str = 'Back', next_label: str = 'Next', **_: Any
+    *,
+    back_label: str = 'Back',
+    next_label: str = 'Next',
+    save_steps: str = '',
+    show_back: str = 'true',
+    show_next: str = 'true',
+    **_: Any,
 ) -> SafeHTML:
+    if save_steps:
+        _back = (  # NOSONAR
+            html(
+                t'<button type="submit" class="md-button md-button--outlined" name="_sf_wizard" value="back" data-wizard-back>{back_label}</button>'
+            )
+            if show_back
+            else SafeHTML('')
+        )
+        _next = (  # NOSONAR
+            html(
+                t'<button type="submit" class="md-button md-button--filled" name="_sf_wizard" value="next" data-wizard-next>{next_label}</button>'
+            )
+            if show_next
+            else SafeHTML('')
+        )
+        return html(t'<div class="wizard-footer">{_back}{_next}</div>')
     return html(t"""
 <div class="wizard-footer">
     <button type="button" class="md-button md-button--outlined" data-wizard-back>{back_label}</button>
@@ -730,6 +828,7 @@ class FormStyleTemplates:
     wizard_layout: TemplateString = WIZARD_LAYOUT_TEMPLATE
     wizard_progress: TemplateString = WIZARD_PROGRESS_TEMPLATE
     wizard_progress_item: TemplateString = WIZARD_PROGRESS_ITEM_TEMPLATE
+    wizard_step_state: TemplateString = WIZARD_STEP_STATE_TEMPLATE
     wizard_step: TemplateString = DEFAULT_WIZARD_STEP_TEMPLATE
     wizard_footer: TemplateString = DEFAULT_WIZARD_FOOTER_TEMPLATE
 

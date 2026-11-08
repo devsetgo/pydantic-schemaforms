@@ -257,6 +257,11 @@ WIZARD_COMPONENT_ASSETS = """
     display: flex; justify-content: space-between; gap: 0.5rem; margin: 1rem 0;
 }
 .form-wizard .wizard-footer [data-wizard-next] { margin-left: auto; }
+.form-wizard .wizard-progress-item:disabled { cursor: default; opacity: 0.6; }
+.form-wizard .wizard-default-action {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 </style>
 """
 

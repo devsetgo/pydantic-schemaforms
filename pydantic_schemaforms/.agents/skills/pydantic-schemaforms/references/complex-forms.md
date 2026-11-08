@@ -183,6 +183,42 @@ form_html = render_form_html(
   `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`). An unknown key
   raises `ValueError`. Pass it to `validate()` too.
 
+### Saving each step (`save_steps`)
+
+Use `wizard_options={"save_steps": True}` only when a user must be able to stop and resume, or
+a step needs server work (storing a file, prefilling a later step). Otherwise keep the default
+one-POST wizard. Each step is then its own page and POST, and the app stores the draft:
+
+```python
+FORM = {'submit_url': '/apply', 'layout': 'wizard', 'wizard_options': {'save_steps': True}}
+
+@app.get('/apply', response_class=HTMLResponse)
+async def show(request: Request):
+    return await render_form_html_async(ApplicationForm, draft=load_draft(request), **FORM)
+
+@app.post('/apply', response_class=HTMLResponse)
+async def step(request: Request):
+    result = ApplicationForm.validate_step(await request.form(), draft=load_draft(request), **FORM)
+    if result.is_complete:  # Submit on the last step, whole model valid
+        clear_draft(request)
+        return finish(result.data)
+    if result.is_valid:
+        save_draft(request, result.draft)  # JSON-safe; store as is, pass back as draft=
+    return await result.render_async()  # next step, or this step with its errors
+```
+
+- `validate_step()` replaces `validate()` and needs the same render options. `WizardStepResult`
+  (top-level) has `is_valid`, `is_complete`, `data`, `errors`, `draft`, `files`, `step`, `render()`
+  and `render_async()`. `draft=` must be an unchanged `result.draft` (else `ValueError`).
+- Back never blocks; Next needs a valid step; the final submit validates the whole model, so
+  `@model_validator` runs then.
+- A file is uploaded on its own step. Store each `result.files` item's content, set
+  `upload.ref = <your id>` before reading `result.draft`, and later steps and the final
+  `result.data` hold a `SavedFile` (top-level; `filename`, `content_type`, `size`, `ref`) whose
+  `read()` raises. Fetch the content by `ref`.
+- To prefill a later step, change `result.data` before `result.render()` and `result.draft`.
+- Full page loads only; HTMX per step is not supported.
+
 ## Nested data and errors
 
 `result.data` is nested exactly like the model:

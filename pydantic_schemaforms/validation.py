@@ -1374,7 +1374,9 @@ def _visible_submission(
     return prune(metadata.schema.get('properties') or {}, metadata.schema_defs, nested)
 
 
-def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResult:
+def validate_form_data(
+    form_model_class: type[Any], data: Any, *, from_form: bool | None = None
+) -> ValidationResult:
     """Validate a submission against a form model.
 
     Args:
@@ -1406,7 +1408,7 @@ def validate_form_data(form_model_class: type[Any], data: Any) -> ValidationResu
     coerced = _coerce_html_form_values(
         visible,
         getattr(runtime_model, 'model_fields', {}) or {},
-        from_form=is_form_submission(data),
+        from_form=is_form_submission(data) if from_form is None else from_form,
     )
     try:
         instance = runtime_model(**coerced)
