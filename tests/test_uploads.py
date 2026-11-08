@@ -361,3 +361,7 @@ def test_seek_rewinds_the_file() -> None:
     assert upload.read() == b'abc'
     assert upload.seek(0) == 0
     assert upload.read(1) == b'a'
+
+
+def test_an_optional_limited_field_can_be_left_empty() -> None:
+    assert Reference(name='Bo', letter=None).letter is None

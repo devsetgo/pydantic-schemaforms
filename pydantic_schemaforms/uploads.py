@@ -223,7 +223,12 @@ class _UploadLimits:
         return core_schema.no_info_after_validator_function(self._check, schema)
 
     def _check(self, value: Any) -> Any:
-        files = value if isinstance(value, list) else [value] if value is not None else []
+        if isinstance(value, list):
+            files = value
+        elif value is None:
+            files = []
+        else:
+            files = [value]
         if self.max_files is not None and len(files) > self.max_files:
             noun = 'file' if self.max_files == 1 else 'files'
             raise PydanticCustomError(
