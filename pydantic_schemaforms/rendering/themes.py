@@ -40,6 +40,9 @@ _CLOSE_SECTION = '</section>'
 _CLOSE_INNER_DIV = '  </div>'
 
 
+_BOOTSTRAP_PRIMARY_BUTTON = 'btn btn-primary'
+_MATERIAL_TEXT_BUTTON = 'md-button md-button--text'
+
 _TABLE_STYLE_CLASSES = {
     'striped': 'table-striped',
     'bordered': 'table-bordered',
@@ -53,17 +56,17 @@ _DATATABLE_CLASSES = {
     'upload_help': 'form-text',
     'load_button': 'btn btn-secondary mt-2',
     'submit_wrapper': 'mt-3',
-    'submit_button': 'btn btn-primary',
+    'submit_button': _BOOTSTRAP_PRIMARY_BUTTON,
     'csv_template': 'btn btn-secondary btn-sm mb-2',
 }
 
 _CONFIRM_CLASSES = {
     'cancel': 'btn btn-outline-secondary',
-    'confirm': 'btn btn-primary',
+    'confirm': _BOOTSTRAP_PRIMARY_BUTTON,
 }
 
 _MATERIAL_CONFIRM_CLASSES = {
-    'cancel': 'md-button md-button--text',
+    'cancel': _MATERIAL_TEXT_BUTTON,
     'confirm': 'md-button md-button--filled',
 }
 
@@ -82,7 +85,7 @@ _MATERIAL_DISPLAY_CLASSES = {
     'value': 'md-display__value',
     'empty': 'md-display__value--empty',
     'table_wrapper': 'md-display__table',
-    'edit': 'md-button md-button--text',
+    'edit': _MATERIAL_TEXT_BUTTON,
 }
 
 _MATERIAL_DATATABLE_CLASSES = {
@@ -92,7 +95,7 @@ _MATERIAL_DATATABLE_CLASSES = {
     'load_button': 'md-button md-button--tonal',
     'submit_wrapper': 'md-field',
     'submit_button': 'md-button md-button--filled',
-    'csv_template': 'md-button md-button--text',
+    'csv_template': _MATERIAL_TEXT_BUTTON,
 }
 
 
@@ -376,7 +379,7 @@ class RendererTheme:
         never confirms by accident; Escape closes it.
         """
 
-        # Sonar can't parse t-strings, so these read-only-there names carry NOSONAR.
+        # Sonar can't parse t-strings, so each name read only there is marked for it.
         title = texts['title']  # NOSONAR
         cancel_label = texts['cancel_label']  # NOSONAR
         confirm_label = texts['confirm_label']  # NOSONAR
@@ -453,7 +456,7 @@ class FrameworkTheme(RendererTheme):
     input_css = 'form-control'
     select_css = 'form-select'
     checkbox_css = 'form-check-input'
-    button_css = 'btn btn-primary'
+    button_css = _BOOTSTRAP_PRIMARY_BUTTON
 
     def __init__(
         self,
