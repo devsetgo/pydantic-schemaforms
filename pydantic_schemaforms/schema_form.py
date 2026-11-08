@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import inspect
 
@@ -10,6 +10,9 @@ from .show_when import check_field_options
 from .validation import ValidationResult
 from .tstring import SafeHTML
 from .uploads import attach_upload_limits, check_upload_limits
+
+if TYPE_CHECKING:
+    from .wizard_steps import WizardStepResult
 
 
 _PYDANTIC_FIELD_PARAMS = frozenset(inspect.signature(PydanticField).parameters)
@@ -462,6 +465,44 @@ class FormModel(BaseModel):
         result._framework = framework
         result._render_kwargs = render_kwargs
         return result
+
+    @classmethod
+    def validate_step(
+        cls,
+        data: Any,
+        *,
+        draft: Any = None,
+        submit_url: str | None = None,
+        framework: str = 'bootstrap',
+        **render_kwargs: Any,
+    ) -> 'WizardStepResult':
+        """Check one step of a ``wizard_options={"save_steps": True}`` wizard.
+
+        ``data`` is the raw request form and ``draft`` the ``result.draft``
+        saved from the previous step (``None`` at the start). Pass the same
+        render options as the form was rendered with. Only the submitted
+        step's fields are checked, until Submit on the last step validates the
+        whole model.
+
+        Example::
+
+            result = ApplicationForm.validate_step(await request.form(), draft=load(), **FORM)
+            if result.is_complete:
+                return finish(result.data)
+            if result.is_valid:
+                save(result.draft)
+            return HTMLResponse(await result.render_async())
+        """
+        from .wizard_steps import validate_step
+
+        return validate_step(
+            cls,
+            data,
+            draft=draft,
+            submit_url=submit_url,
+            framework=framework,
+            render_kwargs=render_kwargs,
+        )
 
     @classmethod
     def register_field(

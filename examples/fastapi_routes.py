@@ -55,6 +55,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     VALID_VALIDATION_DEMO,
     ValidationShowcaseForm,
     FieldGroupsForm,
+    SaveAndContinueForm,
     WidgetGalleryForm,
     validation_showcase_rules,
     create_sample_nested_data,
@@ -1812,9 +1813,12 @@ def _layout_switcher(
                 )
             )
         )
+        save_steps_href = f'/layouts/save-steps?style={style}{_variant_query(variant)}'
         wizard_row = html(
             t'<div class="d-flex flex-wrap gap-2 align-items-center mt-2">'
-            t'<span class="text-muted small">Wizard options:</span>{toggles}</div>'
+            t'<span class="text-muted small">Wizard options:</span>{toggles}'
+            t'<a class="btn btn-sm btn-outline-primary" href="{save_steps_href}">'
+            t'Save each step (save_steps)</a></div>'
         )
     return str(
         html(
@@ -2089,6 +2093,127 @@ async def field_groups_post(
             'try_again_url': create_refer_path(request),
         },
     )
+
+
+# --- Save and continue: wizard_options={'save_steps': True} -------------------
+# The app stores the wizard's draft; here it's a signed cookie, and uploaded
+# files sit in memory under a ref (a real app would use a database and file store).
+_SAVE_STEPS_COOKIE = 'sf_save_steps_draft'
+_SAVE_STEPS_KEY = secrets.token_bytes(32)
+_SAVED_UPLOADS: dict[str, bytes] = {}
+_CITY_BY_POSTCODE = {'SW': 'London', 'M': 'Manchester', 'EH': 'Edinburgh'}
+_SAVE_STEPS_DESCRIPTION = (
+    "wizard_options={'save_steps': True}: each step is its own page and POST, checked "
+    'on the server and saved before the next one shows. Leave and come back: the draft '
+    'is kept in a cookie. The postcode on step 1 fills in the city on step 3.'
+)
+
+
+def _save_steps_options(style: str, variant: str | None) -> dict[str, Any]:
+    return {
+        'submit_url': f'/layouts/save-steps?style={style}{_variant_query(variant)}',
+        'framework': style,
+        'material_variant': _material_variant(variant),
+        'layout': 'wizard',
+        'wizard_options': {'save_steps': True, 'next_label': 'Save and continue'},
+    }
+
+
+def _load_save_steps_draft(request: Request) -> dict | None:
+    import base64
+    import json
+
+    raw = request.cookies.get(_SAVE_STEPS_COOKIE, '')
+    payload, _, signature = raw.partition('.')
+    expected = hmac.new(_SAVE_STEPS_KEY, payload.encode(), 'sha256').hexdigest()
+    if not payload or not hmac.compare_digest(signature, expected):
+        return None
+    return json.loads(base64.urlsafe_b64decode(payload))
+
+
+def _store_save_steps_draft(response: Response, draft: dict) -> None:
+    import base64
+    import json
+
+    payload = base64.urlsafe_b64encode(json.dumps(draft).encode()).decode()
+    signature = hmac.new(_SAVE_STEPS_KEY, payload.encode(), 'sha256').hexdigest()
+    response.set_cookie(_SAVE_STEPS_COOKIE, f'{payload}.{signature}', httponly=True, samesite='lax')
+
+
+def _prefill_city(data: dict) -> None:
+    postcode = str((data.get('applicant') or {}).get('postcode') or '').upper()
+    availability = data.setdefault('availability', {})
+    if availability.get('city'):
+        return
+    for prefix, city in _CITY_BY_POSTCODE.items():
+        if postcode.startswith(prefix):
+            availability['city'] = city
+            return
+
+
+def _save_steps_page(request: Request, style: str, form_html: str):
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Save and Continue Wizard',
+            'description': _SAVE_STEPS_DESCRIPTION,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'hide_api_info': True,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.get('/layouts/save-steps', response_class=HTMLResponse, tags=['Showcase'])
+async def save_steps_get(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    """A wizard that saves each step on the server; resumes from the saved draft."""
+    form_html = await render_form_html_async(
+        SaveAndContinueForm,
+        draft=_load_save_steps_draft(request),
+        **_save_steps_options(style, variant),
+    )
+    return _save_steps_page(request, style, form_html)
+
+
+@router.post('/layouts/save-steps', response_class=HTMLResponse, tags=['Showcase'])
+async def save_steps_post(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    result = SaveAndContinueForm.validate_step(
+        await request.form(),
+        draft=_load_save_steps_draft(request),
+        **_save_steps_options(style, variant),
+    )
+    if result.is_complete:
+        response = templates.TemplateResponse(
+            request,
+            'success.html',
+            {
+                'request': request,
+                'title': 'Application Saved and Submitted',
+                'message': 'Every step was saved on the server, then checked together.',
+                'display_html': SaveAndContinueForm.render_display(
+                    result.data, framework=style, material_variant=_material_variant(variant)
+                ),
+                'data': result.data,
+                'framework': 'fastapi',
+                'framework_name': 'FastAPI (Async)',
+                'try_again_url': f'/layouts/save-steps?style={style}{_variant_query(variant)}',
+            },
+        )
+        response.delete_cookie(_SAVE_STEPS_COOKIE)
+        return response
+    if result.is_valid:
+        for upload in result.files:
+            upload.ref = secrets.token_hex(8)
+            _SAVED_UPLOADS[upload.ref] = upload.read()
+        _prefill_city(result.data)
+    response = _save_steps_page(request, style, await result.render_async())
+    if result.is_valid:
+        _store_save_steps_draft(response, result.draft)
+    return response
 
 
 @router.get('/layouts/review', response_class=HTMLResponse, tags=['Showcase'])

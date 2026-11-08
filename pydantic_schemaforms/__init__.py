@@ -101,6 +101,7 @@ from .schema_form import Field, FormModel, ValidationResult
 from .templates import FormTemplates, TemplateString
 from .tstring import SafeHTML, html
 from .uploads import UploadedFile
+from .wizard_steps import SavedFile, WizardStepResult
 
 from .validation import (
     CrossFieldRules,
@@ -147,6 +148,8 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'Field',
     'ValidationResult',
     'UploadedFile',
+    'SavedFile',
+    'WizardStepResult',
     'render_form_html',
     'render_form_html_async',
     'EnhancedFormRenderer',

@@ -63,6 +63,7 @@ Pass to `render_form_html()` and `validate()` together with `layout="wizard"`:
 | `show_progress` | `True` | `False` hides the progress header. |
 | `back_label` | `"Back"` | Text of the Back button |
 | `next_label` | `"Next"` | Text of the Next button |
+| `save_steps` | `False` | `True` makes each step its own page and POST, saved on the server. See [Saving each step](#saving-each-step). |
 
 An unknown key raises `ValueError`.
 
@@ -80,6 +81,33 @@ How the wizard behaves:
   with an error is marked in the progress header.
 - **Without JavaScript**, every step is shown, stacked under its title, with
   the submit button at the end.
+
+### Saving each step
+
+With `wizard_options={"save_steps": True}`, only the current step's inputs are
+rendered, with the progress header. Back, Next and the header's links are
+submit buttons, so it works without JavaScript. The form's own submit button is
+on the last step. Steps not reached yet are shown disabled in the header.
+
+- **`draft=`** on `render_form_html()`, `render_form_html_async()` and
+  `Model.render_form()` is the `result.draft` you saved. `None` starts at step
+  1. It raises `TypeError` without `save_steps`.
+- **`Model.validate_step(data, *, draft=None, **render_options)`** takes the
+  request form, the saved draft and the same render options, and returns a
+  `WizardStepResult`. It raises `ValueError` unless `layout="wizard"` and
+  `save_steps` are set, or if `draft` was not produced by `result.draft`.
+- **Next needs a valid step.** Back never blocks: it keeps the step if valid
+  and drops invalid input on the step being left. A header jump back behaves
+  like Back; forward goes only to steps already reached, and with `linear` it
+  checks the current step first.
+- **The final submit validates the whole model**, so `@model_validator` and
+  cross-step checks run. An error in an earlier step reopens that step; a
+  form-wide error stays on the last step.
+- **`ui_show_when`** rules controlled by a field on another step render from
+  the draft's data.
+
+See [Rendering API](rendering-api.md#wizardstepresult) for the result and the
+[Save and Continue recipe](../recipes/save-and-continue.md) for a full route.
 
 ## Repeating sub-form options
 

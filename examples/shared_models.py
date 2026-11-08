@@ -2551,6 +2551,44 @@ class LayoutDemonstrationForm(FormModel):
     )
 
 
+class SavedStepApplicant(FormModel):
+    full_name: str = Field(title='Full name', min_length=2)
+    postcode: str = Field(
+        title='Postcode',
+        description='Try one starting SW, M or EH: the last step fills in the city from it.',
+        min_length=2,
+    )
+
+
+class SavedStepResume(FormModel):
+    resume: UploadedFile = Field(
+        title='Resume (PDF or text, up to 200 KB)',
+        ui_max_size=200 * 1024,
+        ui_options={'accept': '.pdf,.txt'},
+    )
+
+
+class SavedStepAvailability(FormModel):
+    city: str = Field(title='City', min_length=2)
+    start_date: date = Field(title='Earliest start date')
+    end_date: date = Field(title='Available until')
+
+
+class SaveAndContinueForm(FormModel):
+    """wizard_options={'save_steps': True}: one step per page, saved on the server."""
+
+    applicant: SavedStepApplicant = Field(title='About you')
+    documents: SavedStepResume = Field(title='Resume')
+    availability: SavedStepAvailability = Field(title='Availability')
+
+    # Runs on the final submit, once every step is in.
+    @model_validator(mode='after')
+    def _dates_in_order(self) -> 'SaveAndContinueForm':
+        if self.availability.end_date <= self.availability.start_date:
+            raise ValueError('"Available until" must be after the earliest start date')
+        return self
+
+
 class FieldGroupsForm(FormModel):
     """A flat model arranged with ui_group and ui_cols: result.data has no nesting."""
 

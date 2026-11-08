@@ -38,6 +38,8 @@ class UploadedFile:
         self.filename = filename
         self.content_type = content_type
         self.file = file
+        # Set by the app to find a stored file again; a save_steps wizard keeps it.
+        self.ref: Any = None
 
     @classmethod
     def from_upload(cls, upload: Any) -> UploadedFile:
@@ -77,7 +79,7 @@ class UploadedFile:
 
     def __repr__(self) -> str:
         return (
-            f'UploadedFile(filename={self.filename!r}, content_type={self.content_type!r}, '
+            f'{type(self).__name__}(filename={self.filename!r}, content_type={self.content_type!r}, '
             f'size={self.size})'
         )
 

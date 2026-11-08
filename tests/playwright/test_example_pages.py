@@ -459,3 +459,58 @@ def test_group_show_when_hides_the_whole_group(
     expect(company).to_be_hidden()
     expect(company).to_be_disabled()
     expect(page.get_by_text('Invoice', exact=True)).to_be_hidden()
+
+
+@pytest.mark.parametrize('javascript', [True, False])
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_save_steps_wizard_walks_through(
+    browser, examples_server_url: str, style: str, javascript: bool
+) -> None:
+    context = browser.new_context(java_script_enabled=javascript)
+    page = context.new_page()
+    try:
+        page.goto(f'{examples_server_url}/layouts/save-steps?style={style}', wait_until='load')
+        page.fill('[name="applicant.full_name"]', 'Robin Example')
+        page.fill('[name="applicant.postcode"]', 'SW9 9ZZ')
+        with page.expect_navigation(wait_until='load'):
+            if javascript:
+                page.click('[data-wizard-next]')
+            else:
+                # The theme's script stops Enter submitting a form. Without it, Enter
+                # uses the first submit button, the hidden Next, not a header jump.
+                page.press('[name="applicant.postcode"]', 'Enter')
+        expect(page.locator('[name="documents.resume"]')).to_be_attached(timeout=TIMEOUT)
+        if javascript:
+            assert _blocking_violations(page) == []
+
+        page.set_input_files(
+            '[name="documents.resume"]',
+            files=[{'name': 'cv.txt', 'mimeType': 'text/plain', 'buffer': b'hello'}],
+        )
+        with page.expect_navigation(wait_until='load'):
+            page.click('[data-wizard-next]')
+        expect(page.locator('[name="availability.city"]')).to_have_value('London', timeout=TIMEOUT)
+
+        with page.expect_navigation(wait_until='load'):
+            page.click('[data-wizard-back]')
+        expect(page.locator('[name="documents.resume"]')).to_be_attached(timeout=TIMEOUT)
+        with page.expect_navigation(wait_until='load'):
+            page.click('[data-wizard-next]')
+
+        page.fill('[name="availability.start_date"]', '2027-03-01')
+        page.fill('[name="availability.end_date"]', '2027-02-01')
+        with page.expect_navigation(wait_until='load'):
+            page.click('form [type="submit"]:not([name])')
+        expect(page.get_by_text('must be after the earliest start date')).to_be_visible(
+            timeout=TIMEOUT
+        )
+        if javascript:
+            assert _blocking_violations(page) == []
+
+        page.fill('[name="availability.end_date"]', '2027-09-01')
+        with page.expect_navigation(wait_until='load'):
+            page.click('form [type="submit"]:not([name])')
+        expect(page.get_by_text('Application Saved and Submitted')).to_be_visible(timeout=TIMEOUT)
+        expect(page.get_by_text('cv.txt', exact=True)).to_be_visible(timeout=TIMEOUT)
+    finally:
+        context.close()
