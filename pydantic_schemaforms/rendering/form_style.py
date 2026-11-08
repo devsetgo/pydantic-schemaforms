@@ -682,7 +682,9 @@ def _saved_steps_footer(
 ) -> SafeHTML:
     """A save_steps wizard's Back and Next: submit buttons that post the step."""
 
-    def button(css: str, action: str, label: str, marker: SafeHTML) -> SafeHTML:
+    def button(  # NOSONAR - the parameters are read in the t-string below
+        css: str, action: str, label: str, marker: SafeHTML
+    ) -> SafeHTML:
         _class = html(t' class="{css}"') if css else SafeHTML('')  # NOSONAR
         return html(
             t'<button type="submit"{_class} name="_sf_wizard" value="{action}" {marker}>{label}</button>'
