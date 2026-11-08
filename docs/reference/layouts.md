@@ -64,7 +64,6 @@ Pass to `render_form_html()` and `validate()` together with `layout="wizard"`:
 | `back_label` | `"Back"` | Text of the Back button |
 | `next_label` | `"Next"` | Text of the Next button |
 | `save_steps` | `False` | `True` makes each step its own page and POST, saved on the server. See [Saving each step](#saving-each-step). |
-
 | `review_step` | `False` | `True` adds a final review step. A dict sets `title` (default `"Review"`) and `edit_label` (default `"Edit"`); any other key, or a non-text value, raises `ValueError`. See [Review step](#review-step). |
 
 An unknown key raises `ValueError`.

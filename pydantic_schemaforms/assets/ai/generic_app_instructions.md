@@ -414,8 +414,8 @@ form_html = render_form_html(
   everything on submit. The submit button is on the last step. Without JavaScript, all steps show
   stacked.
 - `wizard_options`: `linear` (default `True`; `False` lets the progress header jump to any step),
-  `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`). An unknown key
-  raises `ValueError`. Pass it to `validate()` too.
+  `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`), `review_step` and
+  `save_steps` (both below). An unknown key raises `ValueError`. Pass it to `validate()` too.
 
 #### Review step (`review_step`)
 
