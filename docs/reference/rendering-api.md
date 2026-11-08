@@ -25,6 +25,7 @@ inputs need. It is a fragment for your page, not a whole page.
 | `draft` | `None` | With `wizard_options={"save_steps": True}`: the saved `result.draft`, to resume a wizard. See [Layouts](layouts.md#saving-each-step) |
 | `method` | `"POST"` | The form's `method` |
 | `include_submit_button` | `True` | `False` leaves the button out, for a form you submit some other way |
+| `progress` | `False` | `True` shows how many required fields are filled in, as the user types: a bar at the top, or ticks in a wizard's step header. See [Showing progress](../tutorial/layouts.md#showing-progress) |
 | `confirm` | `None` | `True`, or a dict of `title`, `message`, `confirm_label` and `cancel_label` (any other key raises `ValueError`): a dialog asks before the form submits. See [Asking before submitting](../tutorial/handling-submissions.md#asking-before-submitting) |
 | `csrf_mode` | `"off"` | `"required-provider"` adds a hidden CSRF field; see [CSRF Protection](../tutorial/csrf.md) |
 | `csrf_token_provider` | `None` | The token, or a function returning it |

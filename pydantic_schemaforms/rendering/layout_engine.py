@@ -387,6 +387,7 @@ class WizardLayout(BaseLayout):
         save_steps: bool = False,
         reached: int = 0,
         original_json: str | None = None,
+        progress: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(content='', **kwargs)
@@ -401,6 +402,8 @@ class WizardLayout(BaseLayout):
         self.reached = reached
         # A review step's starting values, posted back so a failed submit keeps them.
         self.original_json = original_json
+        # progress=True: tick each step in the header once its required fields are filled.
+        self.progress = progress
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
@@ -431,6 +434,10 @@ class WizardLayout(BaseLayout):
         )
         assets = theme.wizard_component_assets() if theme else form_style.assets.wizard_assets
         layout_class = self._merge_classes(attrs)
+        if self.progress:
+            from pydantic_schemaforms.progress import WIZARD_TICKS_CLASS
+
+            layout_class = f'{layout_class} {WIZARD_TICKS_CLASS}'.strip()
         hidden_html = ''
         if self.save_steps:
             # The page already shows just this step, so it needs the styles but not the script.
@@ -461,7 +468,12 @@ class WizardLayout(BaseLayout):
         state = (_ACTIVE_CLASS if is_active else '') + (
             ' has-error' if step.get('has_error') else ''
         )
-        common = {'index': str(index), 'number': str(index + 1), 'title': step['title']}
+        common = {
+            'index': str(index),
+            'number': str(index + 1),
+            'title': step['title'],
+            'done': self._done_state(index),
+        }
         if not self.save_steps:
             return templates.wizard_progress_item.render(state_class=state, **common)
         if index < self.active_index:
@@ -473,6 +485,15 @@ class WizardLayout(BaseLayout):
             current='true' if is_active else '',
             **common,
         )
+
+    def _done_state(self, index: int) -> str:
+        """'' without progress; otherwise whether the step starts ticked. The script
+        ticks live; with save_steps the server knows which other steps are saved."""
+
+        if not self.progress:
+            return ''
+        saved = self.save_steps and index < self.reached and index != self.active_index
+        return 'true' if saved else 'false'
 
     def _footer(self, templates: Any) -> str:
         return templates.wizard_footer.render(

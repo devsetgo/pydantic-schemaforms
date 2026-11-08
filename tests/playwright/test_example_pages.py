@@ -623,3 +623,28 @@ def test_confirm_without_javascript_submits_directly(browser, examples_server_ur
         expect(page.get_by_text('Account Closed')).to_be_visible(timeout=TIMEOUT)
     finally:
         context.close()
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_progress_counts_required_fields_as_they_fill(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/layouts?layout=tabbed&count=true&style={style}')
+    count = page.locator('.sf-progress__count')
+    expect(count).to_have_text('6 of 6 complete', timeout=TIMEOUT)
+    page.fill('[name="personal_info.first_name"]', '')
+    expect(count).to_have_text('5 of 6 complete', timeout=TIMEOUT)
+    assert _blocking_violations(page) == []
+
+    # A wizard ticks its step header instead; a step with nothing required ticks once passed.
+    page.goto(f'{examples_server_url}/layouts?layout=wizard&count=true&linear=false&style={style}')
+    numbers = page.locator('.wizard-progress-number')
+    expect(numbers).to_have_text(['✓', '✓', '3', '✓'], timeout=TIMEOUT)
+    page.fill('[name="personal_info.first_name"]', '')
+    expect(numbers.first).to_have_text('1', timeout=TIMEOUT)
+    page.fill('[name="personal_info.first_name"]', 'Robin')
+    for _ in range(3):
+        page.click('[data-wizard-next]')
+    expect(numbers).to_have_text(['✓', '✓', '✓', '✓'], timeout=TIMEOUT)
+    expect(page.locator('[data-step-done]:not([hidden])')).to_have_count(4)
+    assert _blocking_violations(page) == []

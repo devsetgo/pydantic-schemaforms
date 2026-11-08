@@ -128,6 +128,28 @@ When the wizard is rendered with existing data, as an edit form is, the review
 shows each changed answer as **old → new**, so users see what they changed
 before they submit. Nothing to set up: pass the data as usual.
 
+## Showing progress
+
+`progress=True` shows how much of a long form is left: how many of its required
+fields are filled in, updated as the user types.
+
+```python
+render_form_html(ApplicationForm, submit_url="/apply", layout="tabbed", progress=True)
+```
+
+- **Most layouts** get a bar at the top of the form, "4 of 6 complete", counting
+  the whole form across its tabs or panels.
+- **A wizard** ticks its step header instead: a step's number becomes ✓ once its
+  required fields are filled. A step with nothing required ticks once the user
+  has moved past it. With `save_steps`, steps already saved are ticked by the
+  server. A wizard without a header (`"show_progress": False`) gets the bar.
+
+Only visible required fields count: fields hidden by a `ui_show_when` rule drop
+out, and items added to a `model_list` add theirs. "Complete" means filled in,
+not valid; the server still checks everything on submit. Without JavaScript
+nothing is shown, since a count from the server would go out of date as soon as
+the user types.
+
 ??? note "Layouts for content that isn't a form field"
 
     The library also has layout building blocks, such as a grid, tabs and
