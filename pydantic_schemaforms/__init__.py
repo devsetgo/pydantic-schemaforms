@@ -100,6 +100,7 @@ from .rendering.layout_engine import (
 from .schema_form import Field, FormModel, ValidationResult
 from .templates import FormTemplates, TemplateString
 from .tstring import SafeHTML, html
+from .uploads import UploadedFile
 
 from .validation import (
     CrossFieldRules,
@@ -145,6 +146,7 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'FormModel',
     'Field',
     'ValidationResult',
+    'UploadedFile',
     'render_form_html',
     'render_form_html_async',
     'EnhancedFormRenderer',

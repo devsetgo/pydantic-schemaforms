@@ -824,25 +824,30 @@ if not verify_captcha(token=token, answer=form.get('captcha_answer'), secret_key
     ...  # re-render with errors={"_errors": "..."}; a fresh challenge renders automatically
 ```
 
-**file upload** (drag-and-drop on by default). Type the field `Any`: the upload arrives as the
-framework's own file object (Starlette's `UploadFile`, Werkzeug's `FileStorage`), and `validate()`
-passes it through. Check the file yourself (chosen at all, extension, size) and add your message
-to the errors. Flask keeps files apart from fields, so combine them before validating:
+**file upload** (drag-and-drop on by default). Type the field `UploadedFile`
+(`UploadedFile | None = Field(None, ...)` for optional, `list[UploadedFile]` for several); it
+renders as a file input by itself, no `ui_element` needed. `validate()` turns the framework's
+upload (Starlette's `UploadFile`, Werkzeug's `FileStorage`) into an `UploadedFile`
+(`filename`, `content_type`, `size`, `read()`, `seek()`). The limits are checked on the server and
+the message shows under the field: `ui_max_size` (bytes), `ui_max_files` (on a list) and `accept`
+in `ui_options` (extension or content type, `image/*` works). Don't write your own checks.
+Flask keeps files apart from fields, so combine them before validating:
 
 ```python
-from typing import Any
+from pydantic_schemaforms import Field, UploadedFile
 
-document: Any = Field(
-    None, title='Document', ui_element='file', ui_options={'accept': '.pdf,.docx'}
+document: UploadedFile = Field(
+    title='Document', ui_max_size=5 * 1024 * 1024, ui_options={'accept': '.pdf,.docx'}
 )
 
-# FastAPI: form = await request.form(); upload = form.get('document')  (starlette.datastructures.UploadFile)
-# Flask:   form = CombinedMultiDict([request.form, request.files])  (werkzeug.datastructures)
+# FastAPI: UploadForm.validate(await request.form())
+# Flask:   UploadForm.validate(CombinedMultiDict([request.form, request.files]))  (werkzeug.datastructures)
 ```
 
 `render_form_html()` sets `enctype="multipart/form-data"` by itself when a form has a file field.
-The browser can't keep a chosen file across a re-render, so after an error the user picks it
-again. See the security reference for checking uploads.
+An empty file input counts as not submitted. The browser can't keep a chosen file across a
+re-render, so after an error the user picks it again. See the security reference for untrusted
+uploads.
 
 **quantity** — ships +/- stepper buttons automatically:
 
@@ -1318,28 +1323,14 @@ Load `CAPTCHA_SECRET` from the app's configuration, never a literal in code.
 ### File uploads
 
 ```python
-from pathlib import Path
-
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from models import ALLOWED_TYPES, MAX_BYTES, UploadForm
-from starlette.datastructures import UploadFile
+from models import UploadForm
 
 from pydantic_schemaforms import html, render_form_html_async
 
 app = FastAPI()
 FORM_OPTIONS = {'submit_url': '/upload', 'include_framework_assets': True, 'asset_mode': 'cdn'}
-
-
-def check_upload(upload: object) -> tuple[str | None, bytes]:
-    if not isinstance(upload, UploadFile) or not upload.filename:
-        return 'Choose a file to upload', b''
-    if Path(upload.filename).suffix.lower() not in ALLOWED_TYPES:
-        return 'Upload a PDF or Word document', b''
-    content = upload.file.read(MAX_BYTES + 1)
-    if len(content) > MAX_BYTES:
-        return 'The file is larger than 5 MB', b''
-    return None, content
 
 
 @app.get('/upload', response_class=HTMLResponse)
@@ -1349,24 +1340,21 @@ async def show_upload():
 
 @app.post('/upload', response_class=HTMLResponse)
 async def upload(request: Request):
-    form = await request.form()
-    result = UploadForm.validate(form, **FORM_OPTIONS)
-    file_error, content = check_upload(form.get('document'))
-    if not result.is_valid or file_error:
-        errors = {**result.errors, **({'document': file_error} if file_error else {})}
-        return await render_form_html_async(
-            UploadForm, form_data={'title': form.get('title')}, errors=errors, **FORM_OPTIONS
-        )
-    size = len(content)
+    result = UploadForm.validate(await request.form(), **FORM_OPTIONS)
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+    size = len(result.data['document'].read())
     return html(t'<p>Stored "{result.data["title"]}" ({size} bytes).</p>')
 ```
 
-- Type the file field `Any`; `validate()` passes the upload object through. In FastAPI it's
-  `starlette.datastructures.UploadFile` (not `fastapi.UploadFile`, so `isinstance` against the
-  FastAPI class fails). In Flask, validate `CombinedMultiDict([request.form, request.files])`;
-  the file is a `FileStorage`, and set `app.config["MAX_CONTENT_LENGTH"]`.
-- Check that a file was chosen (`upload.filename`), its extension and its size, reading at most
-  one byte more than the limit. `accept` in `ui_options` only filters the file picker.
+- Type the file field `UploadedFile` (`list[UploadedFile]` for several). `validate()` turns
+  Starlette's `UploadFile` / Werkzeug's `FileStorage` into it. Set `ui_max_size`, `ui_max_files`
+  and `accept` on the field: they are checked on the server, so don't write a size or extension
+  check by hand. In Flask, validate `CombinedMultiDict([request.form, request.files])` and set
+  `app.config["MAX_CONTENT_LENGTH"]`, which refuses an oversized request before it is parsed.
+- `accept` is not content sniffing: extension and content type both come from the browser. Check
+  the content before trusting it.
+- Read the file inside the request handler; the framework closes it afterwards.
 - Store files outside the web root under names you generate; never show a file name in HTML
   without `html(t'...')`.
 
@@ -1766,7 +1754,7 @@ class SignupForm(FormModel):
 | `RadioField` | the same, `ui_element="radio"` |
 | `SelectMultipleField` | `list[Literal[...]]` |
 | `DateField`, `DateTimeLocalField`, `TimeField` | `date`, `datetime`, `time` |
-| `FileField` / `MultipleFileField` | `Any`, `ui_element="file"`; check the file in the route |
+| `FileField` / `MultipleFileField` | `UploadedFile` / `list[UploadedFile]`; `ui_max_size`, `accept` |
 | `HiddenField` | the type, `ui_hidden=True` |
 | `FormField(Sub)` | a nested `FormModel` |
 | `FieldList(FormField(Item))` | `list[ItemForm]`; `min_entries` → `min_length` |
@@ -1800,7 +1788,7 @@ with the token in the session (see the `pydantic-schemaforms` skill's security r
 | `MultipleChoiceField` | `list[Literal[...]]` |
 | `ModelChoiceField(queryset)` | choices built at runtime: `ui_options={"choices": [...]}` from the query, or `create_model()` |
 | `DateField`, `DateTimeField`, `TimeField` | `date`, `datetime`, `time` |
-| `FileField`, `ImageField` | `Any`, `ui_element="file"` |
+| `FileField`, `ImageField` | `UploadedFile`, `ui_max_size`, `accept` |
 | `required=False` | a default (`None` with `X \| None`) |
 | `label`, `help_text`, `initial` | `title`, `description`, the default |
 | `clean_<field>()` | `@field_validator("<field>")` |

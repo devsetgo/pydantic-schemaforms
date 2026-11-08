@@ -71,12 +71,14 @@ Load `CAPTCHA_SECRET` from the app's configuration, never a literal in code.
 
 <!-- INCLUDE-CODE: docs_src/recipes/file_upload/fastapi_app.py -->
 
-- Type the file field `Any`; `validate()` passes the upload object through. In FastAPI it's
-  `starlette.datastructures.UploadFile` (not `fastapi.UploadFile`, so `isinstance` against the
-  FastAPI class fails). In Flask, validate `CombinedMultiDict([request.form, request.files])`;
-  the file is a `FileStorage`, and set `app.config["MAX_CONTENT_LENGTH"]`.
-- Check that a file was chosen (`upload.filename`), its extension and its size, reading at most
-  one byte more than the limit. `accept` in `ui_options` only filters the file picker.
+- Type the file field `UploadedFile` (`list[UploadedFile]` for several). `validate()` turns
+  Starlette's `UploadFile` / Werkzeug's `FileStorage` into it. Set `ui_max_size`, `ui_max_files`
+  and `accept` on the field: they are checked on the server, so don't write a size or extension
+  check by hand. In Flask, validate `CombinedMultiDict([request.form, request.files])` and set
+  `app.config["MAX_CONTENT_LENGTH"]`, which refuses an oversized request before it is parsed.
+- `accept` is not content sniffing: extension and content type both come from the browser. Check
+  the content before trusting it.
+- Read the file inside the request handler; the framework closes it afterwards.
 - Store files outside the web root under names you generate; never show a file name in HTML
   without `html(t'...')`.
 

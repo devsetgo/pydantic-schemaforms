@@ -39,7 +39,6 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from loguru import logger
-from starlette.datastructures import FormData, UploadFile
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; Pet Forms; Layout Demonstration; Utility functions
@@ -80,6 +79,7 @@ from pydantic_schemaforms import (
     get_app_instructions,
     render_form_html_async,
     suggested_instruction_filename,
+    UploadedFile,
     verify_captcha,
 )
 from pydantic_schemaforms import (
@@ -345,27 +345,6 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
 
 
 # Add custom JSON filter that handles date objects
-def uploads_as_filenames(form_data: FormData) -> FormData:
-    """Swap each file part for its filename(s) before ``.validate()``.
-
-    File fields are typed ``str`` and the upload itself never goes through
-    Pydantic. A browser sends an empty file part for every file input left
-    blank, so passing ``request.form()`` straight in fails those fields.
-    """
-    items: list[tuple[str, str]] = []
-    filenames: dict[str, list[str]] = {}
-    for key, value in form_data.multi_items():
-        if isinstance(value, UploadFile):
-            if value.filename:
-                filenames.setdefault(key, []).append(value.filename)
-            else:
-                filenames.setdefault(key, [])
-        else:
-            items.append((key, value))
-    items.extend((key, ', '.join(names)) for key, names in filenames.items())
-    return FormData(items)
-
-
 def safe_json_filter(obj):
     """Custom JSON filter that handles date/datetime objects."""
     import json
@@ -376,6 +355,8 @@ def safe_json_filter(obj):
         """JSON serializer for objects not serializable by default json code"""
         if isinstance(o, (datetime, date, dt_time)):
             return o.isoformat()
+        if isinstance(o, UploadedFile):
+            return o.filename
         # Handle other common non-serializable objects
         elif hasattr(o, '__dict__'):
             return str(o)
@@ -921,7 +902,7 @@ async def showcase_post(
     request: Request, style: str = 'bootstrap', debug: bool = False, show_timing: bool = True
 ):
     """Complex form example - All features submission (async)."""
-    form_data = uploads_as_filenames(await request.form())
+    form_data = await request.form()
 
     full_referer_path = create_refer_path(request)
 
@@ -1153,7 +1134,7 @@ async def gallery_post(
     variant: str | None = None,
 ):
     """Tabbed widget gallery submission (async)."""
-    form_data = uploads_as_filenames(await request.form())
+    form_data = await request.form()
 
     validation = WidgetGalleryForm.validate(
         form_data,

@@ -11,6 +11,7 @@ from typing import Any, Union, get_args, get_origin
 from pydantic import Field as PydanticField
 
 from .show_when import check_field_options
+from .uploads import attach_upload_limits, check_upload_limits
 
 from .input_types import format_icon_class, get_default_input_type, is_input_type_valid
 
@@ -103,6 +104,7 @@ class FormField:
             ui_cols=kwargs.get('ui_cols'),
             ui_group_show_when=kwargs.get('ui_group_show_when'),
         )
+        check_upload_limits(kwargs.get('ui_max_size'), kwargs.get('ui_max_files'))
         if show_when is not None:
             kwargs['ui_show_when'] = show_when
         if group_show_when is not None:
@@ -152,7 +154,7 @@ class FormField:
 
         final_schema = {k: _sanitize(v) for k, v in final_schema.items()}
 
-        return PydanticField(  # type: ignore[call-overload]
+        field_info = PydanticField(  # type: ignore[call-overload]
             default=default,
             default_factory=default_factory,
             alias=alias,
@@ -178,6 +180,7 @@ class FormField:
             min_length=min_length,
             max_length=max_length,
         )
+        return attach_upload_limits(field_info, final_schema)
 
     @classmethod
     def validate_input_type(

@@ -195,6 +195,8 @@ def test_every_validation_kind_is_demonstrated() -> None:
         'lt',
         'pattern',
         'multiple_of',
+        'ui_max_size',
+        'ui_max_files',
     ):
         assert re.search(rf'\b{constraint}=', source), f'no example uses Field({constraint}=...)'
     for construct in (
@@ -388,6 +390,17 @@ def test_every_example_option_value_validates_against_its_field() -> None:
                     except ValidationError:
                         rejected.append((model.__qualname__, name, value))
     assert not rejected, f'Options the field itself rejects: {rejected}'
+
+
+def test_validation_page_reports_upload_limits(example_client: TestClient) -> None:
+    files = [
+        ('attachment', ('big.pdf', b'x' * (100 * 1024 + 1), 'application/pdf')),
+        *[('photos', (f'p{index}.png', b'1', 'image/png')) for index in range(3)],
+    ]
+    response = example_client.post('/validation', data={'username': 'ada'}, files=files)
+    assert response.status_code == 200
+    assert 'big.pdf is larger than 100 KB.' in response.text
+    assert 'Choose at most 2 files.' in response.text
 
 
 def test_showcase_rerenders_errors_after_a_correct_captcha() -> None:

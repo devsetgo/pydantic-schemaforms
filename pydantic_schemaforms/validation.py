@@ -21,6 +21,7 @@ from pydantic_core import PydanticCustomError, PydanticUndefined, to_jsonable_py
 
 from .form_data import coerce_form_value
 from .tstring import SafeHTML
+from .uploads import is_blank_upload, is_upload_annotation
 
 # Import version check to ensure compatibility
 
@@ -1207,6 +1208,9 @@ def _coerce_html_form_values(
        converted first, so ticking passes. (``from_form`` only) An absent
        ``Literal[True]`` with a default is submitted as ``False``, so that
        leaving it unticked fails instead of falling back to the default.
+    9. A file input left empty still sends a part: ``""`` from Starlette, an
+       unnamed file from Werkzeug. For an ``UploadedFile`` field it is dropped,
+       so the field falls back to its default or is reported missing.
     """
     result = dict(data)
 
@@ -1255,6 +1259,10 @@ def _coerce_html_form_values(
                 continue
 
         value = result[field_name]
+
+        if is_upload_annotation(annotation) and is_blank_upload(value):
+            del result[field_name]
+            continue
 
         if (
             any(_is_literal_true(t) for t in non_none_types)

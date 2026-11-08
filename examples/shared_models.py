@@ -32,6 +32,7 @@ from pydantic_schemaforms import (
     PhoneRule,
     RegexRule,
     RequiredRule,
+    UploadedFile,
 )
 
 # ============================================================================
@@ -932,11 +933,13 @@ class CompleteShowcaseForm(FormModel):
         icon='palette',
     )
 
-    file_field: str = FormField(
+    file_field: UploadedFile | None = FormField(
+        None,
         title='File Upload',
         input_type='file',
-        help_text='Upload a file (max 10MB)',
+        help_text='Upload a file (max 10 MB)',
         icon='cloud-upload',
+        ui_max_size=10 * 1024 * 1024,
     )
 
     hidden_field: str = FormField(
@@ -3075,23 +3078,23 @@ class ContentGalleryForm(FormModel):
 class SpecializedGalleryForm(FormModel):
     """Files and other specialized widgets."""
 
-    file_input: str = Field(
-        '', title='File Upload (drag-and-drop + preview by default)', ui_element='file'
+    file_input: UploadedFile | None = Field(
+        None, title='File Upload (drag-and-drop + preview by default)'
     )
-    file_documents: str = Field(
-        '',
+    file_documents: list[UploadedFile] = Field(
+        default_factory=list,
         title='Several documents (accept=".pdf,.docx", multiple=True)',
         ui_element='file',
         ui_options={'accept': '.pdf,.docx', 'multiple': True},
     )
-    file_camera: str = Field(
-        '',
+    file_camera: UploadedFile | None = Field(
+        None,
         title='Photo from the rear camera on mobile (accept="image/*", capture="environment")',
         ui_element='file',
         ui_options={'accept': 'image/*', 'capture': 'environment'},
     )
-    file_plain: str = Field(
-        '',
+    file_plain: UploadedFile | None = Field(
+        None,
         title='Plain file input (show_preview=False, enable_drag_drop=False)',
         ui_element='file',
         ui_options={'show_preview': False, 'enable_drag_drop': False},
@@ -3282,6 +3285,20 @@ class ValidationShowcaseForm(FormModel):
         '', title='Start date (DateRangeRule: 2025 or later)', ui_element='date'
     )
     end_date: str = Field('', title='End date (cross-field rule: after start)', ui_element='date')
+
+    # Checked on the server. A browser can't pre-fill a file, so choose one to see these fail.
+    attachment: UploadedFile | None = Field(
+        None,
+        title='Attachment (ui_max_size=100 KB, accept=".pdf,.txt")',
+        ui_max_size=100 * 1024,
+        ui_options={'accept': '.pdf,.txt'},
+    )
+    photos: list[UploadedFile] = Field(
+        default_factory=list,
+        title='Photos (ui_max_files=2, accept="image/*")',
+        ui_max_files=2,
+        ui_options={'accept': 'image/*'},
+    )
 
     @field_validator('password')
     @classmethod

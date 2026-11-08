@@ -192,27 +192,22 @@ class OrderForm(FormModel):
 
 ## File upload
 
-The file field is `Any`; the route checks that a file was chosen, its extension and its size.
+The file field is `UploadedFile`; `ui_max_size` and `accept` are checked on the server.
 
 ```python
-from typing import Any
+from pydantic_schemaforms import Field, FormModel, UploadedFile
 
-from pydantic_schemaforms import Field, FormModel
+MAX_BYTES = 5 * 1024 * 1024
 
 
 class UploadForm(FormModel):
     title: str = Field(title='Title', min_length=2)
-    document: Any = Field(
-        None,
+    document: UploadedFile = Field(
         title='Document',
         description='PDF or Word, up to 5 MB.',
-        ui_element='file',
+        ui_max_size=MAX_BYTES,
         ui_options={'accept': '.pdf,.docx'},
     )
-
-
-ALLOWED_TYPES = {'.pdf', '.docx'}
-MAX_BYTES = 5 * 1024 * 1024
 ```
 
 ## Job application (wizard)

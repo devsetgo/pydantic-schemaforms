@@ -88,10 +88,26 @@ def resolve_list_item_ref(field_schema: dict[str, Any]) -> str | None:
     return None
 
 
+def _is_upload_member(schema: Any) -> bool:
+    return (
+        isinstance(schema, dict)
+        and schema.get('format') == 'binary'
+        and schema.get('ui_element') == 'file'
+    )
+
+
+def is_upload_schema(field_schema: dict[str, Any]) -> bool:
+    """Whether a field is typed ``UploadedFile`` or a list of them, optionally ``| None``."""
+
+    candidates = [field_schema, field_schema.get('items'), *(field_schema.get('anyOf') or [])]
+    candidates += [item.get('items') for item in candidates[2:] if isinstance(item, dict)]
+    return any(_is_upload_member(candidate) for candidate in candidates)
+
+
 def resolve_ui_element(field_schema: dict[str, Any]) -> str | None:
     """Return the UI element for a schema field: the declared one, else an
-    inferred composite (``nested_model`` for a sub-model, ``model_list`` for a
-    list of sub-models), else ``None``."""
+    inferred one (``file`` for an ``UploadedFile`` field, ``nested_model`` for
+    a sub-model, ``model_list`` for a list of sub-models), else ``None``."""
 
     ui_info = extract_ui_info(field_schema)
     declared = (
@@ -102,6 +118,8 @@ def resolve_ui_element(field_schema: dict[str, Any]) -> str | None:
     )
     if declared:
         return declared
+    if is_upload_schema(field_schema):
+        return 'file'
     if resolve_nested_model_ref(field_schema):
         return 'nested_model'
     if resolve_list_item_ref(field_schema):

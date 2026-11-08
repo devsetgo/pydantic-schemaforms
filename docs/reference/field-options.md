@@ -36,6 +36,8 @@ the Pydantic constraints.
 | `ui_group_collapsible=True`, `ui_group_collapsed=True` | Let the user fold the group away, and start it closed |
 | `ui_group_show_when={...}` | Hide the whole group until another field has a value, like `ui_show_when` |
 | `ui_order=n` | Position among the fields (lower first); fields otherwise follow declaration order |
+| `ui_max_size=n` | Largest file in bytes, for an `UploadedFile` field; checked on the server. See [File Upload](../recipes/file-upload.md) |
+| `ui_max_files=n` | Most files allowed in a `list[UploadedFile]` field; checked on the server |
 | `ui_class="..."` | Extra CSS classes on the input |
 | `ui_style="..."` | Inline CSS on the input |
 | `unchecked_message="..."` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |

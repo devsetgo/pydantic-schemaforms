@@ -185,7 +185,8 @@ class FieldRenderer:
             'class': self._get_input_class(ui_element),
         }
 
-        if value is not None and ui_element != 'password':
+        # A browser never pre-fills a file input, so a re-rendered upload has no value to show.
+        if value is not None and ui_element not in ('password', 'file'):
             if ui_element in _CHECKBOX_LIKE_ELEMENTS:
                 if value is True or value == 'true' or value == '1' or value == 'on':
                     field_attrs['checked'] = True
@@ -234,6 +235,8 @@ class FieldRenderer:
         ui_options_dict, ui_options_list = self._extract_ui_options(ui_info, field_schema)
         if ui_options_dict:
             field_attrs = self._apply_ui_option_attributes(field_attrs, ui_options_dict, ui_element)
+        if ui_element == 'file' and field_schema.get('type') == 'array':
+            field_attrs.setdefault('multiple', True)
         if self._shell_theme is not None:
             field_attrs = self._shell_theme.control_attributes(
                 getattr(input_component, 'ui_element', None) or ui_element, field_attrs

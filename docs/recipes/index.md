@@ -11,7 +11,7 @@ the routes, run it, and change what you need. They assume you've read the
 | [Edit Form from a Database Row](edit-form.md) | Pre-filling a form from saved data and saving the changes |
 | [Shipping and Billing Addresses](address-subform.md) | One sub-form model used twice, and an optional sub-form |
 | [Order with Line Items](order-line-items.md) | A repeating sub-form with a computed total and currency input |
-| [File Upload](file-upload.md) | A file input, and checking the file's type and size |
+| [File Upload](file-upload.md) | A file input, with the file's type and size checked on the server |
 | [Multi-Step Application (Wizard)](wizard-application.md) | A job application split into steps |
 | [Settings with a Code Field](settings-code-field.md) | JSON and TOML text areas with formatting, checked by validators |
 | [Embedding in a Jinja Template](jinja-template.md) | Putting the form inside your own page template |
