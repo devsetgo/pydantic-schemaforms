@@ -1748,19 +1748,29 @@ async def organization_shared_post(
 
 
 def _layout_demo_options(
-    style: str, layout: str, linear: bool, progress: bool, labels: bool, variant: str | None = None
+    style: str,
+    layout: str,
+    linear: bool,
+    progress: bool,
+    labels: bool,
+    variant: str | None = None,
+    review: bool = False,
 ) -> dict:
     """Render kwargs for /layouts: the submit URL keeps every query option,
     and the wizard gets wizard_options built from them."""
     query = (
         f'style={style}&layout={layout}&linear={linear}&progress={progress}&labels={labels}'
-        f'{_variant_query(variant)}'
+        f'&review={review}{_variant_query(variant)}'
     )
     options: dict = {'submit_url': f'/layouts?{query}', 'layout': layout}
     if layout == 'wizard':
         options['wizard_options'] = {'linear': linear, 'show_progress': progress}
         if labels:
             options['wizard_options'] |= {'back_label': 'Previous', 'next_label': 'Continue'}
+        if review:
+            options['wizard_options']['review_step'] = (
+                {'title': 'Check your answers', 'edit_label': 'Change'} if labels else True
+            )
     return options
 
 
@@ -1780,6 +1790,7 @@ def _layout_switcher(
     progress: bool,
     labels: bool,
     variant: str | None = None,
+    review: bool = False,
 ) -> str:
     """Buttons to re-render /layouts with each layout, plus the wizard's options."""
 
@@ -1789,14 +1800,21 @@ def _layout_switcher(
         'linear': str(linear).lower(),
         'progress': str(progress).lower(),
         'labels': str(labels).lower(),
+        'review': str(review).lower(),
     }
 
-    def link(label: str, current: bool, **query: object) -> SafeHTML:
+    def link(label: str, current: bool, *, toggle: bool = False, **query: object) -> SafeHTML:
         params = current_query | query
         href = '/layouts?' + '&'.join(f'{key}={value}' for key, value in params.items())
         href += _variant_query(variant)
         css = 'btn btn-sm ' + ('btn-primary' if current else 'btn-outline-primary')
-        return html(t'<a class="{css}" href="{href}">{label}</a>')
+        # aria-current shows the state to screen readers and to the Material shell,
+        # which styles every .btn alike; a tick shows which options are on.
+        _current = SafeHTML(' aria-current="true"' if current else '')  # NOSONAR
+        _tick = SafeHTML(
+            '<span aria-hidden="true">✓ </span>' if toggle and current else ''
+        )  # NOSONAR
+        return html(t'<a class="{css}" href="{href}"{_current}>{_tick}{label}</a>')
 
     layout_links = SafeHTML(
         ''.join(str(link(label, value == layout, layout=value)) for value, label in _LAYOUT_CHOICES)
@@ -1805,20 +1823,21 @@ def _layout_switcher(
     if layout == 'wizard':
         toggles = SafeHTML(
             ''.join(
-                str(link(label, active, **{key: str(not active).lower()}))
+                str(link(label, active, toggle=True, **{key: str(not active).lower()}))
                 for key, label, active in (
-                    ('linear', 'Linear (validate before jumping ahead)', linear),
+                    ('linear', 'Linear', linear),
                     ('progress', 'Progress header', progress),
-                    ('labels', 'Custom button labels', labels),
+                    ('labels', 'Custom labels', labels),
+                    ('review', 'Review step', review),
                 )
             )
         )
         save_steps_href = f'/layouts/save-steps?style={style}{_variant_query(variant)}'
         wizard_row = html(
             t'<div class="d-flex flex-wrap gap-2 align-items-center mt-2">'
-            t'<span class="text-muted small">Wizard options:</span>{toggles}'
-            t'<a class="btn btn-sm btn-outline-primary" href="{save_steps_href}">'
-            t'Save each step (save_steps)</a></div>'
+            t'<span class="text-muted small">Wizard options:</span>{toggles}</div>'
+            t'<p class="small text-muted mt-2 mb-0">Saving each step on the server is a '
+            t'different flow: <a href="{save_steps_href}">see save_steps</a>.</p>'
         )
     return str(
         html(
@@ -1875,6 +1894,7 @@ async def layouts_get(
     linear: bool = True,
     progress: bool = True,
     labels: bool = False,
+    review: bool = False,
     data: str = None,
     demo: bool = True,
     debug: bool = False,
@@ -1885,7 +1905,7 @@ async def layouts_get(
     Try ?layout=vertical, tabbed, side-by-side, accordion, or wizard -- the model is
     the same; only the presentation changes. Wizard options: &linear=false lets
     the step header jump anywhere, &progress=false hides it, &labels=true
-    renames Back/Next.
+    renames Back/Next, &review=true adds a review step before Submit.
     """
     # Parse optional pre-fill data or use demo data
     form_data = {}
@@ -1904,22 +1924,23 @@ async def layouts_get(
         LayoutDemonstrationForm,
         data=form_data,
         errors={},
-        **_layout_demo_options(style, layout, linear, progress, labels, variant),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant, review),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
+    form_html = (
+        _layout_switcher(style, layout, linear, progress, labels, variant, review) + form_html
+    )
     return templates.TemplateResponse(
         request,
         'form.html',
         {
             'request': request,
             'title': 'Layout Demonstration - All Types',
-            'description': 'Four FormModels nested in one form. Switch presentation with '
-            '?layout=vertical, tabbed, side-by-side, accordion, or wizard '
-            '(wizard options: &linear=false, &progress=false, &labels=true)',
+            'description': 'Four FormModels nested in one form, shown with each layout. '
+            'Pick a layout and, for the wizard, its options below.',
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
@@ -1937,6 +1958,7 @@ async def layouts_post(
     linear: bool = True,
     progress: bool = True,
     labels: bool = False,
+    review: bool = False,
     debug: bool = False,
     show_timing: bool = True,
 ):
@@ -1973,13 +1995,15 @@ async def layouts_post(
         LayoutDemonstrationForm,
         data=form_data,
         errors=validation.errors,
-        **_layout_demo_options(style, layout, linear, progress, labels, variant),
+        **_layout_demo_options(style, layout, linear, progress, labels, variant, review),
         include_submit_button=True,
         debug=debug,
         show_timing=show_timing,
     )
     form_html = wrap_with_schemaforms_markers(form_html)
-    form_html = _layout_switcher(style, layout, linear, progress, labels, variant) + form_html
+    form_html = (
+        _layout_switcher(style, layout, linear, progress, labels, variant, review) + form_html
+    )
 
     return templates.TemplateResponse(
         request,
@@ -2115,7 +2139,11 @@ def _save_steps_options(style: str, variant: str | None) -> dict[str, Any]:
         'framework': style,
         'material_variant': _material_variant(variant),
         'layout': 'wizard',
-        'wizard_options': {'save_steps': True, 'next_label': 'Save and continue'},
+        'wizard_options': {
+            'save_steps': True,
+            'next_label': 'Save and continue',
+            'review_step': {'title': 'Check and submit'},
+        },
     }
 
 

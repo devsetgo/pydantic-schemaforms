@@ -10,7 +10,7 @@ app = FastAPI()
 FORM = {
     'submit_url': '/apply',
     'layout': 'wizard',
-    'wizard_options': {'save_steps': True},
+    'wizard_options': {'save_steps': True, 'review_step': True},
     'include_framework_assets': True,
     'asset_mode': 'cdn',
 }

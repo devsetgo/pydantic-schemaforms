@@ -35,6 +35,9 @@ its own POST.
   the next request, including the GET, so the user resumes where they left
   off. The example keeps it in a dict keyed by a cookie; a real app uses its
   session or database.
+- **`"review_step": True`** adds a final step, rendered from the saved draft,
+  that shows every answer with an Edit button per step. Submit on it is the
+  final submit, so the route needs no other change.
 - **`result.render()` shows what comes next**: the next step, or the same step
   with its errors. Save the draft only when `result.is_valid`.
 - **On the last step, Submit checks the whole model.** `result.is_complete` is

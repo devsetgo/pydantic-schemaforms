@@ -110,6 +110,20 @@ database) and passes it back as `draft=`. A user can leave after any step and
 resume later, and files can be handled on the step they are uploaded. See the
 [Save and Continue recipe](../recipes/save-and-continue.md).
 
+### Review before submitting
+
+`wizard_options={"review_step": True}` adds a last step that shows everything
+entered so far, read-only and grouped by step, the way `render_display()` shows
+values. Each step's section has an Edit button that goes back to that step, and
+the submit button is on the review step only.
+
+```python
+wizard_options = {"review_step": {"title": "Check your answers", "edit_label": "Change"}}
+```
+
+`True` uses the title "Review" and the label "Edit". It also works with
+`save_steps`, where the review is rendered on the server from the saved draft.
+
 ??? note "Layouts for content that isn't a form field"
 
     The library also has layout building blocks, such as a grid, tabs and

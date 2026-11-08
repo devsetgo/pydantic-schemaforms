@@ -500,6 +500,12 @@ def test_save_steps_wizard_walks_through(
         page.fill('[name="availability.start_date"]', '2027-03-01')
         page.fill('[name="availability.end_date"]', '2027-02-01')
         with page.expect_navigation(wait_until='load'):
+            page.click('[data-wizard-next]')
+        # The review step shows the saved answers, the file by its name.
+        review = page.locator('.sf-review')
+        expect(review).to_contain_text('cv.txt', timeout=TIMEOUT)
+        expect(review).to_contain_text('London')
+        with page.expect_navigation(wait_until='load'):
             page.click('form [type="submit"]:not([name])')
         expect(page.get_by_text('must be after the earliest start date')).to_be_visible(
             timeout=TIMEOUT
@@ -507,10 +513,49 @@ def test_save_steps_wizard_walks_through(
         if javascript:
             assert _blocking_violations(page) == []
 
+        with page.expect_navigation(wait_until='load'):
+            page.click('.sf-review [value="goto:2"]')
         page.fill('[name="availability.end_date"]', '2027-09-01')
+        with page.expect_navigation(wait_until='load'):
+            page.click('[data-wizard-next]')
         with page.expect_navigation(wait_until='load'):
             page.click('form [type="submit"]:not([name])')
         expect(page.get_by_text('Application Saved and Submitted')).to_be_visible(timeout=TIMEOUT)
         expect(page.get_by_text('cv.txt', exact=True)).to_be_visible(timeout=TIMEOUT)
     finally:
         context.close()
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_review_step_shows_the_live_answers(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.on('dialog', lambda dialog: dialog.accept())
+    page.goto(
+        f'{examples_server_url}/layouts?layout=wizard&review=true&linear=false&style={style}',
+        wait_until='load',
+    )
+    review = page.locator('[data-wizard-review]')
+    page.locator('.wizard-progress-item', has_text='Review').click()
+    expect(review).to_be_visible(timeout=TIMEOUT)
+    expect(review.locator('[data-review-slot="personal_info.first_name"]')).to_have_text('Alex')
+    rows = review.locator('[data-review-list="task_list.tasks"] > tr')
+    expect(rows).to_have_count(2, timeout=TIMEOUT)
+    expect(rows.first).to_contain_text('Complete project setup')
+    assert _blocking_violations(page) == []
+
+    # Edit goes back to the step; what is typed shows as text, never markup.
+    review.locator('[data-wizard-edit="0"]').click()
+    page.fill('[name="personal_info.first_name"]', '<b>Robin</b>')
+    page.locator('.wizard-progress-item', has_text='Review').click()
+    slot = review.locator('[data-review-slot="personal_info.first_name"]')
+    expect(slot).to_have_text('<b>Robin</b>', timeout=TIMEOUT)
+    expect(review.locator('b')).to_have_count(0)
+
+    # A list item added in the browser shows up as a row.
+    review.locator('[data-wizard-edit="3"]').click()
+    page.locator('.add-item-btn').first.click()
+    page.fill('[name="task_list.tasks[2].task_name"]', 'Third task')
+    page.locator('.wizard-progress-item', has_text='Review').click()
+    expect(rows).to_have_count(3, timeout=TIMEOUT)
+    expect(rows.nth(2)).to_contain_text('Third task')
