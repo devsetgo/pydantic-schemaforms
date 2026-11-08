@@ -1081,6 +1081,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `wizard_options` | `None` | With `layout="wizard"` |
 | `method` | `"POST"` | The form's method |
 | `include_submit_button` | `True` | `False` when the form is submitted another way |
+| `progress` | `False` | `True`: "n of m complete" for the required fields, counted in the browser as the user types (a bar at the top; a wizard ticks finished steps in its header instead). Hidden without JavaScript. Don't build your own counter; pass it to `validate()` too |
 | `confirm` | `None` | `True` or `{"title", "message", "confirm_label", "cancel_label"}`: a native `<dialog>` asks before the form submits, for actions that are hard to undo. Don't build your own modal. Named buttons (a wizard's Back/Next) don't ask; without JavaScript it submits directly. Not with `wizard_options` `review_step` (raises `ValueError`); pass it to `validate()` too |
 | `csrf_mode`, `csrf_token_provider`, `csrf_field_name` | `"off"` | See the security reference |
 | `include_framework_assets` | `False` | Add the framework's CSS and JavaScript |

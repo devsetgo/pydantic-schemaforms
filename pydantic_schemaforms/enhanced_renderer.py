@@ -52,6 +52,7 @@ from .rendering.themes import (
 )
 from .schema_form import FormModel
 from .confirm import CONFIRM_ASSETS, CONFIRM_ATTRIBUTE, check_confirm
+from .progress import PROGRESS_ASSETS, PROGRESS_ATTRIBUTE, PROGRESS_BAR, WIZARD_TICKS_CLASS
 from .show_when import SHOW_WHEN_SCRIPT, prune
 from .tstring import SafeHTML
 from .tstring import html as render_html
@@ -298,6 +299,14 @@ class EnhancedFormRenderer:
         wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
         step_state = _step_state(layout, wizard_options, kwargs.pop('draft', None))
         confirm = check_confirm(kwargs.pop('confirm', None))
+        progress = kwargs.pop('progress', False)
+        if not isinstance(progress, bool):
+            raise ValueError(f'progress= takes True or False, not {progress!r}.')
+        # A wizard's step header is its progress display, so it ticks steps instead of a bar.
+        progress_bar = progress
+        if progress and layout == 'wizard' and wizard_options.get('show_progress', True):
+            wizard_options = {**wizard_options, 'progress': True}
+            progress_bar = False
         if confirm and layout == 'wizard' and review_options(wizard_options):
             raise ValueError(
                 "confirm= and wizard_options={'review_step': ...} both ask before Submit; "
@@ -388,6 +397,8 @@ class EnhancedFormRenderer:
                 )
             )
 
+        if progress_bar:
+            form_body_parts.insert(0, str(PROGRESS_BAR))
         if error_summary_markup:
             form_body_parts.insert(0, error_summary_markup)
 
@@ -438,6 +449,8 @@ class EnhancedFormRenderer:
             output_parts.append(SHOW_WHEN_SCRIPT)
         if CONFIRM_ATTRIBUTE in form_markup:
             output_parts.append(CONFIRM_ASSETS)
+        if PROGRESS_ATTRIBUTE in form_markup or WIZARD_TICKS_CLASS in form_markup:
+            output_parts.append(PROGRESS_ASSETS)
 
         combined_output = '\n'.join(output_parts)
 

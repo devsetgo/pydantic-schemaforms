@@ -174,6 +174,12 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     for key in CONFIRM_DEFAULTS:
         assert f"'{key}'" in source, f'confirm= key {key!r} is never used'
     assert '/confirm' in home
+    # progress=True: the bar on a plain or grouped layout, ticks in the wizard header.
+    assert 'layout=wizard&count=true' in home and 'layout=tabbed&count=true' in home
+    counted = client.get('/layouts', params={'layout': 'tabbed', 'count': 'true'}).text
+    assert 'data-sf-progress' in counted
+    ticked = client.get('/layouts', params={'layout': 'wizard', 'count': 'true'}).text
+    assert 'wizard-progress-ticks' in ticked
     assert '/layouts/field-groups' in home
     for field_option in (
         'ui_step_title',
