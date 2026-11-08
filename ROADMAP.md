@@ -61,10 +61,10 @@ Both items change the layout engine, and both must work with the display mode fr
 
 ## Phase 4: Long forms and the wizard
 
-Everything a long form needs, finished by a complete job application as a realistic test.
+Everything a long form needs, finished by a Wizards section of realistic examples as the test.
 
 Reviewed 2026-11-08 against the code as of 26.4.5. The phase ships as one
-release: every item is in the same area, and the job application (#276) is
+release: every item is in the same area, and the Wizards section (#276) is
 the test that they fit together.
 
 Decisions that cut across the items:
@@ -104,8 +104,9 @@ Decisions that cut across the items:
 | 19 | [#318](https://github.com/devsetgo/pydantic-schemaforms/issues/318) Wizard review step: show what changed | Done ([#324](https://github.com/devsetgo/pydantic-schemaforms/pull/324)) | Cheap once #250 exists: the server already renders each slot's initial value from `data`, so the slot keeps it and the script shows **from → to** when the live value differs, with screen-reader text that doesn't rely on bold or colour. On by default whenever `data` is passed in, review step only. A `model_list` compares item by item and marks added or removed items whole; a field newly hidden by a rule is left out, as display mode does. Server mode compares saved against submitted on the server with the same templates. |
 | 20 | [#295](https://github.com/devsetgo/pydantic-schemaforms/issues/295) Confirmation step before submit | Done ([#325](https://github.com/devsetgo/pydantic-schemaforms/pull/325)) | For single forms and destructive actions; a wizard with a review step doesn't need it, and the two must not both appear. `render_form(confirm={"title": ..., "message": ..., "confirm_label": ...})` wraps submit in a native `<dialog>` opened by the form's `submit` event, which gives focus trapping and Escape for free, with a theme hook for its Bootstrap and MD3 markup. Without JavaScript the form submits as before. Replaces `ModalLayout`'s global functions and inline `onclick` rather than building on them. |
 | 21 | [#296](https://github.com/devsetgo/pydantic-schemaforms/issues/296) Form progress indicator | Done ([#326](https://github.com/devsetgo/pydantic-schemaforms/pull/326)) | `render_form(progress=True)` counts required inputs that are visible, so fields hidden by #237 don't count, and reports "n of m required fields complete" in a `<progress>` element with a polite live region. In a wizard the step header already shows progress, so the indicator attaches to the current step's count or marks completed steps in the header; decide by trying both on `/layouts?layout=wizard`. |
-| 22 | [#243](https://github.com/devsetgo/pydantic-schemaforms/issues/243) Draft autosave and unsaved-changes warning | Not started | Small vanilla-JS feature, as the issue describes. Restores only when the server rendered no `data`, so an edit form (#318) and a re-render with errors always win; after restoring it dispatches `input` events so `show_when` rules re-evaluate. Skips passwords, CSRF, honeypot and file inputs; the docs say drafts sit unencrypted on the device, so sensitive forms leave it off. In server mode it keys on the step. |
-| 23 | [#276](https://github.com/devsetgo/pydantic-schemaforms/issues/276) Job application example | Not started | A realistic test of everything above, built up in stages: the sign-in page and wizard can start now on 26.4.5's groups, rules, content and consent blocks; the resume step gains server checks with #242, saving with #275, review with #250, change display on the edit route with #318, and autosave with #243. `docs/recipes/wizard-application.md` is already a four-step job application, so it stays the minimal version and links to the full one in `examples/`; sign-in reuses `docs/recipes/login-registration.md`. |
+| 22 | [#243](https://github.com/devsetgo/pydantic-schemaforms/issues/243) Draft autosave and unsaved-changes warning | Done ([#328](https://github.com/devsetgo/pydantic-schemaforms/pull/328)) | Small vanilla-JS feature, as the issue describes. Restores only when the server rendered no `data`, so an edit form (#318) and a re-render with errors always win; after restoring it dispatches `input` events so `show_when` rules re-evaluate. Skips passwords, CSRF, honeypot and file inputs; the docs say drafts sit unencrypted on the device, so sensitive forms leave it off. In server mode it keys on the step. |
+| 23 | [#327](https://github.com/devsetgo/pydantic-schemaforms/issues/327) Wizard: skip a step hidden by its group rule | Not started | Option 1 of the parked #251, split out because it needs no new state: every step is still declared up front. Today a step hidden by `ui_group_show_when` stays in place, empty. It drops out of the header and step count, Back and Next jump over it, the review step and progress (#296) leave it out, and in server mode the server picks the next step from the draft. Before #276, whose car care and insurance claim wizards need it. |
+| 24 | [#276](https://github.com/devsetgo/pydantic-schemaforms/issues/276) Wizards section in the example app | Not started | The realistic test of everything above: a `/wizards` index and eight wizards, each showing a different mix of features (job application, project planner, car setup, car care appointment, insurance claim, rental application, event registration, team onboarding; the issue lists what each one covers). Built after #243 so the job application ships complete, with autosave. `docs/recipes/wizard-application.md` stays the minimal version and links to the full job application; sign-in reuses `docs/recipes/login-registration.md`. |
 
 ## Phase 5: New small inputs
 
@@ -113,10 +114,10 @@ Small, independent widgets that make a quick release. All of them get checked by
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 24 | [#291](https://github.com/devsetgo/pydantic-schemaforms/issues/291) One-time code (OTP) input | Not started | Common on sign-in and verification forms. |
-| 25 | [#292](https://github.com/devsetgo/pydantic-schemaforms/issues/292) Password strength meter | Not started | The scoring rules already exist on the server, so this mostly adds the display. |
-| 26 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Not started | Small gap next to the existing month and week inputs. |
-| 27 | [#294](https://github.com/devsetgo/pydantic-schemaforms/issues/294) E.164 phone numbers | Not started | Builds on the phone input's live formatting, and gives apps a consistent value to store. |
+| 25 | [#291](https://github.com/devsetgo/pydantic-schemaforms/issues/291) One-time code (OTP) input | Not started | Common on sign-in and verification forms. |
+| 26 | [#292](https://github.com/devsetgo/pydantic-schemaforms/issues/292) Password strength meter | Not started | The scoring rules already exist on the server, so this mostly adds the display. |
+| 27 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Not started | Small gap next to the existing month and week inputs. |
+| 28 | [#294](https://github.com/devsetgo/pydantic-schemaforms/issues/294) E.164 phone numbers | Not started | Builds on the phone input's live formatting, and gives apps a consistent value to store. |
 
 ## Phase 6: Rich pickers
 
@@ -124,9 +125,9 @@ Custom option lists and pickers that replace the browser's own menus, sharing th
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 28 | [#239](https://github.com/devsetgo/pydantic-schemaforms/issues/239) Remote options for select and combobox | Not started | Reuses the HTMX plumbing from live validation. Can move earlier if a user needs it. |
-| 29 | [#277](https://github.com/devsetgo/pydantic-schemaforms/issues/277) MD3 menu for select fields | Not started | Native selects open the browser's own menu, so only the closed field looks like MD3. Opt-in, with the native select as the fallback. |
-| 30 | [#278](https://github.com/devsetgo/pydantic-schemaforms/issues/278) MD3 date and time picker | Not started | Same gap for date and time inputs. Opt-in, after #277 so both menus share their surface styling. |
+| 29 | [#239](https://github.com/devsetgo/pydantic-schemaforms/issues/239) Remote options for select and combobox | Not started | Reuses the HTMX plumbing from live validation. Can move earlier if a user needs it. |
+| 30 | [#277](https://github.com/devsetgo/pydantic-schemaforms/issues/277) MD3 menu for select fields | Not started | Native selects open the browser's own menu, so only the closed field looks like MD3. Opt-in, with the native select as the fallback. |
+| 31 | [#278](https://github.com/devsetgo/pydantic-schemaforms/issues/278) MD3 date and time picker | Not started | Same gap for date and time inputs. Opt-in, after #277 so both menus share their surface styling. |
 
 ## Phase 7: Look and feedback
 
@@ -134,10 +135,10 @@ How forms look and how they report back. A new style multiplies the work for eve
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 31 | [#266](https://github.com/devsetgo/pydantic-schemaforms/issues/266) Review other UI frameworks | Not started | Research only: pick which styles to add (for example Tailwind/daisyUI, Bulma, Pico) against criteria such as maintenance, licence and asset size. Feeds #247, so do it first. |
-| 32 | [#247](https://github.com/devsetgo/pydantic-schemaforms/issues/247) Color schemes and a framework-free CSS-variables theme | Not started | Named color schemes plus custom ones, covering light and dark, and a new style built on the same tokens. |
-| 33 | [#279](https://github.com/devsetgo/pydantic-schemaforms/issues/279) Opt out of inlining Material CSS on every form | Not started | Also about how Material's CSS reaches the page, so it's decided alongside the color work in #247. |
-| 34 | [#271](https://github.com/devsetgo/pydantic-schemaforms/issues/271) Toast notifications and other ways to show form feedback | Not started | Choices for how a form shows its errors and success messages, with today's summary as the default. Before #240, so its messages are translated along with everything else. |
+| 32 | [#266](https://github.com/devsetgo/pydantic-schemaforms/issues/266) Review other UI frameworks | Not started | Research only: pick which styles to add (for example Tailwind/daisyUI, Bulma, Pico) against criteria such as maintenance, licence and asset size. Feeds #247, so do it first. |
+| 33 | [#247](https://github.com/devsetgo/pydantic-schemaforms/issues/247) Color schemes and a framework-free CSS-variables theme | Not started | Named color schemes plus custom ones, covering light and dark, and a new style built on the same tokens. |
+| 34 | [#279](https://github.com/devsetgo/pydantic-schemaforms/issues/279) Opt out of inlining Material CSS on every form | Not started | Also about how Material's CSS reaches the page, so it's decided alongside the color work in #247. |
+| 35 | [#271](https://github.com/devsetgo/pydantic-schemaforms/issues/271) Toast notifications and other ways to show form feedback | Not started | Choices for how a form shows its errors and success messages, with today's summary as the default. Before #240, so its messages are translated along with everything else. |
 
 ## Phase 8: Reach and developer tools
 
@@ -145,17 +146,17 @@ Features that widen who can use the library, once the features they have to cove
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
-| 35 | [#245](https://github.com/devsetgo/pydantic-schemaforms/issues/245) Testing helpers for app authors | Not started | After the new inputs and layout features, so the submission builders cover them from the start. |
-| 36 | [#235](https://github.com/devsetgo/pydantic-schemaforms/issues/235) Build a FormModel from JSON Schema | Not started | The library-sized answer to [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190). With `FormBuilder` removed (#255), this is the friendly way to build a form at runtime; until it ships, the `create_model(..., __base__=FormModel)` recipe in `docs/advanced/runtime-forms.md` covers it. |
-| 37 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |
-| 38 | [#240](https://github.com/devsetgo/pydantic-schemaforms/issues/240) Internationalization | Not started | Wraps every library-generated string and display format, so it comes last and is done once. |
+| 36 | [#245](https://github.com/devsetgo/pydantic-schemaforms/issues/245) Testing helpers for app authors | Not started | After the new inputs and layout features, so the submission builders cover them from the start. |
+| 37 | [#235](https://github.com/devsetgo/pydantic-schemaforms/issues/235) Build a FormModel from JSON Schema | Not started | The library-sized answer to [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190). With `FormBuilder` removed (#255), this is the friendly way to build a form at runtime; until it ships, the `create_model(..., __base__=FormModel)` recipe in `docs/advanced/runtime-forms.md` covers it. |
+| 38 | [#244](https://github.com/devsetgo/pydantic-schemaforms/issues/244) Litestar and Django adapters | Not started | Independent of everything above and can be picked up any time, for example by an outside contributor. |
+| 39 | [#240](https://github.com/devsetgo/pydantic-schemaforms/issues/240) Internationalization | Not started | Wraps every library-generated string and display format, so it comes last and is done once. |
 
 ## Parked
 
 | Item | Why parked |
 |---|---|
 | [#147](https://github.com/devsetgo/pydantic-schemaforms/issues/147) Replace MkDocs Material | Waiting on Zensical to leave alpha; migrate spring 2027, before MkDocs Material's end of life on 2027-05-05. Research is done: Zensical builds our `mkdocs.yml` as-is (tested), and a non-blocking CI job builds the docs with it on every PR. Docs aren't part of the package, so this doesn't hold up a release. |
-| [#251](https://github.com/devsetgo/pydantic-schemaforms/issues/251) Dynamic step wizard (steps built from earlier answers, such as a car or product configurator or a BOM builder) | A complex addition that needs design before it's scheduled, and it's out of scope for the current wizard work. Revisit after #237, #238, #239 and #250 have shipped. It probably needs a wizard mode where the server keeps state between steps. |
+| [#251](https://github.com/devsetgo/pydantic-schemaforms/issues/251) Dynamic step wizard (steps built from earlier answers, such as a car or product configurator or a BOM builder) | A complex addition that needs design before it's scheduled, and it's out of scope for the current wizard work. Revisit after #237, #238, #239 and #250 have shipped. It probably needs a wizard mode where the server keeps state between steps. Its first option, skipping a step hidden by a rule, is split out as #327 in phase 4. |
 | [#236](https://github.com/devsetgo/pydantic-schemaforms/issues/236) Form versioning with a migration chain | Wait until a real user asks. The library doesn't store data, so most of the value comes from a documented recipe. |
 | [#297](https://github.com/devsetgo/pydantic-schemaforms/issues/297) Drawing inputs: signature pad, drawing canvas and image annotation | No place on the roadmap decided yet. Stateful canvas work that needs an accessible alternative. |
 | [#298](https://github.com/devsetgo/pydantic-schemaforms/issues/298) Rich content and structured choice inputs | A tracking issue with no place on the roadmap yet. Each input needs a design decision, especially whether it can stay dependency-free. |
