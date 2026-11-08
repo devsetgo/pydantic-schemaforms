@@ -131,28 +131,14 @@ Load `CAPTCHA_SECRET` from the app's configuration, never a literal in code.
 ## File uploads
 
 ```python
-from pathlib import Path
-
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-from models import ALLOWED_TYPES, MAX_BYTES, UploadForm
-from starlette.datastructures import UploadFile
+from models import UploadForm
 
 from pydantic_schemaforms import html, render_form_html_async
 
 app = FastAPI()
 FORM_OPTIONS = {'submit_url': '/upload', 'include_framework_assets': True, 'asset_mode': 'cdn'}
-
-
-def check_upload(upload: object) -> tuple[str | None, bytes]:
-    if not isinstance(upload, UploadFile) or not upload.filename:
-        return 'Choose a file to upload', b''
-    if Path(upload.filename).suffix.lower() not in ALLOWED_TYPES:
-        return 'Upload a PDF or Word document', b''
-    content = upload.file.read(MAX_BYTES + 1)
-    if len(content) > MAX_BYTES:
-        return 'The file is larger than 5 MB', b''
-    return None, content
 
 
 @app.get('/upload', response_class=HTMLResponse)
@@ -162,24 +148,21 @@ async def show_upload():
 
 @app.post('/upload', response_class=HTMLResponse)
 async def upload(request: Request):
-    form = await request.form()
-    result = UploadForm.validate(form, **FORM_OPTIONS)
-    file_error, content = check_upload(form.get('document'))
-    if not result.is_valid or file_error:
-        errors = {**result.errors, **({'document': file_error} if file_error else {})}
-        return await render_form_html_async(
-            UploadForm, form_data={'title': form.get('title')}, errors=errors, **FORM_OPTIONS
-        )
-    size = len(content)
+    result = UploadForm.validate(await request.form(), **FORM_OPTIONS)
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+    size = len(result.data['document'].read())
     return html(t'<p>Stored "{result.data["title"]}" ({size} bytes).</p>')
 ```
 
-- Type the file field `Any`; `validate()` passes the upload object through. In FastAPI it's
-  `starlette.datastructures.UploadFile` (not `fastapi.UploadFile`, so `isinstance` against the
-  FastAPI class fails). In Flask, validate `CombinedMultiDict([request.form, request.files])`;
-  the file is a `FileStorage`, and set `app.config["MAX_CONTENT_LENGTH"]`.
-- Check that a file was chosen (`upload.filename`), its extension and its size, reading at most
-  one byte more than the limit. `accept` in `ui_options` only filters the file picker.
+- Type the file field `UploadedFile` (`list[UploadedFile]` for several). `validate()` turns
+  Starlette's `UploadFile` / Werkzeug's `FileStorage` into it. Set `ui_max_size`, `ui_max_files`
+  and `accept` on the field: they are checked on the server, so don't write a size or extension
+  check by hand. In Flask, validate `CombinedMultiDict([request.form, request.files])` and set
+  `app.config["MAX_CONTENT_LENGTH"]`, which refuses an oversized request before it is parsed.
+- `accept` is not content sniffing: extension and content type both come from the browser. Check
+  the content before trusting it.
+- Read the file inside the request handler; the framework closes it afterwards.
 - Store files outside the web root under names you generate; never show a file name in HTML
   without `html(t'...')`.
 

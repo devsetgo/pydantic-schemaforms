@@ -9,6 +9,7 @@ from pydantic.fields import FieldInfo
 from .show_when import check_field_options
 from .validation import ValidationResult
 from .tstring import SafeHTML
+from .uploads import attach_upload_limits, check_upload_limits
 
 
 _PYDANTIC_FIELD_PARAMS = frozenset(inspect.signature(PydanticField).parameters)
@@ -67,6 +68,8 @@ def Field(
     ui_group_collapsible: bool | None = None,
     ui_group_collapsed: bool | None = None,
     ui_group_show_when: dict[str, Any] | None = None,
+    ui_max_size: int | None = None,
+    ui_max_files: int | None = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -95,6 +98,10 @@ def Field(
     ui_group puts fields under one titled section without nesting the data, and
     ui_cols (1-12) sets a field's width so consecutive fields share a row. The
     ui_group_* options apply to the whole group and go on any one of its fields.
+
+    ui_max_size (bytes) and ui_max_files limit an ``UploadedFile`` or
+    ``list[UploadedFile]`` field, and so does ``ui_options={"accept": ...}``.
+    All three are checked on the server, with the error under the field.
     """
     ui_show_when, ui_group_show_when = check_field_options(
         has_default=default is not ... or 'default_factory' in kwargs,
@@ -103,6 +110,7 @@ def Field(
         ui_cols=ui_cols,
         ui_group_show_when=ui_group_show_when,
     )
+    check_upload_limits(ui_max_size, ui_max_files)
     if 'ui_content_html' in kwargs:
         raise TypeError("Pass ui_content=html(t'...') instead of ui_content_html")
     if ui_element == 'content':
@@ -149,6 +157,8 @@ def Field(
         'ui_group_collapsible': ui_group_collapsible,
         'ui_group_collapsed': ui_group_collapsed,
         'ui_group_show_when': ui_group_show_when,
+        'ui_max_size': ui_max_size,
+        'ui_max_files': ui_max_files,
     }
     # JSON Schema generation turns SafeHTML back into a plain str, so which kind
     # it was has to be kept in the key.
@@ -170,8 +180,7 @@ def Field(
         json_schema_extra = {}
     json_schema_extra.update(ui_attrs)
 
-    # Call the original Pydantic Field function
-    return PydanticField(
+    field_info = PydanticField(
         default=default,
         alias=alias,
         title=title,
@@ -197,6 +206,7 @@ def Field(
         min_length=min_length,
         **kwargs,
     )
+    return attach_upload_limits(field_info, json_schema_extra)
 
 
 class FormModel(BaseModel):

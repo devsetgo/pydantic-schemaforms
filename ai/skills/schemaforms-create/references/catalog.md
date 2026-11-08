@@ -43,7 +43,7 @@ A repeating sub-form; the total is computed on the server, never trusted from th
 
 ## File upload
 
-The file field is `Any`; the route checks that a file was chosen, its extension and its size.
+The file field is `UploadedFile`; `ui_max_size` and `accept` are checked on the server.
 
 <!-- INCLUDE-CODE: docs_src/recipes/file_upload/models.py -->
 

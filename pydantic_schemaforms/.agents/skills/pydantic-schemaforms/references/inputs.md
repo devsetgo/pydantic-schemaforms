@@ -120,25 +120,30 @@ if not verify_captcha(token=token, answer=form.get('captcha_answer'), secret_key
     ...  # re-render with errors={"_errors": "..."}; a fresh challenge renders automatically
 ```
 
-**file upload** (drag-and-drop on by default). Type the field `Any`: the upload arrives as the
-framework's own file object (Starlette's `UploadFile`, Werkzeug's `FileStorage`), and `validate()`
-passes it through. Check the file yourself (chosen at all, extension, size) and add your message
-to the errors. Flask keeps files apart from fields, so combine them before validating:
+**file upload** (drag-and-drop on by default). Type the field `UploadedFile`
+(`UploadedFile | None = Field(None, ...)` for optional, `list[UploadedFile]` for several); it
+renders as a file input by itself, no `ui_element` needed. `validate()` turns the framework's
+upload (Starlette's `UploadFile`, Werkzeug's `FileStorage`) into an `UploadedFile`
+(`filename`, `content_type`, `size`, `read()`, `seek()`). The limits are checked on the server and
+the message shows under the field: `ui_max_size` (bytes), `ui_max_files` (on a list) and `accept`
+in `ui_options` (extension or content type, `image/*` works). Don't write your own checks.
+Flask keeps files apart from fields, so combine them before validating:
 
 ```python
-from typing import Any
+from pydantic_schemaforms import Field, UploadedFile
 
-document: Any = Field(
-    None, title='Document', ui_element='file', ui_options={'accept': '.pdf,.docx'}
+document: UploadedFile = Field(
+    title='Document', ui_max_size=5 * 1024 * 1024, ui_options={'accept': '.pdf,.docx'}
 )
 
-# FastAPI: form = await request.form(); upload = form.get('document')  (starlette.datastructures.UploadFile)
-# Flask:   form = CombinedMultiDict([request.form, request.files])  (werkzeug.datastructures)
+# FastAPI: UploadForm.validate(await request.form())
+# Flask:   UploadForm.validate(CombinedMultiDict([request.form, request.files]))  (werkzeug.datastructures)
 ```
 
 `render_form_html()` sets `enctype="multipart/form-data"` by itself when a form has a file field.
-The browser can't keep a chosen file across a re-render, so after an error the user picks it
-again. See the security reference for checking uploads.
+An empty file input counts as not submitted. The browser can't keep a chosen file across a
+re-render, so after an error the user picks it again. See the security reference for untrusted
+uploads.
 
 **quantity** — ships +/- stepper buttons automatically:
 

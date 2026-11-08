@@ -272,9 +272,11 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
             ),
             InputTypeEntry(
                 'file',
-                'File upload input.',
-                "files: str = Field(..., ui_element='file',\n"
-                "                   ui_options={'accept': '.pdf,.docx', 'multiple': True})",
+                'File upload input. Type the field UploadedFile (list[UploadedFile] for several); '
+                'ui_max_size, ui_max_files and accept are checked on the server.',
+                'files: list[UploadedFile] = Field(default_factory=list, ui_max_files=3,\n'
+                '                                  ui_max_size=5 * 1024 * 1024,\n'
+                "                                  ui_options={'accept': '.pdf,.docx'})",
             ),
             InputTypeEntry(
                 'color',

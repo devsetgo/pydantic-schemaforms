@@ -70,7 +70,7 @@ Flask is the same with `render_form_html()` (not async), `request.form` and no `
 | date, time, date and time | `date`, `time`, `datetime` |
 | rating, stars | `int` with `ui_element="star_rating"`, `ge=1`, `le=5` |
 | tags, keywords | `str` with `ui_element="tags"` |
-| file, attachment, document | `Any` with `ui_element="file"` (checked in the route) |
+| file, attachment, document | `UploadedFile` (`list[UploadedFile]` for several); `ui_max_size`, `accept` |
 | colour | `str` with `ui_element="color"` |
 | an address, a person, a section | a nested `FormModel` |
 | "add more", a list of items | `list[ItemForm]` with `ui_add_button_label` |

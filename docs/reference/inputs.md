@@ -244,10 +244,11 @@ city: str = Field('', ui_element='combobox',
 intro: None = Field(ui_element='content', ui_content='Tell us about yourself.')
 ```
 
-**`file`** — File upload input.
+**`file`** — File upload input. Type the field UploadedFile (list[UploadedFile] for several); ui_max_size, ui_max_files and accept are checked on the server.
 ```python
-files: str = Field(..., ui_element='file',
-                   ui_options={'accept': '.pdf,.docx', 'multiple': True})
+files: list[UploadedFile] = Field(default_factory=list, ui_max_files=3,
+                                  ui_max_size=5 * 1024 * 1024,
+                                  ui_options={'accept': '.pdf,.docx'})
 ```
 
 **`color`** — Native HTML color picker.
@@ -1032,24 +1033,26 @@ birthdate-appropriate min/max defaults but no age display.
 
 Required:
 
-- `Any`-typed field + ui_element="file" (the upload arrives as your
-  framework's file object; see the [File Upload recipe](../recipes/file-upload.md))
+- `UploadedFile`-typed field (`UploadedFile | None` for optional,
+  `list[UploadedFile]` for several); it renders as a file input without
+  `ui_element`. `ui_max_size`, `ui_max_files` and `accept` are checked on the
+  server; see the [File Upload recipe](../recipes/file-upload.md)
 
 Optional:
 
 - ui_options: accept, multiple, capture, show_preview, enable_drag_drop (default True)
 
 ```python
-from typing import Any
+from pydantic_schemaforms import UploadedFile
 
 
 class FileExample(FormModel):
-    attachments: Any = Field(
-        None,
-        ui_element="file",
+    attachments: list[UploadedFile] = Field(
+        default_factory=list,
+        ui_max_files=3,
+        ui_max_size=5 * 1024 * 1024,
         ui_options={
             "accept": ".pdf,.docx,image/*",
-            "multiple": True,
             "show_preview": True,
         },
     )
@@ -1059,6 +1062,8 @@ Drag-and-drop is on by default: the input renders inside a drop zone that
 accepts dragged files and feeds them into the same `change`/preview handling
 as a click-selected file, so no extra wiring is needed. Set
 `ui_options={"enable_drag_drop": False}` to render a plain file input.
+An old-style `Any` or `str` field with `ui_element="file"` still works, but
+`accept` is then only a hint for the browser.
 
 #### color
 

@@ -59,7 +59,7 @@ fields, adding constraints the code checks elsewhere.
 | `RadioField` | the same, `ui_element="radio"` |
 | `SelectMultipleField` | `list[Literal[...]]` |
 | `DateField`, `DateTimeLocalField`, `TimeField` | `date`, `datetime`, `time` |
-| `FileField` / `MultipleFileField` | `Any`, `ui_element="file"`; check the file in the route |
+| `FileField` / `MultipleFileField` | `UploadedFile` / `list[UploadedFile]`; `ui_max_size`, `accept` |
 | `HiddenField` | the type, `ui_hidden=True` |
 | `FormField(Sub)` | a nested `FormModel` |
 | `FieldList(FormField(Item))` | `list[ItemForm]`; `min_entries` → `min_length` |
@@ -93,7 +93,7 @@ with the token in the session (see the `pydantic-schemaforms` skill's security r
 | `MultipleChoiceField` | `list[Literal[...]]` |
 | `ModelChoiceField(queryset)` | choices built at runtime: `ui_options={"choices": [...]}` from the query, or `create_model()` |
 | `DateField`, `DateTimeField`, `TimeField` | `date`, `datetime`, `time` |
-| `FileField`, `ImageField` | `Any`, `ui_element="file"` |
+| `FileField`, `ImageField` | `UploadedFile`, `ui_max_size`, `accept` |
 | `required=False` | a default (`None` with `X \| None`) |
 | `label`, `help_text`, `initial` | `title`, `description`, the default |
 | `clean_<field>()` | `@field_validator("<field>")` |
