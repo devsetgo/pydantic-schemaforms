@@ -57,6 +57,16 @@ _DATATABLE_CLASSES = {
     'csv_template': 'btn btn-secondary btn-sm mb-2',
 }
 
+_CONFIRM_CLASSES = {
+    'cancel': 'btn btn-outline-secondary',
+    'confirm': 'btn btn-primary',
+}
+
+_MATERIAL_CONFIRM_CLASSES = {
+    'cancel': 'md-button md-button--text',
+    'confirm': 'md-button md-button--filled',
+}
+
 _DISPLAY_CLASSES = {
     'list': 'row mt-2',
     'term': 'col-sm-4',
@@ -353,6 +363,37 @@ class RendererTheme:
 
         return _DISPLAY_CLASSES[slot]
 
+    def confirm_class(self, slot: str) -> str:
+        """Classes for the confirm dialog's buttons (see `_CONFIRM_CLASSES`)."""
+
+        return _CONFIRM_CLASSES[slot]
+
+    def render_confirm_dialog(
+        self, *, title: str, message: str, confirm_label: str, cancel_label: str
+    ) -> str:
+        """The native ``<dialog>`` that ``confirm=`` opens before the form submits.
+
+        Cancel has focus first, so Enter on an opened dialog never confirms by
+        accident; Escape closes it.
+        """
+
+        cancel_class = self.confirm_class('cancel')  # NOSONAR - read in the t-string below
+        confirm_class = self.confirm_class('confirm')  # NOSONAR
+        _message = (  # NOSONAR
+            html(t'<p class="sf-confirm__message">{message}</p>') if message else SafeHTML('')
+        )
+        return str(
+            html(
+                t'<dialog class="sf-confirm" data-sf-confirm aria-label="{title}">'
+                t'<h2 class="sf-confirm__title">{title}</h2>{_message}'
+                t'<div class="sf-confirm__actions">'
+                t'<button type="button" class="{cancel_class}" data-sf-confirm-cancel autofocus>'
+                t'{cancel_label}</button>'
+                t'<button type="button" class="{confirm_class}" data-sf-confirm-ok>'
+                t'{confirm_label}</button></div></dialog>'
+            )
+        )
+
     def render_model_list_item(self, item: ModelListItem) -> str:
         """One repeating sub-form item (its header, remove button and fields)."""
 
@@ -512,6 +553,9 @@ class PlainTheme(FrameworkTheme):
     def display_class(self, slot: str) -> str:
         return ''
 
+    def confirm_class(self, slot: str) -> str:
+        return ''
+
 
 class MaterialTheme(RendererTheme):
     """Material Design 3, self-contained: its CSS and JS ship inline with the
@@ -632,6 +676,9 @@ class MaterialTheme(RendererTheme):
 
     def display_class(self, slot: str) -> str:
         return _MATERIAL_DISPLAY_CLASSES[slot]
+
+    def confirm_class(self, slot: str) -> str:
+        return _MATERIAL_CONFIRM_CLASSES[slot]
 
     def render_model_list_item(self, item: ModelListItem) -> str:
         # NOSONAR comments here: these are read in t-strings, which Sonar can't parse yet.

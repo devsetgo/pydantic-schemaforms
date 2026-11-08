@@ -2551,6 +2551,37 @@ class LayoutDemonstrationForm(FormModel):
     )
 
 
+class CloseAccountForm(FormModel):
+    """render_form_html(..., confirm={...}): a destructive submit asks first."""
+
+    reason: Literal['too_expensive', 'not_using', 'switching', 'other'] = Field(
+        'not_using',
+        title='Why are you leaving?',
+        ui_element='select',
+        ui_options={
+            'choices': [
+                {'value': 'too_expensive', 'label': 'It costs too much'},
+                {'value': 'not_using', 'label': "I don't use it enough"},
+                {'value': 'switching', 'label': "I'm moving to another service"},
+                {'value': 'other', 'label': 'Something else'},
+            ]
+        },
+    )
+    feedback: str = Field('', title='Anything we could do better?', ui_element='textarea')
+    understood: Literal[True] = Field(
+        title='I understand my projects will be deleted',
+        unchecked_message='Tick the box to confirm you understand',
+    )
+
+
+CLOSE_ACCOUNT_CONFIRM = {
+    'title': 'Close your account?',
+    'message': 'Your projects are deleted right away. This cannot be undone.',
+    'confirm_label': 'Close account',
+    'cancel_label': 'Keep my account',
+}
+
+
 class SavedStepApplicant(FormModel):
     full_name: str = Field(title='Full name', min_length=2)
     postcode: str = Field(

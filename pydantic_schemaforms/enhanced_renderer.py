@@ -51,6 +51,7 @@ from .rendering.themes import (
     get_theme_for_framework,
 )
 from .schema_form import FormModel
+from .confirm import CONFIRM_ASSETS, CONFIRM_ATTRIBUTE, check_confirm
 from .show_when import SHOW_WHEN_SCRIPT, prune
 from .tstring import SafeHTML
 from .tstring import html as render_html
@@ -296,6 +297,12 @@ class EnhancedFormRenderer:
         check_layout(layout)
         wizard_options = check_wizard_options(kwargs.pop('wizard_options', None))
         step_state = _step_state(layout, wizard_options, kwargs.pop('draft', None))
+        confirm = check_confirm(kwargs.pop('confirm', None))
+        if confirm and layout == 'wizard' and review_options(wizard_options):
+            raise ValueError(
+                "confirm= and wizard_options={'review_step': ...} both ask before Submit; "
+                'use one of them.'
+            )
         metadata: SchemaMetadata = build_schema_metadata(model_cls)
         # A fresh form (no data passed) starts from the model's defaults. Data
         # that was passed, such as a submission being re-rendered, is used as
@@ -389,6 +396,8 @@ class EnhancedFormRenderer:
         ):
             include_submit_button = False
         submit_markup = self._render_submit_button() if include_submit_button else ''
+        if confirm and submit_markup:
+            submit_markup += '\n' + self._theme.render_confirm_dialog(**confirm)
 
         # Calculate render time before form_wrapper (we'll add timing display inside form)
         render_time = time.perf_counter() - start_time
@@ -427,6 +436,8 @@ class EnhancedFormRenderer:
             output_parts.append(GRID_STYLES)
         if SHOW_WHEN_ATTRIBUTE in form_markup:
             output_parts.append(SHOW_WHEN_SCRIPT)
+        if CONFIRM_ATTRIBUTE in form_markup:
+            output_parts.append(CONFIRM_ASSETS)
 
         combined_output = '\n'.join(output_parts)
 

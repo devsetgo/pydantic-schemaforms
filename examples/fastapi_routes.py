@@ -56,6 +56,8 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     ValidationShowcaseForm,
     FieldGroupsForm,
     SaveAndContinueForm,
+    CloseAccountForm,
+    CLOSE_ACCOUNT_CONFIRM,
     WidgetGalleryForm,
     validation_showcase_rules,
     create_sample_nested_data,
@@ -2115,6 +2117,71 @@ async def field_groups_post(
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'try_again_url': create_refer_path(request),
+        },
+    )
+
+
+# --- confirm=: ask before a destructive submit -------------------------------
+_CLOSE_ACCOUNT_DESCRIPTION = (
+    'confirm= opens a dialog before the form submits, for actions that are hard to undo. '
+    'Cancel has focus first, and Escape closes it. Without JavaScript the form submits '
+    'as usual.'
+)
+
+
+def _close_account_options(style: str, variant: str | None) -> dict[str, Any]:
+    return {
+        'submit_url': f'/confirm?style={style}{_variant_query(variant)}',
+        'framework': style,
+        'material_variant': _material_variant(variant),
+        'confirm': CLOSE_ACCOUNT_CONFIRM,
+    }
+
+
+def _close_account_page(request: Request, style: str, form_html: str):
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Close Your Account',
+            'description': _CLOSE_ACCOUNT_DESCRIPTION,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'hide_api_info': True,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.get('/confirm', response_class=HTMLResponse, tags=['Showcase'])
+async def confirm_get(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    """A destructive form that asks before it submits."""
+    form_html = await render_form_html_async(
+        CloseAccountForm, **_close_account_options(style, variant)
+    )
+    return _close_account_page(request, style, form_html)
+
+
+@router.post('/confirm', response_class=HTMLResponse, tags=['Showcase'])
+async def confirm_post(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    result = CloseAccountForm.validate(
+        await request.form(), **_close_account_options(style, variant)
+    )
+    if not result.is_valid:
+        return _close_account_page(request, style, await result.render_with_errors_async())
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': 'Account Closed',
+            'message': 'This is a demo: nothing was deleted.',
+            'data': result.data,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'try_again_url': f'/confirm?style={style}{_variant_query(variant)}',
         },
     )
 
