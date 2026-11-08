@@ -573,3 +573,53 @@ def test_review_step_shows_the_live_answers(
     page.locator('.wizard-progress-item', has_text='Review').click()
     expect(rows).to_have_count(2, timeout=TIMEOUT)
     expect(rows.nth(1)).to_contain_text('Removed: Write documentation')
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_confirm_dialog_asks_before_submitting(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/confirm?style={style}', wait_until='load')
+    dialog = page.locator('dialog[data-sf-confirm]')
+    submit = page.locator('form [type="submit"]:not([name])')
+
+    submit.click()
+    expect(dialog).to_be_visible(timeout=TIMEOUT)
+    expect(dialog.get_by_role('heading')).to_have_text('Close your account?')
+    expect(dialog.locator('[data-sf-confirm-cancel]')).to_be_focused()
+    assert _blocking_violations(page) == []
+
+    dialog.locator('[data-sf-confirm-cancel]').click()
+    expect(dialog).to_be_hidden(timeout=TIMEOUT)
+    submit.click()
+    expect(dialog).to_be_visible(timeout=TIMEOUT)
+    page.keyboard.press('Escape')
+    expect(dialog).to_be_hidden(timeout=TIMEOUT)
+    assert '/confirm' in page.url
+
+    # Confirm submits; the unticked box comes back as the server's error.
+    submit.click()
+    with page.expect_navigation(wait_until='load'):
+        dialog.locator('[data-sf-confirm-ok]').click()
+    expect(page.get_by_text('Tick the box to confirm you understand', exact=True)).to_be_visible(
+        timeout=TIMEOUT
+    )
+
+    page.check('[name="understood"]')
+    page.locator('form [type="submit"]:not([name])').click()
+    with page.expect_navigation(wait_until='load'):
+        page.locator('dialog[data-sf-confirm] [data-sf-confirm-ok]').click()
+    expect(page.get_by_text('Account Closed')).to_be_visible(timeout=TIMEOUT)
+
+
+def test_confirm_without_javascript_submits_directly(browser, examples_server_url: str) -> None:
+    context = browser.new_context(java_script_enabled=False)
+    page = context.new_page()
+    try:
+        page.goto(f'{examples_server_url}/confirm', wait_until='load')
+        page.check('[name="understood"]')
+        with page.expect_navigation(wait_until='load'):
+            page.click('form [type="submit"]:not([name])')
+        expect(page.get_by_text('Account Closed')).to_be_visible(timeout=TIMEOUT)
+    finally:
+        context.close()

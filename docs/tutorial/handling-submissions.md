@@ -96,4 +96,29 @@ Each URL must be relative or http(s).
 `"side-by-side"` arrange the sub-forms the same way, and `"wizard"` shows one flat
 page so everything can be read at once.
 
+## Asking before submitting
+
+For an action that's hard to undo, such as closing an account, `confirm=` asks
+first, in a dialog:
+
+```python
+render_form_html(
+    CloseAccountForm,
+    submit_url="/close",
+    confirm={
+        "title": "Close your account?",
+        "message": "Your projects are deleted right away. This cannot be undone.",
+        "confirm_label": "Close account",
+        "cancel_label": "Keep my account",
+    },
+)
+```
+
+`confirm=True` asks "Submit this form?". Cancel has focus when the dialog
+opens, and Escape closes it. Pass the same option to `validate()` so the form
+asks again after a failed submit. Without JavaScript the form submits as usual,
+and the server's validation still applies. In a wizard only the final Submit
+asks; a wizard with a review step already shows everything before Submit, so
+the two can't be combined.
+
 Next: [Fields and Inputs](fields.md).

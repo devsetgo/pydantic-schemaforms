@@ -27,6 +27,7 @@ from examples import (
     shared_models,
 )
 from pydantic_schemaforms import FormModel, validation
+from pydantic_schemaforms.confirm import CONFIRM_DEFAULTS
 from pydantic_schemaforms.inputs.registry import get_input_component_map
 from pydantic_schemaforms.rendering.layout_engine import LAYOUTS, WIZARD_OPTIONS
 
@@ -170,6 +171,9 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     source = _example_source()
     for option in WIZARD_OPTIONS:
         assert f"'{option}'" in source, f'wizard_options key {option!r} is never used'
+    for key in CONFIRM_DEFAULTS:
+        assert f"'{key}'" in source, f'confirm= key {key!r} is never used'
+    assert '/confirm' in home
     assert '/layouts/field-groups' in home
     for field_option in (
         'ui_step_title',

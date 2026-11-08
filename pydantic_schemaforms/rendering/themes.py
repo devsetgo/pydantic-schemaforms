@@ -40,6 +40,9 @@ _CLOSE_SECTION = '</section>'
 _CLOSE_INNER_DIV = '  </div>'
 
 
+_BOOTSTRAP_PRIMARY_BUTTON = 'btn btn-primary'
+_MATERIAL_TEXT_BUTTON = 'md-button md-button--text'
+
 _TABLE_STYLE_CLASSES = {
     'striped': 'table-striped',
     'bordered': 'table-bordered',
@@ -53,8 +56,18 @@ _DATATABLE_CLASSES = {
     'upload_help': 'form-text',
     'load_button': 'btn btn-secondary mt-2',
     'submit_wrapper': 'mt-3',
-    'submit_button': 'btn btn-primary',
+    'submit_button': _BOOTSTRAP_PRIMARY_BUTTON,
     'csv_template': 'btn btn-secondary btn-sm mb-2',
+}
+
+_CONFIRM_CLASSES = {
+    'cancel': 'btn btn-outline-secondary',
+    'confirm': _BOOTSTRAP_PRIMARY_BUTTON,
+}
+
+_MATERIAL_CONFIRM_CLASSES = {
+    'cancel': _MATERIAL_TEXT_BUTTON,
+    'confirm': 'md-button md-button--filled',
 }
 
 _DISPLAY_CLASSES = {
@@ -72,7 +85,7 @@ _MATERIAL_DISPLAY_CLASSES = {
     'value': 'md-display__value',
     'empty': 'md-display__value--empty',
     'table_wrapper': 'md-display__table',
-    'edit': 'md-button md-button--text',
+    'edit': _MATERIAL_TEXT_BUTTON,
 }
 
 _MATERIAL_DATATABLE_CLASSES = {
@@ -82,7 +95,7 @@ _MATERIAL_DATATABLE_CLASSES = {
     'load_button': 'md-button md-button--tonal',
     'submit_wrapper': 'md-field',
     'submit_button': 'md-button md-button--filled',
-    'csv_template': 'md-button md-button--text',
+    'csv_template': _MATERIAL_TEXT_BUTTON,
 }
 
 
@@ -353,6 +366,41 @@ class RendererTheme:
 
         return _DISPLAY_CLASSES[slot]
 
+    def confirm_class(self, slot: str) -> str:
+        """Classes for the confirm dialog's buttons (see `_CONFIRM_CLASSES`)."""
+
+        return _CONFIRM_CLASSES[slot]
+
+    def render_confirm_dialog(self, texts: dict[str, str]) -> str:
+        """The native ``<dialog>`` that ``confirm=`` opens before the form submits.
+
+        ``texts`` holds ``title``, ``message``, ``confirm_label`` and
+        ``cancel_label``. Cancel has focus first, so Enter on an opened dialog
+        never confirms by accident; Escape closes it.
+        """
+
+        # Sonar can't parse t-strings, so each name read only there is marked for it.
+        title = texts['title']  # NOSONAR
+        cancel_label = texts['cancel_label']  # NOSONAR
+        confirm_label = texts['confirm_label']  # NOSONAR
+        cancel_class = self.confirm_class('cancel')  # NOSONAR
+        confirm_class = self.confirm_class('confirm')  # NOSONAR
+        message = texts['message']
+        _message = (  # NOSONAR
+            html(t'<p class="sf-confirm__message">{message}</p>') if message else SafeHTML('')
+        )
+        return str(
+            html(
+                t'<dialog class="sf-confirm" data-sf-confirm aria-label="{title}">'
+                t'<h2 class="sf-confirm__title">{title}</h2>{_message}'
+                t'<div class="sf-confirm__actions">'
+                t'<button type="button" class="{cancel_class}" data-sf-confirm-cancel autofocus>'
+                t'{cancel_label}</button>'
+                t'<button type="button" class="{confirm_class}" data-sf-confirm-ok>'
+                t'{confirm_label}</button></div></dialog>'
+            )
+        )
+
     def render_model_list_item(self, item: ModelListItem) -> str:
         """One repeating sub-form item (its header, remove button and fields)."""
 
@@ -408,7 +456,7 @@ class FrameworkTheme(RendererTheme):
     input_css = 'form-control'
     select_css = 'form-select'
     checkbox_css = 'form-check-input'
-    button_css = 'btn btn-primary'
+    button_css = _BOOTSTRAP_PRIMARY_BUTTON
 
     def __init__(
         self,
@@ -510,6 +558,9 @@ class PlainTheme(FrameworkTheme):
         return '' if slot == 'csv_template' else super().datatable_class(slot)
 
     def display_class(self, slot: str) -> str:
+        return ''
+
+    def confirm_class(self, slot: str) -> str:
         return ''
 
 
@@ -632,6 +683,9 @@ class MaterialTheme(RendererTheme):
 
     def display_class(self, slot: str) -> str:
         return _MATERIAL_DISPLAY_CLASSES[slot]
+
+    def confirm_class(self, slot: str) -> str:
+        return _MATERIAL_CONFIRM_CLASSES[slot]
 
     def render_model_list_item(self, item: ModelListItem) -> str:
         # NOSONAR comments here: these are read in t-strings, which Sonar can't parse yet.
