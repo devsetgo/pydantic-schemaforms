@@ -426,6 +426,8 @@ class CaptchaInput(FormInput):
         kwargs['name'] = name
         kwargs['id'] = field_id
         kwargs.setdefault('placeholder', 'Enter the answer')
+        # The answer belongs to this challenge's token, so a saved draft must not restore it.
+        kwargs.setdefault('data-sf-no-autosave', True)
         kwargs.setdefault('autocomplete', 'off')
         kwargs.setdefault('required', True)
         attrs = self.validate_attributes(**kwargs)

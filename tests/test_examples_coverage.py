@@ -180,6 +180,11 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     assert 'data-sf-progress' in counted
     ticked = client.get('/layouts', params={'layout': 'wizard', 'count': 'true'}).text
     assert 'wizard-progress-ticks' in ticked
+    # autosave=True and warn_unsaved=True.
+    assert 'autosave=true&warn=true' in home
+    saved = client.get('/layouts', params={'autosave': 'true', 'warn': 'true'}).text
+    assert 'data-sf-autosave="LayoutDemonstrationForm"' in saved
+    assert 'data-sf-warn-unsaved' in saved
     assert '/layouts/field-groups' in home
     for field_option in (
         'ui_step_title',

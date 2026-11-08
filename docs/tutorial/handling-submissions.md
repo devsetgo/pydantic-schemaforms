@@ -121,4 +121,30 @@ and the server's validation still applies. In a wizard only the final Submit
 asks; a wizard with a review step already shows everything before Submit, so
 the two can't be combined.
 
+## Keeping unsaved answers
+
+On a long form, a reload or a closed tab loses everything typed. Two options
+help:
+
+```python
+render_form_html(ApplicationForm, submit_url="/apply", autosave=True, warn_unsaved=True)
+```
+
+- **`autosave=True`** saves what's typed in the browser's `localStorage` and
+  puts it back after a reload, with a notice offering to discard it. The draft
+  is cleared when the form is submitted and expires after 7 days. It's only
+  restored when the page starts from the same values it was saved against, so
+  an edit form whose record changed on the server, or a re-render after a
+  failed submit, shows the server's values instead.
+- **`warn_unsaved=True`** makes the browser ask before leaving a page with
+  changes that weren't submitted.
+
+Passwords, file inputs, hidden inputs and the captcha's answer are never saved.
+For anything else that shouldn't be kept, use `Field(ui_autosave=False)`.
+
+!!! warning "Drafts are stored on the device, unencrypted"
+
+    Anyone using the same browser profile can read them. Leave `autosave` off
+    for sensitive forms and on shared computers.
+
 Next: [Fields and Inputs](fields.md).
