@@ -596,19 +596,20 @@ def render_display(
     return '\n'.join(str(block) for block in blocks if block)
 
 
-def _edit_button(index: int, title: str, edit_label: str, css: str, *, live: bool) -> SafeHTML:
+# Sonar can't parse t-strings, so it reports css as unused.
+def _edit_button(index: int, title: str, text: str, css: str, *, live: bool) -> SafeHTML:  # NOSONAR
     """Edit on a review section: a script jump, or (save_steps) a posted one."""
 
-    label = f'{edit_label} {title}'  # NOSONAR - read in the t-strings below
+    label = f'{text} {title}'  # NOSONAR - read in the t-strings below
     if live:
         return html(
             t'<button type="button" class="{css}" data-wizard-edit="{index}" '
-            t'aria-label="{label}">{edit_label}</button>'
+            t'aria-label="{label}">{text}</button>'
         )
     action = f'goto:{index}'  # NOSONAR
     return html(
         t'<button type="submit" class="{css}" name="_sf_wizard" value="{action}" '
-        t'aria-label="{label}">{edit_label}</button>'
+        t'aria-label="{label}">{text}</button>'
     )
 
 
