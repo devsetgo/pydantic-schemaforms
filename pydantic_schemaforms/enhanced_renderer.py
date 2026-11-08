@@ -397,7 +397,7 @@ class EnhancedFormRenderer:
             include_submit_button = False
         submit_markup = self._render_submit_button() if include_submit_button else ''
         if confirm and submit_markup:
-            submit_markup += '\n' + self._theme.render_confirm_dialog(**confirm)
+            submit_markup += '\n' + self._theme.render_confirm_dialog(confirm)
 
         # Calculate render time before form_wrapper (we'll add timing display inside form)
         render_time = time.perf_counter() - start_time

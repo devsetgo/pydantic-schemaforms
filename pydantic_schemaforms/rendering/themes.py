@@ -368,17 +368,21 @@ class RendererTheme:
 
         return _CONFIRM_CLASSES[slot]
 
-    def render_confirm_dialog(
-        self, *, title: str, message: str, confirm_label: str, cancel_label: str
-    ) -> str:
+    def render_confirm_dialog(self, texts: dict[str, str]) -> str:
         """The native ``<dialog>`` that ``confirm=`` opens before the form submits.
 
-        Cancel has focus first, so Enter on an opened dialog never confirms by
-        accident; Escape closes it.
+        ``texts`` holds ``title``, ``message``, ``confirm_label`` and
+        ``cancel_label``. Cancel has focus first, so Enter on an opened dialog
+        never confirms by accident; Escape closes it.
         """
 
-        cancel_class = self.confirm_class('cancel')  # NOSONAR - read in the t-string below
+        # Sonar can't parse t-strings, so these read-only-there names carry NOSONAR.
+        title = texts['title']  # NOSONAR
+        cancel_label = texts['cancel_label']  # NOSONAR
+        confirm_label = texts['confirm_label']  # NOSONAR
+        cancel_class = self.confirm_class('cancel')  # NOSONAR
         confirm_class = self.confirm_class('confirm')  # NOSONAR
+        message = texts['message']
         _message = (  # NOSONAR
             html(t'<p class="sf-confirm__message">{message}</p>') if message else SafeHTML('')
         )
