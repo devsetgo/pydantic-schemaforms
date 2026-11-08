@@ -195,6 +195,48 @@ WIZARD_COMPONENT_ASSETS = """
         return text;
     }
 
+    // What changed since the wizard was rendered (#318): bold old and new
+    // values for sight, a sentence for screen readers. DOM text only.
+    function showChange(slot, before, after, emptyText) {
+        var from = before || emptyText;
+        var to = after || emptyText;
+        var shown = document.createElement('span');
+        shown.setAttribute('aria-hidden', 'true');
+        var a = document.createElement('strong');
+        a.textContent = from;
+        var b = document.createElement('strong');
+        b.textContent = to;
+        shown.appendChild(a);
+        shown.appendChild(document.createTextNode(' → '));
+        shown.appendChild(b);
+        var said = document.createElement('span');
+        said.className = 'sf-sr-only';
+        said.textContent = 'Changed from ' + from + ' to ' + to;
+        slot.textContent = '';
+        slot.appendChild(shown);
+        slot.appendChild(said);
+    }
+
+    function tagRow(row, label) {
+        var cell = row.querySelector('td');
+        if (!cell) { return; }
+        var tag = document.createElement('span');
+        tag.className = 'sf-review-tag';
+        tag.textContent = label + ': ';
+        cell.insertBefore(tag, cell.firstChild);
+    }
+
+    function copyInitials(row, source) {
+        ownBy(row, '[data-review-slot]').forEach(function (slot) {
+            var match = ownBy(source, '[data-review-slot]').filter(function (other) {
+                return other.dataset.reviewSlot === slot.dataset.reviewSlot;
+            })[0];
+            if (match && match.dataset.reviewInitial !== undefined) {
+                slot.dataset.reviewInitial = match.dataset.reviewInitial;
+            }
+        });
+    }
+
     function fillSlot(slot, prefix, form, review) {
         var controls = controlsFor(form, joinName(prefix, slot.dataset.reviewSlot));
         if (!controls.length) { return; }
@@ -208,10 +250,19 @@ WIZARD_COMPONENT_ASSETS = """
         slot.hidden = false;
         if (term) { term.hidden = false; }
         var text = slotText(slot, live);
+        var initial = slot.dataset.reviewInitial;
+        // An empty file input keeps the file there was: nothing changed.
+        if (initial !== undefined && slot.dataset.reviewFormat === 'file' && !text) { text = initial; }
         var emptyClass = review.dataset.reviewEmptyClass;
-        slot.textContent = text || review.dataset.reviewEmptyText;
+        var changed = initial !== undefined && text !== initial;
+        if (changed) {
+            showChange(slot, initial, text, review.dataset.reviewEmptyText);
+        } else {
+            slot.textContent = text || review.dataset.reviewEmptyText;
+        }
+        // A change shows both values, so it never takes the muted "empty" look.
         if (emptyClass) {
-            emptyClass.split(' ').forEach(function (c) { slot.classList.toggle(c, !text); });
+            emptyClass.split(' ').forEach(function (c) { slot.classList.toggle(c, !text && !changed); });
         }
         slot.style.whiteSpace = text.indexOf('\\n') === -1 ? '' : 'pre-wrap';
     }
@@ -226,21 +277,39 @@ WIZARD_COMPONENT_ASSETS = """
                 if (match && indices.indexOf(+match[1]) === -1) { indices.push(+match[1]); }
             });
             indices.sort(function (a, b) { return a - b; });
-            Array.from(list.children).forEach(function (row) {
-                if (row.tagName === 'TR') { list.removeChild(row); }
+            // The rows the wizard started with stay, hidden, to compare against.
+            var originals = Array.from(list.children).filter(function (row) {
+                return row.hasAttribute('data-review-original');
             });
+            Array.from(list.children).forEach(function (row) {
+                if (row.tagName === 'TR' && !row.hasAttribute('data-review-original')) {
+                    list.removeChild(row);
+                }
+            });
+            originals.forEach(function (row) { row.hidden = true; });
             var template = list.querySelector(':scope > template');
-            indices.forEach(function (i) {
+            indices.forEach(function (i, position) {
                 var row = template.content.firstElementChild.cloneNode(true);
                 var rowName = name + '[' + i + ']';
                 row.setAttribute('data-review-row', rowName);
+                if (position < originals.length) { copyInitials(row, originals[position]); }
                 list.appendChild(row);
                 fillScope(row, rowName, form, review);
+                if (originals.length && position >= originals.length) { tagRow(row, 'Added'); }
             });
+            originals.slice(indices.length).forEach(function (source) {
+                var gone = source.cloneNode(true);
+                gone.removeAttribute('data-review-original');
+                gone.setAttribute('data-review-row', '');
+                gone.hidden = false;
+                tagRow(gone, 'Removed');
+                list.appendChild(gone);
+            });
+            var rows = Math.max(indices.length, originals.length);
             var table = list.closest('[data-review-table]');
             var empty = table ? table.nextElementSibling : null;
-            if (table) { table.hidden = indices.length === 0; }
-            if (empty && empty.hasAttribute('data-review-empty-wrapper')) { empty.hidden = indices.length > 0; }
+            if (table) { table.hidden = rows === 0; }
+            if (empty && empty.hasAttribute('data-review-empty-wrapper')) { empty.hidden = rows > 0; }
         });
         ownBy(scope, '[data-review-slot]').forEach(function (slot) {
             fillSlot(slot, prefix, form, review);
@@ -375,6 +444,11 @@ WIZARD_COMPONENT_ASSETS = """
 }
 .form-wizard .wizard-footer [data-wizard-next] { margin-left: auto; }
 .form-wizard .wizard-progress-item:disabled { cursor: default; opacity: 0.6; }
+.sf-sr-only {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.sf-review-tag { font-weight: 600; }
 .form-wizard .wizard-default-action {
     position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
     overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;

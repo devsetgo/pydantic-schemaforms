@@ -125,8 +125,16 @@ hidden by a `ui_show_when` rule are left out.
   goes to the review.
 - **One-POST wizard:** the browser fills the review from the live inputs each
   time it is reached, as plain text. Added or removed `model_list` items show
-  up. The review adds no inputs, so the POST is unchanged. Without JavaScript
-  the review shows the values the page was rendered with.
+  up. Without JavaScript the review shows the values the page was rendered with.
+- **What changed.** When the form is rendered with data (an edit form), the
+  review marks each value that differs from it as **old → new**, in bold, with
+  "Changed from … to …" for screen readers. A `model_list` is compared item by
+  item, in order: new items are tagged "Added" and items no longer there are
+  shown tagged "Removed". A file input left empty keeps the file that was there.
+  A fresh form (no data) marks nothing. The starting values travel in one
+  hidden field, `_sf_original`, so a re-render after a failed submit still
+  compares with them; `validate()` leaves it out of `result.data`. With
+  `save_steps` the review doesn't mark changes yet.
 - **With `save_steps`:** the server renders the review from the saved draft,
   with no script. Edit buttons are submit buttons that jump back to the step.
   Submit on the review is the final submit: an error in a step reopens that

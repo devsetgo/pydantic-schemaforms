@@ -88,11 +88,12 @@ def test_the_review_is_the_last_step_and_holds_the_submit_button() -> None:
     assert 'aria-label="Edit About you"' in page
 
 
-def test_the_review_adds_no_inputs() -> None:
+def test_the_review_adds_only_its_hidden_starting_values() -> None:
     plain = render_form_html(Application, form_data=DATA, submit_url='/apply', layout='wizard')
     reviewed = _render()
     names = re.compile(r'<(?:input|select|textarea)[^>]*\bname="([^"]+)"')
-    assert sorted(names.findall(plain)) == sorted(names.findall(reviewed))
+    # Only the hidden starting values the review compares against (#318).
+    assert sorted(names.findall(plain) + ['_sf_original']) == sorted(names.findall(reviewed))
     assert not names.findall(_review(reviewed))
 
 
@@ -223,3 +224,87 @@ def test_uploaded_files_are_named_on_the_review() -> None:
         wizard_options={'review_step': True},
     )
     assert 'cv.pdf' in _review(page)
+
+
+# What changed (#318): the review compares against the data the wizard started with.
+
+RECORD = {
+    'about': {'name': 'Robin', 'role': 'des'},
+    'jobs': [{'employer': 'Acme'}, {'employer': 'Initech'}],
+}
+REVIEW = {'submit_url': '/apply', 'layout': 'wizard', 'wizard_options': {'review_step': True}}
+
+
+def _carried(page: str) -> str:
+    match = re.search(r'name="_sf_original" value="([^"]*)"', page)
+    assert match
+    return match.group(1).replace('&quot;', '"')
+
+
+def test_initial_data_becomes_each_slots_starting_value() -> None:
+    page = render_form_html(Application, form_data=RECORD, **REVIEW)
+    initials = re.findall(r'data-review-slot="([^"]+)"[^>]*data-review-initial="([^"]*)"', page)
+    assert ('about.name', 'Robin') in initials
+    assert ('about.role', 'Designer') in initials
+    assert ('about.secret', '') in initials
+    assert [value for slot, value in initials if slot == 'employer'] == ['Acme', 'Initech']
+    assert page.count('data-review-original data-review-row=""') == 2
+
+
+def test_a_new_list_item_has_nothing_to_compare_with() -> None:
+    page = render_form_html(Application, form_data=RECORD, **REVIEW)
+    template = re.search(r'<template><tr>(.*?)</tr></template>', page, re.DOTALL)
+    assert template and 'data-review-initial' not in template.group(1)
+
+
+def test_a_fresh_form_marks_no_changes() -> None:
+    page = render_form_html(Application, **REVIEW)
+    assert 'name="_sf_original" value=""' in page
+    assert 'data-review-initial' not in page
+
+
+def test_a_failed_submit_keeps_the_starting_values() -> None:
+    first = render_form_html(Application, form_data=RECORD, **REVIEW)
+    result = Application.validate(
+        [('about.name', 'Sam'), ('about.role', 'nope'), ('_sf_original', _carried(first))],
+        **REVIEW,
+    )
+    assert not result.is_valid
+    assert '_sf_original' not in result.data
+    again = result.render_with_errors()
+    assert 'data-review-initial="Robin"' in again
+    assert 'value="Sam"' in again
+    assert _carried(again) == _carried(first)
+
+
+def test_a_failed_submit_of_a_fresh_form_still_marks_nothing() -> None:
+    result = Application.validate([('about.name', 'Sam'), ('_sf_original', '')], **REVIEW)
+    page = result.render_with_errors()
+    assert 'data-review-initial' not in page
+
+
+def test_an_unreadable_carried_value_marks_nothing() -> None:
+    result = Application.validate([('about.name', 'Sam'), ('_sf_original', '{nope')], **REVIEW)
+    assert 'data-review-initial' not in result.render_with_errors()
+
+
+def test_only_a_one_post_wizard_with_a_review_carries_the_starting_values() -> None:
+    plain = render_form_html(Application, form_data=RECORD, submit_url='/apply', layout='wizard')
+    saved = render_form_html(
+        Application,
+        form_data=RECORD,
+        submit_url='/apply',
+        layout='wizard',
+        wizard_options={'review_step': True, 'save_steps': True},
+    )
+    vertical = render_form_html(Application, form_data=RECORD, submit_url='/apply')
+    for page in (plain, saved, vertical):
+        assert '_sf_original' not in page
+        assert 'data-review-initial' not in page
+
+
+def test_a_starting_file_is_named_and_carried_by_its_details() -> None:
+    upload = UploadedFile('cv.pdf', 'application/pdf', io.BytesIO(b'12'))
+    page = render_form_html(Application, form_data={**RECORD, 'docs': {'resume': upload}}, **REVIEW)
+    assert 'data-review-initial="cv.pdf"' in page
+    assert '"filename": "cv.pdf"' in _carried(page)

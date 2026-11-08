@@ -97,8 +97,11 @@ submitting. It adds a final step showing every value read-only, grouped by step,
 button per step; Submit appears only there. Pass a dict to rename it:
 `{"review_step": {"title": "Check your answers", "edit_label": "Change"}}` (other keys or
 non-text values raise `ValueError`). The library builds it, so the app writes no confirmation
-page and the POST is unchanged. It works with `save_steps` too (rendered from the draft; Submit
-on it is the final submit, so `result.is_complete` needs no change).
+page. Rendered with existing data (an edit form), it shows each changed answer as **old → new**
+(one-POST wizard only); the starting values travel in a hidden `_sf_original` field, which
+`validate()` keeps out of `result.data`, so pass `validate()` the raw form as usual. It works with
+`save_steps` too (rendered from the draft; Submit on it is the final submit, so
+`result.is_complete` needs no change).
 
 ### Saving each step (`save_steps`)
 

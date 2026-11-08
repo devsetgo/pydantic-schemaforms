@@ -539,23 +539,37 @@ def test_review_step_shows_the_live_answers(
     page.locator('.wizard-progress-item', has_text='Review').click()
     expect(review).to_be_visible(timeout=TIMEOUT)
     expect(review.locator('[data-review-slot="personal_info.first_name"]')).to_have_text('Alex')
-    rows = review.locator('[data-review-list="task_list.tasks"] > tr')
+    rows = review.locator('[data-review-list="task_list.tasks"] > tr:not([hidden])')
     expect(rows).to_have_count(2, timeout=TIMEOUT)
     expect(rows.first).to_contain_text('Complete project setup')
     assert _blocking_violations(page) == []
 
-    # Edit goes back to the step; what is typed shows as text, never markup.
+    # Edit goes back to the step. The change shows as old -> new, as text, never markup.
     review.locator('[data-wizard-edit="0"]').click()
     page.fill('[name="personal_info.first_name"]', '<b>Robin</b>')
     page.locator('.wizard-progress-item', has_text='Review').click()
     slot = review.locator('[data-review-slot="personal_info.first_name"]')
-    expect(slot).to_have_text('<b>Robin</b>', timeout=TIMEOUT)
+    expect(slot.locator('[aria-hidden="true"]')).to_have_text(
+        'Alex → <b>Robin</b>', timeout=TIMEOUT
+    )
+    expect(slot.locator('strong')).to_have_count(2)
+    expect(slot.locator('.sf-sr-only')).to_have_text('Changed from Alex to <b>Robin</b>')
     expect(review.locator('b')).to_have_count(0)
+    unchanged = review.locator('[data-review-slot="personal_info.last_name"]')
+    expect(unchanged).to_have_text('Johnson')
+    assert _blocking_violations(page) == []
 
-    # A list item added in the browser shows up as a row.
+    # A list item added in the browser is tagged Added; one removed is shown as Removed.
     review.locator('[data-wizard-edit="3"]').click()
     page.locator('.add-item-btn').first.click()
     page.fill('[name="task_list.tasks[2].task_name"]', 'Third task')
     page.locator('.wizard-progress-item', has_text='Review').click()
     expect(rows).to_have_count(3, timeout=TIMEOUT)
-    expect(rows.nth(2)).to_contain_text('Third task')
+    expect(rows.nth(2)).to_contain_text('Added: Third task')
+
+    review.locator('[data-wizard-edit="3"]').click()
+    page.locator('.model-list-item .remove-item-btn').last.click()
+    page.locator('.model-list-item .remove-item-btn').last.click()
+    page.locator('.wizard-progress-item', has_text='Review').click()
+    expect(rows).to_have_count(2, timeout=TIMEOUT)
+    expect(rows.nth(1)).to_contain_text('Removed: Write documentation')
