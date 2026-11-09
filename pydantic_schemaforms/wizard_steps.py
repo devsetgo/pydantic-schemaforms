@@ -320,6 +320,29 @@ class WizardStepResult:
         return await asyncio.to_thread(self.render, framework, **kwargs)
 
 
+def _merge_step(
+    submission: dict[str, Any], saved: dict[str, Any], step_names: set[str]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """This step's submitted values, and the draft's data with them in place.
+
+    A file saved earlier stays when its input comes back empty or missing.
+    """
+
+    submitted = {
+        name: _keep_saved_files(_with_uploads(submission[name]), saved.get(name))
+        for name in step_names
+        if name in submission
+    }
+    for name in step_names - set(submitted):
+        if _contains_saved_file(saved.get(name)):
+            submitted[name] = saved[name]
+    merged = {
+        **{key: value for key, value in saved.items() if key not in step_names},
+        **submitted,
+    }
+    return submitted, merged
+
+
 def validate_step(
     model_cls: type[FormModel],
     raw: Any,
@@ -343,18 +366,7 @@ def validate_step(
     linear = (render_kwargs.get('wizard_options') or {}).get('linear', True)
 
     step_names = set(steps[step])
-    submitted = {
-        name: _keep_saved_files(_with_uploads(submission[name]), saved.data.get(name))
-        for name in step_names
-        if name in submission
-    }
-    for name in step_names - set(submitted):
-        if _contains_saved_file(saved.data.get(name)):
-            submitted[name] = saved.data[name]
-    merged = {
-        **{key: value for key, value in saved.data.items() if key not in step_names},
-        **submitted,
-    }
+    submitted, merged = _merge_step(submission, saved.data, step_names)
     # Which steps apply depends on the answers so far, this step's included.
     skipped = _skipped_steps(model_cls, merged)
     applying = [index for index in range(len(steps)) if index not in skipped or index == step]
