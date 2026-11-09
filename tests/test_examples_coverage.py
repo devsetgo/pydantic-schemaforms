@@ -182,6 +182,10 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     index = client.get('/wizards').text.replace('&amp;', '&')
     for example in WIZARD_EXAMPLES:
         assert f'/wizards/{example.slug}' in index, example.slug
+        # Each example's back button returns to the Wizards index, not home.
+        page = client.get(f'/wizards/{example.slug}', params={'style': 'material'}).text
+        assert 'href="/wizards?style=material"' in page, example.slug
+        assert 'Back to Wizard Examples' in page, example.slug
     for option_link in (
         'layout=wizard&linear=false',
         'layout=wizard&progress=false&labels=true',

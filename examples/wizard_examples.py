@@ -364,6 +364,12 @@ def _render_options(example: WizardExample, style: str, variant: str | None) -> 
     }
 
 
+def _back_to_index(style: str) -> dict[str, str]:
+    """The page's back button goes to the Wizards index, not the home page."""
+
+    return {'back_url': f'/wizards?style={style}', 'back_label': 'Back to Wizard Examples'}
+
+
 def _form_page(request: Request, example: WizardExample, style: str, form_html: str):
     return templates.TemplateResponse(
         request,
@@ -375,6 +381,7 @@ def _form_page(request: Request, example: WizardExample, style: str, form_html: 
             'framework_type': style,
             'form_html': form_html,
             **_PAGE,
+            **_back_to_index(style),
         },
     )
 
@@ -411,6 +418,7 @@ def _add_routes(example: WizardExample) -> None:
                 'display_html': str(html(t'{summary}{SafeHTML(display)}')),
                 'data': result.data,
                 **_PAGE,
+                **_back_to_index(style),
                 'try_again_url': f'/wizards/{example.slug}?style={style}{_variant_query(variant)}',
             },
         )
