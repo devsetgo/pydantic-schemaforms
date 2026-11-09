@@ -735,3 +735,21 @@ def test_a_wizard_skips_a_step_that_does_not_apply(
     expect(titles).to_have_text(
         ['Your car', 'Services', 'Date and time', 'Contact', 'Review'], timeout=TIMEOUT
     )
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_an_added_list_item_starts_with_its_defaults(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    # A new item used to be a blanked clone of an existing one, leaving a
+    # select with no option chosen.
+    page.goto(f'{examples_server_url}/wizards/team-onboarding?style={style}')
+    page.fill('[name="workspace.name"]', 'Acme')
+    page.fill('[name="workspace.address"]', 'acme-co')
+    page.click('[data-wizard-next]')
+    page.fill('[name="invites[0].email"]', 'sam@example.com')
+    page.select_option('[name="invites[0].role"]', 'admin')
+    page.locator('.add-item-btn:visible').first.click()
+    expect(page.locator('[name="invites[1].role"]')).to_have_value('member', timeout=TIMEOUT)
+    expect(page.locator('[name="invites[1].email"]')).to_have_value('')
+    expect(page.locator('[name="invites[0].role"]')).to_have_value('admin')

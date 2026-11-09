@@ -153,27 +153,32 @@ class ModelListRenderer:
             );
             const itemsContainer = container.querySelector('.model-list-items');
 
-            // Prefer cloning an existing item (preserves any per-item chrome).
-            // If the list is currently empty, fall back to a hidden <template>.
-            let templateNode = itemsContainer.querySelector('.model-list-item');
-            if (!templateNode) {
-                const template = itemsContainer.querySelector('template.model-list-item-template');
-                if (template && template.content && template.content.firstElementChild) {
-                    templateNode = template.content.firstElementChild;
-                }
+            // Clone the hidden <template> item: it is rendered like a fresh item, so
+            // a select keeps its first option and a field its default. Cloning a
+            // filled-in item and blanking it left selects with no option at all.
+            // Only without a template is an existing item cloned and cleared.
+            let templateNode = null;
+            let fromTemplate = false;
+            const template = itemsContainer.querySelector('template.model-list-item-template');
+            if (template && template.content && template.content.firstElementChild) {
+                templateNode = template.content.firstElementChild;
+                fromTemplate = true;
+            } else {
+                templateNode = itemsContainer.querySelector('.model-list-item');
             }
 
             if (templateNode) {
                 const newItem = templateNode.cloneNode(true);
 
-                // Clear all input values
-                newItem.querySelectorAll('input, select, textarea').forEach(input => {
-                    if (input.type === 'checkbox' || input.type === 'radio') {
-                        input.checked = false;
-                    } else {
-                        input.value = '';
-                    }
-                });
+                if (!fromTemplate) {
+                    newItem.querySelectorAll('input, select, textarea').forEach(input => {
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = false;
+                        } else {
+                            input.value = '';
+                        }
+                    });
+                }
 
                 // Update data-index
                 newItem.dataset.index = index;
