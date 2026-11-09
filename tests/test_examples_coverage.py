@@ -182,6 +182,8 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     assert 'wizard-progress-ticks' in ticked
     # autosave=True and warn_unsaved=True.
     assert 'autosave=true&warn=true' in home
+    # A wizard skips a step its rule hides (#327).
+    assert '/layouts/skip-steps' in home
     saved = client.get('/layouts', params={'autosave': 'true', 'warn': 'true'}).text
     assert 'data-sf-autosave="LayoutDemonstrationForm"' in saved
     assert 'data-sf-warn-unsaved' in saved

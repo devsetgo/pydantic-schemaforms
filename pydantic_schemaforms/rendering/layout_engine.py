@@ -14,7 +14,13 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 from .context import RenderContext
 from .form_style import BOOTSTRAP_TAB_PANEL_TEMPLATE, get_form_style
 from pydantic_schemaforms.error_tree import has_errors
-from pydantic_schemaforms.show_when import GROUP_RULE_KEY, show_when_wrapper
+from pydantic_schemaforms.show_when import (
+    GROUP_RULE_KEY,
+    is_shown,
+    lookup,
+    rule_matches,
+    show_when_wrapper,
+)
 from .schema_parser import (
     FieldList,
     SchemaMetadata,
@@ -388,6 +394,7 @@ class WizardLayout(BaseLayout):
         reached: int = 0,
         original_json: str | None = None,
         progress: bool = False,
+        skipped: set[int] | frozenset[int] = frozenset(),
         **kwargs: Any,
     ) -> None:
         super().__init__(content='', **kwargs)
@@ -404,6 +411,8 @@ class WizardLayout(BaseLayout):
         self.original_json = original_json
         # progress=True: tick each step in the header once its required fields are filled.
         self.progress = progress
+        # Steps a rule hides (#327): out of the header and its numbering, never landed on.
+        self.skipped = frozenset(skipped)
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
@@ -470,9 +479,10 @@ class WizardLayout(BaseLayout):
         )
         common = {
             'index': str(index),
-            'number': str(index + 1),
+            'number': str(self._number(index)),
             'title': step['title'],
             'done': self._done_state(index),
+            'skipped': 'true' if index in self.skipped else '',
         }
         if not self.save_steps:
             return templates.wizard_progress_item.render(state_class=state, **common)
@@ -495,13 +505,17 @@ class WizardLayout(BaseLayout):
         saved = self.save_steps and index < self.reached and index != self.active_index
         return 'true' if saved else 'false'
 
+    def _number(self, index: int) -> int:
+        return sum(1 for other in range(index + 1) if other not in self.skipped)
+
     def _footer(self, templates: Any) -> str:
+        applying = [i for i in range(len(self.steps)) if i not in self.skipped]
         return templates.wizard_footer.render(
             back_label=self.back_label,
             next_label=self.next_label,
             save_steps='true' if self.save_steps else '',
-            show_back='true' if self.active_index > 0 else '',
-            show_next='true' if self.active_index < len(self.steps) - 1 else '',
+            show_back='true' if any(i < self.active_index for i in applying) else '',
+            show_next='true' if any(i > self.active_index for i in applying) else '',
         )
 
 
@@ -905,6 +919,8 @@ class LayoutEngine:
             rendered.append(self._review_group(metadata, data, groups, review, current, original))
 
         component_options = {k: v for k, v in (wizard_options or {}).items() if k != 'review_step'}
+        if mode == 'wizard':
+            component_options['skipped'] = skipped_steps(groups, data)
         if original is not NO_ORIGINAL:
             from pydantic_schemaforms.wizard_steps import original_to_json
 
@@ -1227,6 +1243,38 @@ def wizard_step_count(
 ) -> int:
     steps = len(LayoutEngine.group_fields(metadata, 'wizard', general_title))
     return steps + (1 if review_options(wizard_options) else 0)
+
+
+def skipped_steps(groups: list[tuple[str, FieldList]], values: dict[str, Any]) -> set[int]:
+    """The wizard steps a rule hides for these values (#327): a ``ui_group``
+    whose ``ui_group_show_when`` is false, or a one-field step whose field's own
+    ``ui_show_when`` is false."""
+
+    skipped = set()
+    for index, (_title, fields) in enumerate(groups):
+        rule = group_option(fields, 'group_show_when')
+        if rule is not None:
+            if not rule_matches(rule, lookup(values, rule['field'])):
+                skipped.add(index)
+        elif len(fields) == 1 and not is_shown(fields[0][1], values):
+            skipped.add(index)
+    return skipped
+
+
+def last_wizard_step(
+    metadata: SchemaMetadata,
+    general_title: str,
+    wizard_options: dict[str, Any] | None,
+    values: dict[str, Any],
+) -> int:
+    """The index of the last step that applies; a review step always does."""
+
+    groups = LayoutEngine.group_fields(metadata, 'wizard', general_title)
+    if review_options(wizard_options):
+        return len(groups)
+    skipped = skipped_steps(groups, values)
+    applying = [index for index in range(len(groups)) if index not in skipped]
+    return applying[-1] if applying else len(groups) - 1
 
 
 def check_layout(layout: str) -> None:

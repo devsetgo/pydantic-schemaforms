@@ -71,8 +71,9 @@ heading" or "first and last name on one row", keep the model flat:
   **`ui_group_collapsed=True`** starts it closed; a group with an error always opens.
   These apply in `layout="vertical"`, since a tab or panel already folds.
 - **`ui_group_show_when`** hides the whole group, heading included, using the same rules
-  as `ui_show_when`. Its fields need defaults. Under `"tabbed"`, `"accordion"` and
-  `"wizard"`, the tab, panel or step stays in place, empty.
+  as `ui_show_when`. Its fields need defaults. Under `"tabbed"` and `"accordion"`, the
+  tab or panel stays in place, empty. A `"wizard"` skips the step instead: see
+  [Skipping steps that don't apply](#skipping-steps-that-dont-apply).
 
 The `ui_group_*` options go on any one field of the group. `render_display()` shows groups
 as titled sections too, without the column widths. Inside a `model_list` item, `ui_group`
@@ -109,6 +110,27 @@ POST per step. Your route calls `Model.validate_step()` instead of
 database) and passes it back as `draft=`. A user can leave after any step and
 resume later, and files can be handled on the step they are uploaded. See the
 [Save and Continue recipe](../recipes/save-and-continue.md).
+
+### Skipping steps that don't apply
+
+A step whose rule hides it is skipped. That's a `ui_group` with a
+`ui_group_show_when` rule, or a sub-form field with its own `ui_show_when`. It
+leaves the step header, the remaining steps are numbered 1, 2, 3 without a gap,
+and Back and Next jump over it. When an answer changes, the step comes back. The
+review step and `progress=True` leave it out too, and so does the submitted data,
+since a hidden field's values are dropped.
+
+```python
+licence: str = Field(
+    "",
+    title="Driving licence number",
+    ui_group="Loaner car",
+    ui_group_show_when={"field": "while_we_work", "equals": "loaner"},
+)
+```
+
+With `save_steps`, the server picks the next and previous step from the answers
+saved so far, so this also works without JavaScript.
 
 ### Review before submitting
 

@@ -327,6 +327,16 @@ WIZARD_COMPONENT_ASSETS = """
         });
     }
 
+    // A step whose only content is a show_when wrapper is skipped while the
+    // rule hides it (#327): a ui_group_show_when group, or a sub-form field
+    // with its own rule.
+    function isSkipped(step) {
+        var content = Array.from(step.children).filter(function (child) {
+            return !child.classList.contains('wizard-step-title');
+        });
+        return content.length === 1 && content[0].matches('fieldset.sf-show-when') && content[0].hidden;
+    }
+
     function init(root) {
         if (root.dataset.wizardReady) { return; }
         root.dataset.wizardReady = 'true';
@@ -340,8 +350,17 @@ WIZARD_COMPONENT_ASSETS = """
         var submits = form ? Array.from(form.querySelectorAll('[type="submit"]'))
             .filter(function (b) { return !root.contains(b); }) : [];
         var linear = root.dataset.linear !== 'false';
-        var last = steps.length - 1;
-        var current = Math.min(Math.max(parseInt(root.dataset.activeStep, 10) || 0, 0), last);
+        var current = Math.min(Math.max(parseInt(root.dataset.activeStep, 10) || 0, 0), steps.length - 1);
+
+        function applies(i) { return i >= 0 && i < steps.length && !isSkipped(steps[i]); }
+        function nextFrom(i) {
+            for (var j = i + 1; j < steps.length; j++) { if (applies(j)) { return j; } }
+            return -1;
+        }
+        function previousFrom(i) {
+            for (var j = i - 1; j >= 0; j--) { if (applies(j)) { return j; } }
+            return -1;
+        }
 
         function show(index) {
             current = index;
@@ -349,24 +368,39 @@ WIZARD_COMPONENT_ASSETS = """
                 step.classList.toggle('active', i === index);
                 step.setAttribute('aria-hidden', i === index ? 'false' : 'true');
             });
+            var number = 0;
             items.forEach(function (item, i) {
+                var applying = applies(i);
+                var row = item.closest('li') || item;
+                if (row.hidden === applying) { row.hidden = !applying; }
+                if (applying) {
+                    number += 1;
+                    item.dataset.stepNumber = String(number);
+                    var shown = item.querySelector('.wizard-progress-number');
+                    // A check mark from progress=True stays; it reads stepNumber itself.
+                    if (shown && shown.textContent !== '✓' && shown.textContent !== String(number)) {
+                        shown.textContent = String(number);
+                    }
+                }
                 item.classList.toggle('active', i === index);
                 item.classList.toggle('complete', i < index);
                 if (i === index) { item.setAttribute('aria-current', 'step'); }
                 else { item.removeAttribute('aria-current'); }
             });
-            if (back) { back.style.display = index === 0 ? 'none' : ''; }
-            if (next) { next.style.display = index === last ? 'none' : ''; }
-            submits.forEach(function (b) { b.style.display = index === last ? '' : 'none'; });
+            var isLast = nextFrom(index) === -1;
+            if (back) { back.style.display = previousFrom(index) === -1 ? 'none' : ''; }
+            if (next) { next.style.display = isLast ? 'none' : ''; }
+            submits.forEach(function (b) { b.style.display = isLast ? '' : 'none'; });
             root.dataset.activeStep = String(index);
             var review = steps[index].querySelector('[data-wizard-review]');
             if (review) { fillReview(review); }
         }
 
         function goTo(target) {
-            if (target === current || target < 0 || target > last) { return; }
+            if (target === current || !applies(target)) { return; }
             if (target > current && linear) {
                 for (var i = current; i < target; i++) {
+                    if (!applies(i)) { continue; }
                     show(i);
                     if (!stepIsValid(steps[i])) { return; }
                 }
@@ -376,8 +410,8 @@ WIZARD_COMPONENT_ASSETS = """
             if (top < 0) { root.scrollIntoView({ block: 'start' }); }
         }
 
-        if (back) { back.addEventListener('click', function () { goTo(current - 1); }); }
-        if (next) { next.addEventListener('click', function () { goTo(current + 1); }); }
+        if (back) { back.addEventListener('click', function () { goTo(previousFrom(current)); }); }
+        if (next) { next.addEventListener('click', function () { goTo(nextFrom(current)); }); }
         items.forEach(function (item, i) {
             item.addEventListener('click', function () { goTo(i); });
         });
@@ -389,9 +423,9 @@ WIZARD_COMPONENT_ASSETS = """
         // submit button the page added itself).
         root.addEventListener('keydown', function (event) {
             var target = event.target;
-            if (event.key !== 'Enter' || current === last || target.tagName !== 'INPUT') { return; }
+            if (event.key !== 'Enter' || nextFrom(current) === -1 || target.tagName !== 'INPUT') { return; }
             event.preventDefault();
-            goTo(current + 1);
+            goTo(nextFrom(current));
         });
         if (form) {
             form.addEventListener('submit', function (event) {
@@ -399,8 +433,21 @@ WIZARD_COMPONENT_ASSETS = """
                 // CSV") is a deliberate action of that step; let it through.
                 var submitter = event.submitter;
                 if (submitter && root.contains(submitter)) { return; }
-                if (current < last) { event.preventDefault(); goTo(current + 1); }
+                if (nextFrom(current) !== -1) { event.preventDefault(); goTo(nextFrom(current)); }
             });
+            // An answer can switch a later step on or off: refresh once the
+            // show_when script has run on the same event.
+            var refresh = function () {
+                setTimeout(function () {
+                    if (!applies(current)) {
+                        var other = nextFrom(current);
+                        current = other !== -1 ? other : Math.max(previousFrom(current), 0);
+                    }
+                    show(current);
+                }, 0);
+            };
+            form.addEventListener('input', refresh);
+            form.addEventListener('change', refresh);
         }
         show(current);
     }
