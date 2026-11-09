@@ -620,6 +620,12 @@ def _car_setup_result(data: dict[str, Any]) -> SafeHTML:
 _PHOTO_LIMIT = 8 * 1024 * 1024
 
 
+def _long_date(value: date) -> str:
+    """November 9, 2026. Built by hand: strftime's %-d is not on Windows."""
+
+    return f'{value:%B} {value.day}, {value.year}'
+
+
 def _policies() -> dict[str, tuple[date, date]]:
     """Policy number to its coverage dates; the claim checks the incident against them."""
 
@@ -710,8 +716,8 @@ class InsuranceClaimForm(FormModel):
         start, end = dates
         if not start <= self.incident_date <= end:
             raise ValueError(
-                f'Policy {self.policyholder.policy_number} covers {start:%B %-d, %Y} to '
-                f'{end:%B %-d, %Y}; the incident date is outside it'
+                f'Policy {self.policyholder.policy_number} covers {_long_date(start)} to '
+                f'{_long_date(end)}; the incident date is outside it'
             )
         return self
 
