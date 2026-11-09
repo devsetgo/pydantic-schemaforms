@@ -83,7 +83,7 @@ and `ui_cols` have no effect, since each item already arranges its own fields;
 ## Wizard
 
 `layout="wizard"` shows one group at a time with a progress header and Back
-and Next buttons; the submit button is on the last step.
+and Next buttons; on the last step, Submit takes Next's place beside Back.
 
 ```python
 --8<-- "docs_src/tutorial/layouts/wizard.py"

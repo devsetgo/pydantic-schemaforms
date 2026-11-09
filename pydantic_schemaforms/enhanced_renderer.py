@@ -23,6 +23,7 @@ from pydantic_core import PydanticSerializationError, PydanticUndefined, to_json
 from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
+from .rendering.form_style import WIZARD_SUBMIT_RE
 from .error_tree import iter_errors, normalize_error_tree
 from .form_data import decode_submission
 from .rendering.layout_engine import (
@@ -381,6 +382,12 @@ class EnhancedFormRenderer:
         form_body_parts: list[str] = []
         self._prefill_layout_field_defaults(model_cls, metadata, data)
 
+        if step_state is not None and not _on_last_step(
+            model_cls, metadata, step_state, wizard_options, data
+        ):
+            include_submit_button = False
+        submit_button = self._render_submit_button() if include_submit_button else ''
+
         if layout in GROUPED_LAYOUTS:
             form_body_parts.extend(
                 self._layout_engine.render_groups(
@@ -393,8 +400,13 @@ class EnhancedFormRenderer:
                     wizard_options=wizard_options,
                     step_state=step_state,
                     original=original,
+                    submit_html=submit_button,
                 )
             )
+            # A wizard puts Submit in its footer, beside Back; a custom footer
+            # template that leaves it out keeps it below the form as before.
+            if any(WIZARD_SUBMIT_RE.search(part) for part in form_body_parts):
+                submit_button = ''
         else:
             form_body_parts.extend(
                 self._layout_engine.render_fields(
@@ -421,12 +433,8 @@ class EnhancedFormRenderer:
         if error_summary_markup:
             form_body_parts.insert(0, error_summary_markup)
 
-        if step_state is not None and not _on_last_step(
-            model_cls, metadata, step_state, wizard_options, data
-        ):
-            include_submit_button = False
-        submit_markup = self._render_submit_button() if include_submit_button else ''
-        if confirm and submit_markup:
+        submit_markup = submit_button
+        if confirm and include_submit_button:
             submit_markup += '\n' + self._theme.render_confirm_dialog(confirm)
 
         # Calculate render time before form_wrapper (we'll add timing display inside form)

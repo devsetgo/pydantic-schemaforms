@@ -395,6 +395,7 @@ class WizardLayout(BaseLayout):
         original_json: str | None = None,
         progress: bool = False,
         skipped: set[int] | frozenset[int] = frozenset(),
+        submit_html: str = '',
         **kwargs: Any,
     ) -> None:
         super().__init__(content='', **kwargs)
@@ -413,6 +414,8 @@ class WizardLayout(BaseLayout):
         self.progress = progress
         # Steps a rule hides (#327): out of the header and its numbering, never landed on.
         self.skipped = frozenset(skipped)
+        # The form's own Submit, shown in the footer on the last step.
+        self.submit_html = submit_html
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
@@ -516,6 +519,7 @@ class WizardLayout(BaseLayout):
             save_steps='true' if self.save_steps else '',
             show_back='true' if any(i < self.active_index for i in applying) else '',
             show_next='true' if any(i > self.active_index for i in applying) else '',
+            submit_html=self.submit_html,
         )
 
 
@@ -872,6 +876,7 @@ class LayoutEngine:
         wizard_options: dict[str, Any] | None = None,
         step_state: Any = None,
         original: Any = NO_ORIGINAL,
+        submit_html: str = '',
     ) -> list[str]:
         """Render a parent form as groups -- its own plain fields first, then
         one group per sub-form field (nested model, model_list, layout field),
@@ -921,6 +926,7 @@ class LayoutEngine:
         component_options = {k: v for k, v in (wizard_options or {}).items() if k != 'review_step'}
         if mode == 'wizard':
             component_options['skipped'] = skipped_steps(groups, data)
+            component_options['submit_html'] = submit_html
         if original is not NO_ORIGINAL:
             from pydantic_schemaforms.wizard_steps import original_to_json
 
