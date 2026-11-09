@@ -57,6 +57,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     FieldGroupsForm,
     SaveAndContinueForm,
     CloseAccountForm,
+    CarCareForm,
     CLOSE_ACCOUNT_CONFIRM,
     WidgetGalleryForm,
     validation_showcase_rules,
@@ -2162,6 +2163,72 @@ async def field_groups_post(
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'try_again_url': create_refer_path(request),
+        },
+    )
+
+
+# --- A wizard step that applies only for some answers (#327) ------------------
+_SKIP_STEPS_DESCRIPTION = (
+    'The "Loaner car" step has a ui_group_show_when rule. Choose "I need a loaner car" on '
+    'the Service step and it joins the wizard; choose anything else and Next goes '
+    'straight to Contact, and the header counts only the steps that apply.'
+)
+
+
+def _skip_steps_options(style: str, variant: str | None) -> dict[str, Any]:
+    return {
+        'submit_url': f'/layouts/skip-steps?style={style}{_variant_query(variant)}',
+        'framework': style,
+        'material_variant': _material_variant(variant),
+        'layout': 'wizard',
+        'wizard_options': {'review_step': True},
+        'progress': True,
+    }
+
+
+def _skip_steps_page(request: Request, style: str, form_html: str):
+    return templates.TemplateResponse(
+        request,
+        'form.html',
+        {
+            'request': request,
+            'title': 'Car Care Appointment',
+            'description': _SKIP_STEPS_DESCRIPTION,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'hide_api_info': True,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.get('/layouts/skip-steps', response_class=HTMLResponse, tags=['Showcase'])
+async def skip_steps_get(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    """A wizard whose loaner-car step applies only when a loaner is requested."""
+    form_html = await render_form_html_async(CarCareForm, **_skip_steps_options(style, variant))
+    return _skip_steps_page(request, style, form_html)
+
+
+@router.post('/layouts/skip-steps', response_class=HTMLResponse, tags=['Showcase'])
+async def skip_steps_post(request: Request, style: str = 'bootstrap', variant: str | None = None):
+    result = CarCareForm.validate(await request.form(), **_skip_steps_options(style, variant))
+    if not result.is_valid:
+        return _skip_steps_page(request, style, await result.render_with_errors_async())
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': 'Appointment Booked',
+            'message': 'The loaner-car answers are only here if a loaner was asked for.',
+            'display_html': CarCareForm.render_display(
+                result.data, framework=style, material_variant=_material_variant(variant)
+            ),
+            'data': result.data,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'try_again_url': f'/layouts/skip-steps?style={style}{_variant_query(variant)}',
         },
     )
 

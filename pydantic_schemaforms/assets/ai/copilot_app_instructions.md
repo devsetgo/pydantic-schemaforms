@@ -390,6 +390,9 @@ flat. `ui_cols` (1-12) makes consecutive fields share a row, under every style.
 `ui_group_collapsible=True`, `ui_group_collapsed=True` and `ui_group_show_when={...}` apply to the
 whole group and go on any one of its fields. `ui_group` and `ui_cols` don't apply inside
 `model_list` items; `ui_group_show_when` there hides each field on its own.
+In a `layout="wizard"`, a step hidden by its group's `ui_group_show_when` (or a sub-form field's own
+`ui_show_when`) is skipped: it leaves the header and the numbering, and Back/Next jump over it. Use
+that for steps that apply only to some answers rather than building separate wizards.
 
 ### Wizard
 

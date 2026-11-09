@@ -227,6 +227,16 @@ def step_field_names(
     return [*steps, []] if review_options(wizard_options) else steps
 
 
+def _skipped_steps(model_cls: type[FormModel], values: dict[str, Any]) -> set[int]:
+    from .enhanced_renderer import _general_group_title
+    from .rendering.layout_engine import LayoutEngine, skipped_steps
+    from .rendering.schema_parser import build_schema_metadata
+
+    metadata = build_schema_metadata(model_cls)
+    title = _general_group_title(model_cls, metadata)
+    return skipped_steps(LayoutEngine.group_fields(metadata, 'wizard', title), values)
+
+
 def check_save_steps(render_kwargs: dict[str, Any]) -> None:
     options = render_kwargs.get('wizard_options') or {}
     if render_kwargs.get('layout') != 'wizard' or not options.get('save_steps'):
@@ -236,26 +246,29 @@ def check_save_steps(render_kwargs: dict[str, Any]) -> None:
         )
 
 
-def _parse_action(raw: Any, step: int, reached: int, last: int) -> tuple[str, int]:
-    """The button pressed, as (kind, target step).
+def _parse_action(raw: Any, step: int, reached: int, applying: list[int]) -> tuple[str, int]:
+    """The button pressed, as (kind, target step), among the steps that apply.
 
     No action (Enter in a field, the form's own submit button) means Next, and
-    Next on the last step is the final submit. Submit counts only on the last
-    step, and a jump only to a step already reached, so an edited request can't
-    skip ahead; anything else just shows the current step again.
+    Next on the last step that applies is the final submit. Submit counts only
+    there, and a jump only to a step already reached that applies, so an edited
+    request can't skip ahead; anything else shows the current step again.
+    Steps a rule hides (#327) are never landed on.
     """
 
     action = raw if isinstance(raw, str) else ''
+    earlier = [index for index in applying if index < step]
+    later = [index for index in applying if index > step]
     if action == 'back':
-        return 'back', max(step - 1, 0)
+        return 'back', earlier[-1] if earlier else step
     if action.startswith('goto:') and action[5:].isdigit():
         target = int(action[5:])
-        return (
-            ('goto', target) if target != step and target <= min(reached, last) else ('stay', step)
-        )
-    if step >= last:
-        return 'submit', last
-    return 'next', step + 1
+        if target != step and target <= reached and target in applying:
+            return 'goto', target
+        return 'stay', step
+    if not later:
+        return 'submit', step
+    return 'next', later[0]
 
 
 @dataclass
@@ -326,9 +339,7 @@ def validate_step(
 
     submission = decode_submission(raw)
     step = min(_whole_number(_as_int(submission.pop(STEP_FIELD, None))), last)
-    kind, target = _parse_action(
-        submission.pop(ACTION_FIELD, None), step, max(saved.reached, step), last
-    )
+    action = submission.pop(ACTION_FIELD, None)
     linear = (render_kwargs.get('wizard_options') or {}).get('linear', True)
 
     step_names = set(steps[step])
@@ -344,6 +355,11 @@ def validate_step(
         **{key: value for key, value in saved.data.items() if key not in step_names},
         **submitted,
     }
+    # Which steps apply depends on the answers so far, this step's included.
+    skipped = _skipped_steps(model_cls, merged)
+    applying = [index for index in range(len(steps)) if index not in skipped or index == step]
+    kind, target = _parse_action(action, step, max(saved.reached, step), applying)
+
     result = validate_form_data(model_cls, merged, from_form=True)
     step_errors = {key: value for key, value in result.errors.items() if key in step_names}
     step_valid = not has_errors(step_errors)
@@ -358,19 +374,19 @@ def validate_step(
 
     if kind == 'submit':
         if result.is_valid:
-            done = StepState(merged, last, last)
+            done = StepState(merged, step, max(saved.reached, step))
             return WizardStepResult(
                 is_valid=True,
                 is_complete=True,
                 data=result.data,
                 errors={},
-                step=last,
+                step=step,
                 _state=done,
                 _render_state=done,
                 _render_errors={},
                 **common,
             )
-        failed = _first_step_with_errors(steps, result.errors, default=last)
+        failed = _first_step_with_errors(steps, result.errors, default=step)
         state = StepState(merged if step_valid else saved.data, step, saved.reached)
         return WizardStepResult(
             is_valid=step_valid,

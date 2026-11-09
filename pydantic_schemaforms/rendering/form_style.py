@@ -625,6 +625,7 @@ def _wizard_progress_item(
     disabled: str = '',
     current: str = '',
     done: str = '',
+    skipped: str = '',
     **_: Any,
 ) -> SafeHTML:
     # done ('true' or 'false') only with progress=True: a ticked step shows a
@@ -637,17 +638,19 @@ def _wizard_progress_item(
         _said = html(t'<span class="sf-sr-only" data-step-done{_hidden}> (complete)</span>')
     _title = html(t'<span class="wizard-progress-title">{title}</span>{_said}')  # NOSONAR
     _class = SafeHTML(state_class)  # NOSONAR
+    # A step a rule hides (#327) leaves the header; the wizard script shows it again.
+    _skipped = SafeHTML(' hidden' if skipped else '')  # NOSONAR
     if action:
         # save_steps: a header jump posts the current step, like Back and Next.
         _disabled = SafeHTML(' disabled' if disabled else '')  # NOSONAR
         _current = SafeHTML(' aria-current="step"' if current else '')  # NOSONAR
         return html(t'''
-<li><button type="submit" name="_sf_wizard" value="{action}" class="wizard-progress-item{_class}"{_current}{_disabled}>
+<li{_skipped}><button type="submit" name="_sf_wizard" value="{action}" class="wizard-progress-item{_class}"{_current}{_disabled}>
     {_number}
     {_title}
 </button></li>''')
     return html(t'''
-<li><button type="button" class="wizard-progress-item{_class}" data-wizard-goto="{index}">
+<li{_skipped}><button type="button" class="wizard-progress-item{_class}" data-wizard-goto="{index}">
     {_number}
     {_title}
 </button></li>''')

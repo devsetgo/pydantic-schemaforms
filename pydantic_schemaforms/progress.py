@@ -84,7 +84,9 @@ PROGRESS_ASSETS = SafeHTML("""<script data-schemaforms-progress>
             var done = count.total > 0 ? count.done === count.total : index <= passed;
             var number = item.querySelector('.wizard-progress-number');
             var said = item.querySelector('[data-step-done]');
-            if (number) { setText(number, done ? '✓' : String(index + 1)); }
+            // The wizard renumbers the steps that apply (#327); fall back to position.
+            var plain = item.dataset.stepNumber || String(index + 1);
+            if (number) { setText(number, done ? '✓' : plain); }
             if (said) { setHidden(said, !done); }
         });
     }

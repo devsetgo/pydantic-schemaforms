@@ -33,8 +33,8 @@ from .rendering.layout_engine import (
     check_layout,
     NO_ORIGINAL,
     check_wizard_options,
+    last_wizard_step,
     review_options,
-    wizard_step_count,
 )
 from .rendering.schema_parser import (
     SchemaMetadata,
@@ -140,9 +140,10 @@ def _on_last_step(
     metadata: SchemaMetadata,
     state: Any,
     wizard_options: dict[str, Any],
+    values: dict[str, Any],
 ) -> bool:
     title = _general_group_title(model_cls, metadata)
-    return state.step >= wizard_step_count(metadata, title, wizard_options) - 1
+    return state.step >= last_wizard_step(metadata, title, wizard_options, values)
 
 
 def _general_group_title(model_cls: type[FormModel], metadata: SchemaMetadata) -> str:
@@ -419,7 +420,7 @@ class EnhancedFormRenderer:
             form_body_parts.insert(0, error_summary_markup)
 
         if step_state is not None and not _on_last_step(
-            model_cls, metadata, step_state, wizard_options
+            model_cls, metadata, step_state, wizard_options, data
         ):
             include_submit_button = False
         submit_markup = self._render_submit_button() if include_submit_button else ''
