@@ -714,8 +714,7 @@ def test_a_wizard_skips_a_step_that_does_not_apply(
         ['Your car', 'Services', 'Date and time', 'Contact', 'Review'], timeout=TIMEOUT
     )
 
-    page.fill('[name="make"]', 'Volvo V60')
-    page.fill('[name="plate"]', 'AB 123')
+    # The page opens with demo values, so Next can go straight through.
     for _ in range(3):
         page.click('[data-wizard-next]')
     expect(active).to_have_text('Contact')
@@ -747,9 +746,8 @@ def test_an_added_list_item_starts_with_its_defaults(
     page.fill('[name="workspace.name"]', 'Acme')
     page.fill('[name="workspace.address"]', 'acme-co')
     page.click('[data-wizard-next]')
-    page.fill('[name="invites[0].email"]', 'sam@example.com')
-    page.select_option('[name="invites[0].role"]', 'admin')
+    # The demo's first invite is an admin; the new third one starts as a member.
     page.locator('.add-item-btn:visible').first.click()
-    expect(page.locator('[name="invites[1].role"]')).to_have_value('member', timeout=TIMEOUT)
-    expect(page.locator('[name="invites[1].email"]')).to_have_value('')
+    expect(page.locator('[name="invites[2].role"]')).to_have_value('member', timeout=TIMEOUT)
+    expect(page.locator('[name="invites[2].email"]')).to_have_value('')
     expect(page.locator('[name="invites[0].role"]')).to_have_value('admin')

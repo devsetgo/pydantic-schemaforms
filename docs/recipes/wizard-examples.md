@@ -8,11 +8,12 @@ one model per example, so you can copy the one closest to what you need.
 
 | Example | Page | What it shows |
 |---|---|---|
-| Car care appointment | `/wizards/car-care` | Steps from `ui_group`; a loaner-car step that applies only when a loaner is asked for, skipped otherwise (`ui_group_show_when`); services as checkboxes; a review step; progress ticks in the header |
+| Car care appointment | `/wizards/car-care` | Steps from `ui_group`; make, model and year; a loaner-car step that applies only when a loaner is asked for, skipped otherwise (`ui_group_show_when`); services as checkboxes; a US phone number checked with a `pattern` and formatted as it's typed; a review step; progress ticks in the header |
 | Team onboarding | `/wizards/team-onboarding` | The smallest one, a starter template: steps from sub-forms, an invite list (`model_list`) whose emails are checked with `EmailRule`, a `pattern` on the web address, progress ticks |
 | Event registration | `/wizards/event-registration` | Guests as a repeating list, a capacity check in a `@field_validator`, dietary choices, no progress header (`show_progress: False`) and a renamed Next button |
 
-Each example is rendered with `layout="wizard"` and validated with
+Each example opens with demo values filled in, so it can be tried right away
+(add `?demo=false` for a blank form). Each one is rendered with `layout="wizard"` and validated with
 `FormModel.validate()`, and its result page is built with `html(t'...')`, so
 the answers are escaped. Every one renders under Bootstrap and Material, in
 light and dark.

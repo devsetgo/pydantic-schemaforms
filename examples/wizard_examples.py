@@ -41,6 +41,18 @@ _SERVICES = [
     {'value': 'brakes', 'label': 'Brake check'},
     {'value': 'inspection', 'label': 'Yearly inspection'},
 ]
+_MAKES = [
+    {'value': 'toyota', 'label': 'Toyota'},
+    {'value': 'honda', 'label': 'Honda'},
+    {'value': 'ford', 'label': 'Ford'},
+    {'value': 'chevrolet', 'label': 'Chevrolet'},
+    {'value': 'tesla', 'label': 'Tesla'},
+    {'value': 'subaru', 'label': 'Subaru'},
+]
+# A North American number: area code and exchange can't start with 0 or 1.
+# Brackets, dashes, dots and spaces are optional, so it passes with or without
+# the live (###) ###-#### formatting.
+_US_PHONE = r'^\(?[2-9]\d{2}\)?[-. ]?[2-9]\d{2}[-. ]?\d{4}$'
 _SLOTS = [
     {'value': '08:00', 'label': '8:00'},
     {'value': '10:00', 'label': '10:00'},
@@ -52,8 +64,14 @@ _SLOTS = [
 class CarCareForm(FormModel):
     """The loaner-car step applies only when a loaner is asked for (#327)."""
 
-    make: str = Field(title='Make and model', min_length=2, ui_group='Your car')
-    plate: str = Field(title='Number plate', min_length=2, ui_group='Your car')
+    make: Literal['toyota', 'honda', 'ford', 'chevrolet', 'tesla', 'subaru'] = Field(
+        title='Make',
+        ui_options={'choices': _MAKES, 'placeholder': 'Choose a make'},
+        ui_group='Your car',
+    )
+    model: str = Field(title='Model', min_length=2, ui_placeholder='Camry', ui_group='Your car')
+    year: int = Field(2021, title='Year', ge=1990, le=2027, ui_group='Your car')
+    plate: str = Field(title='License plate', min_length=2, ui_group='Your car')
     services: list[Literal['oil', 'tyres', 'brakes', 'inspection']] = Field(
         default_factory=lambda: ['oil'],
         title='Services',
@@ -96,13 +114,24 @@ class CarCareForm(FormModel):
     )
     loaner_return: date | None = Field(None, title='Return the loaner by', ui_group='Loaner car')
     name: str = Field(title='Your name', min_length=2, ui_group='Contact')
-    phone: str = Field(title='Phone', min_length=7, ui_element='tel', ui_group='Contact')
+    phone: str = Field(
+        title='Phone',
+        pattern=_US_PHONE,
+        description='A US number, such as (212) 555-0142',
+        ui_element='phone',
+        ui_options={'phone_format': '(###) ###-####'},
+        ui_group='Contact',
+    )
 
 
 def _car_care_result(data: dict[str, Any]) -> SafeHTML:
     labels = {choice['value']: choice['label'] for choice in _SERVICES}
     services = ', '.join(labels[value] for value in data['services'])
-    return html(t'<p>Booked for {data["name"]}: {services} on {data["day"]} at {data["slot"]}.</p>')
+    car = f'{data["year"]} {data["make"].title()} {data["model"]}'
+    return html(
+        t'<p>Booked for {data["name"]}: {services} for the {car} on {data["day"]} '
+        t'at {data["slot"]}.</p>'
+    )
 
 
 # --- Team onboarding ----------------------------------------------------------
@@ -234,6 +263,9 @@ class WizardExample:
     features: tuple[str, ...]
     model: type[FormModel]
     result: Callable[[dict[str, Any]], SafeHTML]
+    # The values the page opens with, so every example can be tried right away.
+    # A function when a value depends on today, such as a date next week.
+    demo: dict[str, Any] | Callable[[], dict[str, Any]] = field(default_factory=dict)
     options: dict[str, Any] = field(default_factory=dict)
 
 
@@ -251,6 +283,18 @@ WIZARD_EXAMPLES = [
         ),
         model=CarCareForm,
         result=_car_care_result,
+        demo=lambda: {
+            'day': (date.today() + timedelta(days=7)).isoformat(),
+            'make': 'toyota',
+            'model': 'Camry',
+            'year': 2021,
+            'plate': '7ABC123',
+            'services': ['oil', 'brakes'],
+            'slot': '10:00',
+            'while_we_work': 'wait',
+            'name': 'Jordan Example',
+            'phone': '(212) 555-0142',
+        },
         options={'wizard_options': {'review_step': True}, 'progress': True},
     ),
     WizardExample(
@@ -265,6 +309,18 @@ WIZARD_EXAMPLES = [
         ),
         model=TeamOnboardingForm,
         result=_team_onboarding_result,
+        demo={
+            'workspace': {
+                'name': 'Northwind Design',
+                'address': 'northwind-design',
+                'size': '11-50',
+            },
+            'invites': [
+                {'email': 'sam@example.com', 'role': 'admin'},
+                {'email': 'alex@example.com', 'role': 'member'},
+            ],
+            'preferences': {'weekly_digest': True, 'theme': 'system'},
+        },
         options={'progress': True},
     ),
     WizardExample(
@@ -279,9 +335,23 @@ WIZARD_EXAMPLES = [
         ),
         model=EventRegistrationForm,
         result=_event_registration_result,
+        demo={
+            'attendee': {
+                'name': 'Jordan Example',
+                'email': 'jordan@example.com',
+                'company': 'Northwind Design',
+                'diet': 'vegetarian',
+            },
+            'guests': [{'name': 'Sam Example', 'diet': 'none'}],
+            'sessions': {'picks': ['keynote', 'workshop_a']},
+        },
         options={'wizard_options': {'show_progress': False, 'next_label': 'Continue'}},
     ),
 ]
+
+
+def _demo_values(example: WizardExample) -> dict[str, Any]:
+    return example.demo() if callable(example.demo) else example.demo
 
 
 def _render_options(example: WizardExample, style: str, variant: str | None) -> dict[str, Any]:
@@ -312,9 +382,13 @@ def _form_page(request: Request, example: WizardExample, style: str, form_html: 
 def _add_routes(example: WizardExample) -> None:
     path = f'/wizards/{example.slug}'
 
-    async def show(request: Request, style: str = _DEFAULT_STYLE, variant: str | None = None):
+    async def show(
+        request: Request, style: str = _DEFAULT_STYLE, variant: str | None = None, demo: bool = True
+    ):
         form_html = await render_form_html_async(
-            example.model, **_render_options(example, style, variant)
+            example.model,
+            form_data=_demo_values(example) if demo else None,
+            **_render_options(example, style, variant),
         )
         return _form_page(request, example, style, form_html)
 
@@ -358,7 +432,26 @@ _INDEX_STYLE = SafeHTML("""<style>
 .sf-wizards__card h2 { font-size: 1.15rem; margin: 0 0 0.5rem; }
 .sf-wizards__card p { margin: 0 0 0.5rem; }
 .sf-wizards__card ul { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; }
+.sf-wizards__options { columns: 2 18rem; padding-left: 1.1rem; }
 </style>""")
+
+
+# Each wizard option on the /layouts demo form, so it can be tried on its own.
+_OPTION_DEMOS = [
+    ('/layouts?layout=wizard', 'The default wizard: one form, one POST'),
+    ('/layouts?layout=wizard&linear=false', 'Jump to any step (linear=False)'),
+    ('/layouts?layout=wizard&progress=false&labels=true', 'No header, custom Back/Next labels'),
+    ('/layouts?layout=wizard&review=true', 'Review step before Submit (review_step)'),
+    ('/layouts?layout=wizard&count=true', 'Tick finished steps (progress=True)'),
+    ('/layouts?layout=tabbed&count=true', 'Required-fields bar on other layouts (progress=True)'),
+    ('/layouts?layout=wizard&autosave=true&warn=true', 'Autosave a draft (autosave, warn_unsaved)'),
+    ('/layouts/save-steps', 'Save each step on the server (save_steps)'),
+    ('/wizards/car-care', "Skip a step that doesn't apply (ui_group_show_when)"),
+]
+
+
+def _with_query(href: str, query: str) -> str:
+    return f'{href}{"&" if "?" in href else "?"}{query}'
 
 
 @router.get('/wizards', response_class=HTMLResponse, tags=['Wizards'])
@@ -379,11 +472,18 @@ async def wizards_index(request: Request, style: str = _DEFAULT_STYLE, variant: 
             )
         )
     _cards = SafeHTML(''.join(cards))  # NOSONAR
-    options_href = f'/layouts?layout=wizard&style={style}{_variant_query(variant)}'
+    query = f'style={style}{_variant_query(variant)}'
+    _options = SafeHTML(  # NOSONAR - read in the t-string below
+        ''.join(
+            str(html(t'<li><a href="{_with_query(href, query)}">{label}</a></li>'))
+            for href, label in _OPTION_DEMOS
+        )
+    )
     page = html(
         t'{_INDEX_STYLE}<div class="sf-wizards">{_cards}</div>'
-        t'<p class="mt-4">Every wizard option on one form: '
-        t'<a href="{options_href}">the layout demo</a>.</p>'
+        t'<h2 class="h5 mt-4">Wizard options</h2>'
+        t'<p>Each option on its own, on the layout demo form:</p>'
+        t'<ul class="sf-wizards__options">{_options}</ul>'
     )
     return templates.TemplateResponse(
         request,

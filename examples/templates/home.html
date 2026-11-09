@@ -241,6 +241,7 @@
                             <a href="/layouts?layout=vertical" class="btn btn-outline-primary btn-sm">Vertical</a>
                             <a href="/layouts?layout=side-by-side" class="btn btn-outline-primary btn-sm">Side by side</a>
                             <a href="/layouts?layout=accordion" class="btn btn-outline-primary btn-sm">Accordion</a>
+                            <a href="/layouts?layout=wizard" class="btn btn-outline-primary btn-sm">Wizard</a>
                             <a href="/layouts?layout=tabbed&style=material" class="btn btn-outline-info btn-sm">Material</a>
                             <a href="/layouts?layout=tabbed&style=material&variant=filled" class="btn btn-outline-info btn-sm">Material (filled)</a>
                             <a href="/layouts/two-forms" class="btn btn-outline-primary btn-sm">Two forms on one page</a>
@@ -265,8 +266,9 @@
                 </div>
                 <h5 class="card-title">Step Wizard</h5>
                 <p class="card-text flex-grow-1">
-                    One sub-form per step with a progress header and Back/Next.
-                    Next checks the current step; one POST submits every step.
+                    Long forms one step at a time: a car care booking, team onboarding and
+                    an event registration, each showing different wizard features.
+                    The examples page also links to every wizard option.
                 </p>
                 <div class="mt-auto">
                     <div class="d-grid gap-2">
@@ -274,21 +276,6 @@
                             <i class="bi bi-arrow-right me-2"></i>
                             Wizard Examples
                         </a>
-                        <a href="/layouts?layout=wizard" class="btn btn-demo btn-sm">
-                            <i class="bi bi-arrow-right me-2"></i>
-                            Try the Wizard
-                        </a>
-                        <div class="btn-group flex-wrap" role="group">
-                            <a href="/layouts?layout=wizard&linear=false" class="btn btn-outline-primary btn-sm">Jump to any step</a>
-                            <a href="/layouts?layout=wizard&progress=false&labels=true" class="btn btn-outline-primary btn-sm">No header, custom labels</a>
-                            <a href="/layouts?layout=wizard&review=true" class="btn btn-outline-primary btn-sm">Review step</a>
-                            <a href="/layouts?layout=wizard&count=true" class="btn btn-outline-primary btn-sm">Tick finished steps (progress)</a>
-                            <a href="/layouts?layout=tabbed&count=true" class="btn btn-outline-primary btn-sm">Required-fields bar (progress)</a>
-                            <a href="/layouts?layout=wizard&autosave=true&warn=true" class="btn btn-outline-primary btn-sm">Autosave a draft (autosave, warn_unsaved)</a>
-                            <a href="/wizards/car-care" class="btn btn-outline-primary btn-sm">Skip a step that doesn't apply</a>
-                            <a href="/layouts/save-steps" class="btn btn-outline-primary btn-sm">Save each step (save_steps)</a>
-                            <a href="/layouts?layout=wizard&style=material" class="btn btn-outline-info btn-sm">Material</a>
-                        </div>
                     </div>
                     <small class="text-muted mt-2">Works without JavaScript too: steps stack</small>
                 </div>

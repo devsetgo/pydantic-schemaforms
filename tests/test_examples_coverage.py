@@ -174,23 +174,30 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     for key in CONFIRM_DEFAULTS:
         assert f"'{key}'" in source, f'confirm= key {key!r} is never used'
     assert '/confirm' in home
+    # The Wizards section (#276) is linked from home. Its index links to every
+    # example and to each wizard option on its own (home stays uncluttered).
+    from examples.wizard_examples import WIZARD_EXAMPLES
+
+    assert '/wizards"' in home
+    index = client.get('/wizards').text.replace('&amp;', '&')
+    for example in WIZARD_EXAMPLES:
+        assert f'/wizards/{example.slug}' in index, example.slug
+    for option_link in (
+        'layout=wizard&linear=false',
+        'layout=wizard&progress=false&labels=true',
+        'layout=wizard&review=true',
+        'layout=wizard&count=true',
+        'layout=tabbed&count=true',
+        'layout=wizard&autosave=true&warn=true',
+        '/layouts/save-steps',
+        '/wizards/car-care',
+    ):
+        assert option_link in index, option_link
     # progress=True: the bar on a plain or grouped layout, ticks in the wizard header.
-    assert 'layout=wizard&count=true' in home and 'layout=tabbed&count=true' in home
     counted = client.get('/layouts', params={'layout': 'tabbed', 'count': 'true'}).text
     assert 'data-sf-progress' in counted
     ticked = client.get('/layouts', params={'layout': 'wizard', 'count': 'true'}).text
     assert 'wizard-progress-ticks' in ticked
-    # autosave=True and warn_unsaved=True.
-    assert 'autosave=true&warn=true' in home
-    # A wizard skips a step its rule hides (#327).
-    assert '/wizards/car-care' in home
-    # The Wizards section (#276): linked from home, and linking to every example.
-    from examples.wizard_examples import WIZARD_EXAMPLES
-
-    assert '/wizards"' in home
-    index = client.get('/wizards').text
-    for example in WIZARD_EXAMPLES:
-        assert f'/wizards/{example.slug}' in index, example.slug
     saved = client.get('/layouts', params={'autosave': 'true', 'warn': 'true'}).text
     assert 'data-sf-autosave="LayoutDemonstrationForm"' in saved
     assert 'data-sf-warn-unsaved' in saved
@@ -354,6 +361,9 @@ _VALID_DEMO_PAGES = [
     '/pets',
     '/register',
     '/self-contained',
+    '/wizards/car-care',
+    '/wizards/event-registration',
+    '/wizards/team-onboarding',
 ]
 
 
