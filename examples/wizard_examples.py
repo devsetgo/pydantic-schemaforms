@@ -16,7 +16,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from pydantic import EmailStr, field_validator
+from pydantic import EmailStr, field_validator, model_validator
 
 from examples.fastapi_routes import _material_variant, _variant_query, templates
 from pydantic_schemaforms import (
@@ -24,6 +24,7 @@ from pydantic_schemaforms import (
     Field,
     FormModel,
     SafeHTML,
+    UploadedFile,
     html,
     render_form_html_async,
 )
@@ -254,6 +255,144 @@ def _event_registration_result(data: dict[str, Any]) -> SafeHTML:
     )
 
 
+# --- Rental application -------------------------------------------------------
+# Monthly rent by unit; the income check needs it.
+_UNITS = {
+    '2b': ('Unit 2B, 410 Elm St, Austin, TX', 2_400),
+    '5a': ('Unit 5A, 410 Elm St, Austin, TX', 3_100),
+    '1c': ('Unit 1C, 88 Lake Ave, Round Rock, TX', 1_850),
+}
+_INCOME_MULTIPLE = 3
+_PROOF_LIMIT = 5 * 1024 * 1024
+
+
+class Home(FormModel):
+    unit: Literal['2b', '5a', '1c'] = Field(
+        title='Apartment',
+        ui_element='select',
+        ui_options={
+            'choices': [
+                {'value': key, 'label': f'{name} (${rent:,} a month)'}
+                for key, (name, rent) in _UNITS.items()
+            ]
+        },
+    )
+    move_in: date = Field(title='Move-in date')
+    lease: Literal['6', '12', '24'] = Field(
+        '12',
+        title='Lease length',
+        ui_element='radio',
+        ui_options={
+            'choices': [
+                {'value': '6', 'label': '6 months'},
+                {'value': '12', 'label': '12 months'},
+                {'value': '24', 'label': '24 months'},
+            ]
+        },
+    )
+    has_pets: bool = Field(False, title='I have pets')
+    pets: str = Field(
+        '',
+        title='Tell us about your pets',
+        ui_placeholder='One cat, 9 lb',
+        ui_show_when={'field': 'has_pets', 'truthy': True, 'required': True},
+    )
+
+
+class Renter(FormModel):
+    full_name: str = Field(title='Full name', min_length=2)
+    email: EmailStr = Field(title='Email', ui_element='email')
+    phone: str = Field(
+        title='Phone',
+        pattern=_US_PHONE,
+        description='A US number, such as (512) 555-0187',
+        ui_element='phone',
+    )
+    employer: str = Field(title='Employer', min_length=2)
+    monthly_income: int = Field(title='Monthly income before tax (USD)', ge=0)
+
+
+class CoApplicant(FormModel):
+    full_name: str = Field(title='Full name', min_length=2)
+    relationship: Literal['partner', 'roommate', 'family'] = Field(
+        'roommate',
+        title='Relationship',
+        ui_element='select',
+        ui_options={
+            'choices': [
+                {'value': 'partner', 'label': 'Partner or spouse'},
+                {'value': 'roommate', 'label': 'Roommate'},
+                {'value': 'family', 'label': 'Family member'},
+            ]
+        },
+    )
+    monthly_income: int = Field(0, title='Monthly income before tax (USD)', ge=0)
+
+
+class Documents(FormModel):
+    proof_of_income: list[UploadedFile] = Field(
+        default_factory=list,
+        title='Proof of income (up to 3 files)',
+        description='Pay stubs or an offer letter, PDF or image, up to 5 MB each. '
+        'You can also send them after you apply.',
+        ui_max_files=3,
+        ui_max_size=_PROOF_LIMIT,
+        ui_options={'accept': '.pdf,.jpg,.jpeg,.png'},
+    )
+
+
+class RentalReference(FormModel):
+    name: str = Field(title='Name', min_length=2)
+    phone: str = Field(title='Phone', pattern=_US_PHONE, ui_element='phone')
+    relationship: str = Field(title='How you know them', ui_placeholder='Previous landlord')
+
+
+class RentalApplicationForm(FormModel):
+    """Co-applicants and references as lists, an income check across them, uploads."""
+
+    home: Home = Field(title='The apartment')
+    renter: Renter = Field(title='You')
+    co_applicants: list[CoApplicant] = Field(
+        default_factory=list,
+        title='Co-applicants',
+        max_length=3,
+        ui_add_button_label='Add a co-applicant',
+        ui_item_title_template='{full_name}',
+    )
+    documents: Documents = Field(title='Documents')
+    references: list[RentalReference] = Field(
+        default_factory=list,
+        title='References',
+        min_length=1,
+        max_length=3,
+        ui_add_button_label='Add a reference',
+        ui_item_title_template='{name}',
+    )
+
+    @model_validator(mode='after')
+    def _income_covers_rent(self) -> 'RentalApplicationForm':
+        name, rent = _UNITS[self.home.unit]
+        income = self.renter.monthly_income + sum(c.monthly_income for c in self.co_applicants)
+        needed = rent * _INCOME_MULTIPLE
+        if income < needed:
+            raise ValueError(
+                f'Together you earn ${income:,} a month. {name} needs at least '
+                f'${needed:,} ({_INCOME_MULTIPLE} times the rent); add a co-applicant '
+                'or pick another apartment.'
+            )
+        return self
+
+
+def _rental_application_result(data: dict[str, Any]) -> SafeHTML:
+    name, rent = _UNITS[data['home']['unit']]
+    files = len(data['documents']['proof_of_income'])
+    renter = data['renter']['full_name']
+    return html(
+        t'<p>Thanks, {renter}. Your application for {name} (${rent:,} a month) is in, '
+        t'with {files} document(s).</p>'
+    )
+
+
 # --- The registry and its routes ----------------------------------------------
 @dataclass(frozen=True)
 class WizardExample:
@@ -267,9 +406,29 @@ class WizardExample:
     # A function when a value depends on today, such as a date next week.
     demo: dict[str, Any] | Callable[[], dict[str, Any]] = field(default_factory=dict)
     options: dict[str, Any] = field(default_factory=dict)
+    # True when the example's module adds its own routes (the job application).
+    own_routes: bool = False
 
 
 WIZARD_EXAMPLES = [
+    WizardExample(
+        slug='job-application',
+        title='Job application',
+        summary=(
+            'The fullest example: sign in, apply in saved steps, then edit what you sent '
+            'and see every change marked.'
+        ),
+        features=(
+            'A sign-in page before the wizard',
+            'Each step saved on the server (save_steps)',
+            'Resume upload with a type and size limit',
+            'Work history as a repeating list',
+            'An edit page that marks what changed',
+        ),
+        model=None,  # type: ignore[arg-type]
+        result=None,  # type: ignore[arg-type]
+        own_routes=True,
+    ),
     WizardExample(
         slug='car-care',
         title='Car care appointment',
@@ -294,6 +453,51 @@ WIZARD_EXAMPLES = [
             'while_we_work': 'wait',
             'name': 'Jordan Example',
             'phone': '(212) 555-0142',
+        },
+        options={'wizard_options': {'review_step': True}, 'progress': True},
+    ),
+    WizardExample(
+        slug='rental-application',
+        title='Rental application',
+        summary=(
+            'Apply for an apartment with co-applicants; their incomes together must '
+            'cover three times the rent.'
+        ),
+        features=(
+            'Co-applicants and references as repeating lists',
+            'An income check across steps (@model_validator)',
+            'Several uploads (ui_max_files)',
+            'A pets question that shows when needed',
+            'Review step and progress ticks',
+        ),
+        model=RentalApplicationForm,
+        result=_rental_application_result,
+        demo=lambda: {
+            'home': {
+                'unit': '2b',
+                'move_in': (date.today() + timedelta(days=45)).isoformat(),
+                'lease': '12',
+                'has_pets': True,
+                'pets': 'One cat, 9 lb',
+            },
+            'renter': {
+                'full_name': 'Jordan Example',
+                'email': 'jordan@example.com',
+                'phone': '(512) 555-0187',
+                'employer': 'Northwind Design',
+                'monthly_income': 6_000,
+            },
+            'co_applicants': [
+                {'full_name': 'Sam Example', 'relationship': 'partner', 'monthly_income': 2_500}
+            ],
+            'documents': {},
+            'references': [
+                {
+                    'name': 'Pat Landlord',
+                    'phone': '(512) 555-0110',
+                    'relationship': 'Previous landlord',
+                }
+            ],
         },
         options={'wizard_options': {'review_step': True}, 'progress': True},
     ),
@@ -431,7 +635,8 @@ def _add_routes(example: WizardExample) -> None:
 
 
 for _example in WIZARD_EXAMPLES:
-    _add_routes(_example)
+    if not _example.own_routes:
+        _add_routes(_example)
 
 
 _INDEX_STYLE = SafeHTML("""<style>
@@ -508,3 +713,7 @@ async def wizards_index(request: Request, style: str = _DEFAULT_STYLE, variant: 
             **_PAGE,
         },
     )
+
+
+# The job application adds its own routes to this router (sign-in, apply, edit).
+from examples import job_application_example  # noqa: E402,F401

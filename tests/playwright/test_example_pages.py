@@ -576,6 +576,51 @@ def test_review_step_shows_the_live_answers(
 
 
 @pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_job_application_signs_in_applies_and_edits(
+    browser, examples_server_url: str, style: str
+) -> None:
+    context = browser.new_context()
+    page = context.new_page()
+    page.on('dialog', lambda dialog: dialog.accept())
+    try:
+        page.goto(f'{examples_server_url}/wizards/job-application?style={style}', wait_until='load')
+        expect(page.locator('[name="confirm_password"]')).to_be_attached(timeout=TIMEOUT)
+        with page.expect_navigation(wait_until='load'):
+            page.locator('form button[type="submit"]').last.click()
+        expect(page.locator('[name="position.salary"]')).to_have_value('120000', timeout=TIMEOUT)
+
+        with page.expect_navigation(wait_until='load'):
+            page.click('[data-wizard-next]')
+        page.set_input_files(
+            '[name="documents.resume"]',
+            files=[{'name': 'cv.pdf', 'mimeType': 'application/pdf', 'buffer': b'%PDF-1.4'}],
+        )
+        for _step in range(4):
+            with page.expect_navigation(wait_until='load'):
+                page.click('[data-wizard-next]')
+        expect(page.locator('form')).to_contain_text('Northwind Design', timeout=TIMEOUT)
+        expect(page.locator('form')).to_contain_text('cv.pdf')
+        assert _blocking_violations(page) == []
+        with page.expect_navigation(wait_until='load'):
+            page.get_by_role('button', name='Submit', exact=True).click()
+        expect(page.locator('body')).to_contain_text('Application sent', timeout=TIMEOUT)
+        review = page.locator('[data-wizard-review]')
+
+        with page.expect_navigation(wait_until='load'):
+            page.click('text=Edit your application')
+        page.fill('[name="position.salary"]', '130000')
+        page.locator('.wizard-progress-item', has_text='Check your changes').click()
+        slot = review.locator('[data-review-slot="position.salary"]')
+        expect(slot.locator('.sf-sr-only')).to_contain_text('Changed from', timeout=TIMEOUT)
+        assert _blocking_violations(page) == []
+        with page.expect_navigation(wait_until='load'):
+            page.locator('form button[type="submit"]:not([name])').click()
+        expect(page.locator('body')).to_contain_text('Application updated', timeout=TIMEOUT)
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
 def test_confirm_dialog_asks_before_submitting(
     page: Page, examples_server_url: str, style: str
 ) -> None:

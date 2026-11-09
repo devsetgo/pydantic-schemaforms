@@ -1114,6 +1114,20 @@ def _sub_model(annotation: Any) -> type[BaseModel] | None:
     return next((model for arg in get_args(annotation) if (model := _sub_model(arg))), None)
 
 
+def checkbox_with_default(field_info: Any) -> bool:
+    """A ``bool`` (or ``Literal[True]``) checkbox with a default: unticked, it
+    submits nothing and is taken as False."""
+
+    annotation = field_info.annotation
+    union_args = get_args(annotation) if get_origin(annotation) is Union else ()
+    non_none_types = [t for t in union_args if t is not type(None)] if union_args else [annotation]
+    return (
+        (non_none_types == [bool] or _is_literal_true(annotation))
+        and not field_info.is_required()
+        and _renders_as_checkbox(field_info)
+    )
+
+
 def _unchecked_message(model: type[BaseModel], loc: tuple[Any, ...]) -> str | None:
     """The ``unchecked_message`` of the field an error location points at."""
     current: type[BaseModel] | None = model
@@ -1239,12 +1253,7 @@ def _coerce_html_form_values(
             if from_form and list_item_model is not None:
                 result[field_name] = []
                 continue
-            elif (
-                from_form
-                and (non_none_types == [bool] or _is_literal_true(annotation))
-                and not field_info.is_required()
-                and _renders_as_checkbox(field_info)
-            ):
+            elif from_form and checkbox_with_default(field_info):
                 result[field_name] = False
                 continue
             # A sub-form of only unticked checkboxes and content blocks sends nothing.

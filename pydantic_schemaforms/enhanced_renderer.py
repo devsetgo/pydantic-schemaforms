@@ -326,12 +326,14 @@ class EnhancedFormRenderer:
         # A fresh form (no data passed) starts from the model's defaults. Data
         # that was passed, such as a submission being re-rendered, is used as
         # is: an unticked checkbox is simply absent from a submission, so
-        # filling in its default would tick it again.
+        # filling in its default would tick it again. Under a saved-steps
+        # draft, the passed data are the starting values (a record being
+        # edited) and the steps saved so far go on top.
         data_passed = data is not None
         if data is None:
             data = self._model_defaults(model_cls)
-            if step_state is not None:
-                data = {**data, **step_state.data}
+        if step_state is not None:
+            data = {**data, **step_state.data}
         data = _render_values(data)
         original = _review_original(layout, wizard_options, step_state, data, passed=data_passed)
 

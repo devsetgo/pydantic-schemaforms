@@ -219,6 +219,35 @@ def test_an_unticked_checkbox_on_a_revisited_step_is_unticked() -> None:
     assert 'newsletter' not in again.draft['data']['about']
 
 
+class Grouped(FormModel):
+    name: str = Field(title='Name', ui_group='About')
+    newsletter: bool = Field(True, title='Newsletter', ui_group='About')
+    city: str = Field('', title='City', ui_group='Where')
+
+
+def test_an_unticked_grouped_checkbox_stays_unticked_on_back() -> None:
+    first = Grouped.validate_step([('_sf_wizard_step', '0'), ('name', 'Ada')], **OPTIONS)
+    assert first.draft['data']['newsletter'] is False
+    back = Grouped.validate_step(
+        [('_sf_wizard_step', '1'), ('_sf_wizard', 'back'), ('city', 'Oslo')],
+        draft=first.draft,
+        **OPTIONS,
+    )
+    box = re.search(r'<input[^>]*name="newsletter"[^>]*>', back.render())
+    assert box and 'checked' not in box.group(0)
+
+
+def test_form_data_gives_the_starting_values_and_the_draft_goes_on_top() -> None:
+    record = {'about': {'name': 'Ada'}, 'dates': {'start': 3, 'end': 9}}
+    first = _post(0, 'next', about__name='Grace')
+    back = _post(1, 'back', draft=first.draft)
+    page = render_form_html(Application, form_data=record, draft=back.draft, **OPTIONS)
+    assert _step_shown(page) == 0
+    assert 'value="Grace"' in page and 'value="Ada"' not in page
+    second = _post(1, 'next', draft=first.draft, docs__resume=_upload())
+    assert 'value="9"' in second.render(data=record)
+
+
 def test_list_items_on_a_step_are_checked_and_kept() -> None:
     draft = _through_docs()
     failed = _post(
