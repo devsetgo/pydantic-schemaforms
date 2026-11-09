@@ -40,4 +40,6 @@ Since no state is kept between steps, there is nothing to store in a session,
 and the browser's back button and a page reload behave like on any form.
 
 For fuller wizards, each showing different features, see
-[Wizard Examples](wizard-examples.md).
+[Wizard Examples](wizard-examples.md). Its job application goes further than
+this recipe: a sign-in page, each step saved on the server, a resume upload,
+and an edit page that marks what changed.

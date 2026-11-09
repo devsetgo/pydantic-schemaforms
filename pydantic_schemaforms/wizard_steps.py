@@ -321,11 +321,13 @@ class WizardStepResult:
 
 
 def _merge_step(
-    submission: dict[str, Any], saved: dict[str, Any], step_names: set[str]
+    submission: dict[str, Any], saved: dict[str, Any], step_names: set[str], unticked: set[str]
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """This step's submitted values, and the draft's data with them in place.
 
-    A file saved earlier stays when its input comes back empty or missing.
+    A file saved earlier stays when its input comes back empty or missing. An
+    unticked checkbox submits nothing, so it is saved as False; otherwise going
+    back to the step would show its default again.
     """
 
     submitted = {
@@ -336,11 +338,20 @@ def _merge_step(
     for name in step_names - set(submitted):
         if _contains_saved_file(saved.get(name)):
             submitted[name] = saved[name]
+        elif name in unticked:
+            submitted[name] = False
     merged = {
         **{key: value for key, value in saved.items() if key not in step_names},
         **submitted,
     }
     return submitted, merged
+
+
+def _checkbox_names(model_cls: type[FormModel], names: set[str]) -> set[str]:
+    from .validation import checkbox_with_default
+
+    fields = model_cls.model_fields
+    return {name for name in names if name in fields and checkbox_with_default(fields[name])}
 
 
 def validate_step(
@@ -366,7 +377,9 @@ def validate_step(
     linear = (render_kwargs.get('wizard_options') or {}).get('linear', True)
 
     step_names = set(steps[step])
-    submitted, merged = _merge_step(submission, saved.data, step_names)
+    submitted, merged = _merge_step(
+        submission, saved.data, step_names, _checkbox_names(model_cls, step_names)
+    )
     # Which steps apply depends on the answers so far, this step's included.
     skipped = _skipped_steps(model_cls, merged)
     applying = [index for index in range(len(steps)) if index not in skipped or index == step]

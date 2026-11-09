@@ -367,6 +367,7 @@ _VALID_DEMO_PAGES = [
     '/self-contained',
     '/wizards/car-care',
     '/wizards/event-registration',
+    '/wizards/rental-application',
     '/wizards/team-onboarding',
 ]
 
@@ -389,6 +390,38 @@ def test_valid_demo_values_submit_successfully(path: str, style: str) -> None:
     response = _submit_rendered_form(client, path, style)
     assert response.status_code == 200
     assert 'alert-success' in response.text, path
+
+
+def test_rental_application_checks_income_against_the_rent() -> None:
+    client = TestClient(examples.main.app)
+    parser = _FormValues()
+    parser.feed(client.get('/wizards/rental-application').text)
+    data: dict[str, list[str]] = {}
+    for name, value in parser.values:
+        data.setdefault(name, []).append(value)
+    data['home.unit'] = ['5a']
+    files = [(name, ('', b'', 'application/octet-stream')) for name in parser.files]
+    response = client.post('/wizards/rental-application', data=data, files=files)
+    assert 'alert-success' not in response.text
+    assert 'needs at least $9,300' in response.text
+
+
+def test_job_application_signs_in_before_the_wizard() -> None:
+    client = TestClient(examples.main.app)
+    redirect = client.get('/wizards/job-application', follow_redirects=False)
+    assert redirect.status_code == 303
+    assert redirect.headers['location'].startswith('/wizards/job-application/sign-in')
+    account = {'email': 'jordan@example.com', 'password': 'example-pass-2027'}
+    mismatch = client.post(
+        '/wizards/job-application/sign-in', data={**account, 'confirm_password': 'other-pass-2027'}
+    )
+    assert 'Passwords do not match' in mismatch.text
+    client.post(
+        '/wizards/job-application/sign-in',
+        data={**account, 'confirm_password': account['password']},
+    )
+    wizard = client.get('/wizards/job-application').text
+    assert 'name="_sf_wizard_step"' in wizard and 'value="120000"' in wizard
 
 
 def _example_form_models() -> list[type[FormModel]]:

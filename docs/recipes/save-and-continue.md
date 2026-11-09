@@ -56,6 +56,10 @@ its own POST.
 - **A later step can be prefilled.** Change `result.data` before
   `result.render()` and before reading `result.draft`, for example to fill a
   field from an answer given on an earlier step.
+- **Start from existing values with `form_data=`.** To edit a saved record,
+  or to open every step with demo answers, pass the values as `form_data=` on
+  the GET and as `data=` to `result.render()`. The steps saved in the draft
+  go on top of them.
 - **The draft must come from `result.draft`.** Anything else raises
   `ValueError`, and `draft=` without `save_steps` raises `TypeError`.
 
