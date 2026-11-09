@@ -307,17 +307,17 @@
     top: 16px;
 }
 
-/* Disabled */
-.md-form .md-field__box:has(:disabled) {
+/* Disabled: a disabled control, not a select's disabled placeholder option. */
+.md-form .md-field__box:has(:is(input, select, textarea):disabled) {
     color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
 
-.md-form .md-field__box:has(:disabled) .md-floating-label {
+.md-form .md-field__box:has(:is(input, select, textarea):disabled) .md-floating-label {
     color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
 }
 
-.md-form .md-field__box:has(:disabled) .md-field__outline > span,
-.md-form .md-field__box:has(:disabled):hover .md-field__outline > span {
+.md-form .md-field__box:has(:is(input, select, textarea):disabled) .md-field__outline > span,
+.md-form .md-field__box:has(:is(input, select, textarea):disabled):hover .md-field__outline > span {
     border-color: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
 }
 
