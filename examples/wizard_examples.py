@@ -37,7 +37,7 @@ _PAGE = {'framework': 'fastapi', 'framework_name': 'FastAPI (Async)', 'hide_api_
 # --- Car care appointment -----------------------------------------------------
 _SERVICES = [
     {'value': 'oil', 'label': 'Oil change'},
-    {'value': 'tyres', 'label': 'Tyre change'},
+    {'value': 'tires', 'label': 'Tire change'},
     {'value': 'brakes', 'label': 'Brake check'},
     {'value': 'inspection', 'label': 'Yearly inspection'},
 ]
@@ -72,7 +72,7 @@ class CarCareForm(FormModel):
     model: str = Field(title='Model', min_length=2, ui_placeholder='Camry', ui_group='Your car')
     year: int = Field(2021, title='Year', ge=1990, le=2027, ui_group='Your car')
     plate: str = Field(title='License plate', min_length=2, ui_group='Your car')
-    services: list[Literal['oil', 'tyres', 'brakes', 'inspection']] = Field(
+    services: list[Literal['oil', 'tires', 'brakes', 'inspection']] = Field(
         default_factory=lambda: ['oil'],
         title='Services',
         min_length=1,
@@ -105,9 +105,9 @@ class CarCareForm(FormModel):
         },
         ui_group='Date and time',
     )
-    licence: str = Field(
+    license: str = Field(
         '',
-        title='Driving licence number',
+        title="Driver's license number",
         ui_group='Loaner car',
         ui_group_show_when={'field': 'while_we_work', 'equals': 'loaner'},
         ui_show_when={'field': 'while_we_work', 'equals': 'loaner', 'required': True},

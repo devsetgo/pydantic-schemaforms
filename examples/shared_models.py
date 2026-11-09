@@ -2440,7 +2440,7 @@ class AppearanceForm(FormModel):
             {'value': 'auto', 'label': '🔄 Auto (System)'},
             {'value': 'high_contrast', 'label': '🔲 High Contrast'},
         ],
-        help_text='Choose your preferred colour theme',
+        help_text='Choose your preferred color theme',
         icon='palette',
     )
 
