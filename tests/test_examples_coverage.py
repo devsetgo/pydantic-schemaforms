@@ -366,7 +366,10 @@ _VALID_DEMO_PAGES = [
     '/register',
     '/self-contained',
     '/wizards/car-care',
+    '/wizards/car-setup',
     '/wizards/event-registration',
+    '/wizards/insurance-claim',
+    '/wizards/project-planner',
     '/wizards/rental-application',
     '/wizards/team-onboarding',
 ]
@@ -392,18 +395,47 @@ def test_valid_demo_values_submit_successfully(path: str, style: str) -> None:
     assert 'alert-success' in response.text, path
 
 
-def test_rental_application_checks_income_against_the_rent() -> None:
+def _post_demo_with(path: str, **changes: list[str]) -> str:
+    """Submit a page's demo values with some of them changed."""
+
     client = TestClient(examples.main.app)
     parser = _FormValues()
-    parser.feed(client.get('/wizards/rental-application').text)
+    parser.feed(client.get(path).text)
     data: dict[str, list[str]] = {}
     for name, value in parser.values:
         data.setdefault(name, []).append(value)
-    data['home.unit'] = ['5a']
+    data.update({name.replace('__', '.'): value for name, value in changes.items()})
     files = [(name, ('', b'', 'application/octet-stream')) for name in parser.files]
-    response = client.post('/wizards/rental-application', data=data, files=files)
-    assert 'alert-success' not in response.text
-    assert 'needs at least $9,300' in response.text
+    return client.post(path, data=data, files=files).text
+
+
+def test_rental_application_checks_income_against_the_rent() -> None:
+    page = _post_demo_with('/wizards/rental-application', home__unit=['5a'])
+    assert 'alert-success' not in page
+    assert 'needs at least $9,300' in page
+
+
+def test_project_planner_checks_its_dates() -> None:
+    page = _post_demo_with('/wizards/project-planner', project__end=['2020-01-01'])
+    assert 'The end date must be after the start date' in page
+    late = _post_demo_with('/wizards/project-planner', **{'milestones[2]__due': ['2099-01-01']})
+    assert 'Due outside the project dates: Launch' in late
+
+
+def test_insurance_claim_checks_the_policy_and_skips_the_other_party() -> None:
+    expired = _post_demo_with('/wizards/insurance-claim', policyholder__policy_number=['AU-100274'])
+    assert 'the incident date is outside it' in expired
+    unknown = _post_demo_with('/wizards/insurance-claim', policyholder__policy_number=['AU-999999'])
+    assert 'could not find that policy number' in unknown
+    alone = _post_demo_with('/wizards/insurance-claim', other_party=['no'])
+    assert 'alert-success' in alone and 'Casey Example' not in alone
+
+
+def test_car_setup_prices_the_build_and_offers_towing_only_to_trucks() -> None:
+    truck = _post_demo_with('/wizards/car-setup')
+    assert '$48,700 before tax' in truck
+    sedan = _post_demo_with('/wizards/car-setup', body=['sedan'])
+    assert '$36,800 before tax' in sedan
 
 
 def test_job_application_signs_in_before_the_wizard() -> None:

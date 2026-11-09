@@ -391,7 +391,11 @@ WIZARD_COMPONENT_ASSETS = """
             var isLast = nextFrom(index) === -1;
             if (back) { back.style.display = previousFrom(index) === -1 ? 'none' : ''; }
             if (next) { next.style.display = isLast ? 'none' : ''; }
-            submits.forEach(function (b) { b.style.display = isLast ? '' : 'none'; });
+            // The footer's Submit hides with its wrapper, so the wrapper never
+            // takes a share of the row from Next.
+            submits.forEach(function (b) {
+                (b.closest('[data-wizard-submit]') || b).style.display = isLast ? '' : 'none';
+            });
             root.dataset.activeStep = String(index);
             var review = steps[index].querySelector('[data-wizard-review]');
             if (review) { fillReview(review); }

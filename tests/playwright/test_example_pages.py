@@ -576,6 +576,33 @@ def test_review_step_shows_the_live_answers(
 
 
 @pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_wizard_footer_keeps_next_and_submit_at_the_right(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/wizards/team-onboarding?style={style}', wait_until='load')
+    footer = page.locator('.wizard-footer')
+
+    def right(locator) -> float:
+        box = locator.bounding_box()
+        assert box
+        return box['x'] + box['width']
+
+    page.locator('.wizard-progress-item').nth(1).click()
+    expect(page.locator('[data-wizard-submit]')).to_be_hidden(timeout=TIMEOUT)
+    assert abs(right(page.locator('[data-wizard-next]')) - right(footer)) < 2
+
+    page.locator('.wizard-progress-item').last.click()
+    submit = page.locator('[data-wizard-submit] button')
+    back = page.locator('[data-wizard-back]')
+    expect(submit).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('[data-wizard-next]')).to_be_hidden()
+    assert abs(right(submit) - right(footer)) < 2
+    back_box, submit_box = back.bounding_box(), submit.bounding_box()
+    assert back_box and submit_box
+    assert abs(back_box['y'] - submit_box['y']) < 2
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
 def test_job_application_signs_in_applies_and_edits(
     browser, examples_server_url: str, style: str
 ) -> None:
