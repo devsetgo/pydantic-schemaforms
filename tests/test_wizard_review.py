@@ -134,7 +134,7 @@ def test_custom_title_and_edit_label() -> None:
 
 @pytest.mark.parametrize(
     'value',
-    [{'title': 'x', 'colour': 'red'}, {'title': 3}, 'yes'],
+    [{'title': 'x', 'color': 'red'}, {'title': 3}, 'yes'],
 )
 def test_bad_review_options_are_rejected(value: object) -> None:
     with pytest.raises(ValueError, match='review_step'):

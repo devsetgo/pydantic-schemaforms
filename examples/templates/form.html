@@ -40,9 +40,9 @@
 
                 <!-- Navigation -->
                 <div class="text-center mt-4">
-                    <a href="/" class="btn btn-outline-secondary">
+                    <a href="{{ back_url | default('/') }}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-2"></i>
-                        Back to Examples
+                        {{ back_label | default('Back to Examples') }}
                     </a>
                 </div>
 

@@ -352,9 +352,12 @@ A feature without a working example is not done.
 - **Layouts:** every value in `LAYOUTS` (`rendering/layout_engine.py`) is
   selectable on a page; today that is `/layouts?layout=...` with
   `LayoutDemonstrationForm`. A new layout value, or a new option such as
-  `wizard_options=`, gets wired into that page's switcher and a link on the
-  home page (`examples/templates/home.html`) in the same change -- a page you
-  can only reach by typing a query string is not demonstrated.
+  `wizard_options=`, gets wired into that page's switcher and a link in the
+  same change -- a page you can only reach by typing a query string is not
+  demonstrated. Layouts are linked from the home page
+  (`examples/templates/home.html`); wizard options from the `/wizards` index
+  (`examples/wizard_examples.py`), which the home page's Step Wizard card
+  links to, so the home page stays uncluttered.
 - **Inputs:** every registered `ui_element` (`get_input_component_map()`,
   including aliases), with every one of its widget options, is rendered on
   the widget gallery (`/gallery`, `WidgetGalleryForm` in

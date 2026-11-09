@@ -121,9 +121,9 @@ review step and `progress=True` leave it out too, and so does the submitted data
 since a hidden field's values are dropped.
 
 ```python
-licence: str = Field(
+license: str = Field(
     "",
-    title="Driving licence number",
+    title="Driver's license number",
     ui_group="Loaner car",
     ui_group_show_when={"field": "while_we_work", "equals": "loaner"},
 )

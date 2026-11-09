@@ -9,9 +9,9 @@ from pydantic_schemaforms import Field, FormModel, render_form_html
 class Visit(FormModel):
     make: str = Field(title='Make', ui_group='Your car')
     choice: Literal['wait', 'loaner'] = Field('wait', title='While we work', ui_group='Service')
-    licence: str = Field(
+    license: str = Field(
         '',
-        title='Licence',
+        title='License',
         ui_group='Loaner car',
         ui_group_show_when={'field': 'choice', 'equals': 'loaner'},
         ui_show_when={'field': 'choice', 'equals': 'loaner', 'required': True},
@@ -20,7 +20,7 @@ class Visit(FormModel):
 
 
 class Loaner(FormModel):
-    licence: str = Field(title='Licence')
+    license: str = Field(title='License')
 
 
 class Nested(FormModel):
@@ -87,18 +87,18 @@ def test_a_step_that_hides_and_shows_again_before_submit() -> None:
     first = _step(0, make='Volvo')
     loaner = _step(1, first.draft, choice='loaner')
     assert loaner.step == 2
-    back = _step(2, loaner.draft, 'back', licence='')
+    back = _step(2, loaner.draft, 'back', license='')
     switched = _step(1, back.draft, choice='wait')
     assert switched.step == 3
     again = _step(3, switched.draft, 'back', name='Robin')
     shown = _step(1, again.draft, choice='loaner')
     assert shown.step == 2
-    missing = _step(2, shown.draft, licence='')
-    assert not missing.is_valid and 'licence' in missing.errors
-    filled = _step(2, shown.draft, licence='D123')
+    missing = _step(2, shown.draft, license='')
+    assert not missing.is_valid and 'license' in missing.errors
+    filled = _step(2, shown.draft, license='D123')
     done = _step(3, filled.draft, name='Robin')
     assert done.is_complete
-    assert done.data['licence'] == 'D123'
+    assert done.data['license'] == 'D123'
 
 
 def test_the_last_step_that_applies_submits() -> None:
@@ -108,7 +108,7 @@ def test_the_last_step_that_applies_submits() -> None:
     assert re.search(r'<button[^>]*type="submit"(?![^>]*name=)', second.render())
     done = _step(3, second.draft, name='Robin')
     assert done.is_complete
-    assert done.data['licence'] == ''
+    assert done.data['license'] == ''
 
 
 def test_a_jump_to_a_hidden_step_stays_put() -> None:

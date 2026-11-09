@@ -707,21 +707,23 @@ def test_warn_unsaved_asks_only_when_something_changed(
 def test_a_wizard_skips_a_step_that_does_not_apply(
     page: Page, examples_server_url: str, style: str
 ) -> None:
-    page.goto(f'{examples_server_url}/layouts/skip-steps?style={style}', wait_until='load')
+    page.goto(f'{examples_server_url}/wizards/car-care?style={style}', wait_until='load')
     titles = page.locator('.wizard-progress li:not([hidden]) .wizard-progress-title')
     active = page.locator('.wizard-step.active .wizard-step-title')
-    expect(titles).to_have_text(['Your car', 'Service', 'Contact', 'Review'], timeout=TIMEOUT)
+    expect(titles).to_have_text(
+        ['Your car', 'Services', 'Date and time', 'Contact', 'Review'], timeout=TIMEOUT
+    )
 
-    page.fill('[name="make"]', 'Volvo')
-    page.fill('[name="plate"]', 'AB 123')
-    page.click('[data-wizard-next]')
-    page.click('[data-wizard-next]')
+    # The page opens with demo values, so Next can go straight through.
+    for _ in range(3):
+        page.click('[data-wizard-next]')
     expect(active).to_have_text('Contact')
 
     page.click('[data-wizard-back]')
     page.check('input[name="while_we_work"][value="loaner"]')
     expect(titles).to_have_text(
-        ['Your car', 'Service', 'Loaner car', 'Contact', 'Review'], timeout=TIMEOUT
+        ['Your car', 'Services', 'Date and time', 'Loaner car', 'Contact', 'Review'],
+        timeout=TIMEOUT,
     )
     page.click('[data-wizard-next]')
     expect(active).to_have_text('Loaner car')
@@ -729,4 +731,23 @@ def test_a_wizard_skips_a_step_that_does_not_apply(
 
     page.click('[data-wizard-back]')
     page.check('input[name="while_we_work"][value="drop_off"]')
-    expect(titles).to_have_text(['Your car', 'Service', 'Contact', 'Review'], timeout=TIMEOUT)
+    expect(titles).to_have_text(
+        ['Your car', 'Services', 'Date and time', 'Contact', 'Review'], timeout=TIMEOUT
+    )
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_an_added_list_item_starts_with_its_defaults(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    # A new item used to be a blanked clone of an existing one, leaving a
+    # select with no option chosen.
+    page.goto(f'{examples_server_url}/wizards/team-onboarding?style={style}')
+    page.fill('[name="workspace.name"]', 'Acme')
+    page.fill('[name="workspace.address"]', 'acme-co')
+    page.click('[data-wizard-next]')
+    # The demo's first invite is an admin; the new third one starts as a member.
+    page.locator('.add-item-btn:visible').first.click()
+    expect(page.locator('[name="invites[2].role"]')).to_have_value('member', timeout=TIMEOUT)
+    expect(page.locator('[name="invites[2].email"]')).to_have_value('')
+    expect(page.locator('[name="invites[0].role"]')).to_have_value('admin')
