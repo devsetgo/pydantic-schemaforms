@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -682,6 +684,20 @@ def _default_wizard_step(
 DEFAULT_WIZARD_STEP_TEMPLATE = TemplateString(_default_wizard_step)
 
 
+# data-wizard-submit marks the wrapper of the form's Submit inside a wizard
+# footer: the wizard script shows it on the last step, and the renderer looks
+# for it in a tag (not the script's selector) to know the footer took Submit.
+WIZARD_SUBMIT_RE = re.compile(r'<[^<>]*\sdata-wizard-submit[\s>=]')
+
+
+def _wizard_submit(submit_html: str) -> SafeHTML:
+    """The form's Submit button, in the footer's place for Next."""
+
+    if not submit_html:
+        return SafeHTML('')
+    return html(t'<div class="wizard-submit" data-wizard-submit>{SafeHTML(submit_html)}</div>')
+
+
 def _saved_steps_footer(
     back_class: str,
     next_class: str,
@@ -690,6 +706,7 @@ def _saved_steps_footer(
     *,
     show_back: bool,
     show_next: bool,
+    submit_html: str = '',
 ) -> SafeHTML:
     """A save_steps wizard's Back and Next: submit buttons that post the step."""
 
@@ -710,7 +727,8 @@ def _saved_steps_footer(
         if show_next
         else SafeHTML('')
     )
-    return html(t'<div class="wizard-footer">{_back}{_next}</div>')
+    _submit = _wizard_submit(submit_html)  # NOSONAR
+    return html(t'<div class="wizard-footer">{_back}{_next}{_submit}</div>')
 
 
 def _default_wizard_footer(
@@ -720,6 +738,7 @@ def _default_wizard_footer(
     save_steps: str = '',
     show_back: str = 'true',
     show_next: str = 'true',
+    submit_html: str = '',
     **_: Any,
 ) -> SafeHTML:
     if save_steps:
@@ -730,11 +749,14 @@ def _default_wizard_footer(
             next_label,
             show_back=bool(show_back),
             show_next=bool(show_next),
+            submit_html=submit_html,
         )
+    _submit = _wizard_submit(submit_html)  # NOSONAR
     return html(t"""
 <div class="wizard-footer">
     <button type="button" class="btn btn-outline-secondary" data-wizard-back>{back_label}</button>
     <button type="button" class="btn btn-primary" data-wizard-next>{next_label}</button>
+    {_submit}
 </div>""")
 
 
@@ -761,16 +783,25 @@ def _plain_wizard_footer(
     save_steps: str = '',
     show_back: str = 'true',
     show_next: str = 'true',
+    submit_html: str = '',
     **_: Any,
 ) -> SafeHTML:
     if save_steps:
         return _saved_steps_footer(
-            '', '', back_label, next_label, show_back=bool(show_back), show_next=bool(show_next)
+            '',
+            '',
+            back_label,
+            next_label,
+            show_back=bool(show_back),
+            show_next=bool(show_next),
+            submit_html=submit_html,
         )
+    _submit = _wizard_submit(submit_html)  # NOSONAR
     return html(t"""
 <div class="wizard-footer">
     <button type="button" data-wizard-back>{back_label}</button>
     <button type="button" data-wizard-next>{next_label}</button>
+    {_submit}
 </div>""")
 
 
@@ -797,6 +828,7 @@ def _material_wizard_footer(
     save_steps: str = '',
     show_back: str = 'true',
     show_next: str = 'true',
+    submit_html: str = '',
     **_: Any,
 ) -> SafeHTML:
     if save_steps:
@@ -807,11 +839,14 @@ def _material_wizard_footer(
             next_label,
             show_back=bool(show_back),
             show_next=bool(show_next),
+            submit_html=submit_html,
         )
+    _submit = _wizard_submit(submit_html)  # NOSONAR
     return html(t"""
 <div class="wizard-footer">
     <button type="button" class="md-button md-button--outlined" data-wizard-back>{back_label}</button>
     <button type="button" class="md-button md-button--filled" data-wizard-next>{next_label}</button>
+    {_submit}
 </div>""")
 
 

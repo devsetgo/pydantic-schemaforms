@@ -120,7 +120,8 @@ ACCORDION_COMPONENT_ASSETS = ACCORDION_COMPONENT_SCRIPT + ACCORDION_COMPONENT_ST
 # Idempotent: every wizard on a page ships this snippet, but the functions are
 # defined once and each `.form-wizard` is wired up once (data-wizard-ready).
 # Without JavaScript the `wizard-enhanced` class never appears, so every step
-# stays visible and the navigation stays hidden: the form still submits.
+# stays visible and Back and Next stay hidden; the footer's Submit still shows.
+# Submit sits in the footer in Next's place and shows only on the last step.
 WIZARD_COMPONENT_ASSETS = """
 <script>
 (function () {
@@ -348,7 +349,7 @@ WIZARD_COMPONENT_ASSETS = """
         var next = own(root, '[data-wizard-next]')[0];
         var form = root.closest('form');
         var submits = form ? Array.from(form.querySelectorAll('[type="submit"]'))
-            .filter(function (b) { return !root.contains(b); }) : [];
+            .filter(function (b) { return !root.contains(b) || b.closest('[data-wizard-submit]'); }) : [];
         var linear = root.dataset.linear !== 'false';
         var current = Math.min(Math.max(parseInt(root.dataset.activeStep, 10) || 0, 0), steps.length - 1);
 
@@ -432,7 +433,7 @@ WIZARD_COMPONENT_ASSETS = """
                 // A submit button inside a step (e.g. DataTableLayout's "Load
                 // CSV") is a deliberate action of that step; let it through.
                 var submitter = event.submitter;
-                if (submitter && root.contains(submitter)) { return; }
+                if (submitter && root.contains(submitter) && !submitter.closest('[data-wizard-submit]')) { return; }
                 if (nextFrom(current) !== -1) { event.preventDefault(); goTo(nextFrom(current)); }
             });
             // An answer can switch a later step on or off: refresh once the
@@ -465,7 +466,8 @@ WIZARD_COMPONENT_ASSETS = """
 </script>
 <style>
 .form-wizard:not(.wizard-enhanced) .wizard-progress,
-.form-wizard:not(.wizard-enhanced) .wizard-footer { display: none; }
+.form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-back],
+.form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-next] { display: none; }
 .form-wizard.wizard-enhanced .wizard-step:not(.active) { display: none; }
 .form-wizard .wizard-progress {
     display: flex; flex-wrap: wrap; gap: 0.5rem;
@@ -489,7 +491,8 @@ WIZARD_COMPONENT_ASSETS = """
 .form-wizard .wizard-footer {
     display: flex; justify-content: space-between; gap: 0.5rem; margin: 1rem 0;
 }
-.form-wizard .wizard-footer [data-wizard-next] { margin-left: auto; }
+.form-wizard .wizard-footer [data-wizard-next],
+.form-wizard .wizard-footer [data-wizard-submit] { margin-left: auto; }
 .form-wizard .wizard-progress-item:disabled { cursor: default; opacity: 0.6; }
 .sf-sr-only {
     position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;

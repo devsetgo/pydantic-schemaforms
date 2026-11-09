@@ -284,7 +284,7 @@ def test_wizard_without_javascript_shows_every_step_and_hides_navigation() -> No
     # Only the script adds `wizard-enhanced`; the server never hides a step inline.
     assert 'wizard-enhanced"' not in html
     assert 'style="display: none' not in html.split('<script>')[0]
-    assert '.form-wizard:not(.wizard-enhanced) .wizard-footer { display: none; }' in html
+    assert '.form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-next] { display: none; }' in html
     assert '.form-wizard.wizard-enhanced .wizard-step:not(.active) { display: none; }' in html
 
 
