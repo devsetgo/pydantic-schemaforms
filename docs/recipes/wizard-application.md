@@ -38,3 +38,6 @@ a time.
 
 Since no state is kept between steps, there is nothing to store in a session,
 and the browser's back button and a page reload behave like on any form.
+
+For fuller wizards, each showing different features, see
+[Wizard Examples](wizard-examples.md).

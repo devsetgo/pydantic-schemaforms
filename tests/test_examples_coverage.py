@@ -183,7 +183,14 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     # autosave=True and warn_unsaved=True.
     assert 'autosave=true&warn=true' in home
     # A wizard skips a step its rule hides (#327).
-    assert '/layouts/skip-steps' in home
+    assert '/wizards/car-care' in home
+    # The Wizards section (#276): linked from home, and linking to every example.
+    from examples.wizard_examples import WIZARD_EXAMPLES
+
+    assert '/wizards"' in home
+    index = client.get('/wizards').text
+    for example in WIZARD_EXAMPLES:
+        assert f'/wizards/{example.slug}' in index, example.slug
     saved = client.get('/layouts', params={'autosave': 'true', 'warn': 'true'}).text
     assert 'data-sf-autosave="LayoutDemonstrationForm"' in saved
     assert 'data-sf-warn-unsaved' in saved

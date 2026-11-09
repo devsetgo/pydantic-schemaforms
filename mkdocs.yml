@@ -44,6 +44,7 @@ nav:
       - File Upload: 'recipes/file-upload.md'
       - Multi-Step Application (Wizard): 'recipes/wizard-application.md'
       - Save and Continue (Wizard): 'recipes/save-and-continue.md'
+      - Wizard Examples: 'recipes/wizard-examples.md'
       - Settings with a Code Field: 'recipes/settings-code-field.md'
       - Embedding in a Jinja Template: 'recipes/jinja-template.md'
   - Reference:

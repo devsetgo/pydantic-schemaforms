@@ -14,6 +14,7 @@ the routes, run it, and change what you need. They assume you've read the
 | [File Upload](file-upload.md) | A file input, with the file's type and size checked on the server |
 | [Multi-Step Application (Wizard)](wizard-application.md) | A job application split into steps |
 | [Save and Continue (Wizard)](save-and-continue.md) | A wizard that saves each step on the server |
+| [Wizard Examples](wizard-examples.md) | The example app's Wizards section: realistic wizards, each showing different features |
 | [Settings with a Code Field](settings-code-field.md) | JSON and TOML text areas with formatting, checked by validators |
 | [Embedding in a Jinja Template](jinja-template.md) | Putting the form inside your own page template |
 

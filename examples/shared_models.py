@@ -2551,50 +2551,6 @@ class LayoutDemonstrationForm(FormModel):
     )
 
 
-class CarCareForm(FormModel):
-    """A wizard step that applies only for some answers (#327): the loaner-car
-    step is skipped unless the customer asks for a loaner."""
-
-    make: str = Field(title='Make', min_length=2, ui_group='Your car')
-    plate: str = Field(title='Number plate', min_length=2, ui_group='Your car')
-    service: Literal['oil', 'tyres', 'inspection'] = Field(
-        'oil',
-        title='Service',
-        ui_element='radio',
-        ui_options={
-            'choices': [
-                {'value': 'oil', 'label': 'Oil change'},
-                {'value': 'tyres', 'label': 'Tyre change'},
-                {'value': 'inspection', 'label': 'Yearly inspection'},
-            ]
-        },
-        ui_group='Service',
-    )
-    while_we_work: Literal['wait', 'drop_off', 'loaner'] = Field(
-        'wait',
-        title='While we work',
-        ui_element='radio',
-        ui_options={
-            'choices': [
-                {'value': 'wait', 'label': 'I will wait'},
-                {'value': 'drop_off', 'label': 'I will drop it off'},
-                {'value': 'loaner', 'label': 'I need a loaner car'},
-            ]
-        },
-        ui_group='Service',
-    )
-    licence: str = Field(
-        '',
-        title='Driving licence number',
-        ui_group='Loaner car',
-        ui_group_show_when={'field': 'while_we_work', 'equals': 'loaner'},
-        ui_show_when={'field': 'while_we_work', 'equals': 'loaner', 'required': True},
-    )
-    loaner_return: date | None = Field(None, title='Return the loaner by', ui_group='Loaner car')
-    name: str = Field(title='Your name', min_length=2, ui_group='Contact')
-    phone: str = Field(title='Phone', min_length=7, ui_group='Contact')
-
-
 class CloseAccountForm(FormModel):
     """render_form_html(..., confirm={...}): a destructive submit asks first."""
 

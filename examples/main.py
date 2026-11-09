@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from examples.fastapi_routes import PreferredStyleMiddleware, RequestTimingMiddleware, router
 from examples.datatable_import_example import router as datatable_router
 from examples.menu_order_example import router as menu_order_router
+from examples.wizard_examples import router as wizards_router
 from pydantic_schemaforms import __version__ as _psf_version
 
 from dsg_lib.common_functions.logging_config import config_log
@@ -131,6 +132,7 @@ app.mount('/static', StaticFiles(directory=_base_dir / 'img'), name='static')
 app.include_router(router)
 app.include_router(datatable_router)
 app.include_router(menu_order_router)
+app.include_router(wizards_router)
 
 
 if __name__ == '__main__':
