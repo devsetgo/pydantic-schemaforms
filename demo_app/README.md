@@ -31,13 +31,28 @@ docker run --rm -p 8000:8000 mikeryan56/pydantic-schemaforms-demo:latest
 
 Then open http://localhost:8000.
 
-## Full release
+## Published on every release
+
+Publishing a GitHub release runs `.github/workflows/pythonpublish.yml`, which
+publishes to PyPI, then deploys the docs, then builds the demo image with
+`.github/workflows/docker-demo.yml`. Each step waits for the one before, so a
+failed docs deploy pushes no image. The image job waits until the new version
+is on PyPI, smoke-tests the image, checks it has that version installed, and
+pushes `mikeryan56/pydantic-schemaforms-demo:<version>` (such as `:26.4.6`)
+and `:latest`. It needs the repository secrets `DOCKERHUB_USERNAME` and
+`DOCKERHUB_TOKEN` (a Docker Hub access token with read and write access).
+
+To rebuild the image for a version already on PyPI, run **Demo Docker Image**
+from the Actions tab with that version.
+
+## Full manual release
 
 ```bash
 make release
 ```
 
 Runs `release-check`, `docs-deploy`, `package`, and `docker-all` in order, stopping at the first failure.
+Only for releasing without GitHub Actions; a published GitHub release already does all of this.
 
 ## Privacy-first defaults
 

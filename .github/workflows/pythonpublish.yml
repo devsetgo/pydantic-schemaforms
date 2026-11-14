@@ -88,3 +88,17 @@ jobs:
       contents: write
       pages: write
       id-token: write
+
+  docker-image:
+    name: Build the demo Docker image after the docs deploy
+    needs:
+      - prepare-docs-inputs
+      - deploy-docs
+    uses: ./.github/workflows/docker-demo.yml
+    with:
+      version: ${{ needs.prepare-docs-inputs.outputs.version }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    permissions:
+      contents: read
