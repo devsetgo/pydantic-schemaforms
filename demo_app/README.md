@@ -38,12 +38,16 @@ publishes to PyPI, then deploys the docs, then builds the demo image with
 `.github/workflows/docker-demo.yml`. Each step waits for the one before, so a
 failed docs deploy pushes no image. The image job waits until the new version
 is on PyPI, smoke-tests the image, checks it has that version installed, and
-pushes `mikeryan56/pydantic-schemaforms-demo:<version>` (such as `:26.4.6`)
-and `:latest`. It needs the repository secrets `DOCKERHUB_USERNAME` and
-`DOCKERHUB_TOKEN` (a Docker Hub access token with read and write access).
+pushes `mikeryan56/pydantic-schemaforms-demo:<YY.MM.DD.HHMM>` and `:latest`.
+Like `make docker-build`, the tag is the build time (New York time), not the
+library version, so a fix to the demo can ship without a new PyPI release.
+It needs the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`
+(a Docker Hub access token with read and write access).
 
-To rebuild the image for a version already on PyPI, run **Demo Docker Image**
-from the Actions tab with that version.
+To rebuild the image, for example after a fix to the demo app, run **Demo
+Docker Image** from the Actions tab: pick the branch to build the demo from
+(usually `main`) and the library version to install from PyPI. A release
+builds from its own tag.
 
 ## Full manual release
 
