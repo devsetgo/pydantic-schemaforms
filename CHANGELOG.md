@@ -48,6 +48,10 @@ behavior is opt-in, and file fields typed `Any` still return the framework's own
 - On a wizard's last step, Submit takes Next's place beside Back instead of sitting on a
   line below the wizard. A custom `wizard_footer` template that leaves Submit out keeps it
   below the form. (#332)
+- The `wizard_footer` and `wizard_progress_item` templates receive new keyword arguments
+  (`save_steps`, `show_back`, `show_next`, `submit_html`, `done`, `skipped`). A custom
+  template must accept `**_` for arguments it doesn't use, as the shipped ones do.
+  (#322, #326, #329, #332)
 - Publishing a release now builds and pushes the demo Docker image after the docs deploy.
   (#334, #335)
 
