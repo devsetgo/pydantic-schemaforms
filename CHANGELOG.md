@@ -7,6 +7,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [26.4.6] — 2026-11-14
+
+Long forms and the wizard: file uploads checked on the server, wizards that save each step,
+a review step that marks what changed, a confirm dialog, progress, autosave, and steps
+skipped when they don't apply. The example app has a new Wizards section with eight
+realistic wizards. There are no breaking changes for apps using the public API: every new
+behavior is opt-in, and file fields typed `Any` still return the framework's own upload object.
+
+### Added
+
+- `UploadedFile` for file fields, with `list[UploadedFile]` for several files. `validate()`
+  checks `ui_max_size`, `ui_max_files` and the `accept` option on the server and reports a
+  violation under the field like any other error. (#321)
+- `wizard_options={"save_steps": True}` posts one step at a time, so a long wizard can be
+  left and resumed. `FormModel.validate_step()` checks the step and returns a
+  `WizardStepResult` whose `draft` the app stores and passes back as `draft=`; a file
+  uploaded on an earlier step comes back as a `SavedFile`. With `form_data=` as well, the
+  draft goes on top of those starting values, for example a record being edited. (#322, #331)
+- `wizard_options={"review_step": True}` (or `{"title": ..., "edit_label": ...}`) adds a
+  last step that shows every answer, with an Edit button per step. (#323)
+- When a wizard is rendered with existing data, its review step shows each change as
+  old → new, in bold. (#324)
+- `confirm=True` (or `{"title", "message", "confirm_label", "cancel_label"}`) asks in a
+  dialog before the form submits. (#325)
+- `progress=True` shows how many required fields are filled: a bar on plain and grouped
+  forms, ticks in a wizard's step header. (#326)
+- `autosave=True` keeps a draft of the answers in the browser and offers to restore it;
+  `warn_unsaved=True` asks before leaving a page with unsaved changes.
+  `Field(ui_autosave=False)` leaves a field out of the draft. (#328)
+- A wizard skips a step whose rule hides it (`ui_group_show_when`, or a sub-form with its
+  own `ui_show_when`): it leaves the header and the numbering, and Back and Next jump over
+  it, in both wizard modes. (#329)
+- The example app's Wizards section (`/wizards`): job application, project planner, car
+  care, car setup, rental application, insurance claim, event registration and team
+  onboarding, each showing a different mix of wizard features. (#330, #331, #332)
+
+### Changed
+
+- On a wizard's last step, Submit takes Next's place beside Back instead of sitting on a
+  line below the wizard. A custom `wizard_footer` template that leaves Submit out keeps it
+  below the form. (#332)
+- Publishing a release now builds and pushes the demo Docker image after the docs deploy.
+  (#334, #335)
+
+### Fixed
+
+- A list item added in the browser starts with the item's defaults; its selects were
+  blank. (#330)
+- Material showed a select with a placeholder as disabled. (#330)
+- In a wizard with `save_steps`, a checkbox unticked on a step came back ticked after
+  going Back. (#331)
+
 ## [26.4.5] — 2026-11-01
 
 Forms can now respond to what's entered and show answers back: conditional fields,
