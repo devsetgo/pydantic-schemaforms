@@ -5,7 +5,7 @@ from pydantic_schemaforms import Field, FormModel, UploadedFile
 
 class AboutYou(FormModel):
     full_name: str = Field(title='Full name', min_length=2)
-    postcode: str = Field(title='Postcode', min_length=2)
+    zip_code: str = Field(title='ZIP code', pattern=r'^\d{5}$')
 
 
 class Resume(FormModel):

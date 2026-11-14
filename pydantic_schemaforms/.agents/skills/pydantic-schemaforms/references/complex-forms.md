@@ -180,8 +180,14 @@ form_html = render_form_html(
 - **One `<form>`, one POST.** The routes are the same as for any layout. Never build a route per
   step or keep step state in the session.
 - **Next checks the current step** with the browser's own validation; the server checks
-  everything on submit. The submit button is on the last step. Without JavaScript, all steps show
-  stacked.
+  everything on submit. On the last step, Submit takes Next's place beside Back. Without
+  JavaScript, all steps show stacked, with Submit at the end.
+- **Options that work in any wizard:** `progress=True` ticks each step in the header once its
+  required fields are filled; `autosave=True` and `warn_unsaved=True` keep typed answers in the
+  browser (both with `save_steps` too); `confirm=` asks before Submit, but not together with
+  `review_step`. See the rendering reference.
+- **Uploads:** in a one-POST wizard a failed submit loses the chosen file, because browsers never
+  re-fill a file input. If a long form has an upload, give it its own `save_steps` step.
 - `wizard_options`: `linear` (default `True`; `False` lets the progress header jump to any step),
   `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`), `review_step` and
   `save_steps` (both below). An unknown key raises `ValueError`. Pass it to `validate()` too.
@@ -233,6 +239,8 @@ async def step(request: Request):
   `result.data` hold a `SavedFile` (top-level; `filename`, `content_type`, `size`, `ref`) whose
   `read()` raises. Fetch the content by `ref`.
 - To prefill a later step, change `result.data` before `result.render()` and `result.draft`.
+- To edit a saved record, or open every step with starting answers, pass the values as
+  `form_data=` on the GET and as `data=` to `result.render()`; the draft's saved steps go on top.
 - Full page loads only; HTMX per step is not supported.
 
 ## Nested data and errors

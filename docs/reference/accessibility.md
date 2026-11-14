@@ -59,7 +59,9 @@ Automated tools find only part of what a full WCAG audit covers. These are
 not checked by the gate and are worth reviewing by hand in your application:
 
 - **Keyboard flow** through multi-step and grouped layouts (wizard, tabs,
-  accordion): focus order and where focus lands after a step change.
+  accordion): focus order and where focus lands after a step change, a wizard
+  step that is skipped, the `confirm=` dialog and the `autosave=` restore
+  notice.
 - **Screen reader announcements** of live (HTMX) validation as the user types.
 - **Your own page**: the template, headings, landmarks, navigation and any
   colors or CSS you add around the form.

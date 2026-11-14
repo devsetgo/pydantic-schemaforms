@@ -76,8 +76,12 @@ How the wizard behaves:
   (`required`, `minlength`, `min`/`max`, `pattern`, `type="email"`, ...) and
   stays put if something fails. Back never checks. Enter in a field moves to
   the next step instead of submitting.
-- **The submit button is on the last step.** The server validates everything,
-  including rules the browser can't check.
+- **On the last step, Submit takes Next's place** in the footer, beside Back.
+  The server validates everything, including rules the browser can't check.
+- **Steps hidden by a rule are skipped.** A group whose `ui_group_show_when`
+  hides it, or a sub-form field with its own `ui_show_when`, leaves the progress
+  header and the numbering, and Back and Next jump over it. See
+  [Skipping steps that don't apply](../tutorial/layouts.md#skipping-steps-that-dont-apply).
 - **After a failed submit**, the first step with an error opens and every step
   with an error is marked in the progress header.
 - **Without JavaScript**, every step is shown, stacked under its title, with
@@ -88,11 +92,14 @@ How the wizard behaves:
 With `wizard_options={"save_steps": True}`, only the current step's inputs are
 rendered, with the progress header. Back, Next and the header's links are
 submit buttons, so it works without JavaScript. The form's own submit button is
-on the last step. Steps not reached yet are shown disabled in the header.
+on the last step, beside Back. Steps not reached yet are shown disabled in the header.
 
 - **`draft=`** on `render_form_html()`, `render_form_html_async()` and
   `Model.render_form()` is the `result.draft` you saved. `None` starts at step
   1. It raises `TypeError` without `save_steps`.
+- **`form_data=` with `draft=`** gives the starting values, such as a record
+  being edited, with the saved steps on top. On a step's POST, pass them as
+  `result.render(data=...)`.
 - **`Model.validate_step(data, *, draft=None, **render_options)`** takes the
   request form, the saved draft and the same render options, and returns a
   `WizardStepResult`. It raises `ValueError` unless `layout="wizard"` and
@@ -105,7 +112,8 @@ on the last step. Steps not reached yet are shown disabled in the header.
   cross-step checks run. An error in an earlier step reopens that step; a
   form-wide error stays on the last step.
 - **`ui_show_when`** rules controlled by a field on another step render from
-  the draft's data.
+  the draft's data, and a step hidden by its rule is skipped: the server picks
+  the next and previous step from the answers saved so far.
 
 See [Rendering API](rendering-api.md#wizardstepresult) for the result and the
 [Save and Continue recipe](../recipes/save-and-continue.md) for a full route.

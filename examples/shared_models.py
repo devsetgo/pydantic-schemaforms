@@ -2584,10 +2584,10 @@ CLOSE_ACCOUNT_CONFIRM = {
 
 class SavedStepApplicant(FormModel):
     full_name: str = Field(title='Full name', min_length=2)
-    postcode: str = Field(
-        title='Postcode',
-        description='Try one starting SW, M or EH: the last step fills in the city from it.',
-        min_length=2,
+    zip_code: str = Field(
+        title='ZIP code',
+        description='Try one starting 100, 787 or 981: the last step fills in the city from it.',
+        pattern=r'^\d{5}$',
     )
 
 
@@ -2629,12 +2629,12 @@ class FieldGroupsForm(FormModel):
         '456 Demo Street', title='Street (ui_cols=8)', ui_group='Address', ui_cols=8
     )
     unit: str = Field('', title='Unit (ui_cols=4)', ui_group='Address', ui_cols=4)
-    city: str = Field('Oslo', title='City (ui_cols=4)', ui_group='Address', ui_cols=4)
-    region: str = Field('', title='Region (ui_cols=4)', ui_group='Address', ui_cols=4)
-    postcode: str = Field('0150', title='Postcode (ui_cols=4)', ui_group='Address', ui_cols=4)
+    city: str = Field('Austin', title='City (ui_cols=4)', ui_group='Address', ui_cols=4)
+    region: str = Field('TX', title='State (ui_cols=4)', ui_group='Address', ui_cols=4)
+    zip_code: str = Field('78701', title='ZIP code (ui_cols=4)', ui_group='Address', ui_cols=4)
     wants_invoice: bool = Field(True, title='Send me an invoice')
     company: str = Field(
-        'Example Ltd',
+        'Example Inc.',
         title='Company (the whole group follows ui_group_show_when)',
         ui_group='Invoice',
         ui_group_show_when={'field': 'wants_invoice', 'truthy': True},
@@ -3278,7 +3278,7 @@ class WidgetGalleryForm(FormModel):
 
 class ValidationAddress(FormModel):
     city: str = Field(..., title='City (min_length=2)', min_length=2)
-    postcode: str = Field(..., title='Postcode (pattern: 5 digits)', pattern=r'^\d{5}$')
+    zip_code: str = Field(..., title='ZIP code (pattern: 5 digits)', pattern=r'^\d{5}$')
     needs_access_code: bool = Field(False, title='This building needs an access code')
     access_code: str = Field(
         '',
@@ -3422,7 +3422,7 @@ VALID_VALIDATION_DEMO = {
     'accept_terms': True,
     'password': 'engine1843',
     'confirm_password': 'engine1843',
-    'address': {'city': 'London', 'postcode': '10001'},
+    'address': {'city': 'New York', 'zip_code': '10001'},
     'items': [{'name': 'Widget', 'quantity': 2}],
     'phone': '(555) 123-4567',
     'nickname': 'ada',
@@ -3452,7 +3452,7 @@ INVALID_VALIDATION_DEMO = {
     'email': 'not-an-email',
     'password': 'nodigits',
     'confirm_password': 'different',
-    'address': {'city': 'X', 'postcode': 'ABC'},
+    'address': {'city': 'X', 'zip_code': 'ABC'},
     'items': [{'name': 'Widget', 'quantity': 2}, {'name': '', 'quantity': 0}],
     'phone': '123',
     'nickname': 'x',

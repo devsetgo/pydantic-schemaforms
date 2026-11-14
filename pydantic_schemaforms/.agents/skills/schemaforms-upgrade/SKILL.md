@@ -52,6 +52,23 @@ These apply to every task. Read them before writing code.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
 
+## 26.4.6: long forms and the wizard
+
+No breaking changes: every new option is opt-in, and file fields typed `Any` still receive the
+framework's own upload object. One thing to check: a custom `wizard_footer` or
+`wizard_progress_item` template must accept `**_`, since both now receive new keyword arguments.
+
+After upgrading, replace hand-written code the library now does (show the user each one first):
+
+| Hand-written in the app | Replace with |
+|---|---|
+| Upload checks (size, count, type) after `validate()` | `UploadedFile` / `list[UploadedFile]` with `ui_max_size`, `ui_max_files`, `accept` |
+| A confirmation page or summary before submitting a wizard | `wizard_options={"review_step": True}` |
+| A route per wizard step with session state | `wizard_options={"save_steps": True}` and `Model.validate_step()` |
+| Separate wizards, or JavaScript hiding steps, for answers that skip a step | `ui_group_show_when` (or a sub-form's `ui_show_when`): the step is skipped |
+| A modal or `confirm()` call before submit | `confirm=True` |
+| A progress counter, or a `localStorage` draft script | `progress=True`; `autosave=True`, `warn_unsaved=True` |
+
 ## 26.4.4: Material Design 3
 
 `framework="material"` was rebuilt on Material Design 3. Forms keep working with no code change;
@@ -170,7 +187,7 @@ email = result.data['contact']['email']
 `result.data`, saves it, or pre-fills `form_data`, and pre-fill with the same nested shape:
 `form_data={"contact": {"email": ...}}`. Saved records may need a migration or a mapping layer.
 
-## Behaviour changes worth checking after any upgrade
+## Behavior changes worth checking after any upgrade
 
 - A fresh form now starts from the field defaults; code that passed defaults in `form_data` by
   hand can drop them.

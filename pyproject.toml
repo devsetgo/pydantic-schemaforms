@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pydantic-schemaforms"
-version = "26.4.5"
+version = "26.4.6"
 requires-python = ">=3.14"
 description = "Server-rendered HTML forms from Pydantic models: one model for the form, its validation and its data"
 keywords = [ "pydantic", "forms", "html-forms", "form-validation", "form-generator", "server-side-rendering", "fastapi", "flask", "htmx", "bootstrap", "material-design", "t-strings","AI assisted"]

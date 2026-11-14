@@ -194,6 +194,24 @@ form_html = render_form_html(
 )
 ```
 
+### Long forms and wizards
+
+These are built in. Don't hand-write them: no route per step for an ordinary wizard, no review
+page, modal, progress counter or `localStorage` script of your own. Pass each option to
+`render_form_html()` and to `validate()` (or `validate_step()`) alike.
+
+| The user wants | Use | Reference |
+|---|---|---|
+| One step at a time | `layout="wizard"`; one nested `FormModel` (or `ui_group`) per step | complex forms |
+| To check answers before submitting | `wizard_options={"review_step": True}` | complex forms |
+| To see what they changed when editing | the review step, rendered with `form_data=` (one-POST wizard) | complex forms |
+| To stop and resume later, or a step that does server work (stores a file, fills a later step) | `wizard_options={"save_steps": True}` with `Model.validate_step()` and `draft=` | complex forms |
+| A step only some users need | `ui_group_show_when` on the step's group, or `ui_show_when` on its sub-form field: the step is skipped | complex forms |
+| To see how far along they are | `progress=True` (ticks finished steps in a wizard's header) | rendering |
+| A last chance before submitting | `confirm=True` or a dict of texts; not together with `review_step` | rendering |
+| Not to lose what they typed | `autosave=True`, `warn_unsaved=True`; `Field(ui_autosave=False)` on private fields | rendering |
+| File uploads with limits | `UploadedFile` (`list[UploadedFile]`), `ui_max_size`, `ui_max_files`, `accept` | inputs, security |
+
 ### More
 
 | Task | Reference |
@@ -217,6 +235,10 @@ form_html = render_form_html(
 | A validator's message isn't next to the field | `@model_validator` messages are form-wide. Use `@field_validator` to attach it to one field. |
 | A limit isn't enforced on the server | It's in `ui_options` instead of on `Field()`. |
 | Values are missing from multi-selects or checkbox groups | The request form was converted with `dict()`/`to_dict()` before `validate()`. |
+| `draft=` raises `TypeError` | `draft=` needs `layout="wizard"` and `wizard_options={"save_steps": True}`, passed to the render call too. |
+| `ValueError` about `draft=` | The draft was changed or built by hand. Store `result.draft` as it is and pass it back unchanged. |
+| `confirm=` with a wizard raises `ValueError` | The wizard has a `review_step`, which already asks before Submit. Use one of them. |
+| A chosen file is gone after a failed submit | Browsers never re-fill a file input. In a long form, put the upload on its own `save_steps` step, where it's stored as soon as that step is valid. |
 | `ImportError` mentioning `email-validator` | A field is typed `EmailStr`; install `pydantic-schemaforms[email]`. |
 | `ImportError` or `FormLayoutRemovedError` naming a replacement | The code uses a removed API; follow the message, or use the `schemaforms-upgrade` skill. |
 
@@ -412,8 +434,14 @@ form_html = render_form_html(
 - **One `<form>`, one POST.** The routes are the same as for any layout. Never build a route per
   step or keep step state in the session.
 - **Next checks the current step** with the browser's own validation; the server checks
-  everything on submit. The submit button is on the last step. Without JavaScript, all steps show
-  stacked.
+  everything on submit. On the last step, Submit takes Next's place beside Back. Without
+  JavaScript, all steps show stacked, with Submit at the end.
+- **Options that work in any wizard:** `progress=True` ticks each step in the header once its
+  required fields are filled; `autosave=True` and `warn_unsaved=True` keep typed answers in the
+  browser (both with `save_steps` too); `confirm=` asks before Submit, but not together with
+  `review_step`. See the rendering reference.
+- **Uploads:** in a one-POST wizard a failed submit loses the chosen file, because browsers never
+  re-fill a file input. If a long form has an upload, give it its own `save_steps` step.
 - `wizard_options`: `linear` (default `True`; `False` lets the progress header jump to any step),
   `show_progress` (`True`), `back_label` (`"Back"`), `next_label` (`"Next"`), `review_step` and
   `save_steps` (both below). An unknown key raises `ValueError`. Pass it to `validate()` too.
@@ -465,6 +493,8 @@ async def step(request: Request):
   `result.data` hold a `SavedFile` (top-level; `filename`, `content_type`, `size`, `ref`) whose
   `read()` raises. Fetch the content by `ref`.
 - To prefill a later step, change `result.data` before `result.render()` and `result.draft`.
+- To edit a saved record, or open every step with starting answers, pass the values as
+  `form_data=` on the GET and as `data=` to `result.render()`; the draft's saved steps go on top.
 - Full page loads only; HTMX per step is not supported.
 
 ### Nested data and errors
@@ -613,7 +643,7 @@ def download_template() -> Response:
   `include_submit_button=False` to `render_form_html_async()` — the rendered field already
   includes its own file input and "Load CSV"/"Submit" buttons when `model_config["csv_upload"]`
   is on (the default).
-- Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
+- Table behavior is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
   `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
   `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
   (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`[]`;
@@ -1082,6 +1112,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only with `framework="material"` |
 | `layout` | `"vertical"` | See the complex forms reference |
 | `wizard_options` | `None` | With `layout="wizard"` |
+| `draft` | `None` | With `wizard_options` `save_steps`: the `result.draft` you stored, unchanged, to resume the wizard; the saved steps go on top of `form_data`. Raises `TypeError` without `save_steps` |
 | `method` | `"POST"` | The form's method |
 | `include_submit_button` | `True` | `False` when the form is submitted another way |
 | `progress` | `False` | `True`: "n of m complete" for the required fields, counted in the browser as the user types (a bar at the top; a wizard ticks finished steps in its header instead). Hidden without JavaScript. Don't build your own counter; pass it to `validate()` too |
@@ -1853,6 +1884,16 @@ A `ModelForm` maps the model's fields the same way, through their form field typ
 CSRF middleware still applies; render its token into the page or use `csrf_mode` with Django's
 token as `csrf_token_provider`.
 
+### Multi-step forms
+
+A wizard from another library (Django formtools' `SessionWizardView`, a WTForms form per page, a
+JavaScript stepper) becomes one `FormModel` with a nested `FormModel` per step and
+`layout="wizard"`. Keep one POST unless users must resume later or a step does server work
+(storing a file, looking something up); then use `wizard_options={"save_steps": True}` with
+`Model.validate_step()`, and store `result.draft` where the old code kept its step state. A
+summary page becomes `review_step`, and a step shown only for some answers becomes a group with
+`ui_group_show_when`. Remove the per-step routes, the session plumbing and the step templates.
+
 ### From JSON Schema or a sample JSON payload
 
 | JSON Schema | FormModel |
@@ -1941,6 +1982,23 @@ its replacement; this skill has the full mapping and the order to do it in.
    submission if there isn't one.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
+
+### 26.4.6: long forms and the wizard
+
+No breaking changes: every new option is opt-in, and file fields typed `Any` still receive the
+framework's own upload object. One thing to check: a custom `wizard_footer` or
+`wizard_progress_item` template must accept `**_`, since both now receive new keyword arguments.
+
+After upgrading, replace hand-written code the library now does (show the user each one first):
+
+| Hand-written in the app | Replace with |
+|---|---|
+| Upload checks (size, count, type) after `validate()` | `UploadedFile` / `list[UploadedFile]` with `ui_max_size`, `ui_max_files`, `accept` |
+| A confirmation page or summary before submitting a wizard | `wizard_options={"review_step": True}` |
+| A route per wizard step with session state | `wizard_options={"save_steps": True}` and `Model.validate_step()` |
+| Separate wizards, or JavaScript hiding steps, for answers that skip a step | `ui_group_show_when` (or a sub-form's `ui_show_when`): the step is skipped |
+| A modal or `confirm()` call before submit | `confirm=True` |
+| A progress counter, or a `localStorage` draft script | `progress=True`; `autosave=True`, `warn_unsaved=True` |
 
 ### 26.4.4: Material Design 3
 
@@ -2060,7 +2118,7 @@ email = result.data['contact']['email']
 `result.data`, saves it, or pre-fills `form_data`, and pre-fill with the same nested shape:
 `form_data={"contact": {"email": ...}}`. Saved records may need a migration or a mapping layer.
 
-### Behaviour changes worth checking after any upgrade
+### Behavior changes worth checking after any upgrade
 
 - A fresh form now starts from the field defaults; code that passed defaults in `form_data` by
   hand can drop them.

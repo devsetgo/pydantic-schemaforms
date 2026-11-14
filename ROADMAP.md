@@ -9,7 +9,7 @@ Every item follows the "Examples must cover every layout, input, and
 validation" rule in `CLAUDE.md`: a feature isn't done until it's demonstrated
 on an example page under both Bootstrap and Material.
 
-Last updated: 2026-11-09.
+Last updated: 2026-11-14.
 
 ## Phase 1: Clear the ground
 
@@ -62,6 +62,8 @@ Both items change the layout engine, and both must work with the display mode fr
 ## Phase 4: Long forms and the wizard
 
 Everything a long form needs, finished by a Wizards section of realistic examples as the test.
+
+All phase 4 items are done; they ship as release 26.4.6.
 
 Reviewed 2026-11-08 against the code as of 26.4.5. The phase ships as one
 release: every item is in the same area, and the Wizards section (#276) is

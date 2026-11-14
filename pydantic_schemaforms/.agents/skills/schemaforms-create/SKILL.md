@@ -146,6 +146,18 @@ password confirmation on registration, for example). Give optional fields a defa
 | columns, side by side | `"side-by-side"` |
 | steps, wizard, multi-step, one page at a time | `"wizard"` |
 
+For a wizard, add what the description asks for (the `pydantic-schemaforms` skill's complex forms
+reference has the details):
+
+| The description says | Add |
+|---|---|
+| review, check answers, confirm before submitting | `wizard_options={"review_step": True}` |
+| save and continue, resume later, come back to it | `wizard_options={"save_steps": True}`; routes use `Model.validate_step()` and store `result.draft` (see the catalogue's resumable wizard) |
+| progress, how far along | `progress=True` |
+| don't lose answers, warn before leaving | `autosave=True`, `warn_unsaved=True` |
+| a step only for some answers ("if they have pets...") | put that step's fields in a group with `ui_group_show_when`; the wizard skips it |
+| an upload in a wizard | its own step with `save_steps`, so a failed submit doesn't lose the file |
+
 Grouped layouts arrange **sub-forms**: write one `FormModel` per section and nest them as fields
 of the main form; plain fields on the main form become its first group. For a "blank" or
 "skeleton" layout, create two or three clearly named placeholder sections, each with one or two

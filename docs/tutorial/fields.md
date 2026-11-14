@@ -43,6 +43,11 @@ Set `ui_element` when the type alone isn't enough: `"email"` for a plain
 show a few choices side by side instead of a dropdown, `"password"`,
 `"color"`, `"slider"`, `"tags"`, `"file"` and many more.
 
+For a file upload, type the field `UploadedFile` (`list[UploadedFile]` for
+several). `Field(ui_max_size=...)`, `ui_max_files` and the `accept` option are
+checked on the server, and a file that breaks them gets an error under the
+field. See [File Upload](../recipes/file-upload.md).
+
 [Input Types](../reference/inputs.md) lists every `ui_element` with all of
 its options.
 
@@ -52,7 +57,7 @@ its options.
 |---|---|
 | `title="Full name"` | The label. Without it, the field name is used: `team_size` becomes "Team Size". |
 | `description="..."` | Help text under the input |
-| `ui_placeholder="you@example.com"` | Grey hint text inside an empty input |
+| `ui_placeholder="you@example.com"` | Gray hint text inside an empty input |
 | `ui_autofocus=True` | The cursor starts in this field |
 
 Help text and error messages are linked to their input for screen readers,

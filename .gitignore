@@ -191,3 +191,6 @@ TODO_TASKS.md
 # Output of scripts/export_sonar_issues.py (point-in-time snapshot)
 sonarcloud-issues.md
 tests/playwright/screenshots/
+
+# Rendered from demo_app/requirements.template by `make docker-build` and docker-demo.yml
+demo_app/requirements.txt

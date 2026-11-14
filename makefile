@@ -1,6 +1,6 @@
 # Variables
 REPONAME = pydantic-schemaforms
-APP_VERSION = 26.4.5
+APP_VERSION = 26.4.6
 # Version used by docs, release checks, and the Docker image's package pin.
 # Override on the command line, e.g. `make docs-deploy VERSION=26.4.0`
 VERSION ?= $(APP_VERSION)

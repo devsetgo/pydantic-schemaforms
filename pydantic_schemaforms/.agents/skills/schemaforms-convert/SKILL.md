@@ -187,6 +187,16 @@ A `ModelForm` maps the model's fields the same way, through their form field typ
 CSRF middleware still applies; render its token into the page or use `csrf_mode` with Django's
 token as `csrf_token_provider`.
 
+## Multi-step forms
+
+A wizard from another library (Django formtools' `SessionWizardView`, a WTForms form per page, a
+JavaScript stepper) becomes one `FormModel` with a nested `FormModel` per step and
+`layout="wizard"`. Keep one POST unless users must resume later or a step does server work
+(storing a file, looking something up); then use `wizard_options={"save_steps": True}` with
+`Model.validate_step()`, and store `result.draft` where the old code kept its step state. A
+summary page becomes `review_step`, and a step shown only for some answers becomes a group with
+`ui_group_show_when`. Remove the per-step routes, the session plumbing and the step templates.
+
 ## From JSON Schema or a sample JSON payload
 
 | JSON Schema | FormModel |

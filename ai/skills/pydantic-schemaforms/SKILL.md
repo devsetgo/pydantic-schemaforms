@@ -1,6 +1,6 @@
 ---
 name: pydantic-schemaforms
-description: Build, change and fix server-rendered HTML forms with pydantic-schemaforms (FormModel, Field, render_form_html, FormModel.validate) in FastAPI, Flask or any Python web app. Use for any form work in an app that depends on pydantic-schemaforms - fields and inputs, validation and error messages, nested and repeating sub-forms, tabbed/accordion/wizard layouts, CSV import tables, live HTMX validation, CSRF, file uploads, styling, or a form that renders or validates wrongly.
+description: Build, change and fix server-rendered HTML forms with pydantic-schemaforms (FormModel, Field, render_form_html, FormModel.validate) in FastAPI, Flask or any Python web app. Use for any form work in an app that depends on pydantic-schemaforms - fields and inputs, validation and error messages, nested and repeating sub-forms, tabbed/accordion/wizard layouts, wizards that save each step or end with a review step, progress, autosave and confirm dialogs, CSV import tables, live HTMX validation, CSRF, file uploads, styling, or a form that renders or validates wrongly.
 ---
 
 # pydantic-schemaforms
@@ -110,6 +110,24 @@ form_html = render_form_html(
 )
 ```
 
+## Long forms and wizards
+
+These are built in. Don't hand-write them: no route per step for an ordinary wizard, no review
+page, modal, progress counter or `localStorage` script of your own. Pass each option to
+`render_form_html()` and to `validate()` (or `validate_step()`) alike.
+
+| The user wants | Use | Reference |
+|---|---|---|
+| One step at a time | `layout="wizard"`; one nested `FormModel` (or `ui_group`) per step | complex forms |
+| To check answers before submitting | `wizard_options={"review_step": True}` | complex forms |
+| To see what they changed when editing | the review step, rendered with `form_data=` (one-POST wizard) | complex forms |
+| To stop and resume later, or a step that does server work (stores a file, fills a later step) | `wizard_options={"save_steps": True}` with `Model.validate_step()` and `draft=` | complex forms |
+| A step only some users need | `ui_group_show_when` on the step's group, or `ui_show_when` on its sub-form field: the step is skipped | complex forms |
+| To see how far along they are | `progress=True` (ticks finished steps in a wizard's header) | rendering |
+| A last chance before submitting | `confirm=True` or a dict of texts; not together with `review_step` | rendering |
+| Not to lose what they typed | `autosave=True`, `warn_unsaved=True`; `Field(ui_autosave=False)` on private fields | rendering |
+| File uploads with limits | `UploadedFile` (`list[UploadedFile]`), `ui_max_size`, `ui_max_files`, `accept` | inputs, security |
+
 ## More
 
 | Task | Reference |
@@ -133,6 +151,10 @@ form_html = render_form_html(
 | A validator's message isn't next to the field | `@model_validator` messages are form-wide. Use `@field_validator` to attach it to one field. |
 | A limit isn't enforced on the server | It's in `ui_options` instead of on `Field()`. |
 | Values are missing from multi-selects or checkbox groups | The request form was converted with `dict()`/`to_dict()` before `validate()`. |
+| `draft=` raises `TypeError` | `draft=` needs `layout="wizard"` and `wizard_options={"save_steps": True}`, passed to the render call too. |
+| `ValueError` about `draft=` | The draft was changed or built by hand. Store `result.draft` as it is and pass it back unchanged. |
+| `confirm=` with a wizard raises `ValueError` | The wizard has a `review_step`, which already asks before Submit. Use one of them. |
+| A chosen file is gone after a failed submit | Browsers never re-fill a file input. In a long form, put the upload on its own `save_steps` step, where it's stored as soon as that step is valid. |
 | `ImportError` mentioning `email-validator` | A field is typed `EmailStr`; install `pydantic-schemaforms[email]`. |
 | `ImportError` or `FormLayoutRemovedError` naming a replacement | The code uses a removed API; follow the message, or use the `schemaforms-upgrade` skill. |
 

@@ -31,3 +31,9 @@ Show a saved record in a form, let the user change it, and save it back.
 
 If your rows are ORM objects or Pydantic models, build the dictionary the same
 way: `{name: getattr(row, name) for name in ProductForm.model_fields}`.
+
+**Editing in a wizard?** Render it with `layout="wizard"` and
+`wizard_options={"review_step": True}`, and `form_data=` set to the row. The
+review step then shows each changed answer as **old → new**. The job
+application in [Wizard Examples](wizard-examples.md) has an edit page that
+does this.

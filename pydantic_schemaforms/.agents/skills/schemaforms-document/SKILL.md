@@ -8,7 +8,7 @@ description: Document the pydantic-schemaforms forms in an app - add docstrings,
 
 Produce two things: documentation **in the code** (models that explain themselves) and a
 **Markdown page** that describes every form for developers and reviewers. Document what the code
-does; never describe behaviour you haven't checked.
+does; never describe behavior you haven't checked.
 
 ## Rules for any code that uses pydantic-schemaforms
 
@@ -50,7 +50,7 @@ These apply to every task. Read them before writing code.
    can list them, but it imports the app's modules, so ask the user before running it:
    `python <this skill's folder>/scripts/list_forms.py app.forms app/admin/forms.py`
    (module names or files; `--json` for JSON).
-3. **Document the code** (below). Change only documentation: don't change behaviour, field names,
+3. **Document the code** (below). Change only documentation: don't change behavior, field names,
    types or constraints. Adding a missing `title` or `description` does change what the form
    shows (they're the label and help text), so list those changes for the user.
 4. **Write the page** using [the page template](references/forms-page.md). Default location:
