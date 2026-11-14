@@ -3,18 +3,22 @@ name: Demo Docker Image
 # Builds the demo app image (demo_app/Dockerfile), which installs
 # pydantic-schemaforms from PyPI, so it runs after the package is published.
 # pythonpublish.yml calls it once the docs have deployed; run it by hand to
-# rebuild the image for a version already on PyPI.
+# rebuild the image, for example after a fix to the demo app.
+#
+# Like `make docker-build`, the image is tagged with its build time
+# (YY.MM.DD.HHMM, New York time), not the library version: a fixed demo can be
+# released without a new PyPI version.
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Released version to build (e.g. 26.4.6); must already be on PyPI"
+        description: "Library version to install (e.g. 26.4.6); must already be on PyPI"
         required: true
         type: string
   workflow_call:
     inputs:
       version:
-        description: "Released version to build; must already be on PyPI"
+        description: "Library version to install; must already be on PyPI"
         required: true
         type: string
     secrets:
@@ -43,10 +47,12 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout the release tag
+      # A release builds the demo from its tag; a manual run builds from the
+      # branch picked in the Run workflow dialog, so a demo fix on main ships.
+      - name: Checkout the code
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.version }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || inputs.version }}
 
       - name: Wait for the version on PyPI
         env:
@@ -69,6 +75,10 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: sed "s/__APP_VERSION__/$VERSION/g" demo_app/requirements.template > demo_app/requirements.txt
 
+      - name: Compute the image tag
+        id: tag
+        run: echo "tag=$(TZ=America/New_York date +%y.%m.%d.%H%M)" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -77,17 +87,18 @@ jobs:
         with:
           context: .
           file: demo_app/Dockerfile
-          build-args: SCHEMAFORMS_DEMO_IMAGE_VERSION=${{ inputs.version }}
-          labels: version=${{ inputs.version }}
-          tags: ${{ env.IMAGE }}:${{ inputs.version }},${{ env.IMAGE }}:latest
+          build-args: SCHEMAFORMS_DEMO_IMAGE_VERSION=${{ steps.tag.outputs.tag }}
+          labels: version=${{ steps.tag.outputs.tag }}
+          tags: ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }},${{ env.IMAGE }}:latest
           load: true
 
       - name: Smoke-test the image
         env:
           VERSION: ${{ inputs.version }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          docker run --rm "$IMAGE:$VERSION" python -c "import examples.main; print('smoke-ok')"
-          installed=$(docker run --rm "$IMAGE:$VERSION" python -c "import pydantic_schemaforms; print(pydantic_schemaforms.__version__)")
+          docker run --rm "$IMAGE:$TAG" python -c "import examples.main; print('smoke-ok')"
+          installed=$(docker run --rm "$IMAGE:$TAG" python -c "import pydantic_schemaforms; print(pydantic_schemaforms.__version__)")
           if [ "$installed" != "$VERSION" ]; then
             echo "Error: the image has pydantic-schemaforms $installed, expected $VERSION"
             exit 1
@@ -101,7 +112,8 @@ jobs:
 
       - name: Push the image
         env:
-          VERSION: ${{ inputs.version }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          docker push "$IMAGE:$VERSION"
+          echo "Pushing $IMAGE:$TAG and :latest"
+          docker push "$IMAGE:$TAG"
           docker push "$IMAGE:latest"
