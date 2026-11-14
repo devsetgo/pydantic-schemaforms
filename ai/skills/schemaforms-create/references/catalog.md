@@ -53,6 +53,18 @@ One step per sub-form; pass `layout="wizard"` to both `render_form_html()` and `
 
 <!-- INCLUDE-CODE: docs_src/recipes/wizard_application/models.py -->
 
+## Resumable application (save and continue)
+
+For "users can leave and come back" or an upload in a wizard: each step is its own POST, checked
+on the server and saved as a draft; uploaded files are stored as soon as their step is valid.
+
+<!-- INCLUDE-CODE: docs_src/recipes/save_and_continue/models.py -->
+
+The routes call `validate_step()` instead of `validate()`, store `result.draft`, and pass it back
+as `draft=` on both routes:
+
+<!-- INCLUDE-CODE: docs_src/recipes/save_and_continue/fastapi_app.py -->
+
 ## Settings with a code field
 
 JSON or TOML typed into a code-editor text area, checked by validators.

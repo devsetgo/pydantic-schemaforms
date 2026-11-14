@@ -471,14 +471,14 @@ def test_save_steps_wizard_walks_through(
     try:
         page.goto(f'{examples_server_url}/layouts/save-steps?style={style}', wait_until='load')
         page.fill('[name="applicant.full_name"]', 'Robin Example')
-        page.fill('[name="applicant.postcode"]', 'SW9 9ZZ')
+        page.fill('[name="applicant.zip_code"]', '78701')
         with page.expect_navigation(wait_until='load'):
             if javascript:
                 page.click('[data-wizard-next]')
             else:
                 # The theme's script stops Enter submitting a form. Without it, Enter
                 # uses the first submit button, the hidden Next, not a header jump.
-                page.press('[name="applicant.postcode"]', 'Enter')
+                page.press('[name="applicant.zip_code"]', 'Enter')
         expect(page.locator('[name="documents.resume"]')).to_be_attached(timeout=TIMEOUT)
         if javascript:
             assert _blocking_violations(page) == []
@@ -489,7 +489,7 @@ def test_save_steps_wizard_walks_through(
         )
         with page.expect_navigation(wait_until='load'):
             page.click('[data-wizard-next]')
-        expect(page.locator('[name="availability.city"]')).to_have_value('London', timeout=TIMEOUT)
+        expect(page.locator('[name="availability.city"]')).to_have_value('Austin', timeout=TIMEOUT)
 
         with page.expect_navigation(wait_until='load'):
             page.click('[data-wizard-back]')
@@ -504,7 +504,7 @@ def test_save_steps_wizard_walks_through(
         # The review step shows the saved answers, the file by its name.
         review = page.locator('.sf-review')
         expect(review).to_contain_text('cv.txt', timeout=TIMEOUT)
-        expect(review).to_contain_text('London')
+        expect(review).to_contain_text('Austin')
         with page.expect_navigation(wait_until='load'):
             page.click('form [type="submit"]:not([name])')
         expect(page.get_by_text('must be after the earliest start date')).to_be_visible(

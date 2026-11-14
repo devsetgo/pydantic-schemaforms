@@ -261,6 +261,95 @@ class ApplicationForm(FormModel):
     motivation: Motivation = Field(title='Motivation')
 ```
 
+## Resumable application (save and continue)
+
+For "users can leave and come back" or an upload in a wizard: each step is its own POST, checked
+on the server and saved as a draft; uploaded files are stored as soon as their step is valid.
+
+```python
+from datetime import date
+
+from pydantic_schemaforms import Field, FormModel, UploadedFile
+
+
+class AboutYou(FormModel):
+    full_name: str = Field(title='Full name', min_length=2)
+    zip_code: str = Field(title='ZIP code', pattern=r'^\d{5}$')
+
+
+class Resume(FormModel):
+    resume: UploadedFile = Field(
+        title='Resume (PDF or text, up to 200 KB)',
+        ui_max_size=200 * 1024,
+        ui_options={'accept': '.pdf,.txt'},
+    )
+
+
+class Availability(FormModel):
+    city: str = Field(title='City', min_length=2)
+    start_date: date = Field(title='Earliest start date')
+
+
+class ApplicationForm(FormModel):
+    about_you: AboutYou = Field(title='About you')
+    resume: Resume = Field(title='Resume')
+    availability: Availability = Field(title='Availability')
+```
+
+The routes call `validate_step()` instead of `validate()`, store `result.draft`, and pass it back
+as `draft=` on both routes:
+
+```python
+import secrets
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import ApplicationForm
+
+from pydantic_schemaforms import html, render_form_html_async
+
+app = FastAPI()
+FORM = {
+    'submit_url': '/apply',
+    'layout': 'wizard',
+    'wizard_options': {'save_steps': True, 'review_step': True},
+    'include_framework_assets': True,
+    'asset_mode': 'cdn',
+}
+
+# Stand-ins for a real app's session (or database) and file store.
+DRAFTS: dict[str, dict] = {}
+FILES: dict[str, bytes] = {}
+
+
+def load_draft(request: Request) -> dict | None:
+    return DRAFTS.get(request.cookies.get('draft_id', ''))
+
+
+@app.get('/apply', response_class=HTMLResponse)
+async def show_application(request: Request):
+    return await render_form_html_async(ApplicationForm, draft=load_draft(request), **FORM)
+
+
+@app.post('/apply', response_class=HTMLResponse)
+async def apply(request: Request):
+    draft_id = request.cookies.get('draft_id') or secrets.token_urlsafe(16)
+    result = ApplicationForm.validate_step(await request.form(), draft=load_draft(request), **FORM)
+    if result.is_complete:
+        DRAFTS.pop(draft_id, None)
+        name = result.data['about_you']['full_name']
+        city = result.data['availability']['city']
+        return html(t'<p>Thanks, {name}. We will be in touch about {city}.</p>')
+    if result.is_valid:
+        for upload in result.files:
+            upload.ref = secrets.token_hex(8)
+            FILES[upload.ref] = upload.read()
+        DRAFTS[draft_id] = result.draft
+    response = HTMLResponse(await result.render_async())
+    response.set_cookie('draft_id', draft_id, httponly=True, samesite='lax')
+    return response
+```
+
 ## Settings with a code field
 
 JSON or TOML typed into a code-editor text area, checked by validators.

@@ -2237,11 +2237,11 @@ async def confirm_post(request: Request, style: str = 'bootstrap', variant: str 
 _SAVE_STEPS_COOKIE = 'sf_save_steps_draft'
 _SAVE_STEPS_KEY = secrets.token_bytes(32)
 _SAVED_UPLOADS: dict[str, bytes] = {}
-_CITY_BY_POSTCODE = {'SW': 'London', 'M': 'Manchester', 'EH': 'Edinburgh'}
+_CITY_BY_ZIP_PREFIX = {'100': 'New York', '787': 'Austin', '981': 'Seattle'}
 _SAVE_STEPS_DESCRIPTION = (
     "wizard_options={'save_steps': True}: each step is its own page and POST, checked "
     'on the server and saved before the next one shows. Leave and come back: the draft '
-    'is kept in a cookie. The postcode on step 1 fills in the city on step 3.'
+    'is kept in a cookie. The ZIP code on step 1 fills in the city on step 3.'
 )
 
 
@@ -2282,12 +2282,12 @@ def _store_save_steps_draft(response: Response, draft: dict) -> None:
 
 
 def _prefill_city(data: dict) -> None:
-    postcode = str((data.get('applicant') or {}).get('postcode') or '').upper()
+    zip_code = str((data.get('applicant') or {}).get('zip_code') or '')
     availability = data.setdefault('availability', {})
     if availability.get('city'):
         return
-    for prefix, city in _CITY_BY_POSTCODE.items():
-        if postcode.startswith(prefix):
+    for prefix, city in _CITY_BY_ZIP_PREFIX.items():
+        if zip_code.startswith(prefix):
             availability['city'] = city
             return
 
