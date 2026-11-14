@@ -103,6 +103,8 @@ class Position(FormModel):
         le=500_000,
         multiple_of=1_000,
         description='In whole thousands, such as 120000',
+        # Private: kept out of the browser's autosaved draft.
+        ui_autosave=False,
     )
 
 

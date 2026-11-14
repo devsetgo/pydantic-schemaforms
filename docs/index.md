@@ -88,6 +88,12 @@ with `render_form_html()` and `request.form`.
   `ui_cols`, keeping the data flat.
 - **Review pages for free.** `render_display()` shows validated data read-only,
   with the form's labels and sections, for confirmation pages.
+- **Long forms made easier.** A step wizard can save each step on the server,
+  end with a review step that marks what changed, and skip steps that don't
+  apply. `progress=True`, `autosave=True` and `confirm=True` add a progress
+  indicator, drafts kept in the browser and a dialog before submitting.
+  Uploads typed `UploadedFile` get their size, count and type checked on the
+  server.
 - **Bootstrap, Material Design 3 or plain HTML**, with opt-in dark mode for
   Bootstrap and Material, and assets inlined, linked from a CDN or left to your
   page.

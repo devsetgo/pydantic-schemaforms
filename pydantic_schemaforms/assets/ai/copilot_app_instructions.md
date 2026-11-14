@@ -465,6 +465,8 @@ async def step(request: Request):
   `result.data` hold a `SavedFile` (top-level; `filename`, `content_type`, `size`, `ref`) whose
   `read()` raises. Fetch the content by `ref`.
 - To prefill a later step, change `result.data` before `result.render()` and `result.draft`.
+- To edit a saved record, or open every step with starting answers, pass the values as
+  `form_data=` on the GET and as `data=` to `result.render()`; the draft's saved steps go on top.
 - Full page loads only; HTMX per step is not supported.
 
 ### Nested data and errors
@@ -613,7 +615,7 @@ def download_template() -> Response:
   `include_submit_button=False` to `render_form_html_async()` — the rendered field already
   includes its own file input and "Load CSV"/"Submit" buttons when `model_config["csv_upload"]`
   is on (the default).
-- Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
+- Table behavior is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
   `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
   `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
   (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`[]`;
@@ -1082,6 +1084,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only with `framework="material"` |
 | `layout` | `"vertical"` | See the complex forms reference |
 | `wizard_options` | `None` | With `layout="wizard"` |
+| `draft` | `None` | With `wizard_options` `save_steps`: the `result.draft` you stored, unchanged, to resume the wizard; the saved steps go on top of `form_data`. Raises `TypeError` without `save_steps` |
 | `method` | `"POST"` | The form's method |
 | `include_submit_button` | `True` | `False` when the form is submitted another way |
 | `progress` | `False` | `True`: "n of m complete" for the required fields, counted in the browser as the user types (a bar at the top; a wizard ticks finished steps in its header instead). Hidden without JavaScript. Don't build your own counter; pass it to `validate()` too |
@@ -2060,7 +2063,7 @@ email = result.data['contact']['email']
 `result.data`, saves it, or pre-fills `form_data`, and pre-fill with the same nested shape:
 `form_data={"contact": {"email": ...}}`. Saved records may need a migration or a mapping layer.
 
-### Behaviour changes worth checking after any upgrade
+### Behavior changes worth checking after any upgrade
 
 - A fresh form now starts from the field defaults; code that passed defaults in `form_data` by
   hand can drop them.

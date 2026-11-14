@@ -18,6 +18,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only with `framework="material"` |
 | `layout` | `"vertical"` | See the complex forms reference |
 | `wizard_options` | `None` | With `layout="wizard"` |
+| `draft` | `None` | With `wizard_options` `save_steps`: the `result.draft` you stored, unchanged, to resume the wizard; the saved steps go on top of `form_data`. Raises `TypeError` without `save_steps` |
 | `method` | `"POST"` | The form's method |
 | `include_submit_button` | `True` | `False` when the form is submitted another way |
 | `progress` | `False` | `True`: "n of m complete" for the required fields, counted in the browser as the user types (a bar at the top; a wizard ticks finished steps in its header instead). Hidden without JavaScript. Don't build your own counter; pass it to `validate()` too |

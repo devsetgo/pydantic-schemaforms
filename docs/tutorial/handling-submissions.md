@@ -119,7 +119,7 @@ opens, and Escape closes it. Pass the same option to `validate()` so the form
 asks again after a failed submit. Without JavaScript the form submits as usual,
 and the server's validation still applies. In a wizard only the final Submit
 asks; a wizard with a review step already shows everything before Submit, so
-the two can't be combined.
+the two can't be combined: passing both raises `ValueError`.
 
 ## Keeping unsaved answers
 

@@ -110,7 +110,7 @@ def download_template() -> Response:
   `include_submit_button=False` to `render_form_html_async()` — the rendered field already
   includes its own file input and "Load CSV"/"Submit" buttons when `model_config["csv_upload"]`
   is on (the default).
-- Table behaviour is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
+- Table behavior is `model_config` on the `DataTableLayout` subclass: `csv_upload` (default
   `True`; `False` drops the file input and Load/Submit buttons for a browse-only table),
   `editable` (default `True`; see the `"reload"` action below), `search` (`True`), `paging`
   (`True`), `page_length` (`10`), `length_menu` (`[10, 25, 50, 100]`), `buttons` (`[]`;

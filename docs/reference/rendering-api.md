@@ -22,13 +22,13 @@ inputs need. It is a fragment for your page, not a whole page.
 | `material_variant` | `None` | `"outlined"` (the default look) or `"filled"`; only affects `framework="material"`. See [Material Design 3](../advanced/material.md) |
 | `layout` | `"vertical"` | See [Layouts](layouts.md) |
 | `wizard_options` | `None` | See [Layouts](layouts.md#wizard_options) |
-| `draft` | `None` | With `wizard_options={"save_steps": True}`: the saved `result.draft`, to resume a wizard. See [Layouts](layouts.md#saving-each-step) |
+| `draft` | `None` | With `wizard_options={"save_steps": True}`: the saved `result.draft`, to resume a wizard. With `form_data=` too, the saved steps go on top of those starting values. See [Layouts](layouts.md#saving-each-step) |
 | `method` | `"POST"` | The form's `method` |
 | `include_submit_button` | `True` | `False` leaves the button out, for a form you submit some other way |
 | `progress` | `False` | `True` shows how many required fields are filled in, as the user types: a bar at the top, or ticks in a wizard's step header. See [Showing progress](../tutorial/layouts.md#showing-progress) |
 | `autosave` | `False` | `True` saves what's typed to the browser's `localStorage` and restores it after a reload, with a notice to discard it. Drafts are unencrypted on the device. See [Keeping unsaved answers](../tutorial/handling-submissions.md#keeping-unsaved-answers) |
 | `warn_unsaved` | `False` | `True` makes the browser ask before leaving the page with changes that weren't submitted |
-| `confirm` | `None` | `True`, or a dict of `title`, `message`, `confirm_label` and `cancel_label` (any other key raises `ValueError`): a dialog asks before the form submits. See [Asking before submitting](../tutorial/handling-submissions.md#asking-before-submitting) |
+| `confirm` | `None` | `True`, or a dict of `title`, `message`, `confirm_label` and `cancel_label` (any other key raises `ValueError`): a dialog asks before the form submits. Combined with a wizard `review_step` it raises `ValueError`. See [Asking before submitting](../tutorial/handling-submissions.md#asking-before-submitting) |
 | `csrf_mode` | `"off"` | `"required-provider"` adds a hidden CSRF field; see [CSRF Protection](../tutorial/csrf.md) |
 | `csrf_token_provider` | `None` | The token, or a function returning it |
 | `csrf_field_name` | `"csrf_token"` | Name of the hidden CSRF field |

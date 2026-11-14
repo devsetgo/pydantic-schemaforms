@@ -12,7 +12,7 @@ the Pydantic constraints.
 | `title="..."` | The label. Without it, the field name is used: `team_size` becomes "Team Size". |
 | `description="..."` | Help text under the input. Also appears in the JSON Schema. |
 | `ui_help_text="..."` | Help text for the form only; shown instead of `description` |
-| `ui_placeholder="..."` | Grey hint text inside an empty input |
+| `ui_placeholder="..."` | Gray hint text inside an empty input |
 
 ## Choosing the input
 
@@ -22,12 +22,12 @@ the Pydantic constraints.
 | `input_type="..."`, `ui_widget="..."` | Same as `ui_element`. |
 | `ui_options={...}` | Settings for that input, such as `rows`, `choices` or `language`. Keys an input doesn't use become HTML attributes on it, for example `{"autocomplete": "username"}`. |
 
-## Behaviour
+## Behavior
 
 | Option | Effect |
 |---|---|
 | `ui_autofocus=True` | The cursor starts in this field |
-| `ui_disabled=True` | The input is greyed out. Browsers don't submit disabled inputs, so the field gets its default when validated. |
+| `ui_disabled=True` | The input is grayed out. Browsers don't submit disabled inputs, so the field gets its default when validated. |
 | `ui_readonly=True` | The input can't be changed but is submitted |
 | `ui_hidden=True` | Rendered as `<input type="hidden">`, same as `ui_element="hidden"` |
 | `ui_show_when={...}` | Hide this field until another field has a given value; see [Show a field only when it applies](../tutorial/fields.md#show-a-field-only-when-it-applies) |

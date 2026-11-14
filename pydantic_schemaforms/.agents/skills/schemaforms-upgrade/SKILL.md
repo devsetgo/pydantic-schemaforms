@@ -170,7 +170,7 @@ email = result.data['contact']['email']
 `result.data`, saves it, or pre-fills `form_data`, and pre-fill with the same nested shape:
 `form_data={"contact": {"email": ...}}`. Saved records may need a migration or a mapping layer.
 
-## Behaviour changes worth checking after any upgrade
+## Behavior changes worth checking after any upgrade
 
 - A fresh form now starts from the field defaults; code that passed defaults in `form_data` by
   hand can drop them.

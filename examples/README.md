@@ -50,8 +50,15 @@ What it demonstrates:
 
 `/layouts` shows the same composed form under every presentation: append
 `?layout=vertical`, `tabbed`, `side-by-side`, `accordion`, or `wizard`. For the
-wizard, `&linear=false`, `&progress=false`, and `&labels=true` exercise every
-`wizard_options` key. The guide is `docs/tutorial/layouts.md`.
+wizard, `&linear=false`, `&progress=false`, `&labels=true` and `&review=true`
+exercise the `wizard_options` keys, and `&count=true` (`progress=True`) and
+`&autosave=true&warn=true` the form options. `/layouts/save-steps` shows
+`save_steps`, and `/confirm` shows `confirm=`. The guide is
+`docs/tutorial/layouts.md`.
+
+`/wizards` lists eight realistic wizard examples (`examples/wizard_examples.py`,
+plus `examples/job_application_example.py` for the job application); see
+`docs/recipes/wizard-examples.md`.
 
 This module is imported by the FastAPI example to generate rich nested sample payloads.
 

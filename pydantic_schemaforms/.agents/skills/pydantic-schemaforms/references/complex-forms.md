@@ -233,6 +233,8 @@ async def step(request: Request):
   `result.data` hold a `SavedFile` (top-level; `filename`, `content_type`, `size`, `ref`) whose
   `read()` raises. Fetch the content by `ref`.
 - To prefill a later step, change `result.data` before `result.render()` and `result.draft`.
+- To edit a saved record, or open every step with starting answers, pass the values as
+  `form_data=` on the GET and as `data=` to `result.render()`; the draft's saved steps go on top.
 - Full page loads only; HTMX per step is not supported.
 
 ## Nested data and errors

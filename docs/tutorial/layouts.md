@@ -150,6 +150,10 @@ When the wizard is rendered with existing data, as an edit form is, the review
 shows each changed answer as **old → new**, so users see what they changed
 before they submit. Nothing to set up: pass the data as usual.
 
+For eight complete wizards, each showing a different mix of these options, see
+[Wizard Examples](../recipes/wizard-examples.md); they run at `/wizards` in the
+example app.
+
 ## Showing progress
 
 `progress=True` shows how much of a long form is left: how many of its required
