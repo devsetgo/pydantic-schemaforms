@@ -16,11 +16,11 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
     <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', path='favicon.png') }}">
-    <script defer data-domain="pydantic-schemaforms.devsetgo.com" src="https://plausible.devsetgo.com/js/script.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" defer data-domain="pydantic-schemaforms.devsetgo.com" src="https://plausible.devsetgo.com/js/script.js"></script>
 
     {% block extra_head %}{% endblock %}
 
-    <style>
+    <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --demo-primary-color: #4f46e5;
             --demo-secondary-color: #7c3aed;
@@ -172,6 +172,9 @@
             --bs-btn-active-bg: #6edff6;
             --bs-btn-active-color: #000;
         }
+        .demo-icon-warning { color: #ffc107; }
+        .demo-icon-danger { color: #dc3545; }
+        .demo-hero-icon { font-size: 4rem; color: var(--demo-primary-color); }
     </style>
 
     {% block extra_styles %}{% endblock %}
@@ -187,7 +190,7 @@
         </div>
     </div>
 
-    <script src="/vendor/bootstrap.bundle.min.js"></script>
+    <script nonce="{{ request.state.csp_nonce }}" src="/vendor/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 

@@ -118,6 +118,11 @@ def Field(
         ui_group_show_when=ui_group_show_when,
     )
     check_upload_limits(ui_max_size, ui_max_files)
+    if ui_style and set('{}<') & set(ui_style):
+        raise ValueError(
+            'ui_style is a list of CSS declarations such as "font-weight: 600; color: red"; '
+            f"it can't contain {{, }} or <. Got {ui_style!r}"
+        )
     if 'ui_content_html' in kwargs:
         raise TypeError("Pass ui_content=html(t'...') instead of ui_content_html")
     if ui_element == 'content':

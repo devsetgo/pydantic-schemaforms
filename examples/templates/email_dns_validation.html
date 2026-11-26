@@ -1,7 +1,7 @@
 {% extends "form.html" %}
 
 {% block extra_styles %}
-<style>
+<style nonce="{{ request.state.csp_nonce }}">
     .validation-feedback {
         font-size: 0.9em;
         min-height: 1.4em;
@@ -112,6 +112,8 @@ class SignupForm(FormModel):
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="/vendor/htmx.min.js"></script>
+{# HTMX re-creates the <script>s in a swapped fragment; it runs them only with the page's nonce. #}
+<meta name="htmx-config" content='{"inlineScriptNonce": "{{ request.state.csp_nonce }}", "inlineStyleNonce": "{{ request.state.csp_nonce }}"}'>
+<script nonce="{{ request.state.csp_nonce }}" src="/vendor/htmx.min.js"></script>
 {{ validator_script | safe }}
 {% endblock %}

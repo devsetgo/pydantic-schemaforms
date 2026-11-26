@@ -3,7 +3,7 @@
 {% block title %}Pydantic Forms Demo{% endblock %}
 
 {% block extra_head %}
-<style>
+<style nonce="{{ request.state.csp_nonce }}">
     body .hero-section {
         background: linear-gradient(135deg, #050505, #111827);
         padding: 3.5rem 2.5rem;
@@ -914,7 +914,7 @@
 </div>
 
 <!-- Add interactive animations -->
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
         const cards = document.querySelectorAll('.demo-card');
 

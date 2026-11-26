@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticSerializationError, PydanticUndefined, to_jsonable_python
 
-from .csp import csp_nonces, script_tag, style_tag
+from .csp import app_style_scope, app_styles_tag, csp_nonces, script_tag, style_tag
 from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
@@ -573,8 +573,7 @@ class EnhancedFormRenderer:
             **kwargs,
         )
 
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, render_callable)
+        return await asyncio.to_thread(render_callable)
 
     @staticmethod
     def _model_defaults(model_cls: type[BaseModel]) -> dict[str, Any]:
@@ -1048,7 +1047,7 @@ def render_form_html(
         asset_mode=asset_mode,
         material_variant=kwargs.pop('material_variant', None),
     )
-    with csp_nonces(script_nonce, style_nonce):
+    with csp_nonces(script_nonce, style_nonce), app_style_scope() as app_styles:
         html = renderer.render_form_from_model(
             form_model_cls,
             data=form_data,
@@ -1060,6 +1059,7 @@ def render_form_html(
             enable_logging=enable_logging,
             **kwargs,
         )
+        html = app_styles_tag(app_styles) + html
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
 
@@ -1089,7 +1089,7 @@ def render_display_html(
         material_variant=material_variant,
     )
     metadata = build_schema_metadata(form_model_cls)
-    with csp_nonces(script_nonce, style_nonce):
+    with csp_nonces(script_nonce, style_nonce), app_style_scope() as app_styles:
         output = render_display(
             renderer,
             metadata,
@@ -1098,6 +1098,7 @@ def render_display_html(
             general_title=_general_group_title(form_model_cls, metadata),
             edit_urls=edit_urls,
         )
+        output = app_styles_tag(app_styles) + output
     return wrap_with_schemaforms_markers(output, enabled=include_html_markers)
 
 
@@ -1115,7 +1116,7 @@ async def render_form_html_async(
     **kwargs: Any,
 ) -> str:
     """Same as render_form_html(), but runs it in the default executor via
-    `loop.run_in_executor` so it doesn't block the event loop -- rendering
+    `asyncio.to_thread` so it doesn't block the event loop -- rendering
     itself is synchronous CPU-bound work, not async I/O."""
 
     # Ensure these knobs work consistently in async mode too.
@@ -1141,9 +1142,4 @@ async def render_form_html_async(
         **kwargs,
     )
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.get_event_loop()
-
-    return await loop.run_in_executor(None, render_callable)
+    return await asyncio.to_thread(render_callable)

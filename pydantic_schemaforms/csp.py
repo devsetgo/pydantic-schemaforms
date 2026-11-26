@@ -3,13 +3,14 @@
 Every such tag is built by ``script_tag``, ``script_src_tag`` or ``style_tag``,
 which add ``nonce="..."`` while a ``csp_nonces()`` block is active. The render
 entry points open that block from their ``script_nonce=``/``style_nonce=``
-arguments. Tags an app writes itself, such as a ``<script>`` inside
+arguments; an app can instead open it once per request in a middleware. Tags an app writes itself, such as a ``<script>`` inside
 ``content_html``, are never given the nonce, so a policy still blocks a script
 that was injected there.
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -18,6 +19,7 @@ from contextvars import ContextVar, Token
 from .tstring import SafeHTML, html
 
 __all__ = [
+    'app_style_scope',
     'csp_nonces',
     'script_src_tag',
     'script_tag',
@@ -32,6 +34,9 @@ _SCRIPT_RE = re.compile(r'<script\b.*?</script>', re.DOTALL | re.IGNORECASE)
 
 _script_nonce: ContextVar[str | None] = ContextVar('schemaforms_script_nonce', default=None)
 _style_nonce: ContextVar[str | None] = ContextVar('schemaforms_style_nonce', default=None)
+# Rules for app-supplied styles collected during one render, keyed by data-schemaforms-style value.
+_app_styles: ContextVar[dict[str, str] | None] = ContextVar('schemaforms_app_styles', default=None)
+_UNSAFE_STYLE_CHARS = frozenset('{}<')
 
 
 def check_nonce(value: object, name: str) -> str | None:
@@ -112,8 +117,56 @@ def style_attr(value: str | None) -> SafeHTML:
 
     A strict ``style-src`` blocks any ``style`` attribute, even an empty one, so the
     library writes none of its own and leaves this one out when there is no value.
+    While a render has a style nonce, the value becomes a rule in that render's
+    nonced stylesheet instead, matched by a ``data-schemaforms-style`` attribute, so an
+    app's ``ui_style`` still applies under such a policy.
     """
 
     if value is None or not str(value).strip():
         return SafeHTML('')
-    return html(t' style="{str(value)}"')
+    text = str(value)
+    rules = _app_styles.get()
+    if rules is None or _style_nonce.get() is None:
+        return html(t' style="{text}"')
+    if _UNSAFE_STYLE_CHARS & set(text):
+        raise ValueError(
+            f"An inline style rendered with a style nonce can't contain {{, }} or <; got {text!r}"
+        )
+    key = hashlib.sha256(text.encode()).hexdigest()[:12]
+    declarations = (part.strip() for part in text.split(';'))
+    rules[key] = '; '.join(
+        part if part.endswith('!important') else f'{part} !important'
+        for part in declarations
+        if part
+    )
+    return html(t' data-schemaforms-style="{key}"')
+
+
+@contextmanager
+def app_style_scope() -> Iterator[dict[str, str]]:
+    """Collect the app styles ``style_attr`` turns into rules during one render.
+
+    The caller adds ``app_styles_tag(rules)`` to its output. A nested scope
+    yields nothing to write: its styles go to the outer scope, written once there.
+    """
+
+    if _app_styles.get() is not None:
+        yield {}
+        return
+    rules: dict[str, str] = {}
+    token = _app_styles.set(rules)
+    try:
+        yield rules
+    finally:
+        _app_styles.reset(token)
+
+
+def app_styles_tag(rules: dict[str, str]) -> str:
+    """The nonced ``<style>`` for *rules* from ``app_style_scope``, or '' when there are none."""
+
+    if not rules:
+        return ''
+    css = ''.join(
+        f'[data-schemaforms-style="{key}"] {{ {body}; }}\n' for key, body in rules.items()
+    )
+    return style_tag('\n' + css, 'data-schemaforms-app-styles') + '\n'

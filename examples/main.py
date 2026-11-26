@@ -25,7 +25,12 @@ from starlette.middleware.sessions import SessionMiddleware
 # Add the parent directory to the path to import our library
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from examples.fastapi_routes import PreferredStyleMiddleware, RequestTimingMiddleware, router
+from examples.fastapi_routes import (
+    ContentSecurityPolicyMiddleware,
+    PreferredStyleMiddleware,
+    RequestTimingMiddleware,
+    router,
+)
 from examples.datatable_import_example import router as datatable_router
 from examples.menu_order_example import router as menu_order_router
 from examples.wizard_examples import router as wizards_router
@@ -113,6 +118,8 @@ app = FastAPI(
     openapi_tags=_openapi_tags,
 )
 
+# Innermost, so every route renders inside its per-request nonce.
+app.add_middleware(ContentSecurityPolicyMiddleware)
 app.add_middleware(PreferredStyleMiddleware)
 app.add_middleware(
     SessionMiddleware,

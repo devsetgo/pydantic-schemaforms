@@ -1,5 +1,5 @@
 {# The site header both page shells share: resource links, theme, style and variant. #}
-<style>
+<style nonce="{{ request.state.csp_nonce }}">
         a.site-brand {
             display: inline-flex;
             align-items: center;
@@ -132,7 +132,7 @@
         .site-brand-subtitle { display: block; }
 </style>
 {% set current_style = request.query_params.get('style') or framework_type or 'bootstrap' %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     (function () {
         var theme = null;
         try { theme = localStorage.getItem('sf-theme'); } catch (error) { /* storage blocked */ }
@@ -185,7 +185,7 @@
         </a>
     </div></div>
 {% endif %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
     (function () {
         var root = document.documentElement;
         var params = new URLSearchParams(location.search);

@@ -28,12 +28,7 @@ _RECORDER = (
 NONCES = {'script_nonce': NONCE, 'style_nonce': NONCE}
 
 
-_APP_STYLE = ' style="font-weight: 600"'
-
-
 def _serve(page: Page, body: str) -> list[str]:
-    # The gallery's ui_style demo is an app's own style, which a strict policy rightly blocks.
-    body = body.replace(_APP_STYLE, '')
     document = (
         '<!doctype html><html><head><meta charset="utf-8">'
         f'<script nonce="{NONCE}">{_RECORDER}</script></head><body>{body}</body></html>'
@@ -102,3 +97,11 @@ def test_tabs_and_accordions_still_switch_under_the_policy(page: Page, framework
     control.click()
     expect(page.locator(f'[id="{control.get_attribute("aria-controls")}"]')).to_be_visible()
     assert page.evaluate('window.cspViolations') == []
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+def test_an_app_ui_style_still_applies_under_the_policy(page: Page, framework: str) -> None:
+    violations = _serve(page, _RENDERS['gallery'](framework))
+    field = page.locator('[name="field_options.styled_field"]')
+    expect(field).to_have_css('font-weight', '600')
+    assert violations == []

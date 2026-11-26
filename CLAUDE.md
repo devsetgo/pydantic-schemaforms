@@ -229,6 +229,29 @@ def _my_wrapper(*, content: str = '') -> SafeHTML:
     return html(t'<section>{_content}</section>')
 ```
 
+### Content-Security-Policy: no inline code the library didn't nonce
+
+Forms must run under `script-src 'nonce-…'; style-src 'nonce-…'` with nothing
+blocked (`tests/playwright/test_csp_pages.py`, and the example app is served
+under that policy by `ContentSecurityPolicyMiddleware`).
+
+1. Every `<script>`/`<style>` in `pydantic_schemaforms/` is built by
+   `csp.script_tag`/`script_src_tag`/`style_tag`, called at render time (not
+   into a module constant or an `lru_cache`), so it takes the nonce.
+   `tests/test_csp.py` fails on a `<script`/`<style` literal anywhere else.
+2. No inline event handlers (`onclick=`): give the element a `data-sf-*`
+   attribute and bind one delegated listener in the widget's script.
+3. No `style="..."` attributes, not even empty ones: library styling goes in a
+   class rule (the base stylesheet in `rendering/theme_assets.py` or the
+   widget's own), show/hide state is the `hidden` attribute, and an
+   app-supplied style (`ui_style`, a layout's `style=`) goes through
+   `csp.style_attr`. `tests/test_csp.py` fails on a `style=` literal.
+4. No `eval`, `new Function` or `setAttribute('style', ...)` in library JS;
+   `el.style.x = ...` is fine.
+5. Example pages follow the same policy: their own tags take
+   `nonce="{{ request.state.csp_nonce }}"`, and a script rendered at import
+   gets no nonce, so render it per request.
+
 ## Composite layout controls — reuse this pattern, don't invent a new one
 
 A "composite" control renders something bigger than a single input — a

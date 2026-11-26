@@ -6,14 +6,14 @@
         <div class="demo-card">
             <div class="form-header text-center">
                 <h1 class="mb-3">
-                    <i class="bi bi-exclamation-circle-fill me-2" style="color: #dc3545;"></i>
+                    <i class="bi bi-exclamation-circle-fill me-2 demo-icon-danger"></i>
                     500 - Server Error
                 </h1>
                 <p class="mb-0">An internal server error has occurred.</p>
             </div>
             <div class="p-4 text-center">
                 <div class="mb-4">
-                    <i class="bi bi-tools" style="font-size: 4rem; color: var(--demo-primary-color);"></i>
+                    <i class="bi bi-tools demo-hero-icon"></i>
                 </div>
                 <p class="lead mb-4">
                     Something went wrong on our end. Our team has been notified and is working to fix the issue.
@@ -27,7 +27,7 @@
                         <i class="bi bi-house-fill me-2"></i>
                         Back to Home
                     </a>
-                    <button onclick="window.location.reload()" class="btn btn-outline-secondary">
+                    <button type="button" id="demo-reload" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-clockwise me-2"></i>
                         Refresh Page
                     </button>
@@ -42,4 +42,7 @@
         </div>
     </div>
 </div>
+<script nonce="{{ request.state.csp_nonce }}">
+document.getElementById('demo-reload').addEventListener('click', function () { window.location.reload(); });
+</script>
 {% endblock %}

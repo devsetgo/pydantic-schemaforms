@@ -162,5 +162,4 @@ async def render_form_html_async(
             **kwargs,
         )
 
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, render_callable)
+    return await asyncio.to_thread(render_callable)

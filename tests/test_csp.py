@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import re
+from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from pydantic_schemaforms import (
     ModalLayout,
     SafeHTML,
 )
-from pydantic_schemaforms.csp import csp_nonces, script_tag
+from pydantic_schemaforms.csp import app_style_scope, csp_nonces, script_tag, style_attr
 from pydantic_schemaforms.rendering.layout_engine import LAYOUTS
 
 FRAMEWORKS = ('bootstrap', 'material', 'none')
@@ -303,3 +304,53 @@ def test_rendered_output_has_no_library_style_attributes(framework: str) -> None
 
 def test_legacy_layouts_write_no_style_attribute_unless_given_one() -> None:
     assert _style_attrs(ModalLayout('m1', 'Title', 'Body').render()) == set()
+
+
+@pytest.mark.asyncio
+async def test_a_request_wide_block_reaches_sync_async_and_rerenders() -> None:
+    from pydantic_schemaforms import csp_nonces as exported
+
+    with exported(**NONCES):
+        _assert_all_nonced(LayoutDemonstrationForm.render_form(submit_url='/x', layout='tabbed'))
+        _assert_all_nonced(
+            await LayoutDemonstrationForm.render_form_async(submit_url='/x', layout='accordion')
+        )
+        result = WidgetGalleryForm.validate({}, submit_url='/x')
+        _assert_all_nonced(await result.render_with_errors_async())
+        _assert_all_nonced(WidgetGalleryForm.render_display({}))
+
+
+def _gallery_with_app_style(**options: object) -> str:
+    return WidgetGalleryForm.render_form(framework='material', submit_url='/x', **options)
+
+
+def test_an_app_style_becomes_a_nonced_rule_under_a_style_nonce() -> None:
+    markup = _gallery_with_app_style(**NONCES)
+    assert _style_attrs(markup) == set()
+    key = re.search(r'data-schemaforms-style="([0-9a-f]{12})"', markup)
+    assert key
+    block = re.search(
+        r'<style data-schemaforms-app-styles nonce="abc123DEF456">(.*?)</style>', markup, re.S
+    )
+    assert (
+        block
+        and f'[data-schemaforms-style="{key.group(1)}"] {{ font-weight: 600 !important; }}'
+        in (block.group(1))
+    )
+    assert markup.count('data-schemaforms-app-styles') == 1
+
+
+def test_an_app_style_stays_an_attribute_without_a_style_nonce() -> None:
+    markup = _gallery_with_app_style(script_nonce=NONCE)
+    assert _style_attrs(markup) == _APP_STYLES
+    assert 'data-schemaforms-style' not in markup
+
+
+@pytest.mark.parametrize('bad', ['color: red} body {color: blue', 'x: url(<a>)', '{'])
+def test_an_app_style_that_could_leave_its_rule_is_rejected(bad: str) -> None:
+    with pytest.raises(ValueError, match='ui_style'):
+        Field('', ui_style=bad)
+    with csp_nonces(style_nonce=NONCE), pytest.raises(ValueError, match='inline style'):
+        with app_style_scope():
+            style_attr(bad)
+    assert style_attr(bad) == f' style="{escape(bad)}"'

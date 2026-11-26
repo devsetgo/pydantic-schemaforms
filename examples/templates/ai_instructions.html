@@ -3,7 +3,7 @@
 {% block title %}AI Assistant Instructions{% endblock %}
 
 {% block extra_styles %}
-<style>
+<style nonce="{{ request.state.csp_nonce }}">
     .ai-instructions-content h1,
     .ai-instructions-content h2,
     .ai-instructions-content h3 {

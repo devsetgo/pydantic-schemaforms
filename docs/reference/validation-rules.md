@@ -13,6 +13,11 @@ built-in rules other than `RequiredRule` pass an empty value, so an optional
 field is only checked when it's filled in. A `CustomRule` function is called
 for empty values too.
 
+A field that's required only while another field's answer shows it doesn't
+need a rule or a `@model_validator`: add `"required": True` to its
+`ui_show_when`, and the server checks it with the same condition the page
+uses. See [Show a field only when it applies](../tutorial/fields.md#show-a-field-only-when-it-applies).
+
 ## Rule classes
 
 Every rule takes `message=` to replace its default text.
