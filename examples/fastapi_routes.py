@@ -464,7 +464,8 @@ async def vendor_bootstrap_js():
 
 
 _SELF_CONTAINED_PAGE_CSS = """
-body { max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui; }
+/* A class, not plain body: the form's inlined Bootstrap resets body's margin after this. */
+body.demo-page { max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui; }
 body code { color: #a61e4d; }
 .demo-form-box { border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa; }
 .demo-panel { margin-top: 30px; padding: 20px; border-radius: 8px; }
@@ -499,7 +500,7 @@ def render_self_contained_demo_page(
     <title>Self-Contained Form Demo</title>
     <style nonce="{nonce}">{_css}</style>
 </head>
-<body>
+<body class="demo-page">
     <h1>Self-Contained Form Demo (FastAPI)</h1>
     <p><strong>This form includes ZERO external dependencies!</strong></p>
     <p><strong>Selected Style:</strong> <code>{selected_style}</code></p>

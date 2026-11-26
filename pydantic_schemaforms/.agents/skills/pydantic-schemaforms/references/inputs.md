@@ -282,7 +282,7 @@ These are `Field()` keyword arguments, not `ui_options` keys:
 | `ui_readonly=True` | Read-only: not editable but submitted |
 | `ui_hidden=True` | Rendered as a bare hidden input (same as `ui_element="hidden"`) |
 | `ui_autofocus=True` | Focused on load (one field per page) |
-| `ui_class=` / `ui_style=` | Extra CSS class / inline style on the input |
+| `ui_class=` / `ui_style=` | Extra CSS class / inline style declarations on the input (`ui_style` can't contain `{`, `}` or `<`; it still works under a CSP style nonce) |
 | `ui_element=` (`input_type=` and `ui_widget=` are accepted aliases) | The widget; see the table above |
 | `ui_collapsible=True` / `ui_collapsed=True` | On a sub-form field: render it as a collapsible section (vertical layout), optionally starting closed; it opens itself when it holds an error |
 | `ui_step_title=` | On a sub-form field: the step label under `layout="wizard"` (falls back to `title=`) |
