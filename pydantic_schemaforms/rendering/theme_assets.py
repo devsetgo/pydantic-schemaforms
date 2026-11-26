@@ -30,6 +30,13 @@ function switchTab(tabId, buttonElement) {
     buttonElement.classList.add('active');
     buttonElement.setAttribute('aria-selected', 'true');
 }
+if (!window.schemaformsTabsBound) {
+    window.schemaformsTabsBound = true;
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-sf-toggle="tab"]');
+        if (button) { switchTab(button.getAttribute('aria-controls'), button); }
+    });
+}
 </script>
 """
 
@@ -81,6 +88,13 @@ function toggleAccordion(sectionId, buttonElement) {
         buttonElement.setAttribute('aria-expanded', 'true');
         buttonElement.classList.add('expanded');
     }
+}
+if (!window.schemaformsAccordionBound) {
+    window.schemaformsAccordionBound = true;
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-sf-toggle="accordion"]');
+        if (button) { toggleAccordion(button.getAttribute('aria-controls'), button); }
+    });
 }
 </script>
 """

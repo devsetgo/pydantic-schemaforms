@@ -532,7 +532,7 @@ class ModalLayout(BaseLayout):
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="${modal_id}-title" class="modal-title">${title}</h2>
-                <button class="modal-close" onclick="closeModal('${modal_id}')" aria-label="Close">×</button>
+                <button type="button" class="modal-close" data-sf-close-modal="${modal_id}" aria-label="Close">×</button>
             </div>
             <div class="modal-body">
                 ${content}
@@ -562,7 +562,10 @@ function closeModal(modalId) {
 }
 
 document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('modal-overlay')) {
+    const closer = e.target.closest('[data-sf-close-modal]');
+    if (closer) {
+        closeModal(closer.getAttribute('data-sf-close-modal'));
+    } else if (e.target.classList.contains('modal-overlay')) {
         closeModal(e.target.id);
     }
 });
@@ -632,8 +635,9 @@ document.addEventListener('keydown', function(e) {
         self, modal_id: str, title: str, content: str, footer: str = '', **kwargs: Any
     ) -> None:
         safe_modal_id = ''.join(c if c.isalnum() or c in '_-' else '_' for c in modal_id)
-        onclick = f"closeModal('{safe_modal_id}')"
-        default_footer = footer or html(t'<button onclick="{onclick}">Close</button>')
+        default_footer = footer or html(
+            t'<button type="button" data-sf-close-modal="{safe_modal_id}">Close</button>'
+        )
         super().__init__(
             content=content,
             modal_id=modal_id,

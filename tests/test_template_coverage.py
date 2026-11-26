@@ -75,7 +75,7 @@ class TestFormTemplatesInputs:
         out = FormTemplates.PASSWORD_INPUT.render(id='pw', name='pw')
         assert isinstance(out, SafeHTML)
         assert 'type="password"' in out
-        assert 'togglePassword' in out
+        assert 'onclick=' not in out
 
     def test_number_input(self):
         out = FormTemplates.NUMBER_INPUT.render(

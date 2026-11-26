@@ -238,6 +238,51 @@ document.addEventListener('DOMContentLoaded', function() {{
 """)
 
 
+_LOCAL_DATETIME_JS = (
+    "now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + "
+    "String(now.getDate()).padStart(2, '0') + 'T' + String(now.getHours()).padStart(2, '0') + "
+    "':' + String(now.getMinutes()).padStart(2, '0')"
+)
+
+
+def _set_now_markup(field_id: str, js_expr: str) -> SafeHTML:
+    """A "Set Now" button and the script that fills *field_id* with ``js_expr``.
+
+    One delegated click listener serves every button, so the markup carries no
+    inline handler and works under a Content-Security-Policy.
+    """
+    button_html = html(t'''
+            <button type="button" class="set-now-btn" data-sf-set-now="{field_id}">
+                Set Now
+            </button>
+            ''')
+    # JS-only below (rule 4 exception): js_expr is developer-generated JS, and
+    # the id is JSON-encoded with < > & escaped so it can't close the script.
+    js_id = (
+        json.dumps(field_id).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+    )
+    script_html = SafeHTML(f"""
+            <script>
+            (function () {{
+                var setNow = window.schemaformsSetNow;
+                if (!setNow) {{
+                    setNow = window.schemaformsSetNow = {{formats: {{}}}};
+                    document.addEventListener('click', function (event) {{
+                        var button = event.target.closest('[data-sf-set-now]');
+                        if (!button) {{ return; }}
+                        var fieldId = button.getAttribute('data-sf-set-now');
+                        var field = document.getElementById(fieldId);
+                        var format = setNow.formats[fieldId];
+                        if (field && format) {{ field.value = format(new Date()); }}
+                    }});
+                }}
+                setNow.formats[{js_id}] = function (now) {{ return {js_expr}; }};
+            }})();
+            </script>
+            """)
+    return SafeHTML(button_html + script_html)
+
+
 def _render_set_now_button(field_id: str, fmt: str) -> str:
     """Render a "Set Now" button that writes the current datetime using *fmt*.
 
@@ -249,28 +294,7 @@ def _render_set_now_button(field_id: str, fmt: str) -> str:
     if js_expr is None:
         return ''
 
-    fn_name = f'setCurrentDatetime_{re.sub(r"\W", "_", field_id, flags=re.ASCII)}'
-    onclick = f"{fn_name}('{field_id}')"
-
-    button_html = html(t'''
-            <button type="button" class="set-now-btn" onclick="{onclick}">
-                Set Now
-            </button>
-            ''')
-    # JS-only below (rule 4 exception): fn_name is a sanitized JS identifier
-    # and js_expr is developer-generated JS, not user data.
-    script_html = SafeHTML(f"""
-            <script>
-            function {fn_name}(fieldId) {{
-                const field = document.getElementById(fieldId);
-                if (field) {{
-                    const now = new Date();
-                    field.value = {js_expr};
-                }}
-            }}
-            </script>
-            """)
-    return SafeHTML(button_html + script_html)
+    return _set_now_markup(field_id, js_expr)
 
 
 # Minimal inline SVGs (Bootstrap Icons' "calendar3"/"clock" glyphs, MIT
@@ -571,30 +595,7 @@ class DatetimeInput(FormInput):
                 field_name = kwargs.get('name', '')
                 field_id = kwargs.get('id', field_name)
 
-                onclick = f"setCurrentDatetime('{field_id}')"
-                button_html = html(t'''
-                <button type="button" class="set-now-btn" onclick="{onclick}">
-                    Set Now
-                </button>
-                ''')
-                # JS-only below (rule 4 exception).
-                script_html = SafeHTML("""
-                <script>
-                function setCurrentDatetime(fieldId) {
-                    const field = document.getElementById(fieldId);
-                    if (field) {
-                        const now = new Date();
-                        const datetime = now.getFullYear() + '-' +
-                            String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                            String(now.getDate()).padStart(2, '0') + 'T' +
-                            String(now.getHours()).padStart(2, '0') + ':' +
-                            String(now.getMinutes()).padStart(2, '0');
-                        field.value = datetime;
-                    }
-                }
-                </script>
-                """)
-                set_now_button = SafeHTML(button_html + script_html)
+                set_now_button = _set_now_markup(field_id, _LOCAL_DATETIME_JS)
                 _datetime_html = SafeHTML(str(datetime_html))
                 return html(
                     t'<div class="datetime-input-group">{_datetime_html}{set_now_button}</div>'

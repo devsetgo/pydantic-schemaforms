@@ -373,7 +373,8 @@ class TestTabLayout:
         html = layout.render()
 
         assert 'switchTab' in html
-        assert 'onclick=' in html
+        assert 'data-sf-toggle="tab"' in html
+        assert 'onclick=' not in html
         assert 'role=' in html  # Accessibility
         assert 'aria-' in html  # Accessibility
 
@@ -461,7 +462,8 @@ class TestAccordionLayout:
         html = layout.render()
 
         assert 'toggleAccordion' in html
-        assert 'onclick=' in html
+        assert 'data-sf-toggle="accordion"' in html
+        assert 'onclick=' not in html
         assert 'aria-expanded' in html
 
 
@@ -509,7 +511,8 @@ class TestModalLayout:
 
         assert 'openModal' in html
         assert 'closeModal' in html
-        assert 'onclick=' in html
+        assert 'data-sf-close-modal="test-modal"' in html
+        assert 'onclick=' not in html
 
 
 class TestCardLayout:

@@ -648,9 +648,9 @@ class TestDatetimeInputsCustomFormat:
             name='dt', id='dt', datetime_format='%Y%m%d%H%M%S', with_set_now_button=True
         )
         assert 'Set Now' in html
-        assert 'setCurrentDatetime_dt(' in html
-        # Must not collide with the default (unformatted) global function name.
-        assert 'function setCurrentDatetime(' not in html
+        assert 'data-sf-set-now="dt"' in html
+        assert 'setNow.formats["dt"]' in html
+        assert 'onclick=' not in html
 
     def test_datetime_input_set_now_button_omitted_for_unsupported_format(self):
         from pydantic_schemaforms.inputs.datetime_inputs import DatetimeInput
