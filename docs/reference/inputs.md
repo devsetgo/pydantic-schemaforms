@@ -91,6 +91,12 @@ price: str = Field('', ui_element='currency',
                    ui_options={'currency_symbol': '$'})
 ```
 
+**`otp`** (also accepts: `one_time_code`) — One-time code: one box per character, filled by typing, pasting or SMS autofill. Submits one string; the length and characters are checked on the server.
+```python
+code: str = Field(..., ui_element='otp',
+                  ui_options={'length': 6, 'numeric': True})
+```
+
 ### Numeric Inputs
 
 **`number`** — Plain HTML number input.
@@ -1192,6 +1198,33 @@ Set `ui_options={"live_format": False}` to disable it. On a `Decimal`,
 `float` or `int` field, `validate()` strips the symbol and separators before
 parsing, so `$1,234.50` becomes `Decimal("1234.50")`; a `str` field keeps the
 text as typed.
+
+#### otp (alias: one_time_code)
+
+Required:
+
+- `str` (or `str | None`) field + ui_element="otp"
+
+Optional:
+
+- ui_options: length (4 to 12, default 6), numeric (default True; False also allows letters)
+
+```python
+class SignInCodeExample(FormModel):
+    code: str = Field(..., title="Verification code", ui_element="otp")
+```
+
+The field shows one box per character. Typing moves to the next box,
+Backspace on an empty box goes back, and pasting a code such as `123 456`
+fills every box. The first box has `autocomplete="one-time-code"`, so a
+phone offers the code from a text message. Without JavaScript it is one
+ordinary text box.
+
+The form submits one string. `validate()` strips spaces and dashes, then
+checks the length and characters, with the error "Enter the 6-digit code."
+under the field; a blank `str | None` field becomes `None`. The code is never
+kept in `autosave` drafts. Any other field type raises `TypeError`, because
+an `int` would drop a leading zero.
 
 #### tags
 

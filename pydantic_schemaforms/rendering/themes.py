@@ -19,7 +19,9 @@ from .field_shell import (
     FieldShellRenderer,
     MaterialFieldShell,
     field_shell_for_framework,
+    MATERIAL_STATIC_INPUTS,
     material_field_kind,
+    material_element,
 )
 from .form_style import FormStyle, get_form_style
 from .model_list_markup import ModelListItem, render_default_model_list_item
@@ -605,7 +607,7 @@ class MaterialTheme(RendererTheme):
             return 'md-select'
         if kind == 'textarea':
             return 'md-textarea'
-        if kind == 'text':
+        if kind == 'text' or material_element(ui_element) in MATERIAL_STATIC_INPUTS:
             return 'md-input'
         if kind == 'checkbox':
             return 'md-checkbox'

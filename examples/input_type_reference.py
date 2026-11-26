@@ -89,6 +89,14 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
                 "                   ui_options={'currency_symbol': '$'})",
                 aliases=('money',),
             ),
+            InputTypeEntry(
+                'otp',
+                'One-time code: one box per character, filled by typing, pasting or SMS autofill. '
+                'Submits one string; the length and characters are checked on the server.',
+                "code: str = Field(..., ui_element='otp',\n"
+                "                  ui_options={'length': 6, 'numeric': True})",
+                aliases=('one_time_code',),
+            ),
         ],
     ),
     (

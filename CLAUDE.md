@@ -115,6 +115,7 @@ pydantic_schemaforms/
   show_when.py         # ui_show_when rules: the checks, server pruning and browser script
   form_data.py         # decode_submission(): request form -> nested data
   error_tree.py        # Nested validation-error tree handed to renderers
+  field_checks.py      # Server checks a widget's ui_options imply (otp), attached in Field()
   templates.py         # FormTemplates: t-string render functions for form and layout chrome
   composite_layout.py  # CompositeLayoutModel — base for FormModel-shaped composites
   datatable_layout.py  # DataTableLayout — reference composite (CSV-import-to-table)

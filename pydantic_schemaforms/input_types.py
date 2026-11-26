@@ -20,6 +20,7 @@ TEXT_INPUTS = [
     'phone',
     'credit_card',
     'currency',
+    'otp',
 ]
 
 # Numeric input types
@@ -107,6 +108,7 @@ VALID_INPUT_TYPES_BY_PYTHON_TYPE: dict[type, set[str]] = {
         'phone',
         'credit_card',
         'currency',
+        'otp',
         'hidden',
         'color',
     },

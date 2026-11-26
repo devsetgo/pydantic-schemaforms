@@ -47,6 +47,10 @@ class LoginForm(FormModel):
     remember_me: bool = Field(False, title='Keep me signed in')
 
 
+class SignInCodeForm(FormModel):
+    code: str = Field(title='Code from your authenticator app', ui_element='otp')
+
+
 class RegistrationForm(FormModel):
     username: str = Field(
         title='Username',
