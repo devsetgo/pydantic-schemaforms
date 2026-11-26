@@ -551,6 +551,7 @@ async def home(request: Request):
         'home.html',
         {
             'request': request,
+            'title': 'Forms from Pydantic models',
             'framework': 'fastapi',
             'framework_name': 'FastAPI',
             'framework_type': 'async',

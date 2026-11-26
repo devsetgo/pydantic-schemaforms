@@ -154,12 +154,13 @@ def test_every_widget_option_is_used_by_an_example(cls: type) -> None:
 
 def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     client = TestClient(examples.main.app)
-    home = client.get('/').text
+    # Linked from the example catalog, which the sidebar and every index page show.
+    home = client.get('/examples').text.replace('&amp;', '&')
     for layout in sorted(LAYOUTS):
         response = client.get('/layouts', params={'layout': layout})
         assert response.status_code == 200, layout
         # Reachable is not enough: a reader has to be able to find it.
-        assert f'/layouts?layout={layout}' in home, f'home page has no link to layout={layout}'
+        assert f'/layouts?layout={layout}' in home, f'the catalog has no link to layout={layout}'
         assert f'layout={layout}' in response.text, f'/layouts has no switcher link to {layout}'
     wizard = client.get(
         '/layouts',
@@ -174,8 +175,7 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     for key in CONFIRM_DEFAULTS:
         assert f"'{key}'" in source, f'confirm= key {key!r} is never used'
     assert '/confirm' in home
-    # The Wizards section (#276) is linked from home. Its index links to every
-    # example and to each wizard option on its own (home stays uncluttered).
+    # The Wizards index (#276) links to every example and to each wizard option.
     from examples.wizard_examples import WIZARD_EXAMPLES
 
     assert '/wizards"' in home
@@ -582,3 +582,49 @@ def test_every_example_page_escapes_the_style_parameter(example_client: TestClie
         if '<img src=x onerror' in example_client.get(path, params={'style': payload}).text
     ]
     assert not reflected, f'These pages put the raw style parameter into their HTML: {reflected}'
+
+
+def test_every_example_page_is_in_the_catalog() -> None:
+    from examples.catalog import example_for_path
+
+    site_pages = {'/', '/examples'}
+    paths = examples.main.app.openapi()['paths']
+    orphans = [
+        path
+        for path, ops in paths.items()
+        if 'get' in ops
+        and '{' not in path
+        and 'text/html' in str(ops['get'].get('responses'))
+        and path not in site_pages
+        and example_for_path(path) is None
+    ]
+    assert not orphans, f'add these pages to examples/catalog.py: {orphans}'
+
+
+def test_every_catalog_entry_opens_in_each_of_its_styles(example_client: TestClient) -> None:
+    from examples.catalog import EXAMPLES, SECTIONS
+
+    slugs = [example.slug for example in EXAMPLES]
+    assert len(slugs) == len(set(slugs))
+    assert {example.section for example in EXAMPLES} == {section.slug for section in SECTIONS}
+    failures = []
+    for example in EXAMPLES:
+        for style in example.styles or (None,):
+            params = {'style': style} if style else {}
+            response = example_client.get(example.url, params=params)
+            if response.status_code != 200:
+                failures.append((example.slug, style, response.status_code))
+        for path in example.pages:
+            if example_client.get(path).status_code >= 500:
+                failures.append((example.slug, path))
+    assert not failures
+
+
+def test_section_pages_list_their_examples(example_client: TestClient) -> None:
+    from examples.catalog import SECTIONS, section_examples
+
+    for section in SECTIONS:
+        page = example_client.get(f'/examples/{section.slug}').text
+        for example in section_examples(section.slug):
+            assert example.title in page.replace('&#39;', "'"), (section.slug, example.slug)
+    assert example_client.get('/examples/nope').status_code == 404

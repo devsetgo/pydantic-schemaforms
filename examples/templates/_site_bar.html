@@ -1,52 +1,16 @@
 {# The site header both page shells share: resource links, theme, style and variant. #}
 <style nonce="{{ request.state.csp_nonce }}">
-        a.site-brand {
+        .top-resource-bar a.site-brand {
             display: inline-flex;
             align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
+            gap: 0.5rem;
+            margin-right: 1rem;
             color: #ffffff;
-        }
-
-        a.site-brand:hover {
-            color: #ffffff;
-        }
-
-        .site-brand-logo {
-            height: 42px;
-            width: auto;
-            display: block;
-        }
-
-        .site-brand-mark {
-            width: 36px;
-            height: 36px;
-            border-radius: 0.75rem;
-            display: none;
-        }
-
-        .site-brand-copy {
-            line-height: 1.1;
-        }
-
-        .site-brand-title {
-            font-size: 0.95rem;
             font-weight: 700;
-            margin: 0;
+            font-size: 0.9rem;
         }
 
-        .site-brand-subtitle {
-            font-size: 0.8rem;
-            color: #d1d5db;
-            margin: 0;
-        }
-
-        .site-brand-shell {
-            background: #000000;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem;
-        }
+        .site-brand img { width: 22px; height: 22px; border-radius: 5px; }
 
         .top-resource-bar {
             background: #0d0d0d;
@@ -79,24 +43,14 @@
             font-size: 0.72rem;
         }
 
-        @media (max-width: 576px) {
-            .site-brand-logo {
-                display: none;
-            }
-
-            .site-brand-mark {
-                display: block;
-            }
-        }
-
         .top-resource-bar__inner {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 4px;
-            max-width: 1140px;
+            max-width: 1440px;
             margin: 0 auto;
-            padding: 0 12px;
+            padding: 0 1rem;
             box-sizing: border-box;
         }
 
@@ -128,8 +82,6 @@
         .sf-bar__btn:hover { background: #1f2937; color: #ffffff; }
         .sf-bar__btn:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
         .sf-bar__btn[aria-current="true"] { background: #e5e7eb; color: #0d0d0d; }
-        .site-brand-header { max-width: 1116px; margin: 24px auto 0; padding: 0 12px; box-sizing: border-box; }
-        .site-brand-subtitle { display: block; }
 </style>
 {% set current_style = request.query_params.get('style') or framework_type or 'bootstrap' %}
 <script nonce="{{ request.state.csp_nonce }}">
@@ -144,6 +96,10 @@
 </script>
 <div class="top-resource-bar">
     <div class="top-resource-bar__inner">
+        <a class="site-brand" href="/">
+            <img src="{{ url_for('static', path='favicon.png') }}" alt="">
+            Pydantic SchemaForms
+        </a>
         <a href="https://devsetgo.github.io/pydantic-schemaforms/" target="_blank" rel="noopener">Documentation</a>
         <span class="sep">|</span>
         <a href="https://github.com/devsetgo/pydantic-schemaforms" target="_blank" rel="noopener">Repository</a>
@@ -171,20 +127,6 @@
         </div>
     </div>
 </div>
-    {% if not request or request.url.path != '/' %}
-    <div class="site-brand-header"><div class="site-brand-shell">
-        <a class="site-brand" href="/">
-            <img class="site-brand-logo" src="{{ url_for('static', path='pydantic-schemaform-logo.png') }}"
-                alt="">
-            <img class="site-brand-mark" src="{{ url_for('static', path='favicon.png') }}"
-                alt="">
-            <span class="site-brand-copy">
-                <span class="site-brand-title d-block">Pydantic Schemaform</span>
-                <span class="site-brand-subtitle d-block">Pydantic models to polished forms</span>
-            </span>
-        </a>
-    </div></div>
-{% endif %}
 <script nonce="{{ request.state.csp_nonce }}">
     (function () {
         var root = document.documentElement;

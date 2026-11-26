@@ -183,10 +183,13 @@
 <body>
     {% include "_site_bar.html" %}
 
-    <div class="{% if request and 'organization' in request.path %}container-fluid{% else %}container{% endif %} py-4">
-        {% block content %}{% endblock %}
-        <div class="demo-version-footer">
-            Demo App: v{{ container_version }}
+    <div class="site-layout">
+        {% include "_sidebar.html" %}
+        <div class="site-main py-4">
+            {% block content %}{% endblock %}
+            <div class="demo-version-footer">
+                Demo App: v{{ container_version }}
+            </div>
         </div>
     </div>
 

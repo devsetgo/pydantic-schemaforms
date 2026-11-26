@@ -1,0 +1,99 @@
+{# The docs-style examples menu both page shells share, built from examples/catalog.py. #}
+{% set current = current_example(request.url.path) %}
+{% set current_section = current.section if current else (request.path_params.get('section') if request.path_params else None) %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .site-layout {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    .site-layout > .site-main { flex: 1 1 auto; min-width: 0; }
+    .site-nav {
+        --site-nav-fg: var(--md-sys-color-on-surface, var(--bs-body-color, #1f2937));
+        --site-nav-muted: var(--md-sys-color-on-surface-variant, var(--bs-secondary-color, #6b7280));
+        --site-nav-accent: var(--md-sys-color-primary, #4f46e5);
+        --site-nav-current-bg: var(--md-sys-color-secondary-container, rgba(79, 70, 229, 0.1));
+        --site-nav-line: var(--md-sys-color-outline-variant, var(--bs-border-color, #e5e7eb));
+        flex: 0 0 260px;
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        margin-top: 1.5rem;
+        padding: 0.5rem 0.25rem 1rem 0;
+        font-size: 0.9rem;
+        line-height: 1.35;
+        color: var(--site-nav-fg);
+    }
+    /* Bootstrap's dark scheme has no Material tokens, so it gets a lighter accent here. */
+    [data-bs-theme="dark"] body:not(.md-shell) .site-nav {
+        --site-nav-accent: #a5b4fc;
+        --site-nav-current-bg: rgba(165, 180, 252, 0.16);
+    }
+    .site-nav > summary { display: none; }
+    .site-nav a {
+        display: block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        color: var(--site-nav-fg);
+        text-decoration: none;
+    }
+    .site-nav a:hover { background: var(--site-nav-current-bg); }
+    .site-nav a[aria-current="page"] {
+        background: var(--site-nav-current-bg);
+        color: var(--site-nav-accent);
+        font-weight: 600;
+    }
+    .site-nav__top { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--site-nav-line); }
+    .site-nav__section > summary {
+        cursor: pointer;
+        padding: 0.35rem 0.6rem;
+        font-weight: 600;
+        list-style-position: inside;
+    }
+    .site-nav__section ul { list-style: none; margin: 0 0 0.5rem; padding: 0 0 0 0.75rem; border-left: 1px solid var(--site-nav-line); margin-left: 0.9rem; }
+    .site-nav__section .site-nav__overview { color: var(--site-nav-muted); font-size: 0.85rem; }
+    @media (max-width: 991.98px) {
+        .site-layout { display: block; padding: 0 0.75rem; }
+        .site-nav {
+            position: static;
+            max-height: none;
+            margin: 1rem 0 0;
+            padding: 0;
+            border: 1px solid var(--site-nav-line);
+            border-radius: 8px;
+        }
+        .site-nav > summary { display: block; cursor: pointer; padding: 0.6rem 0.9rem; font-weight: 600; }
+        .site-nav[open] > nav { padding: 0 0.5rem 0.75rem; }
+    }
+</style>
+<details class="site-nav" open data-site-nav>
+    <summary>Examples menu</summary>
+    <nav aria-label="Examples">
+        <div class="site-nav__top">
+            <a href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}>Overview</a>
+            <a href="/examples" {% if request.url.path == '/examples' %}aria-current="page"{% endif %}>All examples</a>
+        </div>
+        {% for section in catalog_sections %}
+        <details class="site-nav__section" {% if section.slug == current_section %}open{% endif %}>
+            <summary>{{ section.title }}</summary>
+            <ul>
+                <li><a class="site-nav__overview" href="/examples/{{ section.slug }}"
+                       {% if request.url.path == '/examples/' ~ section.slug %}aria-current="page"{% endif %}>Section overview</a></li>
+                {% for example in section_examples(section.slug) %}
+                <li><a href="{{ example.url }}" {% if current and current.slug == example.slug %}aria-current="page"{% endif %}>{{ example.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endfor %}
+    </nav>
+</details>
+<script nonce="{{ request.state.csp_nonce }}">
+    (function () {
+        var nav = document.querySelector('[data-site-nav]');
+        if (nav && window.matchMedia('(max-width: 991.98px)').matches) { nav.open = false; }
+    })();
+</script>

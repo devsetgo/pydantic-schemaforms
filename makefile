@@ -25,7 +25,7 @@ DEMO_APP_DIR = demo_app
 DOCKER_IMAGE ?= mikeryan56/pydantic-schemaforms-demo
 DOCKER_TAG := $(shell TZ=America/New_York date +%y.%m.%d.%H%M)
 
-.PHONY: help install test tests cleanup ruff isort autoflake \
+.PHONY: help install test tests cleanup ruff isort autoflake example-screenshots \
 	ex-run ex-test kill \
 	ai-instructions docs-build docs-deploy \
 	vendor-update-htmx vendor-update-imask vendor-update-bootstrap vendor-verify \
@@ -94,6 +94,9 @@ kill: ## Kill any process listening on PORT
 
 ai-instructions: ## Regenerate the packaged AI-assistant instruction files
 	$(PYTHON) scripts/build_ai_instructions.py
+
+example-screenshots: ## Regenerate the screenshots on the demo site's home page
+	$(PYTHON) scripts/example_screenshots.py
 
 docs-build: ## Regenerate generated docs and build the site locally
 	$(PYTHON) scripts/changelog.py

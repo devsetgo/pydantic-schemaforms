@@ -398,10 +398,17 @@ A feature without a working example is not done.
   `LayoutDemonstrationForm`. A new layout value, or a new option such as
   `wizard_options=`, gets wired into that page's switcher and a link in the
   same change -- a page you can only reach by typing a query string is not
-  demonstrated. Layouts are linked from the home page
-  (`examples/templates/home.html`); wizard options from the `/wizards` index
-  (`examples/wizard_examples.py`), which the home page's Step Wizard card
-  links to, so the home page stays uncluttered.
+  demonstrated. Wizard options are linked from the `/wizards` index
+  (`examples/wizard_examples.py`).
+- **The catalog:** every example page has one entry in `examples/catalog.py`
+  (section, plain-English summary, feature tags, URL, styles, docs link). The
+  home page's section tiles, the sidebar, the section pages and "All examples"
+  are built from it, so a new example needs its route and one entry, never a
+  hand-written card or link. `test_every_example_page_is_in_the_catalog` fails
+  on a page with no entry, and a new kind of example gets a new section there.
+  Layout values are linked as the Layouts entry's `variants`. The home page's
+  screenshots come from `scripts/example_screenshots.py`; rerun it after a
+  visual change to the forms they show.
 - **Inputs:** every registered `ui_element` (`get_input_component_map()`,
   including aliases), with every one of its widget options, is rendered on
   the widget gallery (`/gallery`, `WidgetGalleryForm` in

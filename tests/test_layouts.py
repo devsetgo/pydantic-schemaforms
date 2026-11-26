@@ -1348,6 +1348,9 @@ def _patch_templates_to_repo_root() -> None:
 
     base_dir = Path(fastapi_routes.__file__).resolve().parent
     fastapi_routes.templates = Jinja2Templates(directory=base_dir / 'templates')
+    from examples.site_pages import install_template_globals
+
+    install_template_globals(fastapi_routes.templates)
 
 
 def _client() -> TestClient:
