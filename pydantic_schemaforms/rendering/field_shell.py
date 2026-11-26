@@ -62,7 +62,8 @@ def build_label(
             icon_class = icon if icon.startswith('bi bi-') else f'bi bi-{icon}'  # NOSONAR
             icon_html = html(t'<i class="{icon_class}"></i> ')
         elif framework == 'material':
-            icon_html = html(t'<i class="material-icons">{icon}</i> ')
+            _icon = _md_icon(icon)
+            icon_html = html(t'{_icon} ') if _icon else SafeHTML('')
         elif framework == 'fontawesome':
             icon_class = icon if icon.startswith('fas fa-') else f'fas fa-{icon}'
             icon_html = html(t'<i class="{icon_class}"></i> ')

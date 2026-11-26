@@ -1,8 +1,7 @@
 """Coverage tests for FormTemplates, form_style templates, and layout_base branches.
 
 These tests exercise rendering paths that are not covered by integration-level
-tests — primarily the Bootstrap/utility FormTemplates that no renderer currently
-calls, the Plain/Material form-style templates, and the callable/BaseLayout
+tests — primarily the Plain/Material form-style templates, and the callable/BaseLayout
 content branches in layout_base.BaseLayout.
 """
 
@@ -42,99 +41,8 @@ from pydantic_schemaforms.templates import FormTemplates
 from pydantic_schemaforms.tstring import SafeHTML
 
 
-# ---------------------------------------------------------------------------
-# FormTemplates — Bootstrap / utility input templates
-# ---------------------------------------------------------------------------
-
-
-class TestFormTemplatesInputs:
-    """Exercise the bootstrap-style input render functions."""
-
-    def test_text_input(self):
-        out = FormTemplates.TEXT_INPUT.render(
-            id='username', name='username', value='alice', placeholder='Enter name'
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'type="text"' in out
-        assert 'id="username"' in out
-        assert 'alice' in out
-        assert 'Enter name' in out
-
-    def test_text_input_xss_escaping(self):
-        out = FormTemplates.TEXT_INPUT.render(name='f', id='f', value='<script>x</script>')
-        assert '&lt;script&gt;' in out
-        assert '<script>' not in out
-
-    def test_email_input(self):
-        out = FormTemplates.EMAIL_INPUT.render(id='email', name='email', value='a@b.com')
-        assert isinstance(out, SafeHTML)
-        assert 'type="email"' in out
-        assert 'a@b.com' in out
-
-    def test_password_input(self):
-        out = FormTemplates.PASSWORD_INPUT.render(id='pw', name='pw')
-        assert isinstance(out, SafeHTML)
-        assert 'type="password"' in out
-        assert 'onclick=' not in out
-
-    def test_number_input(self):
-        out = FormTemplates.NUMBER_INPUT.render(
-            id='age', name='age', value='25', min_value='0', max_value='120', step='1'
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'type="number"' in out
-        assert 'min="0"' in out
-        assert 'max="120"' in out
-
-    def test_select_input(self):
-        options_html = SafeHTML('<option value="a">A</option><option value="b">B</option>')
-        out = FormTemplates.SELECT_INPUT.render(id='pick', name='pick', options=str(options_html))
-        assert isinstance(out, SafeHTML)
-        assert '<select' in out
-        assert '<option value="a">' in out
-
-    def test_textarea_input(self):
-        out = FormTemplates.TEXTAREA_INPUT.render(
-            id='bio', name='bio', value='Hello', rows='4', cols='40'
-        )
-        assert isinstance(out, SafeHTML)
-        assert '<textarea' in out
-        assert 'rows="4"' in out
-        assert 'Hello' in out
-
-    def test_checkbox_input(self):
-        out = FormTemplates.CHECKBOX_INPUT.render(
-            id='agree', name='agree', checkbox_value='1', label_text='I agree'
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'type="checkbox"' in out
-        assert 'I agree' in out
-
-    def test_radio_input(self):
-        opts = SafeHTML('<label><input type="radio" value="y"> Yes</label>')
-        out = FormTemplates.RADIO_INPUT.render(radio_options=str(opts))
-        assert isinstance(out, SafeHTML)
-        assert 'radio-group' in out
-
-
 class TestFormTemplatesLayout:
-    """Exercise layout and helper templates."""
-
-    def test_vertical_layout(self):
-        out = FormTemplates.VERTICAL_LAYOUT.render(
-            sections=str(SafeHTML('<div>field1</div>')), layout_class='my-vl'
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'vertical-layout' in out
-        assert 'field1' in out
-
-    def test_horizontal_layout(self):
-        out = FormTemplates.HORIZONTAL_LAYOUT.render(
-            sections=str(SafeHTML('<div>f</div>')), layout_class='my-hl'
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'horizontal-layout' in out
-        assert 'f' in out
+    """Exercise the section template."""
 
     def test_section(self):
         content_html = SafeHTML('<input name="x">')
@@ -145,69 +53,6 @@ class TestFormTemplatesLayout:
         assert isinstance(out, SafeHTML)
         assert 'form-section' in out
         assert '<h4>Details</h4>' in out
-
-    def test_label(self):
-        out = FormTemplates.LABEL.render(for_id='field', label_text='My Label')
-        assert isinstance(out, SafeHTML)
-        assert 'for="field"' in out
-        assert 'My Label' in out
-
-    def test_label_xss(self):
-        out = FormTemplates.LABEL.render(for_id='f', label_text='<b>bold</b>')
-        assert '&lt;b&gt;' in out
-
-    def test_help_text(self):
-        out = FormTemplates.HELP_TEXT.render(help_content='Enter your full name')
-        assert isinstance(out, SafeHTML)
-        assert 'Enter your full name' in out
-
-    def test_error_message(self):
-        out = FormTemplates.ERROR_MESSAGE.render(error_content='This field is required')
-        assert isinstance(out, SafeHTML)
-        assert 'invalid-feedback' in out
-        assert 'This field is required' in out
-
-    def test_icon(self):
-        out = FormTemplates.ICON.render(icon_name='envelope', icon_class='text-muted')
-        assert isinstance(out, SafeHTML)
-        assert 'bi-envelope' in out
-        assert 'text-muted' in out
-
-    def test_input_group(self):
-        prepend = SafeHTML('<span class="input-group-text">@</span>')
-        inp = SafeHTML('<input type="text" name="handle">')
-        out = FormTemplates.INPUT_GROUP.render(
-            prepend=str(prepend), input_element=str(inp), append=''
-        )
-        assert isinstance(out, SafeHTML)
-        assert 'input-group' in out
-        assert 'input-group-text' in out
-
-    def test_form_page(self):
-        out = FormTemplates.FORM_PAGE.render(
-            page_title='My Form',
-            form_content=str(SafeHTML('<form action="/submit"></form>')),
-        )
-        assert isinstance(out, SafeHTML)
-        assert '<!DOCTYPE html>' in out
-        assert 'My Form' in out
-        assert '<form action="/submit">' in out
-
-
-class TestFormTemplatesMaterial:
-    """Exercise the uncovered material-specific FormTemplates."""
-
-    def test_material_icon(self):
-        out = FormTemplates.MATERIAL_ICON.render(icon_name='home')
-        assert isinstance(out, SafeHTML)
-        assert 'material-icons' in out
-        assert 'home' in out
-
-    def test_material_submit_button(self):
-        out = FormTemplates.MATERIAL_SUBMIT_BUTTON.render(label='Send')
-        assert isinstance(out, SafeHTML)
-        assert 'md-button' in out
-        assert 'Send' in out
 
 
 # ---------------------------------------------------------------------------

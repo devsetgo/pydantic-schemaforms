@@ -11,6 +11,7 @@ from typing import Any
 from pydantic_schemaforms.templates import FormTemplates, TemplateString
 from pydantic_schemaforms.csp import style_attr
 from pydantic_schemaforms.tstring import SafeHTML, html
+from .material_icons import render_material_icon
 from .theme_assets import (
     accordion_component_assets,
     tab_component_assets,
@@ -528,6 +529,7 @@ def _material_model_list_container(
     error_html: str = '',
     **_: Any,
 ) -> SafeHTML:
+    _add_icon = SafeHTML(render_material_icon('add', classes='md-button__icon'))
     return html(t'''
 <section class="md-model-list-wrapper" data-field-name="{field_name}" data-min-items="{min_items}" data-max-items="{max_items}">
     <label class="md-field-label">{label}{SafeHTML(required_indicator)}</label>
@@ -535,7 +537,7 @@ def _material_model_list_container(
         <div class="model-list-items md-model-list-items" id="{items_id}">{SafeHTML(items_html)}</div>
         <div class="md-model-list-actions">
             <button type="button" class="md-button md-button-tonal add-item-btn" data-target="{field_name}">
-                <span class="material-icons md-button__icon">add</span>
+                {_add_icon}
                 <span class="md-button__label">{add_button_label}</span>
             </button>
         </div>

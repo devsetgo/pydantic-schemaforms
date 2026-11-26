@@ -104,8 +104,11 @@ referencing it in any doc or AI-instructions example.
 ```
 pydantic_schemaforms/
   tstring.py           # SafeHTML + html() processor — the XSS safety core
+  csp.py               # Nonced <script>/<style> tags; the only place those literals live
   show_when.py         # ui_show_when rules: the checks, server pruning and browser script
-  templates.py         # FormTemplates: t-string render functions for form elements
+  form_data.py         # decode_submission(): request form -> nested data
+  error_tree.py        # Nested validation-error tree handed to renderers
+  templates.py         # FormTemplates: t-string render functions for form and layout chrome
   composite_layout.py  # CompositeLayoutModel — base for FormModel-shaped composites
   datatable_layout.py  # DataTableLayout — reference composite (CSV-import-to-table)
   rendering/
@@ -116,6 +119,8 @@ pydantic_schemaforms/
     themes.py               # RendererTheme hooks; MaterialTheme
     material_icons.py       # Material icons as inline SVG
     model_list_renderer.py  # model_list's registered renderer
+    nested_model_renderer.py # nested_model's registered renderer (FormModel-typed field)
+    content_renderer.py     # 'content' and 'consent' registered renderers
     display_renderer.py     # render_display(): read-only review pages
   assets/material/    # md3-tokens.css, md3.css, md3.js
   inputs/             # Field-level input classes
@@ -167,7 +172,11 @@ html_out = html(t'<input value="{user_input}">')   # user_input auto-escaped
    submitted/validated form data must use `html(t'...')`, never an f-string
    or `.format()` — a real instance of this (an f-string interpolating
    `result.data["full_name"]` into an `<h1>` in the flagship AI-instructions
-   example) shipped and went unnoticed until an explicit audit found it.
+   example) shipped and went unnoticed until an explicit audit found it, and
+   so did a reflected XSS in the demo app (the `style` query parameter
+   f-stringed into an `href` on `/employees/import`), now caught by
+   `test_every_example_page_escapes_the_style_parameter`. Query parameters
+   count as submitted data.
    `.validate()`/`Field()` constraints succeeding confirms type/constraint
    compliance, not that a value is safe to place in HTML. Note this is a
    convention to enforce in review, not something `test_invariants.py`/ruff's
@@ -258,7 +267,8 @@ A "composite" control renders something bigger than a single input — a
 whole table, a repeating list of sub-forms, wizard steps, and similar.
 `DataTableLayout` (CSV-import-to-table), `model_list` (repeating
 sub-form items), and `nested_model` (one sub-form, inferred from a field
-typed as another `FormModel`) are the shipped examples; all go through the
+typed as another `FormModel`) are the shipped examples (`content` and `consent`
+blocks register the same way); all go through the
 same mechanism below. **When asked to build a new composite control, reuse this
 mechanism instead of hand-rolling a bespoke rendering path** — this
 codebase used to have three inconsistent ones (DataTableLayout's registry,
@@ -324,9 +334,11 @@ mechanism (`builtin=False`) is the AI-instructions-facing use case — see
 path: `FieldRenderer.render_field` -> the input's `render()` -> the theme's field
 shell (`rendering/field_shell.py`). A theme (`rendering/themes.py`) supplies
 markup through hooks: `field_shell`, `control_attributes`, `input_class`,
-`alert_class`, `table_class`, `datatable_class`, `display_class`, `render_model_list_item`,
-`render_collapsible_section`, `render_error_summary` and the `FormStyleTemplates`
-chrome. The Material theme is `MaterialTheme`, with its CSS and script in
+`alert_class`, `alert_action_class`, `table_class`, `datatable_class`, `display_class`,
+`confirm_class`, `render_confirm_dialog`, `render_model_list_item`,
+`render_model_list_container`, `render_layout_section`, `render_collapsible_section`,
+`render_error_summary` and the `FormStyleTemplates` chrome (`themes.py` has the full
+list). The Material theme is `MaterialTheme`, with its CSS and script in
 `assets/material/`. **There is no Material-only rendering path any more; don't
 add one.**
 
@@ -339,10 +351,11 @@ add one.**
   `field_shell.py`, and put a new name in the right `MATERIAL_*` set there; anything
   unlisted gets the static-label field. Style it with scoped `.md-form` rules in
   `assets/material/md3.css`.
-- **Widget CSS uses the tokens.** A `<style>` block shipped by an input takes its
-  colors through `var(--sf-x, <fallback>)`, with a hex value only as that fallback.
+- **Widget CSS uses the tokens.** Any `<style>` block the library ships (an input, a
+  layout, the client-validation script) takes its colors through
+  `var(--sf-x, <fallback>)`, with a hex value only as that fallback.
   `md3.css` has no `!important` and no hex; colors live in `md3-tokens.css`. Both
-  are enforced by `test_theme_contract.py`.
+  are enforced by `test_theme_contract.py`, which scans every package module.
 - **Material Design 3 is the reference** (m3.material.io, 2023 baseline).
   `docs/advanced/material.md` documents the anatomy, tokens, the `filled` variant
   and the dark scheme; keep it in step with the CSS.
@@ -351,12 +364,12 @@ add one.**
   `test_validation_reports_the_same_errors_in_both_styles` compares the two.
 - **Dark mode is offered for Bootstrap and Material alike**, opt-in through
   `data-bs-theme="dark"` and `data-md-theme="dark"`. Bootstrap's dark `--sf-*` values
-  are `BOOTSTRAP_DARK_TOKENS` in `rendering/theme_assets.py`; anything new that takes
+  are `BOOTSTRAP_DARK_CSS` in `rendering/theme_assets.py`; anything new that takes
   a color must follow both. `tests/playwright/test_example_pages.py` runs axe on every
   example page in dark under both styles.
 - **Icons are inline SVG** from `rendering/material_icons.py`, never a ligature
-  `<span>` or a Bootstrap icon. An unknown name renders nothing, so add the path
-  when you use a new icon.
+  `<span>`/`<i>` or a Bootstrap icon in Material markup (`test_icons_are_inline_svg_not_ligatures`).
+  An unknown name renders nothing, so add the path when you use a new icon.
 - **The example app's Material shell** (`examples/templates/material_base.html`)
   loads no Bootstrap. Both shells share `examples/templates/_site_bar.html`, whose style, variant and theme controls apply across the site.
 - **A green test run doesn't show how it looks.** Run the screenshot test and read

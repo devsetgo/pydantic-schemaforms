@@ -56,13 +56,20 @@ import asyncio
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from pydantic import EmailStr
 
 from examples.fastapi_routes import log_timing, templates
-from pydantic_schemaforms import DataTableLayout, FormModel, render_form_html_async
+from pydantic_schemaforms import (
+    DataTableLayout,
+    FormModel,
+    SafeHTML,
+    html,
+    render_form_html_async,
+)
 from pydantic_schemaforms import Field as FormField
 
 
@@ -251,28 +258,32 @@ _EDITABLE_ROW_RECOMMENDATION_THRESHOLD = 100
 
 
 def _sample_links_html() -> str:
-    links = ''.join(
-        f'<a href="/employees/samples/{size}" class="btn btn-outline-secondary btn-sm me-2 mb-2">'
-        f'{size:,} rows</a>'
-        for size in _SAMPLE_SIZES
+    links = SafeHTML(
+        ''.join(
+            html(
+                t'<a href="/employees/samples/{size}" '
+                t'class="btn btn-outline-secondary btn-sm me-2 mb-2">{f"{size:,}"} rows</a>'
+            )
+            for size in _SAMPLE_SIZES
+        )
     )
-    return (
-        '<div class="mb-3">'
-        '<div class="text-muted small mb-1">Sample CSV files to test different scales:</div>'
-        f'{links}'
-        '<div class="text-muted small mt-1">'
-        'Every cell is a real form control with no virtualization, so row '
-        f'count drives DOM size directly -- for imports over '
-        f'{_EDITABLE_ROW_RECOMMENDATION_THRESHOLD} rows, the read-only view '
-        'below renders noticeably faster.'
-        '</div>'
-        '</div>'
+    threshold = _EDITABLE_ROW_RECOMMENDATION_THRESHOLD
+    return html(
+        t'<div class="mb-3">'
+        t'<div class="text-muted small mb-1">Sample CSV files to test different scales:</div>'
+        t'{links}'
+        t'<div class="text-muted small mt-1">'
+        t'Every cell is a real form control with no virtualization, so row '
+        t'count drives DOM size directly -- for imports over '
+        t'{threshold} rows, the read-only view below renders noticeably faster.'
+        t'</div>'
+        t'</div>'
     )
 
 
 def _import_url_for(style: str, *, editable: bool = True) -> str:
-    url = f'{_IMPORT_URL}?style={style}'
-    return url if editable else f'{url}&editable=false'
+    query = {'style': style} if editable else {'style': style, 'editable': 'false'}
+    return f'{_IMPORT_URL}?{urlencode(query)}'
 
 
 def _view_toggle_html(*, style: str, editable: bool) -> str:
@@ -281,7 +292,11 @@ def _view_toggle_html(*, style: str, editable: bool) -> str:
         label = 'View without inputs (read-only)'
     else:
         href, label = _import_url_for(style), 'Back to editable view'
-    return f'<div class="mb-3"><a href="{href}" class="btn btn-outline-secondary btn-sm">{label}</a></div>'
+    return html(
+        t'<div class="mb-3">'
+        t'<a href="{href}" class="btn btn-outline-secondary btn-sm">{label}</a>'
+        t'</div>'
+    )
 
 
 def _performance_recommendation_html(*, style: str, editable: bool, row_count: int) -> str:
@@ -290,16 +305,17 @@ def _performance_recommendation_html(*, style: str, editable: bool, row_count: i
     the likely cause of any sluggishness."""
     if not editable or row_count <= _EDITABLE_ROW_RECOMMENDATION_THRESHOLD:
         return ''
-    return (
-        '<div class="alert alert-warning d-flex justify-content-between '
-        'align-items-center flex-wrap gap-2" role="alert">'
-        f'<span>{row_count:,} rows in editable mode -- past '
-        f'{_EDITABLE_ROW_RECOMMENDATION_THRESHOLD} rows, the read-only view '
-        'renders significantly faster (plain text cells instead of '
-        'per-row select/input widgets).</span>'
-        f'<a href="{_import_url_for(style, editable=False)}" class="btn btn-warning btn-sm">'
-        'Switch to read-only</a>'
-        '</div>'
+    rows = f'{row_count:,}'
+    threshold = _EDITABLE_ROW_RECOMMENDATION_THRESHOLD
+    href = _import_url_for(style, editable=False)
+    return html(
+        t'<div class="alert alert-warning d-flex justify-content-between '
+        t'align-items-center flex-wrap gap-2" role="alert">'
+        t'<span>{rows} rows in editable mode -- past {threshold} rows, the read-only view '
+        t'renders significantly faster (plain text cells instead of '
+        t'per-row select/input widgets).</span>'
+        t'<a href="{href}" class="btn btn-warning btn-sm">Switch to read-only</a>'
+        t'</div>'
     )
 
 
