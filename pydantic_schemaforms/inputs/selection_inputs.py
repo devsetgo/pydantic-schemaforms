@@ -8,8 +8,10 @@ import re
 from html import escape
 from typing import Any
 
+from pydantic_schemaforms.csp import script_tag, style_tag
 from pydantic_schemaforms.tstring import SafeHTML, html, substitute
 from .base import FormInput, SelectInputBase
+
 
 # Self-contained collapse toggle for CheckboxGroup/RadioGroup (ui_options=
 # {'collapsible': True}) -- purely static, no Python-side interpolation, so
@@ -20,8 +22,10 @@ from .base import FormInput, SelectInputBase
 # access to a theme/renderer object -- see the module docstring above and
 # CheckboxGroup/RadioGroup's own render() for why this mirrors
 # MultiSelectInput's self-contained-assets pattern instead.
-_COLLAPSIBLE_GROUP_ASSETS = SafeHTML("""
-<style>
+def _collapsible_group_assets() -> SafeHTML:
+    return SafeHTML(
+        '\n'
+        + style_tag("""
 .collapsible-group-toggle {
     display: inline-flex;
     align-items: center;
@@ -47,8 +51,9 @@ _COLLAPSIBLE_GROUP_ASSETS = SafeHTML("""
 .collapsible-group-toggle[aria-expanded="false"] .collapsible-group-chevron {
     transform: rotate(-45deg);
 }
-</style>
-<script>
+""")
+        + '\n'
+        + script_tag("""
 function toggleCollapsibleGroup(contentId, buttonElement) {
     var content = document.getElementById(contentId);
     var isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
@@ -64,14 +69,17 @@ if (!window.schemaformsCollapsibleBound) {
         if (button) { toggleCollapsibleGroup(button.getAttribute('aria-controls'), button); }
     });
 }
-</script>
 """)
+        + '\n'
+    )
 
 
 # The look of radio variant="segmented" and checkbox_group variant="button_group".
 # Colors read the theme's tokens; md3.css restyles both as MD3 components.
-_CHOICE_VARIANT_ASSETS = SafeHTML("""
-<style>
+def _choice_variant_assets() -> SafeHTML:
+    return SafeHTML(
+        '\n'
+        + style_tag("""
 .radio-group-segmented, .checkbox-group-button-group { border: 0; padding: 0; }
 .radio-item-segmented, .checkbox-item-button-group { display: inline-block; margin: 0 -1px 0 0; }
 .radio-item-segmented label, .checkbox-item-button-group label {
@@ -96,8 +104,9 @@ _CHOICE_VARIANT_ASSETS = SafeHTML("""
 .checkbox-item-button-group label:has(input:focus-visible) {
     outline: 2px solid var(--sf-primary, #86b7fe);
 }
-</style>
 """)
+        + '\n'
+    )
 
 
 class SelectInput(SelectInputBase):
@@ -211,20 +220,21 @@ class MultiSelectInput(SelectInput):
         # HTML attribute position -- per the t-string rule, JS generation may
         # stay an f-string; the surrounding <style>/<script> tags are marked
         # SafeHTML since this whole block is developer-authored, not user data.
-        style_and_script = SafeHTML(f"""
-<style>
-.multiselect-enhanced {{
+        style_and_script = SafeHTML(
+            '\n'
+            + style_tag("""
+.multiselect-enhanced {
     position: relative;
-}}
-.multiselect-chips {{
+}
+.multiselect-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-}}
-.multiselect-chips:not(:empty) {{
+}
+.multiselect-chips:not(:empty) {
     margin-bottom: 6px;
-}}
-.multiselect-chip {{
+}
+.multiselect-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -233,20 +243,20 @@ class MultiSelectInput(SelectInput):
     border-radius: 12px;
     padding: 2px 8px;
     font-size: 0.875rem;
-}}
-.multiselect-chip-remove {{
+}
+.multiselect-chip-remove {
     cursor: pointer;
     font-weight: bold;
-}}
-.multiselect-search {{
+}
+.multiselect-search {
     display: block;
     width: 100%;
     box-sizing: border-box;
     padding: 6px 10px;
     border: 1px solid var(--sf-outline, #79747e);
     border-radius: 4px;
-}}
-.multiselect-dropdown {{
+}
+.multiselect-dropdown {
     list-style: none;
     margin: 6px 0 0;
     padding: 0;
@@ -254,26 +264,27 @@ class MultiSelectInput(SelectInput):
     overflow-y: auto;
     border: 1px solid var(--sf-outline, #79747e);
     border-radius: 4px;
-}}
-.multiselect-option {{
+}
+.multiselect-option {
     padding: 6px 10px;
     cursor: pointer;
-}}
-.multiselect-option:hover {{
+}
+.multiselect-option:hover {
     background: var(--sf-surface-low, #f1f5f9);
-}}
-.multiselect-option-selected {{
+}
+.multiselect-option-selected {
     background: var(--sf-chip-bg, #e0e7ff);
     font-weight: 600;
-}}
+}
 /* Applied by the enhancement script once the chips/search/dropdown UI has
    successfully built -- the real <select> stays the form's source of truth
    and in the DOM, just visually replaced by the UI above it. */
-.multiselect-native-hidden {{
+.multiselect-native-hidden {
     display: none !important;
-}}
-</style>
-<script>
+}
+""")
+            + '\n'
+            + script_tag(f"""
 document.addEventListener('DOMContentLoaded', function() {{
     const select = document.getElementById('{field_id}');
     const chipsEl = document.getElementById('{field_id}_chips');
@@ -341,8 +352,9 @@ document.addEventListener('DOMContentLoaded', function() {{
     renderDropdown('');
     select.classList.add('multiselect-native-hidden');
 }});
-</script>
 """)
+            + '\n'
+        )
 
         return wrapper + style_and_script
 
@@ -501,7 +513,7 @@ class CheckboxGroup(SelectInputBase):
                 checkboxes=checkboxes_html,
             )
             if variant == 'button_group':
-                return SafeHTML(rendered + _CHOICE_VARIANT_ASSETS)
+                return SafeHTML(rendered + _choice_variant_assets())
             return rendered
 
         content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
@@ -520,9 +532,9 @@ class CheckboxGroup(SelectInputBase):
             toggle=toggle,
             content=content,
             assets=(
-                SafeHTML(_COLLAPSIBLE_GROUP_ASSETS + _CHOICE_VARIANT_ASSETS)
+                SafeHTML(_collapsible_group_assets() + _choice_variant_assets())
                 if variant in ('button_group', 'segmented')
-                else _COLLAPSIBLE_GROUP_ASSETS
+                else _collapsible_group_assets()
             ),
         )
 
@@ -659,7 +671,7 @@ class RadioGroup(SelectInputBase):
                 radio_buttons=radio_buttons_html,
             )
             if variant == 'segmented':
-                return SafeHTML(rendered + _CHOICE_VARIANT_ASSETS)
+                return SafeHTML(rendered + _choice_variant_assets())
             return rendered
 
         content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
@@ -678,9 +690,9 @@ class RadioGroup(SelectInputBase):
             toggle=toggle,
             content=content,
             assets=(
-                SafeHTML(_COLLAPSIBLE_GROUP_ASSETS + _CHOICE_VARIANT_ASSETS)
+                SafeHTML(_collapsible_group_assets() + _choice_variant_assets())
                 if variant in ('button_group', 'segmented')
-                else _COLLAPSIBLE_GROUP_ASSETS
+                else _collapsible_group_assets()
             ),
         )
 
@@ -722,8 +734,9 @@ class ToggleSwitch(CheckboxInput):
 
         # Static CSS -- no interpolation, so it stays a plain (non-f) string
         # and is appended as trusted, developer-authored markup.
-        style_block = SafeHTML("""
-        <style>
+        style_block = SafeHTML(
+            '\n        '
+            + style_tag("""
         .toggle-switch-wrapper {
             position: relative;
             display: inline-block;
@@ -779,8 +792,9 @@ class ToggleSwitch(CheckboxInput):
             vertical-align: middle;
             cursor: pointer;
         }
-        </style>
         """)
+            + '\n        '
+        )
 
         return label_wrapper + style_block
 
@@ -845,8 +859,9 @@ class ComboBoxInput(SelectInput):
         if not field_id:
             return combo_html
 
-        script = SafeHTML(f"""
-<script>
+        script = SafeHTML(
+            '\n'
+            + script_tag(f"""
 document.addEventListener('DOMContentLoaded', function() {{
     const input = document.getElementById('{field_id}');
     const datalist = document.getElementById('{datalist_id}');
@@ -914,6 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         }}
     }});
 }});
-</script>
 """)
+            + '\n'
+        )
         return combo_html + script

@@ -9,6 +9,7 @@ from datetime import date, datetime, time
 
 from typing import Any
 
+from pydantic_schemaforms.csp import script_tag
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .base import FormInput, _render_input_tag
@@ -212,8 +213,9 @@ def _render_datetime_mask_script(field_id: str, mask: str) -> str:
     """Live '#'-mask character-by-character reformatting for a text-mode
     date/time/datetime field, mirroring PhoneInput's inline script in
     text_inputs.py."""
-    return SafeHTML(rf"""
-<script>
+    return SafeHTML(
+        '\n'
+        + script_tag(rf"""
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
     const mask = {json.dumps(mask)};
@@ -234,8 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {{
         }});
     }}
 }});
-</script>
 """)
+        + '\n'
+    )
 
 
 _LOCAL_DATETIME_JS = (
@@ -261,8 +264,9 @@ def _set_now_markup(field_id: str, js_expr: str) -> SafeHTML:
     js_id = (
         json.dumps(field_id).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
     )
-    script_html = SafeHTML(f"""
-            <script>
+    script_html = SafeHTML(
+        '\n            '
+        + script_tag(f"""
             (function () {{
                 var setNow = window.schemaformsSetNow;
                 if (!setNow) {{
@@ -278,8 +282,9 @@ def _set_now_markup(field_id: str, js_expr: str) -> SafeHTML:
                 }}
                 setNow.formats[{js_id}] = function (now) {{ return {js_expr}; }};
             }})();
-            </script>
             """)
+        + '\n            '
+    )
     return SafeHTML(button_html + script_html)
 
 
@@ -372,8 +377,9 @@ def _wrap_with_picker_toggle(input_html: str, field_id: str, fmt: str, native_ty
 ''')
     # JS-only below (rule 4 exception): ids are embedded as JS string
     # literals, not HTML attribute values.
-    script_html = SafeHTML(f"""
-<script>
+    script_html = SafeHTML(
+        '\n'
+        + script_tag(f"""
 document.addEventListener('DOMContentLoaded', function() {{
     const toggle = document.getElementById('{toggle_id}');
     const picker = document.getElementById('{picker_id}');
@@ -393,8 +399,9 @@ document.addEventListener('DOMContentLoaded', function() {{
         }});
     }}
 }});
-</script>
 """)
+        + '\n'
+    )
     return SafeHTML(wrapper_html + script_html)
 
 
@@ -785,8 +792,9 @@ class DateRangeInput:
         # Add validation script to ensure end date is after start date
         # (JS-only content, rule 4 exception -- name is embedded as a JS
         # string literal, not an HTML attribute value).
-        validation_script = SafeHTML(f"""
-        <script>
+        validation_script = SafeHTML(
+            '\n        '
+            + script_tag(f"""
         document.addEventListener('DOMContentLoaded', function() {{
             const startDate = document.getElementById('{name}_start');
             const endDate = document.getElementById('{name}_end');
@@ -810,8 +818,9 @@ class DateRangeInput:
                 endDate.addEventListener('change', validateDateRange);
             }}
         }});
-        </script>
         """)
+            + '\n        '
+        )
 
         return html(t'''
         <div class="date-range-input" data-name="{name}">
@@ -884,8 +893,9 @@ class TimeRangeInput:
 
         # Add validation script to ensure end time is after start time
         # (JS-only content, rule 4 exception).
-        validation_script = SafeHTML(f"""
-        <script>
+        validation_script = SafeHTML(
+            '\n        '
+            + script_tag(f"""
         document.addEventListener('DOMContentLoaded', function() {{
             const startTime = document.getElementById('{name}_start');
             const endTime = document.getElementById('{name}_end');
@@ -905,8 +915,9 @@ class TimeRangeInput:
                 endTime.addEventListener('change', validateTimeRange);
             }}
         }});
-        </script>
         """)
+            + '\n        '
+        )
 
         return html(t'''
         <div class="time-range-input" data-name="{name}">
@@ -943,8 +954,9 @@ class BirthdateInput(DateInput):
                 t'style="margin-top: 5px; font-size: 0.9em; color: var(--sf-on-surface-variant, #666);"></div>'
             )
             # JS-only below (rule 4 exception).
-            age_script = SafeHTML(f"""
-            <script>
+            age_script = SafeHTML(
+                '\n            '
+                + script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const birthdateField = document.getElementById('{field_id}');
                 const ageDisplay = document.getElementById('{field_name}_age');
@@ -969,8 +981,9 @@ class BirthdateInput(DateInput):
                     calculateAge(); // Calculate on load if value is set
                 }}
             }});
-            </script>
             """)
+                + '\n            '
+            )
             age_display = SafeHTML(age_div + age_script)
             _birthdate_html = SafeHTML(str(birthdate_html))
             return html(t'<div class="birthdate-input-group">{_birthdate_html}{age_display}</div>')

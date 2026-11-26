@@ -5,6 +5,7 @@ Includes NumberInput, RangeInput, and specialized numeric inputs.
 
 from typing import Any
 
+from pydantic_schemaforms.csp import script_tag, style_tag
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .base import NumericInput
@@ -46,20 +47,22 @@ class NumberInput(NumericInput):
         # JS/CSS-only below (rule 4 exception) -- field_id is embedded as a
         # JS string literal / CSS attribute selector value, not an HTML
         # attribute value.
-        assets = SafeHTML(f"""
-<style>
-.number-stepper {{
+        assets = SafeHTML(
+            '\n'
+            + style_tag("""
+.number-stepper {
     display: inline-flex;
     align-items: stretch;
     gap: 4px;
-}}
-.number-stepper input {{
+}
+.number-stepper input {
     flex: 1 1 auto;
     width: auto;
     min-width: 0;
-}}
-</style>
-<script>
+}
+""")
+            + '\n'
+            + script_tag(f"""
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
     if (!el) return;
@@ -76,8 +79,9 @@ document.addEventListener('DOMContentLoaded', function() {{
         }});
     }});
 }});
-</script>
 """)
+            + '\n'
+        )
         return SafeHTML(wrapper + assets)
 
 
@@ -104,8 +108,9 @@ class RangeInput(NumericInput):
                 t'<output for="{field_name}" id="{field_name}-value">{value}</output>'
             )
             # JS-only below (rule 4 exception).
-            script_html = SafeHTML(f"""
-            <script>
+            script_html = SafeHTML(
+                '\n            '
+                + script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const range = document.getElementById('{field_name}');
                 const output = document.getElementById('{field_name}-value');
@@ -115,8 +120,9 @@ class RangeInput(NumericInput):
                     }});
                 }}
             }});
-            </script>
             """)
+                + '\n            '
+            )
             value_display = SafeHTML(output_html + script_html)
             return range_html + value_display
 
@@ -237,8 +243,9 @@ class RatingInput(RangeInput):
         stars_text = '★' * current_rating + '☆' * (max_rating - current_rating)
         stars_div = html(t'<div class="star-rating" id="{field_name}-stars">{stars_text}</div>')
         # JS-only below (rule 4 exception).
-        stars_script = SafeHTML(f"""
-        <script>
+        stars_script = SafeHTML(
+            '\n        '
+            + script_tag(f"""
         document.addEventListener('DOMContentLoaded', function() {{
             const range = document.getElementById('{field_name}');
             const stars = document.getElementById('{field_name}-stars');
@@ -250,8 +257,9 @@ class RatingInput(RangeInput):
                 }});
             }}
         }});
-        </script>
         """)
+            + '\n        '
+        )
         stars_html = SafeHTML(stars_div + stars_script)
 
         return range_html + stars_html

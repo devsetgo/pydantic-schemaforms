@@ -19,6 +19,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pydantic import AfterValidator, BaseModel, EmailStr, ValidationError
 from pydantic_core import PydanticCustomError, PydanticUndefined, to_jsonable_python
 
+from .csp import csp_nonces, script_tag, style_tag
 from .form_data import coerce_form_value
 from .tstring import SafeHTML
 from .uploads import is_blank_upload, is_upload_annotation
@@ -729,8 +730,18 @@ class FormValidator:
 
         return is_form_valid, all_errors
 
-    def generate_client_validation_script(self) -> str:
-        """Generate complete JavaScript validation script."""
+    def generate_client_validation_script(
+        self, *, script_nonce: str | None = None, style_nonce: str | None = None
+    ) -> str:
+        """Generate complete JavaScript validation script.
+
+        Pass the request's Content-Security-Policy nonces to put them on its tags.
+        """
+
+        with csp_nonces(script_nonce, style_nonce):
+            return self._client_validation_script()
+
+    def _client_validation_script(self) -> str:
         field_functions = []
         field_validations = []
 
@@ -748,7 +759,7 @@ class FormValidator:
         # JS/CSS-only content below (rule 4 exception): fn_block/validators_block
         # are built from model field names (developer-controlled identifiers)
         # and validator-generated JS, not user input.
-        return SafeHTML(f"""<script>
+        js = f"""
 {fn_block}
 
 const formValidators = {{
@@ -827,18 +838,19 @@ document.addEventListener('DOMContentLoaded', function() {{
         }});
     }});
 }});
-</script>
-<style>
-.error {{
+"""
+        css = """
+.error {
     border-color: #dc3545 !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}}
-.error-message {{
+}
+.error-message {
     color: #dc3545;
     font-size: 0.875rem;
     margin-top: 0.25rem;
-}}
-</style>""")
+}
+"""
+        return SafeHTML(script_tag(js) + '\n' + style_tag(css))
 
 
 # Common cross-field validation rules

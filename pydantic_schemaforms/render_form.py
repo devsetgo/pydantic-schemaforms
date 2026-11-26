@@ -13,6 +13,7 @@ from collections.abc import Callable
 from .enhanced_renderer import SchemaFormValidationError
 from .enhanced_renderer import render_form_html as _core_render_form_html
 from .assets.runtime import htmx_script_tag, imask_script_tag
+from .csp import csp_nonces
 from .schema_form import FormModel
 from .tstring import SafeHTML, html
 
@@ -93,15 +94,16 @@ def render_form_html(
     if include_htmx_response_container:
         container_id = f'form-response-{form_model_cls.__name__.lower()}'
         form_html += '\n' + html(t'<div id="{container_id}"></div>')
-    if include_htmx_script:
-        htmx_tag = htmx_script_tag(asset_mode=asset_mode)
-        if htmx_tag:
-            form_html += '\n' + SafeHTML(str(htmx_tag))
+    with csp_nonces(render_kwargs.get('script_nonce'), render_kwargs.get('style_nonce')):
+        if include_htmx_script:
+            htmx_tag = htmx_script_tag(asset_mode=asset_mode)
+            if htmx_tag:
+                form_html += '\n' + SafeHTML(str(htmx_tag))
 
-    if include_imask:
-        imask_tag = imask_script_tag(asset_mode=asset_mode)
-        if imask_tag:
-            form_html += '\n' + SafeHTML(str(imask_tag))
+        if include_imask:
+            imask_tag = imask_script_tag(asset_mode=asset_mode)
+            if imask_tag:
+                form_html += '\n' + SafeHTML(str(imask_tag))
 
     # Calculate and log render time
     render_time = time.perf_counter() - start_time

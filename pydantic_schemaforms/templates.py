@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Any
 from collections.abc import Callable
 
+from .csp import style_tag
 from .tstring import SafeHTML, html
 
 __all__ = ['FormTemplates', 'TemplateString', 'render_template', 'create_custom_template']
@@ -879,6 +880,61 @@ def _material_checkbox_field(
 ''')
 
 
+_MATERIAL_TOGGLE_CSS = """
+    .md-toggle-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+    }
+    .md-toggle-wrapper .md-toggle-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .md-toggle-slider {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 24px;
+        background: #79747e;
+        border-radius: 12px;
+        transition: background .2s;
+        flex-shrink: 0;
+    }
+    .md-toggle-slider::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform .2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    }
+    .md-toggle-wrapper input:checked + .md-toggle-slider {
+        background: #6750a4;
+    }
+    .md-toggle-wrapper input:checked + .md-toggle-slider::before {
+        transform: translateX(16px);
+    }
+    .md-toggle-wrapper input:focus + .md-toggle-slider {
+        box-shadow: 0 0 0 2px rgba(103, 80, 164, .3);
+    }
+    .md-toggle-wrapper input:disabled + .md-toggle-slider {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+    .md-toggle-label {
+        color: #1c1b1f;
+        font-size: 16px;
+    }
+"""
+
+
 def _material_toggle_field(
     *,
     name: str = '',
@@ -898,6 +954,7 @@ def _material_toggle_field(
     _required = SafeHTML(required)
     _help_text = SafeHTML(help_text)
     _error_text = SafeHTML(error_text)
+    _style = style_tag(_MATERIAL_TOGGLE_CSS)
     return html(t'''
 <div class="md-field">
     <label class="md-toggle-wrapper" for="{field_id}">
@@ -912,59 +969,7 @@ def _material_toggle_field(
     </label>
     {_help_text}
     {_error_text}
-    <style>
-    .md-toggle-wrapper {{
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        cursor: pointer;
-    }}
-    .md-toggle-wrapper .md-toggle-input {{
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }}
-    .md-toggle-slider {{
-        position: relative;
-        display: inline-block;
-        width: 40px;
-        height: 24px;
-        background: #79747e;
-        border-radius: 12px;
-        transition: background .2s;
-        flex-shrink: 0;
-    }}
-    .md-toggle-slider::before {{
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 20px;
-        height: 20px;
-        background: white;
-        border-radius: 50%;
-        transition: transform .2s;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
-    }}
-    .md-toggle-wrapper input:checked + .md-toggle-slider {{
-        background: #6750a4;
-    }}
-    .md-toggle-wrapper input:checked + .md-toggle-slider::before {{
-        transform: translateX(16px);
-    }}
-    .md-toggle-wrapper input:focus + .md-toggle-slider {{
-        box-shadow: 0 0 0 2px rgba(103, 80, 164, .3);
-    }}
-    .md-toggle-wrapper input:disabled + .md-toggle-slider {{
-        opacity: .5;
-        cursor: not-allowed;
-    }}
-    .md-toggle-label {{
-        color: #1c1b1f;
-        font-size: 16px;
-    }}
-    </style>
+    {_style}
 </div>
 ''')
 

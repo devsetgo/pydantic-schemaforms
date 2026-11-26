@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import re
 import secrets
 from html import escape
 from typing import TYPE_CHECKING, Any, Union
 from collections.abc import Callable
 
+from pydantic_schemaforms.csp import script_tag, strip_script_tags, style_tag
 from pydantic_schemaforms.layout_base import BaseLayout
 from pydantic_schemaforms.templates import FormTemplates
 from pydantic_schemaforms.tstring import SafeHTML, html
@@ -48,8 +48,8 @@ IN_GROUP_FLAG = '_in_group'
 
 # Self-contained rather than a framework's grid, so a width means the same under
 # every style. The :has rule lets neighbours close up when a rule hides a column.
-GRID_STYLES = (
-    """<style data-schemaforms-grid>
+GRID_CSS = (
+    """
 .sf-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1rem; }
 .sf-col { grid-column: span 12; min-width: 0; }
 .sf-col:has(> fieldset[hidden]) { display: none; }
@@ -57,13 +57,18 @@ GRID_STYLES = (
 """
     + ''.join(f'.sf-col-{width} {{ grid-column: span {width}; }}\n' for width in range(1, 13))
     + """}
-</style>"""
+"""
 )
+
 GRID_CLASS = 'sf-grid'
+
+
+def grid_styles() -> SafeHTML:
+    return style_tag(GRID_CSS, 'data-schemaforms-grid')
+
 
 # Leading space: appended directly after another class in the templates.
 _ACTIVE_CLASS = ' active'
-_SCRIPT_RE = re.compile(r'<script\b.*?</script>', re.DOTALL)
 # render_groups(original=...) when the form has no live review step to compare in.
 NO_ORIGINAL: Any = object()
 
@@ -298,7 +303,7 @@ ${component_assets}
             )
 
         template = _DEFAULT_FORM_STYLE.templates.tab_layout
-        assets = _DEFAULT_FORM_STYLE.assets.tab_assets
+        assets = _DEFAULT_FORM_STYLE.assets.tab_assets()
         if theme:
             themed_assets = theme.tab_component_assets()
             if themed_assets:
@@ -360,7 +365,7 @@ ${component_assets}
             )
 
         template = _DEFAULT_FORM_STYLE.templates.accordion_layout
-        assets = _DEFAULT_FORM_STYLE.assets.accordion_assets
+        assets = _DEFAULT_FORM_STYLE.assets.accordion_assets()
         if theme:
             themed_assets = theme.accordion_component_assets()
             if themed_assets:
@@ -444,7 +449,7 @@ class WizardLayout(BaseLayout):
             if self.show_progress
             else ''
         )
-        assets = theme.wizard_component_assets() if theme else form_style.assets.wizard_assets
+        assets = theme.wizard_component_assets() if theme else form_style.assets.wizard_assets()
         layout_class = self._merge_classes(attrs)
         if self.progress:
             from pydantic_schemaforms.progress import WIZARD_TICKS_CLASS
@@ -453,7 +458,7 @@ class WizardLayout(BaseLayout):
         hidden_html = ''
         if self.save_steps:
             # The page already shows just this step, so it needs the styles but not the script.
-            assets = _SCRIPT_RE.sub('', assets)
+            assets = strip_script_tags(assets)
             layout_class = f'{layout_class} wizard-enhanced wizard-saved'.strip()
             hidden_html = str(
                 templates.wizard_step_state.render(
@@ -523,27 +528,7 @@ class WizardLayout(BaseLayout):
         )
 
 
-class ModalLayout(BaseLayout):
-    """Modal dialog layout."""
-
-    template = """
-<div class="modal-overlay ${class_}" id="${modal_id}" style="display: none; ${style}">
-    <div class="modal-dialog" role="dialog" aria-labelledby="${modal_id}-title">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="${modal_id}-title" class="modal-title">${title}</h2>
-                <button type="button" class="modal-close" data-sf-close-modal="${modal_id}" aria-label="Close">×</button>
-            </div>
-            <div class="modal-body">
-                ${content}
-            </div>
-            <div class="modal-footer">
-                ${footer}
-            </div>
-        </div>
-    </div>
-</div>
-<script>
+_MODAL_JS = """
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -578,8 +563,9 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-</script>
-<style>
+"""
+
+_MODAL_CSS = """
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -628,7 +614,30 @@ document.addEventListener('keydown', function(e) {
     border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     text-align: right;
 }
-</style>
+"""
+
+
+class ModalLayout(BaseLayout):
+    """Modal dialog layout."""
+
+    template = """
+<div class="modal-overlay ${class_}" id="${modal_id}" style="display: none; ${style}">
+    <div class="modal-dialog" role="dialog" aria-labelledby="${modal_id}-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="${modal_id}-title" class="modal-title">${title}</h2>
+                <button type="button" class="modal-close" data-sf-close-modal="${modal_id}" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                ${content}
+            </div>
+            <div class="modal-footer">
+                ${footer}
+            </div>
+        </div>
+    </div>
+</div>
+${component_assets}
     """
 
     def __init__(
@@ -650,25 +659,11 @@ document.addEventListener('keydown', function(e) {
         self.footer = default_footer
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
+        kwargs['component_assets'] = SafeHTML(script_tag(_MODAL_JS) + '\n' + style_tag(_MODAL_CSS))
         return super().render(**kwargs)
 
 
-class CardLayout(BaseLayout):
-    """Card layout for grouped content."""
-
-    template = """
-<div class="card-layout ${class_}" style="${style}">
-    <div class="card-header">
-        <h3 class="card-title">${title}</h3>
-    </div>
-    <div class="card-body">
-        ${content}
-    </div>
-    <div class="card-footer">
-        ${footer}
-    </div>
-</div>
-<style>
+_CARD_CSS = """
 .card-layout {
     border: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 8px;
@@ -694,7 +689,25 @@ class CardLayout(BaseLayout):
     border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 0 0 8px 8px;
 }
-</style>
+"""
+
+
+class CardLayout(BaseLayout):
+    """Card layout for grouped content."""
+
+    template = """
+<div class="card-layout ${class_}" style="${style}">
+    <div class="card-header">
+        <h3 class="card-title">${title}</h3>
+    </div>
+    <div class="card-body">
+        ${content}
+    </div>
+    <div class="card-footer">
+        ${footer}
+    </div>
+</div>
+${component_assets}
     """
 
     def __init__(self, title: str, content: str, footer: str = '', **kwargs: Any) -> None:
@@ -705,6 +718,7 @@ class CardLayout(BaseLayout):
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
         kwargs['title'] = escape(self.title)
         kwargs['footer'] = self.footer
+        kwargs['component_assets'] = style_tag(_CARD_CSS)
         return super().render(**kwargs)
 
 

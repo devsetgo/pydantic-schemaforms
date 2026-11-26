@@ -1,7 +1,9 @@
 """Default CSS/JS snippets for layout-oriented components."""
 
-TAB_COMPONENT_SCRIPT = """
-<script>
+from pydantic_schemaforms.csp import script_tag, style_tag
+from pydantic_schemaforms.tstring import SafeHTML
+
+TAB_COMPONENT_JS = """
 function switchTab(tabId, buttonElement) {
     const tabLayout = buttonElement.closest('.tab-layout');
     const own = selector => Array.from(tabLayout.querySelectorAll(selector))
@@ -37,10 +39,9 @@ if (!window.schemaformsTabsBound) {
         if (button) { switchTab(button.getAttribute('aria-controls'), button); }
     });
 }
-</script>
 """
 
-TAB_COMPONENT_STYLE = """<style>
+TAB_COMPONENT_CSS = """
 .tab-layout .tab-navigation {
     border-bottom: 2px solid var(--sf-outline-variant, #e0e0e0);
     margin-bottom: 1rem;
@@ -66,13 +67,18 @@ TAB_COMPONENT_STYLE = """<style>
 .tab-layout .tab-panel.active {
     display: block;
 }
-</style>
 """
 
-TAB_COMPONENT_ASSETS = TAB_COMPONENT_SCRIPT + TAB_COMPONENT_STYLE
 
-ACCORDION_COMPONENT_SCRIPT = """
-<script>
+def tab_component_script() -> SafeHTML:
+    return SafeHTML('\n' + script_tag(TAB_COMPONENT_JS) + '\n')
+
+
+def tab_component_assets() -> SafeHTML:
+    return SafeHTML(tab_component_script() + style_tag(TAB_COMPONENT_CSS) + '\n')
+
+
+ACCORDION_COMPONENT_JS = """
 function toggleAccordion(sectionId, buttonElement) {
     const content = Array.from(buttonElement.parentElement.children)
         .find(el => el.id === sectionId);
@@ -96,10 +102,9 @@ if (!window.schemaformsAccordionBound) {
         if (button) { toggleAccordion(button.getAttribute('aria-controls'), button); }
     });
 }
-</script>
 """
 
-ACCORDION_COMPONENT_STYLE = """<style>
+ACCORDION_COMPONENT_CSS = """
 .accordion-layout .accordion-section {
     border: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 4px;
@@ -126,18 +131,23 @@ ACCORDION_COMPONENT_STYLE = """<style>
     padding: 1rem;
     border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
 }
-</style>
 """
 
-ACCORDION_COMPONENT_ASSETS = ACCORDION_COMPONENT_SCRIPT + ACCORDION_COMPONENT_STYLE
+
+def accordion_component_script() -> SafeHTML:
+    return SafeHTML('\n' + script_tag(ACCORDION_COMPONENT_JS) + '\n')
+
+
+def accordion_component_assets() -> SafeHTML:
+    return SafeHTML(accordion_component_script() + style_tag(ACCORDION_COMPONENT_CSS) + '\n')
+
 
 # Idempotent: every wizard on a page ships this snippet, but the functions are
 # defined once and each `.form-wizard` is wired up once (data-wizard-ready).
 # Without JavaScript the `wizard-enhanced` class never appears, so every step
 # stays visible and Back and Next stay hidden; the footer's Submit still shows.
 # Submit sits in the footer in Next's place and shows only on the last step.
-WIZARD_COMPONENT_ASSETS = """
-<script>
+WIZARD_COMPONENT_JS = """
 (function () {
     if (window.schemaformsWizard) { window.schemaformsWizard.initAll(); return; }
 
@@ -481,8 +491,9 @@ WIZARD_COMPONENT_ASSETS = """
         window.schemaformsWizard.initAll();
     }
 })();
-</script>
-<style>
+"""
+
+WIZARD_COMPONENT_CSS = """
 .form-wizard:not(.wizard-enhanced) .wizard-progress,
 .form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-back],
 .form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-next] { display: none; }
@@ -521,12 +532,18 @@ WIZARD_COMPONENT_ASSETS = """
     position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
     overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-</style>
 """
+
+
+def wizard_component_assets() -> SafeHTML:
+    return SafeHTML(
+        '\n' + script_tag(WIZARD_COMPONENT_JS) + '\n' + style_tag(WIZARD_COMPONENT_CSS) + '\n'
+    )
+
 
 # Bootstrap supplies its own dark colors under data-bs-theme="dark"; this points
 # the library's --sf-* tokens (widgets, tabs, accordion, wizard) at them.
-BOOTSTRAP_DARK_TOKENS = """<style data-schemaforms-dark-tokens>
+BOOTSTRAP_DARK_CSS = """
 [data-bs-theme="dark"] {
     --sf-primary: var(--bs-primary-text-emphasis);
     --sf-on-primary: var(--bs-body-bg);
@@ -544,4 +561,8 @@ BOOTSTRAP_DARK_TOKENS = """<style data-schemaforms-dark-tokens>
     --sf-star-filled: var(--bs-warning-text-emphasis);
     --sf-star-empty: var(--bs-secondary-color);
 }
-</style>"""
+"""
+
+
+def bootstrap_dark_tokens() -> SafeHTML:
+    return style_tag(BOOTSTRAP_DARK_CSS, 'data-schemaforms-dark-tokens')

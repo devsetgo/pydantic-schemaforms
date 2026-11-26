@@ -6,7 +6,8 @@ import re
 from functools import lru_cache
 from importlib import resources
 
-from pydantic_schemaforms.tstring import SafeHTML, html
+from pydantic_schemaforms.csp import script_src_tag, script_tag, style_tag
+from pydantic_schemaforms.tstring import html
 
 
 @lru_cache(maxsize=32)
@@ -27,35 +28,32 @@ def read_asset_bytes(relative_path: str) -> bytes:
 
 
 @lru_cache(maxsize=1)
-def material_style_tag() -> str:
-    """The Material Design 3 tokens and components as an inline <style>."""
-    css = read_asset_text('assets/material/md3-tokens.css') + read_asset_text(
+def _material_css() -> str:
+    return read_asset_text('assets/material/md3-tokens.css') + read_asset_text(
         'assets/material/md3.css'
     )
-    return style_tag_inline(css)
 
 
-@lru_cache(maxsize=1)
+def material_style_tag() -> str:
+    """The Material Design 3 tokens and components as an inline <style>."""
+    return style_tag_inline(_material_css())
+
+
 def material_script_tag() -> str:
     """The Material style's small script (submit-time required-field check)."""
     return script_tag_inline(read_asset_text('assets/material/md3.js'))
 
 
 def script_tag_inline(js: str) -> str:
-    # js is raw <script> element content, not an HTML context -- html-escaping it
-    # here would corrupt the JS (e.g. turn `<` into `&lt;`), so it's passed through
-    # via SafeHTML rather than escaped like a normal interpolation.
-    _js = SafeHTML(js)
-    return html(t'<script>\n{_js}\n</script>')
+    return script_tag(f'\n{js}\n')
 
 
 def script_tag_src(src: str) -> str:
-    return html(t'<script src="{src}"></script>')
+    return script_src_tag(src)
 
 
 def style_tag_inline(css: str) -> str:
-    _css = SafeHTML(css)
-    return html(t'<style>\n{_css}\n</style>')
+    return style_tag(f'\n{css}\n')
 
 
 def style_tag_href(href: str) -> str:

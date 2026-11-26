@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import re
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic_schemaforms.templates import FormTemplates, TemplateString
 from pydantic_schemaforms.tstring import SafeHTML, html
 from .theme_assets import (
-    ACCORDION_COMPONENT_ASSETS,
-    TAB_COMPONENT_ASSETS,
-    WIZARD_COMPONENT_ASSETS,
+    accordion_component_assets,
+    tab_component_assets,
+    wizard_component_assets,
 )
 
 # ---------------------------------------------------------------------------
@@ -580,7 +581,7 @@ MATERIAL_SUBMIT_BUTTON_TEMPLATE = TemplateString(_material_submit_button)
 
 
 # ---------------------------------------------------------------------------
-# Step wizard templates (behaviour and base styling: WIZARD_COMPONENT_ASSETS)
+# Step wizard templates (behaviour and base styling: wizard_component_assets)
 # ---------------------------------------------------------------------------
 
 
@@ -890,9 +891,9 @@ class FormStyleAssets:
 
     before_form: str = ''
     after_form: str = ''
-    tab_assets: str = TAB_COMPONENT_ASSETS
-    accordion_assets: str = ACCORDION_COMPONENT_ASSETS
-    wizard_assets: str = WIZARD_COMPONENT_ASSETS
+    tab_assets: Callable[[], str] = field(default=tab_component_assets)
+    accordion_assets: Callable[[], str] = field(default=accordion_component_assets)
+    wizard_assets: Callable[[], str] = field(default=wizard_component_assets)
 
 
 @dataclass(frozen=True)

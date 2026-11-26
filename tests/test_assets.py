@@ -2083,8 +2083,8 @@ def test_material_theme_css_has_no_google_fonts_imports() -> None:
 def test_inline_theme_scripts_have_no_python_comments() -> None:
     # A stray `# comment` is a SyntaxError in JavaScript and kills the whole script.
     from pydantic_schemaforms.assets.runtime import material_script_tag
-    from pydantic_schemaforms.rendering.theme_assets import WIZARD_COMPONENT_ASSETS
+    from pydantic_schemaforms.rendering.theme_assets import wizard_component_assets
 
-    for source in (material_script_tag(), WIZARD_COMPONENT_ASSETS):
+    for source in (material_script_tag(), wizard_component_assets()):
         script = source[source.index('<script>') : source.index('</script>')]
         assert not [line for line in script.splitlines() if line.lstrip().startswith('#')]

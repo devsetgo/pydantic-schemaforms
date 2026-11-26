@@ -1,6 +1,6 @@
 """Conditional fields: ``Field(ui_show_when={"field": "kind", "equals": "other"})``.
 
-The same rules decide what the browser shows (``SHOW_WHEN_SCRIPT``) and what the
+The same rules decide what the browser shows (``show_when_script()``) and what the
 server keeps (``prune``), so a value hidden on the page is never validated, even
 in a hand-written request. ``rule_matches`` and the script must agree.
 
@@ -15,6 +15,7 @@ import json
 from enum import Enum
 from typing import Any
 
+from .csp import script_tag
 from .form_data import _tokenize_form_path
 from .tstring import SafeHTML, html
 
@@ -291,7 +292,7 @@ def show_when_wrapper(field_name: str, rule: dict[str, Any], markup: str, contex
 
 
 # Plain JavaScript in a Python string: a '#' comment here would kill the script.
-SHOW_WHEN_SCRIPT = """<script data-schemaforms-show-when>
+SHOW_WHEN_JS = """
 (function () {
     if (window.schemaFormsShowWhen) { window.schemaFormsShowWhen.refresh(); return; }
     var FALSE_STRINGS = ['', '0', 'false', 'off', 'no'];
@@ -379,4 +380,8 @@ SHOW_WHEN_SCRIPT = """<script data-schemaforms-show-when>
     }
     refresh();
 })();
-</script>"""
+"""
+
+
+def show_when_script() -> SafeHTML:
+    return script_tag(SHOW_WHEN_JS, 'data-schemaforms-show-when')
