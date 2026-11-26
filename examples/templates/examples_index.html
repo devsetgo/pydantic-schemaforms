@@ -1,0 +1,122 @@
+{% extends "material_base.html" if request.query_params.get("style") == "material" else "shared_base.html" %}
+
+{% block extra_styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .ex-index { --ex-line: var(--md-sys-color-outline-variant, var(--bs-border-color, #e5e7eb)); --ex-muted: var(--md-sys-color-on-surface-variant, var(--bs-secondary-color, #6b7280)); --ex-accent: var(--md-sys-color-primary, #4f46e5); }
+    .ex-index { --ex-on-accent: var(--md-sys-color-on-primary, #ffffff); }
+    [data-bs-theme="dark"] body:not(.md-shell) .ex-index { --ex-accent: #a5b4fc; --ex-on-accent: #111827; }
+    .ex-index h1 { font-size: 1.9rem; margin: 0.5rem 0 0.25rem; }
+    .ex-index .ex-lead { color: var(--ex-muted); margin-bottom: 1.25rem; max-width: 60rem; }
+    .ex-index h2 { font-size: 1.3rem; margin: 2rem 0 0.25rem; }
+    .ex-index h2 a { color: inherit; text-decoration: none; }
+    .ex-index .ex-section-summary { color: var(--ex-muted); margin: 0 0 0.75rem; }
+    .ex-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ex-line); }
+    .ex-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 1.5rem; padding: 0.9rem 0.25rem; border-bottom: 1px solid var(--ex-line); }
+    .ex-row[hidden], [data-ex-section][hidden] { display: none; }
+    .ex-row h3 { font-size: 1.05rem; margin: 0; }
+    .ex-row h3 a { color: var(--ex-accent); text-decoration: none; }
+    .ex-row h3 a:hover { text-decoration: underline; }
+    .ex-row p { margin: 0.2rem 0 0.35rem; }
+    .ex-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+    .ex-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; padding: 0.05rem 0.45rem; border: 1px solid var(--ex-line); border-radius: 999px; color: var(--ex-muted); }
+    .ex-actions { display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: flex-end; gap: 0.35rem; font-size: 0.85rem; }
+    .ex-actions a { padding: 0.15rem 0.6rem; border: 1px solid var(--ex-line); border-radius: 6px; text-decoration: none; color: inherit; white-space: nowrap; }
+    .ex-actions a:hover { border-color: var(--ex-accent); color: var(--ex-accent); }
+    .ex-more { grid-column: 1 / -1; font-size: 0.85rem; color: var(--ex-muted); }
+    .ex-more a { color: var(--ex-accent); }
+    .ex-filter { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.5rem; }
+    .ex-filter button { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; padding: 0.15rem 0.6rem; border: 1px solid var(--ex-line); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+    .ex-filter button[aria-pressed="true"] { background: var(--ex-accent); border-color: var(--ex-accent); color: var(--ex-on-accent); }
+    .ex-count { font-size: 0.85rem; color: var(--ex-muted); margin-bottom: 0.5rem; }
+    @media (max-width: 640px) { .ex-row { grid-template-columns: 1fr; } .ex-actions { justify-content: flex-start; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ex-index">
+    {% if section %}
+    <h1>{{ section.title }}</h1>
+    <p class="ex-lead">{{ section.summary }} Open any example in Bootstrap, Material or plain HTML; the menu on the left lists every section.</p>
+    {% else %}
+    <h1>All examples</h1>
+    <p class="ex-lead">
+        Every page of this demo, grouped by what it shows. Each one is a real form built from a
+        Pydantic model: try it, submit it with mistakes, and switch the style. Pick a feature below
+        to see only the examples that use it.
+    </p>
+    <div class="ex-filter" role="group" aria-label="Show examples that use">
+        <button type="button" aria-pressed="true" data-ex-tag="">Everything</button>
+        {% for tag in tags %}<button type="button" aria-pressed="false" data-ex-tag="{{ tag }}">{{ tag }}</button>{% endfor %}
+    </div>
+    <p class="ex-count" aria-live="polite" data-ex-count>{{ count }} examples</p>
+    {% endif %}
+
+    {% for sec, examples in sections %}
+    <section data-ex-section>
+        {% if not section %}
+        <h2><a href="/examples/{{ sec.slug }}">{{ sec.title }}</a></h2>
+        <p class="ex-section-summary">{{ sec.summary }}</p>
+        {% endif %}
+        <ul class="ex-list">
+            {% for example in examples %}
+            <li class="ex-row" data-ex-tags="{{ example.tags | join(' ') }}">
+                <div>
+                    <h3><a href="{{ example.url }}">{{ example.title }}</a></h3>
+                    <p>{{ example.summary }}</p>
+                    {% if example.tags %}
+                    <ul class="ex-tags" aria-label="Shows">
+                        {% for tag in example.tags %}<li class="ex-tag">{{ tag }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                <div class="ex-actions">
+                    {% for style in example.styles %}
+                    <a href="{{ example.url | with_style(style) }}">{{ style_labels[style] }}</a>
+                    {% endfor %}
+                    {% if not example.styles %}<a href="{{ example.url }}">Open</a>{% endif %}
+                </div>
+                {% if example.variants or example.docs %}
+                <div class="ex-more">
+                    {% if example.variants %}Also:
+                        {% for label, url in example.variants %}<a href="{{ url }}">{{ label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}
+                    {% endif %}
+                    {% if example.variants and example.docs %} &nbsp;|&nbsp; {% endif %}
+                    {% if example.docs %}<a href="{{ example.docs }}">Read the docs</a>{% endif %}
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if not section %}
+<script nonce="{{ request.state.csp_nonce }}">
+(function () {
+    var buttons = Array.from(document.querySelectorAll('[data-ex-tag]'));
+    var count = document.querySelector('[data-ex-count]');
+    buttons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            var tag = button.getAttribute('data-ex-tag');
+            buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b === button)); });
+            var shown = 0;
+            document.querySelectorAll('[data-ex-section]').forEach(function (section) {
+                var visible = 0;
+                section.querySelectorAll('.ex-row').forEach(function (row) {
+                    var match = !tag || row.getAttribute('data-ex-tags').split(' ').indexOf(tag) !== -1;
+                    row.hidden = !match;
+                    if (match) { visible++; }
+                });
+                section.hidden = visible === 0;
+                shown += visible;
+            });
+            count.textContent = shown + (shown === 1 ? ' example' : ' examples');
+        });
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

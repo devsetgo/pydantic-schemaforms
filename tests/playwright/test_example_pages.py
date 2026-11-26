@@ -451,7 +451,8 @@ def test_site_header_style_and_variant_apply_across_pages(
 def test_material_pages_show_the_site_header(page: Page, examples_server_url: str) -> None:
     page.goto(f'{examples_server_url}/login?style=material', wait_until='load')
     expect(page.locator('.top-resource-bar')).to_contain_text('Documentation', timeout=TIMEOUT)
-    expect(page.locator('.site-brand-shell')).to_be_visible()
+    expect(page.locator('.site-brand')).to_be_visible()
+    expect(page.locator('[data-site-nav]')).to_be_visible()
 
 
 @pytest.mark.parametrize('style', ['bootstrap', 'material'])

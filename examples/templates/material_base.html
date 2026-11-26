@@ -146,10 +146,13 @@
 
 <body class="md-form md-shell">
     {% include "_site_bar.html" %}
-    <main class="md-shell__main">
-        {% block content %}{% endblock %}
-        <div class="demo-version-footer">Demo App: v{{ container_version }}</div>
-    </main>
+    <div class="site-layout">
+        {% include "_sidebar.html" %}
+        <main class="md-shell__main site-main">
+            {% block content %}{% endblock %}
+            <div class="demo-version-footer">Demo App: v{{ container_version }}</div>
+        </main>
+    </div>
     {% block extra_scripts %}{% endblock %}
 </body>
 

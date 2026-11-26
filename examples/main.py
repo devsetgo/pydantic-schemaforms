@@ -34,6 +34,7 @@ from examples.fastapi_routes import (
 from examples.datatable_import_example import router as datatable_router
 from examples.menu_order_example import router as menu_order_router
 from examples.wizard_examples import router as wizards_router
+from examples.site_pages import router as site_router
 from pydantic_schemaforms import __version__ as _psf_version
 
 from dsg_lib.common_functions.logging_config import config_log
@@ -140,6 +141,7 @@ app.include_router(router)
 app.include_router(datatable_router)
 app.include_router(menu_order_router)
 app.include_router(wizards_router)
+app.include_router(site_router)
 
 
 if __name__ == '__main__':

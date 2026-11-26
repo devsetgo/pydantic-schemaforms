@@ -183,6 +183,18 @@ class PetModel(FormModel):
     )
 
 
+class SignupForm(FormModel):
+    """The home page's example: its source is shown there as it is here."""
+
+    name: str = Field(title='Full name', min_length=2)
+    email: EmailStr = Field(title='Email', ui_element='email')
+    plan: Literal['Free', 'Team', 'Business'] = Field('Team', title='Plan')
+    start_date: date = Field(title='Start date')
+    agree: Literal[True] = Field(
+        title='I agree to the terms', unchecked_message='Please agree to continue'
+    )
+
+
 class MinimalLoginForm(FormModel):
     """Minimal form example - Simple login form."""
 
