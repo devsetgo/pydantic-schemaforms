@@ -174,6 +174,7 @@ Features that widen who can use the library, once the features they have to cove
 | [#236](https://github.com/devsetgo/pydantic-schemaforms/issues/236) Form versioning with a migration chain | Wait until a real user asks. The library doesn't store data, so most of the value comes from a documented recipe. |
 | [#297](https://github.com/devsetgo/pydantic-schemaforms/issues/297) Drawing inputs: signature pad, drawing canvas and image annotation | No place on the roadmap decided yet. Stateful canvas work that needs an accessible alternative. |
 | [#298](https://github.com/devsetgo/pydantic-schemaforms/issues/298) Rich content and structured choice inputs | A tracking issue with no place on the roadmap yet. Each input needs a design decision, especially whether it can stay dependency-free. |
+| [#347](https://github.com/devsetgo/pydantic-schemaforms/issues/347) `ui_cols` has no effect inside `model_list` items | A small bug with no phase decided yet. It touches the list item markup that #245's test helpers and #271's feedback work also read, so it can ride along with either. |
 | [#190](https://github.com/devsetgo/pydantic-schemaforms/issues/190) Form builder | A far-future idea that depends on the library gaining a larger user base. It may become part of the demo site (pydantic-schemaforms.devsetgo.com) or DevSetGo.com rather than the library, so it stays open after #235 ships. |
 
 ## Not planned
