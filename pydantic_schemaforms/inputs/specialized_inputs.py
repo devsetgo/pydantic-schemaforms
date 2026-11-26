@@ -66,8 +66,7 @@ class FileInput(FileInputBase):
             # embedded as JS string literals inside getElementById(...), not HTML
             # attribute values, so they stay in an f-string.
             preview_script = SafeHTML(
-                '\n            '
-                + script_tag(f"""
+                script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const fileInput = document.getElementById('{field_id}');
                 const preview = document.getElementById('{field_name}_preview');
@@ -108,15 +107,13 @@ class FileInput(FileInputBase):
                 }}
             }});
             """)
-                + '\n            '
             )
             preview_html = SafeHTML(preview_div + preview_script)
 
         drag_drop_script: SafeHTML = SafeHTML('')
         if enable_drag_drop:
             drag_drop_script = SafeHTML(
-                '\n            '
-                + script_tag(f"""
+                script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const dropzone = document.getElementById('{field_id}_dropzone');
                 const fileInput = document.getElementById('{field_id}');
@@ -144,7 +141,6 @@ class FileInput(FileInputBase):
                 }});
             }});
             """)
-                + '\n            '
             )
 
         if not (show_preview or enable_drag_drop):
@@ -216,8 +212,7 @@ class ColorInput(FormInput):
             # JS-only content below (rule 4 exception) -- field_id/field_name
             # are embedded as JS string literals, not HTML attribute values.
             value_script = SafeHTML(
-                '\n            '
-                + script_tag(f"""
+                script_tag(f"""
             (function() {{
               function init() {{
                 const colorInput = document.getElementById('{field_id}');
@@ -241,7 +236,6 @@ class ColorInput(FormInput):
               }}
             }})();
             """)
-                + '\n            '
             )
             value_display = SafeHTML(value_div + value_script)
             return html(t'<div class="color-input-group">{color_html}{value_display}</div>')
@@ -524,8 +518,7 @@ class RatingStarsInput(FormInput):
         stars_html = SafeHTML(''.join(star_parts))  # NOSONAR
 
         assets = SafeHTML(
-            '\n            '
-            + style_tag("""
+            style_tag("""
             .star-rating-input .stars {
                 font-size: 24px;
                 cursor: pointer;
@@ -545,7 +538,6 @@ class RatingStarsInput(FormInput):
                 color: var(--sf-star-filled, #b58900);
             }
             """)
-            + '\n            '
             + script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const starsContainer = document.getElementById('{field_id}_stars');
@@ -650,8 +642,7 @@ class TagsInput(FormInput):
 
         separator_js = json.dumps(separator)
         assets = SafeHTML(
-            '\n            '
-            + style_tag("""
+            style_tag("""
             .tags-input {
                 border: 1px solid var(--sf-outline, #ccc);
                 border-radius: 4px;
@@ -683,7 +674,6 @@ class TagsInput(FormInput):
                 font-weight: bold;
             }
             """)
-            + '\n            '
             + script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const container = document.getElementById('{field_id}_container');

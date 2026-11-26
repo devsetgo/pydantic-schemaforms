@@ -17,6 +17,8 @@ from .theme_assets import (
     wizard_component_assets,
 )
 
+_HIDDEN_ATTR = ' hidden'
+
 # ---------------------------------------------------------------------------
 # Default (Bootstrap-compatible) templates
 # ---------------------------------------------------------------------------
@@ -495,7 +497,7 @@ def _material_accordion_section(
     **_: Any,
 ) -> SafeHTML:
     _expanded_class = SafeHTML(expanded_class)
-    hidden = SafeHTML(' hidden' if display_style == 'none' else '')
+    hidden = SafeHTML(_HIDDEN_ATTR if display_style == 'none' else '')
     return html(t'''
 <div class="md-accordion-section">
     <button class="md-accordion-header{_expanded_class}" type="button" aria-expanded="{aria_expanded}"
@@ -639,12 +641,12 @@ def _wizard_progress_item(
     _number = html(t'<span class="wizard-progress-number">{shown}</span>')  # NOSONAR
     _said = SafeHTML('')  # NOSONAR - read in the t-string below
     if done:
-        _hidden = SafeHTML('' if done == 'true' else ' hidden')  # NOSONAR
+        _hidden = SafeHTML('' if done == 'true' else _HIDDEN_ATTR)  # NOSONAR
         _said = html(t'<span class="sf-sr-only" data-step-done{_hidden}> (complete)</span>')
     _title = html(t'<span class="wizard-progress-title">{title}</span>{_said}')  # NOSONAR
     _class = SafeHTML(state_class)  # NOSONAR
     # A step a rule hides (#327) leaves the header; the wizard script shows it again.
-    _skipped = SafeHTML(' hidden' if skipped else '')  # NOSONAR
+    _skipped = SafeHTML(_HIDDEN_ATTR if skipped else '')  # NOSONAR
     if action:
         # save_steps: a header jump posts the current step, like Back and Next.
         _disabled = SafeHTML(' disabled' if disabled else '')  # NOSONAR
