@@ -56,6 +56,7 @@ def test_modal_layout_renders_no_inline_event_handlers() -> None:
 
 _PACKAGE = Path(__file__).resolve().parent.parent / 'pydantic_schemaforms'
 _TAG_LITERAL = re.compile(r'<(script|style)\b', re.IGNORECASE)
+_STYLE_ATTR_LITERAL = re.compile(r'\bstyle\s*=\s*["\'$]|setAttribute\(\s*["\']style', re.IGNORECASE)
 
 
 def _docstring_nodes(tree: ast.AST) -> set[int]:
@@ -69,7 +70,7 @@ def _docstring_nodes(tree: ast.AST) -> set[int]:
     return found
 
 
-def _tag_literals(path: Path) -> list[str]:
+def _tag_literals(path: Path, pattern: re.Pattern[str] = _TAG_LITERAL) -> list[str]:
     tree = ast.parse(path.read_text(encoding='utf-8'))
     docstrings = _docstring_nodes(tree)
     hits = []
@@ -78,7 +79,7 @@ def _tag_literals(path: Path) -> list[str]:
             isinstance(node, ast.Constant)
             and isinstance(node.value, str)
             and id(node) not in docstrings
-            and _TAG_LITERAL.search(node.value)
+            and pattern.search(node.value)
         ):
             hits.append(f'{path.relative_to(_PACKAGE.parent)}:{node.lineno}')
     return hits
@@ -248,3 +249,57 @@ def test_base64_and_base64url_nonces_are_accepted(good: str) -> None:
     assert f'nonce="{good}"' in LayoutDemonstrationForm.render_form(
         submit_url='/x', script_nonce=good
     )
+
+
+def test_no_style_attribute_is_written_in_package_source() -> None:
+    """A strict style-src blocks every style="" attribute, even an empty one: the library's
+    own styling lives in its stylesheets, and an app's ui_style goes through csp.style_attr."""
+    offenders = [
+        hit
+        for path in sorted(_PACKAGE.rglob('*.py'))
+        if 'vendor' not in path.parts and path.name != 'csp.py'
+        for hit in _tag_literals(path, _STYLE_ATTR_LITERAL)
+    ]
+    assert offenders == [], 'Use a class, the hidden attribute or csp.style_attr:\n' + '\n'.join(
+        offenders
+    )
+
+
+class _StyleAttrs(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.values: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.values += [value or '' for name, value in attrs if name == 'style']
+
+
+def _style_attrs(markup: str) -> set[str]:
+    parser = _StyleAttrs()
+    parser.feed(markup)
+    return set(parser.values)
+
+
+# The gallery's ui_style demo: an app's own inline style, passed through as given.
+_APP_STYLES = {'font-weight: 600'}
+
+
+@pytest.mark.parametrize('framework', FRAMEWORKS)
+def test_rendered_output_has_no_library_style_attributes(framework: str) -> None:
+    renders = [
+        WidgetGalleryForm.render_form(
+            framework=framework, submit_url='/x', include_framework_assets=True
+        ),
+        WidgetGalleryForm.render_display({}, framework=framework),
+        WidgetGalleryForm.validate({}, submit_url='/x', framework=framework).render_with_errors(),
+        *(
+            LayoutDemonstrationForm.render_form(framework=framework, submit_url='/x', layout=layout)
+            for layout in sorted(LAYOUTS)
+        ),
+    ]
+    for markup in renders:
+        assert _style_attrs(markup) <= _APP_STYLES
+
+
+def test_legacy_layouts_write_no_style_attribute_unless_given_one() -> None:
+    assert _style_attrs(ModalLayout('m1', 'Title', 'Body').render()) == set()

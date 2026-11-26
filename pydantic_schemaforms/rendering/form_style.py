@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic_schemaforms.templates import FormTemplates, TemplateString
+from pydantic_schemaforms.csp import style_attr
 from pydantic_schemaforms.tstring import SafeHTML, html
 from .theme_assets import (
     accordion_component_assets,
@@ -257,7 +258,7 @@ def _bootstrap_tab_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="tab-layout nav-tabs-wrapper {layout_class}" style="{layout_style}">
+<div class="tab-layout nav-tabs-wrapper {layout_class}"{style_attr(layout_style)}>
     <ul class="nav nav-tabs" role="tablist">
         {SafeHTML(tab_buttons)}
     </ul>
@@ -327,7 +328,7 @@ def _bootstrap_accordion_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="accordion {layout_class}" id="{layout_id}" style="{layout_style}">
+<div class="accordion {layout_class}" id="{layout_id}"{style_attr(layout_style)}>
     {SafeHTML(sections)}
 </div>
 {SafeHTML(component_assets)}
@@ -381,7 +382,7 @@ def _plain_tab_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="tab-layout {layout_class}" style="{layout_style}">
+<div class="tab-layout {layout_class}"{style_attr(layout_style)}>
     <div class="tab-navigation" role="tablist">{SafeHTML(tab_buttons)}</div>
     <div class="tab-content">{SafeHTML(tab_panels)}</div>
 </div>
@@ -404,7 +405,7 @@ def _plain_accordion_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="accordion-layout {layout_class}" style="{layout_style}">
+<div class="accordion-layout {layout_class}"{style_attr(layout_style)}>
     {SafeHTML(sections)}
 </div>
 {SafeHTML(component_assets)}
@@ -431,7 +432,7 @@ def _material_tab_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="tab-layout md-tab-layout {layout_class}" style="{layout_style}">
+<div class="tab-layout md-tab-layout {layout_class}"{style_attr(layout_style)}>
     <div class="tab-navigation md-tab-navigation" role="tablist">{SafeHTML(tab_buttons)}</div>
     <div class="tab-content md-tab-content">{SafeHTML(tab_panels)}</div>
 </div>
@@ -473,7 +474,7 @@ def _material_accordion_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="md-accordion-layout {layout_class}" style="{layout_style}">
+<div class="md-accordion-layout {layout_class}"{style_attr(layout_style)}>
     {SafeHTML(sections)}
 </div>
 {SafeHTML(component_assets)}
@@ -494,13 +495,14 @@ def _material_accordion_section(
     **_: Any,
 ) -> SafeHTML:
     _expanded_class = SafeHTML(expanded_class)
+    hidden = SafeHTML(' hidden' if display_style == 'none' else '')
     return html(t'''
 <div class="md-accordion-section">
     <button class="md-accordion-header{_expanded_class}" type="button" aria-expanded="{aria_expanded}"
             aria-controls="{section_id}" data-sf-toggle="accordion">
         {title}
     </button>
-    <div id="{section_id}" class="md-accordion-content" style="display: {display_style};">
+    <div id="{section_id}" class="md-accordion-content"{hidden}>
         {SafeHTML(content)}
     </div>
 </div>

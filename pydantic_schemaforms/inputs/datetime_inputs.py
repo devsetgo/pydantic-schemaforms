@@ -19,7 +19,7 @@ _DATETIME_FMT = '%Y-%m-%dT%H:%M'
 _STRFTIME_DIRECTIVE_RE = re.compile(r'(%.)')
 
 # Reserves room for the picker-toggle icon button (see _wrap_with_picker_toggle).
-_PICKER_TOGGLE_PADDING_STYLE = 'padding-right: 2.25rem;'
+_PICKER_INPUT_CLASS = 'schemaforms-picker-input'
 
 # Directives that map to a fixed-width run of digits -- safe for live
 # character-by-character mask-driven input, using the same '#'-per-digit
@@ -332,13 +332,8 @@ _PICKER_ARIA_LABEL = {
 }
 
 
-def _append_inline_style(existing: str, addition: str) -> str:
-    """Append a CSS declaration to an existing inline `style` value."""
-    existing = existing.strip()
-    if not existing:
-        return addition
-    sep = '' if existing.endswith(';') else '; '
-    return f'{existing}{sep}{addition}'
+def _with_picker_input_class(existing: object) -> str:
+    return f'{existing or ""} {_PICKER_INPUT_CLASS}'.strip()
 
 
 def _wrap_with_picker_toggle(input_html: str, field_id: str, fmt: str, native_type: str) -> str:
@@ -369,10 +364,10 @@ def _wrap_with_picker_toggle(input_html: str, field_id: str, fmt: str, native_ty
     _input_html = SafeHTML(str(input_html))
 
     wrapper_html = html(t'''
-<div class="schemaforms-picker-wrap" style="position: relative; display: inline-block; width: 100%;">
+<div class="schemaforms-picker-wrap">
 {_input_html}
-<button type="button" id="{toggle_id}" aria-label="{aria_label}" class="schemaforms-picker-toggle" style="position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%); background: transparent; border: none; padding: 0.15rem; margin: 0; cursor: pointer; line-height: 0; color: inherit; opacity: 0.6; min-width: 24px; min-height: 24px; display: inline-flex; align-items: center; justify-content: center;">{icon}</button>
-<input type="{native_type}" id="{picker_id}" tabindex="-1" aria-hidden="true" style="position: absolute; inset: 0; opacity: 0; width: 1px; height: 1px; border: 0; padding: 0; pointer-events: none;" />
+<button type="button" id="{toggle_id}" aria-label="{aria_label}" class="schemaforms-picker-toggle">{icon}</button>
+<input type="{native_type}" id="{picker_id}" class="schemaforms-picker-native" tabindex="-1" aria-hidden="true" />
 </div>
 ''')
     # JS-only below (rule 4 exception): ids are embedded as JS string
@@ -460,9 +455,7 @@ class DateInput(FormInput):
             live_format and field_id and _picker_toggle_js_expr(date_format) is not None
         )
         if show_picker_toggle:
-            kwargs['style'] = _append_inline_style(
-                str(kwargs.get('style', '')), _PICKER_TOGGLE_PADDING_STYLE
-            )
+            kwargs['class'] = _with_picker_input_class(kwargs.get('class'))
 
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = 'text'
@@ -537,9 +530,7 @@ class TimeInput(FormInput):
             live_format and field_id and _picker_toggle_js_expr(time_format) is not None
         )
         if show_picker_toggle:
-            kwargs['style'] = _append_inline_style(
-                str(kwargs.get('style', '')), _PICKER_TOGGLE_PADDING_STYLE
-            )
+            kwargs['class'] = _with_picker_input_class(kwargs.get('class'))
 
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = 'text'
@@ -639,9 +630,7 @@ class DatetimeInput(FormInput):
             live_format and field_id and _picker_toggle_js_expr(datetime_format) is not None
         )
         if show_picker_toggle:
-            kwargs['style'] = _append_inline_style(
-                str(kwargs.get('style', '')), _PICKER_TOGGLE_PADDING_STYLE
-            )
+            kwargs['class'] = _with_picker_input_class(kwargs.get('class'))
 
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = 'text'
@@ -949,10 +938,7 @@ class BirthdateInput(DateInput):
             field_name = kwargs.get('name', '')
             field_id = kwargs.get('id', field_name)
 
-            age_div = html(
-                t'<div class="age-display" id="{field_name}_age" '
-                t'style="margin-top: 5px; font-size: 0.9em; color: var(--sf-on-surface-variant, #666);"></div>'
-            )
+            age_div = html(t'<div class="age-display" id="{field_name}_age"></div>')
             # JS-only below (rule 4 exception).
             age_script = SafeHTML(
                 '\n            '

@@ -22,6 +22,7 @@ from pydantic_schemaforms.show_when import field_rules, is_shown, prune
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .layout_engine import GROUPED_LAYOUTS, LayoutEngine, check_layout, is_sub_form_group
+from .theme_assets import base_styles
 from .schema_parser import (
     GROUP_ELEMENTS,
     SchemaMetadata,
@@ -275,12 +276,10 @@ class _DisplayRenderer:
             return ', '.join(str(item) for item in value)
         return str(value)
 
-    def _value_markup(self, text: str, is_empty: bool) -> tuple[str, SafeHTML]:
-        # HTML collapses a multi-line answer's line breaks and indentation.
-        style = 'white-space: pre-wrap' if '\n' in text else ''  # NOSONAR
-        _style = html(t' style="{style}"') if style else SafeHTML('')
+    def _value_markup(self, text: str, is_empty: bool) -> str:
         css = self._theme.display_class('empty') if is_empty else ''
-        return css, _style
+        # HTML collapses a multi-line answer's line breaks and indentation.
+        return f'{css} sf-pre-wrap'.strip() if '\n' in text else css
 
     def _rows(self, rows: list[tuple[str, str, bool, SafeHTML]]) -> str:
         if not rows:
@@ -291,13 +290,13 @@ class _DisplayRenderer:
         value_class = theme.display_class('value')
         parts = []
         for title, text, is_empty, _slot in rows:
-            extra_class, _style = self._value_markup(text, is_empty)
+            extra_class = self._value_markup(text, is_empty)
             _dd_class = f'{value_class} {extra_class}'.strip()  # NOSONAR
             parts.append(
                 str(
                     html(
                         t'<dt class="{term_class}">{title}</dt>'
-                        t'<dd class="{_dd_class}"{_style}{_slot}>{text}</dd>'
+                        t'<dd class="{_dd_class}"{_slot}>{text}</dd>'
                     )
                 )
             )
@@ -399,10 +398,10 @@ class _DisplayRenderer:
                 _content = SafeHTML(self._composite_body(field_schema, value))  # NOSONAR
             return html(t'<td>{_content}</td>')
         text, is_empty = self._text(field_schema, value)
-        extra_class, _style = self._value_markup(text, is_empty)
+        extra_class = self._value_markup(text, is_empty)
         _class = html(t' class="{extra_class}"') if extra_class else SafeHTML('')  # NOSONAR
         _slot = self._slot(name, field_schema, text, is_empty)  # NOSONAR
-        return html(t'<td{_class}{_style}{_slot}>{text}</td>')
+        return html(t'<td{_class}{_slot}>{text}</td>')
 
     @staticmethod
     def _title(name: str, field_schema: dict[str, Any]) -> str:
@@ -607,7 +606,7 @@ def render_display(
     _class = f'sf-display {wrapper_class}'.strip()  # NOSONAR
     _content = SafeHTML(content)  # NOSONAR
     wrapper = html(t'<div class="{_class}">{_content}</div>')
-    blocks = [theme.before_form(), wrapper, theme.after_form()]
+    blocks = [base_styles(), theme.before_form(), wrapper, theme.after_form()]
     return '\n'.join(str(block) for block in blocks if block)
 
 

@@ -45,8 +45,7 @@ def _block(
     if scrollable:
         # tabindex lets keyboard users scroll it.
         return html(
-            t'<div id="{block_id}" class="{css_class}" tabindex="0" '
-            t'style="max-height: 16rem; overflow-y: auto">{_heading}{_content}</div>'
+            t'<div id="{block_id}" class="{css_class} sf-scrollable" tabindex="0">{_heading}{_content}</div>'
         )
     return html(t'<div id="{block_id}" class="{css_class}">{_heading}{_content}</div>')
 

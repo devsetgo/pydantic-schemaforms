@@ -13,6 +13,7 @@ function switchTab(tabId, buttonElement) {
 
     panels.forEach(panel => {
         panel.style.display = 'none';
+        panel.hidden = true;
         panel.classList.remove('active');
         panel.setAttribute('aria-hidden', 'true');
     });
@@ -25,6 +26,7 @@ function switchTab(tabId, buttonElement) {
     const selectedPanel = panels.find(panel => panel.id === tabId);
     if (selectedPanel) {
         selectedPanel.style.display = 'block';
+        selectedPanel.hidden = false;
         selectedPanel.classList.add('active');
         selectedPanel.setAttribute('aria-hidden', 'false');
     }
@@ -87,10 +89,12 @@ function toggleAccordion(sectionId, buttonElement) {
 
     if (isExpanded) {
         content.style.display = 'none';
+        content.hidden = true;
         buttonElement.setAttribute('aria-expanded', 'false');
         buttonElement.classList.remove('expanded');
     } else {
         content.style.display = 'block';
+        content.hidden = false;
         buttonElement.setAttribute('aria-expanded', 'true');
         buttonElement.classList.add('expanded');
     }
@@ -566,3 +570,44 @@ BOOTSTRAP_DARK_CSS = """
 
 def bootstrap_dark_tokens() -> SafeHTML:
     return style_tag(BOOTSTRAP_DARK_CSS, 'data-schemaforms-dark-tokens')
+
+
+# The library's own declarations that used to be style="" attributes, which a strict
+# style-src blocks. Each selector is more specific than the Bootstrap and md3 rules
+# for the same element, as the inline style it replaces was.
+BASE_COMPONENT_CSS = """
+.sf-scrollable.sf-scrollable { max-height: 16rem; overflow-y: auto; }
+.sf-pre-wrap.sf-pre-wrap { white-space: pre-wrap; }
+.sf-render-time { margin-top: 0.5rem; font-size: 0.75rem; color: var(--sf-on-surface-variant, #5c636a); text-align: right; }
+.sf-honeypot.sf-honeypot { display: none !important; }
+textarea.sf-resize-none.sf-resize-none { resize: none; }
+textarea.sf-resize-both.sf-resize-both { resize: both; }
+textarea.sf-resize-horizontal.sf-resize-horizontal { resize: horizontal; }
+textarea.sf-resize-vertical.sf-resize-vertical { resize: vertical; }
+textarea.sf-resize-block.sf-resize-block { resize: block; }
+textarea.sf-resize-inline.sf-resize-inline { resize: inline; }
+.schemaforms-picker-wrap { position: relative; display: inline-block; width: 100%; }
+form .schemaforms-picker-wrap input.schemaforms-picker-input.schemaforms-picker-input { padding-right: 2.25rem; }
+.schemaforms-picker-wrap button.schemaforms-picker-toggle {
+    position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+    background: transparent; border: none; padding: 0.15rem; margin: 0; cursor: pointer;
+    line-height: 0; color: inherit; opacity: 0.6; min-width: 24px; min-height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.schemaforms-picker-wrap input.schemaforms-picker-native.schemaforms-picker-native {
+    position: absolute; inset: 0; opacity: 0; width: 1px; height: 1px; border: 0; padding: 0;
+    pointer-events: none;
+}
+.age-display { margin-top: 5px; font-size: 0.9em; color: var(--sf-on-surface-variant, #666); }
+.file-preview { margin-top: 10px; }
+.color-input-group > div { display: inline-flex; align-items: center; margin-left: 10px; }
+.color-input-group > div > span.color-value-text.color-value-text { font-family: monospace; }
+.color-input-group > div > .color-swatch {
+    width: 20px; height: 20px; border: 1px solid var(--sf-outline-variant, #ccc); margin-left: 5px;
+}
+.slider-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+"""
+
+
+def base_styles() -> SafeHTML:
+    return style_tag(BASE_COMPONENT_CSS, 'data-schemaforms-base')

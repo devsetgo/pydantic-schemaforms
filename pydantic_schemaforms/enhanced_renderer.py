@@ -25,6 +25,7 @@ from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.form_style import WIZARD_SUBMIT_RE
+from .rendering.theme_assets import base_styles
 from .error_tree import iter_errors, normalize_error_tree
 from .form_data import decode_submission
 from .rendering.layout_engine import (
@@ -450,7 +451,11 @@ class EnhancedFormRenderer:
         )
 
         styles = self._render_layout_support_styles() if inject_layout_styles else ''
-        output_parts = [styles, form_markup] if styles else [form_markup]
+        output_parts = (
+            [str(base_styles()), styles, form_markup]
+            if styles
+            else [str(base_styles()), form_markup]
+        )
 
         # Direct top-level fields cover the common case, but a form composed
         # entirely of layout/tab fields (e.g. a tabbed wrapper) never lists

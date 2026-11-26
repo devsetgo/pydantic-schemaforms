@@ -114,17 +114,22 @@ class TestTextInputs:
         assert 'cols="40"' in html
         assert 'Long text content</textarea>' in html
 
-    def test_textarea_resize_becomes_a_style_not_a_raw_attribute(self):
-        """`resize` is a CSS property, not an HTML attribute -- it must be merged
-        into `style`, not emitted as a bare (invalid) `resize="..."` attribute."""
+    def test_textarea_resize_becomes_a_class_not_a_raw_attribute(self):
+        """`resize` is a CSS property, not an HTML attribute -- it must become a
+        class, not a bare (invalid) `resize="..."` attribute or a style attribute."""
         input_field = TextArea()
 
         html = input_field.render(name='notes', resize='vertical')
-        assert 'style="resize: vertical"' in html
+        assert 'class="sf-resize-vertical"' in html
+        assert 'style=' not in html
         assert 'resize="vertical"' not in html
 
         html_with_style = input_field.render(name='notes', resize='vertical', style='color: red')
-        assert 'style="color: red; resize: vertical"' in html_with_style
+        assert 'style="color: red"' in html_with_style
+        assert 'sf-resize-vertical' in html_with_style
+
+        html_unlisted = input_field.render(name='notes', resize='initial')
+        assert 'style="resize: initial"' in html_unlisted
 
     def test_textarea_language_none_is_unaffected(self):
         """No `language` set -> byte-identical to today's plain textarea path."""
@@ -1488,8 +1493,7 @@ class TestCheckboxGroup:
         assert 'class="checkbox-group collapsible"' in html
         assert 'toggleCollapsibleGroup' in html
         assert 'aria-expanded="true"' in html
-        assert 'id="vegetables-options"' in html
-        assert 'style=""' in html  # visible, not display:none
+        assert 'id="vegetables-options">' in html  # visible, not hidden
 
     def test_checkbox_group_collapsible_collapsed_starts_hidden(self):
         group = CheckboxGroup()
@@ -1499,7 +1503,7 @@ class TestCheckboxGroup:
         )
 
         assert 'aria-expanded="false"' in html
-        assert 'style="display:none"' in html
+        assert ' hidden>' in html
 
 
 # ---------------------------------------------------------------------------
@@ -1594,8 +1598,7 @@ class TestRadioGroup:
         assert 'class="radio-group collapsible"' in html
         assert 'toggleCollapsibleGroup' in html
         assert 'aria-expanded="true"' in html
-        assert 'id="size-options"' in html
-        assert 'style=""' in html
+        assert 'id="size-options">' in html
 
     def test_radio_group_collapsible_collapsed_starts_hidden(self):
         group = RadioGroup()
@@ -1603,7 +1606,7 @@ class TestRadioGroup:
         html = group.render(options=options, group_name='size', collapsible=True, collapsed=True)
 
         assert 'aria-expanded="false"' in html
-        assert 'style="display:none"' in html
+        assert ' hidden>' in html
 
 
 # ---------------------------------------------------------------------------

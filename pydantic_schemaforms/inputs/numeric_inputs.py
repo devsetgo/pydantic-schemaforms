@@ -279,7 +279,7 @@ class SliderInput(RangeInput):
             max_val = kwargs.get('max', '100')
 
             labels_html = html(t"""
-            <div class="slider-labels" style="display: flex; justify-content: space-between; margin-top: 5px;">
+            <div class="slider-labels">
                 <span class="slider-min">{min_val}</span>
                 <span class="slider-max">{max_val}</span>
             </div>

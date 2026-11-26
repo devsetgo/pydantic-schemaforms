@@ -122,10 +122,50 @@ def _wrap_side_by_side_column(col: str) -> str:
     return html(t'<div class="side-by-side-column">{_col}</div>')
 
 
+_LAYOUT_CSS = """
+.horizontal-layout.sf-hlayout {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+.horizontal-layout.sf-hlayout.form-groups-side-by-side {
+    gap: 1.5rem;
+}
+.vertical-layout.sf-vlayout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+}
+.grid-layout.sf-glayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+"""
+
+
+def _differing(**declarations: tuple[str | None, str]) -> list[str]:
+    """CSS declarations for the options whose value is not the stylesheet's default."""
+
+    return [
+        f'{name.replace("_", "-")}: {value}'
+        for name, (value, default) in declarations.items()
+        if value and value != default
+    ]
+
+
+def _with_declarations(kwargs: dict[str, Any], declarations: list[str]) -> None:
+    kwargs['style'] = '; '.join(filter(None, [kwargs.get('style', ''), *declarations]))
+    kwargs['component_assets'] = style_tag(_LAYOUT_CSS)
+
+
 class HorizontalLayout(BaseLayout):
     """Horizontal layout using flexbox."""
 
-    template = """<div class="horizontal-layout ${class_}" style="display: flex; flex-direction: row; ${style}">${content}</div>"""
+    template = """<div class="horizontal-layout sf-hlayout ${class_}"${style_attr}>${content}</div>${component_assets}"""
 
     def __init__(
         self,
@@ -143,22 +183,21 @@ class HorizontalLayout(BaseLayout):
         self.justify_content = justify_content
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        additional_styles = [
-            f'gap: {self.gap}',
-            f'align-items: {self.align_items}',
-            f'justify-content: {self.justify_content}',
-        ]
-
-        current_style = kwargs.get('style', '')
-        kwargs['style'] = '; '.join(filter(None, [current_style, *additional_styles]))
-
+        _with_declarations(
+            kwargs,
+            _differing(
+                gap=(self.gap, '1rem'),
+                align_items=(self.align_items, 'flex-start'),
+                justify_content=(self.justify_content, 'flex-start'),
+            ),
+        )
         return super().render(**kwargs)
 
 
 class VerticalLayout(BaseLayout):
     """Vertical layout using flexbox."""
 
-    template = """<div class="vertical-layout ${class_}" style="display: flex; flex-direction: column; ${style}">${content}</div>"""
+    template = """<div class="vertical-layout sf-vlayout ${class_}"${style_attr}>${content}</div>${component_assets}"""
 
     def __init__(
         self,
@@ -174,18 +213,17 @@ class VerticalLayout(BaseLayout):
         self.align_items = align_items
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        additional_styles = [f'gap: {self.gap}', f'align-items: {self.align_items}']
-
-        current_style = kwargs.get('style', '')
-        kwargs['style'] = '; '.join(filter(None, [current_style, *additional_styles]))
-
+        _with_declarations(
+            kwargs,
+            _differing(gap=(self.gap, '1rem'), align_items=(self.align_items, 'stretch')),
+        )
         return super().render(**kwargs)
 
 
 class GridLayout(BaseLayout):
     """CSS Grid layout for complex arrangements."""
 
-    template = """<div class="grid-layout ${class_}" style="display: grid; grid-template-columns: ${columns}; ${style}">${content}</div>"""
+    template = """<div class="grid-layout sf-glayout ${class_}"${style_attr}>${content}</div>${component_assets}"""
 
     def __init__(
         self,
@@ -203,15 +241,14 @@ class GridLayout(BaseLayout):
         self.rows = rows
 
     def render(self, **kwargs: Any) -> str:  # type: ignore[override]
-        additional_styles = [f'gap: {self.gap}']
-
-        if self.rows:
-            additional_styles.append(f'grid-template-rows: {self.rows}')
-
-        current_style = kwargs.get('style', '')
-        kwargs['style'] = '; '.join(filter(None, [current_style, *additional_styles]))
-        kwargs['columns'] = self.columns
-
+        _with_declarations(
+            kwargs,
+            _differing(
+                grid_template_columns=(self.columns, '1fr 1fr'),
+                gap=(self.gap, '1rem'),
+                grid_template_rows=(self.rows, ''),
+            ),
+        )
         return super().render(**kwargs)
 
 
@@ -234,7 +271,7 @@ class TabLayout(BaseLayout):
     """Tab layout with JavaScript interactivity."""
 
     template = """
-<div class="tab-layout ${class_}" style="${style}">
+<div class="tab-layout ${class_}"${style_attr}>
     <div class="tab-navigation" role="tablist">
         ${tab_buttons}
     </div>
@@ -325,7 +362,7 @@ class AccordionLayout(BaseLayout):
     """Accordion layout with collapsible sections."""
 
     template = """
-<div class="accordion-layout ${class_}" style="${style}">
+<div class="accordion-layout ${class_}"${style_attr}>
     ${accordion_sections}
 </div>
 ${component_assets}
@@ -533,6 +570,7 @@ function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
+        modal.hidden = false;
         document.body.style.overflow = 'hidden';
         modal.focus();
     }
@@ -542,6 +580,7 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
+        modal.hidden = true;
         document.body.style.overflow = '';
     }
 }
@@ -557,7 +596,7 @@ document.addEventListener('click', function(e) {
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const openModal = document.querySelector('.modal-overlay[style*="flex"]');
+        const openModal = document.querySelector('.modal-overlay:not([hidden])');
         if (openModal) {
             closeModal(openModal.id);
         }
@@ -577,6 +616,9 @@ _MODAL_CSS = """
     align-items: center;
     justify-content: center;
     z-index: 1000;
+}
+.modal-overlay[hidden] {
+    display: none;
 }
 .modal-dialog {
     background: white;
@@ -621,7 +663,7 @@ class ModalLayout(BaseLayout):
     """Modal dialog layout."""
 
     template = """
-<div class="modal-overlay ${class_}" id="${modal_id}" style="display: none; ${style}">
+<div class="modal-overlay ${class_}" id="${modal_id}" hidden${style_attr}>
     <div class="modal-dialog" role="dialog" aria-labelledby="${modal_id}-title">
         <div class="modal-content">
             <div class="modal-header">
@@ -696,7 +738,7 @@ class CardLayout(BaseLayout):
     """Card layout for grouped content."""
 
     template = """
-<div class="card-layout ${class_}" style="${style}">
+<div class="card-layout ${class_}"${style_attr}>
     <div class="card-header">
         <h3 class="card-title">${title}</h3>
     </div>
@@ -1144,8 +1186,6 @@ class LayoutEngine:
             component = HorizontalLayout(
                 content=columns,
                 class_='form-groups-side-by-side',
-                gap='1.5rem',
-                align_items='flex-start',
             )
         return component.render(**renderer_kwargs)
 

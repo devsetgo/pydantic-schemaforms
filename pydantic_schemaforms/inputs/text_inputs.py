@@ -372,6 +372,9 @@ class SearchInput(FormInput):
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
+_RESIZE_VALUES = ('none', 'both', 'horizontal', 'vertical', 'block', 'inline')
+
+
 class TextArea(FormInput):
     """Multi-line text input area."""
 
@@ -395,7 +398,9 @@ class TextArea(FormInput):
         attrs = self.validate_attributes(**kwargs)
         if 'type' in attrs:
             del attrs['type']  # <textarea> has no type attribute.
-        if resize:
+        if resize in _RESIZE_VALUES:
+            attrs['class'] = f'{attrs.get("class") or ""} sf-resize-{resize}'.strip()
+        elif resize:
             # 'resize' is a CSS property, not an HTML attribute -- merge it into
             # `style` rather than emitting it as a bare (invalid) attribute.
             existing_style = str(attrs.get('style') or '').strip().rstrip(';')

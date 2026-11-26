@@ -59,6 +59,7 @@ function toggleCollapsibleGroup(contentId, buttonElement) {
     var isExpanded = buttonElement.getAttribute('aria-expanded') === 'true';
     if (content) {
         content.style.display = isExpanded ? 'none' : '';
+        content.hidden = isExpanded;
     }
     buttonElement.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
 }
@@ -518,13 +519,13 @@ class CheckboxGroup(SelectInputBase):
 
         content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
         aria_expanded = 'false' if collapsed else 'true'
-        content_style = 'display:none' if collapsed else ''
+        hidden = SafeHTML(' hidden' if collapsed else '')
         _checkboxes_html = SafeHTML(checkboxes_html)
         toggle = html(
             t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" data-sf-toggle="collapsible-group">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
         )
         content = html(
-            t'<div class="collapsible-group-content" id="{content_id}" style="{content_style}">{_checkboxes_html}</div>'
+            t'<div class="collapsible-group-content" id="{content_id}"{hidden}>{_checkboxes_html}</div>'
         )
         return substitute(
             self.collapsible_template,
@@ -676,13 +677,13 @@ class RadioGroup(SelectInputBase):
 
         content_id = f'{re.sub(r"[^a-zA-Z0-9_-]", "_", group_name)}-options'
         aria_expanded = 'false' if collapsed else 'true'
-        content_style = 'display:none' if collapsed else ''
+        hidden = SafeHTML(' hidden' if collapsed else '')
         _radio_buttons_html = SafeHTML(radio_buttons_html)
         toggle = html(
             t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" data-sf-toggle="collapsible-group">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
         )
         content = html(
-            t'<div class="collapsible-group-content" id="{content_id}" style="{content_style}">{_radio_buttons_html}</div>'
+            t'<div class="collapsible-group-content" id="{content_id}"{hidden}>{_radio_buttons_html}</div>'
         )
         return substitute(
             self.collapsible_template,

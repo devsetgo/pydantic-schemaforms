@@ -17,7 +17,14 @@ from contextvars import ContextVar, Token
 
 from .tstring import SafeHTML, html
 
-__all__ = ['csp_nonces', 'script_src_tag', 'script_tag', 'strip_script_tags', 'style_tag']
+__all__ = [
+    'csp_nonces',
+    'script_src_tag',
+    'script_tag',
+    'strip_script_tags',
+    'style_attr',
+    'style_tag',
+]
 
 # The CSP grammar for a nonce: base64 or base64url characters, up to two '=' of padding.
 _NONCE_RE = re.compile(r'[A-Za-z0-9+/_-]+={0,2}')
@@ -98,3 +105,15 @@ def strip_script_tags(markup: str) -> str:
     """*markup* with every ``<script>...</script>`` element removed, nonce or not."""
 
     return _SCRIPT_RE.sub('', markup)
+
+
+def style_attr(value: str | None) -> SafeHTML:
+    """`` style="..."`` for a style the app supplied (``ui_style``, a layout's ``style=``), or ''.
+
+    A strict ``style-src`` blocks any ``style`` attribute, even an empty one, so the
+    library writes none of its own and leaves this one out when there is no value.
+    """
+
+    if value is None or not str(value).strip():
+        return SafeHTML('')
+    return html(t' style="{str(value)}"')

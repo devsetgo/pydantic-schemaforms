@@ -409,7 +409,9 @@ class TestFieldRendererCheckboxHandling:
             assert 'toggleCollapsibleGroup' in html, framework
             # vegetables: collapsible + collapsed -- starts closed.
             assert 'aria-expanded="false"' in html, framework
-            assert 'style="display:none"' in html, framework
+            assert 'class="collapsible-group-content" id="vegetables-options" hidden>' in html, (
+                framework
+            )
             # size: no collapsible ui_option -- unaffected, plain <legend>.
             assert '<legend>Size</legend>' in html, framework
 

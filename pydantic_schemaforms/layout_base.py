@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional, Union
 from collections.abc import Callable, Iterable, Sequence
 
+from .csp import style_attr
 from .tstring import substitute
 
 try:  # pragma: no cover - optional import for typing only
@@ -29,7 +30,7 @@ class BaseLayout:
     helpers (``pydantic_schemaforms.form_layouts``) can share a single abstraction.
     """
 
-    template: str = '<div class="${class_}" style="${style}">${content}</div>'
+    template: str = '<div class="${class_}"${style_attr}>${content}</div>'
 
     def __init__(
         self, content: RenderableContent | ContentCallable | None = None, **attributes: Any
@@ -48,7 +49,7 @@ class BaseLayout:
     ) -> str:
         attrs: dict[str, Any] = {**self.attributes, **kwargs}
         class_attr = self._merge_classes(attrs)
-        style_attr = self._merge_styles(attrs)
+        merged_style = self._merge_styles(attrs)
 
         template_data: dict[str, Any] = {
             'content': self._render_content(
@@ -58,7 +59,8 @@ class BaseLayout:
                 framework=framework,
             ),
             'class_': class_attr,
-            'style': style_attr,
+            'style': merged_style,
+            'style_attr': style_attr(merged_style),
             **attrs,
         }
 

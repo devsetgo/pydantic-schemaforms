@@ -61,9 +61,7 @@ class FileInput(FileInputBase):
 
         preview_html: SafeHTML = SafeHTML('')
         if show_preview:
-            preview_div = html(
-                t'<div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>'
-            )
+            preview_div = html(t'<div class="file-preview" id="{field_name}_preview"></div>')
             # JS-only content below (rule 4 exception) -- field_id/field_name are
             # embedded as JS string literals inside getElementById(...), not HTML
             # attribute values, so they stay in an f-string.
@@ -210,9 +208,9 @@ class ColorInput(FormInput):
             current_value = kwargs.get('value', '#000000')
 
             value_div = html(t'''
-            <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
-                <span id="{field_name}_value" style="font-family: monospace;">{current_value}</span>
-                <div id="{field_name}_swatch" style="width: 20px; height: 20px; background-color: {current_value}; border: 1px solid var(--sf-outline-variant, #ccc); margin-left: 5px;"></div>
+            <div class="color-value-display">
+                <span id="{field_name}_value" class="color-value-text">{current_value}</span>
+                <div id="{field_name}_swatch" class="color-swatch" data-color="{current_value}"></div>
             </div>
             ''')
             # JS-only content below (rule 4 exception) -- field_id/field_name
@@ -220,18 +218,28 @@ class ColorInput(FormInput):
             value_script = SafeHTML(
                 '\n            '
                 + script_tag(f"""
-            document.addEventListener('DOMContentLoaded', function() {{
+            (function() {{
+              function init() {{
                 const colorInput = document.getElementById('{field_id}');
                 const valueSpan = document.getElementById('{field_name}_value');
                 const swatch = document.getElementById('{field_name}_swatch');
 
+                if (swatch) {{
+                    swatch.style.backgroundColor = swatch.dataset.color;
+                }}
                 if (colorInput && valueSpan && swatch) {{
                     colorInput.addEventListener('input', function() {{
                         valueSpan.textContent = this.value;
                         swatch.style.backgroundColor = this.value;
                     }});
                 }}
-            }});
+              }}
+              if (document.readyState === 'loading') {{
+                document.addEventListener('DOMContentLoaded', init);
+              }} else {{
+                init();
+              }}
+            }})();
             """)
                 + '\n            '
             )
@@ -338,7 +346,7 @@ class HoneypotInput(HiddenInput):
         # Use a name that looks like a real field but is actually a trap
         kwargs['name'] = kwargs.get('name', 'website_url')
         kwargs['value'] = ''
-        kwargs['style'] = 'display: none !important;'
+        kwargs['class'] = f'{kwargs.get("class") or ""} sf-honeypot'.strip()
         kwargs['tabindex'] = '-1'
         kwargs['autocomplete'] = 'off'
         return super().render(**kwargs)
