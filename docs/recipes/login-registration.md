@@ -1,6 +1,6 @@
 # Login and Registration
 
-A login form and a registration form, with the checks that only your app can
+A login form, a sign-in code step and a registration form, with the checks that only your app can
 make (is the password right? is the username free?) shown in the form like
 any other error.
 
@@ -33,6 +33,11 @@ any other error.
   shows a message for the whole form in the summary at the top. Pass
   `form_data=` so the user's input stays filled in. The login form only puts
   back the username, never the password.
+- **The sign-in code** uses `ui_element="otp"`: one box per digit, which
+  takes a pasted code and the phone's autofill. `validate()` strips spaces
+  and dashes and checks there are six digits, so `code_matches()` only sees
+  a well-formed code. Keep the field a `str`, so a code starting with `0`
+  keeps it.
 - **After success, redirect** (303) so reloading the page doesn't send the
   form again.
 

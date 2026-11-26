@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from models import LoginForm, RegistrationForm
+from models import LoginForm, RegistrationForm, SignInCodeForm
 
 from pydantic_schemaforms import render_form_html_async
 
@@ -10,6 +10,10 @@ ASSETS = {'include_framework_assets': True, 'asset_mode': 'cdn'}
 
 def authenticate(username: str, password: str) -> bool:
     return False  # look the user up and verify the password hash
+
+
+def code_matches(code: str) -> bool:
+    return False  # check the code against the user's authenticator secret
 
 
 def username_taken(username: str) -> bool:
@@ -35,6 +39,26 @@ async def login(request: Request):
             form_data={'username': result.data['username']},
             errors={'_errors': 'Wrong username or password'},
             submit_url='/login',
+            **ASSETS,
+        )
+    return RedirectResponse('/login/code', status_code=303)
+
+
+@app.get('/login/code', response_class=HTMLResponse)
+async def show_code():
+    return await render_form_html_async(SignInCodeForm, submit_url='/login/code', **ASSETS)
+
+
+@app.post('/login/code', response_class=HTMLResponse)
+async def check_code(request: Request):
+    result = SignInCodeForm.validate(await request.form(), submit_url='/login/code', **ASSETS)
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+    if not code_matches(result.data['code']):
+        return await render_form_html_async(
+            SignInCodeForm,
+            errors={'code': 'That code is wrong or has expired'},
+            submit_url='/login/code',
             **ASSETS,
         )
     return RedirectResponse('/', status_code=303)

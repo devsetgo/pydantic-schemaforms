@@ -603,3 +603,131 @@ document.addEventListener('DOMContentLoaded', function() {{
             + '\n'
         )
         return input_html + script
+
+
+OTP_LENGTHS = range(4, 13)
+
+# One script for every code field on the page, re-run harmlessly per field. The
+# named input is what submits; the boxes only write into it, so the field still
+# works as one plain text box without JavaScript.
+_OTP_JS = r"""
+(function () {
+    if (window.schemaformsOtp) { window.schemaformsOtp.scan(); return; }
+
+    function allowed(input, text) {
+        var chars = input.hasAttribute('data-sf-otp-letters') ? /[^0-9a-z]/gi : /\D/g;
+        return text.replace(chars, '');
+    }
+
+    function enhance(input) {
+        if (input.hasAttribute('data-sf-otp-ready')) { return; }
+        input.setAttribute('data-sf-otp-ready', '');
+        var length = parseInt(input.getAttribute('data-sf-otp'), 10) || 6;
+        var group = document.createElement('div');
+        group.className = 'sf-otp';
+        group.setAttribute('role', 'group');
+        var label = input.id ? document.querySelector('label[for="' + CSS.escape(input.id) + '"]') : null;
+        if (label) { group.setAttribute('aria-label', label.textContent.replace('*', '').trim()); }
+        var boxes = [];
+        for (var i = 0; i < length; i++) {
+            var box = document.createElement('input');
+            box.type = 'text';
+            box.className = (input.className + ' sf-otp__box').trim();
+            box.id = input.id + '-digit-' + (i + 1);
+            box.setAttribute('inputmode', input.getAttribute('inputmode') || 'numeric');
+            box.setAttribute('autocomplete', i === 0 ? 'one-time-code' : 'off');
+            box.setAttribute('aria-label', 'Character ' + (i + 1) + ' of ' + length);
+            ['aria-describedby', 'aria-invalid', 'disabled', 'readonly'].forEach(function (name) {
+                if (input.hasAttribute(name)) { box.setAttribute(name, input.getAttribute(name)); }
+            });
+            box.setAttribute('data-sf-no-autosave', '');
+            boxes.push(box);
+            group.appendChild(box);
+        }
+
+        function fill(start, text) {
+            var chars = allowed(input, text).split('');
+            for (var j = start; j < length && chars.length; j++) { boxes[j].value = chars.shift(); }
+            return Math.min(j, length - 1);
+        }
+
+        function sync() {
+            input.value = boxes.map(function (b) { return b.value; }).join('');
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        fill(0, input.value);
+        boxes.forEach(function (box, index) {
+            box.addEventListener('input', function () {
+                var text = box.value;
+                box.value = '';
+                var next = fill(index, text);
+                if (allowed(input, text)) { boxes[next].focus(); }
+                sync();
+            });
+            box.addEventListener('keydown', function (event) {
+                if (event.key === 'Backspace' && !box.value && index > 0) {
+                    boxes[index - 1].value = '';
+                    boxes[index - 1].focus();
+                    sync();
+                    event.preventDefault();
+                } else if (event.key === 'ArrowLeft' && index > 0) {
+                    boxes[index - 1].focus();
+                } else if (event.key === 'ArrowRight' && index < length - 1) {
+                    boxes[index + 1].focus();
+                }
+            });
+            box.addEventListener('focus', function () { box.select(); });
+        });
+
+        input.hidden = true;
+        input.parentNode.insertBefore(group, input);
+        if (label) { label.htmlFor = boxes[0].id; }
+    }
+
+    function scan() { document.querySelectorAll('input[data-sf-otp]').forEach(enhance); }
+
+    window.schemaformsOtp = { scan: scan };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scan);
+    } else {
+        scan();
+    }
+    if (window.MutationObserver) {
+        new MutationObserver(scan).observe(document.documentElement, { subtree: true, childList: true });
+    }
+})();
+"""
+
+_OTP_CSS = """
+.sf-otp { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sf-otp .sf-otp__box {
+    width: 2.75rem; flex: 0 0 2.75rem; padding-left: 0; padding-right: 0;
+    text-align: center; font-size: 1.25rem; font-variant-numeric: tabular-nums;
+}
+"""
+
+
+class OTPInput(TextInput):
+    """One-time code: one box per character, filled by typing, pasting or SMS autofill."""
+
+    ui_element: str = 'otp'
+    ui_element_aliases: tuple[str, ...] = ('one_time_code',)
+
+    def render(self, length: int = 6, numeric: bool = True, **kwargs: Any) -> str:
+        if length not in OTP_LENGTHS:
+            raise ValueError(f'An otp field takes length 4 to 12, not {length!r}')
+        kwargs['autocomplete'] = 'one-time-code'
+        kwargs['inputmode'] = 'numeric' if numeric else 'text'
+        kwargs['data-sf-otp'] = str(length)
+        kwargs['data-sf-otp-letters'] = not numeric
+        # A code is good for a few minutes; a saved draft would bring back a stale one.
+        kwargs['data-sf-no-autosave'] = True
+        kwargs.setdefault('spellcheck', 'false')
+        attrs = self.validate_attributes(**kwargs)
+        attrs['type'] = self.get_input_type()
+        return str(
+            _render_input_tag(self._build_attributes_string(attrs))
+            + style_tag(_OTP_CSS)
+            + script_tag(_OTP_JS)
+        )

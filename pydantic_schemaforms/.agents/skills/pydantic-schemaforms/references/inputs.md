@@ -16,6 +16,7 @@ extending reference if nothing genuinely fits.
 |---|---|
 | Text | `text`, `password`, `email`, `search`, `url`, `tel`, `textarea` |
 | Formatted text | `ssn` (alias `social_security_number`), `phone` (alias `phone_number`), `credit_card` (alias `card`/`cc_number`), `currency` (alias `money`) |
+| Verification code | `otp` (alias `one_time_code`): one box per character, paste and SMS autofill, submits one string |
 | Text collection | `tags` (chip/tag input for a list of short values) |
 | Numeric | `number`, `range` |
 | Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity` (ships +/- stepper buttons by default), `score`, `rating` (alias `rating_stars`; range-slider based), `star_rating` (individually clickable stars — a distinct widget from `rating`, not an alias of it), `slider`, `temperature` |
@@ -98,6 +99,15 @@ budget: Decimal = Field(..., ui_element='currency', ui_options={'currency_symbol
 On a `Decimal`, `float` or `int` field, `validate()` strips the currency symbol and thousands
 separators the input adds while typing (`$1,234.50` → `Decimal("1234.50")`). On a `str` field
 the formatted text is kept as typed.
+
+**otp** — a sign-in or verification code. Type it `str` (an `int` would drop a leading zero and
+raises `TypeError`); `validate()` strips spaces and dashes and checks the length and characters
+itself, so don't add a `pattern`:
+
+```python
+code: str = Field(..., title='Verification code', ui_element='otp')
+backup_code: str = Field(..., ui_element='otp', ui_options={'length': 8, 'numeric': False})
+```
 
 **captcha** — renders an arithmetic challenge; verify it at the route level with the library's
 own `verify_captcha()`, before model validation, and declare only the answer field (not a
@@ -230,6 +240,8 @@ of this table.
 | `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder |
 | `phone`, `currency`, `date`, `time`, `datetime` | `live_format` | `True` | `False` applies the format on blur instead of while typing |
 | `currency` | `currency_symbol` | `"$"` | Symbol shown and stripped on submit |
+| `otp` | `length` | `6` | Number of characters, 4 to 12; checked on the server |
+| `otp` | `numeric` | `True` | `False` also allows letters |
 | `tags` | `separator` | `","` | Join character for the submitted string |
 | `number`, `integer`, `decimal`, `percentage`, `age`, `score`, `temperature` | `show_stepper` | `False` | +/- buttons beside the input |
 | `quantity` | `show_stepper` | `True` | `False` removes its default +/- buttons |
