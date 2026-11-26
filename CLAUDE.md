@@ -50,6 +50,13 @@ data backing the FastAPI demo's `/input-types` page — by
 the script, don't hand-edit the generated markdown. `tests/test_docs_generated_sections.py`
 fails the suite if the two drift out of sync.
 
+**Plain English first.** Every concept a reader may not know (CSRF, XSS, a
+Content-Security-Policy nonce, HTMX, JSON Schema, a wizard draft, ...) gets one or
+two sentences in everyday words, saying what it is and why the reader would care,
+before the technical explanation. This applies to `docs/`, `README.md`, the AI
+skills under `ai/` and the example app's pages. When a feature ships, explain it in
+each of those places it appears, not only on its reference page.
+
 To verify a doc change (including regenerating the three copies above from
 their sources) without touching the deploy pipeline: `make docs-build`
 (runs `scripts/changelog.py`, copies the three files, then `mkdocs build`).

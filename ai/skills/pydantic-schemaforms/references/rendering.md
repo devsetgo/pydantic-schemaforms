@@ -31,7 +31,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `show_timing` / `debug` / `enable_logging` | `False` | Render time under the form / a debug panel / DEBUG log lines |
 | `include_html_markers` | `True` | `<!--- Start/End Pydantic-SchemaForms -->` comments around the output |
 | `inject_layout_styles` | `True` | The small stylesheet that makes the form fill its container |
-| `script_nonce` / `style_nonce` | `None` | The request's Content-Security-Policy nonce, put on every `<script>` / `<style>` the library writes (it writes no inline handlers or `style=` attributes; a `ui_style` goes into a nonced stylesheet). Base64/base64url only, else `ValueError`. Prefer `csp_nonces()` once per request (below) over passing these to every call |
+| `script_nonce` / `style_nonce` | `None` | The request's Content-Security-Policy nonce, put on every `<script>` / `<style>` the library writes (it writes no inline handlers or `style=` attributes; a `ui_style` goes into a nonced stylesheet). Base64/base64url only, else `ValueError`. Prefer `csp_nonces()` once per request (security reference) over passing these to every call |
 
 Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 `**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
@@ -72,20 +72,8 @@ are left out.
 
 ## Content-Security-Policy (nonces)
 
-When the app sends a CSP with nonces, open `csp_nonces()` once per request in the middleware
-that makes the nonce. Every render, `validate()`, `render_with_errors()`, wizard step and
-`render_display()` in the request then carries it. Don't pass the nonce call by call, don't
-add `'unsafe-inline'`/`'unsafe-eval'`, and don't rewrite the HTML to insert nonces.
-
-<!-- INCLUDE-CODE: docs_src/advanced/content_security_policy/fastapi_app.py -->
-
-- Put `nonce="{{ request.state.csp_nonce }}"` on the `<script>`/`<style>` tags in your own
-  templates; the library only nonces what it writes.
-- `ui_style` keeps working (it becomes a nonced rule); it can't contain `{`, `}` or `<`.
-- Render `LiveValidator.render_htmx_script()` per request, not at import.
-- With HTMX, set `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
-  "inlineStyleNonce": "..."}'>` to the page's nonce before htmx loads.
-- `include_html_markers=False` for sites that forbid HTML comments.
+Open `csp_nonces()` once per request in the middleware that makes the nonce. The security
+reference explains what a CSP is and lists the steps.
 
 ## One model for an HTML form and a JSON API
 

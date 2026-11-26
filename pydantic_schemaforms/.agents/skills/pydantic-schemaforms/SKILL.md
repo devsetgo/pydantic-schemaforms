@@ -221,7 +221,7 @@ page, modal, progress counter or `localStorage` script of your own. Pass each op
 | Sub-forms, optional sub-forms, repeating sub-forms, tabbed/accordion/side-by-side/wizard layouts | [complex forms](references/complex-forms.md) |
 | Rule classes, live HTMX validation, the two error shapes | [validation](references/validation.md) |
 | CSV import into an editable, validated table | [data tables](references/data-tables.md) |
-| CSRF, captcha, honeypot, file uploads, safe HTML | [security](references/security.md) |
+| CSRF, Content-Security-Policy nonces, captcha, honeypot, file uploads, safe HTML | [security](references/security.md) |
 | Styling, assets, async rendering, JSON API from the same model, JSON Schema | [rendering](references/rendering.md) |
 | A custom input or a custom composite control | [extending](references/extending.md) |
 
@@ -240,6 +240,7 @@ page, modal, progress counter or `localStorage` script of your own. Pass each op
 | `ValueError` about `draft=` | The draft was changed or built by hand. Store `result.draft` as it is and pass it back unchanged. |
 | `confirm=` with a wizard raises `ValueError` | The wizard has a `review_step`, which already asks before Submit. Use one of them. |
 | A chosen file is gone after a failed submit | Browsers never re-fill a file input. In a long form, put the upload on its own `save_steps` step, where it's stored as soon as that step is valid. |
+| Browser console: "Refused to execute inline script" or "...apply inline style" | The page sends a Content-Security-Policy. Open `csp_nonces()` once per request and add `nonce=` to the app's own tags; see the security reference. Never add `'unsafe-inline'`. |
 | `ImportError` mentioning `email-validator` | A field is typed `EmailStr`; install `pydantic-schemaforms[email]`. |
 | `ImportError` or `FormLayoutRemovedError` naming a replacement | The code uses a removed API; follow the message, or use the `schemaforms-upgrade` skill. |
 

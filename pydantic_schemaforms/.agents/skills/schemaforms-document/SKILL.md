@@ -79,5 +79,9 @@ These apply to every task. Read them before writing code.
 For each form: purpose, where it's used (route and template), the fields (label, type, input,
 required, default, rules, help), the validation beyond field rules (validators, checks in the
 route such as "username must be unused"), the layout and style, protection (CSRF, captcha,
-honeypot), and what happens to the data after a valid submit. End with a short section on how
-forms work in the app, for someone new to pydantic-schemaforms.
+honeypot, Content-Security-Policy), and what happens to the data after a valid submit. End with a
+short section on how forms work in the app, for someone new to pydantic-schemaforms.
+
+Write for readers who may not know the technical terms. The first time the page uses a concept
+such as CSRF, a Content-Security-Policy nonce, HTMX or JSON Schema, explain it in a sentence or
+two of plain words (what it is and why it matters here) before the technical detail.

@@ -24,6 +24,25 @@ its replacement; this skill has the full mapping and the order to do it in.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
 
+## Next release (after 26.4.6): Content-Security-Policy
+
+No breaking changes. Forms now work under a strict Content-Security-Policy (a header that tells
+the browser to run only scripts and styles carrying a per-response random value, the nonce): the
+library puts the nonce on everything it writes and no longer writes `onclick=` or `style=`
+attributes. Search the app for `Content-Security-Policy`, `nonce`, `unsafe-inline` and
+`script_nonce`.
+
+| Hand-written in the app | Replace with |
+|---|---|
+| A regex or HTML rewrite that adds `nonce="..."` to the rendered form | `with csp_nonces(script_nonce=n, style_nonce=n):` once per request in the middleware that makes the nonce |
+| `'unsafe-inline'`, `'unsafe-hashes'` or script hashes in the policy for the forms | Nothing: remove them once `csp_nonces()` is in place |
+| `script_nonce=` passed to some render calls | `csp_nonces()` in the middleware, which also covers `render_with_errors()`, wizard steps and `render_display()` |
+| `LiveValidator.render_htmx_script()` stored in a module-level variable | Call it per request, so it gets that request's nonce |
+
+With HTMX, add `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
+"inlineStyleNonce": "..."}'>`. Test with the `Content-Security-Policy-Report-Only` header and the
+browser console before enforcing.
+
 ## 26.4.6: long forms and the wizard
 
 No breaking changes: every new option is opt-in, and file fields typed `Any` still receive the

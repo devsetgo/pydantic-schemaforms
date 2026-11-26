@@ -220,7 +220,7 @@ page, modal, progress counter or `localStorage` script of your own. Pass each op
 | Sub-forms, optional sub-forms, repeating sub-forms, tabbed/accordion/side-by-side/wizard layouts | complex forms (see "Complex forms reference" below) |
 | Rule classes, live HTMX validation, the two error shapes | validation (see "Validation reference" below) |
 | CSV import into an editable, validated table | data tables (see "Data tables reference" below) |
-| CSRF, captcha, honeypot, file uploads, safe HTML | security (see "Security reference" below) |
+| CSRF, Content-Security-Policy nonces, captcha, honeypot, file uploads, safe HTML | security (see "Security reference" below) |
 | Styling, assets, async rendering, JSON API from the same model, JSON Schema | rendering (see "Rendering reference" below) |
 | A custom input or a custom composite control | extending (see "Extending reference" below) |
 
@@ -239,6 +239,7 @@ page, modal, progress counter or `localStorage` script of your own. Pass each op
 | `ValueError` about `draft=` | The draft was changed or built by hand. Store `result.draft` as it is and pass it back unchanged. |
 | `confirm=` with a wizard raises `ValueError` | The wizard has a `review_step`, which already asks before Submit. Use one of them. |
 | A chosen file is gone after a failed submit | Browsers never re-fill a file input. In a long form, put the upload on its own `save_steps` step, where it's stored as soon as that step is valid. |
+| Browser console: "Refused to execute inline script" or "...apply inline style" | The page sends a Content-Security-Policy. Open `csp_nonces()` once per request and add `nonce=` to the app's own tags; see the security reference. Never add `'unsafe-inline'`. |
 | `ImportError` mentioning `email-validator` | A field is typed `EmailStr`; install `pydantic-schemaforms[email]`. |
 | `ImportError` or `FormLayoutRemovedError` naming a replacement | The code uses a removed API; follow the message, or use the `schemaforms-upgrade` skill. |
 
@@ -1126,7 +1127,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `show_timing` / `debug` / `enable_logging` | `False` | Render time under the form / a debug panel / DEBUG log lines |
 | `include_html_markers` | `True` | `<!--- Start/End Pydantic-SchemaForms -->` comments around the output |
 | `inject_layout_styles` | `True` | The small stylesheet that makes the form fill its container |
-| `script_nonce` / `style_nonce` | `None` | The request's Content-Security-Policy nonce, put on every `<script>` / `<style>` the library writes (it writes no inline handlers or `style=` attributes; a `ui_style` goes into a nonced stylesheet). Base64/base64url only, else `ValueError`. Prefer `csp_nonces()` once per request (below) over passing these to every call |
+| `script_nonce` / `style_nonce` | `None` | The request's Content-Security-Policy nonce, put on every `<script>` / `<style>` the library writes (it writes no inline handlers or `style=` attributes; a `ui_style` goes into a nonced stylesheet). Base64/base64url only, else `ValueError`. Prefer `csp_nonces()` once per request (security reference) over passing these to every call |
 
 Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 `**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
@@ -1218,55 +1219,8 @@ async def signup(request: Request):
 
 ### Content-Security-Policy (nonces)
 
-When the app sends a CSP with nonces, open `csp_nonces()` once per request in the middleware
-that makes the nonce. Every render, `validate()`, `render_with_errors()`, wizard step and
-`render_display()` in the request then carries it. Don't pass the nonce call by call, don't
-add `'unsafe-inline'`/`'unsafe-eval'`, and don't rewrite the HTML to insert nonces.
-
-```python
-import secrets
-
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from models import ContactForm
-
-from pydantic_schemaforms import csp_nonces, html
-
-POLICY = "default-src 'self'; script-src 'nonce-{nonce}'; style-src 'nonce-{nonce}'"
-app = FastAPI()
-
-
-@app.middleware('http')
-async def content_security_policy(request: Request, call_next):
-    nonce = secrets.token_urlsafe(16)
-    request.state.csp_nonce = nonce  # for <script>/<style> tags in your own templates
-    with csp_nonces(script_nonce=nonce, style_nonce=nonce):
-        response = await call_next(request)
-    response.headers['Content-Security-Policy'] = POLICY.format(nonce=nonce)
-    return response
-
-
-@app.get('/contact', response_class=HTMLResponse)
-async def show_contact():
-    return await ContactForm.render_form_async(submit_url='/contact')
-
-
-@app.post('/contact', response_class=HTMLResponse)
-async def submit_contact(request: Request):
-    result = ContactForm.validate(await request.form(), submit_url='/contact')
-    if not result.is_valid:
-        return await result.render_with_errors_async()
-    name = result.data['name']
-    return html(t'<p>Thanks, {name}!</p>')
-```
-
-- Put `nonce="{{ request.state.csp_nonce }}"` on the `<script>`/`<style>` tags in your own
-  templates; the library only nonces what it writes.
-- `ui_style` keeps working (it becomes a nonced rule); it can't contain `{`, `}` or `<`.
-- Render `LiveValidator.render_htmx_script()` per request, not at import.
-- With HTMX, set `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
-  "inlineStyleNonce": "..."}'>` to the page's nonce before htmx loads.
-- `include_html_markers=False` for sites that forbid HTML comments.
+Open `csp_nonces()` once per request in the middleware that makes the nonce. The security
+reference explains what a CSP is and lists the steps.
 
 ### One model for an HTML form and a JSON API
 
@@ -1430,6 +1384,71 @@ async def submit_transfer(request: Request):
 - `csrf_mode="field-only"` is for debugging and raises `ValueError` unless `debug=True`. Don't
   generate it for real routes.
 - Keep the session secret out of code; serve the site over HTTPS.
+
+### Content-Security-Policy (nonces)
+
+In plain terms: a Content-Security-Policy is a header that tells the browser which scripts and
+styles it may run, so a script an attacker slips into the page is blocked. A nonce is a random
+value made fresh for each response; only tags carrying it run. The library puts the nonce on
+every script and style it writes and never writes `onclick=` or `style=` attributes, so the app
+only has to hand it the nonce.
+
+When the app sends (or is asked to add) a CSP, follow these steps:
+
+1. **One nonce per request**: `secrets.token_urlsafe(16)` in a middleware. Never reuse one.
+2. **Hand it to the library once**: open `csp_nonces(script_nonce=n, style_nonce=n)` around the
+   request in that middleware. Every render, `validate()`, `render_with_errors()`, wizard step and
+   `render_display()` in the request then carries it. Don't pass it call by call.
+3. **The app's own templates**: `nonce="{{ request.state.csp_nonce }}"` on every `<script>`/
+   `<style>`; replace `onclick=` with `addEventListener` and `style=` with classes.
+4. **HTMX**: `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
+   "inlineStyleNonce": "..."}'>` with the page's nonce, before htmx loads.
+5. **Test with `Content-Security-Policy-Report-Only`**, read the browser console, then switch to
+   the enforcing header. Keep a browser test that fails on `securitypolicyviolation`.
+
+```python
+import secrets
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import ContactForm
+
+from pydantic_schemaforms import csp_nonces, html
+
+POLICY = "default-src 'self'; script-src 'nonce-{nonce}'; style-src 'nonce-{nonce}'"
+app = FastAPI()
+
+
+@app.middleware('http')
+async def content_security_policy(request: Request, call_next):
+    nonce = secrets.token_urlsafe(16)
+    request.state.csp_nonce = nonce  # for <script>/<style> tags in your own templates
+    with csp_nonces(script_nonce=nonce, style_nonce=nonce):
+        response = await call_next(request)
+    response.headers['Content-Security-Policy'] = POLICY.format(nonce=nonce)
+    return response
+
+
+@app.get('/contact', response_class=HTMLResponse)
+async def show_contact():
+    return await ContactForm.render_form_async(submit_url='/contact')
+
+
+@app.post('/contact', response_class=HTMLResponse)
+async def submit_contact(request: Request):
+    result = ContactForm.validate(await request.form(), submit_url='/contact')
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+    name = result.data['name']
+    return html(t'<p>Thanks, {name}!</p>')
+```
+
+- Never add `'unsafe-inline'`, `'unsafe-eval'` or script hashes, and never rewrite rendered HTML
+  with a regex to insert nonces. If the app does any of these, replace it with steps 2 to 4.
+- `ui_style` keeps working (it becomes a nonced rule); it can't contain `{`, `}` or `<`.
+- Render `LiveValidator.render_htmx_script()` per request, not at import.
+- A `<script>` inside `ui_content` never gets the nonce, by design.
+- `include_html_markers=False` for sites that forbid HTML comments.
 
 ### Spam protection
 
@@ -2035,6 +2054,25 @@ its replacement; this skill has the full mapping and the order to do it in.
    submission if there isn't one.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
+
+### Next release (after 26.4.6): Content-Security-Policy
+
+No breaking changes. Forms now work under a strict Content-Security-Policy (a header that tells
+the browser to run only scripts and styles carrying a per-response random value, the nonce): the
+library puts the nonce on everything it writes and no longer writes `onclick=` or `style=`
+attributes. Search the app for `Content-Security-Policy`, `nonce`, `unsafe-inline` and
+`script_nonce`.
+
+| Hand-written in the app | Replace with |
+|---|---|
+| A regex or HTML rewrite that adds `nonce="..."` to the rendered form | `with csp_nonces(script_nonce=n, style_nonce=n):` once per request in the middleware that makes the nonce |
+| `'unsafe-inline'`, `'unsafe-hashes'` or script hashes in the policy for the forms | Nothing: remove them once `csp_nonces()` is in place |
+| `script_nonce=` passed to some render calls | `csp_nonces()` in the middleware, which also covers `render_with_errors()`, wizard steps and `render_display()` |
+| `LiveValidator.render_htmx_script()` stored in a module-level variable | Call it per request, so it gets that request's nonce |
+
+With HTMX, add `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
+"inlineStyleNonce": "..."}'>`. Test with the `Content-Security-Policy-Report-Only` header and the
+browser console before enforcing.
 
 ### 26.4.6: long forms and the wizard
 

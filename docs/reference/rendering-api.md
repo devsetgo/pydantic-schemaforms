@@ -40,7 +40,7 @@ inputs need. It is a fragment for your page, not a whole page.
 | `enable_logging` | `False` | Log rendering at DEBUG level; see [Render Timing and Logging](../advanced/timing-logging.md) |
 | `include_html_markers` | `True` | Wrap the output in `<!--- Start/End Pydantic-SchemaForms -->` comments |
 | `inject_layout_styles` | `True` | Add the small stylesheet that makes the form fill its container |
-| `script_nonce` | `None` | Your Content-Security-Policy nonce for this request: every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too, or set it once per request with `csp_nonces()`; see [Content-Security-Policy](../advanced/content-security-policy.md) |
+| `script_nonce` | `None` | Only for sites that send a Content-Security-Policy, a header telling the browser to run only scripts carrying this page's random value (the nonce). Every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too, or set it once per request with `csp_nonces()`; see [Content-Security-Policy](../advanced/content-security-policy.md) |
 | `style_nonce` | `None` | The same for every `<style>`. The library writes no `style="..."` attributes, and a field's `ui_style` goes into a nonced stylesheet, so a strict `style-src` needs only this |
 
 Any other keyword becomes an attribute of the `<form>` tag, for example
@@ -125,6 +125,11 @@ nest. Wrap a string in `SafeHTML(...)` only when it's HTML you trust, such as
 another form you rendered.
 
 ## `csp_nonces()`
+
+For sites that send a Content-Security-Policy: hand the library this page's
+nonce (the random value that marks your own scripts as allowed) once, in the
+middleware that makes it (code that runs on every request before your
+routes), instead of on every call.
 
 `with csp_nonces(script_nonce=nonce, style_nonce=nonce):` gives every form
 rendered, validated or re-rendered inside the block your

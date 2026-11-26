@@ -97,8 +97,13 @@ with `render_form_html()` and `request.form`.
 - **Bootstrap, Material Design 3 or plain HTML**, with opt-in dark mode for
   Bootstrap and Material, and assets inlined, linked from a CDN or left to your
   page.
-- **Escaped by construction.** All HTML is built with Python 3.14 t-strings
-  and an escaping processor.
+- **Escaped by construction.** Text a user types can never turn into code on
+  your page: all HTML is built with Python 3.14 t-strings and an escaping
+  processor.
+- **Works under a strict Content-Security-Policy.** If your site tells the
+  browser to run only scripts carrying a per-page random value (a nonce), set
+  it once per request with `csp_nonces()` and every form follows the rule. No
+  `'unsafe-inline'` needed.
 - **Accessibility-tested.** Every input, layout and error state is checked
   with axe-core against WCAG 2.0–2.2 A and AA rules on every pull request.
 - **More when you need it:** live validation over HTMX, CSV import into an
@@ -123,7 +128,8 @@ The docs at <https://devsetgo.github.io/pydantic-schemaforms/> have:
   styling and CSRF protection, with FastAPI and Flask versions of every
   example.
 - [Advanced User Guide](https://devsetgo.github.io/pydantic-schemaforms/advanced/): live validation, data tables,
-  JSON APIs, forms built at runtime, assets and plugin hooks.
+  JSON APIs, forms built at runtime, assets, Content-Security-Policy and
+  plugin hooks.
 - [Recipes](https://devsetgo.github.io/pydantic-schemaforms/recipes/): complete apps for contact forms, login and
   registration, edit forms, line items, file uploads, wizards and more.
 - [Reference](https://devsetgo.github.io/pydantic-schemaforms/reference/): every input, layout, field option and
