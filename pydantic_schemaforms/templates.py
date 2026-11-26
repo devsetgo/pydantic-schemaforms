@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Any
 from collections.abc import Callable
 
+from .csp import style_attr, style_tag
 from .tstring import SafeHTML, html
 
 __all__ = ['FormTemplates', 'TemplateString', 'render_template', 'create_custom_template']
@@ -100,13 +101,12 @@ def _text_input(
         _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <input type="text"
            id="{id}"
            name="{name}"
-           class="form-control {input_class}"
-           style="{input_style}"
+           class="form-control {input_class}"{style_attr(input_style)}
            value="{value}"
            placeholder="{placeholder}"
            {_required}
@@ -141,13 +141,12 @@ def _email_input(
         _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <input type="email"
            id="{id}"
            name="{name}"
-           class="form-control {input_class}"
-           style="{input_style}"
+           class="form-control {input_class}"{style_attr(input_style)}
            value="{value}"
            placeholder="{placeholder}"
            {_required}
@@ -182,14 +181,13 @@ def _password_input(
         _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <div class="input-group">
         <input type="password"
                id="{id}"
                name="{name}"
-               class="form-control {input_class}"
-               style="{input_style}"
+               class="form-control {input_class}"{style_attr(input_style)}
                value="{value}"
                placeholder="{placeholder}"
                {_required}
@@ -228,13 +226,12 @@ def _number_input(
         _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <input type="number"
            id="{id}"
            name="{name}"
-           class="form-control {input_class}"
-           style="{input_style}"
+           class="form-control {input_class}"{style_attr(input_style)}
            value="{value}"
            placeholder="{placeholder}"
            min="{min_value}"
@@ -272,12 +269,11 @@ def _select_input(
     )
     _options = SafeHTML(options)
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <select id="{id}"
             name="{name}"
-            class="form-select {input_class}"
-            style="{input_style}"
+            class="form-select {input_class}"{style_attr(input_style)}
             {_required}
             {_disabled}
             {_multiple}
@@ -314,12 +310,11 @@ def _textarea_input(
         _cast_input_html(label, help_text, error_message, required, disabled, readonly, attributes)
     )
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <textarea id="{id}"
               name="{name}"
-              class="form-control {input_class}"
-              style="{input_style}"
+              class="form-control {input_class}"{style_attr(input_style)}
               rows="{rows}"
               cols="{cols}"
               placeholder="{placeholder}"
@@ -357,12 +352,11 @@ def _checkbox_input(
     _disabled = SafeHTML(disabled)
     _attributes = SafeHTML(attributes)
     return html(t'''
-<div class="form-check {wrapper_class}" style="{wrapper_style}">
+<div class="form-check {wrapper_class}"{style_attr(wrapper_style)}>
     <input type="checkbox"
            id="{id}"
            name="{name}"
-           class="form-check-input {input_class}"
-           style="{input_style}"
+           class="form-check-input {input_class}"{style_attr(input_style)}
            value="{checkbox_value}"
            {_checked}
            {_required}
@@ -391,7 +385,7 @@ def _radio_input(
     _help_text = SafeHTML(help_text)
     _error_message = SafeHTML(error_message)
     return html(t'''
-<div class="form-group {wrapper_class}" style="{wrapper_style}">
+<div class="form-group {wrapper_class}"{style_attr(wrapper_style)}>
     {_label}
     <div class="radio-group">
         {_radio_options}
@@ -423,8 +417,7 @@ def _form_wrapper(
     _submit_buttons = SafeHTML(submit_buttons)
     return html(t'''
 <form id="{form_id}"
-      class="pydantic-form {form_class}"
-      style="{form_style}"
+      class="pydantic-form {form_class}"{style_attr(form_style)}
       method="{method}"
       action="{action}"
       {_form_attributes}>
@@ -443,7 +436,7 @@ def _vertical_layout(
 ) -> SafeHTML:
     _sections = SafeHTML(sections)
     return html(t'''
-<div class="vertical-layout {layout_class}" style="{layout_style}">
+<div class="vertical-layout {layout_class}"{style_attr(layout_style)}>
     {_sections}
 </div>
 ''')
@@ -457,7 +450,7 @@ def _horizontal_layout(
 ) -> SafeHTML:
     _sections = SafeHTML(sections)
     return html(t'''
-<div class="horizontal-layout row {layout_class}" style="{layout_style}">
+<div class="horizontal-layout row {layout_class}"{style_attr(layout_style)}>
     {_sections}
 </div>
 ''')
@@ -475,7 +468,7 @@ def _tab_layout(
     _tab_panels = SafeHTML(tab_panels)
     _component_assets = SafeHTML(component_assets)
     return html(t'''
-<div class="tab-layout {layout_class}" style="{layout_style}">
+<div class="tab-layout {layout_class}"{style_attr(layout_style)}>
     <div class="tab-navigation" role="tablist">
         {_tab_buttons}
     </div>
@@ -517,11 +510,11 @@ def _tab_panel(
 ) -> SafeHTML:
     _content = SafeHTML(content)
     _active_class = SafeHTML(active_class)
+    hidden = SafeHTML(' hidden' if display_style == 'none' else '')
     return html(t'''
 <div id="{tab_id}"
      class="tab-panel{_active_class}"
-     role="tabpanel"
-     style="display: {display_style};"
+     role="tabpanel"{hidden}
      aria-hidden="{aria_hidden}">
     {_content}
 </div>
@@ -538,7 +531,7 @@ def _accordion_layout(
     _sections = SafeHTML(sections)
     _component_assets = SafeHTML(component_assets)
     return html(t'''
-<div class="accordion-layout {layout_class}" style="{layout_style}">
+<div class="accordion-layout {layout_class}"{style_attr(layout_style)}>
     {_sections}
 </div>
 {_component_assets}
@@ -556,6 +549,7 @@ def _accordion_section(
 ) -> SafeHTML:
     _content = SafeHTML(content)
     _expanded_class = SafeHTML(expanded_class)
+    hidden = SafeHTML(' hidden' if display_style == 'none' else '')
     return html(t'''
 <div class="accordion-section">
     <button class="accordion-header{_expanded_class}"
@@ -566,8 +560,7 @@ def _accordion_section(
         {title}
     </button>
     <div id="{section_id}"
-         class="accordion-content"
-         style="display: {display_style};">
+         class="accordion-content"{hidden}>
         {_content}
     </div>
 </div>
@@ -584,7 +577,7 @@ def _section(
     _section_title = SafeHTML(section_title)
     _section_content = SafeHTML(section_content)
     return html(t'''
-<div class="form-section {section_class}" style="{section_style}">
+<div class="form-section {section_class}"{style_attr(section_style)}>
     {_section_title}
     {_section_content}
 </div>
@@ -606,7 +599,7 @@ def _label(
     _icon = SafeHTML(icon)
     _required_indicator = SafeHTML(required_indicator)
     return html(t'''
-<label for="{for_id}" class="form-label {label_class}" style="{label_style}">
+<label for="{for_id}" class="form-label {label_class}"{style_attr(label_style)}>
     {_icon}{label_text}{_required_indicator}
 </label>
 ''')
@@ -619,7 +612,7 @@ def _help_text(
     help_content: str = '',
 ) -> SafeHTML:
     return html(t'''
-<div class="form-text {help_class}" style="{help_style}">
+<div class="form-text {help_class}"{style_attr(help_style)}>
     {help_content}
 </div>
 ''')
@@ -632,7 +625,7 @@ def _error_message(
     error_content: str = '',
 ) -> SafeHTML:
     return html(t'''
-<div class="invalid-feedback {error_class}" style="{error_style}">
+<div class="invalid-feedback {error_class}"{style_attr(error_style)}>
     {error_content}
 </div>
 ''')
@@ -644,7 +637,7 @@ def _icon(
     icon_class: str = '',
     icon_style: str = '',
 ) -> SafeHTML:
-    return html(t'<i class="bi bi-{icon_name} {icon_class}" style="{icon_style}"></i>')
+    return html(t'<i class="bi bi-{icon_name} {icon_class}"{style_attr(icon_style)}></i>')
 
 
 def _input_group(
@@ -659,7 +652,7 @@ def _input_group(
     _input_element = SafeHTML(input_element)
     _append = SafeHTML(append)
     return html(t'''
-<div class="input-group {group_class}" style="{group_style}">
+<div class="input-group {group_class}"{style_attr(group_style)}>
     {_prepend}
     {_input_element}
     {_append}
@@ -879,6 +872,61 @@ def _material_checkbox_field(
 ''')
 
 
+_MATERIAL_TOGGLE_CSS = """
+    .md-toggle-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+    }
+    .md-toggle-wrapper .md-toggle-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .md-toggle-slider {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 24px;
+        background: #79747e;
+        border-radius: 12px;
+        transition: background .2s;
+        flex-shrink: 0;
+    }
+    .md-toggle-slider::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: transform .2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    }
+    .md-toggle-wrapper input:checked + .md-toggle-slider {
+        background: #6750a4;
+    }
+    .md-toggle-wrapper input:checked + .md-toggle-slider::before {
+        transform: translateX(16px);
+    }
+    .md-toggle-wrapper input:focus + .md-toggle-slider {
+        box-shadow: 0 0 0 2px rgba(103, 80, 164, .3);
+    }
+    .md-toggle-wrapper input:disabled + .md-toggle-slider {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+    .md-toggle-label {
+        color: #1c1b1f;
+        font-size: 16px;
+    }
+"""
+
+
 def _material_toggle_field(
     *,
     name: str = '',
@@ -898,6 +946,7 @@ def _material_toggle_field(
     _required = SafeHTML(required)
     _help_text = SafeHTML(help_text)
     _error_text = SafeHTML(error_text)
+    _style = style_tag(_MATERIAL_TOGGLE_CSS)
     return html(t'''
 <div class="md-field">
     <label class="md-toggle-wrapper" for="{field_id}">
@@ -912,59 +961,7 @@ def _material_toggle_field(
     </label>
     {_help_text}
     {_error_text}
-    <style>
-    .md-toggle-wrapper {{
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        cursor: pointer;
-    }}
-    .md-toggle-wrapper .md-toggle-input {{
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }}
-    .md-toggle-slider {{
-        position: relative;
-        display: inline-block;
-        width: 40px;
-        height: 24px;
-        background: #79747e;
-        border-radius: 12px;
-        transition: background .2s;
-        flex-shrink: 0;
-    }}
-    .md-toggle-slider::before {{
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 20px;
-        height: 20px;
-        background: white;
-        border-radius: 50%;
-        transition: transform .2s;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
-    }}
-    .md-toggle-wrapper input:checked + .md-toggle-slider {{
-        background: #6750a4;
-    }}
-    .md-toggle-wrapper input:checked + .md-toggle-slider::before {{
-        transform: translateX(16px);
-    }}
-    .md-toggle-wrapper input:focus + .md-toggle-slider {{
-        box-shadow: 0 0 0 2px rgba(103, 80, 164, .3);
-    }}
-    .md-toggle-wrapper input:disabled + .md-toggle-slider {{
-        opacity: .5;
-        cursor: not-allowed;
-    }}
-    .md-toggle-label {{
-        color: #1c1b1f;
-        font-size: 16px;
-    }}
-    </style>
+    {_style}
 </div>
 ''')
 

@@ -41,6 +41,7 @@ from pydantic_schemaforms.assets.runtime import (
     datatables_css_tag,
     datatables_script_tag,
 )
+from pydantic_schemaforms.csp import script_tag, style_tag
 from pydantic_schemaforms.inputs.registry import get_input_component_map
 from pydantic_schemaforms.inputs.specialized_inputs import FileInput
 from pydantic_schemaforms.rendering.layout_engine import LayoutEngine
@@ -70,14 +71,16 @@ _BUTTON_NAME_MAP = {'csv': 'csvHtml5', 'copy': 'copyHtml5', 'pdf': 'pdfHtml5'}
 _DEFAULT_THEME = RendererTheme()
 
 
-# Plain, developer-authored CSS with no interpolated values -- wrapped in
-# SafeHTML(...) at each interpolation site so the html() processor passes
-# it through instead of escaping it.
-_ERROR_STYLES = """<style>
+# Plain, developer-authored CSS with no interpolated values; style_tag() returns
+# SafeHTML, so the html() processor passes it through instead of escaping it.
+_ERROR_CSS = """
 .datatable-row-error > td { background-color: var(--sf-error-container, #f8d7da); }
 .datatable-cell-error { outline: 2px solid var(--sf-error, #dc3545); outline-offset: -2px; }
-</style>
 """
+
+
+def _error_styles() -> SafeHTML:
+    return SafeHTML(style_tag(_ERROR_CSS) + '\n')
 
 
 # The browser's own file-input chrome ("Choose File") plus FileInput's bare,
@@ -87,7 +90,7 @@ _ERROR_STYLES = """<style>
 # .datatable-upload-zone (this block's own wrapper) rather than the bare
 # .file-drop-zone class FileInput always emits, so unrelated file inputs
 # elsewhere on the same page are unaffected.
-_UPLOAD_STYLES = """<style>
+_UPLOAD_CSS = """
 .datatable-upload-zone .file-drop-zone {
     border: 2px dashed var(--sf-outline, #adb5bd);
     border-radius: 0.375rem;
@@ -103,8 +106,11 @@ _UPLOAD_STYLES = """<style>
     color: var(--sf-on-surface-variant, #495057);
     margin-top: 0.25rem;
 }
-</style>
 """
+
+
+def _upload_styles() -> SafeHTML:
+    return SafeHTML(style_tag(_UPLOAD_CSS) + '\n')
 
 
 def _field_label(field_name: str, field_info: Any) -> str:
@@ -251,7 +257,7 @@ def _render_csv_upload_block(
     one button is always "Reload CSV" and both parses and commits in a
     single click (action='reload', see handle_import_post()).
 
-    Wrapped in .datatable-upload-zone so _UPLOAD_STYLES below can give the
+    Wrapped in .datatable-upload-zone so _UPLOAD_CSS above can give the
     file picker more visual weight than the browser's own faint default
     styling, without affecting unrelated file inputs elsewhere on the page.
     """
@@ -280,7 +286,7 @@ def _render_csv_upload_block(
     help_class = theme.datatable_class('upload_help')  # NOSONAR
     button_class = theme.datatable_class('load_button')  # NOSONAR
     return render_html(t"""
-{SafeHTML(_UPLOAD_STYLES)}<div class="{zone_class} datatable-upload-zone">
+{_upload_styles()}<div class="{zone_class} datatable-upload-zone">
     <label for="{file_name}" class="{label_class}">Import CSV (optional)</label>
     {file_input_html}
     <div class="{help_class}">{help_text}</div>
@@ -385,7 +391,7 @@ def render_datatable_table(
         f'{(theme or _DEFAULT_THEME).table_class(style or {})} datatable-table'.strip()
     )
 
-    return render_html(t"""{SafeHTML(_ERROR_STYLES)}<table id="{table_id}" class="{table_class}">
+    return render_html(t"""{_error_styles()}<table id="{table_id}" class="{table_class}">
 <thead><tr>{thead_row}</tr></thead>
 <tbody>{tbody_rows}</tbody>
 </table>""")
@@ -489,8 +495,7 @@ def _render_init_script(table_id: str, options: 'DataTableConfig') -> SafeHTML:
     # swapped-in content), long after the event already fired. A listener
     # added post-facto would silently never run, leaving the freshly
     # swapped-in table un-enhanced.
-    return SafeHTML(f"""
-<script>
+    js = f"""
 function _dtCellExportValue(node) {{
     var select = node.querySelector('select');
     if (select) {{ return select.value; }}
@@ -546,8 +551,8 @@ function _dtCellExportValue(node) {{
         _dtInit();
     }}
 }})();
-</script>
-""")
+"""
+    return SafeHTML('\n' + script_tag(js) + '\n')
 
 
 def _datatable_field_needs_multipart(value: Any) -> bool:

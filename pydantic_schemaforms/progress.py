@@ -11,6 +11,7 @@ Without JavaScript nothing shows: a count from the server would go stale.
 
 from __future__ import annotations
 
+from .csp import script_tag, style_tag
 from .tstring import SafeHTML
 
 PROGRESS_ATTRIBUTE = 'data-sf-progress'
@@ -26,7 +27,7 @@ PROGRESS_BAR = SafeHTML(
 )
 
 # Plain JavaScript in a Python string: a '#' comment would kill it.
-PROGRESS_ASSETS = SafeHTML("""<script data-schemaforms-progress>
+PROGRESS_JS = """
 (function () {
     if (window.schemaformsProgress) { window.schemaformsProgress.refresh(); return; }
 
@@ -119,8 +120,9 @@ PROGRESS_ASSETS = SafeHTML("""<script data-schemaforms-progress>
         refresh();
     }
 })();
-</script>
-<style data-schemaforms-progress>
+"""
+
+PROGRESS_CSS = """
 .sf-progress { margin: 0 0 1rem; }
 .sf-progress__label {
     display: flex; justify-content: space-between; gap: 1rem;
@@ -130,4 +132,12 @@ PROGRESS_ASSETS = SafeHTML("""<script data-schemaforms-progress>
     display: block; width: 100%; height: 0.5rem;
     accent-color: var(--sf-primary, #0d6efd);
 }
-</style>""")
+"""
+
+
+def progress_assets() -> SafeHTML:
+    return SafeHTML(
+        script_tag(PROGRESS_JS, 'data-schemaforms-progress')
+        + '\n'
+        + style_tag(PROGRESS_CSS, 'data-schemaforms-progress')
+    )

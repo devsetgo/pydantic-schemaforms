@@ -520,8 +520,12 @@ class TestDatetimeInputsCustomFormat:
         assert 'schemaforms-picker-toggle' in html
         assert 'aria-label="Open date picker"' in html
         # The hidden native picker is excluded from tab order / AT and never submits.
-        assert 'type="date" id="d__picker" tabindex="-1" aria-hidden="true"' in html
-        assert 'opacity: 0' in html
+        assert (
+            'type="date" id="d__picker" class="schemaforms-picker-native" tabindex="-1" aria-hidden="true"'
+            in html
+        )
+        assert 'class="schemaforms-picker-input"' in html
+        assert 'opacity: 0' not in html
         assert 'showPicker' in html
         # The picker's onchange handler must build the SAME %d/%m/%Y order.
         assert 'getDate()).padStart(2, \'0\') + "/"' in html
@@ -549,7 +553,7 @@ class TestDatetimeInputsCustomFormat:
         inp = TimeInput()
         html = inp.render(name='t', id='t', time_format='%H:%M')
         assert html.count('name="t"') == 1
-        assert 'type="time" id="t__picker" tabindex="-1"' in html
+        assert 'type="time" id="t__picker" class="schemaforms-picker-native" tabindex="-1"' in html
         assert 'aria-label="Open time picker"' in html
         assert "new Date('1970-01-01T' + this.value)" in html
 
@@ -559,7 +563,10 @@ class TestDatetimeInputsCustomFormat:
         inp = DatetimeInput()
         html = inp.render(name='dt', id='dt', datetime_format='%Y%m%d%H%M%S')
         assert html.count('name="dt"') == 1
-        assert 'type="datetime-local" id="dt__picker" tabindex="-1"' in html
+        assert (
+            'type="datetime-local" id="dt__picker" class="schemaforms-picker-native" tabindex="-1"'
+            in html
+        )
         assert 'aria-label="Open date and time picker"' in html
         assert 'new Date(this.value)' in html
 

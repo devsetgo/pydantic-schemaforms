@@ -167,9 +167,9 @@ def test_forms_without_rules_ship_no_script():
 
 
 def test_script_contains_no_python_comment():
-    from pydantic_schemaforms.show_when import SHOW_WHEN_SCRIPT
+    from pydantic_schemaforms.show_when import SHOW_WHEN_JS
 
-    assert not [line for line in SHOW_WHEN_SCRIPT.splitlines() if line.strip().startswith('#')]
+    assert not [line for line in SHOW_WHEN_JS.splitlines() if line.strip().startswith('#')]
 
 
 def test_re_render_with_errors_keeps_the_state_without_javascript():

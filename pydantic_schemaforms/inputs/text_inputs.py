@@ -5,6 +5,7 @@ import re
 from typing import Any
 
 from pydantic_schemaforms.assets.runtime import read_asset_text
+from pydantic_schemaforms.csp import script_tag, style_tag
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .base import FormInput, _render_input_tag
@@ -285,10 +286,12 @@ textarea.code-invalid {{ outline: 2px solid var(--sf-error, #b91c1c); }}
     # Style/script block is developer-authored markup, not user data; `field_id`
     # and `language` are interpolated into JS string literals/selectors (not an
     # HTML-attribute position), so f-strings are used per CLAUDE.md's JS exception.
-    script = SafeHTML(f"""
-<style>{css}
-</style>
-<script>
+    script = SafeHTML(
+        '\n'
+        + style_tag(f"""{css}
+""")
+        + '\n'
+        + script_tag(f"""
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
     if (!el) return;
@@ -300,7 +303,8 @@ document.addEventListener('DOMContentLoaded', function() {{
 {format_js}
 {highlight_wire_js}
 }});
-</script>""")
+""")
+    )
 
     return str(wrapper) + str(script)
 
@@ -368,6 +372,9 @@ class SearchInput(FormInput):
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
+_RESIZE_VALUES = ('none', 'both', 'horizontal', 'vertical', 'block', 'inline')
+
+
 class TextArea(FormInput):
     """Multi-line text input area."""
 
@@ -391,7 +398,9 @@ class TextArea(FormInput):
         attrs = self.validate_attributes(**kwargs)
         if 'type' in attrs:
             del attrs['type']  # <textarea> has no type attribute.
-        if resize:
+        if resize in _RESIZE_VALUES:
+            attrs['class'] = f'{attrs.get("class") or ""} sf-resize-{resize}'.strip()
+        elif resize:
             # 'resize' is a CSS property, not an HTML attribute -- merge it into
             # `style` rather than emitting it as a bare (invalid) attribute.
             existing_style = str(attrs.get('style') or '').strip().rstrip(';')
@@ -506,8 +515,9 @@ class PhoneInput(TelInput):
         if not live_format or not field_id:
             return input_html
 
-        script = SafeHTML(rf"""
-<script>
+        script = SafeHTML(
+            '\n'
+            + script_tag(rf"""
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
     const mask = {json.dumps(phone_format)};
@@ -528,8 +538,9 @@ document.addEventListener('DOMContentLoaded', function() {{
         }});
     }}
 }});
-</script>
 """)
+            + '\n'
+        )
         return input_html + script
 
 
@@ -568,8 +579,9 @@ class CurrencyInput(TextInput):
         if not live_format or not field_id:
             return input_html
 
-        script = SafeHTML(rf"""
-<script>
+        script = SafeHTML(
+            '\n'
+            + script_tag(rf"""
 document.addEventListener('DOMContentLoaded', function() {{
     const el = document.getElementById('{field_id}');
     const symbol = {json.dumps(currency_symbol)};
@@ -587,6 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         }});
     }}
 }});
-</script>
 """)
+            + '\n'
+        )
         return input_html + script

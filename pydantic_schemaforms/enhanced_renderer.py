@@ -20,15 +20,17 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticSerializationError, PydanticUndefined, to_jsonable_python
 
+from .csp import csp_nonces, script_tag, style_tag
 from .html_markers import wrap_with_schemaforms_markers
 from .rendering.context import RenderContext
 from .rendering.field_renderer import FieldRenderer
 from .rendering.form_style import WIZARD_SUBMIT_RE
+from .rendering.theme_assets import base_styles
 from .error_tree import iter_errors, normalize_error_tree
 from .form_data import decode_submission
 from .rendering.layout_engine import (
     GRID_CLASS,
-    GRID_STYLES,
+    grid_styles,
     GROUPED_LAYOUTS,
     LayoutEngine,
     check_layout,
@@ -53,15 +55,15 @@ from .rendering.themes import (
 )
 from .schema_form import FormModel
 from .autosave import (
-    AUTOSAVE_ASSETS,
+    autosave_assets,
     AUTOSAVE_ATTRIBUTE,
     WARN_ATTRIBUTE,
     check_flag,
     draft_notice,
 )
-from .confirm import CONFIRM_ASSETS, CONFIRM_ATTRIBUTE, check_confirm
-from .progress import PROGRESS_ASSETS, PROGRESS_ATTRIBUTE, PROGRESS_BAR, WIZARD_TICKS_CLASS
-from .show_when import SHOW_WHEN_SCRIPT, prune
+from .confirm import CONFIRM_ATTRIBUTE, check_confirm, confirm_assets
+from .progress import PROGRESS_ATTRIBUTE, PROGRESS_BAR, WIZARD_TICKS_CLASS, progress_assets
+from .show_when import prune, show_when_script
 from .tstring import SafeHTML
 from .tstring import html as render_html
 
@@ -240,8 +242,8 @@ def _render_context(data: dict[str, Any], metadata: SchemaMetadata) -> RenderCon
 
 
 def _with_field_assets(markup: str) -> str:
-    grid = f'\n{GRID_STYLES}' if GRID_ATTRIBUTE in markup else ''
-    script = f'\n{SHOW_WHEN_SCRIPT}' if SHOW_WHEN_ATTRIBUTE in markup else ''
+    grid = f'\n{grid_styles()}' if GRID_ATTRIBUTE in markup else ''
+    script = f'\n{show_when_script()}' if SHOW_WHEN_ATTRIBUTE in markup else ''
     return f'{markup}{grid}{script}'
 
 
@@ -449,7 +451,11 @@ class EnhancedFormRenderer:
         )
 
         styles = self._render_layout_support_styles() if inject_layout_styles else ''
-        output_parts = [styles, form_markup] if styles else [form_markup]
+        output_parts = (
+            [str(base_styles()), styles, form_markup]
+            if styles
+            else [str(base_styles()), form_markup]
+        )
 
         # Direct top-level fields cover the common case, but a form composed
         # entirely of layout/tab fields (e.g. a tabbed wrapper) never lists
@@ -471,16 +477,16 @@ class EnhancedFormRenderer:
             output_parts.append(list_renderer.get_model_list_javascript())
 
         if GRID_ATTRIBUTE in form_markup:
-            output_parts.append(GRID_STYLES)
+            output_parts.append(grid_styles())
         if SHOW_WHEN_ATTRIBUTE in form_markup:
-            output_parts.append(SHOW_WHEN_SCRIPT)
+            output_parts.append(show_when_script())
         if CONFIRM_ATTRIBUTE in form_markup:
-            output_parts.append(CONFIRM_ASSETS)
+            output_parts.append(confirm_assets())
         if PROGRESS_ATTRIBUTE in form_markup or WIZARD_TICKS_CLASS in form_markup:
-            output_parts.append(PROGRESS_ASSETS)
+            output_parts.append(progress_assets())
         # Last, so the other scripts have set the form up before its starting values are read.
         if AUTOSAVE_ATTRIBUTE in form_markup or WARN_ATTRIBUTE in form_markup:
-            output_parts.append(AUTOSAVE_ASSETS)
+            output_parts.append(autosave_assets())
 
         combined_output = '\n'.join(output_parts)
 
@@ -629,8 +635,7 @@ class EnhancedFormRenderer:
     def _render_layout_support_styles(self) -> str:
         """Return shared form layout CSS so templates don't need framework-specific fixes."""
 
-        return """
-<style data-schemaforms-layout-support>
+        css = """
 .pydantic-form,
 .md-form {
     width: 100%;
@@ -663,8 +668,8 @@ class EnhancedFormRenderer:
     max-width: none;
     box-sizing: border-box;
 }
-</style>
 """
+        return SafeHTML('\n' + style_tag(css, 'data-schemaforms-layout-support') + '\n')
 
     def _singularize_label(self, label: str) -> str:
         """Best-effort singularization for indexed collection labels."""
@@ -889,8 +894,7 @@ class EnhancedFormRenderer:
         # Static CSS/JS below (rule 4 exception) -- no user data is
         # interpolated, so it stays a plain string appended as trusted,
         # developer-authored markup.
-        panel_assets = SafeHTML("""
-<style>
+        panel_css = """
 .pf-debug-panel { margin-top: 1.5rem; border: 1px solid var(--sf-outline-variant, #e0e0e0); border-radius: 8px; background: var(--sf-surface-low, #fafafa); }
 .pf-debug-summary { cursor: pointer; padding: 0.6rem 0.85rem; font-weight: 600; font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
 .pf-debug-tabs { padding: 0.35rem 0.85rem 0.75rem; }
@@ -900,8 +904,8 @@ class EnhancedFormRenderer:
 .pf-debug-tab { display: none; }
 .pf-debug-tab.pf-active { display: block; }
 .pf-debug-tab pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: var(--sf-surface, #ffffff); border: 1px dashed var(--sf-outline-variant, #d0d7de); padding: 0.65rem; border-radius: 6px; margin: 0.35rem 0; overflow: auto; }
-</style>
-<script>
+"""
+        panel_js = """
 (function() {
     document.querySelectorAll('.pf-debug-panel').forEach(function(panel) {
         var buttons = panel.querySelectorAll('[data-pf-tab]');
@@ -982,8 +986,8 @@ class EnhancedFormRenderer:
         }
     });
 })();
-</script>
-""")
+"""
+        panel_assets = SafeHTML('\n' + style_tag(panel_css) + '\n' + script_tag(panel_js) + '\n')
 
         return panel_body + panel_assets
 
@@ -999,10 +1003,15 @@ def render_form_html(
     enable_logging: bool = False,
     *,
     include_html_markers: bool = True,
+    script_nonce: str | None = None,
+    style_nonce: str | None = None,
     **kwargs: Any,
 ) -> str:
     """Render a FormModel to a complete HTML `<form>` -- the library's primary
     entry point (see the package docstring).
+
+    `script_nonce`/`style_nonce` put a Content-Security-Policy nonce on every
+    `<script>`/`<style>` the library emits; pass the current request's nonce.
 
     `submit_url` is required as a keyword-only kwarg (via **kwargs) since the
     library never chooses a submission target on its own. `csrf_mode` (a
@@ -1039,17 +1048,18 @@ def render_form_html(
         asset_mode=asset_mode,
         material_variant=kwargs.pop('material_variant', None),
     )
-    html = renderer.render_form_from_model(
-        form_model_cls,
-        data=form_data,
-        errors=errors,
-        submit_url=submit_url,
-        layout=layout,
-        debug=debug,
-        show_timing=show_timing,
-        enable_logging=enable_logging,
-        **kwargs,
-    )
+    with csp_nonces(script_nonce, style_nonce):
+        html = renderer.render_form_from_model(
+            form_model_cls,
+            data=form_data,
+            errors=errors,
+            submit_url=submit_url,
+            layout=layout,
+            debug=debug,
+            show_timing=show_timing,
+            enable_logging=enable_logging,
+            **kwargs,
+        )
     return wrap_with_schemaforms_markers(html, enabled=include_html_markers)
 
 
@@ -1065,6 +1075,8 @@ def render_display_html(
     asset_mode: str = 'vendored',
     material_variant: str | None = None,
     include_html_markers: bool = True,
+    script_nonce: str | None = None,
+    style_nonce: str | None = None,
 ) -> str:
     """Render validated data as a read-only review page; see `FormModel.render_display`."""
 
@@ -1077,14 +1089,15 @@ def render_display_html(
         material_variant=material_variant,
     )
     metadata = build_schema_metadata(form_model_cls)
-    output = render_display(
-        renderer,
-        metadata,
-        data,
-        layout=layout,
-        general_title=_general_group_title(form_model_cls, metadata),
-        edit_urls=edit_urls,
-    )
+    with csp_nonces(script_nonce, style_nonce):
+        output = render_display(
+            renderer,
+            metadata,
+            data,
+            layout=layout,
+            general_title=_general_group_title(form_model_cls, metadata),
+            edit_urls=edit_urls,
+        )
     return wrap_with_schemaforms_markers(output, enabled=include_html_markers)
 
 

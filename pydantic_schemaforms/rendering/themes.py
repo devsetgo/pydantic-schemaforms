@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from pydantic_schemaforms.csp import script_tag
 from pydantic_schemaforms.templates import TemplateString
 from pydantic_schemaforms.tstring import SafeHTML, html
 from pydantic_schemaforms.assets.runtime import (
@@ -23,7 +24,7 @@ from .field_shell import (
 from .form_style import FormStyle, get_form_style
 from .model_list_markup import ModelListItem, render_default_model_list_item
 from .material_icons import render_material_icon
-from .theme_assets import ACCORDION_COMPONENT_SCRIPT, BOOTSTRAP_DARK_TOKENS, TAB_COMPONENT_SCRIPT
+from .theme_assets import accordion_component_script, bootstrap_dark_tokens, tab_component_script
 
 __all__ = [
     'RendererTheme',
@@ -130,8 +131,7 @@ class RendererTheme:
         """Markup appended after the closing form tag."""
 
         # JavaScript to prevent Enter key from submitting forms
-        prevent_enter_script = """
-<script>
+        prevent_enter_script_js = """
 (function() {
     document.addEventListener('DOMContentLoaded', function() {
         // Prevent Enter key from submitting forms unless on submit button
@@ -165,8 +165,8 @@ class RendererTheme:
         });
     });
 })();
-</script>
 """
+        prevent_enter_script = SafeHTML('\n' + script_tag(prevent_enter_script_js) + '\n')
 
         after_form_assets = self.form_style.assets.after_form
         if after_form_assets:
@@ -207,8 +207,7 @@ class RendererTheme:
         if render_time is not None:
             render_time_str = f'{render_time:.3f}'
             timing_display = html(
-                t'<div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--sf-on-surface-variant, #5c636a); '
-                t'text-align: right;">Rendered in {render_time_str}s</div>'
+                t'<div class="sf-render-time">Rendered in {render_time_str}s</div>'
             )
 
         wrapper = template.render(
@@ -282,17 +281,17 @@ class RendererTheme:
     def tab_component_assets(self) -> str:
         """Return CSS/JS assets for tab layouts."""
 
-        return self.form_style.assets.tab_assets
+        return self.form_style.assets.tab_assets()
 
     def accordion_component_assets(self) -> str:
         """Return CSS/JS assets for accordion layouts."""
 
-        return self.form_style.assets.accordion_assets
+        return self.form_style.assets.accordion_assets()
 
     def wizard_component_assets(self) -> str:
         """Return CSS/JS assets for the step wizard layout."""
 
-        return self.form_style.assets.wizard_assets
+        return self.form_style.assets.wizard_assets()
 
     def form_wrapper_template(self) -> TemplateString:
         """Return the template used for the outer <form> element."""
@@ -534,7 +533,7 @@ class BootstrapTheme(FrameworkTheme):
 
     def before_form(self) -> str:
         base = super().before_form()
-        parts = [base, BOOTSTRAP_DARK_TOKENS]
+        parts = [base, bootstrap_dark_tokens()]
         if self.include_assets:
             parts.append(bootstrap_icons_css_tag(asset_mode=self.asset_mode))
         return '\n'.join(part for part in parts if part)
@@ -744,10 +743,10 @@ class MaterialTheme(RendererTheme):
         )
 
     def tab_component_assets(self) -> str:
-        return TAB_COMPONENT_SCRIPT
+        return tab_component_script()
 
     def accordion_component_assets(self) -> str:
-        return ACCORDION_COMPONENT_SCRIPT
+        return accordion_component_script()
 
     def render_model_list_container(
         self,

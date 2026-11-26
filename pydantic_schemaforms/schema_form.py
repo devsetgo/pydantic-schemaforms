@@ -217,6 +217,14 @@ def Field(
     return attach_upload_limits(field_info, json_schema_extra)
 
 
+def _check_render_nonces(render_kwargs: dict[str, Any]) -> None:
+    """Fail at validate() time, not on the later re-render, for a malformed nonce."""
+    from .csp import check_nonce
+
+    for name in ('script_nonce', 'style_nonce'):
+        check_nonce(render_kwargs.get(name), name)
+
+
 class FormModel(BaseModel):
     """
     Enhanced base class for form models with UI element support.
@@ -465,6 +473,7 @@ class FormModel(BaseModel):
                 '(python -m pydantic_schemaforms.ai_instructions claude).'
             )
 
+        _check_render_nonces(render_kwargs)
         result = validate_form_data(cls, data)
         result._submit_url = submit_url
         result._framework = framework
@@ -500,6 +509,7 @@ class FormModel(BaseModel):
         """
         from .wizard_steps import validate_step
 
+        _check_render_nonces(render_kwargs)
         return validate_step(
             cls,
             data,

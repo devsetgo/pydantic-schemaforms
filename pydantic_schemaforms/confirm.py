@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .csp import script_tag, style_tag
 from .tstring import SafeHTML
 
 CONFIRM_ATTRIBUTE = 'data-sf-confirm'
@@ -41,7 +42,7 @@ def check_confirm(value: Any) -> dict[str, Any] | None:
 
 # One listener on the document, after the form's own (a wizard stops a submit
 # before its last step first). Plain JavaScript: a '#' comment would kill it.
-CONFIRM_ASSETS = SafeHTML("""<script data-schemaforms-confirm>
+CONFIRM_JS = """
 (function () {
     if (window.schemaformsConfirm) { return; }
     window.schemaformsConfirm = true;
@@ -74,8 +75,9 @@ CONFIRM_ASSETS = SafeHTML("""<script data-schemaforms-confirm>
         }
     });
 })();
-</script>
-<style data-schemaforms-confirm>
+"""
+
+CONFIRM_CSS = """
 dialog.sf-confirm {
     border: 1px solid var(--sf-outline-variant, #dee2e6); border-radius: 0.75rem;
     padding: 1.5rem; max-width: min(28rem, calc(100% - 2rem));
@@ -85,4 +87,12 @@ dialog.sf-confirm::backdrop { background: var(--sf-scrim, rgba(0, 0, 0, 0.45)); 
 dialog.sf-confirm .sf-confirm__title { font-size: 1.25rem; margin: 0 0 0.75rem; }
 dialog.sf-confirm .sf-confirm__message { margin: 0 0 1.25rem; }
 dialog.sf-confirm .sf-confirm__actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
-</style>""")
+"""
+
+
+def confirm_assets() -> SafeHTML:
+    return SafeHTML(
+        script_tag(CONFIRM_JS, 'data-schemaforms-confirm')
+        + '\n'
+        + style_tag(CONFIRM_CSS, 'data-schemaforms-confirm')
+    )

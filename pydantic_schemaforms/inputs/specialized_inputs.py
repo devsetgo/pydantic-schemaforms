@@ -9,6 +9,7 @@ import json
 import random
 from typing import Any
 
+from pydantic_schemaforms.csp import script_tag, style_tag
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 from .base import FileInputBase, FormInput, _render_input_tag
@@ -60,14 +61,12 @@ class FileInput(FileInputBase):
 
         preview_html: SafeHTML = SafeHTML('')
         if show_preview:
-            preview_div = html(
-                t'<div class="file-preview" id="{field_name}_preview" style="margin-top: 10px;"></div>'
-            )
+            preview_div = html(t'<div class="file-preview" id="{field_name}_preview"></div>')
             # JS-only content below (rule 4 exception) -- field_id/field_name are
             # embedded as JS string literals inside getElementById(...), not HTML
             # attribute values, so they stay in an f-string.
-            preview_script = SafeHTML(f"""
-            <script>
+            preview_script = SafeHTML(
+                script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const fileInput = document.getElementById('{field_id}');
                 const preview = document.getElementById('{field_name}_preview');
@@ -107,14 +106,14 @@ class FileInput(FileInputBase):
                     }});
                 }}
             }});
-            </script>
             """)
+            )
             preview_html = SafeHTML(preview_div + preview_script)
 
         drag_drop_script: SafeHTML = SafeHTML('')
         if enable_drag_drop:
-            drag_drop_script = SafeHTML(f"""
-            <script>
+            drag_drop_script = SafeHTML(
+                script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const dropzone = document.getElementById('{field_id}_dropzone');
                 const fileInput = document.getElementById('{field_id}');
@@ -141,8 +140,8 @@ class FileInput(FileInputBase):
                     }}
                 }});
             }});
-            </script>
             """)
+            )
 
         if not (show_preview or enable_drag_drop):
             return file_html
@@ -205,29 +204,39 @@ class ColorInput(FormInput):
             current_value = kwargs.get('value', '#000000')
 
             value_div = html(t'''
-            <div class="color-value-display" style="display: inline-flex; align-items: center; margin-left: 10px;">
-                <span id="{field_name}_value" style="font-family: monospace;">{current_value}</span>
-                <div id="{field_name}_swatch" style="width: 20px; height: 20px; background-color: {current_value}; border: 1px solid var(--sf-outline-variant, #ccc); margin-left: 5px;"></div>
+            <div class="color-value-display">
+                <span id="{field_name}_value" class="color-value-text">{current_value}</span>
+                <div id="{field_name}_swatch" class="color-swatch" data-color="{current_value}"></div>
             </div>
             ''')
             # JS-only content below (rule 4 exception) -- field_id/field_name
             # are embedded as JS string literals, not HTML attribute values.
-            value_script = SafeHTML(f"""
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {{
+            value_script = SafeHTML(
+                script_tag(f"""
+            (function() {{
+              function init() {{
                 const colorInput = document.getElementById('{field_id}');
                 const valueSpan = document.getElementById('{field_name}_value');
                 const swatch = document.getElementById('{field_name}_swatch');
 
+                if (swatch) {{
+                    swatch.style.backgroundColor = swatch.dataset.color;
+                }}
                 if (colorInput && valueSpan && swatch) {{
                     colorInput.addEventListener('input', function() {{
                         valueSpan.textContent = this.value;
                         swatch.style.backgroundColor = this.value;
                     }});
                 }}
-            }});
-            </script>
+              }}
+              if (document.readyState === 'loading') {{
+                document.addEventListener('DOMContentLoaded', init);
+              }} else {{
+                init();
+              }}
+            }})();
             """)
+            )
             value_display = SafeHTML(value_div + value_script)
             return html(t'<div class="color-input-group">{color_html}{value_display}</div>')
 
@@ -331,7 +340,7 @@ class HoneypotInput(HiddenInput):
         # Use a name that looks like a real field but is actually a trap
         kwargs['name'] = kwargs.get('name', 'website_url')
         kwargs['value'] = ''
-        kwargs['style'] = 'display: none !important;'
+        kwargs['class'] = f'{kwargs.get("class") or ""} sf-honeypot'.strip()
         kwargs['tabindex'] = '-1'
         kwargs['autocomplete'] = 'off'
         return super().render(**kwargs)
@@ -508,13 +517,13 @@ class RatingStarsInput(FormInput):
             )
         stars_html = SafeHTML(''.join(star_parts))  # NOSONAR
 
-        assets = SafeHTML(f"""
-            <style>
-            .star-rating-input .stars {{
+        assets = SafeHTML(
+            style_tag("""
+            .star-rating-input .stars {
                 font-size: 24px;
                 cursor: pointer;
-            }}
-            .star-rating-input .rating-star {{
+            }
+            .star-rating-input .rating-star {
                 background: none;
                 border: 0;
                 padding: 0;
@@ -522,14 +531,14 @@ class RatingStarsInput(FormInput):
                 cursor: pointer;
                 color: var(--sf-star-empty, #6c757d);
                 transition: color 0.2s;
-            }}
+            }
             .star-rating-input .rating-star.star-filled,
             .star-rating-input .rating-star:hover,
-            .star-rating-input .rating-star.hover {{
+            .star-rating-input .rating-star.hover {
                 color: var(--sf-star-filled, #b58900);
-            }}
-            </style>
-            <script>
+            }
+            """)
+            + script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const starsContainer = document.getElementById('{field_id}_stars');
                 const hiddenInput = document.getElementById('{field_id}_value');
@@ -577,8 +586,9 @@ class RatingStarsInput(FormInput):
                     }});
                 }});
             }});
-            </script>
-        """)  # NOSONAR
+            """)
+            + '\n        '
+        )  # NOSONAR
 
         return html(t'''
         <div class="star-rating-input" data-name="{name}">
@@ -631,9 +641,9 @@ class TagsInput(FormInput):
         )
 
         separator_js = json.dumps(separator)
-        assets = SafeHTML(f"""
-            <style>
-            .tags-input {{
+        assets = SafeHTML(
+            style_tag("""
+            .tags-input {
                 border: 1px solid var(--sf-outline, #ccc);
                 border-radius: 4px;
                 padding: 5px;
@@ -642,14 +652,14 @@ class TagsInput(FormInput):
                 flex-wrap: wrap;
                 align-items: center;
                 gap: 5px;
-            }}
-            .tags-input input {{
+            }
+            .tags-input input {
                 border: none;
                 outline: none;
                 flex: 1;
                 min-width: 100px;
-            }}
-            .tag {{
+            }
+            .tag {
                 background: var(--sf-chip-bg, #0a58ca);
                 color: var(--sf-chip-fg, white);
                 padding: 2px 8px;
@@ -658,13 +668,13 @@ class TagsInput(FormInput):
                 display: inline-flex;
                 align-items: center;
                 gap: 5px;
-            }}
-            .tag .remove {{
+            }
+            .tag .remove {
                 cursor: pointer;
                 font-weight: bold;
-            }}
-            </style>
-            <script>
+            }
+            """)
+            + script_tag(f"""
             document.addEventListener('DOMContentLoaded', function() {{
                 const container = document.getElementById('{field_id}_container');
                 const input = document.getElementById('{field_id}');
@@ -713,8 +723,9 @@ class TagsInput(FormInput):
                     }}
                 }});
             }});
-            </script>
-        """)  # NOSONAR
+            """)
+            + '\n        '
+        )  # NOSONAR
 
         return html(t'''
         <div class="tags-input" data-name="{name}">

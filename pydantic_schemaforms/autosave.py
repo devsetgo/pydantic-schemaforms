@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .csp import script_tag
 from .tstring import SafeHTML, html
 
 AUTOSAVE_ATTRIBUTE = 'data-sf-autosave'
@@ -47,7 +48,7 @@ def draft_notice(alert_class: str, button_class: str) -> str:  # NOSONAR
 
 
 # Plain JavaScript in a Python string: a '#' comment would kill it.
-AUTOSAVE_ASSETS = SafeHTML("""<script data-schemaforms-autosave>
+AUTOSAVE_JS = """
 (function () {
     if (window.schemaformsAutosave) { window.schemaformsAutosave.initAll(); return; }
     var WEEK = 7 * 24 * 60 * 60 * 1000;
@@ -234,4 +235,8 @@ AUTOSAVE_ASSETS = SafeHTML("""<script data-schemaforms-autosave>
         window.schemaformsAutosave.initAll();
     }
 })();
-</script>""")
+"""
+
+
+def autosave_assets() -> SafeHTML:
+    return script_tag(AUTOSAVE_JS, 'data-schemaforms-autosave')

@@ -107,6 +107,8 @@ class BaseInput(ABC):
             if isinstance(value, bool):
                 if value:
                     parts.append(key)
+            elif key == 'style' and not str(value or '').strip():
+                continue
             elif value not in (None, ''):
                 escaped_value = escape(str(value), quote=True)
                 parts.append(f'{key}="{escaped_value}"')

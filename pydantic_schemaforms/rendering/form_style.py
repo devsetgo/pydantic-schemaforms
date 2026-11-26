@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import re
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic_schemaforms.templates import FormTemplates, TemplateString
+from pydantic_schemaforms.csp import style_attr
 from pydantic_schemaforms.tstring import SafeHTML, html
 from .theme_assets import (
-    ACCORDION_COMPONENT_ASSETS,
-    TAB_COMPONENT_ASSETS,
-    WIZARD_COMPONENT_ASSETS,
+    accordion_component_assets,
+    tab_component_assets,
+    wizard_component_assets,
 )
+
+_HIDDEN_ATTR = ' hidden'
 
 # ---------------------------------------------------------------------------
 # Default (Bootstrap-compatible) templates
@@ -256,7 +260,7 @@ def _bootstrap_tab_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="tab-layout nav-tabs-wrapper {layout_class}" style="{layout_style}">
+<div class="tab-layout nav-tabs-wrapper {layout_class}"{style_attr(layout_style)}>
     <ul class="nav nav-tabs" role="tablist">
         {SafeHTML(tab_buttons)}
     </ul>
@@ -326,7 +330,7 @@ def _bootstrap_accordion_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="accordion {layout_class}" id="{layout_id}" style="{layout_style}">
+<div class="accordion {layout_class}" id="{layout_id}"{style_attr(layout_style)}>
     {SafeHTML(sections)}
 </div>
 {SafeHTML(component_assets)}
@@ -380,7 +384,7 @@ def _plain_tab_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="tab-layout {layout_class}" style="{layout_style}">
+<div class="tab-layout {layout_class}"{style_attr(layout_style)}>
     <div class="tab-navigation" role="tablist">{SafeHTML(tab_buttons)}</div>
     <div class="tab-content">{SafeHTML(tab_panels)}</div>
 </div>
@@ -403,7 +407,7 @@ def _plain_accordion_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="accordion-layout {layout_class}" style="{layout_style}">
+<div class="accordion-layout {layout_class}"{style_attr(layout_style)}>
     {SafeHTML(sections)}
 </div>
 {SafeHTML(component_assets)}
@@ -430,7 +434,7 @@ def _material_tab_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="tab-layout md-tab-layout {layout_class}" style="{layout_style}">
+<div class="tab-layout md-tab-layout {layout_class}"{style_attr(layout_style)}>
     <div class="tab-navigation md-tab-navigation" role="tablist">{SafeHTML(tab_buttons)}</div>
     <div class="tab-content md-tab-content">{SafeHTML(tab_panels)}</div>
 </div>
@@ -472,7 +476,7 @@ def _material_accordion_layout(
     **_: Any,
 ) -> SafeHTML:
     return html(t'''
-<div class="md-accordion-layout {layout_class}" style="{layout_style}">
+<div class="md-accordion-layout {layout_class}"{style_attr(layout_style)}>
     {SafeHTML(sections)}
 </div>
 {SafeHTML(component_assets)}
@@ -493,13 +497,14 @@ def _material_accordion_section(
     **_: Any,
 ) -> SafeHTML:
     _expanded_class = SafeHTML(expanded_class)
+    hidden = SafeHTML(_HIDDEN_ATTR if display_style == 'none' else '')
     return html(t'''
 <div class="md-accordion-section">
     <button class="md-accordion-header{_expanded_class}" type="button" aria-expanded="{aria_expanded}"
             aria-controls="{section_id}" data-sf-toggle="accordion">
         {title}
     </button>
-    <div id="{section_id}" class="md-accordion-content" style="display: {display_style};">
+    <div id="{section_id}" class="md-accordion-content"{hidden}>
         {SafeHTML(content)}
     </div>
 </div>
@@ -580,7 +585,7 @@ MATERIAL_SUBMIT_BUTTON_TEMPLATE = TemplateString(_material_submit_button)
 
 
 # ---------------------------------------------------------------------------
-# Step wizard templates (behaviour and base styling: WIZARD_COMPONENT_ASSETS)
+# Step wizard templates (behaviour and base styling: wizard_component_assets)
 # ---------------------------------------------------------------------------
 
 
@@ -636,12 +641,12 @@ def _wizard_progress_item(
     _number = html(t'<span class="wizard-progress-number">{shown}</span>')  # NOSONAR
     _said = SafeHTML('')  # NOSONAR - read in the t-string below
     if done:
-        _hidden = SafeHTML('' if done == 'true' else ' hidden')  # NOSONAR
+        _hidden = SafeHTML('' if done == 'true' else _HIDDEN_ATTR)  # NOSONAR
         _said = html(t'<span class="sf-sr-only" data-step-done{_hidden}> (complete)</span>')
     _title = html(t'<span class="wizard-progress-title">{title}</span>{_said}')  # NOSONAR
     _class = SafeHTML(state_class)  # NOSONAR
     # A step a rule hides (#327) leaves the header; the wizard script shows it again.
-    _skipped = SafeHTML(' hidden' if skipped else '')  # NOSONAR
+    _skipped = SafeHTML(_HIDDEN_ATTR if skipped else '')  # NOSONAR
     if action:
         # save_steps: a header jump posts the current step, like Back and Next.
         _disabled = SafeHTML(' disabled' if disabled else '')  # NOSONAR
@@ -890,9 +895,9 @@ class FormStyleAssets:
 
     before_form: str = ''
     after_form: str = ''
-    tab_assets: str = TAB_COMPONENT_ASSETS
-    accordion_assets: str = ACCORDION_COMPONENT_ASSETS
-    wizard_assets: str = WIZARD_COMPONENT_ASSETS
+    tab_assets: Callable[[], str] = field(default=tab_component_assets)
+    accordion_assets: Callable[[], str] = field(default=accordion_component_assets)
+    wizard_assets: Callable[[], str] = field(default=wizard_component_assets)
 
 
 @dataclass(frozen=True)

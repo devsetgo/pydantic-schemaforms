@@ -1,7 +1,9 @@
 """Default CSS/JS snippets for layout-oriented components."""
 
-TAB_COMPONENT_SCRIPT = """
-<script>
+from pydantic_schemaforms.csp import script_tag, style_tag
+from pydantic_schemaforms.tstring import SafeHTML
+
+TAB_COMPONENT_JS = """
 function switchTab(tabId, buttonElement) {
     const tabLayout = buttonElement.closest('.tab-layout');
     const own = selector => Array.from(tabLayout.querySelectorAll(selector))
@@ -11,6 +13,7 @@ function switchTab(tabId, buttonElement) {
 
     panels.forEach(panel => {
         panel.style.display = 'none';
+        panel.hidden = true;
         panel.classList.remove('active');
         panel.setAttribute('aria-hidden', 'true');
     });
@@ -23,6 +26,7 @@ function switchTab(tabId, buttonElement) {
     const selectedPanel = panels.find(panel => panel.id === tabId);
     if (selectedPanel) {
         selectedPanel.style.display = 'block';
+        selectedPanel.hidden = false;
         selectedPanel.classList.add('active');
         selectedPanel.setAttribute('aria-hidden', 'false');
     }
@@ -37,10 +41,9 @@ if (!window.schemaformsTabsBound) {
         if (button) { switchTab(button.getAttribute('aria-controls'), button); }
     });
 }
-</script>
 """
 
-TAB_COMPONENT_STYLE = """<style>
+TAB_COMPONENT_CSS = """
 .tab-layout .tab-navigation {
     border-bottom: 2px solid var(--sf-outline-variant, #e0e0e0);
     margin-bottom: 1rem;
@@ -66,13 +69,18 @@ TAB_COMPONENT_STYLE = """<style>
 .tab-layout .tab-panel.active {
     display: block;
 }
-</style>
 """
 
-TAB_COMPONENT_ASSETS = TAB_COMPONENT_SCRIPT + TAB_COMPONENT_STYLE
 
-ACCORDION_COMPONENT_SCRIPT = """
-<script>
+def tab_component_script() -> SafeHTML:
+    return SafeHTML('\n' + script_tag(TAB_COMPONENT_JS) + '\n')
+
+
+def tab_component_assets() -> SafeHTML:
+    return SafeHTML(tab_component_script() + style_tag(TAB_COMPONENT_CSS) + '\n')
+
+
+ACCORDION_COMPONENT_JS = """
 function toggleAccordion(sectionId, buttonElement) {
     const content = Array.from(buttonElement.parentElement.children)
         .find(el => el.id === sectionId);
@@ -81,10 +89,12 @@ function toggleAccordion(sectionId, buttonElement) {
 
     if (isExpanded) {
         content.style.display = 'none';
+        content.hidden = true;
         buttonElement.setAttribute('aria-expanded', 'false');
         buttonElement.classList.remove('expanded');
     } else {
         content.style.display = 'block';
+        content.hidden = false;
         buttonElement.setAttribute('aria-expanded', 'true');
         buttonElement.classList.add('expanded');
     }
@@ -96,10 +106,9 @@ if (!window.schemaformsAccordionBound) {
         if (button) { toggleAccordion(button.getAttribute('aria-controls'), button); }
     });
 }
-</script>
 """
 
-ACCORDION_COMPONENT_STYLE = """<style>
+ACCORDION_COMPONENT_CSS = """
 .accordion-layout .accordion-section {
     border: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 4px;
@@ -126,18 +135,23 @@ ACCORDION_COMPONENT_STYLE = """<style>
     padding: 1rem;
     border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
 }
-</style>
 """
 
-ACCORDION_COMPONENT_ASSETS = ACCORDION_COMPONENT_SCRIPT + ACCORDION_COMPONENT_STYLE
+
+def accordion_component_script() -> SafeHTML:
+    return SafeHTML('\n' + script_tag(ACCORDION_COMPONENT_JS) + '\n')
+
+
+def accordion_component_assets() -> SafeHTML:
+    return SafeHTML(accordion_component_script() + style_tag(ACCORDION_COMPONENT_CSS) + '\n')
+
 
 # Idempotent: every wizard on a page ships this snippet, but the functions are
 # defined once and each `.form-wizard` is wired up once (data-wizard-ready).
 # Without JavaScript the `wizard-enhanced` class never appears, so every step
 # stays visible and Back and Next stay hidden; the footer's Submit still shows.
 # Submit sits in the footer in Next's place and shows only on the last step.
-WIZARD_COMPONENT_ASSETS = """
-<script>
+WIZARD_COMPONENT_JS = """
 (function () {
     if (window.schemaformsWizard) { window.schemaformsWizard.initAll(); return; }
 
@@ -481,8 +495,9 @@ WIZARD_COMPONENT_ASSETS = """
         window.schemaformsWizard.initAll();
     }
 })();
-</script>
-<style>
+"""
+
+WIZARD_COMPONENT_CSS = """
 .form-wizard:not(.wizard-enhanced) .wizard-progress,
 .form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-back],
 .form-wizard:not(.wizard-enhanced) .wizard-footer [data-wizard-next] { display: none; }
@@ -521,12 +536,18 @@ WIZARD_COMPONENT_ASSETS = """
     position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
     overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-</style>
 """
+
+
+def wizard_component_assets() -> SafeHTML:
+    return SafeHTML(
+        '\n' + script_tag(WIZARD_COMPONENT_JS) + '\n' + style_tag(WIZARD_COMPONENT_CSS) + '\n'
+    )
+
 
 # Bootstrap supplies its own dark colors under data-bs-theme="dark"; this points
 # the library's --sf-* tokens (widgets, tabs, accordion, wizard) at them.
-BOOTSTRAP_DARK_TOKENS = """<style data-schemaforms-dark-tokens>
+BOOTSTRAP_DARK_CSS = """
 [data-bs-theme="dark"] {
     --sf-primary: var(--bs-primary-text-emphasis);
     --sf-on-primary: var(--bs-body-bg);
@@ -544,4 +565,49 @@ BOOTSTRAP_DARK_TOKENS = """<style data-schemaforms-dark-tokens>
     --sf-star-filled: var(--bs-warning-text-emphasis);
     --sf-star-empty: var(--bs-secondary-color);
 }
-</style>"""
+"""
+
+
+def bootstrap_dark_tokens() -> SafeHTML:
+    return style_tag(BOOTSTRAP_DARK_CSS, 'data-schemaforms-dark-tokens')
+
+
+# The library's own declarations that used to be style="" attributes, which a strict
+# style-src blocks. Each selector is more specific than the Bootstrap and md3 rules
+# for the same element, as the inline style it replaces was.
+BASE_COMPONENT_CSS = """
+.sf-scrollable.sf-scrollable { max-height: 16rem; overflow-y: auto; }
+.sf-pre-wrap.sf-pre-wrap { white-space: pre-wrap; }
+.sf-render-time { margin-top: 0.5rem; font-size: 0.75rem; color: var(--sf-on-surface-variant, #5c636a); text-align: right; }
+.sf-honeypot.sf-honeypot { display: none !important; }
+textarea.sf-resize-none.sf-resize-none { resize: none; }
+textarea.sf-resize-both.sf-resize-both { resize: both; }
+textarea.sf-resize-horizontal.sf-resize-horizontal { resize: horizontal; }
+textarea.sf-resize-vertical.sf-resize-vertical { resize: vertical; }
+textarea.sf-resize-block.sf-resize-block { resize: block; }
+textarea.sf-resize-inline.sf-resize-inline { resize: inline; }
+.schemaforms-picker-wrap { position: relative; display: inline-block; width: 100%; }
+form .schemaforms-picker-wrap input.schemaforms-picker-input.schemaforms-picker-input { padding-right: 2.25rem; }
+.schemaforms-picker-wrap button.schemaforms-picker-toggle {
+    position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+    background: transparent; border: none; padding: 0.15rem; margin: 0; cursor: pointer;
+    line-height: 0; color: inherit; opacity: 0.6; min-width: 24px; min-height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.schemaforms-picker-wrap input.schemaforms-picker-native.schemaforms-picker-native {
+    position: absolute; inset: 0; opacity: 0; width: 1px; height: 1px; border: 0; padding: 0;
+    pointer-events: none;
+}
+.age-display { margin-top: 5px; font-size: 0.9em; color: var(--sf-on-surface-variant, #666); }
+.file-preview { margin-top: 10px; }
+.color-input-group > div { display: inline-flex; align-items: center; margin-left: 10px; }
+.color-input-group > div > span.color-value-text.color-value-text { font-family: monospace; }
+.color-input-group > div > .color-swatch {
+    width: 20px; height: 20px; border: 1px solid var(--sf-outline-variant, #ccc); margin-left: 5px;
+}
+.slider-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+"""
+
+
+def base_styles() -> SafeHTML:
+    return style_tag(BASE_COMPONENT_CSS, 'data-schemaforms-base')

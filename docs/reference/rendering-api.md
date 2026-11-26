@@ -40,6 +40,8 @@ inputs need. It is a fragment for your page, not a whole page.
 | `enable_logging` | `False` | Log rendering at DEBUG level; see [Render Timing and Logging](../advanced/timing-logging.md) |
 | `include_html_markers` | `True` | Wrap the output in `<!--- Start/End Pydantic-SchemaForms -->` comments |
 | `inject_layout_styles` | `True` | Add the small stylesheet that makes the form fill its container |
+| `script_nonce` | `None` | Your Content-Security-Policy nonce for this request: every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too |
+| `style_nonce` | `None` | The same for every `<style>`. The library writes no `style="..."` attributes, so a strict `style-src` needs only this; a field's `ui_style` still writes one |
 
 Any other keyword becomes an attribute of the `<form>` tag, for example
 `id="signup"` or `**{"hx-post": "/signup"}`. A form with a file input gets
@@ -60,7 +62,7 @@ other async frameworks.
 | `validate(data, *, submit_url=None, framework="bootstrap", **render_options)` | A `ValidationResult`. `data` is the raw request form (`await request.form()`, `request.form`) or a nested dict such as a JSON body. Render options (`layout=`, `csrf_mode=`, ...) are kept for `render_with_errors()`. |
 | `render_form(data=None, errors=None, framework="bootstrap", *, submit_url, **options)` | The same as `render_form_html(Model, ...)` |
 | `validate_step(data, *, draft=None, submit_url=None, framework="bootstrap", **render_options)` | A `WizardStepResult`, for a `layout="wizard"` form with `save_steps`; see [`WizardStepResult`](#wizardstepresult) |
-| `render_display(data, framework="bootstrap", *, layout="vertical", edit_urls=None, **options)` | Read-only HTML for validated data; see [Show the answers back](../tutorial/handling-submissions.md#show-the-answers-back). `data` is `result.data`, a dict shaped like the model, or a model instance. `options` are the asset options plus `material_variant` and `include_html_markers`. |
+| `render_display(data, framework="bootstrap", *, layout="vertical", edit_urls=None, **options)` | Read-only HTML for validated data; see [Show the answers back](../tutorial/handling-submissions.md#show-the-answers-back). `data` is `result.data`, a dict shaped like the model, or a model instance. `options` are the asset options plus `material_variant`, `include_html_markers`, `script_nonce` and `style_nonce`. |
 | `as_api_model()` | A plain Pydantic model with the same fields and validation but without the form settings, for request bodies and `response_model`; see [JSON API and JSON Schema](../advanced/json-api.md) |
 | `get_pydantic_json_schema(**options)` | The standard JSON Schema, with sub-forms as `$defs`; Pydantic's `model_json_schema()` options pass through |
 | `get_json_schema()` | The schema the renderer uses internally, form settings included |

@@ -13,14 +13,17 @@ JavaScript.
 
 from __future__ import annotations
 
+from .csp import script_tag
+from .tstring import SafeHTML
+
 
 class ModelListRenderer:
     """Provides the shared add/remove/collapse JavaScript for model_list fields."""
 
     def get_model_list_javascript(self) -> str:
         """Return JavaScript for model list functionality with collapsible card support."""
-        return """
-        <script>
+        # Plain JavaScript in a Python string, not HTML: nothing here is interpolated.
+        js = """
         (function() {
             'use strict';
 
@@ -310,5 +313,5 @@ class ModelListRenderer:
             // textContent, never innerHTML: the title is built from what the user typed.
             titleElement.textContent = newTitle;
         }
-        </script>
         """
+        return SafeHTML(f'\n        {script_tag(js)}\n        ')

@@ -19,6 +19,7 @@ from typing import Union, get_args, get_origin
 
 from pydantic import BaseModel, ValidationError
 
+from .csp import csp_nonces, script_tag
 from .templates import TemplateString
 from .tstring import SafeHTML, html as _html_proc
 from .validation import (
@@ -34,8 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # JS generation — uses .format() per CLAUDE.md (JS context, not HTML).
 # {config_json} is the only substitution; all other braces are doubled.
-_HTMX_SCRIPT_TEMPLATE = """\
-<script>
+_HTMX_JS = """
 // HTMX Live Validation System
 document.addEventListener('DOMContentLoaded', function() {{
 
@@ -134,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {{
         element.title = feedbackElement ? feedbackElement.textContent.trim() : '';
     }});
 }});
-</script>
 """
 
 
@@ -237,7 +236,7 @@ class LiveValidator:
         self.field_template: TemplateString = TemplateString(_field_with_validation)
 
         def _htmx_script_fn(*, config_json: str = '{}', **_: Any) -> SafeHTML:
-            return SafeHTML(_HTMX_SCRIPT_TEMPLATE.format(config_json=config_json))
+            return SafeHTML(script_tag(_HTMX_JS.format(config_json=config_json)) + '\n')
 
         self.htmx_script: TemplateString = TemplateString(_htmx_script_fn)
 
@@ -505,13 +504,20 @@ async def validate_field(field_name: str, request: ValidationRequest):
             existing_feedback='',
         )
 
-    def render_htmx_script(self) -> str:
+    def render_htmx_script(self, *, script_nonce: str | None = None) -> str:
         """
         Render the HTMX JavaScript for live validation.
+
+        Args:
+            script_nonce: The request's Content-Security-Policy nonce for the tag
 
         Returns:
             HTML script tag with HTMX validation code
         """
+        with csp_nonces(script_nonce):
+            return self._htmx_script()
+
+    def _htmx_script(self) -> str:
         config_json = json.dumps(
             {
                 'validate_on_blur': self.config.validate_on_blur,
