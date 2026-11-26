@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/vendor/md3-tokens.css">
     <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
     {% block extra_head %}{% endblock %}
-    <style>
+    <style nonce="{{ request.state.csp_nonce }}">
         body.md-shell {
             margin: 0;
             background: var(--md-sys-color-surface);

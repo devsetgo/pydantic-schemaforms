@@ -87,6 +87,7 @@ from pydantic_schemaforms import (
 )
 from pydantic_schemaforms import (
     bootstrap_icons_css_content,
+    csp_nonces,
     read_asset_text,
     SafeHTML,
     html,
@@ -236,7 +237,6 @@ class EmailDnsComparisonForm(FormModel):
 _contact_live_validator = LiveValidator.for_model(
     ContactForm, EmailDnsComparisonForm, debounce_ms=LIVE_VALIDATION_DEBOUNCE_MS
 )
-_LIVE_VALIDATOR_SCRIPT = _contact_live_validator.render_htmx_script()
 
 
 LOGIN_CSRF_SESSION_KEY = 'login_csrf_token'
@@ -347,6 +347,57 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
         return response
 
 
+_CSP_EXEMPT_PATHS = ('/docs', '/redoc')  # FastAPI's own pages load inline scripts from a CDN.
+
+
+def content_security_policy(nonce: str) -> str:
+    return '; '.join(
+        [
+            "default-src 'self'",
+            f"script-src 'self' 'nonce-{nonce}' https://plausible.devsetgo.com",
+            f"style-src 'self' 'nonce-{nonce}'",
+            "img-src 'self' data:",
+            "font-src 'self' data:",
+            "connect-src 'self' https://plausible.devsetgo.com",
+            "form-action 'self'",
+            "base-uri 'self'",
+            "object-src 'none'",
+            "frame-ancestors 'self'",
+        ]
+    )
+
+
+class ContentSecurityPolicyMiddleware:
+    """Serve every page under a strict policy: no 'unsafe-inline' for scripts or styles.
+
+    One nonce per request goes in the header, in ``request.state.csp_nonce`` for
+    the templates' own tags, and to the library through ``csp_nonces``, so every
+    render and validate call in the request picks it up without passing it.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope['type'] != 'http' or scope['path'].startswith(_CSP_EXEMPT_PATHS):
+            await self.app(scope, receive, send)
+            return
+        nonce = secrets.token_urlsafe(16)
+        scope.setdefault('state', {})['csp_nonce'] = nonce
+        policy = content_security_policy(nonce).encode()
+
+        async def send_with_policy(message):
+            if message['type'] == 'http.response.start':
+                headers = [
+                    h for h in message.get('headers', []) if h[0] != b'content-security-policy'
+                ]
+                message = {**message, 'headers': [*headers, (b'content-security-policy', policy)]}
+            await send(message)
+
+        with csp_nonces(script_nonce=nonce, style_nonce=nonce):
+            await self.app(scope, receive, send_with_policy)
+
+
 # Add custom JSON filter that handles date objects
 def safe_json_filter(obj):
     """Custom JSON filter that handles date/datetime objects."""
@@ -412,28 +463,53 @@ async def vendor_bootstrap_js():
     return Response(content=js, media_type='application/javascript')
 
 
-def render_self_contained_demo_page(selected_style: str, form_html: str, renderer_name: str) -> str:
+_SELF_CONTAINED_PAGE_CSS = """
+body { max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui; }
+body code { color: #a61e4d; }
+.demo-form-box { border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa; }
+.demo-panel { margin-top: 30px; padding: 20px; border-radius: 8px; }
+.demo-panel--info { background: #e7f3ff; }
+.demo-panel--source { background: #f8f9fa; border: 1px solid #dee2e6; }
+.demo-panel details { margin-top: 15px; }
+.demo-panel summary {
+    cursor: pointer; font-weight: bold; padding: 10px; background: #fff;
+    border: 1px solid #ddd; border-radius: 4px;
+}
+.demo-panel pre {
+    background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px;
+    overflow-x: auto; font-size: 12px; margin-top: 10px; white-space: pre-wrap; word-wrap: break-word;
+}
+.demo-back { text-align: center; margin-top: 30px; }
+.demo-back a { color: #0066cc; text-decoration: none; }
+"""
+
+
+def render_self_contained_demo_page(
+    selected_style: str, form_html: str, renderer_name: str, nonce: str
+) -> str:
     """Build the self-contained demo page shared by GET/POST handlers."""
-    escaped_form_html = form_html.replace('<', '&lt;').replace('>', '&gt;')
-    return f"""<!DOCTYPE html>
+    _form = SafeHTML(form_html)
+    _css = SafeHTML(_SELF_CONTAINED_PAGE_CSS)
+    template_usage = '<div>{{ form_html | safe }}</div>'
+    return html(t"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self-Contained Form Demo</title>
-    <style>body code {{ color: #a61e4d; }}</style>
+    <style nonce="{nonce}">{_css}</style>
 </head>
-<body style="max-width: 600px; margin: 50px auto; padding: 20px; font-family: system-ui;">
+<body>
     <h1>Self-Contained Form Demo (FastAPI)</h1>
     <p><strong>This form includes ZERO external dependencies!</strong></p>
     <p><strong>Selected Style:</strong> <code>{selected_style}</code></p>
     <p>Everything needed is embedded in the form HTML below:</p>
 
-    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; background: #f8f9fa;">
-        {form_html}
+    <div class="demo-form-box">
+        {_form}
     </div>
 
-    <div style="margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
+    <div class="demo-panel demo-panel--info">
         <h3>What's Included:</h3>
         <ul>
             <li>Self-contained form HTML for style <code>{selected_style}</code></li>
@@ -441,25 +517,23 @@ def render_self_contained_demo_page(selected_style: str, form_html: str, rendere
             <li>Form validation and styling</li>
             <li>No external CDN dependencies</li>
         </ul>
-        <p><strong>Template Usage:</strong> <code>&lt;div&gt;{{{{ form_html | safe }}}}&lt;/div&gt;</code></p>
+        <p><strong>Template Usage:</strong> <code>{template_usage}</code></p>
     </div>
 
-    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+    <div class="demo-panel demo-panel--source">
         <h3>Raw HTML Source:</h3>
         <p>This is the complete HTML generated by <code>{renderer_name}</code>:</p>
-        <details style="margin-top: 15px;">
-            <summary style="cursor: pointer; font-weight: bold; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
-                Click to view raw HTML source
-            </summary>
-            <pre style="background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; overflow-x: auto; font-size: 12px; margin-top: 10px; white-space: pre-wrap; word-wrap: break-word;"><code>{escaped_form_html}</code></pre>
+        <details>
+            <summary>Click to view raw HTML source</summary>
+            <pre><code>{form_html}</code></pre>
         </details>
     </div>
 
-    <div style="text-align: center; margin-top: 30px;">
-        <a href="/" style="color: #0066cc; text-decoration: none;">← Back to FastAPI Examples</a>
+    <div class="demo-back">
+        <a href="/">← Back to FastAPI Examples</a>
     </div>
 </body>
-</html>"""
+</html>""")
 
 
 # ================================
@@ -2479,6 +2553,7 @@ async def layouts_two_forms(request: Request, style: str = 'bootstrap', layout: 
 
 @router.get('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
 async def self_contained(
+    request: Request,
     style: str = 'material',
     demo: bool = True,
     debug: bool = True,
@@ -2521,7 +2596,9 @@ async def self_contained(
     )
     form_html = wrap_with_schemaforms_markers(form_html)
     renderer_name = 'EnhancedFormRenderer'
-    return render_self_contained_demo_page(selected_style, form_html, renderer_name)
+    return render_self_contained_demo_page(
+        selected_style, form_html, renderer_name, request.state.csp_nonce
+    )
 
 
 @router.post('/self-contained', response_class=HTMLResponse, tags=['Self-Contained'])
@@ -2572,7 +2649,9 @@ async def self_contained_post(
     form_html = await validation.render_with_errors_async()
     form_html = wrap_with_schemaforms_markers(form_html)
     renderer_name = 'EnhancedFormRenderer'
-    return render_self_contained_demo_page(selected_style, form_html, renderer_name)
+    return render_self_contained_demo_page(
+        selected_style, form_html, renderer_name, request.state.csp_nonce
+    )
 
 
 # ================================
@@ -2999,7 +3078,7 @@ async def live_validation_get(request: Request, style: str = 'bootstrap'):
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
-            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'validator_script': _contact_live_validator.render_htmx_script(),
             'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
             'form_data': {},
             'errors': {},
@@ -3038,7 +3117,7 @@ async def live_validation_post(request: Request, style: str = 'bootstrap'):
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
-            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'validator_script': _contact_live_validator.render_htmx_script(),
             'debounce_ms': LIVE_VALIDATION_DEBOUNCE_MS,
             'form_data': result.original_data,
             'errors': result.errors,
@@ -3104,7 +3183,7 @@ async def email_dns_validation_get(
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
             'form_html': form_html,
-            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'validator_script': _contact_live_validator.render_htmx_script(),
         },
     )
 
@@ -3160,7 +3239,7 @@ async def email_dns_validation_post(
             'framework_name': 'FastAPI (Async)',
             'framework_type': style,
             'form_html': form_html,
-            'validator_script': _LIVE_VALIDATOR_SCRIPT,
+            'validator_script': _contact_live_validator.render_htmx_script(),
             'errors': validation.errors,
         },
     )

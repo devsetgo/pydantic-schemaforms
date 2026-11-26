@@ -41,6 +41,15 @@ _BLOCKING_IMPACTS = ('serious', 'critical')
 _AXE_RULE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']
 
 
+# Every example page is served under a strict nonce policy (ContentSecurityPolicyMiddleware);
+# anything it blocks is recorded here. Init scripts aren't subject to the page's policy.
+_CSP_RECORDER = (
+    'window.cspViolations = [];'
+    'document.addEventListener("securitypolicyviolation", e => window.cspViolations.push('
+    '`${e.violatedDirective}: ${e.blockedURI || ""} ${(e.sample || "").slice(0, 60)}`));'
+)
+
+
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('127.0.0.1', 0))
@@ -88,9 +97,13 @@ def test_example_page_has_no_javascript_errors(
 ) -> None:
     errors: list[str] = []
     page.on('pageerror', lambda error: errors.append(str(error)))
-    page.goto(f'{examples_server_url}{path}?style={style}', wait_until='domcontentloaded')
+    page.add_init_script(_CSP_RECORDER)
+    response = page.goto(f'{examples_server_url}{path}?style={style}', wait_until='load')
     page.wait_for_timeout(200)
     assert errors == [], f'{path} ({style}): {errors}'
+    assert response is not None
+    assert "'unsafe-inline'" not in response.headers['content-security-policy']
+    assert page.evaluate('window.cspViolations') == [], f'{path} ({style})'
 
 
 def _axe_source() -> str:
@@ -101,7 +114,16 @@ def _axe_source() -> str:
 
 
 def _blocking_violations(page: Page) -> list[str]:
-    page.add_script_tag(content=_axe_source())
+    # The page's policy blocks an inline <script>; one carrying the page's own nonce runs.
+    page.evaluate(
+        """source => {
+            const script = document.createElement('script');
+            script.nonce = document.querySelector('script[nonce]').nonce;
+            script.textContent = source;
+            document.head.appendChild(script);
+        }""",
+        _axe_source(),
+    )
     results = page.evaluate(
         "tags => axe.run(document, {runOnly: {type: 'tag', values: tags}, "
         "resultTypes: ['violations']})",
@@ -370,7 +392,16 @@ def test_material_tokens_can_be_overridden_for_a_custom_scheme(
     page: Page, examples_server_url: str
 ) -> None:
     page.goto(f'{examples_server_url}/login?style=material', wait_until='load')
-    page.add_style_tag(content='form.md-form { --md-sys-color-primary: rgb(0, 99, 155); }')
+    # An app's own stylesheet, added with the page's nonce as its policy requires.
+    page.evaluate(
+        """css => {
+            const style = document.createElement('style');
+            style.nonce = document.querySelector('style[nonce]').nonce;
+            style.textContent = css;
+            document.head.appendChild(style);
+        }""",
+        'form.md-form { --md-sys-color-primary: rgb(0, 99, 155); }',
+    )
     expect(page.locator('form.md-form [type="submit"]').first).to_have_css(
         'background-color', 'rgb(0, 99, 155)', timeout=TIMEOUT
     )
@@ -755,6 +786,15 @@ def test_progress_counts_required_fields_as_they_fill(
     assert _blocking_violations(page) == []
 
 
+def _wait_for_one_saved_draft(page: Page) -> None:
+    # wait_for_function evaluates its predicate with eval, which the page's policy blocks.
+    for _ in range(50):
+        if page.evaluate('Object.keys(localStorage).length') == 1:
+            return
+        page.wait_for_timeout(100)
+    raise AssertionError('autosave never stored a draft')
+
+
 @pytest.mark.parametrize('style', ['bootstrap', 'material'])
 def test_autosave_restores_a_draft_after_a_reload(
     page: Page, examples_server_url: str, style: str
@@ -768,7 +808,7 @@ def test_autosave_restores_a_draft_after_a_reload(
     page.get_by_role('tab', name='Task List').click()
     page.locator('.add-item-btn').first.click()
     page.fill('[name="task_list.tasks[2].task_name"]', 'Third task')
-    page.wait_for_function('Object.keys(localStorage).length === 1')
+    _wait_for_one_saved_draft(page)
 
     page.reload(wait_until='load')
     expect(notice).to_be_visible(timeout=TIMEOUT)
@@ -784,7 +824,7 @@ def test_autosave_restores_a_draft_after_a_reload(
 
     # A submit that goes ahead clears the draft.
     page.fill('[name="personal_info.first_name"]', 'Sam')
-    page.wait_for_function('Object.keys(localStorage).length === 1')
+    _wait_for_one_saved_draft(page)
     with page.expect_navigation(wait_until='load'):
         page.locator('form [type="submit"]:not([name])').first.click()
     assert page.evaluate('Object.keys(localStorage).length') == 0

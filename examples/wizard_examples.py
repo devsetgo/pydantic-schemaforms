@@ -1058,14 +1058,14 @@ for _example in WIZARD_EXAMPLES:
         _add_routes(_example)
 
 
-_INDEX_STYLE = SafeHTML("""<style>
+_INDEX_CSS = SafeHTML("""
 .sf-wizards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
 .sf-wizards__card { border: 1px solid rgba(127, 127, 127, 0.35); border-radius: 0.75rem; padding: 1rem 1.25rem; }
 .sf-wizards__card h2 { font-size: 1.15rem; margin: 0 0 0.5rem; }
 .sf-wizards__card p { margin: 0 0 0.5rem; }
 .sf-wizards__card ul { margin: 0; padding-left: 1.1rem; font-size: 0.9rem; }
 .sf-wizards__options { columns: 2 18rem; padding-left: 1.1rem; }
-</style>""")
+""")
 
 
 # Each wizard option on the /layouts demo form, so it can be tried on its own.
@@ -1112,7 +1112,8 @@ async def wizards_index(request: Request, style: str = _DEFAULT_STYLE, variant: 
         )
     )
     page = html(
-        t'{_INDEX_STYLE}<div class="sf-wizards">{_cards}</div>'
+        t'<style nonce="{request.state.csp_nonce}">{_INDEX_CSS}</style>'
+        t'<div class="sf-wizards">{_cards}</div>'
         t'<h2 class="h5 mt-4">Wizard options</h2>'
         t'<p>Each option on its own, on the layout demo form:</p>'
         t'<ul class="sf-wizards__options">{_options}</ul>'

@@ -34,7 +34,7 @@ _SCRIPT_RE = re.compile(r'<script\b.*?</script>', re.DOTALL | re.IGNORECASE)
 
 _script_nonce: ContextVar[str | None] = ContextVar('schemaforms_script_nonce', default=None)
 _style_nonce: ContextVar[str | None] = ContextVar('schemaforms_style_nonce', default=None)
-# Rules for app-supplied styles collected during one render, keyed by data-sf-style value.
+# Rules for app-supplied styles collected during one render, keyed by data-schemaforms-style value.
 _app_styles: ContextVar[dict[str, str] | None] = ContextVar('schemaforms_app_styles', default=None)
 _UNSAFE_STYLE_CHARS = frozenset('{}<')
 
@@ -118,7 +118,7 @@ def style_attr(value: str | None) -> SafeHTML:
     A strict ``style-src`` blocks any ``style`` attribute, even an empty one, so the
     library writes none of its own and leaves this one out when there is no value.
     While a render has a style nonce, the value becomes a rule in that render's
-    nonced stylesheet instead, matched by a ``data-sf-style`` attribute, so an
+    nonced stylesheet instead, matched by a ``data-schemaforms-style`` attribute, so an
     app's ``ui_style`` still applies under such a policy.
     """
 
@@ -139,7 +139,7 @@ def style_attr(value: str | None) -> SafeHTML:
         for part in declarations
         if part
     )
-    return html(t' data-sf-style="{key}"')
+    return html(t' data-schemaforms-style="{key}"')
 
 
 @contextmanager
@@ -166,5 +166,7 @@ def app_styles_tag(rules: dict[str, str]) -> str:
 
     if not rules:
         return ''
-    css = ''.join(f'[data-sf-style="{key}"] {{ {body}; }}\n' for key, body in rules.items())
+    css = ''.join(
+        f'[data-schemaforms-style="{key}"] {{ {body}; }}\n' for key, body in rules.items()
+    )
     return style_tag('\n' + css, 'data-schemaforms-app-styles') + '\n'

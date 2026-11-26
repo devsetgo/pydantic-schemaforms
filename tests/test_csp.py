@@ -327,13 +327,15 @@ def _gallery_with_app_style(**options: object) -> str:
 def test_an_app_style_becomes_a_nonced_rule_under_a_style_nonce() -> None:
     markup = _gallery_with_app_style(**NONCES)
     assert _style_attrs(markup) == set()
-    key = re.search(r'data-sf-style="([0-9a-f]{12})"', markup)
+    key = re.search(r'data-schemaforms-style="([0-9a-f]{12})"', markup)
     assert key
     block = re.search(
         r'<style data-schemaforms-app-styles nonce="abc123DEF456">(.*?)</style>', markup, re.S
     )
-    assert block and f'[data-sf-style="{key.group(1)}"] {{ font-weight: 600 !important; }}' in (
-        block.group(1)
+    assert (
+        block
+        and f'[data-schemaforms-style="{key.group(1)}"] {{ font-weight: 600 !important; }}'
+        in (block.group(1))
     )
     assert markup.count('data-schemaforms-app-styles') == 1
 
@@ -341,7 +343,7 @@ def test_an_app_style_becomes_a_nonced_rule_under_a_style_nonce() -> None:
 def test_an_app_style_stays_an_attribute_without_a_style_nonce() -> None:
     markup = _gallery_with_app_style(script_nonce=NONCE)
     assert _style_attrs(markup) == _APP_STYLES
-    assert 'data-sf-style' not in markup
+    assert 'data-schemaforms-style' not in markup
 
 
 @pytest.mark.parametrize('bad', ['color: red} body {color: blue', 'x: url(<a>)', '{'])
