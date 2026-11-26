@@ -9,7 +9,7 @@ Every item follows the "Examples must cover every layout, input, and
 validation" rule in `CLAUDE.md`: a feature isn't done until it's demonstrated
 on an example page under both Bootstrap and Material.
 
-Last updated: 2026-11-14.
+Last updated: 2026-11-26.
 
 ## Phase 1: Clear the ground
 
@@ -109,6 +109,17 @@ Decisions that cut across the items:
 | 22 | [#243](https://github.com/devsetgo/pydantic-schemaforms/issues/243) Draft autosave and unsaved-changes warning | Done ([#328](https://github.com/devsetgo/pydantic-schemaforms/pull/328)) | Small vanilla-JS feature, as the issue describes. Restores only when the server rendered no `data`, so an edit form (#318) and a re-render with errors always win; after restoring it dispatches `input` events so `show_when` rules re-evaluate. Skips passwords, CSRF, honeypot and file inputs; the docs say drafts sit unencrypted on the device, so sensitive forms leave it off. In server mode it keys on the step. |
 | 23 | [#327](https://github.com/devsetgo/pydantic-schemaforms/issues/327) Wizard: skip a step hidden by its group rule | Done ([#329](https://github.com/devsetgo/pydantic-schemaforms/pull/329)) | Option 1 of the parked #251, split out because it needs no new state: every step is still declared up front. Today a step hidden by `ui_group_show_when` stays in place, empty. It drops out of the header and step count, Back and Next jump over it, the review step and progress (#296) leave it out, and in server mode the server picks the next step from the draft. Before #276, whose car care and insurance claim wizards need it. |
 | 24 | [#276](https://github.com/devsetgo/pydantic-schemaforms/issues/276) Wizards section in the example app | Done ([#330](https://github.com/devsetgo/pydantic-schemaforms/pull/330), [#331](https://github.com/devsetgo/pydantic-schemaforms/pull/331), [#332](https://github.com/devsetgo/pydantic-schemaforms/pull/332)) | The realistic test of everything above: a `/wizards` index and eight wizards, each showing a different mix of features (job application, project planner, car setup, car care appointment, insurance claim, rental application, event registration, team onboarding; the issue lists what each one covers). Built after #243 so the job application ships complete, with autosave. `docs/recipes/wizard-application.md` stays the minimal version and links to the full job application; sign-in reuses `docs/recipes/login-registration.md`. |
+
+## Done since 26.4.6, outside the phases
+
+Work picked up between phases because a site needed it or the docs and demo had
+outgrown their structure. It ships in the same release as phase 5.
+
+| # | Item | Status | Why then |
+|---|---|---|---|
+| — | [#337](https://github.com/devsetgo/pydantic-schemaforms/issues/337) Content-Security-Policy support | Done ([#338](https://github.com/devsetgo/pydantic-schemaforms/pull/338), [#339](https://github.com/devsetgo/pydantic-schemaforms/pull/339), [#340](https://github.com/devsetgo/pydantic-schemaforms/pull/340)) | A site using the library needed forms to work under a strict nonce policy. `csp_nonces()` sets the nonce once per request; the example app now runs under that policy. |
+| — | Plain-English explanations in the docs | Done ([#343](https://github.com/devsetgo/pydantic-schemaforms/pull/343)) | Concepts such as CSP nonces, CSRF and HTMX were explained only in technical terms. Every concept now gets a plain explanation first, a rule recorded in `CLAUDE.md`. |
+| — | Example site redesign: catalog, sidebar and "How it's built" | In progress ([#344](https://github.com/devsetgo/pydantic-schemaforms/pull/344), [#345](https://github.com/devsetgo/pydantic-schemaforms/pull/345)); next: split the example routes by section | The home page had grown to 22 unordered cards. Done before #292 so new inputs land straight in the new structure. |
 
 ## Phase 5: New small inputs
 
