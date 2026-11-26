@@ -32,6 +32,7 @@ same arguments and renders in a worker thread; use it in `async def` routes.
 | `show_timing` / `debug` / `enable_logging` | `False` | Render time under the form / a debug panel / DEBUG log lines |
 | `include_html_markers` | `True` | `<!--- Start/End Pydantic-SchemaForms -->` comments around the output |
 | `inject_layout_styles` | `True` | The small stylesheet that makes the form fill its container |
+| `script_nonce` / `style_nonce` | `None` | The request's Content-Security-Policy nonce, put on every `<script>` / `<style>` the library writes (it writes no inline handlers or `style=` attributes). Base64/base64url only, else `ValueError`. Pass the same values to `validate()`/`validate_step()` so re-renders keep them, and to `render_display()`. Don't post-process the HTML to add nonces; a `ui_style` still needs `'unsafe-inline'` |
 
 Any other keyword becomes an attribute of the `<form>` tag (`id="signup"`,
 `**{"hx-post": "/signup"}`). A form with a file input gets `enctype="multipart/form-data"`.
