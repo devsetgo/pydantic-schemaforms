@@ -38,6 +38,10 @@ class Example:
     pages: tuple[str, ...] = ()
     # Other ways to open it, shown as extra links: (label, url).
     variants: tuple[tuple[str, str], ...] = field(default_factory=tuple)
+    # Models to show under "How it's built" when the routes don't name them.
+    models: tuple[type, ...] = ()
+    # A page that is its own whole document, outside the site's shell and sidebar.
+    standalone: bool = False
 
     @property
     def path(self) -> str:
@@ -380,6 +384,7 @@ _EXAMPLES = [
         '/self-contained',
         tags=('assets',),
         docs=f'{DOCS}/advanced/assets/',
+        standalone=True,
     ),
     # --- For developers -----------------------------------------------------------
     Example(
@@ -434,6 +439,7 @@ _EXAMPLES[_wizard_at:_wizard_at] = [
         tags=_WIZARD_TAGS.get(wizard.slug, ('wizard',)),
         docs=f'{DOCS}/recipes/wizard-examples/',
         pages=_WIZARD_PAGES.get(wizard.slug, ()),
+        models=(wizard.model,) if wizard.model else (),
     )
     for wizard in WIZARD_EXAMPLES
 ]
@@ -454,6 +460,15 @@ def example_for_path(path: str) -> Example | None:
         if path in {example.path.rstrip('/') or '/', *example.pages}:
             return example
     return None
+
+
+def neighbors(example: Example) -> tuple[Example | None, Example | None]:
+    """The examples before and after this one, for a walk through the whole catalog."""
+
+    index = EXAMPLES.index(example)
+    before = EXAMPLES[index - 1] if index > 0 else None
+    after = EXAMPLES[index + 1] if index + 1 < len(EXAMPLES) else None
+    return before, after
 
 
 def all_tags() -> list[str]:

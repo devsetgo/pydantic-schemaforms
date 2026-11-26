@@ -1,0 +1,63 @@
+{# Opens the shared example shell: breadcrumb, "What this shows", the tabs. Closed by _example_bottom.html. #}
+{% set ex_section = catalog_section(ex.section) %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .ex-shell {
+        --ex-fg: var(--md-sys-color-on-surface, var(--bs-body-color, #1f2937));
+        --ex-muted: var(--md-sys-color-on-surface-variant, var(--bs-secondary-color, #4b5563));
+        --ex-line: var(--md-sys-color-outline-variant, var(--bs-border-color, #e5e7eb));
+        --ex-accent: var(--md-sys-color-primary, #4338ca);
+        --ex-panel: var(--md-sys-color-surface-container-low, var(--bs-tertiary-bg, #f3f4f6));
+        color: var(--ex-fg);
+    }
+    [data-bs-theme="dark"] body:not(.md-shell) .ex-shell { --ex-accent: #a5b4fc; }
+    .ex-crumbs ol { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0 0 0.5rem; padding: 0; font-size: 0.85rem; color: var(--ex-muted); }
+    .ex-crumbs li + li::before { content: "\203A"; margin-right: 0.35rem; }
+    .ex-crumbs a { color: var(--ex-accent); text-decoration: none; }
+    .ex-crumbs a:hover { text-decoration: underline; }
+    .ex-shows { border: 1px solid var(--ex-line); border-left: 4px solid var(--ex-accent); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; background: var(--ex-panel); }
+    .ex-shows p { margin: 0 0 0.4rem; }
+    .ex-shows ul { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; margin: 0; padding: 0; align-items: center; font-size: 0.8rem; }
+    .ex-shows .ex-tag { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 0.05rem 0.45rem; border: 1px solid var(--ex-line); border-radius: 999px; color: var(--ex-fg); }
+    .ex-shows a { color: var(--ex-accent); }
+    .ex-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--ex-line); margin-bottom: 1rem; }
+    .ex-tabs[hidden] { display: none; }
+    .ex-tabs button { border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--ex-muted); font: inherit; font-weight: 600; padding: 0.5rem 0.9rem; cursor: pointer; }
+    .ex-tabs button[aria-selected="true"] { color: var(--ex-accent); border-bottom-color: var(--ex-accent); }
+    .ex-tabs button:focus-visible { outline: 2px solid var(--ex-accent); outline-offset: -2px; }
+    .ex-source { margin-top: 2rem; }
+    .ex-source[hidden] { display: none; }
+    .ex-source h2 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+    .ex-source h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+    .ex-source > p { color: var(--ex-muted); }
+    .ex-source figure { margin: 0 0 1rem; }
+    .ex-source figcaption { font-size: 0.85rem; color: var(--ex-muted); margin-bottom: 0.3rem; }
+    .ex-source figcaption a { color: var(--ex-accent); }
+    .ex-source pre { max-height: 32rem; overflow: auto; margin: 0; padding: 0.9rem 1rem; border-radius: 8px; background: #0f172a; color: #e2e8f0; font-size: 0.8rem; line-height: 1.45; }
+    .ex-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2.5rem 0 1rem; }
+    .ex-pager a { display: block; border: 1px solid var(--ex-line); border-radius: 8px; padding: 0.7rem 1rem; text-decoration: none; color: var(--ex-fg); }
+    .ex-pager a:hover { border-color: var(--ex-accent); }
+    .ex-pager small { display: block; color: var(--ex-muted); font-size: 0.78rem; }
+    .ex-pager strong { color: var(--ex-accent); }
+    .ex-pager .ex-next { text-align: right; grid-column: 2; }
+</style>
+<div class="ex-shell">
+    <nav class="ex-crumbs" aria-label="Breadcrumb">
+        <ol>
+            <li><a href="/examples">Examples</a></li>
+            <li><a href="/examples/{{ ex_section.slug }}">{{ ex_section.title }}</a></li>
+            <li aria-current="page">{{ ex.title }}</li>
+        </ol>
+    </nav>
+    <div class="ex-shows">
+        <p><strong>What this shows:</strong> {{ ex.summary }}</p>
+        <ul aria-label="Library features used">
+            {% for tag in ex.tags %}<li class="ex-tag">{{ tag }}</li>{% endfor %}
+            {% if ex.docs %}<li><a href="{{ ex.docs }}">Read the docs</a></li>{% endif %}
+        </ul>
+    </div>
+    <div class="ex-tabs" data-ex-tabs hidden>
+        <button type="button" id="ex-tab-try" data-ex-panel="ex-panel-try">Try it</button>
+        <button type="button" id="ex-tab-source" data-ex-panel="ex-panel-source">How it's built</button>
+    </div>
+</div>
+<div id="ex-panel-try">

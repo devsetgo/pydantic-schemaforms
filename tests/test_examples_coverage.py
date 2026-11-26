@@ -628,3 +628,19 @@ def test_section_pages_list_their_examples(example_client: TestClient) -> None:
         for example in section_examples(section.slug):
             assert example.title in page.replace('&#39;', "'"), (section.slug, example.slug)
     assert example_client.get('/examples/nope').status_code == 404
+
+
+def test_every_form_example_shows_how_its_built(example_client: TestClient) -> None:
+    from examples.catalog import EXAMPLES
+
+    missing = []
+    for example in EXAMPLES:
+        if not example.styles or example.standalone:
+            continue
+        page = example_client.get(example.url).text
+        assert 'aria-label="Breadcrumb"' in page, example.slug
+        assert 'id="ex-panel-source"' in page, example.slug
+        source = page.split('id="ex-panel-source"', 1)[1]
+        if '<form' in page.split('id="ex-panel-source"', 1)[0] and 'class ' not in source:
+            missing.append(example.slug)
+    assert not missing, f'no model source found for {missing}; add models= to their catalog entry'

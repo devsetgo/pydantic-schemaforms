@@ -186,7 +186,10 @@
     <div class="site-layout">
         {% include "_sidebar.html" %}
         <div class="site-main py-4">
+            {% set ex = current_example(request.url.path) %}
+            {% if ex %}{% include "_example_top.html" %}{% endif %}
             {% block content %}{% endblock %}
+            {% if ex %}{% include "_example_bottom.html" %}{% endif %}
             <div class="demo-version-footer">
                 Demo App: v{{ container_version }}
             </div>

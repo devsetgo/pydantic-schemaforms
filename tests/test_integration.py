@@ -795,7 +795,10 @@ def test_fastapi_form_routes_get_post_matrix(client: TestClient, route: str, sty
     post_response = client.post(f'/{route}?style={style}', data=payload)
     assert post_response.status_code == 200
 
-    post_body = post_response.text
+    # The "How it's built" panel shows route source, which may itself say "Exception:".
+    post_body = re.sub(
+        r'<section id="ex-panel-source".*?</section>', '', post_response.text, flags=re.S
+    )
     assert 'Internal Server Error' not in post_body
     assert 'Traceback (most recent call last)' not in post_body
     assert 'Exception:' not in post_body

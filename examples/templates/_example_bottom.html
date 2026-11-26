@@ -1,0 +1,76 @@
+{# Closes the shared example shell opened by _example_top.html. #}
+</div>
+{% set ex_models, ex_routes = example_sources(request, ex) %}
+<section id="ex-panel-source" class="ex-shell ex-source" aria-labelledby="ex-source-title">
+    <h2 id="ex-source-title">How it's built</h2>
+    <p>
+        The real code behind this page, read from the running app. The model describes the form;
+        the routes render it and check what comes back.
+    </p>
+    {% if ex_models %}
+    <h3>{{ 'The models' if ex_models | length > 1 else 'The model' }}</h3>
+    {% for block in ex_models %}
+    <figure>
+        <figcaption><code>{{ block.title }}</code> in <a href="{{ block.url }}">{{ block.file }}</a></figcaption>
+        <pre tabindex="0" aria-label="{{ block.title }} source code"><code>{{ block.code }}</code></pre>
+    </figure>
+    {% endfor %}
+    {% endif %}
+    {% if ex_routes %}
+    <h3>{{ 'The routes' if ex_routes | length > 1 else 'The route' }}</h3>
+    {% for block in ex_routes %}
+    <figure>
+        <figcaption><code>{{ block.title }}</code> in <a href="{{ block.url }}">{{ block.file }}</a></figcaption>
+        <pre tabindex="0" aria-label="{{ block.title }} source code"><code>{{ block.code }}</code></pre>
+    </figure>
+    {% endfor %}
+    {% endif %}
+</section>
+{% set ex_before, ex_after = example_neighbors(ex) %}
+<nav class="ex-shell ex-pager" aria-label="More examples">
+    {% if ex_before %}
+    <a href="{{ ex_before.url }}" rel="prev"><small>Previous{% if ex_before.section != ex.section %} &middot; {{ catalog_section(ex_before.section).title }}{% endif %}</small><strong>&larr; {{ ex_before.title }}</strong></a>
+    {% endif %}
+    {% if ex_after %}
+    <a class="ex-next" href="{{ ex_after.url }}" rel="next"><small>Next{% if ex_after.section != ex.section %} &middot; {{ catalog_section(ex_after.section).title }}{% endif %}</small><strong>{{ ex_after.title }} &rarr;</strong></a>
+    {% endif %}
+</nav>
+<script nonce="{{ request.state.csp_nonce }}">
+(function () {
+    var bar = document.querySelector('[data-ex-tabs]');
+    if (!bar) { return; }
+    var tabs = Array.from(bar.querySelectorAll('button'));
+    bar.setAttribute('role', 'tablist');
+    bar.setAttribute('aria-label', 'Example views');
+    tabs.forEach(function (tab) {
+        var panel = document.getElementById(tab.getAttribute('data-ex-panel'));
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-controls', panel.id);
+        panel.setAttribute('role', 'tabpanel');
+        panel.setAttribute('aria-labelledby', tab.id);
+    });
+
+    function select(tab, focus) {
+        tabs.forEach(function (other) {
+            var on = other === tab;
+            other.setAttribute('aria-selected', String(on));
+            other.tabIndex = on ? 0 : -1;
+            document.getElementById(other.getAttribute('data-ex-panel')).hidden = !on;
+        });
+        if (focus) { tab.focus(); }
+    }
+
+    tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () {
+            select(tab, false);
+            history.replaceState(null, '', tab.id === 'ex-tab-source' ? '#how-its-built' : location.pathname + location.search);
+        });
+        tab.addEventListener('keydown', function (event) {
+            var step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+            if (step) { select(tabs[(index + step + tabs.length) % tabs.length], true); event.preventDefault(); }
+        });
+    });
+    bar.hidden = false;
+    select(location.hash === '#how-its-built' ? tabs[1] : tabs[0], false);
+})();
+</script>

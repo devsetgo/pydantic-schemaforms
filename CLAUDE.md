@@ -406,7 +406,12 @@ A feature without a working example is not done.
   are built from it, so a new example needs its route and one entry, never a
   hand-written card or link. `test_every_example_page_is_in_the_catalog` fails
   on a page with no entry, and a new kind of example gets a new section there.
-  Layout values are linked as the Layouts entry's `variants`. The home page's
+  Every catalog page gets the shared shell from the page templates: breadcrumb,
+  "What this shows", a "How it's built" tab and previous/next. The tab's code is
+  found by `examples/example_source.py` from the page's own routes and the
+  `FormModel`s they use, so keep a page's model reachable from its route (or
+  set the entry's `models=`). A page that is its own whole document sets
+  `standalone=True`. Layout values are linked as the Layouts entry's `variants`. The home page's
   screenshots come from `scripts/example_screenshots.py`; rerun it after a
   visual change to the forms they show.
 - **Inputs:** every registered `ui_element` (`get_input_component_map()`,

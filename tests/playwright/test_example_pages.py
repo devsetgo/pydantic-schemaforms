@@ -572,9 +572,9 @@ def test_save_steps_wizard_walks_through(
         expect(review).to_contain_text('Austin')
         with page.expect_navigation(wait_until='load'):
             page.click('form [type="submit"]:not([name])')
-        expect(page.get_by_text('must be after the earliest start date')).to_be_visible(
-            timeout=TIMEOUT
-        )
+        expect(
+            page.locator('#ex-panel-try').get_by_text('must be after the earliest start date')
+        ).to_be_visible(timeout=TIMEOUT)
         if javascript:
             assert _blocking_violations(page) == []
 
@@ -585,8 +585,12 @@ def test_save_steps_wizard_walks_through(
             page.click('[data-wizard-next]')
         with page.expect_navigation(wait_until='load'):
             page.click('form [type="submit"]:not([name])')
-        expect(page.get_by_text('Application Saved and Submitted')).to_be_visible(timeout=TIMEOUT)
-        expect(page.get_by_text('cv.txt', exact=True)).to_be_visible(timeout=TIMEOUT)
+        expect(
+            page.locator('#ex-panel-try').get_by_text('Application Saved and Submitted')
+        ).to_be_visible(timeout=TIMEOUT)
+        expect(page.locator('#ex-panel-try').get_by_text('cv.txt', exact=True)).to_be_visible(
+            timeout=TIMEOUT
+        )
     finally:
         context.close()
 
@@ -738,15 +742,19 @@ def test_confirm_dialog_asks_before_submitting(
     submit.click()
     with page.expect_navigation(wait_until='load'):
         dialog.locator('[data-sf-confirm-ok]').click()
-    expect(page.get_by_text('Tick the box to confirm you understand', exact=True)).to_be_visible(
-        timeout=TIMEOUT
-    )
+    expect(
+        page.locator('#ex-panel-try').get_by_text(
+            'Tick the box to confirm you understand', exact=True
+        )
+    ).to_be_visible(timeout=TIMEOUT)
 
     page.check('[name="understood"]')
     page.locator('form [type="submit"]:not([name])').click()
     with page.expect_navigation(wait_until='load'):
         page.locator('dialog[data-sf-confirm] [data-sf-confirm-ok]').click()
-    expect(page.get_by_text('Account Closed')).to_be_visible(timeout=TIMEOUT)
+    expect(page.locator('#ex-panel-try').get_by_text('Account Closed')).to_be_visible(
+        timeout=TIMEOUT
+    )
 
 
 def test_confirm_without_javascript_submits_directly(browser, examples_server_url: str) -> None:
@@ -757,7 +765,9 @@ def test_confirm_without_javascript_submits_directly(browser, examples_server_ur
         page.check('[name="understood"]')
         with page.expect_navigation(wait_until='load'):
             page.click('form [type="submit"]:not([name])')
-        expect(page.get_by_text('Account Closed')).to_be_visible(timeout=TIMEOUT)
+        expect(page.locator('#ex-panel-try').get_by_text('Account Closed')).to_be_visible(
+            timeout=TIMEOUT
+        )
     finally:
         context.close()
 
@@ -909,3 +919,16 @@ def test_csp_page_blocks_the_injected_script(
     expect(results).to_contain_text('script-src-elem')
     expect(results).to_contain_text('script-src-attr')
     expect(results).to_contain_text('Neither injected script ran.')
+
+
+def test_example_shell_switches_to_the_source_tab(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/confirm')
+    expect(page.locator('#ex-panel-source')).to_be_hidden()
+    page.get_by_role('tab', name="How it's built").click()
+    expect(page.locator('#ex-panel-source')).to_contain_text('class CloseAccountForm')
+    expect(page.locator('#ex-panel-try')).to_be_hidden()
+    page.keyboard.press('ArrowLeft')
+    expect(page.get_by_role('tab', name='Try it')).to_be_focused()
+    expect(page.locator('#ex-panel-try')).to_be_visible()
+    page.goto(f'{examples_server_url}/pets#how-its-built')
+    expect(page.locator('#ex-panel-source')).to_contain_text('class PetRegistrationForm')
