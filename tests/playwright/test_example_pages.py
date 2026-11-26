@@ -932,3 +932,35 @@ def test_example_shell_switches_to_the_source_tab(page: Page, examples_server_ur
     expect(page.locator('#ex-panel-try')).to_be_visible()
     page.goto(f'{examples_server_url}/pets#how-its-built')
     expect(page.locator('#ex-panel-source')).to_contain_text('class PetRegistrationForm')
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_rental_application_saves_each_step(browser, examples_server_url: str, style: str) -> None:
+    context = browser.new_context()
+    page = context.new_page()
+    try:
+        page.goto(f'{examples_server_url}/wizards/rental-application?style={style}')
+        for _ in range(10):
+            if page.locator('[name="documents.proof_of_income"]').count():
+                page.set_input_files(
+                    '[name="documents.proof_of_income"]',
+                    files=[
+                        {'name': 'paystub.pdf', 'mimeType': 'application/pdf', 'buffer': b'%PDF'}
+                    ],
+                )
+            if page.locator('.sf-review').count():
+                break
+            with page.expect_navigation(wait_until='load'):
+                page.click('[data-wizard-next]')
+        review = page.locator('.sf-review')
+        expect(review).to_contain_text('paystub.pdf', timeout=TIMEOUT)
+        assert _blocking_violations(page) == []
+        with page.expect_navigation(wait_until='load'):
+            page.click('form [type="submit"]:not([name])')
+        done = page.locator('#ex-panel-try')
+        expect(done).to_contain_text('Rental application: done', timeout=TIMEOUT)
+        expect(done).to_contain_text('paystub.pdf')
+        # Finishing clears the saved draft, so the next visit starts over.
+        assert not any(c['name'] == 'sf_wizard_rental_application' for c in context.cookies())
+    finally:
+        context.close()

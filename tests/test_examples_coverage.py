@@ -342,14 +342,48 @@ class _FormValues(HTMLParser):
             self._select = None
 
 
-def _submit_rendered_form(client: TestClient, path: str, style: str = 'bootstrap'):
+def _page_values(page: str) -> tuple[dict[str, list[str]], list]:
     parser = _FormValues()
-    parser.feed(client.get(path, params={'style': style}).text)
+    parser.feed(page)
     data: dict[str, list[str]] = {}
     for name, value in parser.values:
         data.setdefault(name, []).append(value)
     # A browser sends an empty part for every file input left blank.
     files = [(name, ('', b'', 'application/octet-stream')) for name in parser.files]
+    return data, files
+
+
+def _saves_steps(path: str) -> bool:
+    from examples.wizard_examples import WIZARD_EXAMPLES
+
+    return any(
+        path == f'/wizards/{example.slug}'
+        and example.options.get('wizard_options', {}).get('save_steps')
+        for example in WIZARD_EXAMPLES
+    )
+
+
+def _walk_save_steps(client: TestClient, path: str, style: str, changes: dict) -> Any:
+    """Post a save_steps wizard one step at a time, as a browser does, then submit."""
+
+    response = client.get(path, params={'style': style})
+    for _ in range(12):
+        page = response.text
+        data, files = _page_values(page)
+        data.update({name: value for name, value in changes.items() if name in data})
+        final = 'class="sf-display sf-review' in page
+        if not final:
+            data['_sf_wizard'] = ['next']
+        response = client.post(path, params={'style': style}, data=data, files=files or None)
+        if final or 'alert-success' in response.text:
+            break
+    return response
+
+
+def _submit_rendered_form(client: TestClient, path: str, style: str = 'bootstrap'):
+    if _saves_steps(path):
+        return _walk_save_steps(client, path, style, {})
+    data, files = _page_values(client.get(path, params={'style': style}).text)
     return client.post(path, params={'style': style}, data=data, files=files or None)
 
 
@@ -399,13 +433,11 @@ def _post_demo_with(path: str, **changes: list[str]) -> str:
     """Submit a page's demo values with some of them changed."""
 
     client = TestClient(examples.main.app)
-    parser = _FormValues()
-    parser.feed(client.get(path).text)
-    data: dict[str, list[str]] = {}
-    for name, value in parser.values:
-        data.setdefault(name, []).append(value)
-    data.update({name.replace('__', '.'): value for name, value in changes.items()})
-    files = [(name, ('', b'', 'application/octet-stream')) for name in parser.files]
+    renamed = {name.replace('__', '.'): value for name, value in changes.items()}
+    if _saves_steps(path):
+        return _walk_save_steps(client, path, 'bootstrap', renamed).text
+    data, files = _page_values(client.get(path).text)
+    data.update(renamed)
     return client.post(path, data=data, files=files).text
 
 

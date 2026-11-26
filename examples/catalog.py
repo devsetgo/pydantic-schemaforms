@@ -415,7 +415,7 @@ _WIZARD_TAGS = {
     'project-planner': ('wizard', 'model_list', 'review_step'),
     'car-care': ('wizard', 'ui_group', 'ui_show_when', 'review_step'),
     'car-setup': ('wizard', 'ui_group', 'ui_show_when', 'review_step'),
-    'rental-application': ('wizard', 'model_list', 'uploads', 'review_step'),
+    'rental-application': ('wizard', 'save_steps', 'model_list', 'uploads', 'review_step'),
     'insurance-claim': ('wizard', 'uploads', 'ui_show_when', 'review_step'),
     'team-onboarding': ('wizard', 'model_list', 'validation'),
     'event-registration': ('wizard', 'model_list', 'validation'),
