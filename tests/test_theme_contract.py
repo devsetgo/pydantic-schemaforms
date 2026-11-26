@@ -78,8 +78,10 @@ def test_widget_css_takes_colors_from_tokens() -> None:
     hard_coded = re.compile(
         r'(?:color|background|border|box-shadow)[^;\n]*?(?<!, )#[0-9a-fA-F]{3,8}\b'
     )
-    paths = [*(PACKAGE / 'inputs').glob('*.py'), PACKAGE / 'rendering' / 'theme_assets.py']
-    found = {path.name: hard_coded.findall(path.read_text(encoding='utf-8')) for path in paths}
+    found = {
+        str(path.relative_to(PACKAGE)): hard_coded.findall(path.read_text(encoding='utf-8'))
+        for path in PACKAGE.rglob('*.py')
+    }
     assert not {name: hits for name, hits in found.items() if hits}
 
 
@@ -111,3 +113,12 @@ def test_every_registered_input_alias_gets_its_canonical_material_kind() -> None
         if material_field_kind(name) != material_field_kind(cls.ui_element)
     }
     assert not wrong
+
+
+def test_icons_are_inline_svg_not_ligatures() -> None:
+    ligature = re.compile(r'<(?:i|span)\b[^>]*\bmaterial-(?:icons|symbols)\b')
+    found = {
+        str(path.relative_to(PACKAGE)): ligature.findall(path.read_text(encoding='utf-8'))
+        for path in PACKAGE.rglob('*.py')
+    }
+    assert not {name: hits for name, hits in found.items() if hits}

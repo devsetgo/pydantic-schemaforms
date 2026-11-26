@@ -572,3 +572,13 @@ def test_the_style_cookie_applies_only_when_the_url_names_no_style(
     client = TestClient(examples.main.app, cookies={'sf-style': cookie})
     form_tag = re.search(r'<form[^>]*>', client.get(url).text).group(0)
     assert ('md-form' in form_tag) is is_material
+
+
+def test_every_example_page_escapes_the_style_parameter(example_client: TestClient) -> None:
+    payload = '"><img src=x onerror=alert(1)>'
+    reflected = [
+        path
+        for path in _routes('get')
+        if '<img src=x onerror' in example_client.get(path, params={'style': payload}).text
+    ]
+    assert not reflected, f'These pages put the raw style parameter into their HTML: {reflected}'

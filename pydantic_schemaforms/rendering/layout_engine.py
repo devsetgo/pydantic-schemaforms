@@ -714,7 +714,7 @@ _CARD_CSS = """
 }
 .card-header {
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--sf-surface-low, #f8f9fa);
     border-bottom: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 8px 8px 0 0;
 }
@@ -727,7 +727,7 @@ _CARD_CSS = """
 }
 .card-footer {
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--sf-surface-low, #f8f9fa);
     border-top: 1px solid var(--sf-outline-variant, #e0e0e0);
     border-radius: 0 0 8px 8px;
 }

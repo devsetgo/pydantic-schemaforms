@@ -841,11 +841,11 @@ document.addEventListener('DOMContentLoaded', function() {{
 """
         css = """
 .error {
-    border-color: #dc3545 !important;
+    border-color: var(--sf-error, #dc3545) !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 .error-message {
-    color: #dc3545;
+    color: var(--sf-error, #dc3545);
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }

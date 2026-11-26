@@ -809,6 +809,9 @@ def test_inputs_base_helpers_cover_fallback_and_attribute_branches() -> None:
     assert 'fas fa-user' in fa
     bs = build_label('my_field', icon='bi bi-check', framework='bootstrap')
     assert 'bi bi-check' in bs
+    md = build_label('my_field', icon='warning', framework='material')
+    assert '<svg' in md and '<i ' not in md
+    assert '<svg' not in build_label('my_field', icon='no_such_icon', framework='material')
 
 
 def test_select_input_base_renders_for_all_framework_branches() -> None:
