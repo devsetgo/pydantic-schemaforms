@@ -57,6 +57,13 @@ function toggleCollapsibleGroup(contentId, buttonElement) {
     }
     buttonElement.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
 }
+if (!window.schemaformsCollapsibleBound) {
+    window.schemaformsCollapsibleBound = true;
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-sf-toggle="collapsible-group"]');
+        if (button) { toggleCollapsibleGroup(button.getAttribute('aria-controls'), button); }
+    });
+}
 </script>
 """)
 
@@ -502,7 +509,7 @@ class CheckboxGroup(SelectInputBase):
         content_style = 'display:none' if collapsed else ''
         _checkboxes_html = SafeHTML(checkboxes_html)
         toggle = html(
-            t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" onclick="toggleCollapsibleGroup('{content_id}', this)">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
+            t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" data-sf-toggle="collapsible-group">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
         )
         content = html(
             t'<div class="collapsible-group-content" id="{content_id}" style="{content_style}">{_checkboxes_html}</div>'
@@ -660,7 +667,7 @@ class RadioGroup(SelectInputBase):
         content_style = 'display:none' if collapsed else ''
         _radio_buttons_html = SafeHTML(radio_buttons_html)
         toggle = html(
-            t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" onclick="toggleCollapsibleGroup('{content_id}', this)">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
+            t'''<button type="button" class="collapsible-group-toggle" aria-expanded="{aria_expanded}" aria-controls="{content_id}" data-sf-toggle="collapsible-group">{legend_text}<span class="collapsible-group-chevron" aria-hidden="true"></span></button>'''
         )
         content = html(
             t'<div class="collapsible-group-content" id="{content_id}" style="{content_style}">{_radio_buttons_html}</div>'

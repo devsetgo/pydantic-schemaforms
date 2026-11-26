@@ -196,9 +196,6 @@ def _password_input(
                {_disabled}
                {_readonly}
                {_attributes} />
-        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword(&#39;{id}&#39;)">
-            <i class="bi bi-eye" id="{id}_toggle_icon"></i>
-        </button>
     </div>
     {_help_text}
     {_error_message}
@@ -504,7 +501,7 @@ def _tab_button(
         role="tab"
         aria-selected="{aria_selected}"
         aria-controls="{tab_id}"
-        onclick="switchTab(&#39;{tab_id}&#39;, this)">
+        data-sf-toggle="tab">
     {title}
 </button>
 ''')
@@ -565,7 +562,7 @@ def _accordion_section(
             type="button"
             aria-expanded="{aria_expanded}"
             aria-controls="{section_id}"
-            onclick="toggleAccordion(&#39;{section_id}&#39;, this)">
+            data-sf-toggle="accordion">
         {title}
     </button>
     <div id="{section_id}"

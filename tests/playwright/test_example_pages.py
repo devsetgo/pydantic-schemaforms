@@ -188,6 +188,39 @@ def test_grouped_forms_on_one_page_switch_independently(
     expect(panel(first, 1)).to_be_hidden(timeout=TIMEOUT)
 
 
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_collapsible_option_group_toggles(page: Page, examples_server_url: str, style: str) -> None:
+    page.goto(f'{examples_server_url}/menu-order/?style={style}')
+    collapsed = page.locator('[data-sf-toggle="collapsible-group"][aria-expanded="false"]')
+    content_id = collapsed.first.get_attribute('aria-controls')
+    toggle = page.locator(f'[data-sf-toggle="collapsible-group"][aria-controls="{content_id}"]')
+    content = page.locator(f'[id="{content_id}"]')
+    expect(content).to_be_hidden(timeout=TIMEOUT)
+
+    toggle.click()
+    expect(content).to_be_visible(timeout=TIMEOUT)
+    expect(toggle).to_have_attribute('aria-expanded', 'true')
+
+    toggle.click()
+    expect(content).to_be_hidden(timeout=TIMEOUT)
+
+
+def test_set_now_button_fills_the_field(page: Page, examples_server_url: str) -> None:
+    page.goto(f'{examples_server_url}/gallery')
+    page.get_by_role('tab', name='Date & Time').click()
+    page.locator('[data-sf-set-now="date_time.datetime_now_button"]').click()
+    expect(page.locator('[id="date_time.datetime_now_button"]')).to_have_value(
+        re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$'), timeout=TIMEOUT
+    )
+
+    page.goto(f'{examples_server_url}/date-time-formats')
+    page.get_by_role('tab', name='Datetime Formats').click()
+    page.locator('[data-sf-set-now$="custom_format_with_set_now_button"]').click()
+    expect(page.locator('[id$="custom_format_with_set_now_button"]').first).to_have_value(
+        re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$'), timeout=TIMEOUT
+    )
+
+
 def test_material_pages_load_no_bootstrap(page: Page, examples_server_url: str) -> None:
     page.goto(f'{examples_server_url}/gallery?style=material')
     expect(page.locator('form.md-form')).to_be_visible(timeout=TIMEOUT)

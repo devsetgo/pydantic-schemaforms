@@ -452,7 +452,7 @@ def _material_tab_button(
     _active_class = SafeHTML(active_class)
     return html(t'''
 <button class="tab-button md-tab-button{_active_class}" type="button" role="tab"
-        aria-selected="{aria_selected}" aria-controls="{tab_id}" onclick="switchTab(&#39;{tab_id}&#39;, this)">
+        aria-selected="{aria_selected}" aria-controls="{tab_id}" data-sf-toggle="tab">
     {title}
 </button>
 ''')
@@ -496,7 +496,7 @@ def _material_accordion_section(
     return html(t'''
 <div class="md-accordion-section">
     <button class="md-accordion-header{_expanded_class}" type="button" aria-expanded="{aria_expanded}"
-            aria-controls="{section_id}" onclick="toggleAccordion(&#39;{section_id}&#39;, this)">
+            aria-controls="{section_id}" data-sf-toggle="accordion">
         {title}
     </button>
     <div id="{section_id}" class="md-accordion-content" style="display: {display_style};">

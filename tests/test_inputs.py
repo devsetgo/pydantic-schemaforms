@@ -1276,11 +1276,8 @@ def test_datetime_input_set_now_button_uses_name_as_default_id():
 
     html = input_field.render(name='event_time', with_set_now_button=True)
 
-    # The onclick attribute value is HTML-escaped (single quotes become
-    # &#x27;) by the t-string processor -- browsers decode entities in
-    # attribute values before invoking the handler, so this is equivalent
-    # to the unescaped `setCurrentDatetime('event_time')` at runtime.
-    assert 'setCurrentDatetime(&#x27;event_time&#x27;)' in html
+    assert 'data-sf-set-now="event_time"' in html
+    assert 'setNow.formats["event_time"]' in html
     assert 'datetime-input-group' in html
 
 
@@ -1633,8 +1630,8 @@ class TestDatetimeInputRendering:
             with_set_now_button=True,
         )
         assert 'Set Now' in html
-        assert 'setCurrentDatetime' in html
-        assert 'event_time_field' in html
+        assert 'data-sf-set-now="event_time_field"' in html
+        assert 'onclick=' not in html
 
     def test_datetime_input_with_date_object(self):
         """Test datetime input with date object."""
