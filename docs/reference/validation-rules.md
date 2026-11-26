@@ -29,7 +29,7 @@ Every rule takes `message=` to replace its default text.
 | `MaxLengthRule(max_length)` | At most `max_length` characters | `max_length`, `message` |
 | `RegexRule(pattern)` | Matches the regular expression | `pattern`, `message`, `flags` |
 | `EmailRule()` | Looks like an email address (format only) | `message` |
-| `EmailDeliverabilityRule()` | The email's domain exists and accepts mail (a real DNS lookup; server only; needs the `email` extra) | `message`, `timeout` (seconds) |
+| `EmailDeliverabilityRule()` | The email's domain exists and accepts mail (a real DNS lookup, meaning it asks the internet whether the domain can receive mail; server only; needs the `email` extra) | `message`, `timeout` (seconds) |
 | `PhoneRule()` | Looks like a phone number: 10 to 15 digits, with optional `+`, spaces, dashes, dots and parentheses | `message` |
 | `NumericRangeRule(min_value, max_value)` | A number within the range; either end can be `None` | `min_value`, `max_value`, `message` |
 | `DateRangeRule(min_date, max_date)` | A date within the range; dates or `"YYYY-MM-DD"` strings | `min_date`, `max_date`, `message` |
@@ -114,7 +114,7 @@ class SignupForm(FormModel):
 
 ## `LiveValidator`
 
-Checks fields on the server as the user types; the
+Checks fields on the server as the user types, using HTMX (a small script that updates part of the page without a reload); the
 [Live Validation](../advanced/live-validation.md) page shows the whole setup.
 
 | Member | Does |

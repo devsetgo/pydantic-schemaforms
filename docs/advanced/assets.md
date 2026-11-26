@@ -1,13 +1,13 @@
 # Assets and Self-Contained Forms
 
-`pydantic-schemaforms` makes no external requests unless you ask for a CDN. By default your page provides the CSS framework, and the library adds only the small scripts and styles its inputs need. `include_framework_assets=True` adds the framework too, inlined from packaged copies.
+Assets are the CSS and JavaScript files a form needs. You can have the library paste them into the page (vendored), link to a public file host (a CDN), or leave it to your own page. `pydantic-schemaforms` makes no external requests unless you ask for a CDN. By default your page provides the CSS framework, and the library adds only the small scripts and styles its inputs need. `include_framework_assets=True` adds the framework too, inlined from packaged copies.
 
 This page documents the standard knobs used across entry points to control asset injection.
 
 ## Terminology
 
-- **Vendored assets**: Third-party JS/CSS copied into this repo under `pydantic_schemaforms/assets/vendor/**`.
-- **Pinned**: Versions are recorded in `pydantic_schemaforms/assets/vendor/vendor_manifest.json` along with `sha256` checksums and source URLs.
+- **Vendored assets**: copies of third-party JS/CSS shipped inside the package, under `pydantic_schemaforms/assets/vendor/**`, so nothing is fetched from the internet.
+- **Pinned**: each file is one fixed version with a checksum, so it can't be silently swapped. Versions are recorded in `pydantic_schemaforms/assets/vendor/vendor_manifest.json` along with `sha256` checksums and source URLs.
 - **`asset_mode`**: How a renderer should include assets.
 
 ## `asset_mode` values
@@ -44,7 +44,7 @@ html = render_form_html(
 )
 ```
 
-HTMX and IMask are **not** injected by `render_form_html()`. Load them from your host page; to serve the library's vendored copies (no CDN), expose them with `read_asset_text()`:
+HTMX powers live validation and IMask formats input as you type, such as phone numbers; both are small JavaScript libraries. HTMX and IMask are **not** injected by `render_form_html()`. Load them from your host page; to serve the library's vendored copies (no CDN), expose them with `read_asset_text()`:
 
 ```python
 from fastapi import FastAPI, Response
@@ -67,7 +67,7 @@ async def vendor_imask():
 Then add `<script src="/vendor/htmx.min.js"></script>` (and the IMask one, if you use masked inputs) to your base template.
 
 If you already provide Bootstrap in your host app, keep `include_framework_assets=False`. The Material style (`framework="material"`) is self-contained: it always carries its own CSS and JavaScript and loads no CSS framework.
-Use `self_contained=True` as a shorthand for `include_framework_assets=True, asset_mode="vendored"` — for Bootstrap this also embeds Bootstrap Icons as a data URI (truly zero external dependencies).
+Use `self_contained=True` as a shorthand for `include_framework_assets=True, asset_mode="vendored"` — for Bootstrap this also embeds Bootstrap Icons as a data URI (the file's contents placed directly in the HTML, so no extra download; truly zero external dependencies).
 
 ### `EnhancedFormRenderer` — direct renderer instance
 
@@ -175,4 +175,4 @@ After updating, run `make vendor-verify` and the test suite.
 
 ## Security note
 
-`asset_mode="cdn"` is intentionally available, but it re-introduces an external dependency at runtime. For production systems with strict supply-chain or offline requirements, prefer `asset_mode="vendored"`.
+A CDN means trusting another company's server to serve the right file every time. `asset_mode="cdn"` is intentionally available, but it re-introduces an external dependency at runtime. For production systems with strict supply-chain or offline requirements, prefer `asset_mode="vendored"`.

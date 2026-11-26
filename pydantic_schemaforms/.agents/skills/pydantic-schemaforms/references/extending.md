@@ -50,7 +50,7 @@ form_html = render_form_html(DirectoryEntry, submit_url='/directory')
 
 ## A custom composite control
 
-Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer, the
+Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer (a function registered by name that turns a field into HTML), the
 same mechanism `DataTableLayout` and repeating sub-forms are built on. Don't invent another.
 
 ```python

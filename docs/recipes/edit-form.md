@@ -29,7 +29,7 @@ Show a saved record in a form, let the user change it, and save it back.
 - **`result.data`** has the same keys as the model, typed (`Status.archived`,
   `date(2026, 3, 1)`, `None` for a cleared date), ready to write back.
 
-If your rows are ORM objects or Pydantic models, build the dictionary the same
+If your rows are ORM objects (what a database toolkit such as SQLAlchemy gives you) or Pydantic models, build the dictionary the same
 way: `{name: getattr(row, name) for name in ProductForm.model_fields}`.
 
 **Editing in a wizard?** Render it with `layout="wizard"` and

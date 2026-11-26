@@ -19,7 +19,8 @@ uv add "pydantic-schemaforms[fastapi]"
 
 pydantic-schemaforms needs **Python 3.14 or newer**: it builds all of its HTML
 with Python 3.14 template strings (t-strings), which escape every value
-automatically.
+automatically. That matters because text a visitor types can hide code that attacks
+other visitors (called XSS). Escaping turns that text into harmless characters.
 
 ??? note "Using Flask instead"
 

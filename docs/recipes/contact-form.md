@@ -29,5 +29,5 @@ A contact form with a topic, a message and a hidden trap for spam bots.
   in, the route answers as if the message was sent and drops it, so the bot
   learns nothing.
 
-A honeypot stops simple bots. For more, add a `captcha` field; see
+A honeypot stops simple bots. For more, add a `captcha` field, a small test like a sum that is easy for people and hard for bots; see
 [Input Types](../reference/inputs.md).

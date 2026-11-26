@@ -1,7 +1,9 @@
 # JSON API and JSON Schema
 
 A `FormModel` is a Pydantic model, so the same class can validate an HTML
-form and a JSON API request, with the same rules and the same error shape.
+form and a JSON API request, with the same rules and the same error shape. A JSON API
+is a route that other programs, such as a phone app, call with data instead of a person
+using a browser.
 
 ## One model, two routes
 
@@ -19,7 +21,7 @@ form and a JSON API request, with the same rules and the same error shape.
     same fields and the same validation (`min_length`, `title`, `examples`,
     ...), but without the form settings such as `ui_element` and
     `ui_autofocus`. Use it as the request body or `response_model`, and
-    FastAPI's OpenAPI docs show a clean schema, exactly as for a model written
+    FastAPI's OpenAPI docs (the API documentation page it builds automatically) show a clean schema, exactly as for a model written
     by hand. Create it once, at import time.
 
 === "Flask"
@@ -35,7 +37,7 @@ form and a JSON API request, with the same rules and the same error shape.
 
 ## JSON Schema for other tools
 
-`get_pydantic_json_schema()` returns the standard JSON Schema of the form,
+JSON Schema is a standard way to describe the shape of data (fields, types, limits) so other tools can read it. `get_pydantic_json_schema()` returns the standard JSON Schema of the form,
 with nested sub-forms as `$defs` and `$ref`, for OpenAPI tooling, schema
 validators or code generators. Like `as_api_model()`, it leaves out the form
 settings. Pydantic's own options pass through:

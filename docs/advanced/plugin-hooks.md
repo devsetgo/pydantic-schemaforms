@@ -1,6 +1,6 @@
 # Plugin Hooks and Custom Composites
 
-You can add your own inputs and your own composite controls (a whole table,
+A hook is a place where you can plug in your own code. You can add your own inputs and your own composite controls (a whole table,
 a repeating structure, a custom picker) without changing the library. Both
 are registered at startup and then used through `ui_element` or a layout
 field like any built-in one.
@@ -32,6 +32,8 @@ input also needs a widget-gallery entry, which puts it under the axe-core gate i
 `tests/playwright/test_example_pages.py`.
 
 ## Registering Custom Layout Renderers
+
+A layout renderer is a function that turns one field into HTML. You register it under a name, and the registry (the list of those names) tells the library which one to call.
 
 `LayoutEngine` dispatches a field to a registered custom renderer through
 **two independent keyspaces**, both backed by the same
@@ -79,7 +81,7 @@ library, so each step's text is escaped. The field declares
 
 ### `requires_multipart` — declare a nested file input
 
-If your renderer might emit its own `<input type="file">` inside the
+Forms with files must be sent in a special "multipart" format; without it the browser sends only the file's name, not the file. If your renderer might emit its own `<input type="file">` inside the
 field's own output (as `DataTableLayout` does when `csv_upload` is on), pass
 `requires_multipart` to `register_layout_renderer`/`layout_renderer`. A
 nested file input like that isn't a top-level `FormModel` field, so the
@@ -107,7 +109,7 @@ never renders a file input, omit the parameter (the default `None` means
 
 ### `builtin=True` and the `@LayoutEngine.layout_renderer` decorator
 
-A renderer this library ships (like `DataTableLayout`'s or `model_list`'s)
+App authors can usually ignore `builtin`; it matters for plugin authors whose tests reset the registry. A renderer this library ships (like `DataTableLayout`'s or `model_list`'s)
 only registers itself **once per process**, at import time. If you register
 it the plain way and something later calls
 `LayoutEngine.reset_layout_renderers()` — several test fixtures across this

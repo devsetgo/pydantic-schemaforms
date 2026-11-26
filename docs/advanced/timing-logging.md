@@ -89,7 +89,7 @@ html = render_form_html(
 
 ## Logging
 
-pydantic-schemaforms uses Python's standard logging module and keeps detailed renderer logs opt-in.
+Logging means the app writes diagnostic messages to the console or a file. pydantic-schemaforms uses Python's standard logging module and keeps detailed renderer logs opt-in.
 
 ### What is logged by default
 

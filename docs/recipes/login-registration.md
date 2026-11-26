@@ -33,11 +33,11 @@ any other error.
   shows a message for the whole form in the summary at the top. Pass
   `form_data=` so the user's input stays filled in. The login form only puts
   back the username, never the password.
-- **After success, redirect** (303) so reloading the page doesn't send the
+- **After success, redirect** (send the browser to another page with a 303) so reloading the page doesn't send the
   form again.
 
 !!! warning "Before going live"
 
-    Store password hashes, never passwords (use a library such as `argon2-cffi`
+    Store password hashes (a one-way scramble, so a stolen database doesn't reveal passwords), never passwords (use a library such as `argon2-cffi`
     or `bcrypt`). Protect both forms with a CSRF token once users are logged
     in; see [CSRF Protection](../tutorial/csrf.md).

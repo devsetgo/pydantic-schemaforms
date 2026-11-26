@@ -1,7 +1,7 @@
 # File Upload
 
 A form with a file. The library renders the file input (with drag and drop)
-and sends the form as `multipart/form-data`; the server checks its type and
+and sends the form as `multipart/form-data` (the special format browsers use to send files); the server checks its type and
 size, and your route stores it.
 
 ```python title="models.py"
@@ -50,8 +50,8 @@ size, and your route stores it.
 
 !!! warning "Treat uploads as untrusted"
 
-    `accept` is not content sniffing: the extension and the content type
+    A file's name and type come from the visitor's browser and can be faked, so `accept` is not content sniffing: it doesn't look inside the file. The extension and the content type
     both come from the browser, as does the file name. Check the content
-    before you use it, store files outside your web root under names you
+    before you use it, store files outside your web root (the folder your server hands out to anyone) under names you
     generate, and never show a file name in HTML without escaping it
     (`html(t"...")` does).

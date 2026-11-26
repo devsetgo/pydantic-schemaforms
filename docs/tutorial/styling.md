@@ -13,6 +13,8 @@ The same form renders for three styles. Pick one with `framework=`:
     Bootstrap site, and validation states, icons and the grouped layouts
     use Bootstrap's components.
 
+    Bootstrap is a popular CSS toolkit, and a CDN is a public server that hosts it so you can link it instead of downloading it.
+
     **Your page loads Bootstrap.** The form HTML contains the markup, not
     Bootstrap itself, so add Bootstrap's CSS and JS to your page template:
 
@@ -27,7 +29,7 @@ The same form renders for three styles. Pick one with `framework=`:
 
 === "Material"
 
-    A Material Design 3 look with floating labels, built into the library:
+    Material Design 3 is Google's design system for how controls look, with rounded fields and labels that float above the text. This style gives you that look, built into the library:
     the form carries its own styles, so your page needs nothing extra and
     no CSS framework. See [Material Design 3](../advanced/material.md) for the
     filled variant, the dark scheme and changing the colors.
@@ -85,7 +87,7 @@ Forms are light unless you opt in, and the switch is set by your page:
 
 ## Your own colors
 
-Colors are CSS custom properties, so re-coloring needs no change to your Python.
+Colors are CSS custom properties, which are named color settings such as `--sf-primary` that you can change in your stylesheet to recolor every control at once. That needs no change to your Python.
 Put the rules in your page's stylesheet.
 
 === "Bootstrap"

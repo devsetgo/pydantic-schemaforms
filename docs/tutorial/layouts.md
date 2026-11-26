@@ -92,7 +92,7 @@ and Next buttons; on the last step, Submit takes Next's place beside Back.
 - **One form, one POST.** All steps are in the same `<form>`, so the routes
   are exactly the ones above with `layout="wizard"`. No state is kept between
   steps.
-- **Next checks the current step** with the browser's own validation
+- **Next checks the current step** with the browser's own validation (the simple checks a browser makes before sending anything)
   (`required`, `min`, `pattern`, ...) and stays put if something is wrong.
   Pydantic still validates everything on submit.
 - **Without JavaScript**, every step is shown, stacked, with a normal submit button.
@@ -104,6 +104,8 @@ options are in the [Layouts reference](../reference/layouts.md).
 
 ### Save each step
 
+Normally the whole wizard is sent at the end. This option sends each step to your
+server when the user clicks Next, so they can quit and come back later.
 `wizard_options={"save_steps": True}` turns the wizard into one page and one
 POST per step. Your route calls `Model.validate_step()` instead of
 `validate()`, stores the `result.draft` it returns (in a session or a

@@ -2,7 +2,7 @@
 
 Live validation checks a field on the server while the user types or when
 they leave the field, and shows the result next to the form without a page
-reload. It uses [HTMX](https://htmx.org): the field posts its value to a small
+reload. It uses [HTMX](https://htmx.org), a small JavaScript library that updates part of a page from the server without you writing JavaScript: the field posts its value to a small
 endpoint and HTMX swaps the endpoint's answer into the page.
 
 It's a convenience on top of normal validation, not a replacement: the submit
@@ -41,7 +41,7 @@ characters"; finishing the name shows "Looks good".
    from the model itself: its constraints, its type (`EmailStr`) and its
    `@field_validator`s. There's nothing to keep in sync.
 2. **`ui_options=live("name")`** adds HTMX attributes to the input: post to
-   `/validate/name` on blur and 600 ms after the user stops typing, and put
+   `/validate/name` on blur (when the user leaves the field) and 600 ms after the user stops typing (a pause, so it doesn't send a request on every keystroke), and put
    the answer into `#name-feedback`. Any `ui_options` key that isn't a known
    option is written onto the input as an attribute.
 3. **One endpoint serves every field.** `validate_field(name, value)` runs that
@@ -78,7 +78,7 @@ The available rules are in [Validation Rules](../reference/validation-rules.md).
 ## Email addresses that can receive mail
 
 `DeliverableEmailStr` is a drop-in replacement for `EmailStr` that also looks
-up the domain's mail servers (MX records), so `ada@example.con` is rejected
+up the domain's mail servers (MX records), which confirms the part after the @ is a real domain that can receive mail, so `ada@example.con` is rejected
 with a message saying why. It works in `validate()` and in live validation
 with nothing else to set up, and needs the `email` extra
 (`pydantic-schemaforms[email]`).

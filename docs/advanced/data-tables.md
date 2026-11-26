@@ -1,5 +1,7 @@
 # Data Tables (CSV Import)
 
+Use this when users upload a CSV file and need to see it as a table, fix mistakes in the cells, and then save. It is a special kind of form field that draws a whole table.
+
 `DataTableLayout` is a `FormModel` whose fields describe table columns
 instead of one instance's inputs: fields declared with
 `Field(..., input_type=...)` render as real, editable widgets per cell
@@ -30,7 +32,7 @@ class ContactImport(DataTableLayout):
     model_config = {"buttons": ["csv", "copy"], "search": True, "csv_template": True}
 ```
 
-It is **not** rendered on its own — it's embedded as one *layout field* on
+The table doesn't stand alone: you put it inside an ordinary form as one special field. It is **not** rendered on its own — it's embedded as one *layout field* on
 a plain `FormModel` (see [Plugin Hooks](plugin-hooks.md)), and rendered through the same
 `render_form_html_async()` call every other form in this library uses.
 That embedding `FormModel` needs nothing but the one field:
@@ -67,7 +69,7 @@ Because `csv_upload` is on, `ContactImport`'s own rendered output already
 includes a "Submit" button right below the table — pass
 `include_submit_button=False` so the embedding form doesn't *also* render
 its own generic one, which would leave two redundant "Submit"-ish controls
-on the page. This is safe without a nested `<form>`: a `<button
+on the page. Browsers don't allow a form inside a form, so the table's buttons belong to the surrounding form. This is safe without a nested `<form>`: a `<button
 type="submit">`/`<input type="file">` living inside this field's own slot
 still submits/attaches to whatever `<form>` the *embedding* FormModel
 opened — only a `<form>` nested inside another `<form>` is silently
@@ -144,7 +146,7 @@ first, so the DataTables scripts load once. The example app's
 
 Every cell renders as its own named `<input>` (read-only columns get a
 hidden one too, see below), so a submit's field count is *rows times
-columns*, not row count. Starlette/FastAPI's `Request.form()` rejects a
+columns*, not row count. FastAPI caps how many form boxes one request may have, as protection, and a table has a box per cell. Starlette/FastAPI's `Request.form()` rejects a
 request over its default `max_fields=1000` with a 400 ("Too many fields") —
 a plain 5-column table already exceeds that at 200 rows. Size a higher
 `max_fields` to your largest expected import: `await
@@ -181,7 +183,7 @@ not reject unknown `model_config` keys at runtime):
 | `paging` | `True` | Enable client-side paging. |
 | `page_length` | `10` | Default rows per page. Always included as a choice in the "entries per page" dropdown, even if not listed in `length_menu`. |
 | `length_menu` | `[10, 25, 50, 100]` | Choices offered in the "entries per page" dropdown. |
-| `csv_template` | `False` | Render a "Download CSV template" link above the table, as a `data:` URI built from `ContactImport.csv_template_bytes()` — no server route needed. |
+| `csv_template` | `False` | Render a "Download CSV template" link above the table, as a `data:` URI (the file's contents embedded in the link itself) built from `ContactImport.csv_template_bytes()` — no server route needed. |
 | `csv_upload` | `True` | Render the built-in file input + "Load CSV"/"Submit" buttons described above. Set `False` for a bare table with no upload UI (see above). |
 | `editable` | `True` | Whether cells declared with `Field(..., input_type=...)` actually render as editable widgets. Set `False` to force every cell read-only regardless of its own `input_type` — see below. |
 | `style` | see below | Table-appearance flags (dict) — see next section. |
@@ -268,7 +270,7 @@ bare table.
 > If you regularly expect imports in this range: keep as many columns
 > read-only (plain fields, no `Field(input_type=...)`) as your UI can
 > tolerate — read-only cells are a cheap `str()`/escape, not a full widget
-> render; and consider validating/importing in a background task instead
+> render; and consider validating/importing in a background task (a job that runs after the page has responded) instead
 > of inline in the request/response cycle for the largest files.
 
 ## Complete example

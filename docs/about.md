@@ -5,8 +5,10 @@
 It focuses on:
 
 - One Pydantic model for the form, its validation and its data
-- HTML that is escaped by construction, built with Python 3.14 t-strings
-- Sync (WSGI) and async (ASGI) rendering, tested with FastAPI and Flask
+- HTML that is escaped by construction (text a user types can't inject code), built with Python 3.14 t-strings
+- Sync and async rendering, tested with Flask and FastAPI. WSGI and ASGI are
+  the two standard ways Python web apps talk to a server: Flask uses WSGI
+  (sync), FastAPI uses ASGI (async)
 - No external requests by default: assets are packaged and inlined, with explicit opt-in for CDNs
 
 If you're new, start with the [Tutorial](tutorial/index.md). The

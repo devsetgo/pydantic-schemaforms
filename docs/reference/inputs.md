@@ -1247,7 +1247,7 @@ class SignupForm(FormModel):
 ```
 
 `captcha` renders a small arithmetic question ("What is 4 + 7?") plus a
-hidden, HMAC-signed challenge token -- the correct sum is never sent to the
+hidden, HMAC-signed challenge token (a code the server can verify wasn't forged) -- the correct sum is never sent to the
 browser. Verify it at the route level, before model validation, since the
 token only exists in the raw submitted form data:
 

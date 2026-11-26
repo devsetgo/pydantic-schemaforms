@@ -751,7 +751,7 @@ form_html = render_form_html(DirectoryEntry, submit_url='/directory')
 
 ### A custom composite control
 
-Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer, the
+Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer (a function registered by name that turns a field into HTML), the
 same mechanism `DataTableLayout` and repeating sub-forms are built on. Don't invent another.
 
 ```python
@@ -1311,7 +1311,7 @@ page = html(t'<main>{form}</main>')
 
 ### CSRF
 
-Forms that change something on a site with cookie logins need a CSRF token. The library renders
+CSRF is another site tricking a logged-in user's browser into submitting your form. Forms that change something on a site with cookie logins need a CSRF token. The library renders
 the hidden field; the app creates the token, keeps it in the session and checks it.
 
 ```python
@@ -1456,7 +1456,7 @@ async def submit_contact(request: Request):
 
 - **Honeypot:** `website: str = Field('', ui_element='honeypot')` renders an input people can't
   see. When it comes back filled in, answer as if the submission worked and drop it.
-- **Captcha:** a self-hosted arithmetic question. Declare only the answer field; the signed token
+- **Captcha:** a self-hosted arithmetic question (easy for people, hard for bots). Declare only the answer field; the signed token
   is added for you. Check it in the route before validating:
 
 ```python

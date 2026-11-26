@@ -2,7 +2,7 @@
 
 Most forms need nothing beyond the Pydantic validation in the
 [Validation](../tutorial/validation.md) chapter. The library also has a
-rule-based layer, `FormValidator`, for three situations:
+rule-based layer, `FormValidator`, for three situations. A rule is a small reusable check, such as a phone number or a length, that you attach to a field in code instead of on the model:
 
 - **A ready-made check** that isn't a Pydantic type, such as `PhoneRule`.
 - **Rules you switch on or off per route** without changing the model, for

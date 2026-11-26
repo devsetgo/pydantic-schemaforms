@@ -71,7 +71,7 @@ summary at the top names the item: "Pet #2 — Age: Must be 0 or greater".
 
 ??? note "How the inputs are named"
 
-    The inputs are named `address.city` and `pets[0].name` so the browser can
+    Browsers send flat name and value pairs, so nested fields get dotted names. The inputs are named `address.city` and `pets[0].name` so the browser can
     submit them, and `validate()` decodes those names back into the nested
     data. You never need to build or parse them yourself, except when you
     post raw form data in a test.

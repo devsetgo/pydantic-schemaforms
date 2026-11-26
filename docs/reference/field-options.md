@@ -38,10 +38,10 @@ the Pydantic constraints.
 | `ui_order=n` | Position among the fields (lower first); fields otherwise follow declaration order |
 | `ui_max_size=n` | Largest file in bytes, for an `UploadedFile` field; checked on the server. See [File Upload](../recipes/file-upload.md) |
 | `ui_max_files=n` | Most files allowed in a `list[UploadedFile]` field; checked on the server |
-| `ui_autosave=False` | Keep this field out of the form's `autosave=True` drafts, for values that shouldn't sit in the browser |
+| `ui_autosave=False` | Autosave keeps a copy of typed answers in the browser; this keeps one field out of the form's `autosave=True` drafts, for values that shouldn't sit in the browser |
 | `ui_class="..."` | Extra CSS classes on the input |
 | `ui_style="..."` | Inline CSS declarations on the input, such as `"font-weight: 600"`; `{`, `}` and `<` raise `ValueError`. Under a style nonce it goes into a nonced stylesheet instead; see [Content-Security-Policy](../advanced/content-security-policy.md#field-styles) |
-| `unchecked_message="..."` | The error shown when a required checkbox (`Literal[True]`, or `bool` with no default) is left unticked |
+| `unchecked_message="..."` | The error shown when a required checkbox (`Literal[True]`, a type that accepts only `True`, or `bool` with no default) is left unticked |
 
 ## Text in a form
 
@@ -74,7 +74,7 @@ Options on a field typed as a `FormModel` or a `list` of one, described in
 - Repeating sub-form: `ui_add_button_label`, `ui_item_title_template`,
   `ui_collapsible_items`, `ui_items_expanded`.
 
-Composite controls registered through
+Composite controls draw a whole table or list. Ones registered through
 [Plugin Hooks](../advanced/plugin-hooks.md) use `input_type="layout"` with
 `layout_handler="..."`.
 
