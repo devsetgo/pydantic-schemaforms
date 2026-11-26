@@ -140,7 +140,7 @@ hidden by a `ui_show_when` rule are left out.
   item, in order: new items are tagged "Added" and items no longer there are
   shown tagged "Removed". A file input left empty keeps the file that was there.
   A fresh form (no data) marks nothing. The starting values travel in one
-  hidden field, `_sf_original`, so a re-render after a failed submit still
+  hidden field (a value the user never sees but the browser still sends back), `_sf_original`, so a re-render after a failed submit still
   compares with them; `validate()` leaves it out of `result.data`. With
   `save_steps` the review doesn't mark changes yet.
 - **With `save_steps`:** the server renders the review from the saved draft,

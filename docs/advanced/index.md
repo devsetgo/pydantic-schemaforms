@@ -28,8 +28,9 @@ pages here go further, each on its own, so read the ones you need.
 
 - [Assets and Self-Contained Forms](assets.md): where the CSS and JavaScript
   come from, and forms with no external files.
-- [Content-Security-Policy](content-security-policy.md): forms on pages whose
-  policy allows only nonced scripts and styles.
+- [Content-Security-Policy](content-security-policy.md): what a CSP and a
+  nonce are, and how to add one to a site so the browser blocks any script an
+  attacker slips into a page, forms included.
 - [Render Timing and Logging](timing-logging.md): measure rendering and turn
   on the library's logs.
 - [Layout Primitives](layout-primitives.md): grids, cards and tabs for HTML

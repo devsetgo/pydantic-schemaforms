@@ -40,16 +40,16 @@ inputs need. It is a fragment for your page, not a whole page.
 | `enable_logging` | `False` | Log rendering at DEBUG level; see [Render Timing and Logging](../advanced/timing-logging.md) |
 | `include_html_markers` | `True` | Wrap the output in `<!--- Start/End Pydantic-SchemaForms -->` comments |
 | `inject_layout_styles` | `True` | Add the small stylesheet that makes the form fill its container |
-| `script_nonce` | `None` | Your Content-Security-Policy nonce for this request: every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too, or set it once per request with `csp_nonces()`; see [Content-Security-Policy](../advanced/content-security-policy.md) |
+| `script_nonce` | `None` | Only for sites that send a Content-Security-Policy, a header telling the browser to run only scripts carrying this page's random value (the nonce). Every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too, or set it once per request with `csp_nonces()`; see [Content-Security-Policy](../advanced/content-security-policy.md) |
 | `style_nonce` | `None` | The same for every `<style>`. The library writes no `style="..."` attributes, and a field's `ui_style` goes into a nonced stylesheet, so a strict `style-src` needs only this |
 
 Any other keyword becomes an attribute of the `<form>` tag, for example
-`id="signup"` or `**{"hx-post": "/signup"}`. A form with a file input gets
+`id="signup"` or `**{"hx-post": "/signup"}`. A form with a file input (files need a special form encoding, which the library switches on) gets
 `enctype="multipart/form-data"` unless you pass your own `enctype`.
 
 ## `render_form_html_async()`
 
-The same arguments and result as `render_form_html()`. It renders in a worker
+Use this in async apps such as FastAPI: it renders off to the side so other visitors aren't kept waiting. The same arguments and result as `render_form_html()`. It renders in a worker
 thread so an async route doesn't block the event loop. Use it in FastAPI and
 other async frameworks.
 
@@ -94,7 +94,7 @@ Returned by `FormModel.validate_step()` for a wizard with
 | `is_complete` | Submit on the last step and the whole model is valid |
 | `data` | The data so far, nested like the model. When complete it is the validated `model_dump()`; before that, what was submitted so far, with this step's uploads as `UploadedFile` |
 | `errors` | The messages, nested like the data |
-| `draft` | A small JSON-safe dict to store as it is and pass back as `draft=`. Read it after storing files, so a `ref` you set is kept. |
+| `draft` | A plain dictionary (JSON-safe, so a session or database can hold it) to store as it is and pass back as `draft=`. Read it after storing files, so a `ref` you set is kept. |
 | `files` | The `UploadedFile`s accepted on the step just submitted (empty if it was invalid) |
 | `step` | Index of the step shown next |
 | `render()` | The next step, or the same step with its errors. Raises `ValueError` when `is_complete`. |
@@ -120,11 +120,16 @@ name = result.data["name"]
 page = html(t"<p>Thanks, {name}!</p>")
 ```
 
-It returns a `SafeHTML`, a `str` that `html()` won't escape again, so pieces
+It returns a `SafeHTML`, which marks text as already-safe HTML so it isn't turned into plain text a second time. It is a `str` that `html()` won't escape again, so pieces
 nest. Wrap a string in `SafeHTML(...)` only when it's HTML you trust, such as
 another form you rendered.
 
 ## `csp_nonces()`
+
+For sites that send a Content-Security-Policy: hand the library this page's
+nonce (the random value that marks your own scripts as allowed) once, in the
+middleware that makes it (code that runs on every request before your
+routes), instead of on every call.
 
 `with csp_nonces(script_nonce=nonce, style_nonce=nonce):` gives every form
 rendered, validated or re-rendered inside the block your

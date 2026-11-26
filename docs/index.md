@@ -71,12 +71,15 @@ async def submit_signup(request: Request):
 That's a complete FastAPI app: a styled signup form, browser and server
 validation, errors shown next to each field with the user's input kept, and
 the validated data as a plain dictionary. A Flask version is the same model
-with `render_form_html()` and `request.form`.
+with `render_form_html()` and `request.form`. The `asset_mode: 'cdn'` option loads
+Bootstrap's styling from a public file host (a CDN), so the example works with no setup.
 
 **Features**
 
 - **One model for everything.** The form, its validation, the validated data
-  and, with `as_api_model()`, a typed JSON API all come from one Pydantic class.
+  and, with `as_api_model()`, a typed JSON API (a route other programs call
+  with data, rather than people with a browser) all come from one Pydantic
+  class.
 - **Inputs from types.** `str`, `int`, `date`, `bool`, `Enum`, `Literal`,
   `EmailStr` and more pick their input; `Field(ui_element=...)` chooses any of
   40+ others (currency, tags, rating, code editor, file upload, ...).
@@ -88,8 +91,8 @@ with `render_form_html()` and `request.form`.
   `ui_cols`, keeping the data flat.
 - **Review pages for free.** `render_display()` shows validated data read-only,
   with the form's labels and sections, for confirmation pages.
-- **Long forms made easier.** A step wizard can save each step on the server,
-  end with a review step that marks what changed, and skip steps that don't
+- **Long forms made easier.** Users can stop and pick up later: a step wizard
+  can save each step on the server, end with a review step that marks what changed, and skip steps that don't
   apply. `progress=True`, `autosave=True` and `confirm=True` add a progress
   indicator, drafts kept in the browser and a dialog before submitting.
   Uploads typed `UploadedFile` get their size, count and type checked on the
@@ -97,13 +100,21 @@ with `render_form_html()` and `request.form`.
 - **Bootstrap, Material Design 3 or plain HTML**, with opt-in dark mode for
   Bootstrap and Material, and assets inlined, linked from a CDN or left to your
   page.
-- **Escaped by construction.** All HTML is built with Python 3.14 t-strings
-  and an escaping processor.
-- **Accessibility-tested.** Every input, layout and error state is checked
-  with axe-core against WCAG 2.0–2.2 A and AA rules on every pull request.
-- **More when you need it:** live validation over HTMX, CSV import into an
-  editable table, CSRF protection, rule-based validators and plugin hooks for
-  your own inputs.
+- **Escaped by construction.** Text a user types can never turn into code on
+  your page: all HTML is built with Python 3.14 t-strings and an escaping
+  processor.
+- **Works under a strict Content-Security-Policy.** If your site tells the
+  browser to run only scripts carrying a per-page random value (a nonce), set
+  it once per request with `csp_nonces()` and every form follows the rule. No
+  `'unsafe-inline'` needed.
+- **Accessibility-tested.** People who use a screen reader or only a keyboard
+  can fill in the forms. Every input, layout and error state is checked on
+  every pull request with axe-core, an automated checker, against WCAG 2.0–2.2
+  A and AA, the standard accessibility rules.
+- **More when you need it:** live validation over HTMX (a field is checked as
+  the user types, with no page reload), CSV import into an editable table,
+  CSRF protection (stops another site from submitting your forms as a
+  logged-in user), rule-based validators and plugin hooks for your own inputs.
 
 ## Install
 
@@ -114,6 +125,7 @@ pip install "pydantic-schemaforms[fastapi]"
 
 Requires **Python 3.14+** (the library uses t-strings) and Pydantic 2.13+;
 tested on 3.14 and 3.15. Add the `email` extra if your forms use `EmailStr`.
+Versions are calendar based: `26.4.6` is 2026, fourth quarter, sixth build.
 
 ## Documentation
 
@@ -123,7 +135,8 @@ The docs at <https://devsetgo.github.io/pydantic-schemaforms/> have:
   styling and CSRF protection, with FastAPI and Flask versions of every
   example.
 - [Advanced User Guide](https://devsetgo.github.io/pydantic-schemaforms/advanced/): live validation, data tables,
-  JSON APIs, forms built at runtime, assets and plugin hooks.
+  JSON APIs, forms built at runtime, assets, Content-Security-Policy and
+  plugin hooks.
 - [Recipes](https://devsetgo.github.io/pydantic-schemaforms/recipes/): complete apps for contact forms, login and
   registration, edit forms, line items, file uploads, wizards and more.
 - [Reference](https://devsetgo.github.io/pydantic-schemaforms/reference/): every input, layout, field option and

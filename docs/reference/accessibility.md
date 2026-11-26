@@ -1,6 +1,6 @@
 # Accessibility
 
-Accessible forms are part of what this library ships, not an add-on: every
+Accessibility means people who use screen readers, keyboards or magnifiers can complete the form. WCAG is the standard checklist for that. Accessible forms are part of what this library ships, not an add-on: every
 release is tested with [axe-core](https://github.com/dequelabs/axe-core), the
 accessibility engine behind many enterprise audit tools, and a release can't
 pass CI with a serious or critical violation on any example page.
@@ -35,7 +35,7 @@ pytest tests/playwright/test_example_pages.py -k accessibility --no-cov -p no:xd
 
 ## What the library guarantees
 
-Every built-in input meets this baseline under Bootstrap, Material and plain HTML:
+ARIA attributes are extra labels in the HTML that tell screen readers what a control is and which message belongs to it. Contrast is how strongly text stands out from its background. Every built-in input meets this baseline under Bootstrap, Material and plain HTML:
 
 - **Every control has an accessible name.** A field's `title` becomes its
   `<label for=...>`; radio and checkbox groups use a `<fieldset>` with a

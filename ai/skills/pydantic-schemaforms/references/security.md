@@ -24,7 +24,7 @@ page = html(t'<main>{form}</main>')
 
 ## CSRF
 
-Forms that change something on a site with cookie logins need a CSRF token. The library renders
+CSRF is another site tricking a logged-in user's browser into submitting your form. Forms that change something on a site with cookie logins need a CSRF token. The library renders
 the hidden field; the app creates the token, keeps it in the session and checks it.
 
 <!-- INCLUDE-CODE: docs_src/tutorial/csrf/fastapi_app.py -->
@@ -40,11 +40,41 @@ the hidden field; the app creates the token, keeps it in the session and checks 
   generate it for real routes.
 - Keep the session secret out of code; serve the site over HTTPS.
 
+## Content-Security-Policy (nonces)
+
+In plain terms: a Content-Security-Policy is a header that tells the browser which scripts and
+styles it may run, so a script an attacker slips into the page is blocked. A nonce is a random
+value made fresh for each response; only tags carrying it run. The library puts the nonce on
+every script and style it writes and never writes `onclick=` or `style=` attributes, so the app
+only has to hand it the nonce.
+
+When the app sends (or is asked to add) a CSP, follow these steps:
+
+1. **One nonce per request**: `secrets.token_urlsafe(16)` in a middleware. Never reuse one.
+2. **Hand it to the library once**: open `csp_nonces(script_nonce=n, style_nonce=n)` around the
+   request in that middleware. Every render, `validate()`, `render_with_errors()`, wizard step and
+   `render_display()` in the request then carries it. Don't pass it call by call.
+3. **The app's own templates**: `nonce="{{ request.state.csp_nonce }}"` on every `<script>`/
+   `<style>`; replace `onclick=` with `addEventListener` and `style=` with classes.
+4. **HTMX**: `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
+   "inlineStyleNonce": "..."}'>` with the page's nonce, before htmx loads.
+5. **Test with `Content-Security-Policy-Report-Only`**, read the browser console, then switch to
+   the enforcing header. Keep a browser test that fails on `securitypolicyviolation`.
+
+<!-- INCLUDE-CODE: docs_src/advanced/content_security_policy/fastapi_app.py -->
+
+- Never add `'unsafe-inline'`, `'unsafe-eval'` or script hashes, and never rewrite rendered HTML
+  with a regex to insert nonces. If the app does any of these, replace it with steps 2 to 4.
+- `ui_style` keeps working (it becomes a nonced rule); it can't contain `{`, `}` or `<`.
+- Render `LiveValidator.render_htmx_script()` per request, not at import.
+- A `<script>` inside `ui_content` never gets the nonce, by design.
+- `include_html_markers=False` for sites that forbid HTML comments.
+
 ## Spam protection
 
 - **Honeypot:** `website: str = Field('', ui_element='honeypot')` renders an input people can't
   see. When it comes back filled in, answer as if the submission worked and drop it.
-- **Captcha:** a self-hosted arithmetic question. Declare only the answer field; the signed token
+- **Captcha:** a self-hosted arithmetic question (easy for people, hard for bots). Declare only the answer field; the signed token
   is added for you. Check it in the route before validating:
 
 ```python

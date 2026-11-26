@@ -896,3 +896,15 @@ def test_an_added_list_item_starts_with_its_defaults(
     expect(page.locator('[name="invites[2].role"]')).to_have_value('member', timeout=TIMEOUT)
     expect(page.locator('[name="invites[2].email"]')).to_have_value('')
     expect(page.locator('[name="invites[0].role"]')).to_have_value('admin')
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_csp_page_blocks_the_injected_script(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/content-security-policy?style={style}')
+    page.click('#csp-try')
+    results = page.locator('#csp-results')
+    expect(results).to_contain_text('script-src-elem')
+    expect(results).to_contain_text('script-src-attr')
+    expect(results).to_contain_text('Neither injected script ran.')

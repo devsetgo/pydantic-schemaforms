@@ -1,6 +1,6 @@
 # Settings with a Code Field
 
-A settings form where part of the settings is JSON, TOML or a script, typed
+Use this when users must type code or configuration and you want it checked before it's saved. A settings form where part of the settings is JSON, TOML or a script, typed
 into a text area with syntax highlighting and a Format button, and checked on
 the server.
 

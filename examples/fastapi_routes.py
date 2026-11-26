@@ -58,6 +58,7 @@ from examples.shared_models import (  # Simple Form; Medium Form; Complex Form; 
     SaveAndContinueForm,
     CloseAccountForm,
     CLOSE_ACCOUNT_CONFIRM,
+    CspDemoForm,
     WidgetGalleryForm,
     validation_showcase_rules,
     create_sample_nested_data,
@@ -2302,6 +2303,56 @@ async def confirm_post(request: Request, style: str = 'bootstrap', variant: str 
             'framework': 'fastapi',
             'framework_name': 'FastAPI (Async)',
             'try_again_url': f'/confirm?style={style}{_variant_query(variant)}',
+        },
+    )
+
+
+# --- Content-Security-Policy: every page here runs under one ------------------
+def _csp_demo_page(request: Request, style: str, form_html: str):
+    nonce = request.state.csp_nonce
+    return templates.TemplateResponse(
+        request,
+        'csp_demo.html',
+        {
+            'request': request,
+            'title': 'Content-Security-Policy',
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'framework_type': style,
+            'policy': content_security_policy(nonce),
+            'nonce': nonce,
+            'form_html': form_html,
+        },
+    )
+
+
+@router.get('/content-security-policy', response_class=HTMLResponse, tags=['Showcase'])
+async def csp_demo_get(request: Request, style: str = 'bootstrap'):
+    """A form under this site's strict policy, with the policy and nonce shown."""
+    form_html = await render_form_html_async(
+        CspDemoForm, submit_url=f'/content-security-policy?style={style}', framework=style
+    )
+    return _csp_demo_page(request, style, form_html)
+
+
+@router.post('/content-security-policy', response_class=HTMLResponse, tags=['Showcase'])
+async def csp_demo_post(request: Request, style: str = 'bootstrap'):
+    result = CspDemoForm.validate(
+        await request.form(), submit_url=f'/content-security-policy?style={style}', framework=style
+    )
+    if not result.is_valid:
+        return _csp_demo_page(request, style, await result.render_with_errors_async())
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': 'Submitted Under the Policy',
+            'message': 'The form, its error page and this page all ran with nothing blocked.',
+            'data': result.data,
+            'framework': 'fastapi',
+            'framework_name': 'FastAPI (Async)',
+            'try_again_url': f'/content-security-policy?style={style}',
         },
     )
 

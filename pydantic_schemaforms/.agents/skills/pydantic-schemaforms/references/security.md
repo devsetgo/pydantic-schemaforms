@@ -25,7 +25,7 @@ page = html(t'<main>{form}</main>')
 
 ## CSRF
 
-Forms that change something on a site with cookie logins need a CSRF token. The library renders
+CSRF is another site tricking a logged-in user's browser into submitting your form. Forms that change something on a site with cookie logins need a CSRF token. The library renders
 the hidden field; the app creates the token, keeps it in the session and checks it.
 
 ```python
@@ -101,11 +101,76 @@ async def submit_transfer(request: Request):
   generate it for real routes.
 - Keep the session secret out of code; serve the site over HTTPS.
 
+## Content-Security-Policy (nonces)
+
+In plain terms: a Content-Security-Policy is a header that tells the browser which scripts and
+styles it may run, so a script an attacker slips into the page is blocked. A nonce is a random
+value made fresh for each response; only tags carrying it run. The library puts the nonce on
+every script and style it writes and never writes `onclick=` or `style=` attributes, so the app
+only has to hand it the nonce.
+
+When the app sends (or is asked to add) a CSP, follow these steps:
+
+1. **One nonce per request**: `secrets.token_urlsafe(16)` in a middleware. Never reuse one.
+2. **Hand it to the library once**: open `csp_nonces(script_nonce=n, style_nonce=n)` around the
+   request in that middleware. Every render, `validate()`, `render_with_errors()`, wizard step and
+   `render_display()` in the request then carries it. Don't pass it call by call.
+3. **The app's own templates**: `nonce="{{ request.state.csp_nonce }}"` on every `<script>`/
+   `<style>`; replace `onclick=` with `addEventListener` and `style=` with classes.
+4. **HTMX**: `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
+   "inlineStyleNonce": "..."}'>` with the page's nonce, before htmx loads.
+5. **Test with `Content-Security-Policy-Report-Only`**, read the browser console, then switch to
+   the enforcing header. Keep a browser test that fails on `securitypolicyviolation`.
+
+```python
+import secrets
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from models import ContactForm
+
+from pydantic_schemaforms import csp_nonces, html
+
+POLICY = "default-src 'self'; script-src 'nonce-{nonce}'; style-src 'nonce-{nonce}'"
+app = FastAPI()
+
+
+@app.middleware('http')
+async def content_security_policy(request: Request, call_next):
+    nonce = secrets.token_urlsafe(16)
+    request.state.csp_nonce = nonce  # for <script>/<style> tags in your own templates
+    with csp_nonces(script_nonce=nonce, style_nonce=nonce):
+        response = await call_next(request)
+    response.headers['Content-Security-Policy'] = POLICY.format(nonce=nonce)
+    return response
+
+
+@app.get('/contact', response_class=HTMLResponse)
+async def show_contact():
+    return await ContactForm.render_form_async(submit_url='/contact')
+
+
+@app.post('/contact', response_class=HTMLResponse)
+async def submit_contact(request: Request):
+    result = ContactForm.validate(await request.form(), submit_url='/contact')
+    if not result.is_valid:
+        return await result.render_with_errors_async()
+    name = result.data['name']
+    return html(t'<p>Thanks, {name}!</p>')
+```
+
+- Never add `'unsafe-inline'`, `'unsafe-eval'` or script hashes, and never rewrite rendered HTML
+  with a regex to insert nonces. If the app does any of these, replace it with steps 2 to 4.
+- `ui_style` keeps working (it becomes a nonced rule); it can't contain `{`, `}` or `<`.
+- Render `LiveValidator.render_htmx_script()` per request, not at import.
+- A `<script>` inside `ui_content` never gets the nonce, by design.
+- `include_html_markers=False` for sites that forbid HTML comments.
+
 ## Spam protection
 
 - **Honeypot:** `website: str = Field('', ui_element='honeypot')` renders an input people can't
   see. When it comes back filled in, answer as if the submission worked and drop it.
-- **Captcha:** a self-hosted arithmetic question. Declare only the answer field; the signed token
+- **Captcha:** a self-hosted arithmetic question (easy for people, hard for bots). Declare only the answer field; the signed token
   is added for you. Check it in the route before validating:
 
 ```python

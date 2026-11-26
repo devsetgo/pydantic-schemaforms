@@ -2551,6 +2551,24 @@ class LayoutDemonstrationForm(FormModel):
     )
 
 
+class CspDemoForm(FormModel):
+    """A form rendered under the demo's strict Content-Security-Policy.
+
+    Its widgets bring their own scripts and styles, and the note's ui_style becomes a
+    rule in a nonced stylesheet, so the page shows all three working under the policy.
+    """
+
+    name: str = Field(..., title='Your name', min_length=2)
+    favorite_color: str = Field('#0d9488', title='Favorite color', ui_element='color')
+    visit_date: date = Field(date(2026, 12, 1), title='Visit date', ui_element='date')
+    note: str = Field(
+        'This text is bold through ui_style.',
+        title='Note (ui_style="font-weight: 600")',
+        ui_element='textarea',
+        ui_style='font-weight: 600',
+    )
+
+
 class CloseAccountForm(FormModel):
     """render_form_html(..., confirm={...}): a destructive submit asks first."""
 

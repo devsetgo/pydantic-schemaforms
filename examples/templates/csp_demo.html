@@ -1,0 +1,145 @@
+{% extends "material_base.html" if (framework_type == "material" or request.query_params.get("style") == "material") else "shared_base.html" %}
+
+{% block extra_styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .csp-demo pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12);
+        font-size: 0.85rem;
+    }
+    .csp-demo h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
+    .csp-demo .csp-results li { margin-bottom: 0.25rem; }
+    .csp-demo .csp-blocked { color: #15803d; font-weight: 600; }
+    .csp-demo .csp-ran { color: #b91c1c; font-weight: 600; }
+    [data-bs-theme="dark"] .csp-demo .csp-blocked,
+    [data-md-theme="dark"] .csp-demo .csp-blocked { color: #4ade80; }
+    [data-bs-theme="dark"] .csp-demo .csp-ran,
+    [data-md-theme="dark"] .csp-demo .csp-ran { color: #f87171; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="demo-card csp-demo">
+            <div class="form-header">
+                <h2 class="mb-3">
+                    <i class="bi bi-shield-lock-fill me-2"></i>
+                    {{ title }}
+                </h2>
+                <p class="mb-0">
+                    Every page on this site runs under a strict Content-Security-Policy. This page
+                    shows the policy and lets you watch it block a script.
+                    <span class="badge text-bg-info ms-2">Async</span>
+                </p>
+            </div>
+
+            <div class="p-4">
+                <h3>In plain English</h3>
+                <p>
+                    If an attacker ever slipped a script into a web page, the browser would run it
+                    along with the site's own scripts. A <strong>Content-Security-Policy</strong> is a
+                    rule the server sends with each page saying which scripts and styles may run.
+                    This site allows only those carrying a <strong>nonce</strong>: a random value
+                    made fresh for each page, like a wristband for one event. An injected script
+                    doesn't have this page's wristband, so the browser refuses to run it.
+                </p>
+                <p>
+                    The form below brings its own scripts and styles (the color swatch, the date
+                    picker, the bold note). They all carry the nonce, so they work. The app passed
+                    the nonce to the library once, in its middleware, not to this form.
+                </p>
+
+                <h3>This page's policy</h3>
+                <p>The header the server sent with this page:</p>
+                <pre><code>Content-Security-Policy: {{ policy }}</code></pre>
+                <p>
+                    This page's nonce is <code>{{ nonce }}</code>. Reload the page and it changes,
+                    so an old one is useless to an attacker.
+                </p>
+
+                <h3>Try it</h3>
+                <p>
+                    The button below adds two things to this page the way an attacker would: a
+                    <code>&lt;script&gt;</code> without the nonce, and a link with an
+                    <code>onclick="..."</code> attribute. The browser should block both. Open your
+                    browser's developer console to see its own report too.
+                </p>
+                <button type="button" class="btn btn-secondary btn-sm" id="csp-try">
+                    <i class="bi bi-bug me-1"></i> Inject a script
+                </button>
+                <ul class="csp-results mt-3" id="csp-results" aria-live="polite"></ul>
+
+                <h3>A form under the policy</h3>
+                <p>Submit it with the name left blank to see the error page work too.</p>
+                {{ form_html|safe }}
+
+                <h3>How the app does it</h3>
+                <p>
+                    A few lines of middleware make one nonce per request, send the header, and
+                    hand the nonce to the library with <code>csp_nonces()</code>. The page templates
+                    put the same nonce on their own tags. The
+                    <a href="https://devsetgo.github.io/pydantic-schemaforms/advanced/content-security-policy/">Content-Security-Policy guide</a>
+                    walks through adding one to a site, step by step.
+                </p>
+
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Back to Examples
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+(function () {
+    var results = document.getElementById('csp-results');
+    var button = document.getElementById('csp-try');
+    window.cspInjectedRan = false;
+
+    function report(text, cls) {
+        var item = document.createElement('li');
+        item.className = cls;
+        item.textContent = text;
+        results.appendChild(item);
+    }
+
+    document.addEventListener('securitypolicyviolation', function (event) {
+        if (!results.dataset.armed) { return; }
+        var what = event.violatedDirective.indexOf('attr') !== -1
+            ? 'the onclick attribute' : 'the script without a nonce';
+        report('Blocked ' + what + ' (' + event.violatedDirective + ').', 'csp-blocked');
+    });
+
+    button.addEventListener('click', function () {
+        results.textContent = '';
+        results.dataset.armed = '1';
+        var script = document.createElement('script');
+        script.textContent = 'window.cspInjectedRan = true;';
+        document.body.appendChild(script);
+
+        var link = document.createElement('a');
+        link.setAttribute('onclick', 'window.cspInjectedRan = true;');
+        link.hidden = true;
+        document.body.appendChild(link);
+        link.click();
+
+        window.setTimeout(function () {
+            if (window.cspInjectedRan) {
+                report('An injected script ran: the policy is not being enforced.', 'csp-ran');
+            } else {
+                report('Neither injected script ran.', 'csp-blocked');
+            }
+        }, 300);
+    });
+})();
+</script>
+{% endblock %}

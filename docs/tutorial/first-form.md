@@ -34,21 +34,23 @@ date picker. [Fields and Inputs](fields.md) covers this in detail.
 
 **`render_form_html_async()`** returns the form as an HTML string, including
 its labels, inline validation script and the submit button. The FastAPI
-example uses the async version so rendering doesn't block the event loop;
-Flask uses the plain `render_form_html()`.
+example uses the async version. An async app serves many visitors at once on
+one event loop, and the async version keeps one render from making the others
+wait. Flask uses the plain `render_form_html()`.
 
 **`submit_url`** is required: it's where the form posts to. The library never
 guesses a default.
 
 **`include_framework_assets=True, asset_mode="cdn"`** adds the `<link>` and
-`<script>` tags that load Bootstrap from a CDN, so this one string is a
+`<script>` tags that load Bootstrap (the styling toolkit) from a CDN, a public server that hosts files like it, so this one string is a
 working page. In a real app your page template already loads Bootstrap: drop
 these two options and put the form into your template.
 
 ??? note "Putting the form in your own page template"
 
     `render_form_html()` returns a plain string of trusted HTML. In a Jinja
-    template, mark it safe so Jinja doesn't escape it:
+    template, mark it safe so Jinja doesn't escape it. Jinja normally turns HTML into
+    plain text for safety, and this HTML is already safe:
 
     ```html
     <main class="container">

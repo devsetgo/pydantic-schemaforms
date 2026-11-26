@@ -1,6 +1,6 @@
 # Save and Continue (Wizard)
 
-A three-step application that saves each step on the server as it goes: about
+A three-step application that saves each step on the server as it goes (each step is sent when the user clicks Next, so they can quit and resume): about
 you, a resume upload and availability. A user can stop after any step and
 come back to the same place. Unlike the
 [Multi-Step Application](wizard-application.md), each step is its own page and
@@ -30,8 +30,8 @@ its own POST.
 - **`validate_step()` replaces `validate()`.** It checks only the step just
   submitted and returns a `WizardStepResult`. Pass it the same render options
   as the form, and `draft=` with what you saved last time.
-- **`result.draft` is yours to store.** It is a small JSON-safe dict. Save it
-  as it is (session, database, signed cookie) and pass it back as `draft=` on
+- **`result.draft` is yours to store.** The draft is the bundle of answers so far. It is a small JSON-safe dict. Save it
+  as it is (session, database, or a signed cookie, which the server can tell was not tampered with) and pass it back as `draft=` on
   the next request, including the GET, so the user resumes where they left
   off. The example keeps it in a dict keyed by a cookie; a real app uses its
   session or database.

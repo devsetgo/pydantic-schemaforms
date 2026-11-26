@@ -1,5 +1,7 @@
 # Material Design 3
 
+Material Design 3 is Google's design system, with rounded fields and floating labels. Choose this style when you want that look and no CSS framework.
+
 `framework="material"` renders every input, layout and composite as
 [Material Design 3](https://m3.material.io) (the 2023 baseline). The form carries
 its own CSS and script, and your page needs no CSS framework, web font or icon
@@ -27,7 +29,7 @@ Forms are light unless you opt in, in either of two ways:
 
 ## Changing the colors
 
-Every color comes from a `--md-sys-color-*` custom property on `.md-form`.
+Tokens are named color and shape settings: change one and every control that uses it changes. Every color comes from a `--md-sys-color-*` custom property on `.md-form`.
 Override them for your brand:
 
 ```css
@@ -39,7 +41,7 @@ form.md-form {
 }
 ```
 
-To keep the dark scheme working, set each one with `light-dark(<light>, <dark>)`.
+To keep the dark scheme working, set each one with `light-dark(<light>, <dark>)`. That function picks the first color in light mode and the second in dark mode.
 
 | Token | Used for |
 |---|---|
@@ -81,4 +83,4 @@ the tokens on the form itself: a value on an ancestor doesn't reach it.
 
 - A `select` opens the browser's own menu; only the closed field is styled.
 - Native date and time inputs open the browser's own picker.
-- Browsers without CSS `:has()` show the label above the field instead of floating it.
+- Browsers without CSS `:has()` (a newer CSS feature the floating label needs) show the label above the field instead of floating it.

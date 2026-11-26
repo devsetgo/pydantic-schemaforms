@@ -78,7 +78,9 @@ field's `date_format`, a sub-form is a titled section and a `model_list` is a
 table. Every value is escaped, and a submitted URL stays plain text rather than
 becoming a link.
 
-Some fields are deliberately not shown as entered:
+Some fields are deliberately not shown as entered. The hidden anti-spam and
+anti-forgery fields (`csrf`, `captcha`, `honeypot`) aren't answers the user gave, so
+they never appear:
 
 | Field | Shown as |
 |---|---|

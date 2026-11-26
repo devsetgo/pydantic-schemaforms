@@ -5,7 +5,7 @@ upgrade. Every release's changes are in the [Release Notes](release-notes.md).
 
 ## To 26.4.4: Material Design 3
 
-`framework="material"` was rebuilt on Material Design 3. Forms keep working with
+`framework="material"` was rebuilt on Material Design 3, Google's current design system. Forms keep working with
 no code change, and only apps that customize the Material style need to act.
 
 | Changed | What to do |

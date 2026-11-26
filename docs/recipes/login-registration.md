@@ -43,6 +43,6 @@ any other error.
 
 !!! warning "Before going live"
 
-    Store password hashes, never passwords (use a library such as `argon2-cffi`
+    Store password hashes (a one-way scramble, so a stolen database doesn't reveal passwords), never passwords (use a library such as `argon2-cffi`
     or `bcrypt`). Protect both forms with a CSRF token once users are logged
     in; see [CSRF Protection](../tutorial/csrf.md).

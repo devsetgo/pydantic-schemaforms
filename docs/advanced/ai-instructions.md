@@ -6,7 +6,7 @@ always match the version you have installed.
 
 ## Agent skills (recommended)
 
-The package includes five [Agent Skills](https://agentskills.io). Install them into your project
+The package includes five [Agent Skills](https://agentskills.io). Each is a short guide that sits in your project so your assistant uses the current API. Install them into your project
 with [library-skills](https://library-skills.io/):
 
 ```bash

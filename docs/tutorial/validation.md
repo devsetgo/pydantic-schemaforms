@@ -2,7 +2,8 @@
 
 Validation is Pydantic validation: the rules live on the model, and
 `validate()` from [Handling Submissions](handling-submissions.md) runs them.
-There are three levels, and you use them in this order:
+Validators are small Python functions that run on submit and reject a value with your
+own message. There are three levels, and you use them in this order:
 
 1. **Constraints** on `Field()` for a single value: length, range, pattern.
 2. **`@field_validator`** for a rule about one field that a constraint can't express.
@@ -77,7 +78,7 @@ After a failed submit, `result.render_with_errors()` shows:
 
 - the user's values, still filled in;
 - each field's message under the field, with the field marked invalid for
-  screen readers (`aria-invalid`) and linked to the message;
+  screen readers, which read the page aloud (`aria-invalid`) and linked to the message;
 - a summary at the top listing every error, including form-wide ones.
 
 `result.errors` holds the same messages, shaped like the form:

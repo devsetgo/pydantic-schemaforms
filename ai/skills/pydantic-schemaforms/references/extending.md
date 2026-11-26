@@ -22,7 +22,7 @@ wiring; override `render()` to adjust attributes and hand off to `super().render
 
 ## A custom composite control
 
-Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer, the
+Something bigger than one input (a board, a matrix, a custom picker) is a layout renderer (a function registered by name that turns a field into HTML), the
 same mechanism `DataTableLayout` and repeating sub-forms are built on. Don't invent another.
 
 <!-- INCLUDE-CODE: docs_src/advanced/plugin_hooks/composite.py -->

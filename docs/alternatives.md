@@ -81,6 +81,8 @@ integrate with Django's ORM or admin; a Django adapter is on the
 
 ## JSON Schema form renderers in the browser
 
+Some tools build forms in the browser from a JSON description of the fields (a JSON Schema). This library builds them on the server from a Pydantic model instead.
+
 RJSF and the libraries [above](#where-the-idea-came-from) render a form in the
 browser, and RJSF and JSON Forms take a JSON Schema, which a Pydantic model can
 produce. They suit apps that already have a JavaScript frontend. The form is
