@@ -17,8 +17,10 @@ from examples.catalog import (
     SECTIONS_BY_SLUG,
     all_tags,
     example_for_path,
+    neighbors,
     section_examples,
 )
+from examples.example_source import example_sources
 from examples.fastapi_routes import templates
 from examples.shared_models import SignupForm
 from pydantic_schemaforms import render_form_html_async
@@ -45,6 +47,9 @@ def install_template_globals(environment_templates) -> None:
         signup_source=inspect.getsource(SignupForm),
         section_examples=section_examples,
         current_example=example_for_path,
+        catalog_section=SECTIONS_BY_SLUG.get,
+        example_neighbors=neighbors,
+        example_sources=example_sources,
         style_labels=STYLE_LABELS,
     )
     environment_templates.env.filters['with_style'] = with_style
