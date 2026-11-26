@@ -40,8 +40,8 @@ inputs need. It is a fragment for your page, not a whole page.
 | `enable_logging` | `False` | Log rendering at DEBUG level; see [Render Timing and Logging](../advanced/timing-logging.md) |
 | `include_html_markers` | `True` | Wrap the output in `<!--- Start/End Pydantic-SchemaForms -->` comments |
 | `inject_layout_styles` | `True` | Add the small stylesheet that makes the form fill its container |
-| `script_nonce` | `None` | Your Content-Security-Policy nonce for this request: every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too |
-| `style_nonce` | `None` | The same for every `<style>`. The library writes no `style="..."` attributes, so a strict `style-src` needs only this; a field's `ui_style` still writes one |
+| `script_nonce` | `None` | Your Content-Security-Policy nonce for this request: every `<script>` the library writes gets `nonce="..."`. A base64 or base64url token, otherwise `ValueError`. Pass it to `validate()` and `validate_step()` too, or set it once per request with `csp_nonces()`; see [Content-Security-Policy](../advanced/content-security-policy.md) |
+| `style_nonce` | `None` | The same for every `<style>`. The library writes no `style="..."` attributes, and a field's `ui_style` goes into a nonced stylesheet, so a strict `style-src` needs only this |
 
 Any other keyword becomes an attribute of the `<form>` tag, for example
 `id="signup"` or `**{"hx-post": "/signup"}`. A form with a file input gets
@@ -123,6 +123,15 @@ page = html(t"<p>Thanks, {name}!</p>")
 It returns a `SafeHTML`, a `str` that `html()` won't escape again, so pieces
 nest. Wrap a string in `SafeHTML(...)` only when it's HTML you trust, such as
 another form you rendered.
+
+## `csp_nonces()`
+
+`with csp_nonces(script_nonce=nonce, style_nonce=nonce):` gives every form
+rendered, validated or re-rendered inside the block your
+Content-Security-Policy nonce, as if each call had `script_nonce=` and
+`style_nonce=`. Open it once per request in a middleware; `None` for either
+keeps an enclosing block's value. See
+[Content-Security-Policy](../advanced/content-security-policy.md).
 
 ## Lower-level pieces
 
