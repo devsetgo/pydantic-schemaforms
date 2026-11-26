@@ -1078,12 +1078,7 @@ class ValidationResult:
                 **kwargs,
             )
 
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.get_event_loop()
-
-        return await loop.run_in_executor(None, _render)
+        return await asyncio.to_thread(_render)
 
     def __str__(self) -> str:
         if self.is_valid:

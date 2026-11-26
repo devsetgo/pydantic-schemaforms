@@ -12,6 +12,7 @@ from pydantic_schemaforms.rendering.field_shell import (
     build_label,  # noqa: F401  (defined with the shells; public via inputs)
     field_shell_for_framework,
 )
+from pydantic_schemaforms.csp import style_attr
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 
@@ -107,8 +108,10 @@ class BaseInput(ABC):
             if isinstance(value, bool):
                 if value:
                     parts.append(key)
-            elif key == 'style' and not str(value or '').strip():
-                continue
+            elif key == 'style':
+                style = str(style_attr(None if value is None else str(value))).strip()
+                if style:
+                    parts.append(style)
             elif value not in (None, ''):
                 escaped_value = escape(str(value), quote=True)
                 parts.append(f'{key}="{escaped_value}"')

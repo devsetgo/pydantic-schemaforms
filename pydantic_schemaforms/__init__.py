@@ -74,6 +74,7 @@ from .input_types import (
 
 from .inputs import __all__ as _INPUT_EXPORTS
 from .live_validation import HTMXValidationConfig, LiveValidator, validation_response_headers
+from .csp import csp_nonces
 from .html_markers import wrap_with_schemaforms_markers
 from .assets.runtime import bootstrap_icons_css_content, bootstrap_icons_css_tag, read_asset_text
 from .enhanced_renderer import render_form_html, render_form_html_async
@@ -197,7 +198,8 @@ __all__ = [  # pyright: ignore[reportUnsupportedDunderAll]
     'HTMXValidationConfig',
     'LiveValidator',
     'validation_response_headers',
-    # ── PAGE ASSETS / MARKERS ──
+    # ── PAGE ASSETS / MARKERS / CSP ──
+    'csp_nonces',
     'wrap_with_schemaforms_markers',
     'read_asset_text',
     'bootstrap_icons_css_content',
