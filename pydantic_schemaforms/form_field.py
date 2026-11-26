@@ -11,6 +11,7 @@ from typing import Any, Union, get_args, get_origin
 from pydantic import Field as PydanticField
 
 from .show_when import check_field_options
+from .field_checks import attach_widget_checks
 from .uploads import attach_upload_limits, check_upload_limits
 
 from .input_types import format_icon_class, get_default_input_type, is_input_type_valid
@@ -180,7 +181,7 @@ class FormField:
             min_length=min_length,
             max_length=max_length,
         )
-        return attach_upload_limits(field_info, final_schema)
+        return attach_widget_checks(attach_upload_limits(field_info, final_schema), final_schema)
 
     @classmethod
     def validate_input_type(

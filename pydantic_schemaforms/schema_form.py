@@ -9,6 +9,7 @@ from pydantic.fields import FieldInfo
 from .show_when import check_field_options
 from .validation import ValidationResult
 from .tstring import SafeHTML
+from .field_checks import attach_widget_checks
 from .uploads import attach_upload_limits, check_upload_limits
 
 if TYPE_CHECKING:
@@ -219,7 +220,9 @@ def Field(
         min_length=min_length,
         **kwargs,
     )
-    return attach_upload_limits(field_info, json_schema_extra)
+    return attach_widget_checks(
+        attach_upload_limits(field_info, json_schema_extra), json_schema_extra
+    )
 
 
 def _check_render_nonces(render_kwargs: dict[str, Any]) -> None:

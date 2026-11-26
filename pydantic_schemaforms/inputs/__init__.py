@@ -16,6 +16,7 @@ TEXT_INPUTS = [
     'PhoneInput',
     'CreditCardInput',
     'CurrencyInput',
+    'OTPInput',
 ]
 
 NUMERIC_INPUTS = [

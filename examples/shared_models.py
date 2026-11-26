@@ -2812,6 +2812,18 @@ class TextInputsGalleryForm(FormModel):
         ui_element='currency',
         ui_options={'live_format': False},
     )
+    otp_input: str = Field(
+        '042917',
+        title='One-time code (otp: type, paste or use the SMS autofill)',
+        ui_element='otp',
+        ui_help_text='One box per digit; pasting 123 456 fills all six',
+    )
+    otp_letters: str = Field(
+        'A7K2Q9P4',
+        title='Backup code (alias "one_time_code", length=8, numeric=False)',
+        ui_element='one_time_code',
+        ui_options={'length': 8, 'numeric': False},
+    )
     tags_input: str = Field(
         'python,fastapi,pydantic',
         title='Tags',
@@ -3355,6 +3367,11 @@ class ValidationShowcaseForm(FormModel):
     )
     end_date: str = Field('', title='End date (cross-field rule: after start)', ui_element='date')
 
+    # Checked on the server from the widget's own options.
+    verification_code: str = Field(
+        ..., title='Verification code (otp: 6 digits, checked on the server)', ui_element='otp'
+    )
+
     # Checked on the server. A browser can't pre-fill a file, so choose one to see these fail.
     attachment: UploadedFile | None = Field(
         None,
@@ -3433,6 +3450,7 @@ VALID_VALIDATION_DEMO = {
     'coupon': 'SAVE10',
     'start_date': '2025-03-01',
     'end_date': '2025-04-01',
+    'verification_code': '042917',
 }
 
 # Everything valid except the passwords: Pydantic only runs
@@ -3463,4 +3481,5 @@ INVALID_VALIDATION_DEMO = {
     'coupon': 'FREE10',
     'start_date': '2024-03-01',
     'end_date': '2024-02-01',
+    'verification_code': '12345',
 }

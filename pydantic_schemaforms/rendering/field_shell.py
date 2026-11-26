@@ -181,6 +181,8 @@ MATERIAL_FLOATING = frozenset(
 # Native controls that always show a value or a mask, so the label never rests inside.
 MATERIAL_ALWAYS_FLOAT = frozenset({'select', 'date', 'time', 'datetime', 'month', 'week'})
 MATERIAL_GROUPS = frozenset({'radio', 'checkbox_group'})
+# Text boxes under a static label: the label can't float over several boxes.
+MATERIAL_STATIC_INPUTS = frozenset({'otp'})
 
 
 # Registered alias -> the name the sets above use.
@@ -194,11 +196,16 @@ _MATERIAL_ALIASES = {
     'birthdate': 'date',
     'checkbox_toggle': 'toggle',
     'toggle_switch': 'toggle',
+    'one_time_code': 'otp',
 }
 
 
+def material_element(ui_element: str) -> str:
+    return _MATERIAL_ALIASES.get(ui_element, ui_element)
+
+
 def material_field_kind(ui_element: str) -> str:
-    ui_element = _MATERIAL_ALIASES.get(ui_element, ui_element)
+    ui_element = material_element(ui_element)
     if ui_element in MATERIAL_FLOATING:
         return ui_element if ui_element in {'textarea', 'select'} else 'text'
     if ui_element == 'checkbox':

@@ -1,5 +1,5 @@
 from flask import Flask, redirect, request
-from models import LoginForm, RegistrationForm
+from models import LoginForm, RegistrationForm, SignInCodeForm
 
 from pydantic_schemaforms import render_form_html
 
@@ -9,6 +9,10 @@ ASSETS = {'include_framework_assets': True, 'asset_mode': 'cdn'}
 
 def authenticate(username: str, password: str) -> bool:
     return False  # look the user up and verify the password hash
+
+
+def code_matches(code: str) -> bool:
+    return False  # check the code against the user's authenticator secret
 
 
 def username_taken(username: str) -> bool:
@@ -34,6 +38,26 @@ def login():
             form_data={'username': result.data['username']},
             errors={'_errors': 'Wrong username or password'},
             submit_url='/login',
+            **ASSETS,
+        )
+    return redirect('/login/code', code=303)
+
+
+@app.get('/login/code')
+def show_code():
+    return render_form_html(SignInCodeForm, submit_url='/login/code', **ASSETS)
+
+
+@app.post('/login/code')
+def check_code():
+    result = SignInCodeForm.validate(request.form, submit_url='/login/code', **ASSETS)
+    if not result.is_valid:
+        return result.render_with_errors()
+    if not code_matches(result.data['code']):
+        return render_form_html(
+            SignInCodeForm,
+            errors={'code': 'That code is wrong or has expired'},
+            submit_url='/login/code',
             **ASSETS,
         )
     return redirect('/', code=303)
