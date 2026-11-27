@@ -29,7 +29,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from pydantic import EmailStr, ValidationInfo, field_validator, model_validator
 
 from examples.fastapi_routes import _material_variant, _variant_query, templates
-from examples.wizard_examples import _DEFAULT_STYLE, _PAGE, _US_PHONE, _back_to_index, router
+from examples.wizard_examples import _DEFAULT_STYLE, _PAGE, _US_PHONE, router
 from pydantic_schemaforms import (
     Field,
     FormModel,
@@ -269,7 +269,6 @@ def _page(request: Request, style: str, title: str, description: str, form_html:
             'framework_type': style,
             'form_html': form_html,
             **_PAGE,
-            **_back_to_index(style),
         },
     )
 
@@ -285,7 +284,6 @@ def _done_page(request: Request, style: str, title: str, body: SafeHTML, data: d
             'display_html': str(body),
             'data': data,
             **_PAGE,
-            **_back_to_index(style),
             'try_again_url': f'/wizards/job-application?{_query(style, "")}',
         },
     )

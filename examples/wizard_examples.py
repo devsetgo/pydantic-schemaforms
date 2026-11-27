@@ -19,13 +19,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from pydantic import EmailStr, field_validator, model_validator
 
-from examples.fastapi_routes import (
+from examples.fastapi_routes import _material_variant, _variant_query, templates
+from examples.routes.layouts import (
     _SAVED_UPLOADS,
     _load_save_steps_draft,
-    _material_variant,
     _store_save_steps_draft,
-    _variant_query,
-    templates,
 )
 from pydantic_schemaforms import (
     EmailRule,
@@ -995,12 +993,6 @@ def _render_options(example: WizardExample, style: str, variant: str | None) -> 
     }
 
 
-def _back_to_index(style: str) -> dict[str, str]:
-    """The page's back button goes to the Wizards index, not the home page."""
-
-    return {'back_url': f'/wizards?style={style}', 'back_label': 'Back to Wizard Examples'}
-
-
 def _form_page(request: Request, example: WizardExample, style: str, form_html: str):
     return templates.TemplateResponse(
         request,
@@ -1012,7 +1004,6 @@ def _form_page(request: Request, example: WizardExample, style: str, form_html: 
             'framework_type': style,
             'form_html': form_html,
             **_PAGE,
-            **_back_to_index(style),
         },
     )
 
@@ -1094,7 +1085,6 @@ def _done_page(
             'display_html': str(html(t'{summary}{SafeHTML(display)}')),
             'data': data,
             **_PAGE,
-            **_back_to_index(style),
             'try_again_url': f'/wizards/{example.slug}?style={style}{_variant_query(variant)}',
         },
     )

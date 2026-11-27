@@ -19,6 +19,7 @@ from pydantic import EmailStr, field_validator, model_validator
 from pydantic_schemaforms import (
     html,
     CustomRule,
+    DeliverableEmailStr,
     DateRangeRule,
     EmailDeliverabilityRule,
     EmailRule,
@@ -3513,3 +3514,123 @@ INVALID_VALIDATION_DEMO = {
     'end_date': '2024-02-01',
     'verification_code': '12345',
 }
+
+
+# ---------------------------------------------------------------------------
+# Dual-use demo: one FormModel, two endpoints (HTML form + JSON API)
+# ---------------------------------------------------------------------------
+
+
+class ContactForm(FormModel):
+    """Simple contact form that also serves as a typed JSON API body."""
+
+    name: str = Field(
+        ...,
+        min_length=2,
+        title='Full Name',
+        description='Your full name',
+        examples=['Alice Smith'],
+        ui_element='text',
+        ui_placeholder='Enter your full name',
+    )
+    email: EmailStr = Field(
+        ...,
+        title='Email Address',
+        description='We will never share your email',
+        examples=['alice@example.com'],
+        ui_element='email',
+    )
+    message: str = Field(
+        ...,
+        min_length=10,
+        title='Message',
+        description='What would you like to say?',
+        examples=['Hello, I would like to ask about...'],
+        ui_element='textarea',
+    )
+
+
+# ---------------------------------------------------------------------------
+# Second dual-use demo: integer + select fields via as_api_model()
+# ---------------------------------------------------------------------------
+
+
+class FeedbackForm(FormModel):
+    """Product feedback form that also serves as a typed JSON API body."""
+
+    subject: str = Field(
+        ...,
+        title='Subject',
+        description='What are you giving feedback on?',
+        examples=['Documentation', 'Performance', 'New feature request'],
+        ui_element='text',
+        ui_placeholder='e.g. Documentation clarity',
+    )
+    rating: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        title='Rating (1–5)',
+        description='1 = poor, 5 = excellent',
+        examples=[4],
+        ui_element='number',
+    )
+    comment: str = Field(
+        '',
+        title='Comment',
+        description='Any additional details (optional)',
+        examples=['Great library, very easy to integrate!'],
+        ui_element='textarea',
+    )
+
+
+# Shared by both LiveValidator.for_model() below and the hx-trigger built
+# here -- keeps the JS-side debounce and the HTMX trigger's delay in sync.
+LIVE_VALIDATION_DEBOUNCE_MS = 600
+
+
+_DNS_HX_ATTRS = {
+    'hx-trigger': f'blur, input delay:{LIVE_VALIDATION_DEBOUNCE_MS}ms',
+    'hx-swap': 'innerHTML',
+    'data-validate-endpoint': 'true',
+}
+
+
+class EmailDnsComparisonForm(FormModel):
+    """Two email fields, otherwise identical, that differ only in their type:
+    plain ``EmailStr`` (format only) vs. ``DeliverableEmailStr`` (format + a
+    real DNS/MX lookup) — for the /email-dns-validation "with vs. without"
+    demo. Because the DNS/MX check lives on the type itself, there's no
+    per-model validator to write: ``FormModel.validate()``,
+    ``as_api_model()``, and this module's ``register_model_validator()`` call
+    below all enforce/live-check it identically, for free.
+
+    ``ui_options`` attaches the same ``hx-post``/``hx-target`` attributes the
+    hand-written /live-validation demo uses, so both fields validate on blur
+    through the standard FormModel-rendered inputs (no custom HTML needed).
+    """
+
+    email_format_only: EmailStr = Field(
+        ...,
+        title='Without DNS/MX Check',
+        description='EmailRule format check only.',
+        examples=['someone@gmail.com'],
+        ui_element='email',
+        ui_options={
+            **_DNS_HX_ATTRS,
+            'hx-post': '/validate/email_format_only',
+            'hx-target': '#email_format_only-feedback',
+        },
+    )
+    email_with_dns: DeliverableEmailStr = Field(
+        ...,
+        title='With DNS/MX Check',
+        description="Format check, plus a real DNS lookup for the domain's MX records.",
+        examples=['someone@gmail.com'],
+        ui_element='email',
+        ui_options={
+            **_DNS_HX_ATTRS,
+            'hx-post': '/validate/email_with_dns',
+            'hx-target': '#email_with_dns-feedback',
+        },
+    )

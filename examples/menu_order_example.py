@@ -20,8 +20,8 @@ also exercises the feature inside a subform, not just at a form's top level.
 This form mutates state (places an order), so it carries CSRF protection --
 a token is issued on GET and verified before validation on POST, on
 mismatch, re-rendering with a form-level error and never reaching model
-validation -- following the exact same pattern as fastapi_routes.py's
-login/register routes (issue_*_csrf_token/verify_*_csrf_token).
+validation -- following the exact same pattern as the login and registration
+routes in examples/routes/start.py (issue_*_csrf_token/verify_*_csrf_token).
 
 Run directly to print the rendered HTML to stdout, or mount `router` in a
 FastAPI app to try it in a browser.
