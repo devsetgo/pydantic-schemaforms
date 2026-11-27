@@ -15,6 +15,18 @@ from typing import List, Literal, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pydantic import EmailStr, field_validator, model_validator
+from pydantic_extra_types.color import Color
+from pydantic_extra_types.coordinate import Coordinate, Latitude, Longitude
+from pydantic_extra_types.country import CountryAlpha2, CountryShortName
+from pydantic_extra_types.currency_code import Currency
+from pydantic_extra_types.isbn import ISBN
+from pydantic_extra_types.language_code import LanguageAlpha2
+from pydantic_extra_types.mac_address import MacAddress
+from pydantic_extra_types.payment import PaymentCardNumber
+from pydantic_extra_types.phone_numbers import PhoneNumber
+from pydantic_extra_types.routing_number import ABARoutingNumber
+from pydantic_extra_types.semantic_version import SemanticVersion
+from pydantic_extra_types.timezone_name import TimeZoneName
 
 from pydantic_schemaforms import (
     html,
@@ -3313,6 +3325,30 @@ class FieldOptionsGalleryForm(FormModel):
     )
 
 
+class ExtraTypesGalleryForm(FormModel):
+    """pydantic-extra-types fields: each picks its input from its type alone."""
+
+    brand_color: Color = Field(Color('#0d9488'), title='Color (color picker)')
+    phone: PhoneNumber = Field('+1 650 253 0000', title='PhoneNumber (phone input, real check)')
+    country: CountryAlpha2 = Field('US', title='CountryAlpha2 (list of names, submits US)')
+    country_name: CountryShortName = Field('Canada', title='CountryShortName (list of names)')
+    language: LanguageAlpha2 = Field('en', title='LanguageAlpha2 (list of names, submits en)')
+    currency: Currency = Field('USD', title='Currency (list of codes)')
+    time_zone: TimeZoneName = Field('America/New_York', title='TimeZoneName (list of zones)')
+    card: PaymentCardNumber = Field(
+        '4111 1111 1111 1111', title='PaymentCardNumber (card input; spaces allowed)'
+    )
+    latitude: Latitude = Field(40.7128, title='Latitude (number, -90 to 90)')
+    longitude: Longitude = Field(-74.006, title='Longitude (number, -180 to 180)')
+    place: Coordinate = Field(
+        Coordinate(latitude=51.5074, longitude=-0.1278), title='Coordinate ("lat, lon")'
+    )
+    isbn: ISBN = Field('978-0-306-40615-7', title='ISBN (hyphens allowed)')
+    mac_address: MacAddress = Field('00:1A:2B:3C:4D:5E', title='MacAddress')
+    routing_number: ABARoutingNumber = Field('021000021', title='ABARoutingNumber')
+    version: SemanticVersion = Field('1.2.3', title='SemanticVersion')
+
+
 class WidgetGalleryForm(FormModel):
     """Tabbed gallery of every registered ui_element and alias, with all its options.
 
@@ -3330,6 +3366,7 @@ class WidgetGalleryForm(FormModel):
     date_time: DateTimeGalleryForm = Field(title='Date & Time')
     content: ContentGalleryForm = Field(title='Content & Consent')
     files_specialized: SpecializedGalleryForm = Field(title='Files & Specialized')
+    extra_types: ExtraTypesGalleryForm = Field(title='Extra Types')
     field_options: FieldOptionsGalleryForm = Field(title='Field Options')
 
 

@@ -42,6 +42,25 @@ registry listing) — using one of those non-widget names as a `ui_element` valu
 exact silent plain-text fallback this section warns about. The table above, not those constants,
 is the accurate, current source of real `ui_element` values.
 
+## Types from pydantic-extra-types (installed with the library)
+
+For a color, phone number, country, language, currency, time zone, card number, latitude/longitude,
+ISBN, MAC address or semantic version, type the field with the pydantic-extra-types class instead of
+`str` plus a `pattern` or a hand-built list of choices. The form picks the input from the type (a
+country becomes a list of names that submits the code) and Pydantic validates it; no `ui_element`
+needed.
+
+```python
+from pydantic_extra_types.country import CountryAlpha2
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
+country: CountryAlpha2 = Field(title='Country')
+phone: PhoneNumber = Field(title='Phone')  # checks the number really exists
+```
+
+`result.data` holds the type's objects (`Color`, `Coordinate`); `pydantic_core.to_jsonable_python()`
+turns it into plain JSON.
+
 ## Field cookbook: inputs that need more than a bare ui_element
 
 These are the widgets most likely to tempt an assistant into hand-rolling something the library

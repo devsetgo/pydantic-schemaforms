@@ -18,6 +18,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, SecretBytes, SecretStr
 
+from pydantic_schemaforms.extra_types import display_value
 from pydantic_schemaforms.show_when import field_rules, is_shown, prune
 from pydantic_schemaforms.tstring import SafeHTML, html
 
@@ -274,7 +275,7 @@ class _DisplayRenderer:
             return ', '.join(_file_name(item) for item in files)
         if isinstance(value, (list, tuple, set)):
             return ', '.join(str(item) for item in value)
-        return str(value)
+        return str(display_value(value))
 
     def _value_markup(self, text: str, is_empty: bool) -> str:
         css = self._theme.display_class('empty') if is_empty else ''

@@ -1329,11 +1329,13 @@ def _coerce_html_form_values(
             continue
 
         if value == '' and is_optional:
-            # A str-based Enum can't hold "", so it gets None like any other type.
+            # A str-based Enum can't hold "", and neither can a pydantic-extra-types
+            # string (a country code, a phone number), so those get None too.
             allows_string = any(
                 isinstance(candidate, type)
                 and issubclass(candidate, str)
                 and not issubclass(candidate, Enum)
+                and not candidate.__module__.startswith('pydantic_extra_types')
                 for candidate in non_none_types
             )
             if not allows_string:
@@ -1350,6 +1352,11 @@ def _coerce_html_form_values(
             )
         ):
             value = result[field_name] = re.sub(r'[^\d.\-]', '', value)
+
+        if from_form and isinstance(value, str):
+            from .extra_types import clean_form_value
+
+            value = result[field_name] = clean_form_value(annotation, value)
 
         if isinstance(value, str) and value != '':
             # time is NOT a subclass of date (only datetime is) -- must check

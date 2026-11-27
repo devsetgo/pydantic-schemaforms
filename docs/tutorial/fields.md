@@ -32,6 +32,7 @@ Without a `ui_element`, the input comes from the field's type:
 | `list[Enum]`, `list[Literal[...]]` | Multi-select |
 | Another `FormModel` | A sub-form; see [Nested Forms and Lists](nested-forms.md) |
 | `list` of a `FormModel` | A repeating sub-form |
+| A pydantic-extra-types type (`Color`, `PhoneNumber`, `CountryAlpha2`, ...) | The input that fits it; see [Inputs](../reference/inputs.md#types-from-pydantic-extra-types) |
 
 `plan: Plan` above needs nothing else: its dropdown lists `free`, `team` and
 `enterprise`, and the submitted value comes back as a `Plan`.

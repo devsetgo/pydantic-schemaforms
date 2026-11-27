@@ -17,6 +17,7 @@ from pydantic_schemaforms.error_tree import child_errors, field_message
 from pydantic_schemaforms.show_when import field_rules, show_when_wrapper
 from pydantic_schemaforms.rendering.schema_parser import extract_ui_info, resolve_ui_element
 from pydantic_schemaforms.rendering.themes import RendererTheme
+from pydantic_schemaforms.extra_types import display_value
 from pydantic_schemaforms.tstring import SafeHTML, html
 
 # Importing this registers the 'model_list' ui_element renderer (LayoutEngine
@@ -193,7 +194,7 @@ class FieldRenderer:
                     field_attrs['checked'] = True
                 field_attrs['value'] = '1'
             else:
-                field_attrs['value'] = value
+                field_attrs['value'] = display_value(value)
         elif value is not None and ui_element == 'password':
             field_attrs['value'] = value
 

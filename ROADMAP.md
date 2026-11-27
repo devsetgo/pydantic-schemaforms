@@ -141,7 +141,7 @@ validates its types, but most render as a plain text box.
 
 | # | Item | Status | Why now |
 |---|---|---|---|
-| — | [#354](https://github.com/devsetgo/pydantic-schemaforms/issues/354) Pick the right input for each pydantic-extra-types type | Not started | Types such as `Color`, `PhoneNumber` and country codes are already supported for validation, so this mostly maps each one to an existing input. Before phase 6, whose pickers may reuse the country and language dropdowns. |
+| — | [#354](https://github.com/devsetgo/pydantic-schemaforms/issues/354) Pick the right input for each pydantic-extra-types type | Done ([#356](https://github.com/devsetgo/pydantic-schemaforms/pull/356)) | Types such as `Color`, `PhoneNumber` and country codes are already supported for validation, so this mostly maps each one to an existing input. Before phase 6, whose pickers may reuse the country and language dropdowns. |
 
 ## Phase 6: Rich pickers
 

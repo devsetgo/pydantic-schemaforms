@@ -830,6 +830,25 @@ registry listing) — using one of those non-widget names as a `ui_element` valu
 exact silent plain-text fallback this section warns about. The table above, not those constants,
 is the accurate, current source of real `ui_element` values.
 
+### Types from pydantic-extra-types (installed with the library)
+
+For a color, phone number, country, language, currency, time zone, card number, latitude/longitude,
+ISBN, MAC address or semantic version, type the field with the pydantic-extra-types class instead of
+`str` plus a `pattern` or a hand-built list of choices. The form picks the input from the type (a
+country becomes a list of names that submits the code) and Pydantic validates it; no `ui_element`
+needed.
+
+```python
+from pydantic_extra_types.country import CountryAlpha2
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
+country: CountryAlpha2 = Field(title='Country')
+phone: PhoneNumber = Field(title='Phone')  # checks the number really exists
+```
+
+`result.data` holds the type's objects (`Color`, `Coordinate`); `pydantic_core.to_jsonable_python()`
+turns it into plain JSON.
+
 ### Field cookbook: inputs that need more than a bare ui_element
 
 These are the widgets most likely to tempt an assistant into hand-rolling something the library
@@ -2072,6 +2091,20 @@ its replacement; this skill has the full mapping and the order to do it in.
    submission if there isn't one.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
+
+### Next release (after 26.4.7): inputs for pydantic-extra-types
+
+No breaking changes. A field typed with a pydantic-extra-types class now gets a fitting input
+instead of a text box. Look for hand-built versions of what the types now give for free:
+
+| Hand-written in the app | Replace with |
+|---|---|
+| A country or language `str` field with a `pattern`, or a hand-built list of countries | `CountryAlpha2` / `LanguageAlpha2` (a list of names that submits the code) |
+| A hex color `str` field with `ui_element="color"` | `Color` |
+| A phone `str` field plus a `phonenumbers` check in a validator | `PhoneNumber` |
+| A card, ISBN or routing number `str` with a `pattern` | `PaymentCardNumber`, `ISBN`, `ABARoutingNumber` |
+
+A field that sets its own `ui_element` keeps it.
 
 ### 26.4.7: Content-Security-Policy and new inputs
 

@@ -163,10 +163,13 @@ def safe_json_filter(obj):
             return o.isoformat()
         if isinstance(o, UploadedFile):
             return o.filename
-        # Handle other common non-serializable objects
-        elif hasattr(o, '__dict__'):
+        # Values of Pydantic types (Color, Coordinate, ...) in their JSON form.
+        try:
+            from pydantic_core import to_jsonable_python
+
+            return to_jsonable_python(o)
+        except Exception:  # noqa: BLE001 -- the demo shows anything else as text
             return str(o)
-        raise TypeError(f'Object of type {type(o)} is not JSON serializable')
 
     return json.dumps(obj, indent=2, default=json_serial)
 
