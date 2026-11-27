@@ -519,7 +519,7 @@ class FrameworkTheme(RendererTheme):
             'checkbox_group',
         }:
             return self.checkbox_css
-        if ui_element in {'select', 'multiselect'}:
+        if ui_element in {'select', 'multiselect', 'year'}:
             return self.select_css
         return self.input_css
 

@@ -675,6 +675,65 @@ class MonthInput(FormInput):
         return _render_input_tag(attributes_str)
 
 
+YEARS_BACK = 100
+YEARS_AHEAD = 10
+
+
+def year_bounds(
+    min_year: int | None, max_year: int | None, field_min: Any = None, field_max: Any = None
+) -> tuple[int, int]:
+    """The years a year picker offers: its options, else the field's ge/le, else around today."""
+
+    this_year = date.today().year
+    low = min_year if min_year is not None else field_min
+    high = max_year if max_year is not None else field_max
+    low = int(low) if low not in (None, '') else this_year - YEARS_BACK
+    high = int(high) if high not in (None, '') else this_year + YEARS_AHEAD
+    return low, high
+
+
+class YearInput(FormInput):
+    """A year chosen from a list, newest first, instead of a plain number box."""
+
+    ui_element: str = 'year'
+
+    def get_input_type(self) -> str:
+        return 'select'
+
+    def render(
+        self,
+        min_year: int | None = None,
+        max_year: int | None = None,
+        descending: bool = True,
+        **kwargs: Any,
+    ) -> str:
+        low, high = year_bounds(
+            min_year, max_year, kwargs.pop('min', None), kwargs.pop('max', None)
+        )
+        value = kwargs.pop('value', None)
+        selected = str(value) if value not in (None, '') else ''
+        years = list(range(low, high + 1))
+        # A stored year outside the range stays selectable, so the form shows what was
+        # saved or submitted (and the server reports it) instead of quietly changing it.
+        if selected.lstrip('-').isdigit() and not low <= int(selected) <= high:
+            years.append(int(selected))
+        years.sort(reverse=descending)
+        options = (
+            [SafeHTML(str(html(t'<option value="">Choose a year</option>')))]
+            if not selected
+            else []
+        )
+        for year in years:
+            text = str(year)
+            mark = SafeHTML(' selected' if text == selected else '')
+            options.append(html(t'<option value="{text}"{mark}>{text}</option>'))
+        attrs = self.validate_attributes(**kwargs)
+        attrs.pop('type', None)
+        _attrs = SafeHTML(self._build_attributes_string(attrs))
+        _options = SafeHTML(''.join(options))
+        return str(html(t'<select {_attrs}>{_options}</select>'))
+
+
 class WeekInput(FormInput):
     """Week input field for selecting year and week number."""
 
