@@ -106,3 +106,32 @@ def test_otp_renders_in_every_style(framework):
     page = CodeForm.render_form(submit_url='/c', framework=framework)
     assert 'data-sf-otp="6"' in page
     assert 'schemaformsOtp' in page
+
+
+def test_strength_meter_is_opt_in_and_uses_the_validators_rules():
+    from pydantic_schemaforms.validation import PASSWORD_CHECKS
+
+    class Account(FormModel):
+        plain: str = Field(..., ui_element='password')
+        metered: str = Field(
+            ..., ui_element='password', min_length=10, ui_options={'strength_meter': True}
+        )
+
+    page = Account.render_form(submit_url='/a')
+    assert page.count('class="sf-strength" data-sf-strength-for=') == 1
+    assert 'data-sf-strength-for="metered"' in page
+    assert 'minlength="10"' in page
+    for _, _, tip in PASSWORD_CHECKS:
+        assert tip in page
+
+
+def test_password_checks_drive_the_server_validator():
+    from pydantic_schemaforms import create_password_strength_validator
+
+    response = create_password_strength_validator(min_length=8)('abcdefgh')
+    assert response.is_valid
+    assert response.suggestions == [
+        'Add an uppercase letter (A-Z)',
+        'Add a number (0-9)',
+        'Add a special character (!@#$%^&*)',
+    ]

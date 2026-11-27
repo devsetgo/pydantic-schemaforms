@@ -52,6 +52,9 @@ email: str = Field(..., ui_element='email', ui_placeholder='you@example.com')
 **`password`** — Password input; autocomplete defaults to 'new-password' so browsers don't offer to autofill a saved password.
 ```python
 password: str = Field(..., ui_element='password')
+# Add a strength meter as the user types (guidance only):
+password: str = Field(..., ui_element='password', min_length=10,
+                      ui_options={'strength_meter': True})
 ```
 
 **`search`** — Search input with a search-oriented mobile keyboard.
@@ -343,7 +346,8 @@ Required:
 
 Optional:
 
-- ui_options: minlength, maxlength, autocomplete (defaults to new-password)
+- ui_options: minlength, maxlength, autocomplete (defaults to new-password),
+  strength_meter (default False)
 
 ```python
 class PasswordExample(FormModel):
@@ -354,6 +358,30 @@ class PasswordExample(FormModel):
         ui_options={"minlength": 12, "autocomplete": "new-password"},
     )
 ```
+
+**Strength meter.** A strength meter tells people how strong their new password
+is while they type, so they can pick a better one before submitting. It only
+advises: the form still submits whatever they type, and your server decides
+what to accept.
+
+```python
+class SignUp(FormModel):
+    password: str = Field(
+        ...,
+        ui_element="password",
+        min_length=10,
+        ui_options={"strength_meter": True},
+    )
+```
+
+Below the field it shows a bar, a label from "Very weak" to "Strong", and what
+would make the password stronger. It scores the same checks as
+`create_password_strength_validator()`: the field's `min_length` (8 if none is
+set), an uppercase letter, a lowercase letter, a number and a special
+character. The label states the strength in words, so color is never the only
+signal. The meter appears once the user starts typing and needs JavaScript.
+Enforce your real rules on the server with `min_length` and a
+`@field_validator`, as for any field.
 
 #### email
 

@@ -953,6 +953,29 @@ def create_email_validator(
     return validate_email
 
 
+# The character checks a strong password passes: (pattern, warning, suggestion). The
+# password input's strength meter is built from this list too, so the two always agree;
+# the patterns are written to mean the same in Python and JavaScript.
+PASSWORD_CHECKS: tuple[tuple[str, str, str], ...] = (
+    (
+        '[A-Z]',
+        'Password should contain at least one uppercase letter',
+        'Add an uppercase letter (A-Z)',
+    ),
+    (
+        '[a-z]',
+        'Password should contain at least one lowercase letter',
+        'Add a lowercase letter (a-z)',
+    ),
+    (r'\d', 'Password should contain at least one number', 'Add a number (0-9)'),
+    (
+        r'[!@#$%^&*(),.?":{}|<>]',
+        'Password should contain at least one special character',
+        'Add a special character (!@#$%^&*)',
+    ),
+)
+
+
 def create_password_strength_validator(min_length: int = 8) -> Callable[[str], ValidationResponse]:
     """Create a validator for password strength."""
 
@@ -964,21 +987,10 @@ def create_password_strength_validator(min_length: int = 8) -> Callable[[str], V
         if len(value) < min_length:
             errors.append(f'Password must be at least {min_length} characters long')
 
-        if not re.search(r'[A-Z]', value):
-            warnings.append('Password should contain at least one uppercase letter')
-            suggestions.append('Add an uppercase letter (A-Z)')
-
-        if not re.search(r'[a-z]', value):
-            warnings.append('Password should contain at least one lowercase letter')
-            suggestions.append('Add a lowercase letter (a-z)')
-
-        if not re.search(r'\d', value):
-            warnings.append('Password should contain at least one number')
-            suggestions.append('Add a number (0-9)')
-
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
-            warnings.append('Password should contain at least one special character')
-            suggestions.append('Add a special character (!@#$%^&*)')
+        for pattern, warning, suggestion in PASSWORD_CHECKS:
+            if not re.search(pattern, value):
+                warnings.append(warning)
+                suggestions.append(suggestion)
 
         is_valid = len(errors) == 0
 

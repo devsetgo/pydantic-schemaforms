@@ -46,7 +46,10 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
                 'password',
                 "Password input; autocomplete defaults to 'new-password' so browsers "
                 "don't offer to autofill a saved password.",
-                "password: str = Field(..., ui_element='password')",
+                "password: str = Field(..., ui_element='password')\n"
+                '# Add a strength meter as the user types (guidance only):\n'
+                "password: str = Field(..., ui_element='password', min_length=10,\n"
+                "                      ui_options={'strength_meter': True})",
             ),
             InputTypeEntry(
                 'search',
