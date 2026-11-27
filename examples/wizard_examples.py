@@ -19,7 +19,14 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from pydantic import EmailStr, field_validator, model_validator
 
-from examples.fastapi_routes import _material_variant, _variant_query, templates
+from examples.fastapi_routes import (
+    _SAVED_UPLOADS,
+    _load_save_steps_draft,
+    _material_variant,
+    _store_save_steps_draft,
+    _variant_query,
+    templates,
+)
 from pydantic_schemaforms import (
     EmailRule,
     Field,
@@ -851,7 +858,8 @@ WIZARD_EXAMPLES = [
         features=(
             'Co-applicants and references as repeating lists',
             'An income check across steps (@model_validator)',
-            'Several uploads (ui_max_files)',
+            'Each step saved on the server (save_steps)',
+            'Several uploads (ui_max_files), kept once their step is saved',
             'A pets question that shows when needed',
             'Review step and progress ticks',
         ),
@@ -884,7 +892,7 @@ WIZARD_EXAMPLES = [
                 }
             ],
         },
-        options={'wizard_options': {'review_step': True}, 'progress': True},
+        options={'wizard_options': {'review_step': True, 'save_steps': True}, 'progress': True},
     ),
     WizardExample(
         slug='insurance-claim',
@@ -1009,47 +1017,86 @@ def _form_page(request: Request, example: WizardExample, style: str, form_html: 
     )
 
 
+def _saves_steps(example: WizardExample) -> bool:
+    return bool(example.options.get('wizard_options', {}).get('save_steps'))
+
+
 def _add_routes(example: WizardExample) -> None:
     path = f'/wizards/{example.slug}'
+    # A save_steps wizard keeps its draft in a signed cookie and its files in memory,
+    # as /layouts/save-steps does; a real app would use its session and file store.
+    cookie = f'sf_wizard_{example.slug.replace("-", "_")}'
 
     async def show(
         request: Request, style: str = _DEFAULT_STYLE, variant: str | None = None, demo: bool = True
     ):
+        draft = _load_save_steps_draft(request, cookie) if _saves_steps(example) else None
         form_html = await render_form_html_async(
             example.model,
             form_data=_demo_values(example) if demo else None,
+            **({'draft': draft} if draft else {}),
             **_render_options(example, style, variant),
         )
         return _form_page(request, example, style, form_html)
 
+    async def submit_step(request: Request, style: str, variant: str | None):
+        result = example.model.validate_step(
+            await request.form(),
+            draft=_load_save_steps_draft(request, cookie),
+            **_render_options(example, style, variant),
+        )
+        if result.is_complete:
+            response = _done_page(request, example, style, variant, result.data)
+            response.delete_cookie(cookie)
+            return response
+        if result.is_valid:
+            for upload in result.files:
+                upload.ref = secrets.token_hex(8)
+                _SAVED_UPLOADS[upload.ref] = upload.read()
+            # Steps not saved yet open with the demo values, as the first one did.
+            for key, value in _demo_values(example).items():
+                result.data.setdefault(key, value)
+        response = _form_page(request, example, style, await result.render_async())
+        if result.is_valid:
+            _store_save_steps_draft(response, result.draft, cookie)
+        return response
+
     async def submit(request: Request, style: str = _DEFAULT_STYLE, variant: str | None = None):
+        if _saves_steps(example):
+            return await submit_step(request, style, variant)
         options = _render_options(example, style, variant)
         result = example.model.validate(await request.form(), **options)
         if not result.is_valid:
             return _form_page(request, example, style, await result.render_with_errors_async())
-        summary = example.result(result.data)
-        display = example.model.render_display(
-            result.data, framework=style, material_variant=_material_variant(variant)
-        )
-        return templates.TemplateResponse(
-            request,
-            'success.html',
-            {
-                'request': request,
-                'title': f'{example.title}: done',
-                'message': 'Submitted. Here is what was sent.',
-                'display_html': str(html(t'{summary}{SafeHTML(display)}')),
-                'data': result.data,
-                **_PAGE,
-                **_back_to_index(style),
-                'try_again_url': f'/wizards/{example.slug}?style={style}{_variant_query(variant)}',
-            },
-        )
+        return _done_page(request, example, style, variant, result.data)
 
     show.__doc__ = f'{example.title}: {example.summary}'
     router.add_api_route(path, show, methods=['GET'], response_class=HTMLResponse, tags=['Wizards'])
     router.add_api_route(
         path, submit, methods=['POST'], response_class=HTMLResponse, tags=['Wizards']
+    )
+
+
+def _done_page(
+    request: Request, example: WizardExample, style: str, variant: str | None, data: dict
+):
+    summary = example.result(data)
+    display = example.model.render_display(
+        data, framework=style, material_variant=_material_variant(variant)
+    )
+    return templates.TemplateResponse(
+        request,
+        'success.html',
+        {
+            'request': request,
+            'title': f'{example.title}: done',
+            'message': 'Submitted. Here is what was sent.',
+            'display_html': str(html(t'{summary}{SafeHTML(display)}')),
+            'data': data,
+            **_PAGE,
+            **_back_to_index(style),
+            'try_again_url': f'/wizards/{example.slug}?style={style}{_variant_query(variant)}',
+        },
     )
 
 

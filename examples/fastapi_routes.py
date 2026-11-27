@@ -2387,11 +2387,11 @@ def _save_steps_options(style: str, variant: str | None) -> dict[str, Any]:
     }
 
 
-def _load_save_steps_draft(request: Request) -> dict | None:
+def _load_save_steps_draft(request: Request, cookie: str = _SAVE_STEPS_COOKIE) -> dict | None:
     import base64
     import json
 
-    raw = request.cookies.get(_SAVE_STEPS_COOKIE, '')
+    raw = request.cookies.get(cookie, '')
     payload, _, signature = raw.partition('.')
     expected = hmac.new(_SAVE_STEPS_KEY, payload.encode(), 'sha256').hexdigest()
     if not payload or not hmac.compare_digest(signature, expected):
@@ -2399,13 +2399,15 @@ def _load_save_steps_draft(request: Request) -> dict | None:
     return json.loads(base64.urlsafe_b64decode(payload))
 
 
-def _store_save_steps_draft(response: Response, draft: dict) -> None:
+def _store_save_steps_draft(
+    response: Response, draft: dict, cookie: str = _SAVE_STEPS_COOKIE
+) -> None:
     import base64
     import json
 
     payload = base64.urlsafe_b64encode(json.dumps(draft).encode()).decode()
     signature = hmac.new(_SAVE_STEPS_KEY, payload.encode(), 'sha256').hexdigest()
-    response.set_cookie(_SAVE_STEPS_COOKIE, f'{payload}.{signature}', httponly=True, samesite='lax')
+    response.set_cookie(cookie, f'{payload}.{signature}', httponly=True, samesite='lax')
 
 
 def _prefill_city(data: dict) -> None:
