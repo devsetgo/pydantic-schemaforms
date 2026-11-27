@@ -119,7 +119,7 @@ outgrown their structure. It ships in the same release as phase 5.
 |---|---|---|---|
 | — | [#337](https://github.com/devsetgo/pydantic-schemaforms/issues/337) Content-Security-Policy support | Done ([#338](https://github.com/devsetgo/pydantic-schemaforms/pull/338), [#339](https://github.com/devsetgo/pydantic-schemaforms/pull/339), [#340](https://github.com/devsetgo/pydantic-schemaforms/pull/340)) | A site using the library needed forms to work under a strict nonce policy. `csp_nonces()` sets the nonce once per request; the example app now runs under that policy. |
 | — | Plain-English explanations in the docs | Done ([#343](https://github.com/devsetgo/pydantic-schemaforms/pull/343)) | Concepts such as CSP nonces, CSRF and HTMX were explained only in technical terms. Every concept now gets a plain explanation first, a rule recorded in `CLAUDE.md`. |
-| — | Example site redesign: catalog, sidebar and "How it's built" | In progress ([#344](https://github.com/devsetgo/pydantic-schemaforms/pull/344), [#345](https://github.com/devsetgo/pydantic-schemaforms/pull/345)); next: split the example routes by section | The home page had grown to 22 unordered cards. Done before #292 so new inputs land straight in the new structure. |
+| — | Example site redesign: catalog, sidebar and "How it's built" | Done ([#344](https://github.com/devsetgo/pydantic-schemaforms/pull/344), [#345](https://github.com/devsetgo/pydantic-schemaforms/pull/345), [#349](https://github.com/devsetgo/pydantic-schemaforms/pull/349)) | The home page had grown to 22 unordered cards. Done before #292 so new inputs land straight in the new structure. |
 
 ## Phase 5: New small inputs
 
@@ -128,7 +128,7 @@ Small, independent widgets that make a quick release. All of them get checked by
 | # | Item | Status | Why in this order |
 |---|---|---|---|
 | 25 | [#291](https://github.com/devsetgo/pydantic-schemaforms/issues/291) One-time code (OTP) input | Done ([#342](https://github.com/devsetgo/pydantic-schemaforms/pull/342)) | Common on sign-in and verification forms. |
-| 26 | [#292](https://github.com/devsetgo/pydantic-schemaforms/issues/292) Password strength meter | Not started | The scoring rules already exist on the server, so this mostly adds the display. |
+| 26 | [#292](https://github.com/devsetgo/pydantic-schemaforms/issues/292) Password strength meter | Done ([#350](https://github.com/devsetgo/pydantic-schemaforms/pull/350)) | The scoring rules already exist on the server, so this mostly adds the display. |
 | 27 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Not started | Small gap next to the existing month and week inputs. |
 | 28 | [#294](https://github.com/devsetgo/pydantic-schemaforms/issues/294) E.164 phone numbers | Not started | Builds on the phone input's live formatting, and gives apps a consistent value to store. |
 
