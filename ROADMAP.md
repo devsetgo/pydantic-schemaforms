@@ -134,6 +134,15 @@ All phase 5 items are done; they ship as release 26.4.7.
 | 27 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Done ([#351](https://github.com/devsetgo/pydantic-schemaforms/pull/351)) | Small gap next to the existing month and week inputs. |
 | 28 | [#294](https://github.com/devsetgo/pydantic-schemaforms/issues/294) E.164 phone numbers | Done ([#352](https://github.com/devsetgo/pydantic-schemaforms/pull/352)) | Builds on the phone input's live formatting, and gives apps a consistent value to store. |
 
+## Next: pydantic-extra-types in forms
+
+The first item after 26.4.7. The library already depends on pydantic-extra-types and
+validates its types, but most render as a plain text box.
+
+| # | Item | Status | Why now |
+|---|---|---|---|
+| — | [#354](https://github.com/devsetgo/pydantic-schemaforms/issues/354) Pick the right input for each pydantic-extra-types type | Not started | Types such as `Color`, `PhoneNumber` and country codes are already supported for validation, so this mostly maps each one to an existing input. Before phase 6, whose pickers may reuse the country and language dropdowns. |
+
 ## Phase 6: Rich pickers
 
 Custom option lists and pickers that replace the browser's own menus, sharing their surface styling.
