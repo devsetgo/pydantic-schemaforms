@@ -64,7 +64,7 @@ line_length = 100
 version_format = "{current_date}.{build_count}"
 date_format = "%y.%q"
 timezone = "America/New_York"
-git_tag = true
+git_tag = false
 auto_commit = false
 beta_format = "b{beta_count}"
 [[tool.bumpcalver.file]]
