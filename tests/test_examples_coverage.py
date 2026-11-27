@@ -694,5 +694,9 @@ def test_docs_links_name_a_version() -> None:
     )
     root = EXAMPLES_DIR.parent
     files = [root / 'README.md', *EXAMPLES_DIR.rglob('*.py'), *EXAMPLES_DIR.rglob('*.html')]
-    bad = [f'{path.relative_to(root)}' for path in files if unversioned.search(path.read_text())]
+    bad = [
+        f'{path.relative_to(root)}'
+        for path in files
+        if unversioned.search(path.read_text(encoding='utf-8'))
+    ]
     assert not bad, f'link to /stable/... instead: {bad}'
