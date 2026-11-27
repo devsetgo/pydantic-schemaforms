@@ -3,6 +3,24 @@
 Breaking changes that need more than a one-line fix, with the steps to
 upgrade. Every release's changes are in the [Release Notes](release-notes.md).
 
+## To 26.4.7: Content-Security-Policy and new inputs
+
+Apps that use the documented options need no changes: CSP support and the four new inputs
+are opt-in. Only code that customizes the library's internals is affected:
+
+- A custom `FormStyle` built with `FormStyleAssets(tab_assets="<style>...")` must pass a
+  function instead: `tab_assets=lambda: "<style>..."`. The same goes for
+  `accordion_assets` and `wizard_assets`.
+- A subclass of a layout class (`GridLayout`, `CardLayout`, `ModalLayout`, ...) with its
+  own `template` should write `${style_attr}` where it wrote `style="${style}"`. CSS or
+  JavaScript that relied on the old inline styles, or on `ModalLayout`'s global open and
+  close functions, needs updating.
+- About 30 unused `FormTemplates` attributes were removed (the per-input templates and the
+  `MATERIAL_*` entries). Nothing in the library used them.
+
+To serve forms under a strict Content-Security-Policy, see the Content-Security-Policy
+guide: you hand the library your nonce once per request with `csp_nonces()`.
+
 ## To 26.4.4: Material Design 3
 
 `framework="material"` was rebuilt on Material Design 3, Google's current design system. Forms keep working with

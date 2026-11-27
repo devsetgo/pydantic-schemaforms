@@ -59,6 +59,8 @@ categories:
   - title: "Code Improvements"
     labels:
       - "code improvements"
+      - "Code Improvements"
+      - "refactor"
   - title: "GitHub Actions"
     labels:
       - "github actions"

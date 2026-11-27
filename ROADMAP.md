@@ -9,7 +9,7 @@ Every item follows the "Examples must cover every layout, input, and
 validation" rule in `CLAUDE.md`: a feature isn't done until it's demonstrated
 on an example page under both Bootstrap and Material.
 
-Last updated: 2026-11-26.
+Last updated: 2026-11-27.
 
 ## Phase 1: Clear the ground
 
@@ -110,10 +110,10 @@ Decisions that cut across the items:
 | 23 | [#327](https://github.com/devsetgo/pydantic-schemaforms/issues/327) Wizard: skip a step hidden by its group rule | Done ([#329](https://github.com/devsetgo/pydantic-schemaforms/pull/329)) | Option 1 of the parked #251, split out because it needs no new state: every step is still declared up front. Today a step hidden by `ui_group_show_when` stays in place, empty. It drops out of the header and step count, Back and Next jump over it, the review step and progress (#296) leave it out, and in server mode the server picks the next step from the draft. Before #276, whose car care and insurance claim wizards need it. |
 | 24 | [#276](https://github.com/devsetgo/pydantic-schemaforms/issues/276) Wizards section in the example app | Done ([#330](https://github.com/devsetgo/pydantic-schemaforms/pull/330), [#331](https://github.com/devsetgo/pydantic-schemaforms/pull/331), [#332](https://github.com/devsetgo/pydantic-schemaforms/pull/332)) | The realistic test of everything above: a `/wizards` index and eight wizards, each showing a different mix of features (job application, project planner, car setup, car care appointment, insurance claim, rental application, event registration, team onboarding; the issue lists what each one covers). Built after #243 so the job application ships complete, with autosave. `docs/recipes/wizard-application.md` stays the minimal version and links to the full job application; sign-in reuses `docs/recipes/login-registration.md`. |
 
-## Done since 26.4.6, outside the phases
+## Shipped in 26.4.7, outside the phases
 
 Work picked up between phases because a site needed it or the docs and demo had
-outgrown their structure. It ships in the same release as phase 5.
+outgrown their structure. It shipped with phase 5 in 26.4.7.
 
 | # | Item | Status | Why then |
 |---|---|---|---|
@@ -124,6 +124,8 @@ outgrown their structure. It ships in the same release as phase 5.
 ## Phase 5: New small inputs
 
 Small, independent widgets that make a quick release. All of them get checked by the accessibility gate from phase 1.
+
+All phase 5 items are done; they ship as release 26.4.7.
 
 | # | Item | Status | Why in this order |
 |---|---|---|---|
