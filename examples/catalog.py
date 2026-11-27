@@ -12,7 +12,8 @@ from dataclasses import dataclass, field
 
 from examples.wizard_examples import WIZARD_EXAMPLES
 
-DOCS = 'https://devsetgo.github.io/pydantic-schemaforms'
+# The docs are versioned; stable/ always points at the latest release.
+DOCS = 'https://devsetgo.github.io/pydantic-schemaforms/stable'
 STYLES = ('bootstrap', 'material', 'none')
 
 
