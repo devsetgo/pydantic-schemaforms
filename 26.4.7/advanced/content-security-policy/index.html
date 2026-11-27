@@ -1,0 +1,3064 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Server-rendered HTML forms from Pydantic models: one model for the form, its validation and its data">
+      
+      
+        <meta name="author" content="Mike Ryan">
+      
+      
+      
+        <link rel="prev" href="../assets/">
+      
+      
+        <link rel="next" href="../material/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Content-Security-Policy - Pydantic SchemaForms</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#content-security-policy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Pydantic SchemaForms" class="md-header__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  <img src="../../favicon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Pydantic SchemaForms
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Content-Security-Policy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorial/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tutorial - User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../recipes/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Recipes
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../alternatives/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Alternatives
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../about/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://pydantic-schemaforms.devsetgo.com/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Live Demo ↗
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Pydantic SchemaForms" class="md-nav__button md-logo" aria-label="Pydantic SchemaForms" data-md-component="logo">
+      
+  <img src="../../favicon.png" alt="logo">
+
+    </a>
+    Pydantic SchemaForms
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/devsetgo/pydantic-schemaforms" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devsetgo/pydantic-schemaforms
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tutorial/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial - User Guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial - User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/first-form/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Form
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/handling-submissions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Handling Submissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fields and Inputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/nested-forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nested Forms and Lists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/styling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Styling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/csrf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSRF Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced User Guide
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../live-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Validation (HTMX)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rule-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rule-Based Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-tables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Tables (CSV Import)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runtime-forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forms Built at Runtime
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../json-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON API and JSON Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets and Self-Contained Forms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content-Security-Policy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Content-Security-Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-plain-english" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In plain English
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-technical-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The technical version
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-csp-to-a-site-step-by-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a CSP to a site, step by step
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a CSP to a site, step by step">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-make-a-nonce-for-each-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Make a nonce for each request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-hand-it-to-the-library-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Hand it to the library, once
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-put-the-nonce-on-your-own-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Put the nonce on your own tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-if-you-use-htmx-give-it-the-nonce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. If you use HTMX, give it the nonce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-try-it-in-report-only-mode-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Try it in report-only mode first
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-switch-it-on" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Switch it on
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replacing-a-workaround" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replacing a workaround
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#or-pass-the-nonce-to-each-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Or pass the nonce to each call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field styles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-never-gets-the-nonce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What never gets the nonce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#html-comment-markers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTML comment markers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../material/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Material Design 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../timing-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Render Timing and Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../layout-primitives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layout Primitives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugin-hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin Hooks and Custom Composites
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai-instructions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Assistants and Agent Skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../recipes/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recipes
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Recipes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/contact-form/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contact Form
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/login-registration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Login and Registration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/edit-form/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Edit Form from a Database Row
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/address-subform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shipping and Billing Addresses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/order-line-items/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Order with Line Items
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/file-upload/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File Upload
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/wizard-application/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Step Application (Wizard)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/save-and-continue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Save and Continue (Wizard)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/wizard-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wizard Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/settings-code-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings with a Code Field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/jinja-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding in a Jinja Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/layouts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Layouts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/field-options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Field Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/validation-rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rendering-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../alternatives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alternatives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    About
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing_workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../release-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://pydantic-schemaforms.devsetgo.com/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Demo ↗
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-plain-english" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In plain English
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-technical-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The technical version
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-csp-to-a-site-step-by-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a CSP to a site, step by step
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a CSP to a site, step by step">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-make-a-nonce-for-each-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Make a nonce for each request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-hand-it-to-the-library-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Hand it to the library, once
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-put-the-nonce-on-your-own-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Put the nonce on your own tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-if-you-use-htmx-give-it-the-nonce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. If you use HTMX, give it the nonce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-try-it-in-report-only-mode-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Try it in report-only mode first
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-switch-it-on" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Switch it on
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replacing-a-workaround" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replacing a workaround
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#or-pass-the-nonce-to-each-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Or pass the nonce to each call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#field-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field styles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-never-gets-the-nonce" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What never gets the nonce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#html-comment-markers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTML comment markers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="content-security-policy">Content-Security-Policy<a class="headerlink" href="#content-security-policy" title="Permanent link">&para;</a></h1>
+<h2 id="in-plain-english">In plain English<a class="headerlink" href="#in-plain-english" title="Permanent link">&para;</a></h2>
+<p>A web page can contain small programs (scripts) and style rules. Most of
+them are yours, but if an attacker ever manages to slip text into your page,
+say through a comment box that wasn't escaped properly, the browser can't
+tell their script from yours. It runs both. This is called cross-site
+scripting (XSS).</p>
+<p>A <strong>Content-Security-Policy (CSP)</strong> is a list of rules your server sends with
+each page, telling the browser which scripts and styles it may run. Anything
+not on the list is blocked, even if an attacker got it into the page.</p>
+<p>The strictest useful rule is a <strong>nonce</strong>: a random password your server
+makes up fresh for every page it sends. Your own scripts carry it, like a
+wristband at an event. Injected scripts don't know this page's password, so
+the browser turns them away. A new page gets a new nonce, so an attacker
+can't reuse an old one.</p>
+<p><strong>What the library does for you:</strong> every script and style it puts in a form
+wears your nonce, and it never uses the two habits a strict policy forbids:
+code inside HTML attributes (<code>onclick="..."</code>) and inline <code>style="..."</code>
+attributes. You tell it the nonce once per request, and every form, error
+page, wizard step and review page on that request gets it.</p>
+<p><strong>Do you need this?</strong> If your site already sends a <code>Content-Security-Policy</code>
+header, or a security review asks you to, yes. If not, your forms work
+without it. Adding one is a good defense to have even though the library
+already escapes everything it writes.</p>
+<h2 id="the-technical-version">The technical version<a class="headerlink" href="#the-technical-version" title="Permanent link">&para;</a></h2>
+<p>A policy that allows only nonced tags looks like this:</p>
+<div class="highlight"><pre><span></span><code>Content-Security-Policy: script-src 'nonce-r4nd0m'; style-src 'nonce-r4nd0m'
+</code></pre></div>
+<p>The browser then runs a <code>&lt;script&gt;</code> or applies a <code>&lt;style&gt;</code> only when it has
+<code>nonce="r4nd0m"</code>, the value in this response's header. It blocks:</p>
+<ul>
+<li>any <code>&lt;script&gt;</code> or <code>&lt;style&gt;</code> without the nonce;</li>
+<li>inline event handlers such as <code>onclick="..."</code>, nonce or not;</li>
+<li><code>style="..."</code> attributes, even empty ones;</li>
+<li><code>eval()</code> and <code>new Function()</code>.</li>
+</ul>
+<p>Forms render under this policy with nothing blocked. You don't need
+<code>'unsafe-inline'</code> or <code>'unsafe-eval'</code>, which would switch the protection off.</p>
+<h2 id="adding-a-csp-to-a-site-step-by-step">Adding a CSP to a site, step by step<a class="headerlink" href="#adding-a-csp-to-a-site-step-by-step" title="Permanent link">&para;</a></h2>
+<p>The same steps work for a new site and for one that already has a policy.</p>
+<h3 id="1-make-a-nonce-for-each-request">1. Make a nonce for each request<a class="headerlink" href="#1-make-a-nonce-for-each-request" title="Permanent link">&para;</a></h3>
+<p>Use a random, unguessable value, new for every response:
+<code>secrets.token_urlsafe(16)</code>. The nonce must be base64 or base64url, which
+that is. Never reuse one across responses or users.</p>
+<h3 id="2-hand-it-to-the-library-once">2. Hand it to the library, once<a class="headerlink" href="#2-hand-it-to-the-library-once" title="Permanent link">&para;</a></h3>
+<p>Open <code>csp_nonces()</code> around the request, in the same middleware that makes
+the nonce. Everything rendered, validated or re-rendered during that
+request then gets it, with no change to your routes.</p>
+<div class="highlight"><span class="filename">models.py</span><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">FormModel</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ContactForm</span><span class="p">(</span><span class="n">FormModel</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">'Full name'</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ui_style</span><span class="o">=</span><span class="s1">'font-weight: 600'</span><span class="p">)</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s1">'question'</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s1">'Topic'</span><span class="p">,</span>
+        <span class="n">ui_element</span><span class="o">=</span><span class="s1">'radio'</span><span class="p">,</span>
+        <span class="n">ui_options</span><span class="o">=</span><span class="p">{</span><span class="s1">'choices'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'question'</span><span class="p">,</span> <span class="s1">'other'</span><span class="p">]},</span>
+    <span class="p">)</span>
+    <span class="n">other_topic</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="s1">''</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s1">'What about?'</span><span class="p">,</span>
+        <span class="n">ui_show_when</span><span class="o">=</span><span class="p">{</span><span class="s1">'field'</span><span class="p">:</span> <span class="s1">'topic'</span><span class="p">,</span> <span class="s1">'equals'</span><span class="p">:</span> <span class="s1">'other'</span><span class="p">,</span> <span class="s1">'required'</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">'Message'</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ui_element</span><span class="o">=</span><span class="s1">'textarea'</span><span class="p">)</span>
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">FastAPI</label><label for="__tabbed_1_2">Flask</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><span class="filename">main.py</span><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContactForm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">csp_nonces</span><span class="p">,</span> <span class="n">html</span>
+
+<span class="n">POLICY</span> <span class="o">=</span> <span class="s2">"default-src 'self'; script-src 'nonce-</span><span class="si">{nonce}</span><span class="s2">'; style-src 'nonce-</span><span class="si">{nonce}</span><span class="s2">'"</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+
+<span class="hll"><span class="nd">@app</span><span class="o">.</span><span class="n">middleware</span><span class="p">(</span><span class="s1">'http'</span><span class="p">)</span>
+</span><span class="hll"><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">content_security_policy</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
+</span><span class="hll">    <span class="n">nonce</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+</span><span class="hll">    <span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">csp_nonce</span> <span class="o">=</span> <span class="n">nonce</span>  <span class="c1"># for &lt;script&gt;/&lt;style&gt; tags in your own templates</span>
+</span><span class="hll">    <span class="k">with</span> <span class="n">csp_nonces</span><span class="p">(</span><span class="n">script_nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">,</span> <span class="n">style_nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">):</span>
+</span><span class="hll">        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">call_next</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</span><span class="hll">    <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">'Content-Security-Policy'</span><span class="p">]</span> <span class="o">=</span> <span class="n">POLICY</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">)</span>
+</span><span class="hll">    <span class="k">return</span> <span class="n">response</span>
+</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'/contact'</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">show_contact</span><span class="p">():</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">ContactForm</span><span class="o">.</span><span class="n">render_form_async</span><span class="p">(</span><span class="n">submit_url</span><span class="o">=</span><span class="s1">'/contact'</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">'/contact'</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">submit_contact</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">(),</span> <span class="n">submit_url</span><span class="o">=</span><span class="s1">'/contact'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">result</span><span class="o">.</span><span class="n">render_with_errors_async</span><span class="p">()</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">html</span><span class="p">(</span><span class="sa">t</span><span class="s1">'&lt;p&gt;Thanks, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">!&lt;/p&gt;'</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><span class="filename">main.py</span><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExitStack</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContactForm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_schemaforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">csp_nonces</span><span class="p">,</span> <span class="n">html</span>
+
+<span class="n">POLICY</span> <span class="o">=</span> <span class="s2">"default-src 'self'; script-src 'nonce-</span><span class="si">{nonce}</span><span class="s2">'; style-src 'nonce-</span><span class="si">{nonce}</span><span class="s2">'"</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="hll"><span class="nd">@app</span><span class="o">.</span><span class="n">before_request</span>
+</span><span class="hll"><span class="k">def</span><span class="w"> </span><span class="nf">open_nonce_block</span><span class="p">():</span>
+</span><span class="hll">    <span class="n">g</span><span class="o">.</span><span class="n">csp_nonce</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>  <span class="c1"># also for tags in your own templates</span>
+</span><span class="hll">    <span class="n">g</span><span class="o">.</span><span class="n">csp_block</span> <span class="o">=</span> <span class="n">ExitStack</span><span class="p">()</span>
+</span><span class="hll">    <span class="n">g</span><span class="o">.</span><span class="n">csp_block</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">csp_nonces</span><span class="p">(</span><span class="n">script_nonce</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">csp_nonce</span><span class="p">,</span> <span class="n">style_nonce</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">csp_nonce</span><span class="p">))</span>
+</span><span class="hll">
+</span><span class="hll">
+</span><span class="hll"><span class="nd">@app</span><span class="o">.</span><span class="n">after_request</span>
+</span><span class="hll"><span class="k">def</span><span class="w"> </span><span class="nf">add_policy</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+</span><span class="hll">    <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">'Content-Security-Policy'</span><span class="p">]</span> <span class="o">=</span> <span class="n">POLICY</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nonce</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">csp_nonce</span><span class="p">)</span>
+</span><span class="hll">    <span class="k">return</span> <span class="n">response</span>
+</span><span class="hll">
+</span><span class="hll">
+</span><span class="hll"><span class="nd">@app</span><span class="o">.</span><span class="n">teardown_request</span>
+</span><span class="hll"><span class="k">def</span><span class="w"> </span><span class="nf">close_nonce_block</span><span class="p">(</span><span class="n">_error</span><span class="p">):</span>
+</span><span class="hll">    <span class="n">g</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'csp_block'</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'/contact'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">show_contact</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">ContactForm</span><span class="o">.</span><span class="n">render_form</span><span class="p">(</span><span class="n">submit_url</span><span class="o">=</span><span class="s1">'/contact'</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">'/contact'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">submit_contact</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="p">,</span> <span class="n">submit_url</span><span class="o">=</span><span class="s1">'/contact'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">render_with_errors</span><span class="p">()</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">html</span><span class="p">(</span><span class="sa">t</span><span class="s1">'&lt;p&gt;Thanks, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">!&lt;/p&gt;'</span><span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The error page from <code>render_with_errors()</code> and a saved wizard step from
+<code>validate_step().render()</code> get the nonce the same way. So do
+<code>render_display()</code>, <code>LiveValidator.render_htmx_script()</code> and the async
+renderers.</p>
+<h3 id="3-put-the-nonce-on-your-own-tags">3. Put the nonce on your own tags<a class="headerlink" href="#3-put-the-nonce-on-your-own-tags" title="Permanent link">&para;</a></h3>
+<p>The library only nonces what it writes. Your page templates need it too:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">script</span> <span class="na">nonce</span><span class="o">=</span><span class="s">"{{ request.state.csp_nonce }}"</span><span class="p">&gt;...&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">style</span> <span class="na">nonce</span><span class="o">=</span><span class="s">"{{ request.state.csp_nonce }}"</span><span class="p">&gt;</span><span class="o">...</span><span class="p">&lt;/</span><span class="nt">style</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>In your own templates, also move any <code>onclick="..."</code> into a script that
+calls <code>addEventListener</code>, and any <code>style="..."</code> into a class in your
+stylesheet. A <code>&lt;script src="..."&gt;</code> from your own site needs the nonce too,
+or <code>'self'</code> in <code>script-src</code>.</p>
+<h3 id="4-if-you-use-htmx-give-it-the-nonce">4. If you use HTMX, give it the nonce<a class="headerlink" href="#4-if-you-use-htmx-give-it-the-nonce" title="Permanent link">&para;</a></h3>
+<p>HTMX re-creates the <code>&lt;script&gt;</code> tags in each piece of page it swaps in, and
+runs them only if they carry the page's nonce. Tell it the nonce before
+<code>htmx.min.js</code> loads:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">"htmx-config"</span>
+      <span class="na">content</span><span class="o">=</span><span class="s">'{"inlineScriptNonce": "{{ nonce }}", "inlineStyleNonce": "{{ nonce }}"}'</span><span class="p">&gt;</span>
+</code></pre></div>
+<p><code>inlineStyleNonce</code> covers the small stylesheet HTMX adds for its loading
+indicators.</p>
+<h3 id="5-try-it-in-report-only-mode-first">5. Try it in report-only mode first<a class="headerlink" href="#5-try-it-in-report-only-mode-first" title="Permanent link">&para;</a></h3>
+<p>Send the policy as <code>Content-Security-Policy-Report-Only</code> for a while. The
+browser then reports what it <em>would</em> block in its developer console
+("Refused to execute inline script...") but blocks nothing, so you can find
+the tags you missed without breaking the site. Load each page, submit each
+form once with a mistake, and read the console.</p>
+<h3 id="6-switch-it-on">6. Switch it on<a class="headerlink" href="#6-switch-it-on" title="Permanent link">&para;</a></h3>
+<p>When the console stays clean, rename the header to
+<code>Content-Security-Policy</code>. Keep a test that loads your main pages and fails
+on a <code>securitypolicyviolation</code> event, so a new tag without the nonce is
+caught before it ships. This library's own example app does exactly that.</p>
+<h2 id="replacing-a-workaround">Replacing a workaround<a class="headerlink" href="#replacing-a-workaround" title="Permanent link">&para;</a></h2>
+<p>Before the library supported nonces, sites under a strict policy had to
+work around it. If your site does one of these, replace it with steps 2 to 4
+above and delete the workaround:</p>
+<table>
+<thead>
+<tr>
+<th>Workaround</th>
+<th>Why to remove it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rewriting the rendered HTML with a regular expression to add <code>nonce="..."</code></td>
+<td>Fragile, and it can't fix <code>onclick=</code> or <code>style=</code> attributes, which the library no longer writes</td>
+</tr>
+<tr>
+<td><code>'unsafe-inline'</code> in <code>script-src</code> or <code>style-src</code></td>
+<td>It turns the protection off for every script on the page</td>
+</tr>
+<tr>
+<td><code>'unsafe-hashes'</code> or a list of script hashes</td>
+<td>The library's scripts change between releases, so the hashes go stale</td>
+</tr>
+<tr>
+<td>Passing <code>script_nonce=</code> to every render call</td>
+<td>Easy to miss one, such as the error page from <code>render_with_errors()</code>; <code>csp_nonces()</code> covers the whole request</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<h3 id="or-pass-the-nonce-to-each-call">Or pass the nonce to each call<a class="headerlink" href="#or-pass-the-nonce-to-each-call" title="Permanent link">&para;</a></h3>
+<p>Every render function also takes the nonce directly, which suits a single
+page or a script outside a web request:</p>
+<div class="highlight"><pre><span></span><code><span class="n">html</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="o">.</span><span class="n">render_form</span><span class="p">(</span><span class="n">submit_url</span><span class="o">=</span><span class="s1">'/contact'</span><span class="p">,</span> <span class="n">script_nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">,</span> <span class="n">style_nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">submit_url</span><span class="o">=</span><span class="s1">'/contact'</span><span class="p">,</span> <span class="n">script_nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">,</span> <span class="n">style_nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">)</span>
+</code></pre></div>
+<p>Pass it to <code>validate()</code> and <code>validate_step()</code> as well, because the error
+page they render later reuses it. A nonce that isn't base64 or base64url
+raises <code>ValueError</code>.</p>
+<h3 id="field-styles">Field styles<a class="headerlink" href="#field-styles" title="Permanent link">&para;</a></h3>
+<p>A field's <code>ui_style="font-weight: 600"</code> keeps working under the policy.
+While a style nonce is set, the library puts that style in a stylesheet of
+its own that carries the nonce, instead of a <code>style</code> attribute the policy
+would block. <code>ui_style</code> holds declarations only, so it can't contain <code>{</code>,
+<code>}</code> or <code>&lt;</code>.</p>
+<h3 id="what-never-gets-the-nonce">What never gets the nonce<a class="headerlink" href="#what-never-gets-the-nonce" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Anything you put in a content block with <code>ui_content=html(t'...')</code>. A
+  <code>&lt;script&gt;</code> there is never given the nonce, so if untrusted text ever
+  reached it, the policy would still block it.</li>
+<li>A script you render once at import, such as
+  <code>LiveValidator.render_htmx_script()</code> stored in a module-level variable. It
+  was made before any request existed. Render it per request instead.</li>
+<li>The older layout classes (<code>ModalLayout(style=...)</code> and similar) rendered
+  on their own, outside a form, still write a <code>style</code> attribute.</li>
+</ul>
+<h3 id="html-comment-markers">HTML comment markers<a class="headerlink" href="#html-comment-markers" title="Permanent link">&para;</a></h3>
+<p>Each form is wrapped in <code>&lt;!--- Start/End Pydantic-SchemaForms --&gt;</code> comments
+by default. A CSP doesn't cover comments. If your site doesn't allow HTML
+comments in its output, pass <code>include_html_markers=False</code>.</p>
+<h3 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>Cause and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Console: "Refused to execute inline script" pointing at your template</td>
+<td>A tag in your own template lacks <code>nonce=</code>; add it (step 3)</td>
+</tr>
+<tr>
+<td>Console: the same, pointing at a form's script</td>
+<td>The form was rendered outside <code>csp_nonces()</code>, or at import time; render it inside the request</td>
+</tr>
+<tr>
+<td>A form works, but its error page breaks</td>
+<td>The nonce was passed to <code>render_form()</code> but not to <code>validate()</code>; use <code>csp_nonces()</code></td>
+</tr>
+<tr>
+<td>HTMX swaps work, but scripts in the swapped part don't run</td>
+<td>The <code>htmx-config</code> meta tag is missing (step 4)</td>
+</tr>
+<tr>
+<td><code>ValueError</code> naming the nonce</td>
+<td>It isn't base64 or base64url; use <code>secrets.token_urlsafe(16)</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../assets/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Assets and Self-Contained Forms">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Assets and Self-Contained Forms
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../material/" class="md-footer__link md-footer__link--next" aria-label="Next: Material Design 3">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Material Design 3
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 - 2026 Mike Ryan
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://pydantic-schemaforms.devsetgo.com/" target="_blank" rel="noopener" title="Live Demo" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/devsetgo" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/_devsetgo" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.instant", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.footer", "toc.follow", "navigation.top", "search.suggest", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+        <script src="../../js/demo-link.js"></script>
+      
+    
+  </body>
+</html>
