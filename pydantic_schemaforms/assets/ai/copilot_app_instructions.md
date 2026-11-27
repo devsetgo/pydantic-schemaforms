@@ -1022,7 +1022,8 @@ of this table.
 | `textarea` | `code_format` / `code_highlight` / `code_tab_indent` | `True` | Turn off the Format button / highlighting / Tab-key indentation (with `language`) |
 | `textarea` | `indent_size` | `2` | Spaces per indent level (with `language`) |
 | `phone` | `phone_format` | — | Mask with `#` per digit, e.g. `"(###) ###-####"` |
-| `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder |
+| `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder; with `e164`, added to numbers typed without a `+` |
+| `phone` | `e164` | `False` | `validate()` stores the number as E.164 (`+15551234567`) whatever formatting was typed, and rejects a malformed one. Needs `country_code` when `phone_format` is set. Checks the shape only, not that the number exists |
 | `phone`, `currency`, `date`, `time`, `datetime` | `live_format` | `True` | `False` applies the format on blur instead of while typing |
 | `currency` | `currency_symbol` | `"$"` | Symbol shown and stripped on submit |
 | `password` | `strength_meter` | `False` | A bar and tips below the field as the user types, scored like `create_password_strength_validator()` with the field's `min_length`. Guidance only: it never blocks submitting, so enforce rules with `min_length`/`@field_validator` |
@@ -2085,6 +2086,7 @@ attributes. Search the app for `Content-Security-Policy`, `nonce`, `unsafe-inlin
 | `script_nonce=` passed to some render calls | `csp_nonces()` in the middleware, which also covers `render_with_errors()`, wizard steps and `render_display()` |
 | `LiveValidator.render_htmx_script()` stored in a module-level variable | Call it per request, so it gets that request's nonce |
 | A plain text field plus a `pattern` for a verification code | `ui_element="otp"` on a `str` field: one box per character, checked on the server |
+| Code that strips formatting from phone numbers before saving them | `ui_options={"e164": True, "country_code": "+1"}` on the phone field: `result.data` holds `+15551234567` |
 | A number field (or a hand-built select) for a year | `ui_element="year"` on an `int` field, with `min_year`/`max_year` or `ge`/`le` |
 | A hand-written password strength script | `ui_options={"strength_meter": True}` on the password field (guidance only; keep the server checks) |
 

@@ -11,6 +11,22 @@ from pydantic_schemaforms.tstring import SafeHTML, html
 from .base import FormInput, _render_input_tag
 
 
+def _apply_mask(text: str, mask: str) -> str:
+    """Fill a '#'-placeholder mask with the digits of *text*, as the live formatter does."""
+
+    digits = iter(ch for ch in text if ch.isdigit())
+    out = []
+    for ch in mask:
+        if ch == '#':
+            digit = next(digits, None)
+            if digit is None:
+                break
+            out.append(digit)
+        else:
+            out.append(ch)
+    return ''.join(out).rstrip(' -()')
+
+
 def _mask_to_pattern(mask: str) -> str:
     """Turn a '#'-placeholder mask (e.g. '(###) ###-####') into a matching regex."""
     return ''.join(r'\d' if ch == '#' else re.escape(ch) for ch in mask)
@@ -585,9 +601,21 @@ class PhoneInput(TelInput):
         country_code: str | None = None,
         phone_format: str | None = None,
         live_format: bool = True,
+        e164: bool = False,
         **kwargs: Any,
     ) -> str:
-        if country_code:
+        value = kwargs.get('value')
+        if e164 and phone_format and country_code and isinstance(value, str):
+            # A stored +15551234567 is shown the way the user types it: (555) 123-4567.
+            if value.startswith(country_code):
+                kwargs['value'] = _apply_mask(value[len(country_code) :], phone_format)
+                country_code = None
+        # With e164 the server adds the country code, so it stays out of the typed value;
+        # pasting it in front would keep a leading 0 the international form drops.
+        if country_code and e164:
+            if kwargs.get('placeholder') and not kwargs['placeholder'].startswith(country_code):
+                kwargs['placeholder'] = f'{country_code} {kwargs["placeholder"]}'
+        elif country_code:
             if 'value' in kwargs and not kwargs['value'].startswith(country_code):
                 kwargs['value'] = f'{country_code} {kwargs["value"]}'
             elif 'placeholder' in kwargs and not kwargs['placeholder'].startswith(country_code):

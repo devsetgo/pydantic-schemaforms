@@ -70,7 +70,10 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
                 'phone',
                 'Telephone input with a live-formatting mask as the user types.',
                 "phone: str = Field('', ui_element='phone',\n"
-                "                   ui_options={'phone_format': '(###) ###-####'})",
+                "                   ui_options={'phone_format': '(###) ###-####'})\n"
+                '# Store it as E.164 (+15551234567), checked on the server:\n'
+                "phone: str = Field(..., ui_element='phone', ui_options={\n"
+                "    'e164': True, 'country_code': '+1', 'phone_format': '(###) ###-####'})",
                 aliases=('phone_number',),
             ),
             InputTypeEntry(

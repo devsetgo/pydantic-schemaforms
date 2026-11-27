@@ -67,6 +67,7 @@ attributes. Search the app for `Content-Security-Policy`, `nonce`, `unsafe-inlin
 | `script_nonce=` passed to some render calls | `csp_nonces()` in the middleware, which also covers `render_with_errors()`, wizard steps and `render_display()` |
 | `LiveValidator.render_htmx_script()` stored in a module-level variable | Call it per request, so it gets that request's nonce |
 | A plain text field plus a `pattern` for a verification code | `ui_element="otp"` on a `str` field: one box per character, checked on the server |
+| Code that strips formatting from phone numbers before saving them | `ui_options={"e164": True, "country_code": "+1"}` on the phone field: `result.data` holds `+15551234567` |
 | A number field (or a hand-built select) for a year | `ui_element="year"` on an `int` field, with `min_year`/`max_year` or `ge`/`le` |
 | A hand-written password strength script | `ui_options={"strength_meter": True}` on the password field (guidance only; keep the server checks) |
 

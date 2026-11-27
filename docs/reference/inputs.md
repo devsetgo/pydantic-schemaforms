@@ -76,6 +76,9 @@ phone: str = Field('', ui_element='tel')
 ```python
 phone: str = Field('', ui_element='phone',
                    ui_options={'phone_format': '(###) ###-####'})
+# Store it as E.164 (+15551234567), checked on the server:
+phone: str = Field(..., ui_element='phone', ui_options={
+    'e164': True, 'country_code': '+1', 'phone_format': '(###) ###-####'})
 ```
 
 **`ssn`** (also accepts: `social_security_number`) — Social Security Number input, formatted 123-45-6789 with a numeric keyboard.
@@ -1220,6 +1223,41 @@ mask -- `#` marks each digit position, and any other character is inserted
 literally as the user types. Without `phone_format`, the field renders
 exactly as before (no mask). This is display formatting only; it is not a
 substitute for server-side validation of the submitted value.
+
+**Store numbers in one form (E.164).** People type phone numbers in many
+ways: `(555) 123-4567`, `555.123.4567`, `+1 555 123 4567`. If you store them as
+typed, the same number ends up saved several different ways, which makes
+searching, de-duplicating and sending text messages harder. E.164 is the
+international standard form: a `+`, the country code, then the number with
+nothing in between, such as `+15551234567`. With `e164=True`, the form accepts
+any of those spellings and hands your code the E.164 form.
+
+```python
+class ContactExample(FormModel):
+    phone: str = Field(
+        ...,
+        ui_element="phone",
+        ui_options={"e164": True, "country_code": "+1", "phone_format": "(###) ###-####"},
+    )
+```
+
+`validate()` strips spaces, dashes, dots, slashes and brackets, and turns a
+leading `00` into `+`. A number without a `+` gets the field's `country_code`,
+dropping one leading `0` (the prefix most countries dial at home, as in the
+UK's `020 7946 0958`, which becomes `+442079460958`). The result must be a `+`
+and 7 to 15 digits, or the field shows "Enter a valid phone number." Without a
+`country_code`, people must type the `+` themselves, and the error says so. A
+blank `str | None` field becomes `None`.
+
+An edit form shows a stored E.164 value through the mask, so `+15551234567`
+appears as `(555) 123-4567`. Because the mask keeps only digits, `e164` with a
+`phone_format` needs a `country_code`, or `Field()` raises `ValueError`.
+
+This checks the shape of the number, not that it exists: it doesn't know
+each country's area codes or number lengths. For that, check the stored value
+with a library such as `phonenumbers` in a `@field_validator`. Italy is one
+country whose leading `0` is part of the international number, so leave
+`country_code` off for Italian numbers and ask for the `+39`.
 
 #### credit_card (aliases: card, cc_number)
 
