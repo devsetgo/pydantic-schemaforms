@@ -306,6 +306,45 @@ csrf_token: str = Field(..., ui_element='csrf')
 
 <!-- END GENERATED: input-type-reference -->
 
+## Types from pydantic-extra-types
+
+[pydantic-extra-types](https://github.com/pydantic/pydantic-extra-types) adds
+ready-made field types to Pydantic, such as a color, a phone number or a
+country. It comes installed with this library. Type a field with one of them and
+the form picks the input that fits: a color picker for a color, a list of
+country names for a country code. You write nothing else, and Pydantic checks
+the value on the server as usual.
+
+```python
+from pydantic_extra_types.color import Color
+from pydantic_extra_types.country import CountryAlpha2
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
+class ProfileForm(FormModel):
+    favorite_color: Color = Field(title="Favorite color")
+    country: CountryAlpha2 = Field(title="Country")
+    phone: PhoneNumber = Field(title="Phone")
+```
+
+| Type | Input | Notes |
+|---|---|---|
+| `Color` | Color picker | Shown and re-shown as hex (`#ff0000`) |
+| `PhoneNumber` | Phone input | Checks the number really exists for its country, which `ui_options={"e164": True}` can't. Stored as `tel:+1-650-253-0000`, shown without `tel:` |
+| `CountryAlpha2`, `CountryAlpha3`, `CountryNumericCode`, `CountryShortName` | List of country names | Submits the code (`US`, `USA`, `840`) or the name |
+| `LanguageAlpha2`, `LanguageName` | List of language names | Submits `en` or the name |
+| `Currency`, `TimeZoneName`, `ISO_15924` | List of the allowed values | |
+| `PaymentCardNumber` | Card number input | Spaces and hyphens are dropped before checking |
+| `Latitude`, `Longitude` | Number input limited to the valid range | |
+| `Coordinate` | Text input, as `40.7128, -74.0060` | |
+| `ISBN`, `ABARoutingNumber` | Text input | Spaces and hyphens are dropped before checking |
+| `MacAddress`, `ULID`, `SemanticVersion`, `DomainStr` | Text input with an example placeholder | |
+
+A field's own `ui_element` still wins: `country: CountryAlpha2 =
+Field(ui_element="text")` keeps a plain text box. In `result.data` each value
+is the type's own object (a `Color`, a `Coordinate` as `latitude` and
+`longitude`); use `pydantic_core.to_jsonable_python()` to turn the data into
+plain JSON.
+
 ## Options by input
 
 Each input lists what it needs and the `ui_options` it accepts. The examples

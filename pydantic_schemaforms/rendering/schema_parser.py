@@ -211,6 +211,38 @@ def _restore_titles(properties: dict[str, Any], model_fields: dict[str, FieldInf
             field_schema['title'] = info.title
 
 
+def _apply_type_widgets(properties: dict[str, Any], model_fields: dict[str, FieldInfo]) -> None:
+    # A pydantic-extra-types field gets its input from its type (a country code
+    # becomes a select of names), unless the field names its own ui_element.
+    from pydantic_schemaforms.extra_types import widget_for
+
+    for name, info in model_fields.items():
+        field_schema = properties.get(info.alias or name)
+        if not isinstance(field_schema, dict):
+            continue
+        declared = extract_ui_info(field_schema)
+        if any(declared.get(key) for key in ('element', 'ui_element', 'widget', 'input_type')):
+            continue
+        widget = widget_for(info.annotation)
+        if not widget:
+            continue
+        field_schema['ui_element'] = widget['ui_element']
+        if widget['ui_element'] == 'number':
+            field_schema.setdefault('type', 'number')
+        if widget['ui_element'] == 'select':
+            field_schema.pop('pattern', None)
+        # A type that Pydantic describes as a sub-model (Coordinate) is a single input here.
+        field_schema.pop('anyOf', None) if widget['ui_element'] != 'number' else None
+        field_schema.pop('$ref', None)
+        options = widget.get('ui_options')
+        if options:
+            existing = field_schema.get('ui_options')
+            field_schema['ui_options'] = {
+                **options,
+                **(existing if isinstance(existing, dict) else {}),
+            }
+
+
 def ordered_properties(schema: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     """A schema's properties in render order: declaration order, then ``ui_order``."""
 
@@ -305,12 +337,15 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     models = _models_by_name(model_cls)
     _restore_titles(properties, model_cls.model_fields)
     _normalize_properties(properties, schema_defs)
+    _apply_type_widgets(properties, model_cls.model_fields)
     _apply_group_rules(properties, required_fields)
     for def_name, definition in schema_defs.items():
         if isinstance(definition, dict) and isinstance(definition.get('properties'), dict):
             if def_name in models:
                 _restore_titles(definition['properties'], models[def_name].model_fields)
             _normalize_properties(definition['properties'], schema_defs)
+            if def_name in models:
+                _apply_type_widgets(definition['properties'], models[def_name].model_fields)
             _apply_group_rules(definition['properties'], definition.get('required') or [])
 
     fields = ordered_properties(schema)

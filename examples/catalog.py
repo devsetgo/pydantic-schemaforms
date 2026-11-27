@@ -155,9 +155,9 @@ _EXAMPLES = [
         'gallery',
         'Widget gallery',
         'inputs',
-        'Every input type and alias with every option, grouped in tabs.',
+        'Every input type and alias with every option, plus pydantic-extra-types fields, in tabs.',
         '/gallery',
-        tags=('inputs', 'dark-mode'),
+        tags=('inputs', 'extra-types', 'dark-mode'),
         docs=f'{DOCS}/reference/inputs/',
     ),
     Example(

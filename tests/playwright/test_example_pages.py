@@ -987,3 +987,23 @@ def test_password_strength_meter_advises_without_blocking(
     with page.expect_navigation(wait_until='load'):
         page.locator('#ex-panel-try form [type="submit"]').first.click()
     expect(page.locator('#ex-panel-try')).to_contain_text('at least 8 characters')
+
+
+@pytest.mark.parametrize('scheme', ['light', 'dark'])
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_extra_types_tab_passes_axe(
+    browser, examples_server_url: str, style: str, scheme: str
+) -> None:
+    context = browser.new_context(color_scheme=scheme)
+    context.add_init_script(
+        f"try {{ localStorage.setItem('sf-theme', '{scheme}') }} catch (e) {{}}"
+    )
+    page = context.new_page()
+    try:
+        page.goto(f'{examples_server_url}/gallery?style={style}')
+        page.get_by_role('tab', name='Extra Types').click()
+        expect(page.locator('select[name="extra_types.country"]')).to_be_visible()
+        expect(page.locator('select[name="extra_types.country"]')).to_have_value('US')
+        assert _blocking_violations(page) == []
+    finally:
+        context.close()
