@@ -211,6 +211,9 @@ def _restore_titles(properties: dict[str, Any], model_fields: dict[str, FieldInf
             field_schema['title'] = info.title
 
 
+_DECLARED_ELEMENT_KEYS = ('element', 'ui_element', 'widget', 'input_type')
+
+
 def _apply_type_widgets(properties: dict[str, Any], model_fields: dict[str, FieldInfo]) -> None:
     # A pydantic-extra-types field gets its input from its type (a country code
     # becomes a select of names), unless the field names its own ui_element.
@@ -218,29 +221,33 @@ def _apply_type_widgets(properties: dict[str, Any], model_fields: dict[str, Fiel
 
     for name, info in model_fields.items():
         field_schema = properties.get(info.alias or name)
-        if not isinstance(field_schema, dict):
-            continue
-        declared = extract_ui_info(field_schema)
-        if any(declared.get(key) for key in ('element', 'ui_element', 'widget', 'input_type')):
+        if not isinstance(field_schema, dict) or _declares_element(field_schema):
             continue
         widget = widget_for(info.annotation)
-        if not widget:
-            continue
-        field_schema['ui_element'] = widget['ui_element']
-        if widget['ui_element'] == 'number':
-            field_schema.setdefault('type', 'number')
-        if widget['ui_element'] == 'select':
-            field_schema.pop('pattern', None)
-        # A type that Pydantic describes as a sub-model (Coordinate) is a single input here.
-        field_schema.pop('anyOf', None) if widget['ui_element'] != 'number' else None
-        field_schema.pop('$ref', None)
-        options = widget.get('ui_options')
-        if options:
-            existing = field_schema.get('ui_options')
-            field_schema['ui_options'] = {
-                **options,
-                **(existing if isinstance(existing, dict) else {}),
-            }
+        if widget:
+            _use_widget(field_schema, widget)
+
+
+def _declares_element(field_schema: dict[str, Any]) -> bool:
+    declared = extract_ui_info(field_schema)
+    return any(declared.get(key) for key in _DECLARED_ELEMENT_KEYS)
+
+
+def _use_widget(field_schema: dict[str, Any], widget: dict[str, Any]) -> None:
+    element = widget['ui_element']
+    field_schema['ui_element'] = element
+    field_schema.pop('$ref', None)
+    if element == 'number':
+        field_schema.setdefault('type', 'number')
+    else:
+        # A type Pydantic describes as a sub-model or a union (Coordinate) is one input here.
+        field_schema.pop('anyOf', None)
+    if element == 'select':
+        field_schema.pop('pattern', None)
+    existing = field_schema.get('ui_options')
+    options = {**widget.get('ui_options', {}), **(existing if isinstance(existing, dict) else {})}
+    if options:
+        field_schema['ui_options'] = options
 
 
 def ordered_properties(schema: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
@@ -324,6 +331,20 @@ def reset_schema_metadata_cache() -> None:
     _compute_schema_metadata.cache_clear()
 
 
+def _prepare_sub_form(
+    definition: dict[str, Any], model: type[BaseModel] | None, schema_defs: dict[str, Any]
+) -> None:
+    """The same preparation as the form's own fields, for one sub-form in $defs."""
+
+    properties = definition['properties']
+    if model is not None:
+        _restore_titles(properties, model.model_fields)
+    _normalize_properties(properties, schema_defs)
+    if model is not None:
+        _apply_type_widgets(properties, model.model_fields)
+    _apply_group_rules(properties, definition.get('required') or [])
+
+
 @lru_cache(maxsize=128)
 def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     schema = model_cls.model_json_schema()
@@ -341,12 +362,7 @@ def _compute_schema_metadata(model_cls: type[FormModel]) -> SchemaMetadata:
     _apply_group_rules(properties, required_fields)
     for def_name, definition in schema_defs.items():
         if isinstance(definition, dict) and isinstance(definition.get('properties'), dict):
-            if def_name in models:
-                _restore_titles(definition['properties'], models[def_name].model_fields)
-            _normalize_properties(definition['properties'], schema_defs)
-            if def_name in models:
-                _apply_type_widgets(definition['properties'], models[def_name].model_fields)
-            _apply_group_rules(definition['properties'], definition.get('required') or [])
+            _prepare_sub_form(definition, models.get(def_name), schema_defs)
 
     fields = ordered_properties(schema)
 
