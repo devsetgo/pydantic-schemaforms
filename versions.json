@@ -2,15 +2,15 @@
   {
     "version": "26.4.7",
     "title": "Release 26.4.7",
-    "aliases": []
-  },
-  {
-    "version": "26.4.6",
-    "title": "Release 26.4.6",
     "aliases": [
       "stable",
       "latest"
     ]
+  },
+  {
+    "version": "26.4.6",
+    "title": "Release 26.4.6",
+    "aliases": []
   },
   {
     "version": "26.4.5",
