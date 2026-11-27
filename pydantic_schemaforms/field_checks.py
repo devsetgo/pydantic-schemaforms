@@ -17,6 +17,7 @@ from pydantic.fields import FieldInfo
 from pydantic_core import PydanticCustomError, core_schema
 
 _OTP_ELEMENTS = {'otp', 'one_time_code'}
+_YEAR_ELEMENTS = {'year'}
 _OTP_SEPARATORS = re.compile(r'[\s-]')
 
 
@@ -74,9 +75,65 @@ class _OneTimeCode:
         return value
 
 
+@dataclass(frozen=True)
+class _YearRange:
+    """The years a year picker offers, checked on the server.
+
+    A side the field already limits with ge/le is left to Pydantic; an open side
+    uses the picker's default, worked out when the form is checked.
+    """
+
+    min_year: int | None
+    max_year: int | None
+    field_limits_low: bool
+    field_limits_high: bool
+
+    def __get_pydantic_core_schema__(
+        self, source: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        args = _union_args(source)
+        if int not in args:
+            raise TypeError(
+                f'A year field holds a whole year, so type it int or int | None, not {source!r}'
+            )
+        return core_schema.no_info_after_validator_function(self._check, handler(source))
+
+    def _check(self, value: Any) -> Any:
+        if value is None:
+            return value
+        from .inputs.datetime_inputs import year_bounds
+
+        low, high = year_bounds(self.min_year, self.max_year)
+        too_low = not self.field_limits_low and value < low
+        too_high = not self.field_limits_high and value > high
+        if too_low or too_high:
+            raise PydanticCustomError(
+                'year_out_of_range',
+                'Choose a year from {low} to {high}.',
+                {'low': low, 'high': high},
+            )
+        return value
+
+
+def _check_year_options(options: dict[str, Any]) -> None:
+    for key in ('min_year', 'max_year'):
+        value = options.get(key)
+        if value is not None and (not isinstance(value, int) or isinstance(value, bool)):
+            raise ValueError(
+                f"ui_options={{'{key}': ...}} for a year field is a whole year, not {value!r}"
+            )
+    low, high = options.get('min_year'), options.get('max_year')
+    if low is not None and high is not None and low > high:
+        raise ValueError(f"A year field's min_year ({low}) is after its max_year ({high})")
+    if not isinstance(options.get('descending', True), bool):
+        raise ValueError("ui_options={'descending': ...} for a year field is True or False")
+
+
 def check_widget_options(extra: dict[str, Any]) -> None:
     """Fail at declaration, not at the first render, for a widget option that can't work."""
 
+    if _declared_element(extra) in _YEAR_ELEMENTS:
+        _check_year_options(_options(extra))
     if _declared_element(extra) in _OTP_ELEMENTS:
         options = _options(extra)
         length = options.get('length', 6)
@@ -99,5 +156,16 @@ def attach_widget_checks(field_info: FieldInfo, extra: dict[str, Any]) -> FieldI
         options = _options(extra)
         field_info.metadata.append(
             _OneTimeCode(options.get('length', 6), options.get('numeric', True))
+        )
+    if _declared_element(extra) in _YEAR_ELEMENTS:
+        options = _options(extra)
+        limits = {type(item).__name__ for item in field_info.metadata}
+        field_info.metadata.append(
+            _YearRange(
+                options.get('min_year'),
+                options.get('max_year'),
+                field_limits_low=bool(limits & {'Ge', 'Gt'}),
+                field_limits_high=bool(limits & {'Le', 'Lt'}),
+            )
         )
     return field_info

@@ -197,6 +197,13 @@ INPUT_TYPE_CATEGORIES: list[tuple[str, list[InputTypeEntry]]] = [
                 "sprint_week: str = Field(..., ui_element='week')",
             ),
             InputTypeEntry(
+                'year',
+                'A year chosen from a list, newest first. The range comes from min_year/'
+                "max_year, else the field's ge/le, else 100 years back to 10 ahead, and is "
+                'checked on the server.',
+                "birth_year: int = Field(..., ui_element='year', ge=1920, le=2010)",
+            ),
+            InputTypeEntry(
                 'birthdate',
                 'Date input pre-configured with sane birthdate bounds.',
                 "dob: date = Field(..., ui_element='birthdate')",

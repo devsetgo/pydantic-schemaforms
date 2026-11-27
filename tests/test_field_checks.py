@@ -135,3 +135,73 @@ def test_password_checks_drive_the_server_validator():
         'Add a number (0-9)',
         'Add a special character (!@#$%^&*)',
     ]
+
+
+class Years(FormModel):
+    born: int | None = Field(None, ui_element='year', ge=1990, le=2026)
+    model_year: int = Field(
+        2020,
+        ui_element='year',
+        ui_options={'min_year': 2015, 'max_year': 2024, 'descending': False},
+    )
+    any_year: int | None = Field(None, ui_element='year')
+
+
+def test_year_options_follow_min_max_then_ge_le_then_today():
+    import re
+    from datetime import date
+
+    page = Years.render_form(submit_url='/y')
+    selects = dict(re.findall(r'<select name="(\w+)".*?>(.*?)</select>', page, re.S))
+    born = re.findall(r'<option value="(\d*)"', selects['born'])
+    assert born[:3] == ['', '2026', '2025'] and born[-1] == '1990'
+    model_year = re.findall(r'<option value="(\d+)"', selects['model_year'])
+    assert model_year[0] == '2015' and model_year[-1] == '2024'
+    assert 'value="2020" selected' in selects['model_year']
+    this_year = date.today().year
+    any_year = re.findall(r'<option value="(\d+)"', selects['any_year'])
+    assert any_year[0] == str(this_year + 10) and any_year[-1] == str(this_year - 100)
+
+
+def test_year_outside_the_range_stays_selected_and_fails_on_the_server():
+    page = Years.render_form({'model_year': 1999}, submit_url='/y')
+    assert 'value="1999" selected' in page
+    result = Years.validate({'model_year': '1999'}, submit_url='/y')
+    assert result.errors == {'model_year': 'Choose a year from 2015 to 2024.'}
+
+
+def test_year_range_is_checked_only_where_the_field_sets_no_limit():
+    assert Years.validate({'model_year': '2020', 'born': '1985'}, submit_url='/y').errors == {
+        'born': 'Must be 1990 or greater'
+    }
+    result = Years.validate({'model_year': '2020', 'born': '', 'any_year': ''}, submit_url='/y')
+    assert result.is_valid
+    assert result.data == {'born': None, 'model_year': 2020, 'any_year': None}
+    assert not Years.validate({'model_year': '2020', 'any_year': '1800'}, submit_url='/y').is_valid
+
+
+@pytest.mark.parametrize(
+    'options',
+    [
+        {'min_year': '2000'},
+        {'min_year': 2030, 'max_year': 2020},
+        {'descending': 'no'},
+        {'max_year': True},
+    ],
+)
+def test_bad_year_options_fail_at_declaration(options):
+    with pytest.raises(ValueError):
+        Field(ui_element='year', ui_options=options)
+
+
+def test_year_needs_an_int_field():
+    with pytest.raises(TypeError, match='whole year'):
+
+        class Bad(FormModel):
+            year: str = Field(..., ui_element='year')
+
+
+@pytest.mark.parametrize('framework', ['bootstrap', 'material', 'none'])
+def test_year_renders_as_a_select_in_every_style(framework):
+    page = Years.render_form(submit_url='/y', framework=framework)
+    assert page.count('<select name=') == 3

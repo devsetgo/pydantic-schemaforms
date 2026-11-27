@@ -3149,6 +3149,17 @@ class DateTimeGalleryForm(FormModel):
     )
     month_input: str = Field('2024-06', title='Month', ui_element='month')
     week_input: str = Field('2024-W24', title='Week', ui_element='week')
+    year_input: int = Field(
+        1990,
+        title='Year (newest first; 100 years back to 10 ahead)',
+        ui_element='year',
+    )
+    year_range: int | None = Field(
+        None,
+        title='Model year (min_year=2015, max_year=2027, descending=False)',
+        ui_element='year',
+        ui_options={'min_year': 2015, 'max_year': 2027, 'descending': False},
+    )
     birthdate_input: date = Field(
         date(1990, 1, 1), title='Birthdate (shows a computed age)', ui_element='birthdate'
     )
@@ -3408,6 +3419,12 @@ class ValidationShowcaseForm(FormModel):
     end_date: str = Field('', title='End date (cross-field rule: after start)', ui_element='date')
 
     # Checked on the server from the widget's own options.
+    graduation_year: int = Field(
+        ...,
+        title='Graduation year (year picker, min_year=2000, max_year=2026)',
+        ui_element='year',
+        ui_options={'min_year': 2000, 'max_year': 2026},
+    )
     verification_code: str = Field(
         ..., title='Verification code (otp: 6 digits, checked on the server)', ui_element='otp'
     )
@@ -3491,6 +3508,7 @@ VALID_VALIDATION_DEMO = {
     'start_date': '2025-03-01',
     'end_date': '2025-04-01',
     'verification_code': '042917',
+    'graduation_year': 2012,
 }
 
 # Everything valid except the passwords: Pydantic only runs
@@ -3522,6 +3540,7 @@ INVALID_VALIDATION_DEMO = {
     'start_date': '2024-03-01',
     'end_date': '2024-02-01',
     'verification_code': '12345',
+    'graduation_year': 1985,
 }
 
 

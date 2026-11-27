@@ -129,7 +129,7 @@ Small, independent widgets that make a quick release. All of them get checked by
 |---|---|---|---|
 | 25 | [#291](https://github.com/devsetgo/pydantic-schemaforms/issues/291) One-time code (OTP) input | Done ([#342](https://github.com/devsetgo/pydantic-schemaforms/pull/342)) | Common on sign-in and verification forms. |
 | 26 | [#292](https://github.com/devsetgo/pydantic-schemaforms/issues/292) Password strength meter | Done ([#350](https://github.com/devsetgo/pydantic-schemaforms/pull/350)) | The scoring rules already exist on the server, so this mostly adds the display. |
-| 27 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Not started | Small gap next to the existing month and week inputs. |
+| 27 | [#293](https://github.com/devsetgo/pydantic-schemaforms/issues/293) Year picker | Done ([#351](https://github.com/devsetgo/pydantic-schemaforms/pull/351)) | Small gap next to the existing month and week inputs. |
 | 28 | [#294](https://github.com/devsetgo/pydantic-schemaforms/issues/294) E.164 phone numbers | Not started | Builds on the phone input's live formatting, and gives apps a consistent value to store. |
 
 ## Phase 6: Rich pickers

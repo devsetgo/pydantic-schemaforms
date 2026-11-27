@@ -58,6 +58,7 @@ DATETIME_INPUTS = [
     'datetime_local',
     'month',
     'week',
+    'year',
     'date_range',
     'time_range',
     'birthdate',
@@ -122,6 +123,7 @@ VALID_INPUT_TYPES_BY_PYTHON_TYPE: dict[type, set[str]] = {
         'rating',
         'slider',
         'temperature',
+        'year',
         'hidden',
     },
     float: {

@@ -50,6 +50,7 @@ DATETIME_INPUTS = [
     'DatetimeInput',
     'MonthInput',
     'WeekInput',
+    'YearInput',
     'DateRangeInput',
     'TimeRangeInput',
     'BirthdateInput',

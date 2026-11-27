@@ -197,6 +197,8 @@ _MATERIAL_ALIASES = {
     'checkbox_toggle': 'toggle',
     'toggle_switch': 'toggle',
     'one_time_code': 'otp',
+    # A year picker is a native select.
+    'year': 'select',
 }
 
 

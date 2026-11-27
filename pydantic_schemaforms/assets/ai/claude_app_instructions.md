@@ -809,7 +809,7 @@ extending reference if nothing genuinely fits.
 | Specialized numeric | `percentage`, `decimal`, `integer`, `age`, `quantity` (ships +/- stepper buttons by default), `score`, `rating` (alias `rating_stars`; range-slider based), `star_rating` (individually clickable stars — a distinct widget from `rating`, not an alias of it), `slider`, `temperature` |
 | Selection | `select`, `multiselect`, `radio`, `combobox`, `checkbox`, `checkbox_group` |
 | Boolean toggle | `toggle` (alias `toggle_switch`/`checkbox_toggle`) — styled on/off switch, functionally a checkbox |
-| Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week` |
+| Date/time | `date`, `time`, `datetime` (alias `datetime-local`), `month`, `week`, `year` (a list of years, on an int field) |
 | Specialized date | `birthdate` (adds a computed age display) |
 | File/color | `file`, `color` |
 | Hidden/security | `hidden` (a bare `<input type="hidden">` with no label; `ui_hidden=True` on any field does the same), `csrf` (used internally by CSRF support), `honeypot` (spam-trap field; always renders empty by design), `captcha` (self-hosted arithmetic challenge; the answer is verified server-side via `verify_captcha()` and never sent to the client) |
@@ -1028,6 +1028,8 @@ of this table.
 | `phone`, `currency`, `date`, `time`, `datetime` | `live_format` | `True` | `False` applies the format on blur instead of while typing |
 | `currency` | `currency_symbol` | `"$"` | Symbol shown and stripped on submit |
 | `password` | `strength_meter` | `False` | A bar and tips below the field as the user types, scored like `create_password_strength_validator()` with the field's `min_length`. Guidance only: it never blocks submitting, so enforce rules with `min_length`/`@field_validator` |
+| `year` | `min_year`, `max_year` | the field's `ge`/`le`, else 100 years back to 10 ahead | The years offered; checked on the server too |
+| `year` | `descending` | `True` | `False` lists the oldest year first |
 | `otp` | `length` | `6` | Number of characters, 4 to 12; checked on the server |
 | `otp` | `numeric` | `True` | `False` also allows letters |
 | `tags` | `separator` | `","` | Join character for the submitted string |
@@ -2085,6 +2087,7 @@ attributes. Search the app for `Content-Security-Policy`, `nonce`, `unsafe-inlin
 | `script_nonce=` passed to some render calls | `csp_nonces()` in the middleware, which also covers `render_with_errors()`, wizard steps and `render_display()` |
 | `LiveValidator.render_htmx_script()` stored in a module-level variable | Call it per request, so it gets that request's nonce |
 | A plain text field plus a `pattern` for a verification code | `ui_element="otp"` on a `str` field: one box per character, checked on the server |
+| A number field (or a hand-built select) for a year | `ui_element="year"` on an `int` field, with `min_year`/`max_year` or `ge`/`le` |
 | A hand-written password strength script | `ui_options={"strength_meter": True}` on the password field (guidance only; keep the server checks) |
 
 With HTMX, add `<meta name="htmx-config" content='{"inlineScriptNonce": "...",

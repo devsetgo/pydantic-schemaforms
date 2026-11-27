@@ -187,6 +187,11 @@ billing_month: str = Field(..., ui_element='month')
 sprint_week: str = Field(..., ui_element='week')
 ```
 
+**`year`** — A year chosen from a list, newest first. The range comes from min_year/max_year, else the field's ge/le, else 100 years back to 10 ahead, and is checked on the server.
+```python
+birth_year: int = Field(..., ui_element='year', ge=1920, le=2010)
+```
+
 **`birthdate`** — Date input pre-configured with sane birthdate bounds.
 ```python
 dob: date = Field(..., ui_element='birthdate')
@@ -1028,6 +1033,39 @@ class WeekExample(FormModel):
         ui_options={"value": "2026-W17"},
     )
 ```
+
+#### year
+
+A year picker lets people choose a year, such as a birth year or a car's
+model year, from a list instead of typing it. Phones show their own scrolling
+picker for it, which is quicker than a number keypad.
+
+Required:
+
+- `int` (or `int | None`) field + ui_element="year"
+
+Optional:
+
+- ui_options: min_year, max_year, descending (default True: newest first)
+
+```python
+class YearExample(FormModel):
+    birth_year: int = Field(..., ui_element="year", ge=1920, le=2010)
+    model_year: int | None = Field(
+        None,
+        ui_element="year",
+        ui_options={"min_year": 2015, "max_year": 2027, "descending": False},
+    )
+```
+
+The list runs from `min_year` to `max_year`. Without them it uses the field's
+`ge` and `le`, and without those, 100 years back to 10 years ahead of today. A
+field with no value starts on "Choose a year", so nothing is picked for the
+user. The range is checked on the server too, with "Choose a year from 2015
+to 2027." under the field; a side the field already limits with `ge`/`le`
+keeps Pydantic's own message. A stored year outside the range still shows,
+selected, so editing an old record never changes it quietly. Any field type
+other than `int` raises `TypeError`.
 
 #### birthdate
 
