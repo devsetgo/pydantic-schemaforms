@@ -964,3 +964,26 @@ def test_rental_application_saves_each_step(browser, examples_server_url: str, s
         assert not any(c['name'] == 'sf_wizard_rental_application' for c in context.cookies())
     finally:
         context.close()
+
+
+@pytest.mark.parametrize('style', ['bootstrap', 'material'])
+def test_password_strength_meter_advises_without_blocking(
+    page: Page, examples_server_url: str, style: str
+) -> None:
+    page.goto(f'{examples_server_url}/register?style={style}')
+    meter = page.locator('[data-sf-strength-for="password"]')
+    page.fill('input[name="password"]', '')
+    expect(meter).to_be_hidden()
+    page.fill('input[name="password"]', 'abc')
+    expect(meter).to_contain_text('Strength: Very weak')
+    expect(meter).to_contain_text('Use at least 8 characters')
+    page.fill('input[name="password"]', 'abcDEF12!xyz')
+    expect(meter).to_contain_text('Strength: Strong')
+    expect(meter).to_have_attribute('data-level', 'strong')
+    if style == 'material':
+        # Placed after the outlined box, not inside it.
+        assert page.locator('.md-field__box [data-sf-strength-for]').count() == 0
+    page.fill('input[name="password"]', 'abc')
+    with page.expect_navigation(wait_until='load'):
+        page.locator('#ex-panel-try form [type="submit"]').first.click()
+    expect(page.locator('#ex-panel-try')).to_contain_text('at least 8 characters')

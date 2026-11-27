@@ -239,6 +239,7 @@ of this table.
 | `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder |
 | `phone`, `currency`, `date`, `time`, `datetime` | `live_format` | `True` | `False` applies the format on blur instead of while typing |
 | `currency` | `currency_symbol` | `"$"` | Symbol shown and stripped on submit |
+| `password` | `strength_meter` | `False` | A bar and tips below the field as the user types, scored like `create_password_strength_validator()` with the field's `min_length`. Guidance only: it never blocks submitting, so enforce rules with `min_length`/`@field_validator` |
 | `otp` | `length` | `6` | Number of characters, 4 to 12; checked on the server |
 | `otp` | `numeric` | `True` | `False` also allows letters |
 | `tags` | `separator` | `","` | Join character for the submitted string |

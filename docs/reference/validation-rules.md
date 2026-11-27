@@ -92,7 +92,7 @@ Ready-made functions for `add_cross_field_rule()`:
 | Function | Returns |
 |---|---|
 | `create_email_validator(check_deliverability=False, dns_timeout=None)` | A function that checks one email and returns a `ValidationResponse` |
-| `create_password_strength_validator(min_length=8)` | A function that checks a password's length and mix of characters, with `warnings` and `suggestions` |
+| `create_password_strength_validator(min_length=8)` | A function that checks a password's length and mix of characters, with `warnings` and `suggestions`. The password input's `strength_meter` scores the same checks in the browser |
 
 `ValidationResponse` has `field_name`, `is_valid`, `errors`, `warnings`,
 `suggestions`, `value` and `formatted_value`, plus `to_dict()` and `to_json()`.

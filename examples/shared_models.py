@@ -262,6 +262,7 @@ class UserRegistrationForm(FormModel):
         help_text='Password must be at least 8 characters',
         icon='lock',
         min_length=8,
+        ui_options={'strength_meter': True},
     )
 
     confirm_password: str = FormField(
@@ -2790,6 +2791,14 @@ class TextInputsGalleryForm(FormModel):
         ui_options={'language': 'json', 'rows': 2, 'code_tab_indent': False},
     )
     password_input: str = Field('demo-password', title='Password', ui_element='password')
+    password_strength: str = Field(
+        'correct-Horse-7',
+        title='Password with a strength meter (strength_meter=True)',
+        ui_element='password',
+        min_length=10,
+        ui_options={'strength_meter': True},
+        ui_help_text='Type to see the meter; it only advises and never blocks submitting',
+    )
     email_input: str = Field(
         'demo@example.com', title='Email', ui_element='email', ui_placeholder='you@example.com'
     )

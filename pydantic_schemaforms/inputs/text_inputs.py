@@ -323,6 +323,81 @@ class TextInput(FormInput):
         return _render_input_tag(self._build_attributes_string(attrs))
 
 
+_STRENGTH_CSS = """
+.sf-strength { margin-top: 0.4rem; font-size: 0.875rem; }
+.sf-strength[hidden] { display: none; }
+.sf-strength__track { height: 0.35rem; border-radius: 999px; background: var(--sf-outline-variant, #dee2e6); overflow: hidden; }
+.sf-strength__fill { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--sf-error, #dc3545); transition: width 0.15s; }
+.sf-strength[data-level="medium"] .sf-strength__fill { background: var(--sf-primary, #0d6efd); }
+.sf-strength[data-level="strong"] .sf-strength__fill { background: var(--sf-success, #198754); }
+.sf-strength__label { margin: 0.25rem 0 0; color: var(--sf-on-surface, inherit); }
+.sf-strength__tips { margin: 0.15rem 0 0; padding-left: 1.1rem; color: var(--sf-on-surface-variant, #6c757d); }
+"""
+
+
+def _strength_js() -> str:
+    """The meter's script, with the same checks create_password_strength_validator runs."""
+
+    from pydantic_schemaforms.validation import PASSWORD_CHECKS
+
+    rules = json.dumps([[pattern, tip] for pattern, _, tip in PASSWORD_CHECKS])
+    # JS-only (rule 4 exception): the rules are constants from this package, with < escaped.
+    rules = rules.replace('<', '\\u003c').replace('>', '\\u003e')
+    return (
+        """
+(function () {
+    if (window.schemaformsStrength) { return; }
+    var rules = """
+        + rules
+        + """;
+    var labels = ['Very weak', 'Very weak', 'Weak', 'Fair', 'Good', 'Strong'];
+    window.schemaformsStrength = true;
+
+    function meterFor(input) {
+        var meter = document.querySelector('[data-sf-strength-for="' + CSS.escape(input.id) + '"]');
+        if (meter && !meter.dataset.placed) {
+            meter.dataset.placed = '1';
+            var box = input.closest('.md-field__box');
+            if (box) { box.after(meter); }
+        }
+        return meter;
+    }
+
+    function update(input) {
+        var meter = meterFor(input);
+        if (!meter) { return; }
+        var value = input.value;
+        meter.hidden = value === '';
+        if (!value) { return; }
+        var min = input.minLength > 0 ? input.minLength : 8;
+        var tips = [];
+        var score = 0;
+        if (value.length >= min) { score++; } else { tips.push('Use at least ' + min + ' characters'); }
+        rules.forEach(function (rule) {
+            if (new RegExp(rule[0]).test(value)) { score++; } else { tips.push(rule[1]); }
+        });
+        meter.dataset.level = score <= 2 ? 'weak' : score < 5 ? 'medium' : 'strong';
+        meter.querySelector('.sf-strength__fill').style.width = (score / 5 * 100) + '%';
+        meter.querySelector('.sf-strength__label').textContent = 'Strength: ' + labels[score];
+        var list = meter.querySelector('.sf-strength__tips');
+        list.textContent = '';
+        tips.forEach(function (tip) {
+            var item = document.createElement('li');
+            item.textContent = tip;
+            list.appendChild(item);
+        });
+    }
+
+    document.addEventListener('input', function (event) {
+        if (event.target.matches && event.target.matches('input[data-sf-strength]')) { update(event.target); }
+    });
+    function scan() { document.querySelectorAll('input[data-sf-strength]').forEach(update); }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', scan); } else { scan(); }
+})();
+"""
+    )
+
+
 class PasswordInput(FormInput):
     """Password input field with masking."""
 
@@ -331,13 +406,28 @@ class PasswordInput(FormInput):
     def get_input_type(self) -> str:
         return 'password'
 
-    def render(self, **kwargs: Any) -> str:
+    def render(self, strength_meter: bool = False, **kwargs: Any) -> str:
         # Suppress autocomplete so browsers don't pre-fill saved passwords into new-password fields.
         if 'autocomplete' not in kwargs:
             kwargs['autocomplete'] = 'new-password'
+        if strength_meter:
+            kwargs['data-sf-strength'] = True
         attrs = self.validate_attributes(**kwargs)
         attrs['type'] = self.get_input_type()
-        return _render_input_tag(self._build_attributes_string(attrs))
+        input_html = _render_input_tag(self._build_attributes_string(attrs))
+        if not strength_meter:
+            return input_html
+        field_id = attrs.get('id', '')
+        return str(
+            html(
+                t'{SafeHTML(input_html)}<div class="sf-strength" data-sf-strength-for="{field_id}" hidden>'
+                t'<div class="sf-strength__track" aria-hidden="true"><span class="sf-strength__fill"></span></div>'
+                t'<p class="sf-strength__label" aria-live="polite"></p>'
+                t'<ul class="sf-strength__tips"></ul></div>'
+            )
+            + style_tag(_STRENGTH_CSS)
+            + script_tag(_strength_js())
+        )
 
 
 class EmailInput(FormInput):
