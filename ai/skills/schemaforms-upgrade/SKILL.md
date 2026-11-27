@@ -24,7 +24,7 @@ its replacement; this skill has the full mapping and the order to do it in.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
 
-## Next release (after 26.4.6): Content-Security-Policy and new inputs
+## 26.4.7: Content-Security-Policy and new inputs
 
 No breaking changes. Forms now work under a strict Content-Security-Policy (a header that tells
 the browser to run only scripts and styles carrying a per-response random value, the nonce): the

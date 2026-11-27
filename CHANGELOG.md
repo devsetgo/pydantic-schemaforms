@@ -7,6 +7,73 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow **CalVer**: `YY.Quarter.Build` — e.g. `26.2.1` = year 2026, quarter 2, build 1.
 Beta releases append `.beta` (e.g. `26.2.1.beta`); production releases have no suffix.
 
+## [26.4.7] — 2026-11-27
+
+Forms that work under a strict Content-Security-Policy, four new inputs (a one-time code,
+a password strength meter, a year picker and E.164 phone numbers), and a rebuilt example
+site. Every new behavior is opt-in, and apps that only use the documented options need no
+changes. Apps that customize the library's internals (`FormTemplates` attributes,
+`FormStyleAssets`, or their own layout templates) should read Removed and Changed below.
+
+### Added
+
+- Content-Security-Policy support: every `<script>` and `<style>` the library writes takes
+  your nonce, and it writes no inline event handlers or `style="..."` attributes. Set the
+  nonce once per request with `csp_nonces(script_nonce=..., style_nonce=...)`, or pass
+  `script_nonce=`/`style_nonce=` to a render call. A field's `ui_style` keeps working: it
+  goes into a nonced stylesheet. See the new Content-Security-Policy guide. (#337: #338,
+  #339, #340)
+- `ui_element="otp"`: a one-time code with one box per character that takes a pasted code
+  and the phone's SMS autofill. `validate()` strips spaces and dashes and checks the length
+  and characters. (#291, #342)
+- `ui_options={"strength_meter": True}` on a password field shows how strong the password
+  is as it's typed, scored like `create_password_strength_validator()`. It only advises
+  and never blocks submitting. (#292, #350)
+- `ui_element="year"`: a year chosen from a list, from `min_year`/`max_year`, the field's
+  `ge`/`le`, or 100 years back to 10 ahead. The range is checked on the server. (#293,
+  #351)
+- `ui_options={"e164": True}` on a phone field stores the number as E.164
+  (`+15551234567`) whatever formatting was typed, adding the field's `country_code` when
+  there's no `+`. (#294, #352)
+- The example site is built from one catalog of examples, with a docs-style sidebar,
+  section pages, an "All examples" page filtered by feature, a home page that explains
+  the library, and on every example a "How it's built" tab with the page's real model and
+  route code. (#344, #345, #349)
+
+### Changed
+
+- The docs explain each concept in plain words before the technical detail, across the
+  tutorial, guides, reference and AI skills. (#343)
+- The rental application example saves each step on the server. (#348)
+- `FormStyleAssets.tab_assets`, `accordion_assets` and `wizard_assets` are now functions
+  returning the HTML, not strings, so each render can apply that request's nonce. A custom
+  `FormStyle` that passed a string must pass `lambda: "<style>..."` instead. (#339)
+- The layout classes (`HorizontalLayout`, `GridLayout`, `CardLayout`, `TabLayout`,
+  `AccordionLayout`, `ModalLayout`, ...) no longer write inline `style=`/`onclick`. Their
+  layout comes from classes, and `ModalLayout`'s open and close buttons use
+  `data-sf-*` attributes with one listener instead of global functions. A subclass with its
+  own `template` should use `${style_attr}` where it used `style="${style}"`. (#338, #339)
+- `LiveValidator.render_htmx_script()` and `FormValidator.generate_client_validation_script()`
+  take an optional nonce, and the client validation CSS takes its color from
+  `--sf-error`. (#339, #341)
+
+### Removed
+
+- About 30 `FormTemplates` attributes left over from the old Material-only rendering path
+  and used by nothing in the library: the per-input templates (`TEXT_INPUT`,
+  `EMAIL_INPUT`, ...), `LABEL`, `HELP_TEXT`, `ERROR_MESSAGE`, `ICON`, `INPUT_GROUP`,
+  `VERTICAL_LAYOUT`, `HORIZONTAL_LAYOUT`, `FORM_PAGE` and all `MATERIAL_*` entries.
+  Inputs render through their input classes and the theme's field shell. (#341)
+
+### Fixed
+
+- A reflected cross-site scripting bug in the demo app: the `style` query parameter on
+  `/employees/import` went into a link unescaped. Every example page is now tested with
+  that payload. The library itself was not affected. (#341)
+- Material labels and the model list's Add button drew icon-font ligatures instead of
+  inline SVG icons. (#341)
+- The card layout and the client validation styles ignored dark mode. (#341)
+
 ## [26.4.6] — 2026-11-14
 
 Long forms and the wizard: file uploads checked on the server, wizards that save each step,
