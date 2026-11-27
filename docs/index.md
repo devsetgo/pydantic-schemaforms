@@ -131,15 +131,15 @@ Versions are calendar based: `26.4.6` is 2026, fourth quarter, sixth build.
 
 The docs at <https://devsetgo.github.io/pydantic-schemaforms/> have:
 
-- [Tutorial](https://devsetgo.github.io/pydantic-schemaforms/tutorial/): from a first form to nested forms, layouts,
+- [Tutorial](https://devsetgo.github.io/pydantic-schemaforms/stable/tutorial/): from a first form to nested forms, layouts,
   styling and CSRF protection, with FastAPI and Flask versions of every
   example.
-- [Advanced User Guide](https://devsetgo.github.io/pydantic-schemaforms/advanced/): live validation, data tables,
+- [Advanced User Guide](https://devsetgo.github.io/pydantic-schemaforms/stable/advanced/): live validation, data tables,
   JSON APIs, forms built at runtime, assets, Content-Security-Policy and
   plugin hooks.
-- [Recipes](https://devsetgo.github.io/pydantic-schemaforms/recipes/): complete apps for contact forms, login and
+- [Recipes](https://devsetgo.github.io/pydantic-schemaforms/stable/recipes/): complete apps for contact forms, login and
   registration, edit forms, line items, file uploads, wizards and more.
-- [Reference](https://devsetgo.github.io/pydantic-schemaforms/reference/): every input, layout, field option and
+- [Reference](https://devsetgo.github.io/pydantic-schemaforms/stable/reference/): every input, layout, field option and
   function.
 
 The [live demo](https://pydantic-schemaforms.devsetgo.com) shows every input,
@@ -160,7 +160,7 @@ form"), `schemaforms-convert` (from Pydantic, WTForms, Django or JSON Schema),
 `schemaforms-upgrade` (from removed APIs) and `schemaforms-document` (document your forms).
 For assistants without skills support, `python -m pydantic_schemaforms.ai_instructions claude
 --write` writes the same guidance to `CLAUDE.md`; see the
-[AI Assistants and Agent Skills](https://devsetgo.github.io/pydantic-schemaforms/advanced/ai-instructions/) page.
+[AI Assistants and Agent Skills](https://devsetgo.github.io/pydantic-schemaforms/stable/advanced/ai-instructions/) page.
 
 ## Accessibility
 
@@ -168,7 +168,7 @@ axe-core 4.14 runs against every example page, under Bootstrap and Material, in
 light and dark, and in the error state after a failed submit, and any serious or critical
 violation fails CI. This is testing, not a compliance claim: conformance
 depends on your whole application. See the
-[Accessibility reference](https://devsetgo.github.io/pydantic-schemaforms/reference/accessibility/).
+[Accessibility reference](https://devsetgo.github.io/pydantic-schemaforms/stable/reference/accessibility/).
 
 ## Contributing
 

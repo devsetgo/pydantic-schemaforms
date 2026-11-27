@@ -682,3 +682,17 @@ def test_validation_page_valid_scenario_submits_cleanly(example_client: TestClie
     data, files = _page_values(example_client.get('/validation?scenario=valid').text)
     response = example_client.post('/validation', data=data, files=files or None)
     assert 'alert-success' in response.text
+
+
+def test_docs_links_name_a_version() -> None:
+    # The docs site is versioned (mike): /pydantic-schemaforms/recipes/ is a 404, and
+    # /pydantic-schemaforms/stable/recipes/ is the page. Only the bare root redirects.
+    import re
+
+    unversioned = re.compile(
+        r'devsetgo\.github\.io/pydantic-schemaforms/(?!(?:stable|latest)\b|\d)[A-Za-z]'
+    )
+    root = EXAMPLES_DIR.parent
+    files = [root / 'README.md', *EXAMPLES_DIR.rglob('*.py'), *EXAMPLES_DIR.rglob('*.html')]
+    bad = [f'{path.relative_to(root)}' for path in files if unversioned.search(path.read_text())]
+    assert not bad, f'link to /stable/... instead: {bad}'
