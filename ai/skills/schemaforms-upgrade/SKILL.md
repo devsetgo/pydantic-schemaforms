@@ -24,7 +24,7 @@ its replacement; this skill has the full mapping and the order to do it in.
 5. **Report** what changed per form, and anything that behaves differently (for example data now
    nested under a sub-form's name).
 
-## Next release (after 26.4.6): Content-Security-Policy
+## Next release (after 26.4.6): Content-Security-Policy and a one-time code input
 
 No breaking changes. Forms now work under a strict Content-Security-Policy (a header that tells
 the browser to run only scripts and styles carrying a per-response random value, the nonce): the
@@ -38,6 +38,7 @@ attributes. Search the app for `Content-Security-Policy`, `nonce`, `unsafe-inlin
 | `'unsafe-inline'`, `'unsafe-hashes'` or script hashes in the policy for the forms | Nothing: remove them once `csp_nonces()` is in place |
 | `script_nonce=` passed to some render calls | `csp_nonces()` in the middleware, which also covers `render_with_errors()`, wizard steps and `render_display()` |
 | `LiveValidator.render_htmx_script()` stored in a module-level variable | Call it per request, so it gets that request's nonce |
+| A plain text field plus a `pattern` for a verification code | `ui_element="otp"` on a `str` field: one box per character, checked on the server |
 
 With HTMX, add `<meta name="htmx-config" content='{"inlineScriptNonce": "...",
 "inlineStyleNonce": "..."}'>`. Test with the `Content-Security-Policy-Report-Only` header and the
