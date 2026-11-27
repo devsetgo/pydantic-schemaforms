@@ -676,3 +676,9 @@ def test_every_form_example_shows_how_its_built(example_client: TestClient) -> N
         if '<form' in page.split('id="ex-panel-source"', 1)[0] and 'class ' not in source:
             missing.append(example.slug)
     assert not missing, f'no model source found for {missing}; add models= to their catalog entry'
+
+
+def test_validation_page_valid_scenario_submits_cleanly(example_client: TestClient) -> None:
+    data, files = _page_values(example_client.get('/validation?scenario=valid').text)
+    response = example_client.post('/validation', data=data, files=files or None)
+    assert 'alert-success' in response.text

@@ -205,3 +205,75 @@ def test_year_needs_an_int_field():
 def test_year_renders_as_a_select_in_every_style(framework):
     page = Years.render_form(submit_url='/y', framework=framework)
     assert page.count('<select name=') == 3
+
+
+class Phones(FormModel):
+    us: str = Field(
+        ...,
+        ui_element='phone',
+        ui_options={'e164': True, 'country_code': '+1', 'phone_format': '(###) ###-####'},
+    )
+    uk: str | None = Field(
+        None, ui_element='phone_number', ui_options={'e164': True, 'country_code': '+44'}
+    )
+    anywhere: str | None = Field(None, ui_element='phone', ui_options={'e164': True})
+
+
+@pytest.mark.parametrize(
+    ('typed', 'stored'),
+    [
+        ({'us': '(555) 123-4567'}, {'us': '+15551234567'}),
+        ({'us': '+1 555.123.4567'}, {'us': '+15551234567'}),
+        ({'us': '5551234567', 'uk': '020 7946 0958'}, {'uk': '+442079460958'}),
+        ({'us': '5551234567', 'anywhere': '0049 30 1234567'}, {'anywhere': '+49301234567'}),
+        ({'us': '5551234567', 'uk': '', 'anywhere': ''}, {'uk': None, 'anywhere': None}),
+    ],
+)
+def test_e164_stores_one_consistent_form(typed, stored):
+    result = Phones.validate(typed, submit_url='/p')
+    assert result.is_valid, result.errors
+    assert stored.items() <= result.data.items()
+
+
+def test_e164_reports_numbers_it_cannot_complete():
+    result = Phones.validate({'us': '555', 'anywhere': '030 1234567'}, submit_url='/p')
+    assert result.errors == {
+        'us': 'Enter a valid phone number.',
+        'anywhere': 'Enter the phone number with its country code, such as +1 555 123 4567.',
+    }
+
+
+def test_e164_value_shows_through_the_mask():
+    page = Phones.render_form({'us': '+15551234567'}, submit_url='/p')
+    assert 'value="(555) 123-4567"' in page
+
+
+def test_phone_without_e164_keeps_what_was_typed():
+    class Plain(FormModel):
+        phone: str = Field(..., ui_element='phone')
+
+    assert Plain.validate({'phone': '(555) 123-4567'}, submit_url='/p').data == {
+        'phone': '(555) 123-4567'
+    }
+
+
+@pytest.mark.parametrize(
+    ('options', 'message'),
+    [
+        ({'e164': 'yes'}, 'True or False'),
+        ({'e164': True, 'country_code': '44'}, 'such as "\\+44"'),
+        ({'e164': True, 'phone_format': '###'}, 'needs a country_code'),
+    ],
+)
+def test_bad_e164_options_fail_at_declaration(options, message):
+    with pytest.raises(ValueError, match=message):
+        Field(ui_element='phone', ui_options=options)
+
+
+def test_e164_keeps_the_country_code_out_of_the_typed_value():
+    page = Phones.render_form({'uk': '07700 900123'}, submit_url='/p')
+    assert 'value="07700 900123"' in page
+    assert (
+        Phones.validate({'us': '5551234567', 'uk': '07700 900123'}, submit_url='/p').data['uk']
+        == '+447700900123'
+    )

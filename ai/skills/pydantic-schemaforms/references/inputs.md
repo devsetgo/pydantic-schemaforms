@@ -236,7 +236,8 @@ of this table.
 | `textarea` | `code_format` / `code_highlight` / `code_tab_indent` | `True` | Turn off the Format button / highlighting / Tab-key indentation (with `language`) |
 | `textarea` | `indent_size` | `2` | Spaces per indent level (with `language`) |
 | `phone` | `phone_format` | — | Mask with `#` per digit, e.g. `"(###) ###-####"` |
-| `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder |
+| `phone` | `country_code` | — | Prefix such as `"+44"` added to the value/placeholder; with `e164`, added to numbers typed without a `+` |
+| `phone` | `e164` | `False` | `validate()` stores the number as E.164 (`+15551234567`) whatever formatting was typed, and rejects a malformed one. Needs `country_code` when `phone_format` is set. Checks the shape only, not that the number exists |
 | `phone`, `currency`, `date`, `time`, `datetime` | `live_format` | `True` | `False` applies the format on blur instead of while typing |
 | `currency` | `currency_symbol` | `"$"` | Symbol shown and stripped on submit |
 | `password` | `strength_meter` | `False` | A bar and tips below the field as the user types, scored like `create_password_strength_validator()` with the field's `min_length`. Guidance only: it never blocks submitting, so enforce rules with `min_length`/`@field_validator` |

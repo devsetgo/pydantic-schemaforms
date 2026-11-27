@@ -18,6 +18,10 @@ from pydantic_core import PydanticCustomError, core_schema
 
 _OTP_ELEMENTS = {'otp', 'one_time_code'}
 _YEAR_ELEMENTS = {'year'}
+_PHONE_ELEMENTS = {'phone', 'phone_number'}
+_E164 = re.compile(r'\+[1-9]\d{6,14}')
+_COUNTRY_CODE = re.compile(r'\+[1-9]\d{0,2}')
+_PHONE_FORMATTING = re.compile(r'[\s().\-/]')
 _OTP_SEPARATORS = re.compile(r'[\s-]')
 
 
@@ -115,6 +119,70 @@ class _YearRange:
         return value
 
 
+@dataclass(frozen=True)
+class _E164Phone:
+    """Store a phone number as E.164 (+15551234567), whatever formatting it was typed with."""
+
+    country_code: str | None
+
+    def __get_pydantic_core_schema__(
+        self, source: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        args = _union_args(source)
+        if str not in args:
+            raise TypeError(
+                f'An e164 phone field holds text such as +15551234567, so type it str, not {source!r}'
+            )
+        allows_none = type(None) in args
+        checked = core_schema.no_info_after_validator_function(self._check, handler(source))
+
+        def normalize(value: Any) -> Any:
+            if not isinstance(value, str):
+                return value
+            number = _PHONE_FORMATTING.sub('', value)
+            if number == '':
+                return None if allows_none else number
+            if number.startswith('00'):
+                number = '+' + number[2:]
+            if not number.startswith('+') and self.country_code:
+                # Most countries dial a leading 0 at home that the international form drops.
+                number = self.country_code + (number[1:] if number.startswith('0') else number)
+            return number
+
+        return core_schema.no_info_before_validator_function(normalize, checked)
+
+    def _check(self, value: Any) -> Any:
+        if value is None or _E164.fullmatch(value):
+            return value
+        if self.country_code:
+            raise PydanticCustomError('phone_e164', 'Enter a valid phone number.')
+        raise PydanticCustomError(
+            'phone_e164', 'Enter the phone number with its country code, such as +1 555 123 4567.'
+        )
+
+
+def _check_phone_options(options: dict[str, Any]) -> None:
+    e164 = options.get('e164', False)
+    if not isinstance(e164, bool):
+        raise ValueError(
+            f"ui_options={{'e164': ...}} for a phone field is True or False, not {e164!r}"
+        )
+    if not e164:
+        return
+    country_code = options.get('country_code')
+    if country_code is not None and not (
+        isinstance(country_code, str) and _COUNTRY_CODE.fullmatch(country_code)
+    ):
+        raise ValueError(
+            f'country_code is a + and 1 to 3 digits, such as "+44", not {country_code!r}'
+        )
+    if options.get('phone_format') and not country_code:
+        raise ValueError(
+            'An e164 phone field with a phone_format mask needs a country_code: '
+            'the mask keeps only digits, so the user cannot type the +'
+        )
+
+
 def _check_year_options(options: dict[str, Any]) -> None:
     for key in ('min_year', 'max_year'):
         value = options.get(key)
@@ -134,6 +202,8 @@ def check_widget_options(extra: dict[str, Any]) -> None:
 
     if _declared_element(extra) in _YEAR_ELEMENTS:
         _check_year_options(_options(extra))
+    if _declared_element(extra) in _PHONE_ELEMENTS:
+        _check_phone_options(_options(extra))
     if _declared_element(extra) in _OTP_ELEMENTS:
         options = _options(extra)
         length = options.get('length', 6)
@@ -157,6 +227,8 @@ def attach_widget_checks(field_info: FieldInfo, extra: dict[str, Any]) -> FieldI
         field_info.metadata.append(
             _OneTimeCode(options.get('length', 6), options.get('numeric', True))
         )
+    if _declared_element(extra) in _PHONE_ELEMENTS and _options(extra).get('e164'):
+        field_info.metadata.append(_E164Phone(_options(extra).get('country_code')))
     if _declared_element(extra) in _YEAR_ELEMENTS:
         options = _options(extra)
         limits = {type(item).__name__ for item in field_info.metadata}

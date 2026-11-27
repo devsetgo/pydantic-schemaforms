@@ -2822,6 +2822,12 @@ class TextInputsGalleryForm(FormModel):
         ui_placeholder='20 7946 0958',
         ui_options={'country_code': '+44'},
     )
+    phone_e164: str = Field(
+        '+15551234567',
+        title='Phone stored as E.164 (e164=True, country_code="+1"): submits +15551234567',
+        ui_element='phone',
+        ui_options={'e164': True, 'country_code': '+1', 'phone_format': '(###) ###-####'},
+    )
     phone_no_live_format: str = Field(
         '5551234567',
         title='Phone, formatted on blur only (live_format=False)',
@@ -3419,6 +3425,12 @@ class ValidationShowcaseForm(FormModel):
     end_date: str = Field('', title='End date (cross-field rule: after start)', ui_element='date')
 
     # Checked on the server from the widget's own options.
+    mobile: str = Field(
+        ...,
+        title='UK mobile, stored as E.164 (e164=True, country_code="+44")',
+        ui_element='phone',
+        ui_options={'e164': True, 'country_code': '+44'},
+    )
     graduation_year: int = Field(
         ...,
         title='Graduation year (year picker, min_year=2000, max_year=2026)',
@@ -3494,6 +3506,7 @@ VALID_VALIDATION_DEMO = {
     'pack_size': 12,
     'email': 'ada@example.com',
     'accept_terms': True,
+    'accept_disclosure': True,
     'password': 'engine1843',
     'confirm_password': 'engine1843',
     'address': {'city': 'New York', 'zip_code': '10001'},
@@ -3509,6 +3522,7 @@ VALID_VALIDATION_DEMO = {
     'end_date': '2025-04-01',
     'verification_code': '042917',
     'graduation_year': 2012,
+    'mobile': '07700 900123',
 }
 
 # Everything valid except the passwords: Pydantic only runs
@@ -3541,6 +3555,7 @@ INVALID_VALIDATION_DEMO = {
     'end_date': '2024-02-01',
     'verification_code': '12345',
     'graduation_year': 1985,
+    'mobile': '123',
 }
 
 
