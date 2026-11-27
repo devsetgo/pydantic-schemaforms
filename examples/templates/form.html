@@ -38,14 +38,6 @@
 
                 {% block extra_info_top %}{% endblock %}
 
-                <!-- Navigation -->
-                <div class="text-center mt-4">
-                    <a href="{{ back_url | default('/') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-2"></i>
-                        {{ back_label | default('Back to Examples') }}
-                    </a>
-                </div>
-
                 {% block extra_info %}{% endblock %}
 
                 {% if api_endpoint %}

@@ -62,7 +62,7 @@ SECURITY_ELEMENTS = {'csrf', 'captcha', 'honeypot'}
 def _example_source() -> str:
     return '\n'.join(
         path.read_text(encoding='utf-8')
-        for path in EXAMPLES_DIR.glob('*.py')
+        for path in EXAMPLES_DIR.rglob('*.py')
         if path.name != CHEATSHEET
     )
 
@@ -182,10 +182,10 @@ def test_every_layout_and_wizard_option_is_demonstrated() -> None:
     index = client.get('/wizards').text.replace('&amp;', '&')
     for example in WIZARD_EXAMPLES:
         assert f'/wizards/{example.slug}' in index, example.slug
-        # Each example's back button returns to the Wizards index, not home.
+        # Each example sits in its section's breadcrumb, with the Wizards index in the menu.
         page = client.get(f'/wizards/{example.slug}', params={'style': 'material'}).text
-        assert 'href="/wizards?style=material"' in page, example.slug
-        assert 'Back to Wizard Examples' in page, example.slug
+        assert 'href="/examples/layouts"' in page, example.slug
+        assert 'href="/wizards"' in page, example.slug
     for option_link in (
         'layout=wizard&linear=false',
         'layout=wizard&progress=false&labels=true',

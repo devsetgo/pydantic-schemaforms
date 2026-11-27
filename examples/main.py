@@ -4,9 +4,10 @@ FastAPI Example - Composition Root
 ===================================
 
 Thin entrypoint: FastAPI() construction, session middleware, the static asset
-mount, and the uvicorn runner. All routes/endpoints live in fastapi_routes.py
-and are attached here via `app.include_router(router)` — see that module's
-docstring for what the app actually demonstrates.
+mount, and the uvicorn runner. Shared pieces (templates, middleware, the
+/vendor files, the home page) live in fastapi_routes.py; the example routes
+live in examples/routes/, one module per section of examples/catalog.py, plus
+the wizard, data-table and menu-order modules. Each router is attached here.
 
 Run with:
     python examples/main.py
@@ -30,6 +31,15 @@ from examples.fastapi_routes import (
     PreferredStyleMiddleware,
     RequestTimingMiddleware,
     router,
+)
+from examples.routes import (
+    developers,
+    inputs,
+    layouts,
+    nested,
+    security,
+    start,
+    validation,
 )
 from examples.datatable_import_example import router as datatable_router
 from examples.menu_order_example import router as menu_order_router
@@ -138,6 +148,13 @@ _base_dir = Path(__file__).resolve().parent
 app.mount('/static', StaticFiles(directory=_base_dir / 'img'), name='static')
 
 app.include_router(router)
+app.include_router(start.router)
+app.include_router(inputs.router)
+app.include_router(validation.router)
+app.include_router(layouts.router)
+app.include_router(nested.router)
+app.include_router(security.router)
+app.include_router(developers.router)
 app.include_router(datatable_router)
 app.include_router(menu_order_router)
 app.include_router(wizards_router)

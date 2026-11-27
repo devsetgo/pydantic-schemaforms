@@ -7,8 +7,10 @@ This directory contains runnable examples that demonstrate current pydantic-sche
 ### 1) FastAPI demo (async)
 
 Files: examples/main.py (composition root — FastAPI() construction, session
-middleware, static mount, uvicorn entrypoint) and examples/fastapi_routes.py
-(every route/endpoint, attached via `app.include_router(router)`).
+middleware, static mount, uvicorn entrypoint), examples/fastapi_routes.py
+(shared templates, middleware and the home page), examples/routes/ (the example
+pages, one module per section of examples/catalog.py) and the wizard,
+data-table and menu-order modules.
 
 What it demonstrates:
 
